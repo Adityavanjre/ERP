@@ -22,7 +22,7 @@ services:
         sync: false
 
   - type: web
-    name: klypso-agency-frontend
+    name: klypso-agency-viewer
     env: node
     plan: free
     rootDir: agency/client
