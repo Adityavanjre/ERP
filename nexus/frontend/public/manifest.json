@@ -1,0 +1,16 @@
+{
+  "name": "Kernel ERP - SME Edition",
+  "short_name": "Kernel ERP",
+  "description": "Premium ERP for Indian SME Traders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "/next.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

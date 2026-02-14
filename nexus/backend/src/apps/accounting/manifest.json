@@ -1,0 +1,11 @@
+
+{
+    "name": "accounting",
+    "label": "Accounting & Finance",
+    "description": "Double-entry accounting with localized fiscal compliance and automated reconciliation.",
+    "version": "1.0.0",
+    "category": "Accounting",
+    "author": "Klypso Architecture Unit",
+    "website": "https://klypso.io",
+    "dependencies": []
+}

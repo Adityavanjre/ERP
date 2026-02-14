@@ -1,0 +1,11 @@
+
+{
+    "name": "manufacturing",
+    "label": "MRP & Manufacturing",
+    "description": "Industrial production lifecycle with recursive BOMs and shop-floor IoT ready architecture.",
+    "version": "1.0.0",
+    "category": "Manufacturing",
+    "author": "Klypso Architecture Unit",
+    "website": "https://klypso.io",
+    "dependencies": ["inventory"]
+}

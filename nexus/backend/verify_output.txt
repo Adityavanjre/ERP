@@ -1,0 +1,55 @@
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +19ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHrModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mKernelModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProjectModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAccountingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mInventoryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPurchasesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mManufacturingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSalesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[RegistryService] [39m[32mKlypso Kernel: Initializing App Registry...[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[PluginManager] [39m[32mKlypso Nexus: Initializing Plugin System...[39m
+[32m[Nest] 26564  - [39m14/02/2026, 6:01:57 pm [32m    LOG[39m [38;5;3m[PluginManager] [39m[32mFound 0 plugin candidate(s) in local storage.[39m
+🚀 Starting Block A: Financial Integrity Verification...
+Using Tenant: Premium Woodcraft Industries (46667209-03df-4037-9a32-5d3530f60d52)
+
+--- Verifying INV-05: Moving Average Cost ---
+Created Product: MAC-1771072317362
+Creating PO #1 (10 @ $100)...
+✅ MAC Step 1 Passed: Cost is $100
+Creating PO #2 (10 @ $200)...
+✅ MAC Step 2 Passed: Cost is $150
+
+--- Verifying SALE-01: Idempotency ---
+Using Idempotency Key: KEY-1771072317464
+Order 1 Created: 5a72dc2d-a602-4e78-9285-cc59064f1f02
+Order 2 Created: 5a72dc2d-a602-4e78-9285-cc59064f1f02
+✅ Idempotency Passed: IDs match.
+
+--- Verifying SALE-03: Tax Logic ---
+Tenant State: Karnataka
+Invoice Created: INV-4CE7F569
+IGST: 0, CGST: 0
+ℹ️ Tax Logic: Zero tax or custom rate? (Assuming default logic applied)
+
+--- Verifying SALE-04: Period Lock ---
+Locked Period: 3/2026
+✅ Period Lock Passed: Creation blocked.
+Unlocked Period.
+
+🎉 Block A Verification COMPLETED SUCCESSFULLY.

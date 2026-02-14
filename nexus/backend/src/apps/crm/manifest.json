@@ -1,0 +1,11 @@
+
+{
+    "name": "crm",
+    "label": "CRM & Pipelines",
+    "description": "Enterprise customer relationship management with deal stages and lead scoring.",
+    "version": "1.0.0",
+    "category": "Sales",
+    "author": "Klypso Architecture Unit",
+    "website": "https://klypso.io",
+    "dependencies": []
+}

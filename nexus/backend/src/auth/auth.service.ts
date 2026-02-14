@@ -1,0 +1,164 @@
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
+import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { TenantType, PlanType, Role, Prisma } from '@prisma/client';
+import { AccountingService } from '../accounting/accounting.service';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private config: ConfigService,
+    private accountingService: AccountingService,
+  ) {}
+
+  async register(dto: RegisterDto) {
+    // 1. Check if user exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('User already exists');
+    }
+
+    // 2. Hash password
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(dto.password, salt);
+
+    // 3. Create User, Tenant, and Membership in a transaction
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Create User
+      const user = await tx.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          fullName: dto.fullName,
+        },
+      });
+
+      // Create Tenant (Company)
+      const slug = dto.tenantName.toLowerCase().replace(/ /g, '-');
+      // Minimal collision handling for slug
+      let finalSlug = slug;
+      const slugCount = await tx.tenant.count({
+        where: { slug: { startsWith: slug } },
+      });
+      if (slugCount > 0) {
+        finalSlug = `${slug}-${slugCount + 1}`;
+      }
+
+      const tenant = await tx.tenant.create({
+        data: {
+          name: dto.tenantName,
+          slug: finalSlug,
+          type: (dto.companyType as TenantType) || TenantType.Retail,
+          plan: PlanType.Free,
+        },
+      });
+
+      // Create Membership (Owner)
+      await tx.tenantUser.create({
+        data: {
+          userId: user.id,
+          tenantId: tenant.id,
+          role: Role.Owner,
+        },
+      });
+
+      // 4. Initialize Default Chart of Accounts (Strict Mode: Survival requirement)
+      await this.accountingService.initializeTenantAccounts(tenant.id, tx);
+
+      // Generate Token
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        tenantId: tenant.id,
+        role: Role.Owner,
+      };
+
+      const accessToken = this.jwtService.sign(payload);
+
+      return {
+        accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+        },
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          slug: tenant.slug,
+        },
+      };
+    });
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      include: {
+        memberships: {
+          take: 1, // Default to first company for now
+          include: { tenant: true },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Check if user has at least one tenant membership
+    // In future, if multiple tenants, user selects one or gets a list
+    const membership = user.memberships[0]; // Defaulting to first
+    if (!membership) {
+      throw new UnauthorizedException('User has no active tenant');
+    }
+
+    // 4. B2B Context: Check if user is a Customer or Supplier
+    const [customer, supplier] = await Promise.all([
+      this.prisma.customer.findUnique({ where: { userId: user.id } }),
+      this.prisma.supplier.findUnique({ where: { userId: user.id } }),
+    ]);
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      tenantId: membership.tenantId,
+      role: membership.role,
+      customerId: customer?.id || null,
+      supplierId: supplier?.id || null,
+    };
+
+    return {
+      accessToken: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      },
+      tenant: {
+        id: membership.tenant.id,
+        name: membership.tenant.name,
+        slug: membership.tenant.slug,
+      },
+    };
+  }
+}

@@ -1,0 +1,174 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { LayoutGrid, Download, Trash2, ExternalLink, ShieldCheck, CheckCircle, Package, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { useUX } from "@/components/providers/ux-provider";
+
+export default function AppsMarketplace() {
+    const { showConfirm } = useUX();
+    const [apps, setApps] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchApps = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get("/kernel/apps");
+            setApps(res.data);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to sync with Klypso App Cloud");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchApps();
+    }, []);
+
+    const handleUninstall = (name: string) => {
+        showConfirm({
+            title: "Decommission Module?",
+            description: `This will remove the [${name}] module from your enterprise system. Any data specific to this module might become inaccessible.`,
+            confirmText: "Uninstall",
+            variant: "destructive",
+            onConfirm: async () => {
+                try {
+                    await api.post(`/kernel/apps/${name}/uninstall`);
+                    toast.success(`Module [${name}] decommissioned from system`);
+                    fetchApps();
+                    window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
+                } catch (err) {
+                    toast.error("Decommissioning failed");
+                }
+            }
+        });
+    };
+
+    const handleInstall = async (name: string) => {
+        try {
+            await api.post(`/kernel/apps/${name}/install`);
+            toast.success(`Module [${name}] deployed to enterprise system`);
+            fetchApps();
+            window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
+        } catch (err) {
+            toast.error("Deployment failed");
+        }
+    };
+
+    return (
+        <div className="flex-1 space-y-8 p-8 pt-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+                        <LayoutGrid className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
+                        Extension Foundry
+                    </h2>
+                    <p className="text-slate-500 mt-2 font-medium">Manage and extend your business modules.</p>
+                </div>
+                <Button className="rounded-2xl bg-white border border-slate-200 text-slate-600 shadow-sm font-bold h-11 px-5">
+                    <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" /> System Verified
+                </Button>
+            </div>
+
+            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500 mt-4">
+                <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+                    <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
+                        <Zap className="h-5 w-5 text-blue-600" />
+                        Operational Blueprints
+                    </CardTitle>
+                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Deploy validated business architectures in a single sequence</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-4 pt-8">
+                    {["Manufacturing", "Retail", "Wholesale", "Services"].map(type => (
+                        <Button
+                            key={type}
+                            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
+                            onClick={async () => {
+                                try {
+                                    await api.post("/kernel/apps/preset", { type });
+                                    toast.success(`${type} blueprint sequence initiated`);
+                                    fetchApps();
+                                    window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
+                                } catch (err) {
+                                    toast.error("Blueprint deployment failed");
+                                }
+                            }}
+                        >
+                            {type} Profile
+                        </Button>
+                    ))}
+                </CardContent>
+            </Card>
+
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {apps.map((app) => (
+                    <Card key={app.id} className="bg-white border-slate-200 shadow-lg shadow-slate-200/40 rounded-3xl group overflow-hidden flex flex-col hover:shadow-2xl hover:shadow-blue-500/5 transition-all outline outline-0 hover:outline-2 hover:outline-blue-500/20">
+                        <div className={`h-2.5 w-full transition-colors ${app.installed ? 'bg-emerald-500' : 'bg-slate-100'}`} />
+                        <CardHeader className="flex-1 px-8 pt-8">
+                            <div className="flex justify-between items-start mb-6">
+                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-lg border-none uppercase tracking-widest">{app.category}</Badge>
+                                {app.installed && <div className="bg-emerald-50 p-1.5 rounded-full"><CheckCircle className="h-4 w-4 text-emerald-600" /></div>}
+                            </div>
+                            <Link href={`/apps/market/${app.name}`}>
+                                <CardTitle className="text-xl font-black text-slate-900 group-hover:text-blue-600 transition-colors flex items-center cursor-pointer tracking-tight">
+                                    <Package className="mr-3 h-6 w-6 text-blue-500/50" />
+                                    {app.label}
+                                </CardTitle>
+                            </Link>
+                            <CardDescription className="text-slate-500 mt-4 text-sm leading-relaxed font-medium">
+                                {app.description}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="px-8 pb-8 pt-0">
+                            <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-tighter mb-6 bg-slate-50 p-2 rounded-xl">
+                                <span>BUILD_{app.version}</span>
+                                <span>FORGED BY {app.author.toUpperCase()}</span>
+                            </div>
+                            <div className="flex gap-3 w-full">
+                                {app.installed ? (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex-1 bg-rose-50 text-rose-600 hover:bg-rose-100 font-black rounded-2xl h-11"
+                                        onClick={() => handleUninstall(app.name)}
+                                    >
+                                        <Trash2 className="h-4 w-4 mr-2" /> Decommission
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-11 shadow-lg shadow-blue-500/20"
+                                        onClick={() => handleInstall(app.name)}
+                                    >
+                                        <Download className="h-4 w-4 mr-2" /> Deploy Module
+                                    </Button>
+                                )}
+                                <Link href={`/apps/market/${app.name}`}>
+                                    <Button variant="ghost" size="icon" className="h-11 w-11 bg-slate-50 border border-slate-100 text-slate-400 rounded-2xl hover:bg-white hover:border-slate-300">
+                                        <ExternalLink className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+
+                {apps.length === 0 && !loading && (
+                    <div className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                        <Package className="h-20 w-20 text-slate-200 mb-6" />
+                        <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest">Registry Depleted</h3>
+                        <p className="text-slate-400 mt-2 font-bold">No provisionable modules detected in the local repository.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

@@ -1,0 +1,11 @@
+
+{
+    "name": "purchase",
+    "label": "Procurement & Vendors",
+    "description": "Smart procurement engine with multi-vendor RFQ and supply chain orchestration.",
+    "version": "1.0.0",
+    "category": "Logistics",
+    "author": "Klypso Architecture Unit",
+    "website": "https://klypso.io",
+    "dependencies": ["inventory"]
+}

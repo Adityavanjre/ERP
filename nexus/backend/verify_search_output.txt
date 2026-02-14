@@ -1,0 +1,38 @@
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +134ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +8ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTerminusModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCommonModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHrModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mKernelModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProjectModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAccountingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPurchasesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mInventoryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mManufacturingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSalesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[RegistryService] [39m[32mKlypso Kernel: Initializing App Registry...[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[PluginManager] [39m[32mKlypso Nexus: Initializing Plugin System...[39m
+[32m[Nest] 23876  - [39m14/02/2026, 8:59:55 pm [32m    LOG[39m [38;5;3m[PluginManager] [39m[32mFound 0 plugin candidate(s) in local storage.[39m
+🚀 Verifying INV-06: Barcode Search Priority...
+Created Exact Match: Ambiguous Item (Barcode: 998877-1771082996080)
+Created Partial Match: Partial Match 998877-1771082996080 Item
+Searching for: "998877-1771082996080"
+First Result: SKU-EXACT-1771082996080 (Barcode: 998877-1771082996080)
+✅ INV-06 Passed: Exact barcode match returned first.
+
+Testing Manual Search (Alternative) for: "Ambiguous"
+✅ Manual Entry Passed: Found item by partial name "Ambiguous".
+
+🎉 Priority Search Verification COMPLETED SUCCESSFULLY.

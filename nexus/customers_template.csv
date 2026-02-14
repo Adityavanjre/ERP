@@ -1,0 +1,3 @@
+firstName,lastName,email,phone,company,address,state,gstin,openingBalance
+John,Doe,john@example.com,555-0123,Doe Corp,"123 Main St",Maharashtra,27ABCDE1234F1Z5,1500.50
+Jane,Smith,jane@enterprise.co,555-4567,Enterprise Co,"456 Tech Park",Karnataka,29XYZDE5678G2Z9,0

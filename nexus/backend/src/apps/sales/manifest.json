@@ -1,0 +1,11 @@
+
+{
+    "name": "sales",
+    "label": "Sales & Ledger",
+    "description": "Enterprise order orchestration and quotation lifecycle management.",
+    "version": "1.0.0",
+    "category": "Sales",
+    "author": "Klypso Architecture Unit",
+    "website": "https://klypso.io",
+    "dependencies": ["crm"]
+}

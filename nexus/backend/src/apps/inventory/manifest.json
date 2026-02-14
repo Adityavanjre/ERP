@@ -1,0 +1,11 @@
+
+{
+    "name": "inventory",
+    "label": "Inventory & Logistics",
+    "description": "Smart warehouse management with real-time stock orchestration and automated replenishment.",
+    "version": "1.0.0",
+    "category": "Logistics",
+    "author": "Klypso Architecture Unit",
+    "website": "https://klypso.io",
+    "dependencies": []
+}
