@@ -1,0 +1,58 @@
+services:
+  # 🚪 THE FRONT DOOR (Nginx Gateway)
+  - type: web
+    name: klypso-gateway
+    env: docker
+    plan: free
+    dockerFilePath: gateway/Dockerfile
+    envVars:
+      - key: PORT
+        value: 80
+
+  # --- KLYPSO AGENCY ---
+  - type: web
+    name: klypso-agency-backend
+    env: node
+    plan: free
+    rootDir: agency/server
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: MONGO_URI
+        sync: false
+
+  - type: web
+    name: klypso-agency-frontend
+    env: static
+    plan: free
+    rootDir: agency/client
+    buildCommand: npm install && npm run build
+    publishPath: dist
+
+  # --- KLYPSO NEXUS ---
+  - type: web
+    name: nexus-backend
+    env: node
+    plan: free
+    rootDir: nexus/backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexus-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: nexus-frontend
+    env: node
+    plan: free
+    rootDir: nexus/frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+
+databases:
+  - name: nexus-db
+    plan: free
