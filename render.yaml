@@ -23,10 +23,14 @@ services:
 
   - type: web
     name: klypso-agency-frontend
-    env: static
+    env: node
+    plan: free
     rootDir: agency/client
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    startCommand: npx serve -s dist -l $PORT
+    envVars:
+      - key: PORT
+        value: 5000
 
   # --- KLYPSO NEXUS ---
   - type: web
