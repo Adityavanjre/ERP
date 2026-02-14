@@ -24,7 +24,6 @@ services:
   - type: web
     name: klypso-agency-frontend
     env: static
-    plan: free
     rootDir: agency/client
     buildCommand: npm install && npm run build
     staticPublishPath: dist
