@@ -4,7 +4,7 @@ services:
     name: klypso-gateway
     env: docker
     plan: free
-    dockerFilePath: gateway/Dockerfile
+    rootDir: gateway
     envVars:
       - key: PORT
         value: 80
@@ -27,7 +27,7 @@ services:
     plan: free
     rootDir: agency/client
     buildCommand: npm install && npm run build
-    publishPath: dist
+    staticPublishPath: dist
 
   # --- KLYPSO NEXUS ---
   - type: web
