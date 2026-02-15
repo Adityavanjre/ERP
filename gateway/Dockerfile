@@ -1,6 +1,6 @@
-FROM nginx:alpine
-# Install curl and nslookup (bind-tools) for healthchecks/wait scripts
-RUN apk add --no-cache curl bind-tools
+FROM nginx:latest
+# Install curl and dnsutils (bind-tools equiv) for healthchecks/wait scripts using apt-get (Debian)
+RUN apt-get update && apt-get install -y curl dnsutils && rm -rf /var/lib/apt/lists/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /start.sh
