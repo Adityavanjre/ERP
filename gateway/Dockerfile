@@ -1,9 +1,9 @@
 FROM nginx:latest
 
-# Install curl, dnsutils, and gettext (for envsubst)
-RUN apt-get update && apt-get install -y curl dnsutils gettext && rm -rf /var/lib/apt/lists/*
+# Install curl (optional debugging)
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-COPY nginx.conf.template /etc/nginx/nginx.conf.template
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
