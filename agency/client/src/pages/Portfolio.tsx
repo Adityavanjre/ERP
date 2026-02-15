@@ -4,7 +4,7 @@ import API_URL from '../api/config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import type { Project } from '../types';
-import { ArrowRight, Eye } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import projectsData from '../data/projects.json';

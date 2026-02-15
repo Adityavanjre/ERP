@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Image as ImageIcon, Send, Link as LinkIcon, Eye, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Link as LinkIcon, Eye, Save, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 import API_URL from '../../api/config';

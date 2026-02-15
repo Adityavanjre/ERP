@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, Grid, MapPin, Camera, Maximize2 } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, Grid, MapPin, Camera } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const albums = [
