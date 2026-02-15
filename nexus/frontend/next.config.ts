@@ -3,6 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
   basePath: '/portal',
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['*'],
+    },
+  },
+  images: {
+    unoptimized: true,
+  },
   async rewrites() {
     return [
       {
