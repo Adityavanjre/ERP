@@ -26,7 +26,7 @@ export class AuthService {
       where: { email: dto.email },
     });
     if (existingUser) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException('This email address is already in use.');
     }
 
     // 2. Hash password

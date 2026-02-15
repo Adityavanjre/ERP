@@ -51,6 +51,7 @@ export default function RegisterPage() {
     const {
         register: registerUser,
         handleSubmit: handleUserSubmit,
+        setError,
         formState: { errors: userErrors },
     } = useForm<UserFormData>({
         resolver: zodResolver(userSchema),
@@ -99,6 +100,16 @@ export default function RegisterPage() {
             router.push('/dashboard');
         } catch (error: any) {
             console.error(error);
+            if (error.response?.status === 409) {
+                // Set specific error on the email field
+                setError('email', {
+                    type: 'manual',
+                    message: 'This email is already registered. Please sign in.'
+                });
+                // Switch back to step 1 to show the error
+                setStep(1);
+            }
+
             toast.error('Registration failed', {
                 description: error.response?.data?.message || 'Something went wrong. Please try again.',
             });
