@@ -1,3 +1,5 @@
+FROM nginx:latest
+
 # Install curl, dnsutils, and gettext (for envsubst)
 RUN apt-get update && apt-get install -y curl dnsutils gettext && rm -rf /var/lib/apt/lists/*
 
