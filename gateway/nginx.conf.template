@@ -14,6 +14,7 @@ http {
 
         # 🚀 Klypso Agency Website (Root)
         location / {
+            # Debug: Agency Viewer
             proxy_pass http://${AGENCY_VIEWER_HOST}:${AGENCY_VIEWER_PORT};
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
