@@ -8,6 +8,8 @@
     "test",
     "dist",
     "**/*spec.ts",
-    "scripts"
+    "scripts",
+    "debug-mfg.ts",
+    "prisma/seed-manufacturing.ts"
   ]
 }
