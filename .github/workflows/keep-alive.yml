@@ -1,0 +1,23 @@
+name: Keep Render Services Alive
+
+on:
+  schedule:
+    # Run every 14 minutes to beat the 15-minute sleep timer
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  ping_services:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Nexus Frontend
+        run: curl -I https://nexus-frontend-gz8c.onrender.com/portal/login
+      
+      - name: Ping Nexus Backend
+        run: curl -I https://nexus-backend-3ukg.onrender.com/api/health
+      
+      - name: Ping Agency Backend
+        run: curl -I https://klypso-agency-backend.onrender.com/
+
+      - name: Ping Agency Viewer
+        run: curl -I https://klypso-agency-viewer.onrender.com/
