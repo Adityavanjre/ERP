@@ -1,27 +1,17 @@
 #!/bin/sh
 
-# Function to check if a host resolves (with timeout)
-wait_for_host() {
-    host="$1"
-    echo "Waiting for $host to resolve..."
-    i=0
-    while ! nslookup "$host" > /dev/null 2>&1; do
-        if [ $i -ge 15 ]; then
-            echo "⚠️ Timeout waiting for $host. Proceeding anyway..."
-            return 0
-        fi
-        echo "  $host not resolved yet. Retrying in 2s..."
-        sleep 2
-        i=$((i+1))
-    done
-    echo "✅ $host is ready!"
-}
+echo "🔍 Detecting DNS Resolver..."
+export DNS_RESOLVER=$(awk '/nameserver/ {print $2}' /etc/resolv.conf | head -n1)
 
-# Wait for critical upstream services
-wait_for_host "klypso-agency-viewer"
-wait_for_host "nexus-frontend"
-wait_for_host "nexus-backend"
-wait_for_host "klypso-agency-backend"
+if [ -z "$DNS_RESOLVER" ]; then
+    echo "⚠️  No nameserver found in /etc/resolv.conf. Defaulting to Google DNS."
+    export DNS_RESOLVER="8.8.8.8"
+fi
 
-echo "🎯 All upstreams resolved. Starting Nginx..."
+echo "✅ Using Resolver: $DNS_RESOLVER"
+
+# Inject the resolver into nginx.conf
+sed -i "s/__DNS_RESOLVER__/$DNS_RESOLVER/g" /etc/nginx/nginx.conf
+
+echo "🚀 Starting Nginx..."
 exec nginx -g "daemon off;"
