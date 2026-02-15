@@ -9,45 +9,21 @@ services:
       - key: PORT
         value: 80
       - key: AGENCY_VIEWER_HOST
-        fromService:
-          type: web
-          name: klypso-agency-viewer
-          property: host
+        value: klypso-agency-viewer.onrender.com
       - key: AGENCY_VIEWER_PORT
-        fromService:
-          type: web
-          name: klypso-agency-viewer
-          property: port
+        value: 443
       - key: NEXUS_FRONTEND_HOST
-        fromService:
-          type: web
-          name: nexus-frontend
-          property: host
+        value: nexus-frontend-gz8c.onrender.com
       - key: NEXUS_FRONTEND_PORT
-        fromService:
-          type: web
-          name: nexus-frontend
-          property: port
+        value: 443
       - key: NEXUS_BACKEND_HOST
-        fromService:
-          type: web
-          name: nexus-backend
-          property: host
+        value: nexus-backend-3ukg.onrender.com
       - key: NEXUS_BACKEND_PORT
-        fromService:
-          type: web
-          name: nexus-backend
-          property: port
+        value: 443
       - key: AGENCY_BACKEND_HOST
-        fromService:
-          type: web
-          name: klypso-agency-backend
-          property: host
+        value: klypso-agency-backend.onrender.com
       - key: AGENCY_BACKEND_PORT
-        fromService:
-          type: web
-          name: klypso-agency-backend
-          property: port
+        value: 443
 
   # --- KLYPSO AGENCY ---
   - type: web

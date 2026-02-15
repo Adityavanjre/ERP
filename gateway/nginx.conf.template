@@ -12,18 +12,23 @@ http {
         listen 80;
         server_name localhost;
 
+        # Resolver for Public DNS (Google) since we are routing over the internet
+        resolver 8.8.8.8 valid=30s;
+
         # 🚀 Klypso Agency Website (Root)
         location / {
-            # Debug: Agency Viewer
-            proxy_pass http://${AGENCY_VIEWER_HOST}:${AGENCY_VIEWER_PORT};
-            proxy_set_header Host $host;
+            # Route to Public URL (HTTPS)
+            proxy_pass https://${AGENCY_VIEWER_HOST}; 
+            proxy_ssl_server_name on;
+            proxy_set_header Host ${AGENCY_VIEWER_HOST};
             proxy_set_header X-Real-IP $remote_addr;
         }
 
         # 🎨 Nexus ERP Portal
         location /portal/ {
-            proxy_pass http://${NEXUS_FRONTEND_HOST}:${NEXUS_FRONTEND_PORT};
-            proxy_set_header Host $host;
+            proxy_pass https://${NEXUS_FRONTEND_HOST};
+            proxy_ssl_server_name on;
+            proxy_set_header Host ${NEXUS_FRONTEND_HOST};
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
@@ -31,15 +36,17 @@ http {
 
         # 🐘 Nexus Engine API (Direct Access if needed)
         location /portal/api/ {
-            proxy_pass http://${NEXUS_BACKEND_HOST}:${NEXUS_BACKEND_PORT}/api/;
-            proxy_set_header Host $host;
+            proxy_pass https://${NEXUS_BACKEND_HOST}/api/;
+            proxy_ssl_server_name on;
+            proxy_set_header Host ${NEXUS_BACKEND_HOST};
             proxy_set_header X-Real-IP $remote_addr;
         }
 
         # 🏢 Agency API (Relative to Root)
         location /api/agency/ {
-            proxy_pass http://${AGENCY_BACKEND_HOST}:${AGENCY_BACKEND_PORT}/;
-            proxy_set_header Host $host;
+            proxy_pass https://${AGENCY_BACKEND_HOST}/;
+            proxy_ssl_server_name on;
+            proxy_set_header Host ${AGENCY_BACKEND_HOST};
             proxy_set_header X-Real-IP $remote_addr;
         }
     }
