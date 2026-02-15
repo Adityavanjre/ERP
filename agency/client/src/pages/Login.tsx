@@ -106,7 +106,7 @@ const Login = () => {
 
                 <div className="mt-12 text-center">
                     <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-700">
-                        System Version 2.0.4 // Zero-Trust Active
+                        App Version 2.0.4
                     </p>
                 </div>
             </motion.div>

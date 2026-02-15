@@ -189,7 +189,7 @@ const AdminLayout = () => {
                     <div className="flex items-center gap-6">
                         <div className="hidden lg:flex items-center gap-8 mr-6 border-r border-white/5 pr-8">
                             <div className="flex flex-col items-end">
-                                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">System Latency</span>
+                                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Response Time</span>
                                 <span className="text-xs font-mono font-bold text-emerald-500">12ms</span>
                             </div>
                             <div className="flex flex-col items-end">

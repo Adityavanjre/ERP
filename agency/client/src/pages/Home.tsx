@@ -261,7 +261,7 @@ const Home = () => {
                             {/* Floating Badge */}
                             <div className="absolute -top-10 -right-10 w-44 h-44 border border-white/5 bg-black/80 backdrop-blur-3xl rounded-full flex flex-col items-center justify-center p-8 text-center rotate-12 group-hover:rotate-0 transition-transform duration-700 shadow-3xl">
                                 <span className="text-[#C5A059] text-xs font-black uppercase tracking-tighter mb-2">Proprietary</span>
-                                <span className="text-white text-xl font-bold font-heading leading-tight uppercase">Nexus <br /> System</span>
+                                <span className="text-white text-xl font-bold font-heading leading-tight uppercase">Nexus <br /> Platform</span>
                             </div>
                         </div>
 
