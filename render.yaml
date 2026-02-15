@@ -24,6 +24,9 @@ services:
         value: klypso-agency-backend.onrender.com
       - key: AGENCY_BACKEND_PORT
         value: 443
+    domains:
+      - klypso.in
+      - www.klypso.in
 
   # --- KLYPSO AGENCY ---
   - type: web
