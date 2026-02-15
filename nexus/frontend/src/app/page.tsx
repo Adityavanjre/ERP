@@ -21,7 +21,7 @@ export default function Home() {
           <div className="h-4 w-px bg-slate-200 hidden md:block" />
           <Link href="/login">
             <Button variant="ghost" className="text-sm font-semibold hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-all">
-              Access Portal
+              Sign In
             </Button>
           </Link>
           <Link href="/register">
@@ -74,7 +74,7 @@ export default function Home() {
         {/* Feature Grid */}
         <section id="features" className="py-24 bg-white border-y border-slate-100">
           <div className="container px-4 md:px-6 mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-16 text-slate-900">All-in-one Intelligence.</h2>
+            <h2 className="text-3xl font-bold mb-16 text-slate-900">All-in-one Platform.</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 { title: "Smart Inventory", desc: "Precision stock predictions and automated replenishment systems.", icon: BarChart3 },
@@ -89,7 +89,7 @@ export default function Home() {
                     <feature.icon className="h-6 w-6 text-blue-600" />
                   </div>
                   <h3 className="text-xl font-bold mb-2 text-slate-800 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{feature.title}</h3>
-                  <p className="text-slate-500 font-medium">Launch your enterprise intelligence in minutes.</p>
+                  <p className="text-slate-500 font-medium">Launch your business operations in minutes.</p>
                 </div>
               ))}
             </div>

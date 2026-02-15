@@ -36,7 +36,7 @@ const Careers = () => {
     return (
         <div className="min-h-screen bg-[#0A0A0B] text-white pt-48 pb-32 px-4 relative overflow-hidden">
             <SEO
-                title="Join The Collective | Klypso Elite Careers"
+                title="Join The Team | Klypso Elite Careers"
                 description="We are scouting for extraordinary talent to join our private digital engineering collective."
             />
 
@@ -62,7 +62,7 @@ const Careers = () => {
                     </div>
                     <h1 className="text-6xl md:text-[9rem] font-bold mb-12 tracking-tight leading-[0.8] font-heading">
                         Join the <br />
-                        <span className="font-display italic font-light text-[#C5A059]">Collective.</span>
+                        <span className="font-display italic font-light text-[#C5A059]">Team.</span>
                     </h1>
                     <p className="max-w-3xl mx-auto text-xl md:text-2xl text-zinc-500 font-medium leading-relaxed tracking-tight underline underline-offset-4 decoration-[#C5A059]/20">
                         We are a specialized agency of designers and engineers. We value <span className="text-white">craftsmanship, autonomy, and continuous growth.</span>
@@ -91,9 +91,9 @@ const Careers = () => {
                 <div className="bg-[#121214] border border-white/5 rounded-[3rem] p-12 md:p-20 mb-40 shadow-3xl">
                     <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-white/5 pb-12">
                         <h2 className="text-4xl font-bold font-heading tracking-tight flex items-center gap-6">
-                            <Briefcase className="text-[#C5A059]" size={32} /> Active Engagements
+                            <Briefcase className="text-[#C5A059]" size={32} /> Open Positions
                         </h2>
-                        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-6 md:mt-0">Uptime: 99.9% Scout Status</span>
+                        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mt-6 md:mt-0">Uptime: 99.9%</span>
                     </div>
 
                     <div className="space-y-6">
@@ -112,7 +112,7 @@ const Careers = () => {
                             ))
                         ) : (
                             <div className="py-20 text-center border border-dashed border-white/5 rounded-3xl">
-                                <p className="text-zinc-600 font-medium italic">No active openings. Standby for future transmissions.</p>
+                                <p className="text-zinc-600 font-medium italic">No active openings. Check back later for new opportunities.</p>
                             </div>
                         )}
                     </div>

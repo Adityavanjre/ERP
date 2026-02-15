@@ -270,7 +270,7 @@ const Home = () => {
                                 <p className="text-[#C5A059] font-black tracking-[0.4em] uppercase text-[10px] mb-8">Infrastructure</p>
                                 <h2 className="text-5xl md:text-8xl font-bold tracking-tighter leading-[0.9] font-heading mb-10">
                                     Enterprise <br />
-                                    <span className="italic font-display font-medium text-zinc-600">Intelligence.</span>
+                                    <span className="italic font-display font-medium text-zinc-600">Operations.</span>
                                 </h2>
                                 <p className="text-zinc-400 text-lg font-medium leading-relaxed mb-12">
                                     Elite brands require more than just a website. We deploy **Klypso Nexus**,
@@ -284,11 +284,11 @@ const Home = () => {
                                     </div>
                                     <div className="flex items-center gap-6">
                                         <div className="w-2 h-2 rounded-full bg-[#C5A059]" />
-                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-white">AI-Powered Predictive Core</span>
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-white">AI-Powered Predictive Analytics</span>
                                     </div>
                                     <div className="flex items-center gap-6">
                                         <div className="w-2 h-2 rounded-full bg-[#C5A059]" />
-                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-white">Secured B2B Client Gateway</span>
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-white">Secured Client Portal</span>
                                     </div>
                                 </div>
                                 <a

@@ -7,8 +7,8 @@ const About = () => {
     return (
         <section className="min-h-screen bg-[#0A0A0B] text-white pt-48 pb-32 px-4 relative overflow-hidden">
             <Helmet>
-                <title>The Heritage | Klypso Elite Collective</title>
-                <meta name="description" content="Inside the private digital agency crafting masterpieces for the world's most ambitious brands." />
+                <title>The Heritage | Klypso Elite Team</title>
+                <meta name="description" content="Inside the private digital agency crafting digital solutions for the world's most ambitious brands." />
             </Helmet>
 
             <SEO

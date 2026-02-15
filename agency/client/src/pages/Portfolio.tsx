@@ -36,8 +36,8 @@ const Portfolio = () => {
     return (
         <section className="min-h-screen bg-[#0A0A0B] text-white pt-48 pb-32 px-4 relative overflow-hidden">
             <Helmet>
-                <title>Curated Portfolio | Klypso Elite Catalog</title>
-                <meta name="description" content="A portfolio of high-end digital artifacts crafted for the world's most ambitious brands." />
+                <title>Curated Portfolio | Klypso Curated Portfolio</title>
+                <meta name="description" content="A portfolio of high-end digital solutions crafted for the world's most ambitious brands." />
             </Helmet>
 
             {/* Noise Overlay */}
