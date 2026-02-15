@@ -47,7 +47,11 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.response?.data?.message || "Invalid credentials")
+            if (!err.response) {
+                setError("Network Error: Unable to reach the server. Please check your connection or try again later.");
+            } else {
+                setError(err.response?.data?.message || "Invalid credentials");
+            }
         } finally {
             setLoading(false)
         }
