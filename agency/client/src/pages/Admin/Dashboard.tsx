@@ -231,7 +231,7 @@ const Dashboard = () => {
                             <Shield size={120} />
                         </div>
                         <h3 className="text-[11px] font-black text-[#C5A059] uppercase tracking-[0.4em] mb-10 flex items-center gap-3">
-                            <Lock size={16} /> Protocol Health
+                            <Lock size={16} /> System Status
                         </h3>
                         <div className="space-y-10">
                             <DiagRow label="Encryption Layer" status="Hardened" percent={100} color="bg-[#C5A059]" />

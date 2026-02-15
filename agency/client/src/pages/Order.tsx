@@ -163,7 +163,7 @@ const Order = () => {
 
             <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 ml-1">Protocol Type</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 ml-1">Project Type</label>
                     <select
                         name="projectType"
                         value={formData.projectType}
@@ -240,7 +240,7 @@ const Order = () => {
                     onClick={nextStep}
                     className="bg-indigo-600 text-white px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center gap-3 hover:bg-indigo-500 hover:scale-105 transition-all duration-300 shadow-xl shadow-indigo-500/20 group"
                 >
-                    Review Protocol <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    Review Project <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
             </div>
         </motion.div>
@@ -264,7 +264,7 @@ const Order = () => {
                     <ReviewField label="Designation" value={formData.name} />
                     <ReviewField label="Communication" value={formData.email} />
                     <ReviewField label="Target Service" value={formData.service} />
-                    <ReviewField label="Protocol Type" value={formData.projectType} />
+                    <ReviewField label="Project Type" value={formData.projectType} />
                     <ReviewField label="Investment" value={formData.budget} />
                     <ReviewField label="Velocity" value={formData.timeline} />
                 </div>
@@ -298,7 +298,7 @@ const Order = () => {
                         />
                     </div>
                     <span className="text-xs text-gray-500 leading-relaxed group-hover:text-gray-400 transition-colors">
-                        I acknowledge the <span className="text-indigo-400 underline">Engagement Protocols</span> and <span className="text-indigo-400 underline">Privacy Strategy</span>. Payments are secured and governed by our refund structure.
+                        I acknowledge the <span className="text-indigo-400 underline">Engagement Terms</span> and <span className="text-indigo-400 underline">Privacy Policy</span>. Payments are secured and governed by our refund structure.
                     </span>
                 </label>
             </div>
@@ -342,7 +342,7 @@ const Order = () => {
 
                     <div className="mb-10 flex flex-col items-center">
                         <Lock size={20} className="text-indigo-500 mb-4" />
-                        <h3 className="font-black text-xs uppercase tracking-[0.4em] text-gray-500">Secure Protocol</h3>
+                        <h3 className="font-black text-xs uppercase tracking-[0.4em] text-gray-500">Secure Process</h3>
                     </div>
 
                     {showQRCode ? (
@@ -407,8 +407,8 @@ const Order = () => {
     return (
         <section className="min-h-screen bg-black text-white pt-32 pb-24 px-4 relative overflow-hidden">
             <SEO
-                title="Secure Your Slot | Klypso Protocol"
-                description="Initiate your project sequence. High-performance digital architecture starts with a single protocol."
+                title="Secure Your Slot | Klypso Agency"
+                description="Initiate your project. High-performance digital architecture starts with a single step."
             />
 
             {/* Mesh Background */}
@@ -479,7 +479,7 @@ const Order = () => {
                         <InfoCard
                             icon={<ShieldCheck className="text-indigo-400" />}
                             title="Escrow Security"
-                            desc="Commitments are held in a secure protocol until the discovery phase is finalized."
+                            desc="Commitments are held in a secure escrow until the discovery phase is finalized."
                         />
 
                         <div className="pt-10 border-t border-white/5">

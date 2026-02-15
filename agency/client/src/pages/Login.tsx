@@ -47,7 +47,7 @@ const Login = () => {
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 font-heading">
                         Imperial <span className="text-[#C5A059] italic font-display font-medium">Nexus</span>
                     </h1>
-                    <p className="text-zinc-500 font-medium text-sm tracking-wide">Enter credentials to initialize secure uplink.</p>
+                    <p className="text-zinc-500 font-medium text-sm tracking-wide">Enter credentials to access your account.</p>
                 </div>
 
                 <div className="bg-[#121214] border border-white/5 rounded-[3rem] p-8 md:p-12 shadow-3xl backdrop-blur-xl group">
@@ -97,7 +97,7 @@ const Login = () => {
                                 </>
                             ) : (
                                 <>
-                                    Initialize Uplink <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    Sign In <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </button>

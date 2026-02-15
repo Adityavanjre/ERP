@@ -212,7 +212,7 @@ const Contact = () => {
                                 disabled={loading}
                                 className="w-full bg-[#C5A059] text-black py-7 rounded-2xl font-black flex items-center justify-center gap-4 hover:bg-[#D4AF37] transition-all duration-500 shadow-2xl shadow-[#C5A059]/20 disabled:opacity-50 group text-xs uppercase tracking-[0.3em]"
                             >
-                                {loading ? 'Transmitting...' : 'Transmit Protocol'}
+                                {loading ? 'Sending...' : 'Send Message'}
                                 <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center group-hover:bg-black/20 transition-all">
                                     <Send size={14} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                 </div>
