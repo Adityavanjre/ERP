@@ -1,12 +1,18 @@
 #!/bin/sh
 
-# Function to check if a host resolves
+# Function to check if a host resolves (with timeout)
 wait_for_host() {
     host="$1"
     echo "Waiting for $host to resolve..."
-    until nslookup "$host" > /dev/null 2>&1; do
+    i=0
+    while ! nslookup "$host" > /dev/null 2>&1; do
+        if [ $i -ge 15 ]; then
+            echo "⚠️ Timeout waiting for $host. Proceeding anyway..."
+            return 0
+        fi
         echo "  $host not resolved yet. Retrying in 2s..."
         sleep 2
+        i=$((i+1))
     done
     echo "✅ $host is ready!"
 }
