@@ -25,6 +25,10 @@ const userSchema = z.object({
         .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
         .regex(/[0-9]/, 'Must contain at least one number')
         .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character'),
+    confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
 });
 
 const companySchema = z.object({
@@ -41,6 +45,7 @@ export default function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [userData, setUserData] = useState<UserFormData | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Forms
     const {
@@ -72,8 +77,11 @@ export default function RegisterPage() {
 
         setIsLoading(true);
         try {
+            // Exclude confirmPassword from the API payload
+            const { confirmPassword, ...validUserData } = userData;
+
             const payload = {
-                ...userData,
+                ...validUserData,
                 ...companyData,
             };
 
@@ -183,6 +191,29 @@ export default function RegisterPage() {
                                     </p>
                                     {userErrors.password && (
                                         <p className="text-xs text-rose-500 font-bold">{userErrors.password.message}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Confirm Password</Label>
+                                    <div className="relative">
+                                        <Input
+                                            className="bg-slate-50 border-slate-100 text-slate-900 focus:ring-blue-600 focus:border-blue-600 placeholder:text-slate-300 h-12 rounded-xl font-medium pr-10"
+                                            id="confirmPassword"
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            placeholder="Re-enter your password"
+                                            {...registerUser('confirmPassword')}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                    {userErrors.confirmPassword && (
+                                        <p className="text-xs text-rose-500 font-bold">{userErrors.confirmPassword.message}</p>
                                     )}
                                 </div>
                             </form>
