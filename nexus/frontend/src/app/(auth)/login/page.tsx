@@ -44,7 +44,7 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.response?.data?.message || "Access Denied: Invalid System Credentials")
+            setError(err.response?.data?.message || "Invalid credentials")
         } finally {
             setLoading(false)
         }
@@ -63,9 +63,9 @@ export default function LoginPage() {
                             </div>
                         </div>
                     </div>
-                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Access Portal</CardTitle>
+                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
                     <CardDescription className="text-center text-slate-500 font-medium">
-                        Securely authenticate to your Workspace.
+                        Sign in to access your workspace.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
@@ -89,7 +89,7 @@ export default function LoginPage() {
                         </div>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
-                                <Label htmlFor="password" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">System Password</Label>
+                                <Label htmlFor="password" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Password</Label>
                                 <span
                                     className="text-[10px] font-black text-blue-600 hover:text-blue-700 cursor-pointer uppercase tracking-tighter"
                                     onClick={() => toast.info("Please contact your IT administrator.")}

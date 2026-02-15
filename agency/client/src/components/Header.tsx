@@ -95,7 +95,7 @@ const Header = () => {
               to="/contact"
               className="bg-[#C5A059] text-black h-12 px-8 rounded-full font-black text-[10px] tracking-[0.2em] uppercase hover:bg-[#D4AF37] transition-all transform hover:scale-105 flex items-center group shadow-lg shadow-[#C5A059]/10"
             >
-              Initiate
+              Get Started
               <ArrowUpRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </NavLink>
           </nav>
@@ -165,7 +165,7 @@ const Header = () => {
                     onClick={() => setIsOpen(false)}
                     className="bg-[#C5A059] text-black w-full py-6 rounded-[2rem] font-black text-center text-xs uppercase tracking-[0.3em] block shadow-xl shadow-[#C5A059]/20"
                   >
-                    Engage Now
+                    Contact Us
                   </NavLink>
                 </motion.div>
               </nav>

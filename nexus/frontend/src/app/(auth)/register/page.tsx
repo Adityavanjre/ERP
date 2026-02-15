@@ -107,7 +107,7 @@ export default function RegisterPage() {
                         </div>
                     </div>
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900">Create Workspace</h1>
-                    <p className="text-slate-500 font-medium">Deploy your enterprise intelligence in minutes.</p>
+                    <p className="text-slate-500 font-medium">Get started with your enterprise workspace.</p>
                 </div>
 
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-blue-500/5 relative z-10 rounded-[2.5rem] overflow-hidden">
@@ -156,12 +156,12 @@ export default function RegisterPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Access</Label>
+                                    <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Password</Label>
                                     <Input
                                         className="bg-slate-50 border-slate-100 text-slate-900 focus:ring-blue-600 focus:border-blue-600 placeholder:text-slate-300 h-12 rounded-xl font-medium"
                                         id="password"
                                         type="password"
-                                        placeholder="Create encrypted access key"
+                                        placeholder="Create a strong password"
                                         {...registerUser('password')}
                                     />
                                     {userErrors.password && (
@@ -221,7 +221,7 @@ export default function RegisterPage() {
                             <Button type="submit" form={step === 1 ? "user-form" : "company-form"} disabled={isLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-[10px] active:scale-95">
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Provisioning...
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Account...
                                     </>
                                 ) : (
                                     <>
@@ -239,7 +239,7 @@ export default function RegisterPage() {
                     </CardFooter>
                 </Card>
                 <p className="text-center text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] opacity-40">
-                    Secure Connection v4.12
+                    Klypso Nexus v2.0
                 </p>
             </div>
         </div>
