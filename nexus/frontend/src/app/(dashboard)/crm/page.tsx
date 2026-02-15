@@ -518,7 +518,7 @@ export default function CrmPage() {
                                                 <div className="flex flex-col text-slate-500 text-xs">
                                                     <div className="flex items-center font-bold">
                                                         <Building className="h-3.5 w-3.5 mr-2 text-slate-300" />
-                                                        {c.company || "Retail Entity"}
+                                                        {c.company || "Retail Client"}
                                                     </div>
                                                     {c.state && <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">{c.state}</span>}
                                                 </div>

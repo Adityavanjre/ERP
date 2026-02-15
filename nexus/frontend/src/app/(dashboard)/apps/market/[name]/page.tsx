@@ -166,7 +166,7 @@ export default function AppDetailPage() {
                 <div className="w-full lg:w-96 space-y-8">
                     <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[32px] overflow-hidden">
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
-                            <CardTitle className="text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] text-center">Module Identity</CardTitle>
+                            <CardTitle className="text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] text-center">Module Info</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-8 pb-8">
                             <div className="flex items-center gap-4 group">

@@ -26,7 +26,7 @@ export default function Home() {
           </Link>
           <Link href="/register">
             <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-full px-6 group transition-all shadow-md shadow-blue-500/10">
-              Deploy Infrastructure
+              Get Started
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
@@ -89,9 +89,7 @@ export default function Home() {
                     <feature.icon className="h-6 w-6 text-blue-600" />
                   </div>
                   <h3 className="text-xl font-bold mb-2 text-slate-800 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{feature.title}</h3>
-                  <p className="text-slate-500 group-hover:text-slate-600 transition-colors leading-relaxed font-medium">
-                    {feature.desc}
-                  </p>
+                  <p className="text-slate-500 font-medium">Launch your enterprise intelligence in minutes.</p>
                 </div>
               ))}
             </div>

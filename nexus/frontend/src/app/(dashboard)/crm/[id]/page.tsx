@@ -65,7 +65,7 @@ export default function CustomerDetailPage() {
                 </Button>
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 tracking-tighter">{customer.firstName} {customer.lastName}</h2>
-                    <p className="text-slate-500 font-medium text-sm">{customer.company || "Independent Entity"}</p>
+                    <p className="text-slate-500 font-medium text-sm">{customer.company || "Independent Client"}</p>
                 </div>
                 <div className="ml-auto">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none border-b-4 border-b-amber-500">

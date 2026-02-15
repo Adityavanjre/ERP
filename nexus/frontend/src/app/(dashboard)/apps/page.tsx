@@ -55,11 +55,11 @@ export default function AppsMarketplace() {
     const handleInstall = async (name: string) => {
         try {
             await api.post(`/kernel/apps/${name}/install`);
-            toast.success(`Module [${name}] deployed to enterprise system`);
+            toast.success(`Module [${name}] installed to enterprise system`);
             fetchApps();
             window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
         } catch (err) {
-            toast.error("Deployment failed");
+            toast.error("Installation failed");
         }
     };
 
@@ -84,7 +84,7 @@ export default function AppsMarketplace() {
                         <Zap className="h-5 w-5 text-blue-600" />
                         Operational Blueprints
                     </CardTitle>
-                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Deploy validated business architectures in a single sequence</CardDescription>
+                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Install validated business architectures in a single sequence</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4 pt-8">
                     {["Manufacturing", "Retail", "Wholesale", "Services"].map(type => (
@@ -98,7 +98,7 @@ export default function AppsMarketplace() {
                                     fetchApps();
                                     window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
                                 } catch (err) {
-                                    toast.error("Blueprint deployment failed");
+                                    toast.error("Blueprint installation failed");
                                 }
                             }}
                         >
@@ -148,7 +148,7 @@ export default function AppsMarketplace() {
                                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-11 shadow-lg shadow-blue-500/20"
                                         onClick={() => handleInstall(app.name)}
                                     >
-                                        <Download className="h-4 w-4 mr-2" /> Deploy Module
+                                        <Download className="h-4 w-4 mr-2" /> Install Module
                                     </Button>
                                 )}
                                 <Link href={`/apps/market/${app.name}`}>

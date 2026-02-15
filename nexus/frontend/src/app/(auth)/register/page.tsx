@@ -114,7 +114,7 @@ export default function RegisterPage() {
                     <CardHeader className="p-8 pb-4">
                         <div className="flex items-center justify-between mb-2">
                             <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">
-                                {step === 1 ? 'Personal Profile' : 'Enterprise Entity'}
+                                {step === 1 ? 'Personal Profile' : 'Enterprise Organization'}
                             </CardTitle>
                             <Badge variant="outline" className="border-slate-100 text-slate-400 font-black text-[10px]">Step {step} of 2</Badge>
                         </div>
@@ -188,7 +188,7 @@ export default function RegisterPage() {
                                     <Label htmlFor="companyType" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Industry Vertical</Label>
                                     <Select onValueChange={(val) => setCompanyValue('companyType', val)}>
                                         <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
-                                            <SelectValue placeholder="Select Sector" />
+                                            <SelectValue placeholder="Select Industry" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-2xl border-slate-100 shadow-2xl">
                                             <SelectItem value="Manufacturing">Manufacturing</SelectItem>
