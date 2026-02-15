@@ -1,7 +1,9 @@
 
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Ensure we always target the v1 API, even if the environment variable omits it
+const baseURL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_URL = baseURL.endsWith('/v1') ? baseURL : `${baseURL}/v1`;
 
 export const api = axios.create({
   baseURL: API_URL,
