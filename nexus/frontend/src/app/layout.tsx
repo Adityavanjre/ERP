@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     apple: "/apple-touch-icon.png",
   },
-  manifest: "/manifest.json",
+  manifest: "/portal/manifest.json",
   themeColor: "#C5A059",
 };
 

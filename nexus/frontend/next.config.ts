@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://nexus-backend:3001/api/:path*',
+        destination: process.env.NEXUS_BACKEND_URL || 'https://nexus-backend-3ukg.onrender.com/api/:path*',
       },
     ];
   },
