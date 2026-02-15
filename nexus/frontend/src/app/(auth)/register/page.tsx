@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -20,7 +20,11 @@ import { api } from '@/lib/api';
 const userSchema = z.object({
     fullName: z.string().min(2, 'Full name is required'),
     email: z.string().email('Invalid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    password: z.string()
+        .min(8, 'Password must be at least 8 characters')
+        .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+        .regex(/[0-9]/, 'Must contain at least one number')
+        .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character'),
 });
 
 const companySchema = z.object({
@@ -36,6 +40,7 @@ export default function RegisterPage() {
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [userData, setUserData] = useState<UserFormData | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Forms
     const {
@@ -157,13 +162,25 @@ export default function RegisterPage() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Password</Label>
-                                    <Input
-                                        className="bg-slate-50 border-slate-100 text-slate-900 focus:ring-blue-600 focus:border-blue-600 placeholder:text-slate-300 h-12 rounded-xl font-medium"
-                                        id="password"
-                                        type="password"
-                                        placeholder="Create a strong password"
-                                        {...registerUser('password')}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            className="bg-slate-50 border-slate-100 text-slate-900 focus:ring-blue-600 focus:border-blue-600 placeholder:text-slate-300 h-12 rounded-xl font-medium pr-10"
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Create a strong password"
+                                            {...registerUser('password')}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-medium ml-1">
+                                        Must be at least 8 chars, with 1 uppercase, 1 number & 1 symbol.
+                                    </p>
                                     {userErrors.password && (
                                         <p className="text-xs text-rose-500 font-bold">{userErrors.password.message}</p>
                                     )}

@@ -17,10 +17,13 @@ import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 
+import { Eye, EyeOff } from "lucide-react"
+
 export default function LoginPage() {
     const router = useRouter()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -97,14 +100,23 @@ export default function LoginPage() {
                                     Recovery?
                                 </span>
                             </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4 pb-8">
