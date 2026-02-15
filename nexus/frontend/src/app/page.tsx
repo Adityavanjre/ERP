@@ -46,14 +46,14 @@ export default function Home() {
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="inline-flex items-center rounded-full border border-blue-100 bg-white px-3 py-1 text-sm font-bold text-blue-600 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-ping" />
-                Next-Gen ERP v2.0
+                Business Software v2.0
               </div>
               <h1 className="text-4xl font-extrabold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl text-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                 Operate at the <br />
-                <span className="text-blue-600">Speed of Thought.</span>
+                <span className="text-blue-600">Run Your Business Faster.</span>
               </h1>
               <p className="mx-auto max-w-[700px] text-slate-600 md:text-xl/relaxed lg:text-2xl/relaxed font-medium animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
-                High-integrity Enterprise Intelligence platform engineered for manufacturers and modern innovators.
+                High-integrity Business Management platform engineered for manufacturers and modern innovators.
               </p>
               <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700">
                 <Link href="/register">

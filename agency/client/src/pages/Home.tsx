@@ -95,19 +95,19 @@ const Home = () => {
                         <div className="flex items-center justify-center gap-4 mb-10">
                             <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#C5A059]/40" />
                             <span className="text-[10px] font-black tracking-[0.5em] text-[#C5A059] uppercase">
-                                Crafting Private Digital Legacies
+                                Crafting Private Digital Brands
                             </span>
                             <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#C5A059]/40" />
                         </div>
 
                         <h1 className="text-5xl sm:text-7xl md:text-[11rem] font-bold mb-12 tracking-[-0.04em] leading-[0.8] font-heading">
                             REFINED <br />
-                            <span className="font-display italic font-light text-[#C5A059]">Engineering.</span>
+                            <span className="font-display italic font-light text-[#C5A059]">Development.</span>
                         </h1>
 
                         <p className="max-w-3xl mx-auto text-xl md:text-2xl text-zinc-400 font-medium leading-relaxed mb-16 tracking-tight">
                             We build high-performance <span className="text-white">digital systems</span> and <span className="text-white">luxury brand identities</span> for those who refuse to blend in.
-                            Bespoke web architecture meets architectural beauty.
+                            Custom web design meets architectural beauty.
                         </p>
                     </motion.div>
 
@@ -156,9 +156,9 @@ const Home = () => {
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
                         <FeatureCard
                             icon={<Crown className="w-10 h-10" />}
-                            title="Bespoke Systems"
-                            desc="High-performance web applications built on the MERN stack, optimized for scalability and speed."
-                            delay={0}
+                            title="Custom Systems""
+                        desc="High-performance web applications built on the MERN stack, optimized for scalability and speed."
+                        delay={0}
                         />
                         <FeatureCard
                             icon={<Zap className="w-10 h-10" />}
@@ -183,7 +183,7 @@ const Home = () => {
                         <div className="space-y-12">
                             <div>
                                 <h3 className="text-[#C5A059] font-black tracking-[0.4em] uppercase text-[10px] mb-8">Selected Case Study</h3>
-                                <h2 className="text-5xl md:text-8xl font-bold tracking-tighter leading-none font-heading mb-10">Modern <br /><span className="italic font-display font-medium">Ecosystems.</span></h2>
+                                <h2 className="text-5xl md:text-8xl font-bold tracking-tighter leading-none font-heading mb-10">Modern <br /><span className="italic font-display font-medium">Websites.</span></h2>
                                 <p className="text-zinc-400 text-lg font-medium leading-relaxed max-w-lg mb-12">
                                     We redesigned the digital presence for high-growth ventures, increasing engagement through intentional design and technical superiority.
                                 </p>
@@ -260,21 +260,21 @@ const Home = () => {
                             </div>
                             {/* Floating Badge */}
                             <div className="absolute -top-10 -right-10 w-44 h-44 border border-white/5 bg-black/80 backdrop-blur-3xl rounded-full flex flex-col items-center justify-center p-8 text-center rotate-12 group-hover:rotate-0 transition-transform duration-700 shadow-3xl">
-                                <span className="text-[#C5A059] text-xs font-black uppercase tracking-tighter mb-2">Proprietary</span>
+                                <span className="text-[#C5A059] text-xs font-black uppercase tracking-tighter mb-2">Internal Tool</span>
                                 <span className="text-white text-xl font-bold font-heading leading-tight uppercase">Nexus <br /> Platform</span>
                             </div>
                         </div>
 
                         <div className="order-1 lg:order-2 space-y-12">
                             <div>
-                                <p className="text-[#C5A059] font-black tracking-[0.4em] uppercase text-[10px] mb-8">Infrastructure</p>
+                                <p className="text-[#C5A059] font-black tracking-[0.4em] uppercase text-[10px] mb-8">Technology</p>
                                 <h2 className="text-5xl md:text-8xl font-bold tracking-tighter leading-[0.9] font-heading mb-10">
                                     Enterprise <br />
                                     <span className="italic font-display font-medium text-zinc-600">Operations.</span>
                                 </h2>
                                 <p className="text-zinc-400 text-lg font-medium leading-relaxed mb-12">
                                     Elite brands require more than just a website. We deploy **Klypso Nexus**,
-                                    a proprietary enterprise engine that centralizes your global operations,
+                                    a custom business tool that centralizes your global operations,
                                     finances, and client intelligence into one high-integrity ecosystem.
                                 </p>
                                 <div className="space-y-6 mb-12">

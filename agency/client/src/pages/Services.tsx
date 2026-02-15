@@ -20,7 +20,7 @@ const Services = () => {
 
             <SEO
                 title="Elite Capabilities | Klypso Digital Architecture"
-                description="High-end digital engineering and strategy for elite brands."
+                description="High-end web development and strategy for elite brands."
             />
 
             <div className="container mx-auto max-w-7xl relative z-10">
@@ -39,10 +39,10 @@ const Services = () => {
                     </div>
                     <h1 className="text-6xl md:text-[10rem] font-bold mb-12 tracking-tight leading-[0.8] font-heading">
                         Tailored <br />
-                        <span className="font-display italic font-light text-[#C5A059]">Solutions.</span>
+                        <span className="font-display italic font-light text-[#C5A059]">Services.</span>
                     </h1>
                     <p className="max-w-3xl mx-auto text-xl md:text-2xl text-zinc-500 font-medium leading-relaxed tracking-tight underline-offset-8">
-                        We specialize in <span className="text-white">high-end digital engineering</span> and <span className="text-white">strategic design</span>. From bespoke web systems to visual storytelling, we build the foundations for your brand's digital growth.
+                        We specialize in <span className="text-white">expert web development</span> and <span className="text-white">strategic design</span>. From custom web systems to visual storytelling, we build the foundations for your brand's digital growth.
                     </p>
                 </motion.div>
 
