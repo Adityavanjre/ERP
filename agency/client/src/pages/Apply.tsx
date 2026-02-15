@@ -64,7 +64,7 @@ const Apply = () => {
     return (
         <section className="min-h-screen bg-[#0A0A0B] text-white pt-48 pb-32 px-4 relative overflow-hidden">
             <SEO
-                title="Initiate Application | Klypso Collective"
+                title="Start Application | Klypso Collective"
                 description="Apply to join our specialized agency of designers and engineers."
             />
 

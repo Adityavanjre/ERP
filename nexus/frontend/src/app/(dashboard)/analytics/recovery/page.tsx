@@ -199,7 +199,7 @@ export default function RecoveryMemoryDashboard() {
                             <h3 className="font-black text-xl mb-2 text-slate-900 truncate">{opp.name}</h3>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Delta: ₹{opp.lastTransaction.toLocaleString()}</p>
                             <button className="w-full py-3 bg-white border border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
-                                Dispatch Protocol
+                                Dispatch System
                             </button>
                         </div>
                     ))}

@@ -233,7 +233,7 @@ export default function RegisterPage() {
                         </div>
                         {step === 1 && (
                             <div className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                Already registered? <Link href="/login" className="text-blue-600 hover:underline">Access Portal</Link>
+                                Already registered? <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 hover:underline">Sign In</Link>
                             </div>
                         )}
                     </CardFooter>

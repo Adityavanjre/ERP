@@ -68,7 +68,7 @@ const Contact = () => {
     return (
         <section className="min-h-screen bg-[#0A0A0B] text-white pt-48 pb-32 px-4 relative overflow-hidden">
             <Helmet>
-                <title>Contact Us | Klypso Agency</title>
+                <title>Contact The Team | Klypso</title>
                 <meta name="description" content="Get in touch with Klypso for high-end digital engineering and strategic design." />
             </Helmet>
 

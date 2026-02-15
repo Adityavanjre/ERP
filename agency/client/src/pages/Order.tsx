@@ -315,7 +315,7 @@ const Order = () => {
                     disabled={loading || !agreed}
                     className={`bg-white text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 hover:bg-indigo-500 hover:text-white transition-all duration-500 shadow-xl ${(loading || !agreed) ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-105 shadow-white/5'}`}
                 >
-                    {loading ? 'Transmitting...' : 'Initiate Secure Payment'}
+                    {isSubmitting ? 'Processing...' : 'Proceed to Payment'}
                     {!loading && <CreditCard size={18} />}
                 </button>
             </div>
@@ -399,7 +399,7 @@ const Order = () => {
                     <ShieldCheck size={14} className="text-indigo-500" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Quantum-Grade Security</span>
                 </div>
-                <p className="text-xs font-light">Transmission summary sent to <span className="text-indigo-400">{formData.email}</span></p>
+                <p className="text-zinc-500 text-xs font-light">Order summary sent to <span className="text-white font-medium">{customerInfo.email}</span></p>
             </div>
         </motion.div>
     );
