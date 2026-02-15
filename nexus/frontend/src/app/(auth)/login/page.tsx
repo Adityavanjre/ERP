@@ -65,7 +65,7 @@ export default function LoginPage() {
                     </div>
                     <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
                     <CardDescription className="text-center text-slate-500 font-medium">
-                        Sign in to access your workspace.
+                        Sign in to access your account.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
@@ -80,7 +80,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="name@enterprise.com"
+                                placeholder="name@company.com"
                                 className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}

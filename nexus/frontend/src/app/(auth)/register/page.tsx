@@ -79,7 +79,7 @@ export default function RegisterPage() {
             localStorage.setItem('token', accessToken);
 
             toast.success('Registration successful!', {
-                description: 'Welcome to your new enterprise workspace.',
+                description: 'Welcome to your new business account.',
             });
 
             // Redirect
@@ -107,21 +107,21 @@ export default function RegisterPage() {
                         </div>
                     </div>
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900">Create Workspace</h1>
-                    <p className="text-slate-500 font-medium">Get started with your enterprise workspace.</p>
+                    <p className="text-slate-500 font-medium">Get started with your business account.</p>
                 </div>
 
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-blue-500/5 relative z-10 rounded-[2.5rem] overflow-hidden">
                     <CardHeader className="p-8 pb-4">
                         <div className="flex items-center justify-between mb-2">
                             <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">
-                                {step === 1 ? 'Personal Profile' : 'Enterprise Organization'}
+                                {step === 1 ? 'Personal Profile' : 'Company Details'}
                             </CardTitle>
                             <Badge variant="outline" className="border-slate-100 text-slate-400 font-black text-[10px]">Step {step} of 2</Badge>
                         </div>
                         <CardDescription className="text-slate-500 font-medium">
                             {step === 1
                                 ? 'Enter your credentials to create the primary admin profile.'
-                                : 'Configure your organizational identity.'}
+                                : 'Configure your company identity.'}
                         </CardDescription>
                     </CardHeader>
 
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                                         className="bg-slate-50 border-slate-100 text-slate-900 focus:ring-blue-600 focus:border-blue-600 placeholder:text-slate-300 h-12 rounded-xl font-medium"
                                         id="email"
                                         type="email"
-                                        placeholder="admin@enterprise.com"
+                                        placeholder="admin@company.com"
                                         {...registerUser('email')}
                                     />
                                     {userErrors.email && (
@@ -239,7 +239,7 @@ export default function RegisterPage() {
                     </CardFooter>
                 </Card>
                 <p className="text-center text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] opacity-40">
-                    Klypso Nexus v2.0
+                    Business Software v2.0
                 </p>
             </div>
         </div>
