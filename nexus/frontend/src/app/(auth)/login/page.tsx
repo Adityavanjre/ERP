@@ -109,7 +109,7 @@ export default function LoginPage() {
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4 pb-8">
                         <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs" disabled={loading}>
-                            {loading ? "Authorizing Agent..." : "Initialize Intelligence"}
+                            {loading ? "Logging in..." : "Sign In"}
                         </Button>
                         <div className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">
                             New Partner?{" "}

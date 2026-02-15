@@ -58,7 +58,7 @@ export default function Home() {
               <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700">
                 <Link href="/register">
                   <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg shadow-lg shadow-blue-500/20">
-                    Initialize Workspace
+                    Create Workspace
                   </Button>
                 </Link>
                 <Link href="/login">
@@ -78,7 +78,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 { title: "Smart Inventory", desc: "Precision stock predictions and automated replenishment systems.", icon: BarChart3 },
-                { title: "Manufacturing", desc: "Complex BOMs and shop-floor management with real-time telemetry.", icon: Cpu },
+                { title: "Manufacturing", desc: "Complex BOMs and shop-floor management with real-time data.", icon: Cpu },
                 { title: "Financial Hub", desc: "Automated general ledger with full double-entry integrity.", icon: ShieldCheck },
                 { title: "Supply Chain", desc: "Unified logistics tracking with predictive transit intelligence.", icon: Globe },
                 { title: "CRM Excellence", desc: "Lead lifecycle management and deep pipeline intelligence.", icon: Zap },

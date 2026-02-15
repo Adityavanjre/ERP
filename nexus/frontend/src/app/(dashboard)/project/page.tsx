@@ -75,7 +75,7 @@ export default function ProjectPage() {
             await api.post("/projects", formData);
             setShowForm(false);
             setFormData({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
-            toast.success("Project initialized successfully");
+            toast.success("Project created successfully");
             fetchData();
         } catch (err) {
             toast.error("Project creation failed");

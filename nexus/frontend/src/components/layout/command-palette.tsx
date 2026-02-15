@@ -179,7 +179,7 @@ export function CommandPalette() {
                     ) : (
                         <div className="p-16 text-center space-y-4">
                             <Search className="h-16 w-16 text-slate-100 mx-auto" />
-                            <p className="text-slate-400 text-sm font-medium">No system protocols found for "{query}"</p>
+                            <p className="text-slate-400 text-sm font-medium">No results found for "{query}"</p>
                         </div>
                     )}
                 </div>

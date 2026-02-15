@@ -43,7 +43,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
             setLoading(false);
         } catch (err) {
             console.error(err);
-            toast.error(`Neural link to [${modelName}] failed`);
+            toast.error(`Connection to [${modelName}] failed`);
         }
     };
 
@@ -114,7 +114,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
                             {records.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center py-32 text-zinc-600 italic">
-                                        No telemetry found for this object class.
+                                        No data found for this object class.
                                     </TableCell>
                                 </TableRow>
                             )}

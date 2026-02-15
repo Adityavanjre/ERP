@@ -106,7 +106,7 @@ export default function RegisterPage() {
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">Initialize Workspace</h1>
+                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">Create Workspace</h1>
                     <p className="text-slate-500 font-medium">Deploy your enterprise intelligence in minutes.</p>
                 </div>
 
@@ -225,7 +225,7 @@ export default function RegisterPage() {
                                     </>
                                 ) : (
                                     <>
-                                        {step === 1 ? "Continue Protocol" : "Authorize Deployment"}
+                                        {step === 1 ? "Continue" : "Create Account"}
                                         {step === 1 ? <ArrowRight className="ml-2 h-4 w-4" /> : <CheckCircle2 className="ml-2 h-4 w-4" />}
                                     </>
                                 )}
@@ -233,13 +233,13 @@ export default function RegisterPage() {
                         </div>
                         {step === 1 && (
                             <div className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                Already initialized? <Link href="/login" className="text-blue-600 hover:underline">Access Portal</Link>
+                                Already registered? <Link href="/login" className="text-blue-600 hover:underline">Access Portal</Link>
                             </div>
                         )}
                     </CardFooter>
                 </Card>
                 <p className="text-center text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] opacity-40">
-                    Encrypted Connection Protocol v4.12
+                    Secure Connection v4.12
                 </p>
             </div>
         </div>

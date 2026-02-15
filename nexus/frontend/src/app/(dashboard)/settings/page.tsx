@@ -258,7 +258,7 @@ export default function SettingsPage() {
                                 <Shield className="mr-2 h-5 w-5 text-emerald-600" />
                                 Access Integrity
                             </CardTitle>
-                            <CardDescription className="text-slate-500">Manage authentication protocols and audit logging.</CardDescription>
+                            <CardDescription className="text-slate-500">Manage authentication methods and audit logging.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                                         <span className="text-slate-900 font-black font-mono">{billingInfo?.quotas?.maxProducts.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500 font-bold uppercase tracking-tight text-[11px]">AI Neural Engine</span>
+                                        <span className="text-slate-500 font-bold uppercase tracking-tight text-[11px]">AI Engine</span>
                                         <Badge variant="outline" className={billingInfo?.quotas?.aiEnabled ? "border-emerald-500/20 text-emerald-600 font-black bg-emerald-50" : "border-slate-100 text-slate-400"}>
                                             {billingInfo?.quotas?.aiEnabled ? 'ENABLED' : 'DISABLED'}
                                         </Badge>

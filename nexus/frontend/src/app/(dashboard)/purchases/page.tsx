@@ -281,7 +281,7 @@ export default function PurchasesPage() {
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black text-slate-900">New Purchase Order</DialogTitle>
                         <DialogDescription className="text-slate-500 font-medium">
-                            Initialize a new procurement cycle with a verified supplier.
+                            Start a new procurement cycle with a verified supplier.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-6 py-6">

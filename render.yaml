@@ -74,7 +74,7 @@ services:
     plan: free
     rootDir: nexus/frontend
     buildCommand: npm install && npm run build
-    startCommand: npm run start
+    startCommand: node .next/standalone/server.js
     envVars:
       - key: PORT
         value: 3000

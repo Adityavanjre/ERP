@@ -52,7 +52,7 @@ export default function WorkflowBuilder() {
         try {
             if (!workflowName) return toast.error("Name required");
             const res = await api.post("/kernel/workflows", { name: workflowName, modelName });
-            toast.success("Workflow stream initialized");
+            toast.success("Workflow stream created");
             setWorkflowName("");
             fetchWorkflows();
             setSelectedWorkflow(res.data);
@@ -132,7 +132,7 @@ export default function WorkflowBuilder() {
                                 className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-9"
                             />
                             <Button onClick={handleCreateWorkflow} className="w-full bg-slate-900 hover:bg-black text-white h-9 font-bold uppercase tracking-widest text-[10px]">
-                                <Plus className="mr-2 h-4 w-4" /> Initialize
+                                <Plus className="mr-2 h-4 w-4" /> Create
                             </Button>
                         </div>
                     </CardContent>
@@ -185,7 +185,7 @@ export default function WorkflowBuilder() {
                                                     <span className="text-[9px] text-slate-500 font-black uppercase hover:text-white cursor-pointer transition-colors">Script</span>
                                                 </div>
                                                 <Button variant="ghost" className="w-full justify-start text-[10px] h-9 text-emerald-400 font-black uppercase tracking-widest hover:bg-emerald-500/10 rounded-xl transition-all">
-                                                    <Plus className="mr-2 h-4 w-4" /> Add Protocol
+                                                    <Plus className="mr-2 h-4 w-4" /> Add Step
                                                 </Button>
                                             </div>
                                         </CardContent>
