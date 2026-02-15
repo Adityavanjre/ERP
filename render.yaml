@@ -20,6 +20,8 @@ services:
     envVars:
       - key: MONGO_URI
         sync: false
+      - key: PORT
+        value: 5000
 
   - type: web
     name: klypso-agency-viewer
@@ -38,7 +40,7 @@ services:
     env: node
     plan: free
     rootDir: nexus/backend
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm run start:prod
     envVars:
       - key: DATABASE_URL
@@ -47,6 +49,8 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: PORT
+        value: 3001
 
   - type: web
     name: nexus-frontend
@@ -55,6 +59,9 @@ services:
     rootDir: nexus/frontend
     buildCommand: npm install && npm run build
     startCommand: npm run start
+    envVars:
+      - key: PORT
+        value: 3000
 
 databases:
   - name: nexus-db
