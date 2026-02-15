@@ -156,9 +156,9 @@ const Home = () => {
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
                         <FeatureCard
                             icon={<Crown className="w-10 h-10" />}
-                            title="Custom Systems""
-                        desc="High-performance web applications built on the MERN stack, optimized for scalability and speed."
-                        delay={0}
+                            title="Custom Systems"
+                            desc="High-performance web applications built on the MERN stack, optimized for scalability and speed."
+                            delay={0}
                         />
                         <FeatureCard
                             icon={<Zap className="w-10 h-10" />}
