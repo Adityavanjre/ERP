@@ -1,27 +1,12 @@
 #!/bin/sh
 
-# Function to check if a host resolves (with timeout)
-wait_for_host() {
-    host="$1"
-    echo "Waiting for $host to resolve..."
-    i=0
-    while ! nslookup "$host" > /dev/null 2>&1; do
-        if [ $i -ge 15 ]; then
-            echo "⚠️ Timeout waiting for $host. Proceeding anyway..."
-            return 0
-        fi
-        echo "  $host not resolved yet. Retrying in 2s..."
-        sleep 2
-        i=$((i+1))
-    done
-    echo "✅ $host is ready!"
-}
+echo "🚀 Generating Nginx config from template..."
 
-# Wait for critical upstream services
-wait_for_host "klypso-agency-viewer"
-wait_for_host "nexus-frontend"
-wait_for_host "nexus-backend"
-wait_for_host "klypso-agency-backend"
+# Use envsubst to replace ONLY the service variables, preserving Nginx variables like $host
+# We list specific variables to substitute.
+export VARS='$AGENCY_VIEWER_HOST $AGENCY_VIEWER_PORT $NEXUS_FRONTEND_HOST $NEXUS_FRONTEND_PORT $NEXUS_BACKEND_HOST $NEXUS_BACKEND_PORT $AGENCY_BACKEND_HOST $AGENCY_BACKEND_PORT'
 
-echo "🎯 All upstreams resolved. Starting Nginx..."
+envsubst "$VARS" < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
+echo "🔍 Config generated. Starting Nginx..."
 exec nginx -g "daemon off;"

@@ -8,6 +8,46 @@ services:
     envVars:
       - key: PORT
         value: 80
+      - key: AGENCY_VIEWER_HOST
+        fromService:
+          type: web
+          name: klypso-agency-viewer
+          property: host
+      - key: AGENCY_VIEWER_PORT
+        fromService:
+          type: web
+          name: klypso-agency-viewer
+          property: port
+      - key: NEXUS_FRONTEND_HOST
+        fromService:
+          type: web
+          name: nexus-frontend
+          property: host
+      - key: NEXUS_FRONTEND_PORT
+        fromService:
+          type: web
+          name: nexus-frontend
+          property: port
+      - key: NEXUS_BACKEND_HOST
+        fromService:
+          type: web
+          name: nexus-backend
+          property: host
+      - key: NEXUS_BACKEND_PORT
+        fromService:
+          type: web
+          name: nexus-backend
+          property: port
+      - key: AGENCY_BACKEND_HOST
+        fromService:
+          type: web
+          name: klypso-agency-backend
+          property: host
+      - key: AGENCY_BACKEND_PORT
+        fromService:
+          type: web
+          name: klypso-agency-backend
+          property: port
 
   # --- KLYPSO AGENCY ---
   - type: web
