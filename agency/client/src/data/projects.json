@@ -1,7 +1,7 @@
 [
   {
     "id": "1",
-    "title": "Vantage Logistics Core",
+    "title": "Vantage Logistics System",
     "category": "Web Systems",
     "description": "Enterprise-grade fleet intelligence dashboard handling 50k+ daily assets.",
     "fullDescription": "Vantage required a complete digital transformation of their legacy logistics infrastructure. We architected a real-time command center that aggregates data from IoT sensors across their global fleet. The system processes streams of location, fuel, and diagnostic data to predict maintenance needs and optimize routes in real-time.",
@@ -181,7 +181,7 @@
   },
   {
     "id": "7",
-    "title": "CipherGuard Protocol",
+    "title": "CipherGuard Platform",
     "category": "Cloud",
     "description": "Zero-trust security infrastructure for decentralized finance.",
     "fullDescription": "In the world of DeFi, security is the product. CipherGuard needed a visual identity and a dashboard that conveyed impenetrability. We built a dark-mode-first, audit-ready interface that allows institutional investors to verify protocol solvencies on-chain.",

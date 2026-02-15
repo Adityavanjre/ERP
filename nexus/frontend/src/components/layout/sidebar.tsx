@@ -173,22 +173,22 @@ export const Sidebar = () => {
 
                 <div className="p-5 rounded-[2rem] bg-white border border-slate-100 shadow-sm">
                     <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter mb-4">
-                        System v2.1 Normal
+                        System Active
                     </p>
                     <button
                         onClick={() => {
                             toast.promise(
                                 new Promise(r => setTimeout(r, 2000)),
                                 {
-                                    loading: 'Syncing Data...',
+                                    loading: 'Refreshing...',
                                     success: 'Updated!',
-                                    error: 'Sync Failed',
+                                    error: 'Failed',
                                 }
                             );
                         }}
                         className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest transition-all hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95"
                     >
-                        <RefreshCw className="h-3 w-3" /> Sync Core
+                        <RefreshCw className="h-3 w-3" /> Refresh Data
                     </button>
                 </div>
             </div>
