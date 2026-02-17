@@ -292,7 +292,7 @@ const Home = () => {
                                     </div>
                                 </div>
                                 <a
-                                    href="https://klypso-nexus.onrender.com"
+                                    href="/portal"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="btn-lux px-12 h-16 inline-flex"

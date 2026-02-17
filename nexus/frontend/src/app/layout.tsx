@@ -38,11 +38,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Klypso Nexus | Enterprise Intelligence",
     description: "Operate at the speed of thought. The comprehensive operating system for modern business.",
-    url: "https://nexus.klypso.agency",
+    url: "https://klypso.in/portal",
     siteName: "Klypso Nexus",
     images: [
       {
-        url: "/og-image.png",
+        url: "/portal/og-image.png",
         width: 1200,
         height: 630,
         alt: "Klypso Nexus Dashboard",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     title: "Klypso Nexus | Enterprise Intelligence",
     description: "High-integrity enterprise intelligence platform for elite brands.",
     creator: "@klypso",
-    images: ["/og-image.png"],
+    images: ["/portal/og-image.png"],
   },
   icons: {
     icon: "/portal/favicon.svg",
