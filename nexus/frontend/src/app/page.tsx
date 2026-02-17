@@ -8,7 +8,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-white text-slate-900 selection:bg-blue-500/10">
       {/* Header */}
       <header className="px-4 lg:px-6 h-20 flex items-center border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <Link className="flex items-center justify-center group" href="#">
+        <Link className="flex items-center justify-center group" href="/portal">
           <KlypsoLogo size={40} />
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-8 items-center">

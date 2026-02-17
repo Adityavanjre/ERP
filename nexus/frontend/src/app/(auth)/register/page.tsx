@@ -92,7 +92,7 @@ export default function RegisterPage() {
             const { accessToken } = response.data;
 
             // Login
-            localStorage.setItem('token', accessToken);
+            localStorage.setItem('nx_token', accessToken);
 
             toast.success('Registration successful!', {
                 description: 'Welcome to your new business account.',

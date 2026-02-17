@@ -15,7 +15,7 @@ export const api = axios.create({
 // Add a request interceptor to add the JWT token to headers
 api.interceptors.request.use(
   (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('nx_token') : null;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,7 +30,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       if (typeof window !== 'undefined' && !isLoginRequest) {
-        localStorage.removeItem('token');
+        localStorage.removeItem('nx_token');
+        localStorage.removeItem('nx_user');
         window.dispatchEvent(new CustomEvent('kernel-session-expired'));
       }
     }

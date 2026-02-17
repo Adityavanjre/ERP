@@ -20,7 +20,7 @@ const ROUTE_ACCESS: Record<string, string[]> = {
 
 function getRoleFromToken(): string | null {
     try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("nx_token");
         if (!token) return null;
         const decoded: any = jwtDecode(token);
         return decoded.role || null;
@@ -51,7 +51,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("nx_token");
         if (!token) {
             router.push("/login");
             return;

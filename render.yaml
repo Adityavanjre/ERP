@@ -81,6 +81,8 @@ services:
     envVars:
       - key: PORT
         value: 3000
+      - key: NEXUS_BACKEND_URL
+        value: https://nexus-backend-3ukg.onrender.com
 
 databases:
   - name: nexus-db

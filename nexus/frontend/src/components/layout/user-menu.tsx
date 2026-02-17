@@ -10,15 +10,15 @@ export const UserMenu = () => {
     const [user, setUser] = useState<{ fullName: string } | null>(null);
 
     useEffect(() => {
-        const userStr = localStorage.getItem("user");
+        const userStr = localStorage.getItem("nx_user");
         if (userStr) {
             setUser(JSON.parse(userStr));
         }
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        localStorage.removeItem("nx_token");
+        localStorage.removeItem("nx_user");
         router.push("/login");
     };
 
