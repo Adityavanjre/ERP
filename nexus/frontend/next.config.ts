@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // output: 'standalone',
   basePath: '/portal',
-  trailingSlash: true,
+  trailingSlash: false,
   experimental: {
     serverActions: {
       allowedOrigins: ['*'],
