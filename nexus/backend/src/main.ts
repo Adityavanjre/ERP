@@ -18,7 +18,7 @@ async function bootstrap() {
   app.use(require('compression')());
 
   app.enableCors({
-    origin: true, 
+    origin: ['https://klypso.in', 'https://www.klypso.in', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -57,4 +57,5 @@ async function bootstrap() {
   console.log(`Server running on port ${port} with API Docs at /api/docs`);
 }
 
-ClusterService.clusterize(bootstrap);
+// ClusterService.clusterize(bootstrap);
+bootstrap();
