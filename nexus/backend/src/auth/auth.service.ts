@@ -136,11 +136,13 @@ export class AuthService {
       throw new UnauthorizedException('User has no active tenant');
     }
 
-    // 4. B2B Context: Check if user is a Customer or Supplier
-    const [customer, supplier] = await Promise.all([
-      this.prisma.customer.findUnique({ where: { userId: user.id } }),
-      this.prisma.supplier.findUnique({ where: { userId: user.id } }),
-    ]);
+    // 4. B2B Context: Check if user is a Customer or Supplier (Context-Aware)
+    const [customer, supplier] = await this.tenantContext.run(membership.tenantId, async () => {
+      return Promise.all([
+        this.prisma.customer.findUnique({ where: { userId: user.id } }),
+        this.prisma.supplier.findUnique({ where: { userId: user.id } }),
+      ]);
+    });
 
     const payload = {
       sub: user.id,

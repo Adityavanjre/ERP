@@ -15,6 +15,8 @@ jobs:
       
       - name: Ping Gateway
         run: curl -I https://klypso-gateway.onrender.com/
+      - name: Ping Nexus Direct
+        run: curl -I https://nexus-frontend-gz8c.onrender.com/portal/login
       
       - name: Ping Nexus Frontend
         run: curl -I https://nexus-frontend-gz8c.onrender.com/portal/login
