@@ -19,7 +19,7 @@ export default function AppsMarketplace() {
     const fetchApps = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/kernel/apps");
+            const res = await api.get("kernel/apps");
             setApps(res.data);
         } catch (err) {
             console.error(err);
@@ -93,7 +93,7 @@ export default function AppsMarketplace() {
                             className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
                             onClick={async () => {
                                 try {
-                                    await api.post("/kernel/apps/preset", { type });
+                                    await api.post("kernel/apps/preset", { type });
                                     toast.success(`${type} blueprint sequence initiated`);
                                     fetchApps();
                                     window.dispatchEvent(new CustomEvent('kernel-apps-updated'));

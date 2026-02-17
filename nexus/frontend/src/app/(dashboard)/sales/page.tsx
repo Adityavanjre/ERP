@@ -46,10 +46,10 @@ export default function SalesPage() {
         try {
             setLoading(true);
             const [orderRes, statsRes, prodRes, custRes] = await Promise.all([
-                api.get("/sales/orders"),
-                api.get("/sales/stats"),
-                api.get("/inventory/products"),
-                api.get("/crm/customers")
+                api.get("sales/orders"),
+                api.get("sales/stats"),
+                api.get("inventory/products"),
+                api.get("crm/customers")
             ]);
             setOrders(Array.isArray(orderRes.data) ? orderRes.data : (orderRes.data.data || []));
             setStats(statsRes.data);
@@ -79,7 +79,7 @@ export default function SalesPage() {
             setUILocked(true);
             const selectedProduct = (products || []).find(p => p.id === orderData.productId);
 
-            await api.post("/sales/orders", {
+            await api.post("sales/orders", {
                 customerId: orderData.customerId,
                 items: [
                     {

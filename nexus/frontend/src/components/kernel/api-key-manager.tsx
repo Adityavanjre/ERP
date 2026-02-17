@@ -32,7 +32,7 @@ export function ApiKeyManager() {
 
     const fetchKeys = async () => {
         try {
-            const resp = await api.get('/kernel/api/keys');
+            const resp = await api.get('kernel/api/keys');
             setKeys(resp.data);
         } catch (err) {
             toast.error('Failed to load API keys');
@@ -44,7 +44,7 @@ export function ApiKeyManager() {
     const generateKey = async () => {
         if (!newName.trim()) return toast.error('Key name is required');
         try {
-            const resp = await api.post('/kernel/api/keys', {
+            const resp = await api.post('kernel/api/keys', {
                 name: newName,
                 scopes: ['read:all', 'write:all'], // Default for now
             });

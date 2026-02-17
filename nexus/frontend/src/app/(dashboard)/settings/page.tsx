@@ -35,9 +35,9 @@ export default function SettingsPage() {
         const fetchSettings = async () => {
             try {
                 const [profRes, billRes, usersRes] = await Promise.all([
-                    api.get("/auth/profile"),
-                    api.get("/kernel/billing/plan"),
-                    api.get("/users")
+                    api.get("auth/profile"),
+                    api.get("kernel/billing/plan"),
+                    api.get("users")
                 ]);
                 setTenant(profRes.data.tenant);
                 setBillingInfo(billRes.data);
@@ -54,10 +54,10 @@ export default function SettingsPage() {
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post("/users", newUser);
+            await api.post("users", newUser);
             toast.success(`${newUser.fullName} added to the team`);
             setIsAddUserOpen(false);
-            const res = await api.get("/users");
+            const res = await api.get("users");
             setMembers(res.data);
         } catch (err) {
             toast.error("Failed to add user");
@@ -68,7 +68,7 @@ export default function SettingsPage() {
         try {
             await api.patch(`/users/${userId}/role`, { role });
             toast.success("Role updated successfully");
-            const res = await api.get("/users");
+            const res = await api.get("users");
             setMembers(res.data);
         } catch (err) {
             toast.error("Failed to update role");
@@ -91,7 +91,7 @@ export default function SettingsPage() {
         try {
             await api.delete(`/users/${userId}`);
             toast.success("User removed from tenant");
-            const res = await api.get("/users");
+            const res = await api.get("users");
             setMembers(res.data);
         } catch (err) {
             toast.error("Failed to remove user");
@@ -105,7 +105,7 @@ export default function SettingsPage() {
 
     const handleUpgrade = async (plan: string) => {
         try {
-            await api.post("/kernel/billing/upgrade", { plan });
+            await api.post("kernel/billing/upgrade", { plan });
             toast.success(`Succesfully transformed to ${plan} tier`);
             location.reload();
         } catch (err) {

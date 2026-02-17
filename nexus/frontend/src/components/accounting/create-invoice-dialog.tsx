@@ -92,8 +92,8 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
     const fetchData = async () => {
         try {
             const [custRes, prodRes] = await Promise.all([
-                api.get("/crm/customers"),
-                api.get("/inventory/products")
+                api.get("crm/customers"),
+                api.get("inventory/products")
             ]);
 
             // Handle potentially paginated responses
@@ -158,7 +158,7 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
         setLoading(true);
         setUILocked(true);
         try {
-            await api.post("/accounting/invoices", {
+            await api.post("accounting/invoices", {
                 customerId,
                 issueDate: invoiceDate,
                 dueDate: dueDate || invoiceDate,

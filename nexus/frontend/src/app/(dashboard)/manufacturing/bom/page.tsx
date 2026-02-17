@@ -37,7 +37,7 @@ export default function BOMPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/manufacturing/boms");
+            const res = await api.get("manufacturing/boms");
             setBoms(res.data);
         } catch (err) {
             console.error(err);

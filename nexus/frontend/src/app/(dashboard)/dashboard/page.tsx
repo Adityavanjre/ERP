@@ -84,12 +84,12 @@ export default function DashboardPage() {
             try {
                 setLoading(true);
                 const [kernelRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
-                    api.get('/kernel/apps'),
-                    api.get('/analytics/summary'),
-                    api.get('/analytics/performance'),
-                    api.get('/analytics/health'),
-                    api.get('/analytics/activity'),
-                    api.get('/analytics/value-chain')
+                    api.get('kernel/apps'),
+                    api.get('analytics/summary'),
+                    api.get('analytics/performance'),
+                    api.get('analytics/health'),
+                    api.get('analytics/activity'),
+                    api.get('analytics/value-chain')
                 ]);
 
                 // Kernel stats

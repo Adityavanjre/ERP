@@ -39,7 +39,7 @@ export default function WorkOrdersPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await api.get("/manufacturing/work-orders");
+            const res = await api.get("manufacturing/work-orders");
             setWorkOrders(res.data);
         } catch (err) {
             console.error(err);

@@ -48,7 +48,7 @@ export default function StudioPage() {
                 fields: fields
             };
 
-            await api.post("/kernel/studio/models", payload);
+            await api.post("kernel/studio/models", payload);
             toast.success(`Object [${modelLabel}] created in system!`);
 
             // Reset

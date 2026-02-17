@@ -63,14 +63,14 @@ export default function AccountingPage() {
             else setIsSyncing(true);
 
             const [accRes, txRes, invRes, statsRes, invStatsRes, healthRes, leaderRes, recoveryRes] = await Promise.all([
-                api.get("/accounting/accounts"),
-                api.get("/accounting/transactions"),
+                api.get("accounting/accounts"),
+                api.get("accounting/transactions"),
                 api.get(`/accounting/invoices?page=${invoicePage}&limit=50`),
-                api.get("/accounting/stats"),
-                api.get("/inventory/stats"),
-                api.get("/accounting/health-score"),
-                api.get("/accounting/leaderboard"),
-                api.get("/accounting/recovery-memory")
+                api.get("accounting/stats"),
+                api.get("inventory/stats"),
+                api.get("accounting/health-score"),
+                api.get("accounting/leaderboard"),
+                api.get("accounting/recovery-memory")
             ]);
             setAccounts(accRes.data);
             setTransactions(txRes.data.data || txRes.data);

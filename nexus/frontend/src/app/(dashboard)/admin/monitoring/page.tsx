@@ -30,7 +30,7 @@ export default function FounderMonitoring() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.get("/kernel/founder-dashboard");
+                const res = await api.get("kernel/founder-dashboard");
                 setData(res);
             } catch (err) {
                 toast.error("Failed to load monitoring data");

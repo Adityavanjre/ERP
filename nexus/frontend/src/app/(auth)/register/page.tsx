@@ -52,9 +52,11 @@ export default function RegisterPage() {
         register: registerUser,
         handleSubmit: handleUserSubmit,
         setError,
+        watch,
         formState: { errors: userErrors },
     } = useForm<UserFormData>({
         resolver: zodResolver(userSchema),
+        mode: "onChange", // Enable live validation
     });
 
     const {
@@ -86,7 +88,7 @@ export default function RegisterPage() {
                 ...companyData,
             };
 
-            const response = await api.post('/auth/register', payload);
+            const response = await api.post('auth/register', payload);
             const { accessToken } = response.data;
 
             // Login
@@ -197,11 +199,26 @@ export default function RegisterPage() {
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-medium ml-1">
-                                        Must be at least 8 chars, with 1 uppercase, 1 number & 1 symbol.
-                                    </p>
+                                    <div className="mt-3 space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Password Requirements</p>
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {[
+                                                { label: "At least 8 characters", valid: (registerUser("password").onChange as any)?.target?.value?.length >= 8 || watch("password")?.length >= 8 },
+                                                { label: "One uppercase letter", valid: /[A-Z]/.test(watch("password") || "") },
+                                                { label: "One number", valid: /[0-9]/.test(watch("password") || "") },
+                                                { label: "One special character", valid: /[^a-zA-Z0-9]/.test(watch("password") || "") },
+                                            ].map((req, i) => (
+                                                <div key={i} className="flex items-center gap-2">
+                                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center ${req.valid ? "bg-green-500 text-white" : "bg-slate-200 text-slate-400"}`}>
+                                                        {req.valid && <CheckCircle2 className="w-2.5 h-2.5" />}
+                                                    </div>
+                                                    <span className={`text-[10px] font-bold uppercase tracking-tight ${req.valid ? "text-green-600" : "text-slate-400"}`}>{req.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                     {userErrors.password && (
-                                        <p className="text-xs text-rose-500 font-bold">{userErrors.password.message}</p>
+                                        <p className="text-xs text-rose-500 font-bold mt-2">{userErrors.password.message}</p>
                                     )}
                                 </div>
 

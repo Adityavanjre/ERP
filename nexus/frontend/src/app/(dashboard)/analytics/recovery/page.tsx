@@ -27,7 +27,7 @@ export default function RecoveryMemoryDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.get("/accounting/recovery-memory");
+                const res = await api.get("accounting/recovery-memory");
                 setData(res);
             } catch (err) {
                 toast.error("Failed to load recovery memory");

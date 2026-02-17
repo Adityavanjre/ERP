@@ -47,7 +47,7 @@ export default function AuditorDashboard() {
 
     const handleLock = async () => {
         try {
-            await api.post("/accounting/auditor/lock", { month, year });
+            await api.post("accounting/auditor/lock", { month, year });
             toast.success("Period locked successfully");
             fetchDashboard();
         } catch (err: any) {
@@ -61,7 +61,7 @@ export default function AuditorDashboard() {
             return;
         }
         try {
-            await api.post("/accounting/auditor/unlock", { month, year, reason: reopenReason });
+            await api.post("accounting/auditor/unlock", { month, year, reason: reopenReason });
             toast.success("Period reopened");
             setIsReopening(false);
             setReopenReason("");

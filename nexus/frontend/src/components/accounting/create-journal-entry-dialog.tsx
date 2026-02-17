@@ -84,7 +84,7 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
                 }))
             };
 
-            await api.post("/accounting/journal-entries", journalData);
+            await api.post("accounting/journal-entries", journalData);
             toast.success("Journal entry created successfully");
             setDescription("");
             setDate(new Date().toISOString().split('T')[0]);

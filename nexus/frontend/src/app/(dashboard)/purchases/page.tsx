@@ -43,10 +43,10 @@ export default function PurchasesPage() {
         try {
             setLoading(true);
             const [suppRes, prodRes, poRes, statsRes] = await Promise.all([
-                api.get("/purchases/suppliers"),
-                api.get("/inventory/products"),
-                api.get("/purchases/orders"),
-                api.get("/purchases/stats")
+                api.get("purchases/suppliers"),
+                api.get("inventory/products"),
+                api.get("purchases/orders"),
+                api.get("purchases/stats")
             ]);
             setSuppliers(Array.isArray(suppRes.data) ? suppRes.data : []);
             setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
@@ -81,7 +81,7 @@ export default function PurchasesPage() {
                 unitPrice: newPO.unitPrice
             }];
 
-            await api.post("/purchases/orders", {
+            await api.post("purchases/orders", {
                 supplierId: newPO.supplierId,
                 orderDate: new Date(newPO.orderDate),
                 totalAmount: newPO.quantity * newPO.unitPrice,

@@ -173,7 +173,7 @@ export default function RapidBillingPage() {
         }
 
         try {
-            await api.post('/accounting/invoices', invoiceData);
+            await api.post('accounting/invoices', invoiceData);
             toast.success(`Success!`);
             reset();
         } catch (err) {
@@ -195,7 +195,7 @@ export default function RapidBillingPage() {
 
         setIsSubmitting(true);
         try {
-            const res = await api.post('/accounting/invoices/bulk', queue);
+            const res = await api.post('accounting/invoices/bulk', queue);
             const successful = new Set(res.data.results.filter((r: any) => r.status === 'SUCCESS').map((r: any) => r.invoiceNumber));
             const alreadyDone = new Set(res.data.results.filter((r: any) => r.error === 'ALREADY_SYNCED').map((r: any) => r.invoiceNumber));
 

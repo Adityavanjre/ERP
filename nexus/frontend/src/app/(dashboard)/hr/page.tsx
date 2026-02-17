@@ -30,11 +30,11 @@ export default function HrPage() {
         try {
             setLoading(true);
             const [empRes, leaveRes, payrollRes, deptRes, statsRes] = await Promise.all([
-                api.get("/hr/employees"),
-                api.get("/hr/leaves"),
-                api.get("/hr/payroll"),
-                api.get("/hr/departments"),
-                api.get("/hr/stats")
+                api.get("hr/employees"),
+                api.get("hr/leaves"),
+                api.get("hr/payroll"),
+                api.get("hr/departments"),
+                api.get("hr/stats")
             ]);
             setEmployees(empRes.data);
             setLeaves(leaveRes.data);

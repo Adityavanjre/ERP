@@ -29,7 +29,7 @@ export default function WarehousesPage() {
 
     const fetchWarehouses = async () => {
         try {
-            const res = await api.get('/inventory/warehouses');
+            const res = await api.get('inventory/warehouses');
             setWarehouses(res.data);
         } catch (err) {
             console.error("Failed to fetch warehouses", err);

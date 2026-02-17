@@ -43,8 +43,8 @@ export default function ProjectPage() {
         try {
             setLoading(true);
             const [projRes, statsRes] = await Promise.all([
-                api.get("/projects"),
-                api.get("/projects/stats")
+                api.get("projects"),
+                api.get("projects/stats")
             ]);
             setProjects(projRes.data);
             setStats(statsRes.data);
@@ -72,7 +72,7 @@ export default function ProjectPage() {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post("/projects", formData);
+            await api.post("projects", formData);
             setShowForm(false);
             setFormData({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
             toast.success("Project created successfully");
@@ -87,7 +87,7 @@ export default function ProjectPage() {
         if (!selectedProject || !newTaskTitle.trim()) return;
 
         try {
-            await api.post("/projects/tasks", {
+            await api.post("projects/tasks", {
                 title: newTaskTitle,
                 projectId: selectedProject.id,
                 status: "Pending", // Default

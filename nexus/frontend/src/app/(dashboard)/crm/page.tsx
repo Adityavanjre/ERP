@@ -64,8 +64,8 @@ export default function CrmPage() {
             setLoading(true);
             const [custRes, statsRes, oppRes] = await Promise.all([
                 api.get(`/crm/customers?page=${custPage}&limit=50`),
-                api.get("/crm/stats"),
-                api.get("/crm/opportunities").catch(() => ({ data: [] }))
+                api.get("crm/stats"),
+                api.get("crm/opportunities").catch(() => ({ data: [] }))
             ]);
 
             if (custRes.data.data) {
@@ -100,7 +100,7 @@ export default function CrmPage() {
                 if (typeof csv !== 'string') return;
                 const loadingToast = toast.loading("Importing customers...");
 
-                const res = await api.post("/crm/import", { csv });
+                const res = await api.post("crm/import", { csv });
                 toast.dismiss(loadingToast);
 
                 toast.success(`Imported: ${res.data.imported} customers.`);
@@ -122,7 +122,7 @@ export default function CrmPage() {
         try {
             setIsSubmitting(true);
             setUILocked(true);
-            await api.post("/crm/customers", formData);
+            await api.post("crm/customers", formData);
             setShowForm(false);
             setFormData({ firstName: "", lastName: "", email: "", phone: "", company: "", address: "", state: "", gstin: "" });
             toast.success("Customer created successfully");
@@ -161,7 +161,7 @@ export default function CrmPage() {
         e.preventDefault();
         try {
             setUILocked(true);
-            await api.post("/crm/opportunities", {
+            await api.post("crm/opportunities", {
                 ...dealData,
                 value: Number(dealData.value)
             });

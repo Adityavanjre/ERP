@@ -51,7 +51,7 @@ export default function WorkflowBuilder() {
     const handleCreateWorkflow = async () => {
         try {
             if (!workflowName) return toast.error("Name required");
-            const res = await api.post("/kernel/workflows", { name: workflowName, modelName });
+            const res = await api.post("kernel/workflows", { name: workflowName, modelName });
             toast.success("Workflow stream created");
             setWorkflowName("");
             fetchWorkflows();

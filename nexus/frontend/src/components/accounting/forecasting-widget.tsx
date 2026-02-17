@@ -31,7 +31,7 @@ export function ForecastingWidget() {
 
     const fetchForecast = async () => {
         try {
-            const resp = await api.get('/kernel/health/forecast');
+            const resp = await api.get('kernel/health/forecast');
             setData(resp.data);
         } catch (err) {
             console.error('Forecast failed', err);

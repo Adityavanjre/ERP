@@ -51,8 +51,8 @@ export default function InventoryPage() {
             setLoading(true);
             const [prodRes, statsRes, aiRes] = await Promise.all([
                 api.get(`/inventory/products?page=${page}&limit=50`),
-                api.get("/inventory/stats"),
-                api.get("/kernel/ai/inventory-forecast")
+                api.get("inventory/stats"),
+                api.get("kernel/ai/inventory-forecast")
             ]);
 
             // Handle paginated response
@@ -83,7 +83,7 @@ export default function InventoryPage() {
             setIsSubmitting(true);
             setUILocked(true);
             const finalSku = formData.sku.trim() || `PRD-${Date.now().toString().slice(-6)}`;
-            await api.post("/inventory/products", {
+            await api.post("inventory/products", {
                 ...formData,
                 sku: finalSku,
                 stock: Number(formData.stock),
@@ -140,7 +140,7 @@ export default function InventoryPage() {
             try {
                 if (typeof csv !== 'string') return;
                 const loadingToast = toast.loading("Processing bulk import...");
-                const res = await api.post("/inventory/import", { csv });
+                const res = await api.post("inventory/import", { csv });
                 toast.dismiss(loadingToast);
                 toast.success(`Processed: ${res.data.imported} assets imported`);
                 if (res.data.failed > 0) {

@@ -48,7 +48,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
     const addComment = async () => {
         if (!newComment.trim()) return;
         try {
-            await api.post('/kernel/collaboration/comments', {
+            await api.post('kernel/collaboration/comments', {
                 resourceType,
                 resourceId,
                 content: newComment,

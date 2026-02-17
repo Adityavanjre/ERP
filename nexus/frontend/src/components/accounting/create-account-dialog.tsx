@@ -33,7 +33,7 @@ export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAcc
 
         setLoading(true);
         try {
-            await api.post("/accounting/accounts", formData);
+            await api.post("accounting/accounts", formData);
             toast.success(`Account "${formData.name}" created successfully`);
             setFormData({ name: "", code: "", type: "Asset" });
             onOpenChange(false);

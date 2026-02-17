@@ -29,8 +29,8 @@ export default function ManufacturingDashboard() {
         const fetchData = async () => {
             try {
                 const [b, w] = await Promise.all([
-                    api.get("/manufacturing/boms"),
-                    api.get("/manufacturing/work-orders")
+                    api.get("manufacturing/boms"),
+                    api.get("manufacturing/work-orders")
                 ]);
                 setBoms(b.data);
                 setWorkOrders(w.data);
@@ -48,7 +48,7 @@ export default function ManufacturingDashboard() {
             await api.post(`/manufacturing/work-orders/${id}/complete`, {});
             toast.success("Production Completed! Inventory Updated.");
             // Refresh
-            const res = await api.get("/manufacturing/work-orders");
+            const res = await api.get("manufacturing/work-orders");
             setWorkOrders(res.data);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Production failed. Check raw materials.");

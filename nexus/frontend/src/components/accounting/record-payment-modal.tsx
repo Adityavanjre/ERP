@@ -40,7 +40,7 @@ export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: Reco
 
         setLoading(true);
         try {
-            await api.post("/accounting/payments", {
+            await api.post("accounting/payments", {
                 customerId: invoice.customerId,
                 invoiceId: invoice.id,
                 amount: Number(amount),
