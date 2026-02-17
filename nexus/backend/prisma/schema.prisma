@@ -290,12 +290,13 @@ model Order {
   customer   Customer?   @relation(fields: [customerId], references: [id])
   tenant     Tenant      @relation(fields: [tenantId], references: [id])
   items      OrderItem[]
-  idempotencyKey String? @unique
+  idempotencyKey String? 
 
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
   @@index([customerId])
   @@index([tenantId, customerId, createdAt])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model OrderItem {
@@ -448,7 +449,7 @@ model Invoice {
   status             InvoiceStatus @default(Unpaid)
   billingTimeSeconds Int?
   isLocked           Boolean       @default(false)
-  idempotencyKey     String?       @unique
+  idempotencyKey     String?
   tallyExported      Boolean       @default(false)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -458,6 +459,7 @@ model Invoice {
   payments           Payment[]
 
   @@unique([tenantId, invoiceNumber])
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId, issueDate])
   @@index([tenantId, status])
   @@index([invoiceNumber])
@@ -495,7 +497,7 @@ model Payment {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   isLocked       Boolean     @default(false)
-  idempotencyKey String?     @unique
+  idempotencyKey String?
   tallyExported  Boolean     @default(false)
   invoice        Invoice?    @relation(fields: [invoiceId], references: [id])
   supplier       Supplier?   @relation(fields: [supplierId], references: [id])
@@ -507,6 +509,7 @@ model Payment {
   @@index([invoiceId])
   @@index([tenantId, customerId, date])
   @@index([tenantId, invoiceId])
+  @@unique([tenantId, idempotencyKey])
 }
 
 model CustomerOpeningBalance {

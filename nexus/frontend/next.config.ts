@@ -1,31 +1,25 @@
 import type { NextConfig } from "next";
 
+const NEXUS_BACKEND_URL = process.env.NEXUS_BACKEND_URL;
+
 const nextConfig: NextConfig = {
-  // output: 'standalone',
-  basePath: '/portal',
-  trailingSlash: false,
-  experimental: {
-    serverActions: {
-      allowedOrigins: ['*'],
+    output: 'standalone',
+    basePath: '/portal',
+    images: {
+        remotePatterns: [
+            { protocol: 'https', hostname: 'images.unsplash.com' },
+            { protocol: 'https', hostname: 'ui-avatars.com' }
+        ],
     },
-  },
-  images: {
-    unoptimized: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      },
-    ];
-  },
+    async rewrites() {
+        if (!NEXUS_BACKEND_URL) return [];
+        return [
+            {
+                source: '/api/:path*',
+                destination: `${NEXUS_BACKEND_URL}/api/:path*`,
+            },
+        ];
+    },
 };
 
 export default nextConfig;
