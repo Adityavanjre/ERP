@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { TenantType, PlanType, Role, Prisma } from '@prisma/client';
+import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
 
 @Injectable()
@@ -17,7 +18,8 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private config: ConfigService,
-    private accountingService: AccountingService,
+    private readonly accountingService: AccountingService,
+    private readonly tenantContext: TenantContextService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -73,8 +75,10 @@ export class AuthService {
         },
       });
 
-      // 4. Initialize Default Chart of Accounts (Strict Mode: Survival requirement)
-      await this.accountingService.initializeTenantAccounts(tenant.id, tx);
+        // Initialize Default Chart of Accounts (Strict Mode: Survival requirement)
+        await this.tenantContext.run(tenant.id, async () => {
+          await this.accountingService.initializeTenantAccounts(tenant.id, tx);
+        });
 
       // Generate Token
       const payload = {
