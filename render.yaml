@@ -1,5 +1,5 @@
 services:
-  # 🚪 THE FRONT DOOR (Nginx Gateway)
+  # THE FRONT DOOR (Nginx Gateway)
   - type: web
     name: klypso-gateway
     env: docker

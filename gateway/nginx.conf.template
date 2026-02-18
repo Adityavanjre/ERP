@@ -2,9 +2,15 @@ server {
     listen 80;
     server_name localhost;
 
+    # Using Google and Cloudflare DNS to ensure resolution of public names
+    # Internal names should also resolve if the platform routes them.
+    # Note: We use variables in proxy_pass to prevent Nginx from crashing if hosts are unavailable at startup.
+    resolver 8.8.8.8 1.1.1.1 valid=30s;
+
     # Klypso Agency Website (Root)
     location / {
-        proxy_pass http://${AGENCY_VIEWER_HOST};
+        set $target_agency_viewer ${AGENCY_VIEWER_HOST};
+        proxy_pass http://$target_agency_viewer;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -13,7 +19,8 @@ server {
 
     # Klypso ERP Portal
     location ^~ /portal {
-        proxy_pass http://${KLYPSO_FRONTEND_HOST};
+        set $target_erp_frontend ${KLYPSO_FRONTEND_HOST};
+        proxy_pass http://$target_erp_frontend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -22,16 +29,18 @@ server {
 
     # Klypso Engine API
     location ^~ /portal/api/ {
-        proxy_pass http://${KLYPSO_BACKEND_HOST}/api/;
+        set $target_erp_backend ${KLYPSO_BACKEND_HOST};
+        proxy_pass http://$target_erp_backend/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Agency API
-    location ^~ /api/agency/ {
-        proxy_pass http://${AGENCY_BACKEND_HOST}/;
+    # Agency API (Corrected Path)
+    location ^~ /agency-api/ {
+        set $target_agency_backend ${AGENCY_BACKEND_HOST};
+        proxy_pass http://$target_agency_backend/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
