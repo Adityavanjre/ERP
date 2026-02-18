@@ -28,28 +28,37 @@ export default function SettingsPage() {
     const [newUser, setNewUser] = useState({ fullName: '', email: '', role: 'Biller' as RoleName });
     const [isResetOpen, setIsResetOpen] = useState(false);
     const [tempPassword, setTempPassword] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const { user: currentUser } = useAuth();
     const isOwner = currentUser?.role === 'Owner';
 
+    const fetchSettings = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [profRes, billRes, usersRes] = await Promise.all([
+                api.get("auth/profile"),
+                api.get("kernel/billing/plan"),
+                api.get("users")
+            ]);
+            setTenant(profRes.data?.tenant || null);
+            setBillingInfo(billRes.data || null);
+            setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
+        } catch (err: any) {
+            console.error(err);
+            setError(err.isWakeup ? err.message : "Failed to synchronize with Nexus core");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const [profRes, billRes, usersRes] = await Promise.all([
-                    api.get("auth/profile"),
-                    api.get("kernel/billing/plan"),
-                    api.get("users")
-                ]);
-                setTenant(profRes.data?.tenant || null);
-                setBillingInfo(billRes.data || null);
-                setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        setMounted(true);
         fetchSettings();
     }, []);
+
+    if (!mounted) return null; // Prevent hydration mismatch
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -187,65 +196,89 @@ export default function SettingsPage() {
 
                         <Card className="bg-white border-slate-200 shadow-sm">
                             <CardContent className="p-0">
-                                <div className="divide-y divide-slate-100">
-                                    {(members || []).map((member) => (
-                                        <div key={member.id} className="p-4 flex items-center justify-between group">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400">
-                                                    {member.fullName[0]}
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-slate-900">{member.fullName}</div>
-                                                    <div className="text-[11px] text-slate-400 font-medium">{member.email}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-4">
-                                                <Badge className={`font-black ${member.role === 'Owner' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                    member.role === 'Manager' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                        'bg-slate-50 text-slate-500 border-slate-100'
-                                                    }`}>
-                                                    {member.role.toUpperCase()}
-                                                </Badge>
-
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                                    {isOwner && member.email !== currentUser?.email && (
-                                                        <>
-                                                            <Select onValueChange={(val: any) => handleUpdateRole(member.id, val)}>
-                                                                <SelectTrigger className="w-[120px] h-8 text-xs font-bold border-slate-200">
-                                                                    <SelectValue placeholder="Change Role" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'].map(r => (
-                                                                        <SelectItem key={r} value={r} className="text-xs font-bold">{r}</SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-8 w-8 p-0 text-slate-400 hover:text-amber-600 hover:bg-amber-50"
-                                                                title="Reset Password"
-                                                                onClick={() => handleResetPassword(member.id)}
-                                                            >
-                                                                <Key className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                                                                title="Remove Member"
-                                                                onClick={() => handleRemoveUser(member.id)}
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
+                                {loading ? (
+                                    <div className="p-8 flex flex-col items-center justify-center gap-4">
+                                        <div className="h-8 w-8 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Synchronizing Directory...</p>
+                                    </div>
+                                ) : error ? (
+                                    <div className="p-12 text-center space-y-4">
+                                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+                                            <ShieldAlert className="h-6 w-6" />
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="space-y-1">
+                                            <h3 className="font-black text-slate-900 uppercase tracking-tight">Sync Failure</h3>
+                                            <p className="text-xs text-slate-500 font-medium">{error}</p>
+                                        </div>
+                                        <Button onClick={fetchSettings} variant="outline" className="font-bold border-slate-200">
+                                            Re-attempt Connection
+                                        </Button>
+                                    </div>
+                                ) : members.length === 0 ? (
+                                    <div className="p-12 text-center text-slate-400 font-medium text-sm">
+                                        No team members identified in this tenant.
+                                    </div>
+                                ) : (
+                                    <div className="divide-y divide-slate-100">
+                                        {(members || []).map((member) => (
+                                            <div key={member.id} className="p-4 flex items-center justify-between group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400">
+                                                        {member.fullName ? member.fullName[0] : '?'}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-slate-900">{member.fullName}</div>
+                                                        <div className="text-[11px] text-slate-400 font-medium">{member.email}</div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-4">
+                                                    <Badge className={`font-black ${member.role === 'Owner' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                        member.role === 'Manager' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                            'bg-slate-50 text-slate-500 border-slate-100'
+                                                        }`}>
+                                                        {member.role ? member.role.toUpperCase() : 'UNKNOWN'}
+                                                    </Badge>
+
+                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                        {isOwner && member.email !== currentUser?.email && (
+                                                            <>
+                                                                <Select onValueChange={(val: any) => handleUpdateRole(member.id, val)}>
+                                                                    <SelectTrigger className="w-[120px] h-8 text-xs font-bold border-slate-200">
+                                                                        <SelectValue placeholder="Change Role" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent className="bg-white">
+                                                                        {['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'].map(r => (
+                                                                            <SelectItem key={r} value={r} className="text-xs font-bold">{r}</SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-8 w-8 p-0 text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                                                    title="Reset Password"
+                                                                    onClick={() => handleResetPassword(member.id)}
+                                                                >
+                                                                    <Key className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                                                    title="Remove Member"
+                                                                    onClick={() => handleRemoveUser(member.id)}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>

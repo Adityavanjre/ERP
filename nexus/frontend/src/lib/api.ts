@@ -25,7 +25,19 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If Render returns a splash screen (HTML) instead of JSON for a JSON request
+    const contentType = response.headers['content-type'];
+    if (contentType && contentType.includes('text/html') && typeof response.data === 'string') {
+      if (response.data.includes('Render') || response.data.includes('Waking up')) {
+        return Promise.reject({
+          message: 'Service is waking up. Please wait several seconds and try again.',
+          isWakeup: true
+        });
+      }
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       const isLoginRequest = error.config?.url?.includes('/auth/login');

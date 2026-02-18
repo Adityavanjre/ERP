@@ -177,14 +177,10 @@ export const Sidebar = () => {
                     </p>
                     <button
                         onClick={() => {
-                            toast.promise(
-                                new Promise(r => setTimeout(r, 2000)),
-                                {
-                                    loading: 'Refreshing...',
-                                    success: 'Updated!',
-                                    error: 'Failed',
-                                }
-                            );
+                            toast.success('Initiating System Sync...');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
                         }}
                         className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest transition-all hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95"
                     >
