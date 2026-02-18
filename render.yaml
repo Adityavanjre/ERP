@@ -91,7 +91,7 @@ services:
     plan: free
     rootDir: nexus/frontend
     buildCommand: npm install && npm run build
-    startCommand: node .next/standalone/server.js
+    startCommand: npm start
     healthCheckPath: /portal/dashboard
     autoDeploy: false
     envVars:
