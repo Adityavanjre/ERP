@@ -233,7 +233,7 @@ export default function InventoryPage() {
                     toast.warning(`${res.data.failed} rows failed. Check console.`);
                     console.warn(res.data.errors);
                 }
-                syncRegistry(false);
+                syncInventory(false);
             } catch (err) {
                 toast.dismiss();
                 toast.error("Import failed");
