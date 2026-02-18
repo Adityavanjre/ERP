@@ -10,13 +10,13 @@ services:
       - key: PORT
         value: 80
       - key: AGENCY_VIEWER_HOST
-        value: klypso-agency-viewer.onrender.com
+        value: klypso-agency-viewer:10000
       - key: KLYPSO_FRONTEND_HOST
-        value: klypso-frontend.onrender.com
+        value: klypso-frontend:3000
       - key: KLYPSO_BACKEND_HOST
-        value: klypso-backend.onrender.com
+        value: klypso-backend:3001
       - key: AGENCY_BACKEND_HOST
-        value: klypso-agency-backend.onrender.com
+        value: klypso-agency-backend:10000
       - key: KLYPSO_FRONTEND_URL
         value: https://klypso.in/portal
     domains:
