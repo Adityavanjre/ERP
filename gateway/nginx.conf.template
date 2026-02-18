@@ -1,53 +1,48 @@
-events {
-    worker_connections 1024;
-}
+# 🚪 Klypso Gateway (Render Nginx Config)
+# Note: This file is included in the main http { ... } block of /etc/nginx/nginx.conf
 
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
-    sendfile        on;
-    keepalive_timeout  65;
+server {
+    listen 80;
+    server_name localhost;
 
-    server {
-        listen 80;
-        server_name localhost;
+    # Resolver for Public DNS (Google) since we are routing over the internet
+    resolver 8.8.8.8 valid=30s;
 
-        # Resolver for Public DNS (Google) since we are routing over the internet
-        resolver 8.8.8.8 valid=30s;
+    # 🚀 Klypso Agency Website (Root)
+    location / {
+        proxy_pass https://${AGENCY_VIEWER_HOST}; 
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${AGENCY_VIEWER_HOST};
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 
-        # 🚀 Klypso Agency Website (Root)
-        location / {
-            # Route to Public URL (HTTPS)
-            proxy_pass https://${AGENCY_VIEWER_HOST}; 
-            proxy_ssl_server_name on;
-            proxy_set_header Host ${AGENCY_VIEWER_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-        }
+    # 🎨 Nexus ERP Portal
+    location /portal/ {
+        proxy_pass https://${NEXUS_FRONTEND_HOST};
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${NEXUS_FRONTEND_HOST};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
-        # 🎨 Nexus ERP Portal
-        location /portal/ {
-            proxy_pass https://${NEXUS_FRONTEND_HOST};
-            proxy_ssl_server_name on;
-            proxy_set_header Host ${NEXUS_FRONTEND_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
+    # 🐘 Nexus Engine API (Direct Access if needed)
+    location /portal/api/ {
+        proxy_pass https://${NEXUS_BACKEND_HOST}/api/;
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${NEXUS_BACKEND_HOST};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
-        # 🐘 Nexus Engine API (Direct Access if needed)
-        location /portal/api/ {
-            proxy_pass https://${NEXUS_BACKEND_HOST}/api/;
-            proxy_ssl_server_name on;
-            proxy_set_header Host ${NEXUS_BACKEND_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-        }
-
-        # 🏢 Agency API (Relative to Root)
-        location /api/agency/ {
-            proxy_pass https://${AGENCY_BACKEND_HOST}/;
-            proxy_ssl_server_name on;
-            proxy_set_header Host ${AGENCY_BACKEND_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-        }
+    # 🏢 Agency API (Relative to Root)
+    location /api/agency/ {
+        proxy_pass https://${AGENCY_BACKEND_HOST}/;
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${AGENCY_BACKEND_HOST};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
