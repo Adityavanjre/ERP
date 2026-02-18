@@ -66,6 +66,8 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: PORT
+        value: 3001
 
   - type: web
     name: nexus-frontend
