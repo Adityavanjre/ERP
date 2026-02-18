@@ -2,16 +2,11 @@ server {
     listen 80;
     server_name localhost;
 
-    # Using Google and Cloudflare DNS to ensure resolution of public names
-    # Internal names should also resolve if the platform routes them.
-    # Note: We use variables in proxy_pass to prevent Nginx from crashing if hosts are unavailable at startup.
-    resolver 8.8.8.8 1.1.1.1 valid=30s;
-
     # Klypso Agency Website (Root)
     location / {
-        set $target_agency_viewer ${AGENCY_VIEWER_HOST};
-        proxy_pass http://$target_agency_viewer;
-        proxy_set_header Host $host;
+        proxy_pass https://${AGENCY_VIEWER_HOST};
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${AGENCY_VIEWER_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -19,9 +14,9 @@ server {
 
     # Klypso ERP Portal
     location ^~ /portal {
-        set $target_erp_frontend ${KLYPSO_FRONTEND_HOST};
-        proxy_pass http://$target_erp_frontend;
-        proxy_set_header Host $host;
+        proxy_pass https://${KLYPSO_FRONTEND_HOST};
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${KLYPSO_FRONTEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -29,19 +24,19 @@ server {
 
     # Klypso Engine API
     location ^~ /portal/api/ {
-        set $target_erp_backend ${KLYPSO_BACKEND_HOST};
-        proxy_pass http://$target_erp_backend/api/;
-        proxy_set_header Host $host;
+        proxy_pass https://${KLYPSO_BACKEND_HOST}/api/;
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${KLYPSO_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Agency API (Corrected Path)
+    # Agency API
     location ^~ /agency-api/ {
-        set $target_agency_backend ${AGENCY_BACKEND_HOST};
-        proxy_pass http://$target_agency_backend/;
-        proxy_set_header Host $host;
+        proxy_pass https://${AGENCY_BACKEND_HOST}/;
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${AGENCY_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
