@@ -47,7 +47,7 @@ export default function RecoveryMemoryDashboard() {
 
     return (
         <div className="p-8 space-y-10 bg-slate-50 text-slate-900 min-h-screen pb-32">
-            {/* Hero psychological anchor */}
+            {/* Dashboard Overview */}
             <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 border border-blue-500/20 p-16 shadow-2xl shadow-blue-500/20">
                 <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
                     <Zap className="w-80 h-80 text-white" />
@@ -76,7 +76,7 @@ export default function RecoveryMemoryDashboard() {
                         <div className="border-l border-white/20 pl-12">
                             <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">Compliance Streak</p>
                             <p className="text-4xl font-black flex items-center gap-3 text-white">
-                                {data.anchors.daysSinceDrift} Days
+                                {data.anchors.daysSinceDrift} Days without issues
                                 <ShieldAlert className="w-7 h-7 text-white/60" />
                             </p>
                         </div>

@@ -57,9 +57,9 @@ export default function FounderMonitoring() {
                         <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
                             <HeartPulse className="h-7 w-7 text-emerald-400" />
                         </div>
-                        Klypso Founder Overview
+                        Klypso Business Overview
                     </h1>
-                    <p className="text-slate-500 mt-2 font-black uppercase text-[11px] tracking-[0.3em] ml-[68px]">Critical Business Alerts & Autonomous Protection</p>
+                    <p className="text-slate-500 mt-2 font-black uppercase text-[11px] tracking-[0.3em] ml-[68px]">Critical Business Alerts & Automatic Protection</p>
                 </div>
                 <div className="flex gap-4">
                     <button className="h-12 px-6 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
@@ -81,7 +81,7 @@ export default function FounderMonitoring() {
                     <p className="text-4xl font-black mt-3 text-red-600 tracking-tighter italic">₹{data.mrrAtRisk.toLocaleString()}</p>
                     <div className="mt-6 flex items-center gap-2 text-[9px] bg-red-50 text-red-600 w-fit px-3 py-1 rounded-lg font-black uppercase tracking-widest">
                         <TrendingDown className="w-3 h-3" />
-                        Urgent Intervention
+                        Requires Action
                     </div>
                 </Card>
 
@@ -126,7 +126,7 @@ export default function FounderMonitoring() {
                         <div>
                             <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                                 <ShieldAlert className="w-8 h-8 text-red-500" />
-                                High-Priority Interventions
+                                High-Priority Action Items
                             </h2>
                             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2 ml-11">The following items require immediate attention.</p>
                         </div>
@@ -183,7 +183,7 @@ export default function FounderMonitoring() {
                 <div className="space-y-8">
                     <h2 className="text-xl font-black flex items-center gap-3 px-2">
                         <HistoryFeedIcon />
-                        Global Signal Log
+                        Recent Activity
                     </h2>
                     <Card className="bg-slate-900 border-none rounded-[3rem] p-10 h-[700px] overflow-y-auto space-y-10 shadow-2xl shadow-slate-900/20">
                         {data.allReports.flatMap((r: any) => r.signals.map((s: string) => ({ ...r, signal: s }))).map((item: any, i: number) => (
@@ -219,10 +219,10 @@ export default function FounderMonitoring() {
 
                 <div className="flex gap-6">
                     <Button variant="ghost" className="h-14 px-10 rounded-2xl text-[11px] font-black tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all uppercase">
-                        Bulk Nudge (Yellow)
+                        Remind All (Low Risk)
                     </Button>
                     <Button className="h-14 px-12 bg-slate-900 text-white rounded-2xl text-[11px] font-black tracking-widest hover:bg-red-600 shadow-2xl shadow-slate-900/20 transition-all uppercase border-none">
-                        Execute All Recoveries (Red)
+                        Process All Tasks (High Risk)
                     </Button>
                 </div>
             </div>

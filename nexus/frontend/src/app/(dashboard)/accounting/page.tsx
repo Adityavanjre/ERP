@@ -513,7 +513,7 @@ export default function AccountingPage() {
                                     <div className="grid gap-6 md:grid-cols-3">
                                         <div className="p-8 rounded-[32px] bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group">
                                             <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors" />
-                                            <p className="text-[10px] text-slate-600 mb-4 uppercase font-black tracking-[0.2em] relative z-10">Integrity Score</p>
+                                            <p className="text-[10px] text-slate-600 mb-4 uppercase font-black tracking-[0.2em] relative z-10">Accuracy Rating</p>
                                             <div className="relative z-10">
                                                 <span className={`text-6xl font-black tracking-tighter ${healthScore.status === 'RED' ? 'text-rose-500' : healthScore.status === 'YELLOW' ? 'text-amber-500' : 'text-blue-500'}`}>
                                                     {100 - healthScore.riskScore}%

@@ -78,7 +78,7 @@ export default function InventoryPage() {
             setForecast(aiRes.data || null);
         } catch (err: any) {
             console.error("Registry Sync Failure:", err);
-            const msg = err.isWakeup ? err.message : "Inventory synchronization interrupted";
+            const msg = err.isWakeup ? err.message : "Inventory update interrupted";
             setFetchError(msg);
         } finally {
             setLoading(false);
@@ -121,7 +121,7 @@ export default function InventoryPage() {
                 tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0,
                 description: "", barcode: "", isService: false
             });
-            toast.success("Asset ledger record updated");
+            toast.success("Product details updated");
             syncRegistry(false);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Creation failed");
@@ -155,7 +155,7 @@ export default function InventoryPage() {
                 tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0,
                 description: "", barcode: "", isService: false
             });
-            toast.success("Asset updated in ledger");
+            toast.success("Product updated");
             syncRegistry(false);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Update failed");
@@ -197,10 +197,10 @@ export default function InventoryPage() {
                 try {
                     setUILocked(true);
                     await api.delete(`/inventory/products/${id}`);
-                    toast.success("Asset deleted successfully");
+                    toast.success("Product deleted successfully");
                     syncRegistry(false);
                 } catch (err) {
-                    toast.error("Failed to delete asset");
+                    toast.error("Failed to delete product");
                 } finally {
                     setUILocked(false);
                 }
@@ -228,7 +228,7 @@ export default function InventoryPage() {
                 const loadingToast = toast.loading("Processing bulk import...");
                 const res = await api.post("inventory/import", { csv });
                 toast.dismiss(loadingToast);
-                toast.success(`Processed: ${res.data.imported} assets imported`);
+                toast.success(`Processed: ${res.data.imported} products imported`);
                 if (res.data.failed > 0) {
                     toast.warning(`${res.data.failed} rows failed. Check console.`);
                     console.warn(res.data.errors);
@@ -236,7 +236,7 @@ export default function InventoryPage() {
                 syncRegistry(false);
             } catch (err) {
                 toast.dismiss();
-                toast.error("Bulk import failed");
+                toast.error("Import failed");
             }
         };
         reader.readAsText(file);
@@ -260,7 +260,7 @@ export default function InventoryPage() {
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
-                        <Plus className="mr-2 h-4 w-4" /> Initialize Asset
+                        <Plus className="mr-2 h-4 w-4" /> Add Product
                     </Button>
                 </div>
             </div>
@@ -268,11 +268,11 @@ export default function InventoryPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Registered Assets</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Products Registered</CardTitle>
                         <Layers className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.totalProducts} Assets</div>
+                        <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.totalProducts} Items</div>
                         <p className="text-xs text-slate-500 mt-2 flex items-center font-bold">
                             <TrendingDown className="h-3 w-3 mr-1 text-emerald-500" />
                             Stable supply levels
@@ -281,7 +281,7 @@ export default function InventoryPage() {
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-orange-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Critical Resource Thresholds</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Low Stock Alerts</CardTitle>
                         <AlertCircle className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
@@ -291,12 +291,12 @@ export default function InventoryPage() {
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Market Integrity Value</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Inventory Value</CardTitle>
                         <Package className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.totalValue).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">Total ecosphere valuation</p>
+                        <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">Total stock valuation</p>
                     </CardContent>
                 </Card>
             </div>
@@ -313,11 +313,11 @@ export default function InventoryPage() {
                         <form onSubmit={handleCreate} className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="space-y-2 lg:col-span-2">
-                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Designation <span className="text-rose-500">*</span></Label>
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Name <span className="text-rose-500">*</span></Label>
                                     <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20 font-black" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset SKU (Unique)</Label>
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product SKU (Unique)</Label>
                                     <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" placeholder="AUTO_GEN" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
@@ -335,7 +335,7 @@ export default function InventoryPage() {
                                     <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" placeholder="e.g. Klypso" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
                                 </div>
                                 <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
-                                    <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Min Alert Stock Threshold</Label>
+                                    <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Low Stock Alert Level</Label>
                                     <Input type="number" min="0" className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black" value={formData.minStockLevel} onChange={e => setFormData({ ...formData, minStockLevel: Number(e.target.value) })} />
                                 </div>
                                 <div className="space-y-2">
@@ -394,7 +394,7 @@ export default function InventoryPage() {
             <Dialog open={!!editingProduct} onOpenChange={(open) => { if (!open) { setEditingProduct(null); setFormData({ name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "", tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0, description: "", barcode: "", isService: false }); } }}>
                 <DialogContent className="sm:max-w-[780px] bg-white border-slate-200 text-slate-900 rounded-[28px] shadow-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="pb-4 border-b border-slate-100">
-                        <DialogTitle className="text-slate-900 font-black text-xl">Manage Product Ledger</DialogTitle>
+                        <DialogTitle className="text-slate-900 font-black text-xl">Edit Product</DialogTitle>
                         <DialogDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
                             {editingProduct ? `Review/Update metadata for SKU ${editingProduct?.sku}` : ""}
                         </DialogDescription>
@@ -481,7 +481,7 @@ export default function InventoryPage() {
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                     <CardTitle className="text-slate-900 flex items-center gap-3 font-black">
                         <Brain className="h-5 w-5 text-amber-600" />
-                        Predictive Supply Intelligence
+                        Stock Analysis
                     </CardTitle>
                     <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">AI-driven forecasting and consumption rates</CardDescription>
                 </CardHeader>
@@ -553,13 +553,13 @@ export default function InventoryPage() {
                     <Table>
                         <TableHeader className="bg-slate-50/50">
                             <TableRow className="border-slate-100 hover:bg-transparent">
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Asset ID (SKU)</TableHead>
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset Designation</TableHead>
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset Class Cluster</TableHead>
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Forensic Audit</TableHead>
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Resource Intensity</TableHead>
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset Valuation</TableHead>
-                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-8">Market Integrity Value</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">ID (SKU)</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Name</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Category</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Updated</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Inventory Status</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Price</TableHead>
+                                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-8">Total Value</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

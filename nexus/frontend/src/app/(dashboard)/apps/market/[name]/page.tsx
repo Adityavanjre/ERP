@@ -29,7 +29,7 @@ export default function AppDetailPage() {
     const [app, setApp] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncModuleManifest = async (showLoading = false) => {
+    const syncModuleDetails = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("/kernel/apps");
@@ -43,8 +43,8 @@ export default function AppDetailPage() {
     };
 
     useEffect(() => {
-        syncModuleManifest(true);
-        const interval = setInterval(() => syncModuleManifest(false), 30000);
+        syncModuleDetails(true);
+        const interval = setInterval(() => syncModuleDetails(false), 30000);
         return () => clearInterval(interval);
     }, [appName]);
 
@@ -52,7 +52,7 @@ export default function AppDetailPage() {
         try {
             await api.post(`/kernel/apps/${appName}/install`);
             toast.success(`${app.label} activated successfully`);
-            syncModuleManifest(true);
+            syncModuleDetails(true);
         } catch (err) {
             toast.error("Activation sequence failed");
         }
@@ -62,14 +62,14 @@ export default function AppDetailPage() {
         try {
             await api.post(`/kernel/apps/${appName}/uninstall`);
             toast.success(`${app.label} decommissioned`);
-            syncModuleManifest(true);
+            syncModuleDetails(true);
         } catch (err) {
             toast.error("Decommission error");
         }
     };
 
-    if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse">Synchronizing Manifest...</div>;
-    if (!app) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen font-black uppercase tracking-widest uppercase italic">Module [${appName}] not found in Klypso Registry.</div>;
+    if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse">Loading Details...</div>;
+    if (!app) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen font-black uppercase tracking-widest uppercase italic">Module [${appName}] not found in Klypso Store.</div>;
 
     return (
         <div className="flex-1 space-y-10 p-10 pt-8 bg-slate-50/30 min-h-screen">
@@ -129,7 +129,7 @@ export default function AppDetailPage() {
                         </TabsList>
                         <TabsContent value="overview" className="mt-10 space-y-10">
                             <p className="text-slate-600 leading-relaxed text-xl font-medium max-w-3xl">
-                                {app.description || "No extended manifest details found for this module."}
+                                {app.description || "No extended details found for this module."}
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                 <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-200/40 space-y-3">
@@ -137,7 +137,7 @@ export default function AppDetailPage() {
                                     <div className="text-3xl font-black text-slate-900 tracking-tighter">0.4<span className="text-sm font-bold ml-1 text-slate-300">MS</span></div>
                                 </div>
                                 <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-200/40 space-y-3">
-                                    <div className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Data Integrity</div>
+                                    <div className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Data Reliability</div>
                                     <div className="text-3xl font-black text-slate-900 tracking-tighter">100<span className="text-sm font-bold ml-1 text-slate-300">%</span></div>
                                 </div>
                                 <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-200/40 space-y-3">

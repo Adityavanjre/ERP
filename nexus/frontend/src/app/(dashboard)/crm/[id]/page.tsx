@@ -55,7 +55,7 @@ export default function CustomerDetailPage() {
         <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50 min-h-screen">
             <div className="flex items-center space-x-4">
                 <Button variant="ghost" className="text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl font-bold h-10 px-4" onClick={() => router.back()}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Node Registry
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Store
                 </Button>
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 tracking-tighter">{customer.firstName} {customer.lastName}</h2>

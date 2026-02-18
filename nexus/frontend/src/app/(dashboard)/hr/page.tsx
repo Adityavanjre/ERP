@@ -117,7 +117,7 @@ export default function HrPage() {
             <Tabs defaultValue="employees" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
                     <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Personnel Directory</TabsTrigger>
-                    <TabsTrigger value="departments" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Operational Clusters</TabsTrigger>
+                    <TabsTrigger value="departments" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Departments</TabsTrigger>
                     <TabsTrigger value="leaves" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Absence Flow</TabsTrigger>
                     <TabsTrigger value="payroll" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Disbursement Ledger</TabsTrigger>
                 </TabsList>
@@ -125,7 +125,7 @@ export default function HrPage() {
                 <TabsContent value="employees">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
-                            <CardTitle className="text-slate-900 text-xl font-black">Personnel Registry</CardTitle>
+                            <CardTitle className="text-slate-900 text-xl font-black">Employee List</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Master database of all employees</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -133,7 +133,7 @@ export default function HrPage() {
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Employee ID</TableHead>
-                                        <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Full Designation</TableHead>
+                                        <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Job Title</TableHead>
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Department</TableHead>
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Functional Title</TableHead>
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-8">Status</TableHead>
@@ -169,7 +169,7 @@ export default function HrPage() {
                 <TabsContent value="departments">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
-                            <CardTitle className="text-slate-900 text-xl font-black">Organization Clusters</CardTitle>
+                            <CardTitle className="text-slate-900 text-xl font-black">Department Groups</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Structural mapping of business departments</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8">

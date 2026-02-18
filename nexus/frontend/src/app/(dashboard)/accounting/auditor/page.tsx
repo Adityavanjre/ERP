@@ -263,7 +263,7 @@ export default function AuditorDashboard() {
                                     <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                                     <span className="font-black text-emerald-700 uppercase tracking-tight text-xs">Voucher Balancing</span>
                                 </div>
-                                <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Perfect (0.00 Drift)</span>
+                                <span className="text-xs font-black text-emerald-600 uppercase tracking-widest">Perfect (No mismatch)</span>
                             </div>
                         </div>
                     </div>
