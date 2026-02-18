@@ -1,33 +1,35 @@
 # 🚪 Klypso Gateway (Render Nginx Config)
-# Note: This file is included in the main http { ... } block of /etc/nginx/nginx.conf
+# Standardized for Render Docker Environment - Zenith Hardened 🛡️🚀
 
 server {
-    listen 80;
-    server_name localhost;
+    listen 80 default_server;
+    server_name klypso.in www.klypso.in localhost;
 
-    # Resolver for Public DNS (Google) since we are routing over the internet
+    # Resolver for Public DNS (Google)
     resolver 8.8.8.8 valid=30s;
 
-    # 🚀 Klypso Agency Website (Root)
-    location / {
-        proxy_pass https://${AGENCY_VIEWER_HOST}; 
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${AGENCY_VIEWER_HOST};
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+    # 🔗 Debug Headers (Internal Diagnostics)
+    add_header X-Gateway-Version "Zenith-Standard-1.0";
 
-    # 🎨 Nexus ERP Portal
-    location /portal/ {
+    # 🎨 Nexus ERP Portal (Frontend)
+    # Higher priority prefix match (^~) to beat the root / block
+    location ^~ /portal/ {
         proxy_pass https://${NEXUS_FRONTEND_HOST};
         proxy_ssl_server_name on;
         proxy_set_header Host ${NEXUS_FRONTEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Standard Proxy Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
-    # 🐘 Nexus Engine API (Direct Access if needed)
-    location /portal/api/ {
+    # 🐘 Nexus Engine API
+    location ^~ /portal/api/ {
+        # Strip /portal/api/ and prepend /api/
         proxy_pass https://${NEXUS_BACKEND_HOST}/api/;
         proxy_ssl_server_name on;
         proxy_set_header Host ${NEXUS_BACKEND_HOST};
@@ -36,13 +38,29 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # 🏢 Agency API (Relative to Root)
-    location /api/agency/ {
+    # 🏢 Agency API
+    location ^~ /api/agency/ {
+        # Strip /api/agency/ and prepend /
         proxy_pass https://${AGENCY_BACKEND_HOST}/;
         proxy_ssl_server_name on;
         proxy_set_header Host ${AGENCY_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 🚀 Klypso Agency Website (Root & Catch-all)
+    location / {
+        proxy_pass https://${AGENCY_VIEWER_HOST}; 
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${AGENCY_VIEWER_HOST};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Handle /portal (without trailing slash)
+    location = /portal {
+        return 301 $scheme://$http_host/portal/;
     }
 }
