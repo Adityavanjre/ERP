@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-export function CommandPalette() {
+export function CommandPalette(): React.ReactNode {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [results, setResults] = useState<any[]>([]);
@@ -59,23 +59,23 @@ export function CommandPalette() {
         return () => clearTimeout(timer);
     }, [query]);
 
-    const handleCommandPalette = () => {
-        setOpen((open) => !open);
-    };
+    useEffect(() => {
+        const down = (e: KeyboardEvent) => {
+            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                setOpen((open) => !open);
+            }
+        };
 
-    const down = (e: KeyboardEvent) => {
-        if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            handleCommandPalette();
-        }
-    };
+        const toggle = () => setOpen((open) => !open);
 
-    document.addEventListener("keydown", down);
-    window.addEventListener('open-command-palette', handleCommandPalette);
-    return () => {
-        document.removeEventListener("keydown", down);
-        window.removeEventListener('open-command-palette', handleCommandPalette);
-    };
+        document.addEventListener("keydown", down);
+        window.addEventListener('open-command-palette', toggle);
+        return () => {
+            document.removeEventListener("keydown", down);
+            window.removeEventListener('open-command-palette', toggle);
+        };
+    }, []);
 
     const commands = [
         { name: "Dashboard", icon: LayoutGrid, path: "/dashboard", category: "Navigation" },
