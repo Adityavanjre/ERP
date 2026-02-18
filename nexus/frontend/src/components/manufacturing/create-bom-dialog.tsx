@@ -51,8 +51,9 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
 
     const fetchProducts = async () => {
         try {
-            const { data } = await api.get('/inventory/products');
-            setProducts(data);
+            const res = await api.get('/inventory/products');
+            // Backend returns { data: [...], meta: ... } so we need res.data.data
+            setProducts(res.data.data || []);
         } catch (err) {
             toast.error("Failed to load products");
         }

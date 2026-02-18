@@ -189,12 +189,12 @@ export default function AuditorDashboard() {
                         Account Alerts & Blockers
                     </h2>
                     <div className="space-y-4">
-                        {data?.riskFlags.length === 0 && (
+                        {data?.riskFlags?.length === 0 && (
                             <div className="text-slate-400 font-bold italic py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                                 No major flags detected for this period.
                             </div>
                         )}
-                        {data?.riskFlags.map((flag: any, i: number) => (
+                        {data?.riskFlags?.map((flag: any, i: number) => (
                             <div key={i} className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all hover:scale-[1.01] ${flag.severity === 'BLOCKER' ? 'bg-red-50 border-red-100 text-red-900' : 'bg-amber-50 border-amber-100 text-amber-900'}`}>
                                 <div className="flex items-center gap-4">
                                     {flag.type === 'BACKDATED' && <Clock className="w-6 h-6 text-amber-600" />}

@@ -21,6 +21,12 @@ export class CollaborationController {
       },
     }),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, callback) => {
+      if (!file.originalname.match(/\.(jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|csv|txt)$/)) {
+        return callback(new BadRequestException('Only image, PDF, and office document files are allowed!'), false);
+      }
+      callback(null, true);
+    },
   }))
   async uploadFile(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
