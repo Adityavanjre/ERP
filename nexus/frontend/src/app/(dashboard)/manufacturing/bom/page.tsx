@@ -65,12 +65,12 @@ export default function BOMPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Command className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Logic Struct Registry (BOM)
+                        Bill of Materials
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Define assembly structures and material requirements for finished goods.</p>
                 </div>
                 <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
-                    <Plus className="mr-2 h-4 w-4" /> Initialize Logic Struct
+                    <Plus className="mr-2 h-4 w-4" /> New BOM
                 </Button>
             </div>
 

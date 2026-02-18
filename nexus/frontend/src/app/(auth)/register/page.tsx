@@ -132,8 +132,8 @@ export default function RegisterPage() {
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">Initialize Nexus Node</h1>
-                    <p className="text-slate-500 font-medium">Deploy your Zenith ecosystem workspace.</p>
+                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">Create Account</h1>
+                    <p className="text-slate-500 font-medium">Set up your business workspace in minutes.</p>
                 </div>
 
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-blue-500/5 relative z-10 rounded-[2.5rem] overflow-hidden">
@@ -261,7 +261,7 @@ export default function RegisterPage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="companyType" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Industry Vertical</Label>
+                                    <Label htmlFor="companyType" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Industry</Label>
                                     <Select onValueChange={(val) => setCompanyValue('companyType', val)}>
                                         <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
                                             <SelectValue placeholder="Select Industry" />
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                         </div>
                         {step === 1 && (
                             <div className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                Already networked? <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 hover:underline">Nexus Authorization</Link>
+                                Already have an account? <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 hover:underline">Sign In</Link>
                             </div>
                         )}
                     </CardFooter>

@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Zenith Intelligence | Enterprise Nexus",
-    description: "High-integrity enterprise intelligence platform for elite brands.",
+    description: "Manage your business in one place — sales, inventory, HR, purchases, and accounting.",
     creator: "@klypso",
     images: ["/og-image.png"],
   },
