@@ -29,8 +29,8 @@ server {
 
     # 🐘 Nexus Engine API
     location ^~ /portal/api {
-        # Strip /portal/api and prepend /api/
-        proxy_pass https://${NEXUS_BACKEND_HOST}/api/;
+        # Strip /portal/api and prepend /api
+        proxy_pass https://${NEXUS_BACKEND_HOST}/api;
         proxy_ssl_server_name on;
         proxy_set_header Host ${NEXUS_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
@@ -40,8 +40,8 @@ server {
 
     # 🏢 Agency API
     location ^~ /api/agency {
-        # Strip /api/agency and prepend /
-        proxy_pass https://${AGENCY_BACKEND_HOST}/;
+        # Strip /api/agency and proxy to root
+        proxy_pass https://${AGENCY_BACKEND_HOST};
         proxy_ssl_server_name on;
         proxy_set_header Host ${AGENCY_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
