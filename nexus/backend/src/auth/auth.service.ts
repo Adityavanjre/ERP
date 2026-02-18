@@ -38,76 +38,78 @@ export class AuthService {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(dto.password, salt);
 
-    // 3. Create User, Tenant, and Membership in a transaction
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Create User
-      const user = await tx.user.create({
-        data: {
-          email: dto.email,
-          passwordHash,
-          fullName: dto.fullName,
-        },
-      });
+    try {
+      // 3. Create User, Tenant, and Membership in a transaction
+      return await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        // Create User
+        const user = await tx.user.create({
+          data: {
+            email: dto.email,
+            passwordHash,
+            fullName: dto.fullName,
+          },
+        });
 
-      // Create Tenant (Company)
-      const slug = dto.tenantName.toLowerCase().replace(/ /g, '-');
-      // Minimal collision handling for slug
-      let finalSlug = slug;
-      const slugCount = await tx.tenant.count({
-        where: { slug: { startsWith: slug } },
-      });
-      if (slugCount > 0) {
-        finalSlug = `${slug}-${slugCount + 1}`;
-      }
+        // Create Tenant (Company)
+        const slug = dto.tenantName.toLowerCase().replace(/ /g, '-');
+        // Minimal collision handling for slug
+        let finalSlug = slug;
+        const slugCount = await tx.tenant.count({
+          where: { slug: { startsWith: slug } },
+        });
+        if (slugCount > 0) {
+          finalSlug = `${slug}-${slugCount + 1}`;
+        }
 
-      const tenant = await tx.tenant.create({
-        data: {
-          name: dto.tenantName,
-          slug: finalSlug,
-          type: (dto.companyType as TenantType) || TenantType.Retail,
-          plan: PlanType.Free,
-        },
-      });
+        const tenant = await tx.tenant.create({
+          data: {
+            name: dto.tenantName,
+            slug: finalSlug,
+            type: (dto.companyType as TenantType) || TenantType.Retail,
+            plan: PlanType.Free,
+          },
+        });
 
-      // Create Membership (Owner)
-      await tx.tenantUser.create({
-        data: {
-          userId: user.id,
-          tenantId: tenant.id,
-          role: Role.Owner,
-        },
-      });
+        // Create Membership (Owner)
+        await tx.tenantUser.create({
+          data: {
+            userId: user.id,
+            tenantId: tenant.id,
+            role: Role.Owner,
+          },
+        });
 
         // Initialize Default Chart of Accounts (Strict Mode: Survival requirement)
         await this.tenantContext.run(tenant.id, async () => {
           await this.accountingService.initializeTenantAccounts(tenant.id, tx);
         });
 
-      // Generate Token
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        tenantId: tenant.id,
-        role: Role.Owner,
-      };
-
-      const accessToken = this.jwtService.sign(payload);
-
-      return {
-        accessToken,
-        user: {
-          id: user.id,
+        // Generate Token
+        const payload = {
+          sub: user.id,
           email: user.email,
-          fullName: user.fullName,
-        },
-        tenant: {
-          id: tenant.id,
-          name: tenant.name,
-          slug: tenant.slug,
-        },
-      };
+          tenantId: tenant.id,
+          role: Role.Owner,
+        };
+
+        const accessToken = this.jwtService.sign(payload);
+
+        return {
+          accessToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName,
+          },
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+          },
+        };
+      });
     } catch (error: any) {
-      console.error('REGISTRATION_FAILURE: An error occurred during the registration process 🚨');
+      console.error('REGISTRATION_FAILURE: An error occurred during the registration process');
       console.error('Email:', dto.email);
       console.error('Error Details:', error.message || error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
