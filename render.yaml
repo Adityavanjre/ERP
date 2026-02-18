@@ -57,7 +57,7 @@ services:
     plan: free
     rootDir: nexus/backend
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma db push && node dist/main.js
+    startCommand: npx prisma db push --accept-data-loss && node dist/main.js
     healthCheckPath: /api/health/liveness
     envVars:
       - key: DATABASE_URL
