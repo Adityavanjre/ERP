@@ -20,11 +20,7 @@ import { api } from '@/lib/api';
 const userSchema = z.object({
     fullName: z.string().min(2, 'Full name is required'),
     email: z.string().email('Invalid email address'),
-    password: z.string()
-        .min(8, 'Password must be at least 8 characters')
-        .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-        .regex(/[0-9]/, 'Must contain at least one number')
-        .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -113,7 +109,7 @@ export default function RegisterPage() {
             }
 
             toast.error('Registration failed', {
-                description: error.response?.data?.message || 'Something went wrong. Please try again.',
+                description: error.response?.data?.message || error.message || 'Something went wrong. Please try again.',
             });
         } finally {
             setIsLoading(false);
