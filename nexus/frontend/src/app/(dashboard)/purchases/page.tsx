@@ -28,7 +28,7 @@ export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<any>({ totalSpent: 0, pendingPOs: 0 });
     const [loading, setLoading] = useState(true);
     const [showPODialog, setShowPODialog] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -166,7 +166,7 @@ export default function PurchasesPage() {
                         <DollarSign className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.totalSpent).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
+                        <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats?.totalSpent || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Total purchase cost</p>
                     </CardContent>
                 </Card>
@@ -176,7 +176,7 @@ export default function PurchasesPage() {
                         <ShoppingBag className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-amber-600 tracking-tighter">{stats.pendingPOs}</div>
+                        <div className="text-3xl font-black text-amber-600 tracking-tighter">{stats?.pendingPOs || 0}</div>
                         <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Awaiting Fulfillment</p>
                     </CardContent>
                 </Card>

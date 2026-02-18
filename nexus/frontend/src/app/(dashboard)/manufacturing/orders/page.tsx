@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
+import { CreateWorkOrderDialog } from "@/components/manufacturing/create-work-order-dialog";
 
 export default function WorkOrdersPage() {
     const [workOrders, setWorkOrders] = useState<any[]>([]);
@@ -94,9 +95,11 @@ export default function WorkOrdersPage() {
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Create and track work orders for your production runs.</p>
                 </div>
-                <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold px-8 shadow-lg shadow-emerald-500/20 text-white h-11">
-                    <Plus className="mr-2 h-4 w-4" /> New Work Order
-                </Button>
+                <CreateWorkOrderDialog refreshData={() => syncExecutionQueues(false)}>
+                    <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold px-8 shadow-lg shadow-emerald-500/20 text-white h-11">
+                        <Plus className="mr-2 h-4 w-4" /> New Work Order
+                    </Button>
+                </CreateWorkOrderDialog>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">

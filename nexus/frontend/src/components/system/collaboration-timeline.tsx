@@ -141,7 +141,43 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
                     className="min-h-[80px] bg-secondary/10 border-primary/10 focus:border-primary/40 transition-all text-sm"
                 />
                 <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm" className="gap-1 border-primary/10">
+                    <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            const formData = new FormData();
+                            formData.append('file', file);
+
+                            const toastId = toast.loading("Uploading...");
+
+                            try {
+                                const { data } = await api.post('/system/collaboration/upload', formData, {
+                                    headers: { 'Content-Type': 'multipart/form-data' }
+                                });
+
+                                const linkText = file.type.startsWith('image/') ? `\n![${file.name}](${data.url})` : `\n[Download ${file.name}](${data.url})`;
+                                setNewComment(prev => prev + linkText);
+                                toast.success("File attached", { id: toastId });
+                            } catch (err) {
+                                console.error(err);
+                                toast.error("Upload failed", { id: toastId });
+                            } finally {
+                                // Reset the input so the same file can be selected again if needed
+                                e.target.value = '';
+                            }
+                        }}
+                    />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 border-primary/10"
+                        onClick={() => document.getElementById('file-upload')?.click()}
+                        disabled={loading}
+                    >
                         <Paperclip className="w-3 h-3" /> Attach
                     </Button>
                     <Button onClick={addComment} size="sm" className="gap-1 shadow-lg shadow-primary/20">

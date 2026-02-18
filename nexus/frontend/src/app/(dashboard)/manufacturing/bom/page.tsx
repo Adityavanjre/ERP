@@ -28,11 +28,14 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CreateBOMDialog } from "@/components/manufacturing/create-bom-dialog";
+import { BOMDetailsDialog } from "@/components/manufacturing/bom-details-dialog";
 
 export default function BOMPage() {
     const [boms, setBoms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedBomId, setSelectedBomId] = useState<string | null>(null);
 
     const syncLogicStructs = async (showLoading = false) => {
         try {
@@ -61,6 +64,11 @@ export default function BOMPage() {
 
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">
+            <BOMDetailsDialog
+                open={!!selectedBomId}
+                onOpenChange={(open) => !open && setSelectedBomId(null)}
+                bomId={selectedBomId}
+            />
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
@@ -69,9 +77,11 @@ export default function BOMPage() {
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Define assembly structures and material requirements for finished goods.</p>
                 </div>
-                <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
-                    <Plus className="mr-2 h-4 w-4" /> New BOM
-                </Button>
+                <CreateBOMDialog refreshData={() => syncLogicStructs(false)}>
+                    <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
+                        <Plus className="mr-2 h-4 w-4" /> New BOM
+                    </Button>
+                </CreateBOMDialog>
             </div>
 
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
@@ -106,7 +116,7 @@ export default function BOMPage() {
                         </TableHeader>
                         <TableBody>
                             {filteredBoms.map((bom) => (
-                                <TableRow key={bom.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group cursor-pointer" onClick={() => toast.info("BOM Details coming soon")}>
+                                <TableRow key={bom.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group cursor-pointer" onClick={() => setSelectedBomId(bom.id)}>
                                     <TableCell className="pl-8">
                                         <div className="flex items-center">
                                             <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mr-4 group-hover:bg-blue-600 group-hover:text-white transition-all">

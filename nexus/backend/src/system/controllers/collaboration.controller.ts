@@ -1,4 +1,7 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { CollaborationService } from '../services/collaboration.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -6,6 +9,26 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 export class CollaborationController {
   constructor(private readonly collaborationService: CollaborationService) {}
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './uploads',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = extname(file.originalname);
+        callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+      },
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  }))
+  async uploadFile(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    const fileUrl = `${process.env.API_URL || 'http://localhost:3001'}/uploads/${file.filename}`;
+    return { url: fileUrl, filename: file.filename, originalName: file.originalname, mimetype: file.mimetype };
+  }
 
   @Get('comments/:type/:id')
   async getComments(@Request() req: any, @Param('type') type: string, @Param('id') id: string) {

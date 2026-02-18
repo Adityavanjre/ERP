@@ -171,7 +171,7 @@ export default function AuditorDashboard() {
                 <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
                     <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Tax Coverage</p>
                     <div className="mt-2 flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-slate-900 tracking-tighter">{data?.hsnCoverage.toFixed(0)}%</span>
+                        <span className="text-4xl font-black text-slate-900 tracking-tighter">{(data?.hsnCoverage || 0).toFixed(0)}%</span>
                         <FileText className="w-4 h-4 text-slate-400" />
                     </div>
                     <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
