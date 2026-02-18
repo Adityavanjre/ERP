@@ -45,8 +45,8 @@ export default function HrPage() {
             setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
             setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
         } catch (err: any) {
-            console.error("Personnel Sync Failure:", err);
-            const msg = "Nexus personnel flux interrupted";
+            console.error("HR data load failed:", err);
+            const msg = "Failed to load HR data. Please refresh.";
             setFetchError(msg);
         } finally {
             setLoading(false);
@@ -70,13 +70,13 @@ export default function HrPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Users className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Personnel Intelligence
+                        Employees & HR
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage personnel nodes, disbursement integrity, and organizational clusters.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage employees, payroll, leaves, and departments.</p>
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
-                        <Plus className="mr-2 h-4 w-4" /> Initialize Node
+                        <Plus className="mr-2 h-4 w-4" /> Add Employee
                     </Button>
                 </div>
             </div>

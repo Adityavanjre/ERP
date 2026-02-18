@@ -105,10 +105,10 @@ export default function SalesPage() {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'Paid': return <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Settled</Badge>;
-            case 'Shipped': return <Badge className="bg-blue-50 text-blue-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">In Transit</Badge>;
-            case 'Pending': return <Badge className="bg-amber-50 text-amber-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Queued</Badge>;
-            case 'Cancelled': return <Badge className="bg-rose-50 text-rose-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Voided</Badge>;
+            case 'Paid': return <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Paid</Badge>;
+            case 'Shipped': return <Badge className="bg-blue-50 text-blue-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Shipped</Badge>;
+            case 'Pending': return <Badge className="bg-amber-50 text-amber-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Pending</Badge>;
+            case 'Cancelled': return <Badge className="bg-rose-50 text-rose-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">Cancelled</Badge>;
             default: return <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">{status}</Badge>;
         }
     };
@@ -123,16 +123,16 @@ export default function SalesPage() {
                         <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mr-5">
                             <ShoppingCart className="h-7 w-7 text-white" />
                         </div>
-                        Commerce Flow & Treasury
+                        Sales Orders
                     </h2>
-                    <p className="text-slate-600 mt-2 font-black uppercase text-[10px] tracking-[0.2em] ml-[68px]">Orders, Gross Inflow & Entity Transactions</p>
+                    <p className="text-slate-600 mt-2 font-black uppercase text-[10px] tracking-[0.2em] ml-[68px]">All orders, revenue & customer transactions</p>
                 </div>
                 <div className="flex gap-4">
                     <Button
                         className="rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-10 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none"
                         onClick={() => setShowForm(true)}
                     >
-                        <Plus className="mr-2 h-5 w-5" /> Execute Transaction
+                        <Plus className="mr-2 h-5 w-5" /> New Order
                     </Button>
                 </div>
             </div>
@@ -140,7 +140,7 @@ export default function SalesPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Gross Inflow</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Total Revenue</CardTitle>
                         <div className="p-2.5 bg-emerald-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <TrendingUp className="h-4 w-4 text-emerald-600" />
                         </div>
@@ -156,20 +156,20 @@ export default function SalesPage() {
 
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Active Transactions</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Total Orders</CardTitle>
                         <div className="p-2.5 bg-blue-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <ShoppingCart className="h-4 w-4 text-blue-600" />
                         </div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-slate-900 tracking-tighter italic">{stats.orderCount.toString().padStart(3, '0')}</div>
-                        <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">Finalized Transmissions</p>
+                        <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">Completed Orders</p>
                     </CardContent>
                 </Card>
 
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pending Queues</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pending Orders</CardTitle>
                         <div className="p-2.5 bg-amber-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <Clock className="h-4 w-4 text-amber-600" />
                         </div>
@@ -182,7 +182,7 @@ export default function SalesPage() {
 
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Mean Transaction Integrity</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Avg. Order Value</CardTitle>
                         <div className="p-2.5 bg-indigo-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <Package className="h-4 w-4 text-indigo-600" />
                         </div>

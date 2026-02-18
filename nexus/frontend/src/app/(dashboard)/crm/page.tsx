@@ -230,22 +230,22 @@ export default function CrmPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Users className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Strategic Relations
+                        Customers & Deals
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage entity relationships, value-chain flux, and strategic contact nodes.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage your customers, contacts, and sales deals in one place.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="relative">
                         <Input type="file" accept=".csv" onChange={handleImport} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                         <Button className="rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5">
-                            <Upload className="mr-2 h-4 w-4" /> Nexus Batch-Sync
+                            <Upload className="mr-2 h-4 w-4" /> Import CSV
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-amber-50 border border-amber-100 hover:bg-amber-100/50 text-amber-700 shadow-sm font-bold h-11 px-5" onClick={() => setShowDealForm(!showDealForm)}>
-                        <Sparkles className="mr-2 h-4 w-4" /> Flux Opportunity
+                        <Sparkles className="mr-2 h-4 w-4" /> Add Deal
                     </Button>
                     <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
-                        <UserPlus className="mr-2 h-4 w-4" /> Initialize Entity
+                        <UserPlus className="mr-2 h-4 w-4" /> Add Customer
                     </Button>
                 </div>
             </div>

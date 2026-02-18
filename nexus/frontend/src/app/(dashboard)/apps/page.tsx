@@ -23,7 +23,7 @@ export default function AppsMarketplace() {
             setApps(res.data);
         } catch (err) {
             console.error("Node Sync Failure:", err);
-            toast.error("Failed to sync Zenith Node Cloud");
+            toast.error("Failed to load apps. Please refresh.");
         } finally {
             setLoading(false);
         }
@@ -37,18 +37,18 @@ export default function AppsMarketplace() {
 
     const handleUninstall = (name: string) => {
         showConfirm({
-            title: "Decommission Module?",
-            description: `This will remove the [${name}] module from your enterprise system. Any data specific to this module might become inaccessible.`,
+            title: "Remove Module?",
+            description: `This will remove the [${name}] module from your system. Any data specific to this module might become inaccessible.`,
             confirmText: "Uninstall",
             variant: "destructive",
             onConfirm: async () => {
                 try {
                     await api.post(`/kernel/apps/${name}/uninstall`);
-                    toast.success(`Module [${name}] decommissioned from system`);
+                    toast.success(`Module [${name}] removed successfully`);
                     syncNodeEcosystem(true);
                     window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
                 } catch (err) {
-                    toast.error("Decommissioning failed");
+                    toast.error("Failed to remove module");
                 }
             }
         });
@@ -71,9 +71,9 @@ export default function AppsMarketplace() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <LayoutGrid className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Node Extension Registry
+                        Apps & Modules
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage and extend your business modules via Zenith Cloud.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Install and manage add-on modules for your business.</p>
                 </div>
                 <Button className="rounded-2xl bg-white border border-slate-200 text-slate-600 shadow-sm font-bold h-11 px-5">
                     <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" /> System Verified

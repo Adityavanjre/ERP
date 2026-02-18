@@ -93,7 +93,7 @@ export default function PurchasesPage() {
                 items
             });
 
-            toast.success("Procurement node initialized successfully");
+            toast.success("Purchase order created successfully");
             setShowPODialog(false);
             syncProcurement(true);
         } catch (err) {
@@ -129,16 +129,16 @@ export default function PurchasesPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <ShoppingBag className="mr-4 h-9 w-9 text-blue-600" />
-                        Procurement Ledgers
+                        Purchases & Suppliers
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Orchestrate asset procurement, partner nodes, and inbound flux.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage purchase orders, suppliers, and incoming stock.</p>
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
                         onClick={() => setShowPODialog(true)}
                         className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11"
                     >
-                        <Plus className="mr-2 h-4 w-4" /> Initialize Procurement
+                        <Plus className="mr-2 h-4 w-4" /> New Purchase Order
                     </Button>
                 </div>
             </div>
@@ -146,17 +146,17 @@ export default function PurchasesPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Treasury Outflow</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Spent</CardTitle>
                         <DollarSign className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.totalSpent).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Cumulative procurement cost</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Total purchase cost</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Procurement Nodes</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Orders</CardTitle>
                         <ShoppingBag className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
@@ -178,15 +178,15 @@ export default function PurchasesPage() {
 
             <Tabs defaultValue="orders" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-fit">
-                    <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Procurement Registry</TabsTrigger>
-                    <TabsTrigger value="suppliers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Partner Nodes</TabsTrigger>
+                    <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Purchase Orders</TabsTrigger>
+                    <TabsTrigger value="suppliers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Suppliers</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="orders">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none text-slate-900">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Purchase Register</CardTitle>
-                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Real-time ledger of inbound procurement cycles</CardDescription>
+                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">All purchase orders and their status</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
                             <Table>
@@ -290,7 +290,7 @@ export default function PurchasesPage() {
                     <div className="grid gap-6 py-6">
                         <div className="grid gap-2">
                             <Label htmlFor="supplier" className="text-slate-700 font-black text-[10px] uppercase tracking-widest pl-1">
-                                Partner Supplier <span className="text-red-500">*</span>
+                                Supplier <span className="text-red-500">*</span>
                             </Label>
                             <select
                                 id="supplier"
@@ -379,7 +379,7 @@ export default function PurchasesPage() {
                             onClick={() => setShowPODialog(false)}
                             className="rounded-2xl font-bold px-6"
                         >
-                            Abort
+                            Cancel
                         </Button>
                         <Button
                             onClick={handleCreatePO}

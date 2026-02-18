@@ -89,7 +89,7 @@ export default function AccountingPage() {
             setInvStats(invStatsRes.data);
         } catch (err) {
             console.error("Ledger Sync Failure:", err);
-            if (!silent) toast.error("Nexus financial flux interrupted");
+            if (!silent) toast.error("Failed to load accounting data. Please refresh.");
         } finally {
             setLoading(false);
             setIsSyncing(false);
@@ -169,9 +169,9 @@ export default function AccountingPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Landmark className="mr-4 h-9 w-9 text-amber-500 shadow-sm" />
-                        Treasury Engine
+                        Accounting
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Unified ecosystem ledgers, automated billing, and capital intelligence.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage invoices, accounts, transactions, and financial reports.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     {pendingDraft && !showCreateInvoice && (
@@ -194,18 +194,18 @@ export default function AccountingPage() {
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
                             onClick={handleTallyMasters}
                         >
-                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> Nexus Structs
+                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> Tally Masters
                         </Button>
                         <Button
                             variant="ghost"
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
                             onClick={handleTallyExport}
                         >
-                            <FileDown className="mr-2 h-4 w-4 text-emerald-500" /> Ledger Pulses
+                            <FileDown className="mr-2 h-4 w-4 text-emerald-500" /> Export to Tally
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-8 shadow-lg shadow-amber-500/20 text-white h-11" onClick={() => setShowCreateInvoice(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> Initialize Node
+                        <Plus className="mr-2 h-4 w-4" /> New Invoice
                     </Button>
                 </div>
             </div>
@@ -213,7 +213,7 @@ export default function AccountingPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-emerald-500 border-none group">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Capital Velocity</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Total Income</CardTitle>
                         <div className="p-2.5 bg-emerald-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <ArrowUpRight className="h-4 w-4 text-emerald-600" />
                         </div>
@@ -232,12 +232,12 @@ export default function AccountingPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-amber-600 tracking-tighter">₹{Number(stats.receivable || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">External Assets</p>
+                        <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">Pending Collection</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-rose-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-rose-500 border-none group">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Risk Threshold</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Overdue Amount</CardTitle>
                         <div className="p-2.5 bg-rose-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <ArrowDownRight className="h-4 w-4 text-rose-600" />
                         </div>
@@ -306,10 +306,10 @@ export default function AccountingPage() {
 
             <Tabs defaultValue="invoices" className="space-y-6">
                 <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto h-auto p-1.5 rounded-2xl">
-                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Treasury Invoices</TabsTrigger>
-                    <TabsTrigger value="accounts" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Ecosystem Ledgers</TabsTrigger>
-                    <TabsTrigger value="transactions" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Ledger History</TabsTrigger>
-                    <TabsTrigger value="health" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Nexus Integrity</TabsTrigger>
+                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Invoices</TabsTrigger>
+                    <TabsTrigger value="accounts" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Accounts</TabsTrigger>
+                    <TabsTrigger value="transactions" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Transactions</TabsTrigger>
+                    <TabsTrigger value="health" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Store Health</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="invoices" className="space-y-4">
@@ -505,7 +505,7 @@ export default function AccountingPage() {
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-8 px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Store Health Profile</CardTitle>
-                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Behavioral analytics and discipline metrics mapping</CardDescription>
+                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Financial health and payment discipline overview</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8">
                             {healthScore && (
@@ -541,7 +541,7 @@ export default function AccountingPage() {
 
                                     <div className="space-y-6">
                                         <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-4">
-                                            Behavioral Signals
+                                            Health Alerts
                                             <div className="h-px flex-1 bg-slate-100" />
                                         </h4>
                                         {healthScore.signals.length > 0 ? (
@@ -555,8 +555,8 @@ export default function AccountingPage() {
                                             </div>
                                         ) : (
                                             <div className="text-center py-16 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
-                                                <p className="text-blue-600 font-black text-sm uppercase tracking-widest">Operational Peak</p>
-                                                <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase">No behavioral anomalies detected in current cycle</p>
+                                                <p className="text-blue-600 font-black text-sm uppercase tracking-widest">All Good!</p>
+                                                <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase">No issues found in the current period</p>
                                             </div>
                                         )}
                                     </div>
@@ -604,7 +604,7 @@ export default function AccountingPage() {
                                                         <div key={i} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-blue-500/5 group">
                                                             <div>
                                                                 <p className="text-slate-900 font-black tracking-tight">{c.name}</p>
-                                                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">{c.daysSilent} DAYS SINCE LAST SYNC</p>
+                                                                <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">{c.daysSilent} DAYS SINCE LAST ORDER</p>
                                                             </div>
                                                             <Button
                                                                 variant="default"

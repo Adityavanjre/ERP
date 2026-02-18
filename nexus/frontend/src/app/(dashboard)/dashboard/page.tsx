@@ -129,26 +129,26 @@ export default function DashboardPage() {
             icon: DollarSign,
             color: "text-emerald-500",
             bg: "bg-emerald-500/10",
-            desc: "Liquid inflow (Treasury)"
+            desc: "Total sales income"
         },
         {
-            title: "Supply Expenditures",
+            title: "Total Purchases",
             value: `₹${biStats.expenses.toLocaleString('en-IN')}`,
             icon: ArrowDownRight,
             color: "text-rose-500",
             bg: "bg-rose-500/10",
-            desc: "Asset acquisitions"
+            desc: "Total purchase cost"
         },
         {
-            title: "Strategic Relations",
+            title: "Customers",
             value: biStats.customerCount,
             icon: Users,
             color: "text-sky-400",
             bg: "bg-sky-500/10",
-            desc: "Validated entities"
+            desc: "Total customers"
         },
         {
-            title: "Registry Assets",
+            title: "Products in Stock",
             value: biStats.inventoryCount,
             icon: Package,
             color: "text-amber-500",
@@ -165,11 +165,11 @@ export default function DashboardPage() {
                         <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
                         Zenith Intelligence
                     </h2>
-                    <p className="text-slate-600 mt-2 font-medium">Real-time analytical flux for your enterprise ecosystem.</p>
+                    <p className="text-slate-600 mt-2 font-medium">A live overview of your business performance and key metrics.</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
-                        <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">Nexus Status</p>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">System Status</p>
                         <p className="text-xs text-emerald-600 font-mono font-black">CONTINUOUS SYNC ACTIVE</p>
                     </div>
                     <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50/50 px-4 py-2 rounded-2xl shadow-sm">
@@ -250,9 +250,9 @@ export default function DashboardPage() {
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                         <CardTitle className="text-slate-900 flex items-center gap-3 text-xl font-black">
                             <TrendingUp className="h-5 w-5 text-blue-600" />
-                            Revenue Intelligence (YTD)
+                            Revenue This Year
                         </CardTitle>
-                        <CardDescription className="text-slate-500 font-medium">Consolidated sales volume across all business units.</CardDescription>
+                        <CardDescription className="text-slate-500 font-medium">Monthly sales revenue across all orders.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8">
                         <div className="h-[300px] w-full">

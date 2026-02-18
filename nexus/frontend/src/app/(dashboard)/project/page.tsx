@@ -77,7 +77,7 @@ export default function ProjectPage() {
             await api.post("projects", formData);
             setShowForm(false);
             setFormData({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
-            toast.success("Flux initialized successfully");
+            toast.success("Project created successfully");
             syncOperationsFlux(true);
         } catch (err) {
             toast.error("Project creation failed");
@@ -126,24 +126,24 @@ export default function ProjectPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <ClipboardList className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Operations Flux
+                        Projects
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Coordinate high-level operations, track progress, and manage task node flux.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Track and manage your projects, tasks, and team progress.</p>
                 </div>
                 <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
-                    <Plus className="mr-2 h-4 w-4" /> Initialize Flux
+                    <Plus className="mr-2 h-4 w-4" /> New Project
                 </Button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Flux Nodes</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Projects</CardTitle>
                         <LayoutGrid className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.total}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Active flux environments</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">All projects</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
@@ -173,8 +173,8 @@ export default function ProjectPage() {
             {showForm && (
                 <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-8 animate-in fade-in slide-in-from-top-4">
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
-                        <CardTitle className="text-slate-900 font-black text-xl">New Flux Instance</CardTitle>
-                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Initialize a new operational flux workspace</CardDescription>
+                        <CardTitle className="text-slate-900 font-black text-xl">New Project</CardTitle>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Fill in the details to create a new project</CardDescription>
                     </CardHeader>
                     <CardContent className="p-8">
                         <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -196,7 +196,7 @@ export default function ProjectPage() {
                             </div>
                             <div className="md:col-span-2 flex justify-end gap-3 pt-4">
                                 <Button type="button" variant="ghost" className="text-slate-400 font-bold" onClick={() => setShowForm(false)}>Cancel</Button>
-                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl h-12 px-8">Initialize Flux</Button>
+                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl h-12 px-8">Create Project</Button>
                             </div>
                         </form>
                     </CardContent>
@@ -219,12 +219,12 @@ export default function ProjectPage() {
                                     <Badge variant="secondary" className={`border-none font-black text-[9px] uppercase tracking-widest ${project.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
                                         project.status === 'InProgress' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'
                                         }`}>
-                                        {project.status === 'InProgress' ? 'Active Sync' : project.status}
+                                        {project.status === 'InProgress' ? 'In Progress' : project.status}
                                     </Badge>
                                     <div className="text-[10px] text-slate-400 font-black tracking-widest">#{project.id.slice(0, 6).toUpperCase()}</div>
                                 </div>
                                 <CardTitle className="text-slate-900 text-xl font-black tracking-tight">{project.name}</CardTitle>
-                                <CardDescription className="line-clamp-2 mt-1 font-medium text-slate-500">{project.description || "Operational parameters not defined."}</CardDescription>
+                                <CardDescription className="line-clamp-2 mt-1 font-medium text-slate-500">{project.description || "No description provided."}</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
                                 <div className="space-y-2">
@@ -242,7 +242,7 @@ export default function ProjectPage() {
                                     </div>
                                     <div className="flex items-center gap-2 justify-end">
                                         <Clock className="h-3.5 w-3.5 text-slate-300" />
-                                        {project.endDate ? new Date(project.endDate).toLocaleDateString() : "ETL INF"}
+                                        {project.endDate ? new Date(project.endDate).toLocaleDateString() : "No end date"}
                                     </div>
                                 </div>
 

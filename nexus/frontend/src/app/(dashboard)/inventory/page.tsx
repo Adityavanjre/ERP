@@ -248,15 +248,15 @@ export default function InventoryPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Boxes className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Zenith Asset Registry
+                        Products & Inventory
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Core system for managing registered assets, system resources, and node logistics.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage your products, stock levels, and warehouse items.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="relative">
                         <Input type="file" accept=".csv" onChange={handleImport} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                         <Button className="rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5">
-                            <Upload className="mr-2 h-4 w-4" /> Nexus Batch-Sync
+                            <Upload className="mr-2 h-4 w-4" /> Import CSV
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
