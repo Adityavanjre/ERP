@@ -1,61 +1,62 @@
-# 🚪 Klypso Gateway (Render Nginx Config)
-# Standardized for Render Docker Environment - Klypso Hardened 🛡️🚀
+events {
+    worker_connections 1024;
+}
 
-server {
-    listen 80 default_server;
-    server_name klypso.in www.klypso.in localhost;
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
 
-    # Resolver for Public DNS (Google)
-    resolver 8.8.8.8 valid=30s;
+    server {
+        listen 80;
+        server_name localhost;
 
-    # 🔗 Debug Headers (Internal Diagnostics)
-    add_header X-Gateway-Version "Klypso-Standard-1.0";
+        # Resolver for Public DNS (Allows Nginx to resolve variables at runtime)
+        resolver 8.8.8.8 1.1.1.1 valid=30s;
 
-    # 🎨 Klypso ERP Portal (Frontend)
-    # Higher priority prefix match (^~) to beat the root / block
-    location ^~ /portal {
-        proxy_pass https://${KLYPSO_FRONTEND_HOST};
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${KLYPSO_FRONTEND_HOST};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Standard Proxy Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
+        # 🚀 Klypso Agency Website (Root)
+        location / {
+            set $agency_viewer_host ${AGENCY_VIEWER_HOST};
+            proxy_pass https://$agency_viewer_host;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $agency_viewer_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
 
-    # 🐘 Klypso Engine API
-    location ^~ /portal/api {
-        # Strip /portal/api and prepend /api
-        proxy_pass https://${KLYPSO_BACKEND_HOST}/api;
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${KLYPSO_BACKEND_HOST};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+        # 🎨 Klypso ERP Portal
+        location ^~ /portal {
+            set $erp_frontend_host ${KLYPSO_FRONTEND_HOST};
+            proxy_pass https://$erp_frontend_host;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $erp_frontend_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
 
-    # 🏢 Agency API
-    location ^~ /api/agency {
-        # Strip /api/agency and proxy to root
-        proxy_pass https://${AGENCY_BACKEND_HOST};
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${AGENCY_BACKEND_HOST};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+        # 🐘 Klypso Engine API
+        location ^~ /portal/api {
+            set $erp_backend_host ${KLYPSO_BACKEND_HOST};
+            proxy_pass https://$erp_backend_host/api;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $erp_backend_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
 
-    # 🚀 Klypso Agency Website (Root & Catch-all)
-    location / {
-        proxy_pass https://${AGENCY_VIEWER_HOST}; 
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${AGENCY_VIEWER_HOST};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        # 🏢 Agency API (Relative to Root)
+        location /api/agency/ {
+            set $agency_backend_host ${AGENCY_BACKEND_HOST};
+            proxy_pass https://$agency_backend_host/;
+            proxy_ssl_server_name on;
+            proxy_set_header Host $agency_backend_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
     }
 }
