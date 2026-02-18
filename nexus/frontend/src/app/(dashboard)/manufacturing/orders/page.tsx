@@ -57,10 +57,10 @@ export default function WorkOrdersPage() {
     const completeWO = async (id: string) => {
         try {
             await api.post(`/manufacturing/work-orders/${id}/complete`, {});
-            toast.success("Execution Pulse Finalized");
+            toast.success("Work order marked complete");
             syncExecutionQueues(true);
         } catch (err: any) {
-            toast.error("Execution finalization failure");
+            toast.error("Failed to complete work order");
         }
     };
 
@@ -82,7 +82,7 @@ export default function WorkOrdersPage() {
         wo.bom?.product?.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (loading) return <LoadingSpinner className="h-full" text="Syncing Production Line..." />;
+    if (loading) return <LoadingSpinner className="h-full" text="Loading work orders..." />;
 
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">
@@ -90,12 +90,12 @@ export default function WorkOrdersPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
-                        Live Execution Queues
+                        Work Orders
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Issue and track execution cycles for production pulses.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Create and track work orders for your production runs.</p>
                 </div>
                 <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold px-8 shadow-lg shadow-emerald-500/20 text-white h-11">
-                    <Plus className="mr-2 h-4 w-4" /> Execute Production Pulse
+                    <Plus className="mr-2 h-4 w-4" /> New Work Order
                 </Button>
             </div>
 
@@ -134,8 +134,8 @@ export default function WorkOrdersPage() {
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-slate-900 text-xl font-black">Order Ledger</CardTitle>
-                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Operational history of all production cycles</CardDescription>
+                            <CardTitle className="text-slate-900 text-xl font-black">Work Orders</CardTitle>
+                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">History of all production runs</CardDescription>
                         </div>
                         <div className="relative w-96">
                             <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
@@ -197,7 +197,7 @@ export default function WorkOrdersPage() {
                                                 onClick={() => completeWO(wo.id)}
                                                 className="bg-slate-900 hover:bg-emerald-600 text-white font-bold h-9 rounded-xl px-5 text-[10px] uppercase tracking-widest shadow-lg shadow-slate-900/10"
                                             >
-                                                Finalize
+                                                Mark Complete
                                             </Button>
                                         ) : (
                                             <div className="flex items-center justify-end text-emerald-600">

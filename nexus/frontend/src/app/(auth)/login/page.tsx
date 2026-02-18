@@ -70,9 +70,9 @@ export default function LoginPage() {
                             </div>
                         </div>
                     </div>
-                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Nexus Authorization</CardTitle>
+                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
                     <CardDescription className="text-center text-slate-500 font-medium">
-                        Access the Zenith ecosystem intelligence.
+                        Welcome back. Enter your details to continue.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
@@ -83,7 +83,7 @@ export default function LoginPage() {
                             </div>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Strategic Node ID (Email)</Label>
+                            <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Email</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -128,9 +128,9 @@ export default function LoginPage() {
                             {loading ? "Logging in..." : "Sign In"}
                         </Button>
                         <div className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">
-                            Nexus Prospect?{" "}
+                            New here?{" "}
                             <Link href="/register" className="text-blue-600 hover:text-blue-700">
-                                Initialize Relations
+                                Create an account
                             </Link>
                         </div>
                     </CardFooter>

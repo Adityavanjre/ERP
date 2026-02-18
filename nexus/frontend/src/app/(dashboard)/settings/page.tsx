@@ -47,7 +47,7 @@ export default function SettingsPage() {
             setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
         } catch (err: any) {
             console.error(err);
-            setError(err.isWakeup ? err.message : "Failed to synchronize with Nexus core");
+            setError(err.isWakeup ? err.message : "Failed to load settings. Please refresh.");
         } finally {
             setLoading(false);
         }
@@ -109,16 +109,16 @@ export default function SettingsPage() {
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast.success("Enterprise configuration updated successfully");
+        toast.success("Settings updated successfully");
     };
 
     const handleUpgrade = async (plan: string) => {
         try {
             await api.post("kernel/billing/upgrade", { plan });
-            toast.success(`Succesfully transformed to ${plan} tier`);
+            toast.success(`Successfully upgraded to ${plan} plan`);
             location.reload();
         } catch (err) {
-            toast.error("Transformation failed");
+            toast.error("Upgrade failed. Please try again.");
         }
     }
 
@@ -128,9 +128,9 @@ export default function SettingsPage() {
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
                         <Settings className="mr-3 h-8 w-8 text-slate-400" />
-                        Enterprise Settings
+                        Settings
                     </h2>
-                    <p className="text-slate-500 font-medium mt-1">Configure your global tenant settings and system preferences.</p>
+                    <p className="text-slate-500 font-medium mt-1">Manage your account, team, and billing preferences.</p>
                 </div>
             </div>
 
@@ -149,9 +149,9 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="text-slate-900 font-black flex items-center">
                                 <Globe className="mr-2 h-5 w-5 text-sky-600" />
-                                Identity & Localization
+                                Company Profile
                             </CardTitle>
-                            <CardDescription className="text-slate-500">Update your public enterprise profile and region data.</CardDescription>
+                            <CardDescription className="text-slate-500">Update your company name and workspace details.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <form onSubmit={handleUpdate} className="space-y-4">
@@ -171,10 +171,10 @@ export default function SettingsPage() {
                                         disabled
                                         className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10"
                                     />
-                                    <p className="text-[11px] text-slate-400 italic font-medium">Slugs are architectural constants and cannot be modified.</p>
+                                    <p className="text-[11px] text-slate-400 italic font-medium">This ID is fixed and cannot be changed.</p>
                                 </div>
                                 <div className="pt-4">
-                                    <Button type="submit" className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-8 rounded-xl">Save Intelligence Update</Button>
+                                    <Button type="submit" className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-8 rounded-xl">Save Changes</Button>
                                 </div>
                             </form>
                         </CardContent>
@@ -185,12 +185,12 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                         <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
                             <div>
-                                <h3 className="font-black text-slate-900">Corporate Directory</h3>
+                                <h3 className="font-black text-slate-900">Team Members</h3>
                                 <p className="text-xs text-slate-500 font-medium">Manage employees and their access levels.</p>
                             </div>
                             <Button className="bg-slate-900 hover:bg-slate-950 font-bold gap-2" onClick={() => setIsAddUserOpen(true)}>
                                 <UserPlus className="h-4 w-4" />
-                                Onboard Member
+                                Add Member
                             </Button>
                         </div>
 
@@ -199,7 +199,7 @@ export default function SettingsPage() {
                                 {loading ? (
                                     <div className="p-8 flex flex-col items-center justify-center gap-4">
                                         <div className="h-8 w-8 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Synchronizing Directory...</p>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Loading team...</p>
                                     </div>
                                 ) : error ? (
                                     <div className="p-12 text-center space-y-4">
@@ -207,17 +207,15 @@ export default function SettingsPage() {
                                             <ShieldAlert className="h-6 w-6" />
                                         </div>
                                         <div className="space-y-1">
-                                            <h3 className="font-black text-slate-900 uppercase tracking-tight">Sync Failure</h3>
+                                            <h3 className="font-black text-slate-900 uppercase tracking-tight">Connection Error</h3>
                                             <p className="text-xs text-slate-500 font-medium">{error}</p>
                                         </div>
                                         <Button onClick={fetchSettings} variant="outline" className="font-bold border-slate-200">
-                                            Re-attempt Connection
+                                            Try Again
                                         </Button>
                                     </div>
                                 ) : members.length === 0 ? (
-                                    <div className="p-12 text-center text-slate-400 font-medium text-sm">
-                                        No team members identified in this tenant.
-                                    </div>
+                                    <div className="p-12 text-center text-slate-400 font-medium text-sm">No team members found.</div>
                                 ) : (
                                     <div className="divide-y divide-slate-100">
                                         {(members || []).map((member) => (
@@ -289,7 +287,7 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="text-slate-900 font-black flex items-center">
                                 <Shield className="mr-2 h-5 w-5 text-emerald-600" />
-                                Access Integrity
+                                Security
                             </CardTitle>
                             <CardDescription className="text-slate-500">Manage authentication methods and audit logging.</CardDescription>
                         </CardHeader>
@@ -320,16 +318,16 @@ export default function SettingsPage() {
                                     <CreditCard className="mr-2 h-5 w-5 text-amber-600" />
                                     Active Plan
                                 </CardTitle>
-                                <CardDescription className="text-slate-500">Current tier and quota allocation metadata.</CardDescription>
+                                <CardDescription className="text-slate-500">Your current plan and usage limits.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="p-6 rounded-2xl bg-slate-900 border-b-4 border-indigo-500 shadow-xl overflow-hidden relative">
                                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
                                     <Badge className="mb-2 bg-indigo-600 text-white font-black">{billingInfo?.plan}</Badge>
                                     <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
-                                        {billingInfo?.plan === 'Free' ? 'Sandbox Nucleus' : 'Enterprise Intelligence'}
+                                        {billingInfo?.plan === 'Free' ? 'Free Plan' : 'Enterprise Plan'}
                                     </h3>
-                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">Status: Active & Nominal</p>
+                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">Status: Active</p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -355,16 +353,16 @@ export default function SettingsPage() {
                             <CardHeader>
                                 <CardTitle className="text-slate-900 font-black flex items-center">
                                     <Zap className="mr-2 h-5 w-5 text-amber-600" />
-                                    Tier Transformation
+                                    Upgrade Plan
                                 </CardTitle>
-                                <CardDescription className="text-slate-500">Instantly scale your enterprise resources.</CardDescription>
+                                <CardDescription className="text-slate-500">Unlock more features and higher limits.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {['Pro', 'Enterprise'].map(tier => (
                                     <div key={tier} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between hover:border-indigo-500 transition-all group cursor-pointer hover:bg-white">
                                         <div>
                                             <div className="text-sm font-black text-slate-900 tracking-tight">{tier} Configuration</div>
-                                            <div className="text-[10px] text-slate-500 font-medium font-mono uppercase tracking-widest">Advanced Orchestration</div>
+                                            <div className="text-[10px] text-slate-500 font-medium font-mono uppercase tracking-widest">More features & higher limits</div>
                                         </div>
                                         <Button
                                             variant="outline"
@@ -372,7 +370,7 @@ export default function SettingsPage() {
                                             onClick={() => handleUpgrade(tier)}
                                             disabled={billingInfo?.plan === tier}
                                         >
-                                            {billingInfo?.plan === tier ? 'Active' : 'Transform'}
+                                            {billingInfo?.plan === tier ? 'Active' : 'Upgrade'}
                                         </Button>
                                     </div>
                                 ))}
@@ -386,12 +384,12 @@ export default function SettingsPage() {
                         <CardHeader>
                             <CardTitle className="text-slate-900 font-black flex items-center">
                                 <Bell className="mr-2 h-5 w-5 text-rose-600" />
-                                Event Delivery
+                                Notifications
                             </CardTitle>
-                            <CardDescription className="text-slate-500">Configure how the system communicates mission updates.</CardDescription>
+                            <CardDescription className="text-slate-500">Choose how you want to receive alerts and updates.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-slate-400 text-sm italic font-medium">Notification engine is currently running in 'Quiet' mode.</p>
+                            <p className="text-slate-400 text-sm italic font-medium">Notifications are currently turned off.</p>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -412,7 +410,7 @@ export default function SettingsPage() {
                     </DialogHeader>
                     <form onSubmit={handleAddUser} className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Full Legal Name</Label>
+                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Full Name</Label>
                             <Input
                                 placeholder="e.g. Anita Biller"
                                 className="bg-slate-50 border-slate-200 h-11"
@@ -433,7 +431,7 @@ export default function SettingsPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Functional Role (RBAC)</Label>
+                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Role</Label>
                             <Select value={newUser.role} onValueChange={(val: any) => setNewUser({ ...newUser, role: val })}>
                                 <SelectTrigger className="bg-slate-50 border-slate-200 h-11 font-bold">
                                     <SelectValue />
@@ -449,7 +447,7 @@ export default function SettingsPage() {
                         </div>
                         <DialogFooter className="pt-4">
                             <Button type="button" variant="ghost" className="font-bold" onClick={() => setIsAddUserOpen(false)}>Cancel</Button>
-                            <Button type="submit" className="bg-slate-900 hover:bg-black font-black px-8">Confirm Onboarding</Button>
+                            <Button type="submit" className="bg-slate-900 hover:bg-black font-black px-8">Add Member</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -462,8 +460,8 @@ export default function SettingsPage() {
                         <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center mb-2 mx-auto">
                             <Key className="h-6 w-6 text-amber-600" />
                         </div>
-                        <DialogTitle className="text-xl font-black text-slate-900 text-center">New Access Key Generated</DialogTitle>
-                        <DialogDescription className="text-center text-slate-500">Share this temporary key with the employee. They should change it upon login.</DialogDescription>
+                        <DialogTitle className="text-xl font-black text-slate-900 text-center">Temporary Password</DialogTitle>
+                        <DialogDescription className="text-center text-slate-500">Share this temporary password with the employee. They should change it after logging in.</DialogDescription>
                     </DialogHeader>
                     <div className="py-6 flex flex-col items-center justify-center gap-4">
                         <div className="text-3xl font-black font-mono tracking-widest bg-slate-100 p-4 rounded-xl border-b-2 border-slate-200 w-full text-center text-slate-900">

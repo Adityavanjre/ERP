@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Zenith Intelligence | Enterprise Nexus",
-  description: "High-integrity enterprise intelligence platform for elite brands. Centralized finance, inventory, and autonomous operations.",
+  description: "A simple, all-in-one business management platform. Manage your sales, inventory, purchases, HR, and accounting in one place.",
   keywords: ["ERP", "Enterprise Resource Planning", "Zenith Intelligence", "Business Intelligence", "Inventory Management", "Financial Systems", "Nexus"],
   authors: [{ name: "Zenith Core Engineering", url: "https://klypso.agency" }],
   creator: "Zenith Ecosystems",

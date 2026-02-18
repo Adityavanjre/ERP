@@ -166,8 +166,8 @@ export default function AppsMarketplace() {
                 {apps.length === 0 && !loading && (
                     <div className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
                         <Package className="h-20 w-20 text-slate-200 mb-6" />
-                        <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest">Registry Depleted</h3>
-                        <p className="text-slate-400 mt-2 font-bold">No provisionable modules detected in the local repository.</p>
+                        <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest">No Apps Installed</h3>
+                        <p className="text-slate-400 mt-2 font-bold">No apps or modules are currently installed.</p>
                     </div>
                 )}
             </div>

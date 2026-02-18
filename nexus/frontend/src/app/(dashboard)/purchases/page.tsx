@@ -270,7 +270,7 @@ export default function PurchasesPage() {
                                     </Card>
                                 ))}
                                 {suppliers.length === 0 && (
-                                    <div className="col-span-full text-center py-20 text-slate-400 font-bold italic">No suppliers in registry.</div>
+                                    <div className="col-span-full text-center py-20 text-slate-400 font-bold italic">No suppliers added yet.</div>
                                 )}
                             </div>
                         </CardContent>

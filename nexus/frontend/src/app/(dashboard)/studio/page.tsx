@@ -116,7 +116,7 @@ export default function StudioPage() {
                                 value={modelLabel}
                                 onChange={(e) => setModelLabel(e.target.value)}
                                 className="bg-slate-50 border-slate-200 text-slate-900 font-semibold"
-                                placeholder="e.g. Asset Vehicle"
+                                placeholder="e.g. Company Vehicle"
                             />
                         </div>
                     </CardContent>
