@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, Sparkles, Brain, Clock, AlertCircle, Upload } from "lucide-react";
+import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, Sparkles, Brain, Clock, AlertCircle, Upload, Edit3, CheckCircle2, Info, ChevronRight, Tags } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,6 +29,7 @@ export default function InventoryPage() {
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [formData, setFormData] = useState({
         name: "",
@@ -37,8 +38,14 @@ export default function InventoryPage() {
         price: 0,
         costPrice: 0,
         category: "",
+        tags: "",
+        brand: "",
+        minStockLevel: 0,
         hsnCode: "",
-        gstRate: 0
+        gstRate: 0,
+        description: "",
+        barcode: "",
+        isService: false
     });
 
     useUnsavedChanges(showForm || formData.name !== "" || formData.sku !== "");
@@ -83,16 +90,25 @@ export default function InventoryPage() {
             setIsSubmitting(true);
             setUILocked(true);
             const finalSku = formData.sku.trim() || `PRD-${Date.now().toString().slice(-6)}`;
-            await api.post("inventory/products", {
+
+            const payload = {
                 ...formData,
                 sku: finalSku,
                 stock: Number(formData.stock),
                 price: Number(formData.price),
                 costPrice: Number(formData.costPrice),
-                gstRate: Number(formData.gstRate)
-            });
+                gstRate: Number(formData.gstRate),
+                minStockLevel: Number(formData.minStockLevel)
+            };
+
+            await api.post("inventory/products", payload);
+
             setShowForm(false);
-            setFormData({ name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "", hsnCode: "", gstRate: 0 });
+            setFormData({
+                name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "",
+                tags: "", brand: "", minStockLevel: 0, hsnCode: "", gstRate: 0,
+                description: "", barcode: "", isService: false
+            });
             toast.success("Product saved to database");
             fetchData();
         } catch (err: any) {
@@ -101,6 +117,61 @@ export default function InventoryPage() {
             setIsSubmitting(false);
             setUILocked(false);
         }
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingProduct) return;
+        try {
+            setIsSubmitting(true);
+            setUILocked(true);
+
+            const payload = {
+                ...formData,
+                stock: Number(formData.stock),
+                price: Number(formData.price),
+                costPrice: Number(formData.costPrice),
+                gstRate: Number(formData.gstRate),
+                minStockLevel: Number(formData.minStockLevel)
+            };
+
+            await api.patch(`/inventory/products/${editingProduct.id}`, payload);
+
+            setEditingProduct(null);
+            setFormData({
+                name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "",
+                tags: "", brand: "", minStockLevel: 0, hsnCode: "", gstRate: 0,
+                description: "", barcode: "", isService: false
+            });
+            toast.success("Asset updated in ledger");
+            fetchData();
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Update failed");
+        } finally {
+            setIsSubmitting(false);
+            setUILocked(false);
+        }
+    };
+
+    const startEdit = (p: any) => {
+        setEditingProduct(p);
+        setFormData({
+            name: p.name || "",
+            sku: p.sku || "",
+            stock: Number(p.stock) || 0,
+            price: Number(p.price) || 0,
+            costPrice: Number(p.costPrice) || 0,
+            category: p.category || "",
+            tags: p.tags || "",
+            brand: p.brand || "",
+            minStockLevel: Number(p.minStockLevel) || 0,
+            hsnCode: p.hsnCode || "",
+            gstRate: Number(p.gstRate) || 0,
+            description: p.description || "",
+            barcode: p.barcode || "",
+            isService: p.isService || false
+        });
+        setShowForm(false); // Close add form if open
     };
 
     const handleDelete = (id: string) => {
@@ -127,7 +198,9 @@ export default function InventoryPage() {
     const filteredProducts = (products || []).filter(p =>
         p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
+        (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (p.tags && p.tags.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -215,50 +288,88 @@ export default function InventoryPage() {
                 </Card>
             </div>
 
-            {showForm && (
+            {(showForm || editingProduct) && (
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
-                        <CardTitle className="text-slate-900 font-black text-xl">Add Product</CardTitle>
-                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Add a new product to your inventory</CardDescription>
+                        <CardTitle className="text-slate-900 font-black text-xl">{editingProduct ? "Manage Product Ledger" : "Add Product"}</CardTitle>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+                            {editingProduct ? `Review/Update metadata for SKU ${editingProduct.sku}` : "Add a new product to your inventory"}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8">
-                        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Designation <span className="text-rose-500">*</span></Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                        <form onSubmit={editingProduct ? handleUpdate : handleCreate} className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="space-y-2 lg:col-span-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Designation <span className="text-rose-500">*</span></Label>
+                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20 font-black" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset SKU (Unique)</Label>
+                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" placeholder="AUTO_GEN" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} disabled={!!editingProduct} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
+                                    <div className="flex gap-2">
+                                        <Input type="number" min="0" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} required />
+                                        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
+                                            <input type="checkbox" id="isService" checked={formData.isService} onChange={e => setFormData({ ...formData, isService: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                                            <label htmlFor="isService" className="text-[10px] font-black text-slate-500 uppercase">Service</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Brand / Manufacturer</Label>
+                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" placeholder="e.g. Klypso" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
+                                </div>
+                                <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
+                                    <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Min Alert Stock Threshold</Label>
+                                    <Input type="number" min="0" className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black" value={formData.minStockLevel} onChange={e => setFormData({ ...formData, minStockLevel: Number(e.target.value) })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tags (Comma Separated)</Label>
+                                    <div className="relative group">
+                                        <Tags className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                        <Input className="pl-9 bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" placeholder="Tag 1, Tag 2..." value={formData.tags} onChange={e => setFormData({ ...formData, tags: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Primary Category</Label>
+                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Selling Price (₹) <span className="text-rose-500">*</span></Label>
+                                    <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Procurement Cost</Label>
+                                    <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">HSN Classification</Label>
+                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono uppercase" placeholder="e.g. 8517" value={formData.hsnCode} onChange={e => setFormData({ ...formData, hsnCode: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tax (GST %) Rate</Label>
+                                    <Input type="number" min="0" max="100" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" placeholder="18" value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} />
+                                </div>
+
+                                <div className="lg:col-span-4 space-y-2">
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Description & Attributes</Label>
+                                    <textarea
+                                        className="w-full bg-slate-50 border-slate-200 text-slate-900 rounded-xl p-4 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm transition-all"
+                                        placeholder="Detailed specifications, warranty info, etc."
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset SKU (Unique)</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" placeholder="AUTO_GEN" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Initial Inventory <span className="text-rose-500">*</span></Label>
-                                <Input type="number" min="0" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Category</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Selling Price (₹) <span className="text-rose-500">*</span></Label>
-                                <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Procurement Cost</Label>
-                                <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">HSN Classification</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono uppercase" placeholder="e.g. 8517" value={formData.hsnCode} onChange={e => setFormData({ ...formData, hsnCode: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tax (GST %) Rate</Label>
-                                <Input type="number" min="0" max="100" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" placeholder="18" value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} />
-                            </div>
-                            <div className="md:col-span-2 lg:col-span-4 flex justify-end gap-3 pt-6 border-t border-slate-100 mt-2">
-                                <Button type="button" variant="ghost" className="text-slate-400 hover:text-slate-600 font-bold rounded-xl" onClick={() => setShowForm(false)}>Abort</Button>
-                                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10">
-                                    {isSubmitting ? "Saving..." : "Add Product"}
+
+                            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-2">
+                                <Button type="button" variant="ghost" className="text-slate-400 hover:text-slate-600 font-bold rounded-xl" onClick={() => { setShowForm(false); setEditingProduct(null); }}>Abort</Button>
+                                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10">
+                                    {isSubmitting ? "Syncing..." : editingProduct ? "Commit Changes" : "Register Product"}
                                 </Button>
                             </div>
                         </form>
@@ -356,40 +467,58 @@ export default function InventoryPage() {
                                     <TableCell className="pl-8 font-black text-[10px] text-blue-600 tracking-widest bg-slate-50/30 group-hover:bg-blue-50/30 transition-all">#{p.sku.toUpperCase()}</TableCell>
                                     <TableCell className="font-black text-slate-900 tracking-tight">{p.name}</TableCell>
                                     <TableCell>
-                                        <div className="flex flex-col gap-1.5">
-                                            <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-md border-none w-fit uppercase tracking-tighter shadow-none">{p.category || "GENERAL"}</Badge>
+                                        <div className="flex flex-col gap-1.5 min-w-[140px]">
+                                            <div className="flex flex-wrap gap-1">
+                                                <Badge variant="secondary" className="bg-blue-50 text-blue-600 font-black text-[9px] rounded-md border-none uppercase tracking-tighter shadow-none">
+                                                    {p.category || "GENERAL"}
+                                                </Badge>
+                                                {p.tags?.split(',').map((tag: string, idx: number) => (
+                                                    <Badge key={idx} variant="outline" className="bg-slate-50 text-slate-400 font-bold text-[8px] rounded-md border-slate-200 uppercase tracking-tighter">
+                                                        {tag.trim()}
+                                                    </Badge>
+                                                ))}
+                                            </div>
                                             {p.hsnCode && <span className="text-[10px] text-slate-400 font-bold tracking-tighter">HSN {p.hsnCode} • {p.gstRate}% TAX</span>}
+                                            {p.brand && <span className="text-[9px] text-blue-400 font-black uppercase tracking-widest">Brand: {p.brand}</span>}
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col gap-2 min-w-[140px]">
                                             <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
                                                 <span className="text-slate-400">{p.stock} UNITS</span>
-                                                <span className={p.stock <= 10 ? "text-rose-500" : "text-emerald-600"}>
-                                                    {p.stock <= 10 ? "CRITICAL" : "HEALTHY"}
+                                                <span className={Number(p.stock) <= Number(p.minStockLevel || 10) ? "text-rose-500 animate-pulse" : "text-emerald-600"}>
+                                                    {Number(p.stock) <= Number(p.minStockLevel || 10) ? "LOW STOCK" : "OPTIMUM"}
                                                 </span>
                                             </div>
                                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                                                 <div
-                                                    className={`h-full transition-all duration-1000 ${p.stock <= 10 ? 'bg-rose-500' : 'bg-blue-600'}`}
-                                                    style={{ width: `${Math.min(100, (p.stock / 50) * 100)}%` }}
+                                                    className={`h-full transition-all duration-1000 ${Number(p.stock) <= Number(p.minStockLevel || 10) ? 'bg-rose-500' : 'bg-blue-600'}`}
+                                                    style={{ width: `${Math.min(100, (Number(p.stock) / Math.max(50, Number(p.minStockLevel || 1) * 2)) * 100)}%` }}
                                                 />
                                             </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-slate-600 font-bold">₹{Number(p.price).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</TableCell>
                                     <TableCell className="text-right pr-8">
-                                        <div className="flex items-center justify-end gap-6">
+                                        <div className="flex items-center justify-end gap-2">
                                             <div className="font-black text-slate-900 tracking-tighter">
                                                 ₹{(Number(p.price) * p.stock).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </div>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-9 w-9 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                className="h-8 w-8 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                onClick={() => startEdit(p)}
+                                            >
+                                                <Edit3 className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                                                 onClick={() => handleDelete(p.id)}
                                             >
-                                                <Plus className="h-4 w-4 rotate-45" />
+                                                <Plus className="h-3.5 w-3.5 rotate-45" />
                                             </Button>
                                         </div>
                                     </TableCell>

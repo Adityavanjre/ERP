@@ -209,6 +209,13 @@ model Product {
   costPrice          Decimal             @default(0.00)
   stock              Decimal             @default(0.00)
   category           String?
+  tags               String?
+  brand              String?
+  weight             String?
+  dimensions         String?
+  minStockLevel      Decimal             @default(0.00)
+  supplierName       String?
+  isService          Boolean             @default(false)
   hsnCode            String?
   gstRate            Decimal             @default(0.00)
   createdAt          DateTime            @default(now())
@@ -230,6 +237,8 @@ model Product {
   @@unique([tenantId, barcode])
   @@index([tenantId, name])
   @@index([tenantId, category])
+  @@index([tenantId, tags])
+  @@index([tenantId, brand])
   @@index([tenantId, skuAlias])
   @@index([tenantId, hsnCode])
 

@@ -83,11 +83,13 @@ export class InventoryService {
         tenantId,
         isDeleted: false,
         OR: [
-            { name: { contains: search } },
-            { sku: { contains: search } },
-            { category: { contains: search } },
+            { name: { contains: search, mode: 'insensitive' } },
+            { sku: { contains: search, mode: 'insensitive' } },
+            { category: { contains: search, mode: 'insensitive' } },
+            { tags: { contains: search, mode: 'insensitive' } },
+            { brand: { contains: search, mode: 'insensitive' } },
             // Include barcode partial match too, in case exact match failed or wasn't unique (though barcode should be unique)
-            { barcode: { contains: search } },
+            { barcode: { contains: search, mode: 'insensitive' } },
         ]
     };
 
@@ -308,8 +310,12 @@ export class InventoryService {
               data: {
                 name: data.name || existing.name,
                 category: data.category || existing.category,
+                tags: data.tags || existing.tags,
+                brand: data.brand || existing.brand,
+                description: data.description || existing.description,
                 price: data.price ? new Decimal(data.price) : existing.price,
                 stock: data.stock ? { increment: new Decimal(data.stock) as any } : undefined,
+                minStockLevel: data.minStockLevel ? new Decimal(data.minStockLevel) : existing.minStockLevel,
               },
             });
             results.updated++;
@@ -321,8 +327,12 @@ export class InventoryService {
                 barcode,
                 sku: sku || `SKU-${Date.now()}`,
                 category: data.category || 'Uncategorized',
+                tags: data.tags,
+                brand: data.brand,
+                description: data.description,
                 price: new Decimal(data.price || 0),
                 stock: new Decimal(data.stock || 0) as any,
+                minStockLevel: new Decimal(data.minStockLevel || 0),
                 gstRate: new Decimal(data.gstRate || 18),
               },
             });
@@ -353,13 +363,15 @@ export class InventoryService {
       where: { tenantId, isDeleted: false },
     });
 
-    const lowStock = await this.prisma.product.count({
-      where: {
-        tenantId,
-        isDeleted: false,
-        stock: { lt: 10 },
-      },
+    // Calculate low stock items based on custom thresholds
+    const allProducts = await this.prisma.product.findMany({
+      where: { tenantId, isDeleted: false },
+      select: { stock: true, minStockLevel: true }
     });
+
+    const lowStock = allProducts.filter(p => 
+      new Decimal(p.stock as any).lessThan(new Decimal(p.minStockLevel as any))
+    ).length;
 
     // Calculate total inventory value (stock * price)
     const products = await this.prisma.product.findMany({
