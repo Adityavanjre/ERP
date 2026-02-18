@@ -11,6 +11,8 @@ import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { TenantType, PlanType, Role, Prisma } from '@prisma/client';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { MailService } from '../kernel/services/mail.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,7 @@ export class AuthService {
     private config: ConfigService,
     private readonly accountingService: AccountingService,
     private readonly tenantContext: TenantContextService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -139,8 +142,8 @@ export class AuthService {
     // 4. B2B Context: Check if user is a Customer or Supplier (Context-Aware)
     const [customer, supplier] = await this.tenantContext.run(membership.tenantId, async () => {
       return Promise.all([
-        this.prisma.customer.findUnique({ where: { userId: user.id } }),
-        this.prisma.supplier.findUnique({ where: { userId: user.id } }),
+        this.prisma.customer.findFirst({ where: { userId: user.id, isDeleted: false, tenantId: membership.tenantId } }),
+        this.prisma.supplier.findFirst({ where: { userId: user.id, isDeleted: false, tenantId: membership.tenantId } }),
       ]);
     });
 
@@ -167,4 +170,60 @@ export class AuthService {
       },
     };
   }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ 
+      where: { email },
+      include: { memberships: true }
+    });
+    
+    if (!user || user.memberships.length === 0) {
+      // Security: Don't reveal if user exists or is inactive
+      return { message: 'If an account exists with this email, a reset link has been sent.' };
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1); // 1 hour expiry
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetPasswordToken: token,
+        resetPasswordExpires: expires,
+      },
+    });
+
+    await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName || '');
+
+    return { message: 'If an account exists with this email, a reset link has been sent.' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: { gte: new Date() },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const salt = await bcrypt.genSalt();
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
+    });
+
+    return { success: true, message: 'Password reset successful' };
+  }
 }
+

@@ -51,29 +51,51 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [authorized, setAuthorized] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem("nx_token");
-        if (!token) {
+        const handleSessionExpired = () => {
+            setAuthorized(false);
             router.push("/login");
-            return;
-        }
+        };
 
-        const role = getRoleFromToken();
-        if (!role) {
-            router.push("/login");
-            return;
-        }
+        window.addEventListener('kernel-session-expired', handleSessionExpired);
 
-        // Check if user has access to the current route
-        if (!isRouteAllowed(pathname, role)) {
-            router.push("/dashboard");
-            return;
-        }
+        const checkAuth = () => {
+            const token = localStorage.getItem("nx_token");
+            if (!token) {
+                router.push("/login");
+                return;
+            }
 
-        setAuthorized(true);
+            const role = getRoleFromToken();
+            if (!role) {
+                router.push("/login");
+                return;
+            }
+
+            // Check if user has access to the current route
+            if (!isRouteAllowed(pathname, role)) {
+                router.push("/dashboard");
+                return;
+            }
+
+            setAuthorized(true);
+        };
+
+        checkAuth();
+
+        return () => {
+            window.removeEventListener('kernel-session-expired', handleSessionExpired);
+        };
     }, [router, pathname]);
 
     if (!authorized) {
-        return <div className="flex bg-slate-50 h-screen w-screen items-center justify-center text-slate-400 text-sm font-medium">Verifying access...</div>;
+        return (
+            <div className="flex bg-slate-50 h-screen w-screen items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-4 border-[#C5A059] border-t-transparent rounded-full animate-spin" />
+                    <span className="text-slate-400 text-sm font-medium">Verifying access...</span>
+                </div>
+            </div>
+        );
     }
 
     return <>{children}</>;

@@ -40,8 +40,8 @@ export class InvoiceService {
       const invoiceItemsData = [];
 
       const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
-      const customer = await tx.customer.findUnique({
-        where: { id: customerId },
+      const customer = await tx.customer.findFirst({
+        where: { id: customerId, tenantId, isDeleted: false },
       });
 
       const isInterState =
@@ -54,8 +54,8 @@ export class InvoiceService {
       );
 
       for (const item of sortedItems) {
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
+        const product = await tx.product.findFirst({
+          where: { id: item.productId, tenantId, isDeleted: false },
         });
         if (!product)
           throw new NotFoundException(`Product ${item.productId} not found`);
@@ -82,8 +82,8 @@ export class InvoiceService {
           });
 
           if (updateResult.count === 0) {
-            const p = await tx.product.findUnique({
-              where: { id: item.productId },
+            const p = await tx.product.findFirst({
+              where: { id: item.productId, tenantId },
             });
             throw new BadRequestException(
               `Insufficient stock for ${product.name}. Requested: ${qty}, Available: ${p?.stock}`,
@@ -108,14 +108,14 @@ export class InvoiceService {
               where: {
                 productId_warehouseId: {
                   productId: item.productId,
-                  warehouseId: warehouse.id
-                }
-              }
+                  warehouseId: warehouse.id,
+                },
+              },
             });
 
             if (existingLoc) {
-              await tx.stockLocation.update({
-                where: { id: existingLoc.id },
+              await tx.stockLocation.updateMany({
+                where: { id: existingLoc.id, warehouse: { tenantId } },
                 data: { quantity: { decrement: qty } }
               });
             } else {
@@ -269,13 +269,6 @@ export class InvoiceService {
         transactionsList.push({ accountId: taxAccount.id, type: 'Credit', amount: totalGST });
       }
 
-
-
-
-      if (totalGST.greaterThan(0) && taxAccount) {
-        transactionsList.push({ accountId: taxAccount.id, type: 'Credit', amount: totalGST });
-      }
-
       // COGS Ledger Entry
       if (totalCOGS.greaterThan(0)) {
          const cogsAccount = await tx.account.findFirst({
@@ -319,7 +312,7 @@ export class InvoiceService {
       );
 
       for (const t of balanceUpdates) {
-        const acct = await tx.account.findUnique({ where: { id: t.accountId } });
+        const acct = await tx.account.findFirst({ where: { id: t.accountId, tenantId } });
         if (!acct) continue;
 
         const balanceChange = new Decimal(t.amount);
@@ -332,8 +325,8 @@ export class InvoiceService {
 
         const finalChange = isNormalBalance ? balanceChange : balanceChange.negated();
 
-        await tx.account.update({
-          where: { id: t.accountId },
+        await tx.account.updateMany({
+          where: { id: t.accountId, tenantId },
           data: { balance: { increment: finalChange } },
         });
       }
@@ -370,8 +363,8 @@ export class InvoiceService {
     // Audit Guard: Check lock for NEW record date if changed
     if (data.issueDate) await this.ledger.checkPeriodLock(tenantId, data.issueDate);
 
-    return this.prisma.invoice.update({
-      where: { id },
+    return this.prisma.invoice.updateMany({
+      where: { id, tenantId },
       data,
     });
   }
@@ -386,8 +379,8 @@ export class InvoiceService {
 
     // Hard delete for now as per hardening requirements (cascade test)
     // In production, consider soft-delete if preferred.
-    return this.prisma.invoice.delete({
-      where: { id },
+    return this.prisma.invoice.deleteMany({
+      where: { id, tenantId },
     });
   }
 

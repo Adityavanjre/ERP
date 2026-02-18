@@ -3,69 +3,111 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   UseGuards,
-  Req,
+  Query,
+  UseInterceptors,
+  Patch,
 } from '@nestjs/common';
 import { ManufacturingService } from './manufacturing.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/constants/permissions';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('manufacturing')
+@UseInterceptors(AuditInterceptor)
 export class ManufacturingController {
   constructor(private readonly mfgService: ManufacturingService) {}
 
   // BOMs
   @Post('boms')
-  createBOM(@Req() req: any, @Body() dto: any) {
-    return this.mfgService.createBOM(req.user.tenantId, dto);
+  @Permissions(Permission.ADJUST_STOCK)
+  createBOM(@CurrentUser() user: any, @Body() dto: any) {
+    return this.mfgService.createBOM(user.tenantId, dto);
   }
 
   @Get('boms')
-  getBOMs(@Req() req: any) {
-    return this.mfgService.getBOMs(req.user.tenantId);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getBOMs(@CurrentUser() user: any) {
+    return this.mfgService.getBOMs(user.tenantId);
+  }
+
+  @Get('boms/:id')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getBOMDetails(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.mfgService.getBOMDetails(user.tenantId, id);
   }
 
   @Get('boms/:id/explode')
-  explodeBOM(@Param('id') id: string) {
-    return this.mfgService.explodeBOM(id);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  async explodeBOM(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Query('quantity') qty: string,
+  ) {
+    return this.mfgService.explodeBOM(user.tenantId, id, parseFloat(qty) || 1);
+  }
+
+  @Get('boms/:id/cost')
+  @Permissions(Permission.VIEW_REPORTS)
+  async getBOMCost(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.mfgService.getBOMCost(user.tenantId, id);
   }
 
   // Work Orders
   @Post('work-orders')
-  createWO(@Req() req: any, @Body() dto: any) {
-    return this.mfgService.createWorkOrder(req.user.tenantId, dto);
+  @Permissions(Permission.ADJUST_STOCK)
+  createWO(@CurrentUser() user: any, @Body() dto: any) {
+    return this.mfgService.createWorkOrder(user.tenantId, dto);
   }
 
   @Get('work-orders')
-  getWOs(@Req() req: any) {
-    return this.mfgService.getWorkOrders(req.user.tenantId);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getWOs(@CurrentUser() user: any) {
+    return this.mfgService.getWorkOrders(user.tenantId);
   }
 
   @Patch('work-orders/:id/status')
+  @Permissions(Permission.ADJUST_STOCK)
   updateWOStatus(
-    @Req() req: any,
+    @CurrentUser() user: any,
     @Param('id') id: string,
     @Body('status') status: any,
   ) {
-    return this.mfgService.updateWorkOrderStatus(req.user.tenantId, id, status);
+    return this.mfgService.updateWorkOrderStatus(user.tenantId, id, status);
   }
 
   @Get('work-orders/:id/shortages')
-  checkShortages(@Req() req: any, @Param('id') id: string) {
-    // Need to fetch WO first to get BOM and quantity
-    return this.mfgService.checkShortagesFromWO(req.user.tenantId, id);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  checkShortages(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.mfgService.checkShortagesFromWO(user.tenantId, id);
   }
 
   @Post('work-orders/:id/complete')
-  completeWO(@Req() req: any, @Param('id') id: string) {
-    return this.mfgService.completeWorkOrder(req.user.tenantId, id);
+  @Permissions(Permission.ADJUST_STOCK)
+  completeWO(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body('warehouseId') warehouseId?: string,
+  ) {
+    return this.mfgService.completeWorkOrder(user.tenantId, id, warehouseId);
   }
 
-  @Get('boms/:id/cost')
-  getCost(@Param('id') id: string) {
-    return this.mfgService.getBOMCost(id);
+  // Machines
+  @Post('machines')
+  @Permissions(Permission.ADJUST_STOCK)
+  createMachine(@CurrentUser() user: any, @Body() data: any) {
+    return this.mfgService.createMachine(user.tenantId, data);
+  }
+
+  @Get('machines')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getMachines(@CurrentUser() user: any) {
+    return this.mfgService.getMachines(user.tenantId);
   }
 }

@@ -102,14 +102,20 @@ export class ProjectService {
     };
   }
   async deleteProject(tenantId: string, id: string) {
+    const project = await this.prisma.project.findFirst({
+      where: { id, tenantId },
+    });
+    if (!project) throw new Error('Project not found');
+
     await this.audit.log({
       tenantId,
       action: 'DELETE',
       resource: 'Project',
-      details: { id },
+      details: { id, name: project.name },
     });
-    return this.prisma.project.delete({
-      where: { id }, // In a real scenario, should check tenantId too
+
+    return this.prisma.project.deleteMany({
+      where: { id, tenantId },
     });
   }
 }

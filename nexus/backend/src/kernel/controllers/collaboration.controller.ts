@@ -8,8 +8,8 @@ export class CollaborationController {
   constructor(private readonly collaborationService: CollaborationService) {}
 
   @Get('comments/:type/:id')
-  async getComments(@Param('type') type: string, @Param('id') id: string) {
-    return this.collaborationService.getComments(type, id);
+  async getComments(@Request() req: any, @Param('type') type: string, @Param('id') id: string) {
+    return this.collaborationService.getComments(req.user.tenantId, type, id);
   }
 
   @Post('comments')

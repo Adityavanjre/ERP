@@ -17,18 +17,23 @@ export class SalesService {
 
     // 0. Idempotency Check
     if (idempotencyKey) {
-        const existingup = await this.prisma.order.findUnique({
-            where: { idempotencyKey },
+        const existingOrder = await this.prisma.order.findUnique({
+            where: { 
+                tenantId_idempotencyKey: {
+                    tenantId,
+                    idempotencyKey
+                }
+            },
         });
-        if (existingup) return existingup;
+        if (existingOrder) return existingOrder;
     }
 
     // 1. Create Order & Invoice within a single transaction
     return this.prisma.$transaction(async (tx) => {
       // Validate customer exists
       if (customerId) {
-        const customer = await tx.customer.findUnique({
-          where: { id: customerId },
+        const customer = await tx.customer.findFirst({
+          where: { id: customerId, tenantId, isDeleted: false },
         });
         if (!customer)
           throw new BadRequestException(`Customer ${customerId} not found`);

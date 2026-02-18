@@ -279,7 +279,7 @@ export class TallyService {
       this.prisma.auditLog.findMany({
         where: { tenantId, createdAt: { gte: startDate, lte: endDate } },
       }),
-      this.prisma.product.findMany({ where: { tenantId, stock: { lt: 0 } } }),
+      this.prisma.product.findMany({ where: { tenantId, stock: { lt: 0 }, isDeleted: false } }),
     ]);
 
     return {

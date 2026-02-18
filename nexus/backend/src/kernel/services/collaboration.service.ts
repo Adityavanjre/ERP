@@ -11,9 +11,9 @@ export class CollaborationService {
     private audit: AuditService,
   ) {}
 
-  async getComments(resourceType: string, resourceId: string) {
+  async getComments(tenantId: string, resourceType: string, resourceId: string) {
     return this.prisma.comment.findMany({
-      where: { resourceType, resourceId },
+      where: { tenantId, resourceType, resourceId },
       orderBy: { createdAt: 'desc' },
       include: {
         replies: {

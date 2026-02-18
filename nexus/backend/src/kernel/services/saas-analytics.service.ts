@@ -72,6 +72,7 @@ export class SaasAnalyticsService {
       recentInvoices,
       ownerLogin,
       periodLock,
+      activeCustomers,
     ] = await Promise.all([
       // 1. Efficient Payment Aggregation
       this.prisma.invoice.aggregate({
@@ -91,7 +92,7 @@ export class SaasAnalyticsService {
         where: { tenantId },
         orderBy: { createdAt: 'desc' },
       }),
-      // 4. Recent Invoices for Entry Lag
+      // 4. Recent Invoices for Entry Lag (Original 4, now 5th in array)
       this.prisma.auditLog.findMany({
         where: {
           tenantId,
@@ -111,7 +112,12 @@ export class SaasAnalyticsService {
       // 6. Period Lock status
       (this.prisma as any).periodLock.findFirst({
         where: { tenantId, month: today.getMonth() + 1, year: today.getFullYear() }
-      })
+      }),
+      // 7. Active Customers (Moved to end for indexing safety)
+      this.prisma.customer.findMany({
+        where: { tenantId, isDeleted: false },
+        select: { id: true, firstName: true, lastName: true, createdAt: true },
+      }),
     ]);
 
     // Safety for Zero Data
@@ -219,6 +225,7 @@ export class SaasAnalyticsService {
         taggingRatio: taggingRatio.toFixed(1) + '%',
         todayAdjustments: adjustments,
         lastSeen: lastAction?.createdAt || null,
+        totalCustomers: activeCustomers.length,
         periodLockStatus: periodLock ? 'Locked' : 'Vulnerable',
       },
       interventions: this.getInterventionStrategy(status, healthScore),

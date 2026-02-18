@@ -14,7 +14,7 @@ export class ForecastingService {
 
     // 1. Get average settlement lag per customer
     const customers = await this.prisma.customer.findMany({
-      where: { tenantId },
+      where: { tenantId, isDeleted: false },
       include: {
         invoices: {
           where: { status: 'Paid' },

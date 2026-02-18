@@ -36,11 +36,10 @@ services:
     rootDir: agency/server
     buildCommand: npm install
     startCommand: node index.js
+    healthCheckPath: /
     envVars:
       - key: MONGO_URI
         sync: false
-      - key: PORT
-        value: 5000
 
   - type: web
     name: klypso-agency-viewer
@@ -49,9 +48,7 @@ services:
     rootDir: agency/client
     buildCommand: npm install && npm run build
     startCommand: npx serve -s dist -l $PORT
-    envVars:
-      - key: PORT
-        value: 5000
+    healthCheckPath: /
 
   # --- KLYPSO NEXUS ---
   - type: web
@@ -59,8 +56,9 @@ services:
     env: node
     plan: free
     rootDir: nexus/backend
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma db push && node dist/main.js
+    healthCheckPath: /api/health/liveness
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -68,8 +66,6 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
-      - key: PORT
-        value: 3001
 
   - type: web
     name: nexus-frontend
@@ -78,9 +74,8 @@ services:
     rootDir: nexus/frontend
     buildCommand: npm install && npm run build
     startCommand: npm start
+    healthCheckPath: /portal/dashboard
     envVars:
-      - key: PORT
-        value: 3000
       - key: NEXUS_BACKEND_URL
         value: https://nexus-backend-3ukg.onrender.com
 

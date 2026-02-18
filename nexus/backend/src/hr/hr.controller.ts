@@ -12,10 +12,14 @@ import {
 import { HrService } from './hr.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/constants/permissions';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { LeaveStatus } from '@prisma/client';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
 @Controller('hr')
 export class HrController {
@@ -23,58 +27,69 @@ export class HrController {
 
   // Departments
   @Post('departments')
-  createDept(@Req() req: any, @Body() dto: any) {
-    return this.hrService.createDepartment(req.user.tenantId, dto);
+  @Permissions(Permission.MANAGE_USERS)
+  createDept(@CurrentUser() user: any, @Body() dto: any) {
+    return this.hrService.createDepartment(user.tenantId, dto);
   }
 
   @Get('departments')
-  getDepts(@Req() req: any) {
-    return this.hrService.getDepartments(req.user.tenantId);
+  @Permissions(Permission.VIEW_PRODUCTS) // General operational view
+  getDepts(@CurrentUser() user: any) {
+    return this.hrService.getDepartments(user.tenantId);
   }
 
   // Employees
   @Post('employees')
-  createEmployee(@Req() req: any, @Body() dto: any) {
-    return this.hrService.createEmployee(req.user.tenantId, dto);
+  @Permissions(Permission.MANAGE_USERS)
+  createEmployee(@CurrentUser() user: any, @Body() dto: any) {
+    return this.hrService.createEmployee(user.tenantId, dto);
   }
 
   @Get('employees')
-  getEmployees(@Req() req: any) {
-    return this.hrService.getEmployees(req.user.tenantId);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getEmployees(@CurrentUser() user: any) {
+    return this.hrService.getEmployees(user.tenantId);
   }
 
   // Leaves
   @Post('leaves')
-  requestLeave(@Body() dto: any) {
-    return this.hrService.requestLeave(dto);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  requestLeave(@CurrentUser() user: any, @Body() dto: any) {
+    return this.hrService.requestLeave(user.tenantId, dto);
   }
 
   @Get('leaves')
-  getLeaves(@Req() req: any) {
-    return this.hrService.getLeaves(req.user.tenantId);
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getLeaves(@CurrentUser() user: any) {
+    return this.hrService.getLeaves(user.tenantId);
   }
 
   @Patch('leaves/:id/status')
+  @Permissions(Permission.MANAGE_USERS)
   updateLeaveStatus(
+    @CurrentUser() user: any,
     @Param('id') id: string,
-    @Body('status') status: LeaveStatus,
+    @Body('status') status: any,
   ) {
-    return this.hrService.updateLeaveStatus(id, status);
+    return this.hrService.updateLeaveStatus(user.tenantId, id, status);
   }
 
   // Payroll
   @Post('payroll')
-  generatePayroll(@Body() dto: any) {
-    return this.hrService.generatePayroll(dto);
+  @Permissions(Permission.VIEW_REPORTS)
+  generatePayroll(@CurrentUser() user: any, @Body() dto: any) {
+    return this.hrService.generatePayroll(user.tenantId, dto);
   }
 
   @Get('payroll')
-  getPayrolls(@Req() req: any) {
-    return this.hrService.getPayrolls(req.user.tenantId);
+  @Permissions(Permission.VIEW_REPORTS)
+  getPayrolls(@CurrentUser() user: any) {
+    return this.hrService.getPayrolls(user.tenantId);
   }
 
   @Get('stats')
-  getStats(@Req() req: any) {
-    return this.hrService.getHrStats(req.user.tenantId);
+  @Permissions(Permission.VIEW_REPORTS)
+  getStats(@CurrentUser() user: any) {
+    return this.hrService.getHrStats(user.tenantId);
   }
 }

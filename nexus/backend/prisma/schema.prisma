@@ -121,9 +121,11 @@ model User {
   fullName     String?
   avatarUrl    String?
   isSuperAdmin Boolean      @default(false)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  auditLogs    AuditLog[]
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  auditLogs            AuditLog[]
   memberships  TenantUser[]
 }
 
@@ -505,10 +507,7 @@ model Payment {
   tenant         Tenant      @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, date])
-  @@index([customerId])
-  @@index([invoiceId])
   @@index([tenantId, customerId, date])
-  @@index([tenantId, invoiceId])
   @@unique([tenantId, idempotencyKey])
 }
 

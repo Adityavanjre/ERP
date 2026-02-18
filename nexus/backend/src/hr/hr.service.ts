@@ -52,13 +52,18 @@ export class HrService {
   }
 
   // --- Leave Management ---
-  async requestLeave(data: any) {
+  async requestLeave(tenantId: string, data: any) {
+    const employee = await this.prisma.employee.findFirst({
+      where: { id: data.employeeId, tenantId },
+    });
+    if (!employee) throw new Error('Employee not found in this tenant context');
+
     const leave = await this.prisma.leave.create({
       data,
       include: { employee: true },
     });
     await this.audit.log({
-      tenantId: leave.employee.tenantId,
+      tenantId,
       action: 'CREATE',
       resource: 'Leave',
       details: { id: leave.id, type: leave.type, employeeId: leave.employeeId },
@@ -76,24 +81,36 @@ export class HrService {
     });
   }
 
-  async updateLeaveStatus(id: string, status: LeaveStatus) {
-    const leave = await this.prisma.leave.update({
-      where: { id },
-      data: { status },
+  async updateLeaveStatus(tenantId: string, id: string, status: LeaveStatus) {
+    const leave = await this.prisma.leave.findFirst({
+      where: { id, employee: { tenantId } },
       include: { employee: true },
     });
+    if (!leave) throw new Error('Leave record not found in this tenant');
+
+    await this.prisma.leave.updateMany({
+      where: { id, employee: { tenantId } },
+      data: { status },
+    });
+
     await this.audit.log({
-      tenantId: leave.employee.tenantId,
+      tenantId,
       action: 'UPDATE_STATUS',
       resource: 'Leave',
       details: { id, status, employeeId: leave.employeeId },
     });
-    return leave;
+    return { ...leave, status };
   }
 
   // --- Payroll ---
-  async generatePayroll(data: any) {
+  async generatePayroll(tenantId: string, data: any) {
     const { employeeId, bonuses, deductions, basicSalary } = data;
+    
+    const employee = await this.prisma.employee.findFirst({
+      where: { id: employeeId, tenantId },
+    });
+    if (!employee) throw new Error('Employee not found in this tenant context');
+
     const netPay = Number(basicSalary) + Number(bonuses) - Number(deductions);
 
     const payroll = await this.prisma.payroll.create({
@@ -105,7 +122,7 @@ export class HrService {
     });
 
     await this.audit.log({
-      tenantId: payroll.employee.tenantId,
+      tenantId,
       action: 'GENERATE',
       resource: 'Payroll',
       details: { id: payroll.id, employeeId, netPay },

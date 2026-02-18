@@ -23,6 +23,7 @@ import { ForecastingService } from './services/forecasting.service';
 import { B2BController } from './controllers/b2b.controller';
 import { PluginManager } from './services/plugin.manager';
 import { PluginController } from './controllers/plugin.controller';
+import { MailService } from './services/mail.service';
 
 import { KernelController } from './kernel.controller';
 
@@ -55,6 +56,7 @@ import { KernelController } from './kernel.controller';
     ForecastingService,
     SaasAnalyticsService,
     PluginManager,
+    MailService,
   ],
   exports: [
     RegistryService,
@@ -69,6 +71,7 @@ import { KernelController } from './kernel.controller';
     ApiKeyService,
     ForecastingService,
     PluginManager,
+    MailService,
   ],
 })
 export class KernelModule {}

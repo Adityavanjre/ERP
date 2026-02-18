@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { KernelModule } from '../kernel/kernel.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
@@ -13,6 +14,7 @@ import { AccountingModule } from '../accounting/accounting.module';
     PrismaModule,
     PassportModule,
     forwardRef(() => AccountingModule),
+    forwardRef(() => KernelModule),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'supersecreterpkey',

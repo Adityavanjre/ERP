@@ -38,7 +38,17 @@ export class WarehouseService {
     notes?: string;
   }) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Log the movement
+      // 1. Verify existence and ownership
+      const [warehouse, product] = await Promise.all([
+        tx.warehouse.findFirst({ where: { id: data.warehouseId, tenantId } }),
+        tx.product.findFirst({ where: { id: data.productId, tenantId } }),
+      ]);
+
+      if (!warehouse || !product) {
+        throw new NotFoundException('Warehouse or Product not found in this tenant context.');
+      }
+
+      // 2. Log the movement
       const movement = await tx.stockMovement.create({
         data: {
           ...data,
@@ -67,8 +77,8 @@ export class WarehouseService {
       });
 
       // 3. Update global product stock cache
-      await tx.product.update({
-        where: { id: data.productId },
+      await tx.product.updateMany({
+        where: { id: data.productId, tenantId },
         data: {
           stock: {
             [data.type === MovementType.IN ? 'increment' : 'decrement']: data.quantity,
@@ -93,9 +103,9 @@ export class WarehouseService {
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify existence
       const [fromWH, toWH, product] = await Promise.all([
-        tx.warehouse.findUnique({ where: { id: data.fromWarehouseId } }),
-        tx.warehouse.findUnique({ where: { id: data.toWarehouseId } }),
-        tx.product.findUnique({ where: { id: data.productId } }),
+        tx.warehouse.findFirst({ where: { id: data.fromWarehouseId, tenantId } }),
+        tx.warehouse.findFirst({ where: { id: data.toWarehouseId, tenantId } }),
+        tx.product.findFirst({ where: { id: data.productId, tenantId } }),
       ]);
 
       if (!fromWH || !toWH || !product) throw new NotFoundException('Warehouse or Product not found');
@@ -108,8 +118,8 @@ export class WarehouseService {
         throw new Error(`Insufficient stock in warehouse ${fromWH.name}`);
       }
 
-      await tx.stockLocation.update({
-        where: { id: fromLoc.id },
+      await tx.stockLocation.updateMany({
+        where: { id: fromLoc.id, warehouse: { tenantId } },
         data: { quantity: { decrement: qty } }
       });
 

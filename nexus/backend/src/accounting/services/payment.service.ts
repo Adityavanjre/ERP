@@ -25,8 +25,11 @@ export class PaymentService {
       await this.ledger.checkPeriodLock(tenantId, data.date || new Date(), tx);
 
       if (data.idempotencyKey) {
-        const existing = await tx.payment.findUnique({
-          where: { idempotencyKey: data.idempotencyKey },
+        const existing = await tx.payment.findFirst({
+          where: { 
+            tenantId,
+            idempotencyKey: data.idempotencyKey
+          },
         });
         if (existing) return existing;
       }
@@ -78,8 +81,8 @@ export class PaymentService {
           const totalAmt = new Decimal(invoice.totalAmount);
           const isFullyPaid = newAmountPaid.greaterThanOrEqualTo(totalAmt.sub(new Decimal('0.01')));
 
-          await tx.invoice.update({
-            where: { id: invoice.id },
+          await tx.invoice.updateMany({
+            where: { id: invoice.id, tenantId },
             data: { amountPaid: newAmountPaid, status: isFullyPaid ? InvoiceStatus.Paid : InvoiceStatus.Partial },
           });
         }
@@ -100,8 +103,8 @@ export class PaymentService {
           },
         });
 
-        await tx.account.update({ where: { id: bankAccount.id }, data: { balance: { increment: data.amount } } });
-        await tx.account.update({ where: { id: arAccount.id }, data: { balance: { decrement: data.amount } } });
+        await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { increment: data.amount } } });
+        await tx.account.updateMany({ where: { id: arAccount.id, tenantId }, data: { balance: { decrement: data.amount } } });
 
         await tx.auditLog.create({
           data: {
@@ -142,8 +145,8 @@ export class PaymentService {
           },
         });
 
-        await tx.account.update({ where: { id: apAccount.id }, data: { balance: { decrement: data.amount } } });
-        await tx.account.update({ where: { id: bankAccount.id }, data: { balance: { decrement: data.amount } } });
+        await tx.account.updateMany({ where: { id: apAccount.id, tenantId }, data: { balance: { decrement: data.amount } } });
+        await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { decrement: data.amount } } });
       }
 
       return payment;
@@ -161,8 +164,8 @@ export class PaymentService {
     // Audit Guard: Check lock for NEW record date if changed
     if (data.date) await this.ledger.checkPeriodLock(tenantId, data.date);
 
-    return this.prisma.payment.update({
-      where: { id },
+    return this.prisma.payment.updateMany({
+      where: { id, tenantId },
       data,
     });
   }
@@ -176,8 +179,8 @@ export class PaymentService {
     await this.ledger.checkPeriodLock(tenantId, pay.date);
 
     // In double-entry, we don't just "delete". We must reverse or mark as cancelled.
-    return this.prisma.payment.update({
-      where: { id },
+    return this.prisma.payment.updateMany({
+      where: { id, tenantId },
       data: { notes: `CANCELLED: ${pay.notes || ''}`.trim() },
     });
   }

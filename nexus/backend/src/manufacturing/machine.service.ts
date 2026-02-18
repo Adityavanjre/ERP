@@ -44,8 +44,8 @@ export class MachineService {
       throw new NotFoundException(`Machine ${id} not found`);
     }
 
-    const updated = await this.prisma.machine.update({
-      where: { id },
+    const updated = await this.prisma.machine.updateMany({
+      where: { id, tenantId },
       data: { status },
     });
 
@@ -68,8 +68,8 @@ export class MachineService {
       throw new NotFoundException(`Machine ${id} not found`);
     }
 
-    await this.prisma.machine.delete({
-      where: { id },
+    await this.prisma.machine.deleteMany({
+      where: { id, tenantId },
     });
 
     await this.audit.log({

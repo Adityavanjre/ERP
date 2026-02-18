@@ -162,8 +162,8 @@ export class LedgerService {
           },
         });
 
-        const account = await client.account.findUnique({
-          where: { id: t.accountId },
+        const account = await client.account.findFirst({
+          where: { id: t.accountId, tenantId },
         });
         if (!account) throw new BadRequestException(`Account ${t.accountId} not found`);
 
@@ -177,8 +177,8 @@ export class LedgerService {
           balanceChange = isDebit ? balanceChange.negated() : balanceChange;
         }
 
-        await client.account.update({
-          where: { id: t.accountId },
+        await client.account.updateMany({
+          where: { id: t.accountId, tenantId },
           data: { balance: { increment: balanceChange } },
         });
       }

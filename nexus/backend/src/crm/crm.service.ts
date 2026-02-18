@@ -183,14 +183,14 @@ export class CrmService {
       try {
         // Check existing by email
         const existing = await this.prisma.customer.findFirst({
-          where: { tenantId, email },
+          where: { tenantId, email, isDeleted: false },
         });
 
         let customerId = existing?.id;
 
         if (existing) {
-          await this.prisma.customer.update({
-            where: { id: existing.id },
+          await this.prisma.customer.updateMany({
+            where: { id: existing.id, tenantId },
             data: {
               firstName,
               lastName,
@@ -199,6 +199,7 @@ export class CrmService {
               address,
               state,
               gstin,
+              status: CustomerStatus.Customer,
             },
           });
         } else {
@@ -239,8 +240,8 @@ export class CrmService {
             });
           } else {
             // Update existing OB
-            await this.prisma.customerOpeningBalance.update({
-              where: { id: existingOB.id },
+            await this.prisma.customerOpeningBalance.updateMany({
+              where: { id: existingOB.id, tenantId },
               data: { amount: openingBalance },
             });
           }
@@ -290,7 +291,9 @@ export class CrmService {
       },
     });
 
-    const customer = await this.prisma.customer.findUnique({ where: { id } });
+    const customer = await this.prisma.customer.findFirst({ 
+      where: { id, tenantId, isDeleted: false } 
+    });
     if (customer?.email === 'walkin@system.local') {
       throw new Error("System protected 'Walk-In Customer' cannot be deleted.");
     }
@@ -299,8 +302,8 @@ export class CrmService {
       throw new Error('Cannot delete customer with outstanding invoices.');
     }
 
-    return this.prisma.customer.update({
-      where: { id },
+    return this.prisma.customer.updateMany({
+      where: { id, tenantId },
       data: { isDeleted: true },
     });
   }
@@ -331,8 +334,8 @@ export class CrmService {
     });
     if (!opp) throw new Error('Opportunity not found');
 
-    return this.prisma.opportunity.update({
-      where: { id },
+    return this.prisma.opportunity.updateMany({
+      where: { id, tenantId },
       data,
     });
   }

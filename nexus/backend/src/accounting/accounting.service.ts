@@ -124,8 +124,8 @@ export class AccountingService {
         const newAccumulated = entry.asset.accumulatedDepreciation.plus(entry.charge);
         const isFullyDepreciated = newAccumulated.equals(entry.asset.purchaseValue.minus(entry.asset.salvageValue));
 
-        await (tx as any).fixedAsset.update({
-          where: { id: entry.asset.id },
+        await (tx as any).fixedAsset.updateMany({
+          where: { id: entry.asset.id, tenantId },
           data: {
             accumulatedDepreciation: newAccumulated,
             status: isFullyDepreciated ? 'FullyDepreciated' : 'Active',

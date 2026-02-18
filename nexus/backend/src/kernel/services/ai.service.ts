@@ -51,7 +51,8 @@ export class AiService {
 
     // 1. Fetch current stock
     const products = await this.prisma.product.findMany({
-      where: { tenantId },
+      where: { tenantId, isDeleted: false },
+      select: { id: true, sku: true, name: true, category: true, price: true, stock: true },
     });
 
     // 2. Fetch historical sales to determine velocity

@@ -97,12 +97,12 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between ml-1">
                                 <Label htmlFor="password" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Password</Label>
-                                <span
-                                    className="text-[10px] font-black text-blue-600 hover:text-blue-700 cursor-pointer uppercase tracking-tighter"
-                                    onClick={() => toast.info("Please contact your IT administrator.")}
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-[10px] font-black text-blue-600 hover:text-blue-700 cursor-pointer uppercase tracking-tighter transition-colors"
                                 >
                                     Recovery?
-                                </span>
+                                </Link>
                             </div>
                             <div className="relative">
                                 <Input

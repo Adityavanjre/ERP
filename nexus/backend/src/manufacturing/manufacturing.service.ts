@@ -14,16 +14,14 @@ export class ManufacturingService {
 
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
-   * @param bomId The ID of the top-level BOM
-   * @param multiplier Scaling factor (e.g., number of finished goods to produce)
    */
-  async explodeBOM(bomId: string, multiplier: number = 1, depth: number = 0) {
+  async explodeBOM(tenantId: string, bomId: string, multiplier: number = 1, depth: number = 0) {
     if (depth > 10) {
       throw new BadRequestException(`Production Audit Error: Circular dependency or excessive BOM depth detected at ID ${bomId}. Maximum depth is 10.`);
     }
 
-    const bom = await this.prisma.billOfMaterial.findUnique({
-      where: { id: bomId },
+    const bom = await this.prisma.billOfMaterial.findFirst({
+      where: { id: bomId, tenantId },
       include: { items: { include: { product: true } } },
     });
 
@@ -36,12 +34,11 @@ export class ManufacturingService {
 
       // Check if this component has its own BOM (Recursive)
       const subBOM = await this.prisma.billOfMaterial.findFirst({
-        where: { productId: item.productId, status: 'Active' },
+        where: { productId: item.productId, tenantId, status: 'Active' },
       });
 
       if (subBOM) {
-        // If it has a sub-BOM, explode that too
-        const subRequirements = await this.explodeBOM(subBOM.id, totalQty, depth + 1);
+        const subRequirements = await this.explodeBOM(tenantId, subBOM.id, totalQty, depth + 1);
         requirements = [...requirements, ...subRequirements];
       } else {
         requirements.push({
@@ -54,7 +51,6 @@ export class ManufacturingService {
       }
     }
 
-    // Aggregate results by product
     return this.aggregateRequirements(requirements);
   }
 
@@ -87,6 +83,21 @@ export class ManufacturingService {
     });
   }
 
+  async getBOMDetails(tenantId: string, bomId: string) {
+    const bom = await this.prisma.billOfMaterial.findFirst({
+      where: { id: bomId, tenantId },
+      include: { product: true },
+    });
+    if (!bom) throw new NotFoundException('BOM not found');
+
+    const items = await this.prisma.bOMItem.findMany({
+      where: { bomId, bom: { tenantId } },
+      include: { product: true },
+    });
+
+    return { ...bom, items };
+  }
+
   // Work Order Management
   async getWorkOrders(tenantId: string) {
     return this.prisma.workOrder.findMany({
@@ -101,8 +112,8 @@ export class ManufacturingService {
     });
     if (!wo) throw new NotFoundException('Work Order not found');
 
-    return this.prisma.workOrder.update({
-      where: { id },
+    return this.prisma.workOrder.updateMany({
+      where: { id, tenantId },
       data: { status: status as any },
     });
   }
@@ -139,13 +150,13 @@ export class ManufacturingService {
     return Object.values(aggregated);
   }
 
-  async getBOMCost(bomId: string) {
-    const bom = await this.prisma.billOfMaterial.findUnique({
-      where: { id: bomId },
+  async getBOMCost(tenantId: string, bomId: string) {
+    const bom = await this.prisma.billOfMaterial.findFirst({
+      where: { id: bomId, tenantId },
     });
     if (!bom) throw new NotFoundException('BOM not found');
 
-    const requirements: any[] = await this.explodeBOM(bomId, 1);
+    const requirements: any[] = await this.explodeBOM(tenantId, bomId, 1);
     let materialCost = 0;
     for (const req of requirements) {
       materialCost += (req.costPrice || 0) * req.quantity;
@@ -165,12 +176,12 @@ export class ManufacturingService {
   }
 
   async checkShortages(tenantId: string, bomId: string, quantity: number) {
-    const requirements: any[] = await this.explodeBOM(bomId, quantity);
+    const requirements: any[] = await this.explodeBOM(tenantId, bomId, quantity);
     const shortages = [];
 
     for (const req of requirements) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: req.productId },
+      const product = await this.prisma.product.findFirst({
+        where: { id: req.productId, tenantId, isDeleted: false },
       });
       const currentStock = Number(product?.stock || 0);
       if (currentStock < req.quantity) {
@@ -196,16 +207,12 @@ export class ManufacturingService {
     if (wo.status === 'Completed')
       throw new BadRequestException('Work Order already completed');
 
-    // 0. Financial Governance: Period Lock
     await this.accounting.checkPeriodLock(tenantId, new Date());
 
     try {
-      const requirements: any[] = await this.explodeBOM(wo.bomId, wo.quantity);
-      this.logger.log(`Completing Work Order ${wo.orderNumber}: Deducting ${requirements.length} materials.`);
-
-      // Execute Production Transaction - Zenith Grade
+      const requirements: any[] = await this.explodeBOM(tenantId, wo.bomId, wo.quantity);
+      
       return await this.prisma.$transaction(async (tx) => {
-        // Find default warehouse if not provided
         const targetWarehouse = warehouseId || (await tx.warehouse.findFirst({
           where: { tenantId },
           orderBy: { id: 'asc' }
@@ -213,27 +220,25 @@ export class ManufacturingService {
 
         if (!targetWarehouse) throw new Error('No valid warehouse found for production storage.');
 
-        // 1. Deduct Raw Materials (Warehouse Aware)
         for (const req of requirements) {
-            const loc = await tx.stockLocation.findUnique({
-                where: { productId_warehouseId: { productId: req.productId, warehouseId: targetWarehouse } }
+            const loc = await tx.stockLocation.findFirst({
+                where: { productId: req.productId, warehouseId: targetWarehouse, warehouse: { tenantId } }
             });
 
             if (!loc || loc.quantity.lessThan(req.quantity)) {
                 throw new BadRequestException(`Insufficient stock in warehouse for ${req.productName}. Required: ${req.quantity}, Available: ${loc?.quantity || 0}`);
             }
 
-            await tx.stockLocation.update({
-                where: { id: loc.id },
+            await tx.stockLocation.updateMany({
+                where: { id: loc.id, warehouse: { tenantId } },
                 data: { quantity: { decrement: new Decimal(req.quantity) } }
             });
 
-            await tx.product.update({
-                where: { id: req.productId },
+            await tx.product.updateMany({
+                where: { id: req.productId, tenantId },
                 data: { stock: { decrement: new Decimal(req.quantity) } }
             });
 
-            // Audit Trail
             await tx.stockMovement.create({
                 data: {
                     tenantId,
@@ -247,14 +252,13 @@ export class ManufacturingService {
             });
         }
 
-        // 2. Add Finished Good (Warehouse Aware)
-        const fgLoc = await tx.stockLocation.findUnique({
-            where: { productId_warehouseId: { productId: wo.bom.productId, warehouseId: targetWarehouse } }
+        const fgLoc = await tx.stockLocation.findFirst({
+            where: { productId: wo.bom.productId, warehouseId: targetWarehouse, warehouse: { tenantId } }
         });
 
         if (fgLoc) {
-            await tx.stockLocation.update({
-                where: { id: fgLoc.id },
+            await tx.stockLocation.updateMany({
+                where: { id: fgLoc.id, warehouse: { tenantId } },
                 data: { quantity: { increment: new Decimal(wo.quantity) } }
             });
         } else {
@@ -267,8 +271,8 @@ export class ManufacturingService {
             });
         }
 
-        await tx.product.update({
-          where: { id: wo.bom.productId },
+        await tx.product.updateMany({
+          where: { id: wo.bom.productId, tenantId },
           data: { stock: { increment: new Decimal(wo.quantity) } },
         });
 
@@ -284,20 +288,14 @@ export class ManufacturingService {
             }
         });
 
-        // 3. GL Integration (Dr Inventory [Finished], Cr Inventory [Raw])
         const inventoryAccount = await tx.account.findFirst({
           where: { tenantId, name: 'Inventory Asset' },
         });
 
         if (inventoryAccount) {
-            const costData = await this.getBOMCost(wo.bomId);
+            const costData = await this.getBOMCost(tenantId, wo.bomId);
             const totalProductionValue = new Decimal(costData.totalCost).mul(wo.quantity);
 
-            // In production, value moves between inventory sub-categories, 
-            // but in a simplified GL, it's a zero-sum for simple products, 
-            // plus overhead recognition.
-            // Debit: Inventory (Asset Increase)
-            // Credit: Manufacturing Control/Overhead (Cost Absorption)
             await tx.journalEntry.create({
                 data: {
                     tenantId,
@@ -316,7 +314,7 @@ export class ManufacturingService {
                             },
                              {
                                 tenantId,
-                                accountId: inventoryAccount.id, // Simplified: should be a WIP account
+                                accountId: inventoryAccount.id,
                                 type: 'Credit',
                                 amount: totalProductionValue,
                                 description: `Production Cost Recovery - ${wo.orderNumber}`
@@ -327,13 +325,12 @@ export class ManufacturingService {
             });
         }
 
-        // 4. Update WO Status
-        const updatedWO = await tx.workOrder.update({
-          where: { id: woId },
+        await tx.workOrder.updateMany({
+          where: { id: woId, tenantId },
           data: { status: 'Completed', endDate: new Date() },
         });
 
-        return updatedWO;
+        return { success: true };
       });
     } catch (err: any) {
       if (err instanceof BadRequestException || err instanceof NotFoundException) throw err;
@@ -354,8 +351,8 @@ export class ManufacturingService {
     tenantId: string,
     data: { bomId: string; quantity: number },
   ) {
-    const bom = await this.prisma.billOfMaterial.findUnique({
-      where: { id: data.bomId },
+    const bom = await this.prisma.billOfMaterial.findFirst({
+      where: { id: data.bomId, tenantId },
     });
     if (!bom) throw new NotFoundException('BOM not found');
 

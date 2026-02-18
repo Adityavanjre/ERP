@@ -23,18 +23,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const isProd = process.env.NODE_ENV === 'production';
     const message =
       exception instanceof HttpException
         ? exception.getResponse()
         : 'Internal Server Error';
 
-    // In Enterprise, log heavily to Sentry/DataDog/Opentelemetry
-    this.logger.error(
-      `HTTP ${status} Error: ${JSON.stringify(message)}`,
-      (exception as any).stack,
-    );
-
-    response.status(status).json({
+    const responseBody = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
@@ -42,6 +37,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         typeof message === 'object' && message !== null
           ? (message as any).message || message
           : message,
-    });
+    };
+
+    // ZENITH: Additional Sanitization for internal 500s
+    if (status === 500 && isProd) {
+       responseBody.message = 'An internal system error occurred. Please contact Klypso Support.';
+    }
+
+    response.status(status).json(responseBody);
   }
 }

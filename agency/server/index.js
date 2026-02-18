@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+require('express-async-errors');
 
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -27,6 +28,15 @@ app.get('/', (req, res) => {
     res.send('Klypso API is running...');
 });
 
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        status: 'up',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    });
+});
+
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
@@ -38,12 +48,18 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// const limiter = rateLimit({
-//     windowMs: 15 * 60 * 1000, // 15 minutes
-//     max: 100, // limit each IP to 100 requests per windowMs
-// });
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
 
-// app.use(limiter);
+app.use(limiter);
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('--- CRITICAL UNHANDLED REJECTION ---');
+    console.error('Promise:', promise, 'Reason:', reason);
+});
 
 // Routes
 const enquiryRoutes = require('./routes/enquiryRoutes');

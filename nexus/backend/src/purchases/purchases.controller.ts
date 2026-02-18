@@ -11,34 +11,42 @@ import {
 import { PurchasesService } from './purchases.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/constants/permissions';
 import { POStatus } from '@prisma/client';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('purchases')
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) {}
 
   @Post('suppliers')
+  @Permissions(Permission.MANAGE_USERS)
   createSupplier(@Req() req: any, @Body() dto: any) {
     return this.purchasesService.createSupplier(req.user.tenantId, dto);
   }
 
   @Get('suppliers')
+  @Permissions(Permission.VIEW_PRODUCTS)
   getSuppliers(@Req() req: any) {
     return this.purchasesService.getSuppliers(req.user.tenantId);
   }
 
   @Post('orders')
+  @Permissions(Permission.ADJUST_STOCK)
   createPO(@Req() req: any, @Body() dto: any) {
     return this.purchasesService.createPurchaseOrder(req.user.tenantId, dto);
   }
 
   @Get('orders')
+  @Permissions(Permission.VIEW_PRODUCTS)
   getPOs(@Req() req: any) {
     return this.purchasesService.getPurchaseOrders(req.user.tenantId);
   }
 
   @Patch('orders/:id/status')
+  @Permissions(Permission.ADJUST_STOCK)
   updateStatus(
     @Req() req: any,
     @Param('id') id: string,
@@ -49,17 +57,20 @@ export class PurchasesController {
   }
 
   @Get('stats')
+  @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: any) {
     return this.purchasesService.getPurchasesStats(req.user.tenantId);
   }
 
   // --- Opening Balances ---
   @Post('suppliers/opening-balance')
+  @Permissions(Permission.MANAGE_USERS)
   addOpeningBalance(@Req() req: any, @Body() dto: any) {
     return this.purchasesService.addSupplierOpeningBalance(req.user.tenantId, dto);
   }
 
   @Get('suppliers/:id/opening-balances')
+  @Permissions(Permission.VIEW_PRODUCTS)
   getOpeningBalances(@Req() req: any, @Param('id') id: string) {
     return this.purchasesService.getSupplierOpeningBalances(req.user.tenantId, id);
   }

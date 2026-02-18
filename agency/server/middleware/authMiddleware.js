@@ -17,15 +17,15 @@ const protect = async (req, res, next) => {
 
             next();
         } catch (error) {
-            console.error(error);
+            console.error('JWT Verification Error:', error.message);
             res.status(401);
-            throw new Error('Not authorized, token failed');
+            return next(new Error('Not authorized, token failed'));
         }
     }
 
     if (!token) {
         res.status(401);
-        throw new Error('Not authorized, no token');
+        return next(new Error('Not authorized, no token'));
     }
 };
 

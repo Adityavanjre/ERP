@@ -188,8 +188,8 @@ export class OrmService {
 
     const newData = { ...(record.data as object), ...data };
 
-    return this.prisma.record.update({
-      where: { id },
+    return this.prisma.record.updateMany({
+      where: { id, tenantId, modelName },
       data: { data: newData },
     });
   }

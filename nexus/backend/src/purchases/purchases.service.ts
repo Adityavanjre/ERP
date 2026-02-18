@@ -41,8 +41,8 @@ export class PurchasesService {
   }
 
   async deleteSupplier(tenantId: string, id: string) {
-    return this.prisma.supplier.update({
-      where: { id },
+    return this.prisma.supplier.updateMany({
+      where: { id, tenantId },
       data: { isDeleted: true },
     });
   }
@@ -107,8 +107,8 @@ export class PurchasesService {
 
         // A. Increment Stock with Moving Average Cost (MAC) Calculation
         for (const item of sortedItems) {
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
+          const product = await tx.product.findFirst({
+            where: { id: item.productId, tenantId, isDeleted: false },
             select: { stock: true, costPrice: true, name: true },
           });
 
@@ -126,8 +126,8 @@ export class PurchasesService {
               newMAC = (oldStock.mul(oldCost).add(newQty.mul(newPrice))).div(totalQty);
             }
 
-            await tx.product.update({
-              where: { id: item.productId },
+            await tx.product.updateMany({
+              where: { id: item.productId, tenantId },
               data: {
                 stock: { increment: newQty },
                 costPrice: newMAC,
@@ -159,8 +159,8 @@ export class PurchasesService {
               });
 
               if (existingLoc) {
-                await tx.stockLocation.update({
-                  where: { id: existingLoc.id },
+                await tx.stockLocation.updateMany({
+                  where: { id: existingLoc.id, warehouse: { tenantId } },
                   data: { quantity: { increment: newQty } }
                 });
               } else {
@@ -253,17 +253,17 @@ export class PurchasesService {
           });
 
           // Update Account Balances
-          await tx.account.update({
-            where: { id: inventoryAccount.id },
+          await tx.account.updateMany({
+            where: { id: inventoryAccount.id, tenantId },
             data: { balance: { increment: transactions[0].amount } },
           });
-          await tx.account.update({
-            where: { id: apAccount.id },
+          await tx.account.updateMany({
+            where: { id: apAccount.id, tenantId },
             data: { balance: { increment: totalAmount } },
           });
           if (itcAccount && transactions.length > 2) {
-             await tx.account.update({
-                where: { id: itcAccount.id },
+             await tx.account.updateMany({
+                where: { id: itcAccount.id, tenantId },
                 data: { balance: { increment: taxAmount } },
              });
           }
@@ -274,8 +274,8 @@ export class PurchasesService {
         }
       }
 
-      return tx.purchaseOrder.update({
-        where: { id },
+      return tx.purchaseOrder.updateMany({
+        where: { id, tenantId },
         data: { status },
       });
     });
@@ -308,8 +308,8 @@ export class PurchasesService {
     });
     if (!po) throw new Error('Valid RFQ not found for conversion');
 
-    return this.prisma.purchaseOrder.update({
-      where: { id },
+    return this.prisma.purchaseOrder.updateMany({
+      where: { id, tenantId },
       data: { status: POStatus.Ordered },
     });
   }

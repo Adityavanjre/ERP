@@ -127,7 +127,7 @@ export class InventoryService {
 
   async getProduct(tenantId: string, id: string) {
     return this.prisma.product.findFirst({
-      where: { tenantId, id },
+      where: { tenantId, id, isDeleted: false },
     });
   }
 
@@ -166,7 +166,7 @@ export class InventoryService {
       await this.accounting.checkPeriodLock(tenantId, new Date(), tx);
 
       const product = await tx.product.findFirst({
-        where: { id, tenantId },
+        where: { id, tenantId, isDeleted: false },
       });
 
       if (
@@ -227,7 +227,7 @@ export class InventoryService {
 
   async deleteProduct(tenantId: string, id: string) {
     const product = await this.prisma.product.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, isDeleted: false },
       include: { stockLocations: true },
     });
 
@@ -248,8 +248,8 @@ export class InventoryService {
         );
     }
 
-    return this.prisma.product.update({
-      where: { id },
+    return this.prisma.product.updateMany({
+      where: { id, tenantId },
       data: { isDeleted: true },
     });
   }
@@ -303,8 +303,8 @@ export class InventoryService {
                throw new ConflictException(`Line ${i}: Product ${barcode || sku} was previously deleted. Resurrection via import is blocked for high security compliance. Please restore manually.`);
             }
 
-            await tx.product.update({
-              where: { id: existing.id },
+            await tx.product.updateMany({
+              where: { id: existing.id, tenantId },
               data: {
                 name: data.name || existing.name,
                 category: data.category || existing.category,
