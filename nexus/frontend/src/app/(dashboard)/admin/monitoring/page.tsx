@@ -57,7 +57,7 @@ export default function FounderMonitoring() {
                         <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
                             <HeartPulse className="h-7 w-7 text-emerald-400" />
                         </div>
-                        Zenith Founder Intelligence
+                        Klypso Founder Overview
                     </h1>
                     <p className="text-slate-500 mt-2 font-black uppercase text-[11px] tracking-[0.3em] ml-[68px]">Critical Business Alerts & Autonomous Protection</p>
                 </div>
@@ -128,7 +128,7 @@ export default function FounderMonitoring() {
                                 <ShieldAlert className="w-8 h-8 text-red-500" />
                                 High-Priority Interventions
                             </h2>
-                            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2 ml-11">Founder escalation protocol triggered for these entities.</p>
+                            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2 ml-11">The following items require immediate attention.</p>
                         </div>
                         <BarChart2 className="w-6 h-6 text-slate-200" />
                     </div>
@@ -161,7 +161,7 @@ export default function FounderMonitoring() {
                                     {tenant.interventions?.action === 'SCHEDULE_SUPPORT_CALL' && (
                                         <Button className="flex-1 md:flex-none h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl px-8 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">
                                             <MessageSquare className="w-4 h-4 mr-2" />
-                                            Recover Now
+                                            Follow Up
                                         </Button>
                                     )}
                                     {tenant.interventions?.action === 'SEND_TRAINING_VIDEO' && (

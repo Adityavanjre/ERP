@@ -12,7 +12,7 @@ export default function RootLoading() {
             </div>
             <div className="text-center space-y-2">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] animate-pulse">
-                    Nexus Initializing
+                    Loading Klypso...
                 </p>
                 <div className="h-1 w-32 bg-slate-100 rounded-full overflow-hidden mx-auto">
                     <div className="h-full bg-blue-600 w-1/2 animate-[loading_2s_ease-in-out_infinite]"></div>

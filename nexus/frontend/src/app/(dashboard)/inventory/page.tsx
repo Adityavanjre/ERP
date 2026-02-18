@@ -78,7 +78,7 @@ export default function InventoryPage() {
             setForecast(aiRes.data || null);
         } catch (err: any) {
             console.error("Registry Sync Failure:", err);
-            const msg = err.isWakeup ? err.message : "Nexus synchronization flux interrupted";
+            const msg = err.isWakeup ? err.message : "Inventory synchronization interrupted";
             setFetchError(msg);
         } finally {
             setLoading(false);
@@ -225,7 +225,7 @@ export default function InventoryPage() {
             const csv = event.target?.result as string;
             try {
                 if (typeof csv !== 'string') return;
-                const loadingToast = toast.loading("Processing Nexus bulk import...");
+                const loadingToast = toast.loading("Processing bulk import...");
                 const res = await api.post("inventory/import", { csv });
                 toast.dismiss(loadingToast);
                 toast.success(`Processed: ${res.data.imported} assets imported`);
@@ -286,7 +286,7 @@ export default function InventoryPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-orange-600 tracking-tighter">{stats.lowStock} Alerts</div>
-                        <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">Requiring immediate Nexus replenishment</p>
+                        <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">Requiring immediate replenishment</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">

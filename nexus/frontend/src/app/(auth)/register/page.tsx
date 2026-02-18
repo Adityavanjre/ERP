@@ -315,7 +315,7 @@ export default function RegisterPage() {
                     </CardFooter>
                 </Card>
                 <p className="text-center text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] opacity-40">
-                    Zenith Intelligence v2.0
+                    Klypso v2.0
                 </p>
             </div>
         </div>

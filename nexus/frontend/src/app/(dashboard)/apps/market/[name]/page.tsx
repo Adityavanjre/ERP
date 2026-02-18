@@ -69,7 +69,7 @@ export default function AppDetailPage() {
     };
 
     if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse">Synchronizing Manifest...</div>;
-    if (!app) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen font-black uppercase tracking-widest uppercase italic">Module [${appName}] not found in Zenith Node Registry.</div>;
+    if (!app) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen font-black uppercase tracking-widest uppercase italic">Module [${appName}] not found in Klypso Registry.</div>;
 
     return (
         <div className="flex-1 space-y-10 p-10 pt-8 bg-slate-50/30 min-h-screen">
@@ -99,7 +99,7 @@ export default function AppDetailPage() {
                                     </Badge>
                                     <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">{app.category}</span>
                                     <span className="text-slate-200">|</span>
-                                    <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Authored by <span className="text-slate-600 underline decoration-slate-200">{app.author || 'Zenith Core'}</span></span>
+                                    <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">Authored by <span className="text-slate-600 underline decoration-slate-200">{app.author || 'Klypso Core'}</span></span>
                                 </div>
                             </div>
                         </div>

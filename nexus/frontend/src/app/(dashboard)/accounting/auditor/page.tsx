@@ -82,7 +82,7 @@ export default function AuditorDashboard() {
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                         <ShieldCheck className="w-8 h-8 text-emerald-600" />
-                        Financial Auditor
+                        Klypso Auditor
                     </h1>
                     <p className="text-slate-500 font-medium mt-1">Review and close your monthly accounts.</p>
                 </div>

@@ -83,7 +83,7 @@ export function ApiKeyManager() {
                         <div>
                             <CardTitle className="text-xl font-black flex items-center gap-2">
                                 <Key className="text-blue-500 w-6 h-6" />
-                                Segment Nexus: API Access
+                                Klypso: API Access
                             </CardTitle>
                             <CardDescription className="font-medium">
                                 Generate secure credentials for external integrations and automations.

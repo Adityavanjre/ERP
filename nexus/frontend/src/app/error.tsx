@@ -26,15 +26,15 @@ export default function RootError({
 
                 <div className="space-y-4">
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic">
-                        Integrity Interruption
+                        Something went wrong
                     </h1>
                     <p className="text-slate-500 font-medium leading-relaxed">
-                        Nexus has encountered a high-entropy event. Our failsafe systems have isolated the error to prevent data leakage.
+                        We've encountered an unexpected error. The system has safely stopped the current action to protect your data.
                     </p>
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Error Digest</p>
                         <code className="text-xs font-mono text-red-800 break-all">
-                            {error.digest || error.message || 'NX_SYSTEM_DRIFT_DETECTED'}
+                            {error.digest || error.message || 'UNKNOWN_ERROR_DETECTED'}
                         </code>
                     </div>
                 </div>
@@ -45,7 +45,7 @@ export default function RootError({
                         className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95"
                     >
                         <RefreshCcw className="w-4 h-4" />
-                        Resume System
+                        Try Again
                     </button>
                     <Link
                         href="/dashboard"
@@ -57,7 +57,7 @@ export default function RootError({
                 </div>
 
                 <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
-                    Nexus Forensic Protection v2.1
+                    Klypso Protection v2.1
                 </p>
             </div>
         </div>

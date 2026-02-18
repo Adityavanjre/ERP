@@ -60,7 +60,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
                         <Database className="mr-3 h-8 w-8 text-indigo-400" />
                         {modelName.split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
                     </h2>
-                    <p className="text-zinc-500 mt-1">Direct system access to {modelName} architecture.</p>
+                    <p className="text-zinc-500 mt-1">View and manage {modelName} records directly.</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" className="border-white/10 bg-white/5 text-zinc-400">
@@ -115,7 +115,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
                             {records.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center py-32 text-zinc-600 italic">
-                                        No flux nodes detected in this class.
+                                        No records found.
                                     </TableCell>
                                 </TableRow>
                             )}

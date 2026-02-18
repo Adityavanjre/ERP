@@ -109,7 +109,7 @@ export default function DashboardPage() {
                 setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
 
             } catch (err) {
-                console.error("Zenith synchronization error:", err);
+                console.error("Klypso synchronization error:", err);
             } finally {
                 setLoading(false);
             }
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-950 flex items-center">
                         <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Zenith Intelligence
+                        Klypso Dashboard
                     </h2>
                     <p className="text-slate-600 mt-2 font-medium">A live overview of your business performance and key metrics.</p>
                 </div>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                         <p className="text-xs text-emerald-600 font-mono font-black">CONTINUOUS SYNC ACTIVE</p>
                     </div>
                     <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50/50 px-4 py-2 rounded-2xl shadow-sm">
-                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> Live Pulse
+                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> Live Sync
                     </Badge>
                 </div>
             </div>

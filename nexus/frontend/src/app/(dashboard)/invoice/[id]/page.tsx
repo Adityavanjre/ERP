@@ -58,7 +58,7 @@ export default function InvoicePrintPage() {
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-zinc-100 pb-8 mb-8">
                     <div>
-                        <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">ZENITH INVOICE</div>
+                        <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">KLYPSO INVOICE</div>
                         <div className="text-sm text-zinc-500 mt-1 font-medium italic tracking-widest uppercase">Invoice No: #{invoice.invoiceNumber}</div>
                         <div className="mt-4 space-y-1 text-sm text-zinc-600">
                             <p className="font-bold text-zinc-900 uppercase text-[10px] tracking-widest mb-1">Bill To:</p>
@@ -69,7 +69,7 @@ export default function InvoicePrintPage() {
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">Zenith Ecosystems</div>
+                        <div className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">Klypso Ecosystems</div>
                         <div className="text-sm text-zinc-500 mt-1">
                             123 Business Park, Tech City<br />
                             Maharashtra, India - 400001<br />
@@ -143,7 +143,7 @@ export default function InvoicePrintPage() {
                         <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
                         <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>
                         <p>2. Please quote the invoice number in all correspondence.</p>
-                        <p>3. Make payment to "Zenith Ecosystems".</p>
+                        <p>3. Make payment to "Klypso Ecosystems".</p>
                     </div>
                     <div className="text-right">
                         <div className="h-16 mb-2 flex justify-end">

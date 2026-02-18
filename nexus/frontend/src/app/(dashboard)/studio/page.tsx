@@ -66,7 +66,7 @@ export default function StudioPage() {
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
                         <Wand2 className="mr-3 h-8 w-8 text-fuchsia-600" />
-                        Zenith Logic Studio
+                        Klypso Logic Studio
                     </h2>
                     <p className="text-slate-500 mt-1 font-medium">Design custom business objects and automated workflows without code.</p>
                 </div>

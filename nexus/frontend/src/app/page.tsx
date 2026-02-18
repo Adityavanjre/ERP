@@ -46,14 +46,14 @@ export default function Home() {
             <div className="flex flex-col items-center space-y-8 text-center">
               <div className="inline-flex items-center rounded-full border border-blue-100 bg-white px-3 py-1 text-sm font-bold text-blue-600 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-ping" />
-                Business Software v2.0
+                Klypso Software v2.0
               </div>
               <h1 className="text-4xl font-extrabold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl text-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
                 Operate at the <br />
                 <span className="text-blue-600">Run Your Business Faster.</span>
               </h1>
               <p className="mx-auto max-w-[700px] text-slate-600 md:text-xl/relaxed lg:text-2xl/relaxed font-medium animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
-                High-integrity Business Management platform engineered for manufacturers and modern innovators.
+                A modern, all-in-one platform to run your manufacturing or retail business with ease.
               </p>
               <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700">
                 <Link href="/register">
@@ -79,9 +79,9 @@ export default function Home() {
               {[
                 { title: "Smart Inventory", desc: "Precision stock predictions and automated replenishment systems.", icon: BarChart3 },
                 { title: "Manufacturing", desc: "Complex BOMs and shop-floor management with real-time data.", icon: Cpu },
-                { title: "Financial Hub", desc: "Automated general ledger with full double-entry integrity.", icon: ShieldCheck },
-                { title: "Supply Chain", desc: "Unified logistics tracking with predictive transit intelligence.", icon: Globe },
-                { title: "CRM Excellence", desc: "Lead lifecycle management and deep pipeline intelligence.", icon: Zap },
+                { title: "Accounting", desc: "Keep your books accurate and up-to-date automatically.", icon: ShieldCheck },
+                { title: "Supply Chain", desc: "Track your orders and shipments in real-time with automatic updates.", icon: Globe },
+                { title: "CRM Excellence", desc: "Manage your customers and track your sales from first contact to closing.", icon: Zap },
                 { title: "Advanced Security", desc: "Enterprise-grade SOC2 compliant access and auditing.", icon: ShieldCheck },
               ].map((feature, i) => (
                 <div key={i} className="group p-8 rounded-3xl bg-slate-50/50 border border-slate-100 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5 transition-all text-left">

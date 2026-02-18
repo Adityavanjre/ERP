@@ -18,12 +18,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zenith Intelligence | Enterprise Nexus",
+  title: "Klypso | Business Management",
   description: "A simple, all-in-one business management platform. Manage your sales, inventory, purchases, HR, and accounting in one place.",
-  keywords: ["ERP", "Enterprise Resource Planning", "Zenith Intelligence", "Business Intelligence", "Inventory Management", "Financial Systems", "Nexus"],
-  authors: [{ name: "Zenith Core Engineering", url: "https://klypso.agency" }],
-  creator: "Zenith Ecosystems",
-  publisher: "Zenith Ecosystems",
+  keywords: ["ERP", "Business Management", "Inventory", "Accounting", "HR", "Sales", "Manufacturing"],
+  authors: [{ name: "Klypso Core Engineering", url: "https://klypso.agency" }],
+  creator: "Klypso Ecosystems",
+  publisher: "Klypso Ecosystems",
   robots: {
     index: true,
     follow: true,
@@ -36,16 +36,16 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Zenith Intelligence | Enterprise Nexus",
-    description: "Operate at the speed of thought. The autonomous operating system for modern enterprise.",
+    title: "Klypso | Business Management",
+    description: "The easiest way to manage your business — from inventory to accounting.",
     url: "https://klypso.in/portal",
-    siteName: "Zenith Intelligence",
+    siteName: "Klypso",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Zenith Intelligence Dashboard",
+        alt: "Klypso Dashboard",
       },
     ],
     locale: "en_US",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Zenith Intelligence | Enterprise Nexus",
+    title: "Klypso | Business Management",
     description: "Manage your business in one place — sales, inventory, HR, purchases, and accounting.",
     creator: "@klypso",
     images: ["/og-image.png"],
