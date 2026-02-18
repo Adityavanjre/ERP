@@ -2,43 +2,36 @@ server {
     listen 80;
     server_name localhost;
 
-    # Resolver for Render Internal DNS
-    resolver 127.0.0.11 valid=30s;
-
-    # 🚀 Klypso Agency Website (Root)
+    # Klypso Agency Website (Root)
     location / {
-        set $agency_viewer_host ${AGENCY_VIEWER_HOST};
-        proxy_pass http://$agency_viewer_host;
+        proxy_pass http://${AGENCY_VIEWER_HOST};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # 🎨 Klypso ERP Portal
+    # Klypso ERP Portal
     location ^~ /portal {
-        set $erp_frontend_host ${KLYPSO_FRONTEND_HOST};
-        proxy_pass http://$erp_frontend_host;
+        proxy_pass http://${KLYPSO_FRONTEND_HOST};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # 🐘 Klypso Engine API
+    # Klypso Engine API
     location ^~ /portal/api/ {
-        set $erp_backend_host ${KLYPSO_BACKEND_HOST};
-        proxy_pass http://$erp_backend_host/api/;
+        proxy_pass http://${KLYPSO_BACKEND_HOST}/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # 🏢 Agency API
+    # Agency API
     location ^~ /api/agency/ {
-        set $agency_backend_host ${AGENCY_BACKEND_HOST};
-        proxy_pass http://$agency_backend_host/;
+        proxy_pass http://${AGENCY_BACKEND_HOST}/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
