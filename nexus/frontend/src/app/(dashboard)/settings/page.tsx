@@ -39,9 +39,9 @@ export default function SettingsPage() {
                     api.get("kernel/billing/plan"),
                     api.get("users")
                 ]);
-                setTenant(profRes.data.tenant);
-                setBillingInfo(billRes.data);
-                setMembers(usersRes.data);
+                setTenant(profRes.data?.tenant || null);
+                setBillingInfo(billRes.data || null);
+                setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -58,7 +58,7 @@ export default function SettingsPage() {
             toast.success(`${newUser.fullName} added to the team`);
             setIsAddUserOpen(false);
             const res = await api.get("users");
-            setMembers(res.data);
+            setMembers(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             toast.error("Failed to add user");
         }
@@ -69,7 +69,7 @@ export default function SettingsPage() {
             await api.patch(`/users/${userId}/role`, { role });
             toast.success("Role updated successfully");
             const res = await api.get("users");
-            setMembers(res.data);
+            setMembers(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             toast.error("Failed to update role");
         }
@@ -92,7 +92,7 @@ export default function SettingsPage() {
             await api.delete(`/users/${userId}`);
             toast.success("User removed from tenant");
             const res = await api.get("users");
-            setMembers(res.data);
+            setMembers(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             toast.error("Failed to remove user");
         }
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                         <Card className="bg-white border-slate-200 shadow-sm">
                             <CardContent className="p-0">
                                 <div className="divide-y divide-slate-100">
-                                    {members.map((member) => (
+                                    {(members || []).map((member) => (
                                         <div key={member.id} className="p-4 flex items-center justify-between group">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400">

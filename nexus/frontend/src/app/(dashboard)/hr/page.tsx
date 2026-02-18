@@ -36,11 +36,11 @@ export default function HrPage() {
                 api.get("hr/departments"),
                 api.get("hr/stats")
             ]);
-            setEmployees(empRes.data);
-            setLeaves(leaveRes.data);
-            setPayrolls(payrollRes.data);
-            setDepartments(deptRes.data);
-            setStats(statsRes.data);
+            setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
+            setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
+            setPayrolls(Array.isArray(payrollRes.data) ? payrollRes.data : []);
+            setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
+            setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
         } catch (err) {
             console.error(err);
             toast.error("Failed to load HR data");
@@ -129,7 +129,7 @@ export default function HrPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {employees.map((emp) => (
+                                    {(employees || []).map((emp) => (
                                         <TableRow key={emp.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="font-black text-[10px] text-blue-600 tracking-widest pl-8 bg-slate-50/30">#{emp.employeeId.toUpperCase()}</TableCell>
                                             <TableCell className="font-black text-slate-900 tracking-tight">{emp.firstName} {emp.lastName}</TableCell>
@@ -144,7 +144,7 @@ export default function HrPage() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
-                                    {employees.length === 0 && (
+                                    {(!employees || employees.length === 0) && (
                                         <TableRow>
                                             <TableCell colSpan={5} className="text-center py-20 text-slate-400 font-bold italic">No personnel records found.</TableCell>
                                         </TableRow>
@@ -163,7 +163,7 @@ export default function HrPage() {
                         </CardHeader>
                         <CardContent className="p-8">
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                {departments.map((dept) => (
+                                {Array.isArray(departments) && departments.map((dept) => (
                                     <Card key={dept.id} className="bg-slate-50/50 border-slate-100 hover:border-blue-500/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all group rounded-2xl">
                                         <CardHeader className="pb-6">
                                             <div className="p-3 bg-white w-fit rounded-xl shadow-sm mb-4 border border-slate-100 group-hover:border-blue-100 transition-all">
@@ -174,7 +174,7 @@ export default function HrPage() {
                                         </CardHeader>
                                     </Card>
                                 ))}
-                                {departments.length === 0 && (
+                                {(!departments || departments.length === 0) && (
                                     <div className="col-span-full text-center py-20 text-slate-400 font-bold italic">No departments configured.</div>
                                 )}
                             </div>
@@ -199,7 +199,7 @@ export default function HrPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {leaves.map((leave) => (
+                                    {(leaves || []).map((leave) => (
                                         <TableRow key={leave.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="pl-8 font-black text-slate-900 tracking-tight">{leave.employee.firstName} {leave.employee.lastName}</TableCell>
                                             <TableCell>
@@ -215,7 +215,7 @@ export default function HrPage() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
-                                    {leaves.length === 0 && (
+                                    {(!leaves || leaves.length === 0) && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center py-20 text-slate-400 font-bold italic">No leave requests found.</TableCell>
                                         </TableRow>
@@ -243,7 +243,7 @@ export default function HrPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {payrolls.map((p) => (
+                                    {(payrolls || []).map((p) => (
                                         <TableRow key={p.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="pl-8 text-slate-500 font-bold text-xs">{new Date(p.periodStart).toLocaleDateString()} — {new Date(p.periodEnd).toLocaleDateString()}</TableCell>
                                             <TableCell className="font-black text-slate-900 tracking-tight">{p.employee.firstName} {p.employee.lastName}</TableCell>
@@ -251,7 +251,7 @@ export default function HrPage() {
                                             <TableCell className="text-right pr-8"><Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase">{p.status}</Badge></TableCell>
                                         </TableRow>
                                     ))}
-                                    {payrolls.length === 0 && (
+                                    {(!payrolls || payrolls.length === 0) && (
                                         <TableRow>
                                             <TableCell colSpan={4} className="text-center py-20 text-slate-400 font-bold italic">No payroll history found.</TableCell>
                                         </TableRow>

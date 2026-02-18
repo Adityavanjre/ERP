@@ -56,15 +56,15 @@ export default function InventoryPage() {
             ]);
 
             // Handle paginated response
-            if (prodRes.data.data) {
+            if (prodRes.data?.data) {
                 setProducts(prodRes.data.data);
-                setTotalPages(prodRes.data.meta.totalPages);
+                setTotalPages(prodRes.data.meta?.totalPages || 1);
             } else {
-                setProducts(prodRes.data); // Fallback
+                setProducts(Array.isArray(prodRes.data) ? prodRes.data : []); // Fallback
             }
 
-            setStats(statsRes.data);
-            setForecast(aiRes.data);
+            setStats(statsRes.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
+            setForecast(aiRes.data || null);
         } catch (err) {
             console.error(err);
             toast.error("Failed to sync inventory data");
@@ -124,9 +124,9 @@ export default function InventoryPage() {
         });
     };
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const filteredProducts = (products || []).filter(p =>
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
@@ -276,7 +276,7 @@ export default function InventoryPage() {
                 </CardHeader>
                 <CardContent className="pt-8">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        {forecast?.recommendations.slice(0, 4).map((rec: any, i: number) => (
+                        {Array.isArray(forecast?.recommendations) && forecast.recommendations.slice(0, 4).map((rec: any, i: number) => (
                             <div key={i} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-4 relative overflow-hidden group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all border-b-2 border-b-transparent hover:border-b-blue-500">
                                 <div className="flex justify-between items-start relative z-10">
                                     <div className="space-y-1">
@@ -351,7 +351,7 @@ export default function InventoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredProducts.map((p) => (
+                            {(filteredProducts || []).map((p) => (
                                 <TableRow key={p.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                     <TableCell className="pl-8 font-black text-[10px] text-blue-600 tracking-widest bg-slate-50/30 group-hover:bg-blue-50/30 transition-all">#{p.sku.toUpperCase()}</TableCell>
                                     <TableCell className="font-black text-slate-900 tracking-tight">{p.name}</TableCell>
