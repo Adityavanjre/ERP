@@ -106,7 +106,15 @@ export class AuthService {
           slug: tenant.slug,
         },
       };
-    });
+    } catch (error: any) {
+      console.error('REGISTRATION_FAILURE: An error occurred during the registration process 🚨');
+      console.error('Email:', dto.email);
+      console.error('Error Details:', error.message || error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        console.error('Prisma Error Code:', error.code);
+      }
+      throw error;
+    }
   }
 
   async login(dto: LoginDto) {

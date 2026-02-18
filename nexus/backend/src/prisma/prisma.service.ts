@@ -17,11 +17,17 @@ export class PrismaService
     // Intercepts model calls and redirects them to the extension client.
     return new Proxy(this, {
       get: (target: any, prop: string | symbol) => {
-        // If the property exists on PrismaService (like $connect, onModuleInit), use it
-        if (prop in target) return target[prop];
+        // Properties starting with $ are internal Prisma methods ($connect, $transaction, etc.)
+        if (typeof prop === 'string' && prop.startsWith('$')) {
+          return target[prop];
+        }
+        
+        // If it's a model-like property and the extended client has it, use the extended client
+        if (prop in this._isolatedClient) {
+          return this._isolatedClient[prop];
+        }
 
-        // Otherwise, redirect to the extended client which has the isolation logic
-        return this._isolatedClient[prop];
+        return target[prop];
       },
     });
   }
