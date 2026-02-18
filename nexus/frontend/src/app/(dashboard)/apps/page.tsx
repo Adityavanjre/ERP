@@ -16,13 +16,13 @@ export default function AppsMarketplace() {
     const [apps, setApps] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const syncNodeEcosystem = async (showLoading = false) => {
+    const syncAppData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("kernel/apps");
             setApps(res.data);
         } catch (err) {
-            console.error("Node Sync Failure:", err);
+            console.error("App Sync Failure:", err);
             toast.error("Failed to load apps. Please refresh.");
         } finally {
             setLoading(false);
@@ -30,8 +30,8 @@ export default function AppsMarketplace() {
     };
 
     useEffect(() => {
-        syncNodeEcosystem(true);
-        const interval = setInterval(() => syncNodeEcosystem(false), 30000);
+        syncAppData(true);
+        const interval = setInterval(() => syncAppData(false), 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -45,8 +45,8 @@ export default function AppsMarketplace() {
                 try {
                     await api.post(`/kernel/apps/${name}/uninstall`);
                     toast.success(`Module [${name}] removed successfully`);
-                    syncNodeEcosystem(true);
-                    window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
+                    syncAppData(true);
+                    window.dispatchEvent(new CustomEvent('system-apps-updated'));
                 } catch (err) {
                     toast.error("Failed to remove module");
                 }
@@ -57,9 +57,9 @@ export default function AppsMarketplace() {
     const handleInstall = async (name: string) => {
         try {
             await api.post(`/kernel/apps/${name}/install`);
-            toast.success(`Module [${name}] installed to enterprise system`);
-            syncNodeEcosystem(true);
-            window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
+            toast.success(`Module [${name}] installed successfully`);
+            syncAppData(true);
+            window.dispatchEvent(new CustomEvent('system-apps-updated'));
         } catch (err) {
             toast.error("Installation failed");
         }
@@ -84,9 +84,9 @@ export default function AppsMarketplace() {
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                     <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
                         <Zap className="h-5 w-5 text-blue-600" />
-                        Operational Blueprints
+                        Business Blueprints
                     </CardTitle>
-                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Install validated business architectures in a single sequence</CardDescription>
+                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Install pre-configured business setups in a single click</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4 pt-8">
                     {["Manufacturing", "Retail", "Wholesale", "Services"].map(type => (
@@ -97,8 +97,8 @@ export default function AppsMarketplace() {
                                 try {
                                     await api.post("kernel/apps/preset", { type });
                                     toast.success(`${type} blueprint sequence initiated`);
-                                    syncNodeEcosystem(true);
-                                    window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
+                                    syncAppData(true);
+                                    window.dispatchEvent(new CustomEvent('system-apps-updated'));
                                 } catch (err) {
                                     toast.error("Blueprint installation failed");
                                 }
@@ -132,7 +132,7 @@ export default function AppsMarketplace() {
                         <CardContent className="px-8 pb-8 pt-0">
                             <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-tighter mb-6 bg-slate-50 p-2 rounded-xl">
                                 <span>BUILD_{app.version}</span>
-                                <span>FORGED BY {app.author.toUpperCase()}</span>
+                                <span>CREATED BY {app.author.toUpperCase()}</span>
                             </div>
                             <div className="flex gap-3 w-full">
                                 {app.installed ? (
@@ -142,7 +142,7 @@ export default function AppsMarketplace() {
                                         className="flex-1 bg-rose-50 text-rose-600 hover:bg-rose-100 font-black rounded-2xl h-11"
                                         onClick={() => handleUninstall(app.name)}
                                     >
-                                        <Trash2 className="h-4 w-4 mr-2" /> Decommission
+                                        <Trash2 className="h-4 w-4 mr-2" /> Remove Module
                                     </Button>
                                 ) : (
                                     <Button

@@ -24,7 +24,7 @@ export default function RecoveryMemoryDashboard() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncRecoveryIntelligence = async (showLoading = false) => {
+    const syncRecoveryData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("accounting/recovery-memory");
@@ -37,8 +37,8 @@ export default function RecoveryMemoryDashboard() {
     };
 
     useEffect(() => {
-        syncRecoveryIntelligence(true);
-        const interval = setInterval(() => syncRecoveryIntelligence(false), 30000);
+        syncRecoveryData(true);
+        const interval = setInterval(() => syncRecoveryData(false), 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -74,7 +74,7 @@ export default function RecoveryMemoryDashboard() {
                             </p>
                         </div>
                         <div className="border-l border-white/20 pl-12">
-                            <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">Compliance Streak</p>
+                            <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">Issue-free Days</p>
                             <p className="text-4xl font-black flex items-center gap-3 text-white">
                                 {data.anchors.daysSinceDrift} Days without issues
                                 <ShieldAlert className="w-7 h-7 text-white/60" />
@@ -164,7 +164,7 @@ export default function RecoveryMemoryDashboard() {
                         <div className="h-16 w-px bg-slate-100"></div>
                         <div className="space-y-1">
                             <p className="text-5xl font-black text-blue-600">₹{data.timeSaved.monetaryValue.toLocaleString()}</p>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Labor Value</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Saved Labor Cost</p>
                         </div>
                     </div>
                     <p className="text-xs text-slate-400 font-medium italic">Equivalent to {Math.round(data.timeSaved.hours / 8)} full working shifts recovered.</p>

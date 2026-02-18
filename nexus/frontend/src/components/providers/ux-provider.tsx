@@ -68,8 +68,8 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // Global listener for custom events if needed
         const handleSessionExpiry = () => setIsSessionExpired(true);
-        window.addEventListener("kernel-session-expired", handleSessionExpiry);
-        return () => window.removeEventListener("kernel-session-expired", handleSessionExpiry);
+        window.addEventListener("session-expired", handleSessionExpiry);
+        return () => window.removeEventListener("session-expired", handleSessionExpiry);
     }, []);
 
     return (

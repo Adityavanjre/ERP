@@ -77,10 +77,10 @@ export function CommandPalette() {
         { name: "Inventory", icon: Package, path: "/inventory", category: "Navigation" },
         { name: "Accounting", icon: Landmark, path: "/accounting", category: "Navigation" },
         { name: "Customers (CRM)", icon: Users, path: "/crm", category: "Navigation" },
-        { name: "Apps", icon: Zap, path: "/apps", category: "System" },
-        { name: "Settings", icon: Settings, path: "/settings", category: "System" },
-        { name: "AI Insights", icon: Cpu, path: "/dashboard", category: "AI" },
-        { name: "Activity", icon: Activity, path: "/dashboard", category: "System" },
+        { name: "Apps", icon: Zap, path: "/apps", category: "Settings" },
+        { name: "Settings", icon: Settings, path: "/settings", category: "Settings" },
+        { name: "Support Insights", icon: Cpu, path: "/dashboard", category: "Support" },
+        { name: "Activity", icon: Activity, path: "/dashboard", category: "Settings" },
     ];
 
     const filteredCommands = query === ""
@@ -147,7 +147,7 @@ export function CommandPalette() {
 
                     {filteredCommands.length > 0 ? (
                         <>
-                            {["Navigation", "System", "AI"].map(cat => {
+                            {["Navigation", "Settings", "Support"].map(cat => {
                                 const catCommands = filteredCommands.filter(c => c.category === cat);
                                 if (catCommands.length === 0) return null;
 

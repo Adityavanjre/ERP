@@ -261,7 +261,7 @@ export default function AccountingPage() {
                 </Card>
             </div>
 
-            {/* Vision 2.0 Segment Aether & Ion Intelligence Layer */}
+            {/* Data Layer */}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                     <ForecastingWidget />

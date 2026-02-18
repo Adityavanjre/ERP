@@ -27,21 +27,21 @@ export default function FounderMonitoring() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncFounderIntelligence = async (showLoading = false) => {
+    const syncDashboardStats = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("kernel/founder-dashboard");
             setData(res);
         } catch (err) {
-            console.error("Founder Intel Sync Failure:", err);
+            console.error("Dashboard Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        syncFounderIntelligence(true);
-        const interval = setInterval(() => syncFounderIntelligence(false), 30000);
+        syncDashboardStats(true);
+        const interval = setInterval(() => syncDashboardStats(false), 30000);
         return () => clearInterval(interval);
     }, []);
 

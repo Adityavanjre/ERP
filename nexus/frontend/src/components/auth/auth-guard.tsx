@@ -20,7 +20,7 @@ const ROUTE_ACCESS: Record<string, string[]> = {
 
 function getRoleFromToken(): string | null {
     try {
-        const token = localStorage.getItem("nx_token");
+        const token = localStorage.getItem("k_token");
         if (!token) return null;
         const decoded: any = jwtDecode(token);
         return decoded.role || null;
@@ -56,10 +56,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             router.push("/login");
         };
 
-        window.addEventListener('kernel-session-expired', handleSessionExpired);
+        window.addEventListener('session-expired', handleSessionExpired);
 
         const checkAuth = () => {
-            const token = localStorage.getItem("nx_token");
+            const token = localStorage.getItem("k_token");
             if (!token) {
                 router.push("/login");
                 return;
@@ -83,7 +83,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         checkAuth();
 
         return () => {
-            window.removeEventListener('kernel-session-expired', handleSessionExpired);
+            window.removeEventListener('session-expired', handleSessionExpired);
         };
     }, [router, pathname]);
 

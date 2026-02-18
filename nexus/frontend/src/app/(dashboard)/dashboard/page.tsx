@@ -50,7 +50,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller';
-    const [kernelStats, setKernelStats] = useState({
+    const [systemStats, setSystemStats] = useState({
         apps: 0,
         installed: 0,
         records: 0,
@@ -83,7 +83,7 @@ export default function DashboardPage() {
         const fetchData = async () => {
             try {
                 // Background sync shouldn't show global loading after first load
-                const [kernelRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
+                const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
                     api.get('kernel/stats'),
                     api.get('analytics/summary'),
                     api.get('analytics/performance'),
@@ -92,12 +92,12 @@ export default function DashboardPage() {
                     api.get('analytics/value-chain')
                 ]);
 
-                // Kernel stats
-                const kernelData = Array.isArray(kernelRes.data) ? kernelRes.data : [];
-                const installed = kernelData.filter((a: any) => a.installed).length;
-                setKernelStats(prev => ({
+                // System stats
+                const systemData = Array.isArray(systemRes.data) ? systemRes.data : [];
+                const installed = systemData.filter((a: any) => a.installed).length;
+                setSystemStats(prev => ({
                     ...prev,
-                    apps: kernelData.length,
+                    apps: systemData.length,
                     installed
                 }));
 
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                 setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
 
             } catch (err) {
-                console.error("Klypso synchronization error:", err);
+                console.error("Data update error:", err);
             } finally {
                 setLoading(false);
             }
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Value Chain Integration */}
+            {/* Process Overview */}
             <div className="bg-white border border-slate-200 rounded-3xl p-1.5 shadow-xl shadow-slate-200/50">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                     {(valueChain || []).map((step, i) => (
@@ -195,7 +195,7 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-3xl font-black font-mono text-slate-900 tracking-tighter">{step.count.toLocaleString()}</span>
-                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-tight">Active</span>
+                                <span className="text-[10px] text-slate-600 font-black uppercase tracking-tight">Status</span>
                             </div>
                         </div>
                     ))}
@@ -294,13 +294,13 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                {/* Kernel Status & Logs */}
+                {/* System Activity */}
                 <div className="col-span-3 space-y-6">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                             <CardTitle className="text-slate-950 text-base flex items-center uppercase tracking-widest font-black">
                                 <Zap className="mr-3 h-5 w-5 text-amber-500 shadow-sm" />
-                                Growth Capital
+                                Business Growth
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6 pt-6">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                             <CardTitle className="text-slate-950 text-base flex items-center uppercase tracking-widest font-black">
                                 <Activity className="mr-3 h-5 w-5 text-blue-500 shadow-sm" />
-                                Activity Feed
+                                Recent Activity
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-6">

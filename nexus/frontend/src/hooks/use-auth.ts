@@ -16,14 +16,14 @@ export function useAuth() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem("nx_token");
+        const token = localStorage.getItem("k_token");
         if (token) {
             try {
                 const decoded = jwtDecode<User>(token);
                 setUser(decoded);
             } catch (err) {
                 console.error("Failed to decode token", err);
-                localStorage.removeItem("nx_token");
+                localStorage.removeItem("k_token");
             }
         }
         setLoading(false);

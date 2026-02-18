@@ -39,7 +39,7 @@ export default function ProjectPage() {
 
     const [formData, setFormData] = useState({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
 
-    const syncOperationsFlux = async (showLoading = false) => {
+    const syncProjectData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [projRes, statsRes] = await Promise.all([
@@ -57,8 +57,8 @@ export default function ProjectPage() {
     };
 
     useEffect(() => {
-        syncOperationsFlux(true);
-        const interval = setInterval(() => syncOperationsFlux(false), 30000);
+        syncProjectData(true);
+        const interval = setInterval(() => syncProjectData(false), 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -78,7 +78,7 @@ export default function ProjectPage() {
             setShowForm(false);
             setFormData({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
             toast.success("Project created successfully");
-            syncOperationsFlux(true);
+            syncProjectData(true);
         } catch (err) {
             toast.error("Project creation failed");
         }
@@ -98,7 +98,7 @@ export default function ProjectPage() {
             setNewTaskTitle("");
             toast.success("Task added");
             fetchTasks(selectedProject.id);
-            syncOperationsFlux(true); // Refresh progress bars
+            syncProjectData(true); // Refresh progress bars
         } catch (err) {
             toast.error("Task creation failed");
         }
@@ -111,7 +111,7 @@ export default function ProjectPage() {
             setProjectTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
 
             await api.patch(`/projects/tasks/${task.id}/status`, { status: newStatus });
-            syncOperationsFlux(true); // Refresh global progress
+            syncProjectData(true); // Refresh global progress
         } catch (err) {
             toast.error("Status update failed");
             fetchTasks(selectedProject.id); // Revert

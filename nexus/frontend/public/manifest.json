@@ -1,7 +1,7 @@
 {
-  "name": "Kernel ERP - SME Edition",
-  "short_name": "Kernel ERP",
-  "description": "Premium ERP for Indian SME Traders",
+  "name": "Klypso Business Suite",
+  "short_name": "Klypso",
+  "description": "Simplified business management for SMEs",
   "start_url": "/portal/",
   "display": "standalone",
   "background_color": "#09090b",

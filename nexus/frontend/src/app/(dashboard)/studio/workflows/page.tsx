@@ -33,21 +33,21 @@ export default function WorkflowBuilder() {
     const [nodes, setNodes] = useState<any[]>([]);
     const [transitions, setTransitions] = useState<any[]>([]);
 
-    const syncLifecycleStreams = async (showLoading = false) => {
+    const syncWorkflows = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get(`/kernel/workflows/${modelName}`);
             setWorkflows(res.data);
         } catch (err) {
-            console.error("Lifecycle Sync Failure:", err);
+            console.error("Workflows Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        syncLifecycleStreams(true);
-        const interval = setInterval(() => syncLifecycleStreams(false), 30000);
+        syncWorkflows(true);
+        const interval = setInterval(() => syncWorkflows(false), 30000);
         return () => clearInterval(interval);
     }, [modelName]);
 
@@ -57,7 +57,7 @@ export default function WorkflowBuilder() {
             const res = await api.post("kernel/workflows", { name: workflowName, modelName });
             toast.success("Workflow stream created");
             setWorkflowName("");
-            syncLifecycleStreams(true);
+            syncWorkflows(true);
             setSelectedWorkflow(res.data);
         } catch (err) {
             toast.error("Initialization failed");

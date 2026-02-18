@@ -25,7 +25,7 @@ export default function ManufacturingDashboard() {
     const [workOrders, setWorkOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const syncProductionLogic = async (showLoading = false) => {
+    const syncManufacturingData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [b, w] = await Promise.all([
@@ -35,17 +35,17 @@ export default function ManufacturingDashboard() {
             setBoms(b.data);
             setWorkOrders(w.data);
         } catch (err) {
-            console.error("Production Sync Failure:", err);
+            console.error("Manufacturing Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        syncProductionLogic(true);
+        syncManufacturingData(true);
 
         // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncProductionLogic(false), 30000);
+        const interval = setInterval(() => syncManufacturingData(false), 30000);
         return () => clearInterval(interval);
     }, []);
 

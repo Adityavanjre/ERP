@@ -42,7 +42,7 @@ export default function SalesPage() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [orderData, setOrderData] = useState({ customerId: "", productId: "", quantity: 1 });
 
-    const syncCommerceFlow = async (showLoading = false) => {
+    const syncSalesData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [orderRes, statsRes, prodRes, custRes] = await Promise.all([
@@ -56,16 +56,16 @@ export default function SalesPage() {
             setProducts(Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data.data || []));
             setCustomers(Array.isArray(custRes.data) ? custRes.data : (custRes.data.data || []));
         } catch (err) {
-            console.error("Commerce Sync Failure:", err);
+            console.error("Sales Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        syncCommerceFlow(true);
+        syncSalesData(true);
         // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncCommerceFlow(false), 30000);
+        const interval = setInterval(() => syncSalesData(false), 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -94,7 +94,7 @@ export default function SalesPage() {
             setShowForm(false);
             setOrderData({ customerId: "", productId: "", quantity: 1 });
             toast.success("Sales order processed successfully");
-            syncCommerceFlow();
+            syncSalesData();
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Order processing failed");
         } finally {

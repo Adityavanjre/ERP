@@ -29,7 +29,7 @@ export default function AuditorDashboard() {
     const [reopenReason, setReopenReason] = useState("");
     const [isReopening, setIsReopening] = useState(false);
 
-    const syncAuditorIntelligence = async (showLoading = false) => {
+    const syncAuditorData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
@@ -42,8 +42,8 @@ export default function AuditorDashboard() {
     };
 
     useEffect(() => {
-        syncAuditorIntelligence(true);
-        const interval = setInterval(() => syncAuditorIntelligence(false), 30000);
+        syncAuditorData(true);
+        const interval = setInterval(() => syncAuditorData(false), 30000);
         return () => clearInterval(interval);
     }, [month, year]);
 
@@ -51,7 +51,7 @@ export default function AuditorDashboard() {
         try {
             await api.post("accounting/auditor/lock", { month, year });
             toast.success("Period locked successfully");
-            syncAuditorIntelligence(true);
+            syncAuditorData(true);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Failed to lock period");
         }
@@ -67,13 +67,13 @@ export default function AuditorDashboard() {
             toast.success("Period reopened");
             setIsReopening(false);
             setReopenReason("");
-            syncAuditorIntelligence(true);
+            syncAuditorData(true);
         } catch (err) {
             toast.error("Failed to reopen period");
         }
     };
 
-    if (loading && !data) return <div className="p-8">Loading Security Audit...</div>;
+    if (loading && !data) return <div className="p-8">Loading Auditor...</div>;
 
     return (
         <div className="p-8 pb-20 space-y-8 bg-slate-50 text-slate-900 min-h-screen">
@@ -107,7 +107,7 @@ export default function AuditorDashboard() {
                         ))}
                     </select>
                     <button
-                        onClick={() => syncAuditorIntelligence(true)}
+                        onClick={() => syncAuditorData(true)}
                         className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
                     >
                         <Search className="w-4 h-4 text-zinc-400" />
@@ -169,7 +169,7 @@ export default function AuditorDashboard() {
                 </div>
 
                 <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">HSN Coverage</p>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Tax Coverage</p>
                     <div className="mt-2 flex items-baseline gap-2">
                         <span className="text-4xl font-black text-slate-900 tracking-tighter">{data?.hsnCoverage.toFixed(0)}%</span>
                         <FileText className="w-4 h-4 text-slate-400" />
@@ -186,12 +186,12 @@ export default function AuditorDashboard() {
                 <div className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
                     <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2 tracking-tight">
                         <AlertTriangle className="w-5 h-5 text-amber-600" />
-                        Risk Flags & Blockers
+                        Account Alerts & Blockers
                     </h2>
                     <div className="space-y-4">
                         {data?.riskFlags.length === 0 && (
                             <div className="text-slate-400 font-bold italic py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                No major risks detected for this period.
+                                No major flags detected for this period.
                             </div>
                         )}
                         {data?.riskFlags.map((flag: any, i: number) => (
@@ -227,7 +227,7 @@ export default function AuditorDashboard() {
                 <div className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
                     <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2 tracking-tight">
                         <BarChart3 className="w-5 h-5 text-blue-600" />
-                        Simulated Trial Balance
+                        Trial Balance Overview
                     </h2>
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">

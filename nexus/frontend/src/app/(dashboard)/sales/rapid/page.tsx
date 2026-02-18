@@ -49,7 +49,7 @@ export default function RapidBillingPage() {
         const loadMetadata = () => {
             const queue = JSON.parse(localStorage.getItem('billing_queue') || '[]');
             setPendingSync(queue.length);
-            const userData = localStorage.getItem('nx_user');
+            const userData = localStorage.getItem('k_user');
             if (userData) {
                 try {
                     const u = JSON.parse(userData);

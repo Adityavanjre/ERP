@@ -15,7 +15,7 @@ export const api = axios.create({
 // Add a request interceptor to add the JWT token to headers
 api.interceptors.request.use(
   (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('nx_token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,7 +31,7 @@ api.interceptors.response.use(
     if (contentType && contentType.includes('text/html') && typeof response.data === 'string') {
       if (response.data.includes('Render') || response.data.includes('Waking up')) {
         return Promise.reject({
-          message: 'Nexus ecosystem is initializing. Please wait as we synchronize the aether.',
+          message: 'Klypso is starting up. Please wait as we sync your data.',
           isWakeup: true
         });
       }
@@ -42,9 +42,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       if (typeof window !== 'undefined' && !isLoginRequest) {
-        localStorage.removeItem('nx_token');
-        localStorage.removeItem('nx_user');
-        window.dispatchEvent(new CustomEvent('kernel-session-expired'));
+        localStorage.removeItem('k_token');
+        localStorage.removeItem('k_user');
+        window.dispatchEvent(new CustomEvent('session-expired'));
       }
     }
     return Promise.reject(error);

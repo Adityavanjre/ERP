@@ -49,10 +49,10 @@ export function ForecastingWidget() {
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-black flex items-center gap-2">
                         <TrendingUp className="text-amber-500 w-6 h-6" />
-                        Segment Aether: Cashflow Runway
+                        Cashflow Forecast
                     </CardTitle>
                     <Badge variant="outline" className="bg-amber-100 text-amber-700 animate-pulse border-amber-200">
-                        30-Day Intelligence
+                        30-Day Forecast
                     </Badge>
                 </div>
                 <CardDescription className="font-medium">

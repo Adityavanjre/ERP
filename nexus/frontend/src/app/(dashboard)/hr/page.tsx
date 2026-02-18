@@ -28,7 +28,7 @@ export default function HrPage() {
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    const syncPersonnelIntelligence = async (showLoading = false) => {
+    const syncEmployeeData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             setFetchError(null);
@@ -55,10 +55,10 @@ export default function HrPage() {
 
     useEffect(() => {
         setMounted(true);
-        syncPersonnelIntelligence(true);
+        syncEmployeeData(true);
 
         // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncPersonnelIntelligence(false), 30000);
+        const interval = setInterval(() => syncEmployeeData(false), 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -89,7 +89,7 @@ export default function HrPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.activeEmployees}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Live personnel nodes</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">On-site Staff</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
@@ -109,17 +109,17 @@ export default function HrPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.totalPayroll).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Total treasury flow cycle</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Net Payroll Amount</p>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs defaultValue="employees" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
-                    <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Personnel Directory</TabsTrigger>
+                    <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Employee Directory</TabsTrigger>
                     <TabsTrigger value="departments" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Departments</TabsTrigger>
-                    <TabsTrigger value="leaves" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Absence Flow</TabsTrigger>
-                    <TabsTrigger value="payroll" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Disbursement Ledger</TabsTrigger>
+                    <TabsTrigger value="leaves" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Leaves & Absence</TabsTrigger>
+                    <TabsTrigger value="payroll" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Payroll Ledger</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="employees">

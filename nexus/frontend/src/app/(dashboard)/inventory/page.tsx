@@ -57,7 +57,7 @@ export default function InventoryPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const syncRegistry = async (showLoading = false) => {
+    const syncInventory = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             setFetchError(null);
@@ -77,7 +77,7 @@ export default function InventoryPage() {
             setStats(statsRes.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
             setForecast(aiRes.data || null);
         } catch (err: any) {
-            console.error("Registry Sync Failure:", err);
+            console.error("Inventory Sync Failure:", err);
             const msg = err.isWakeup ? err.message : "Inventory update interrupted";
             setFetchError(msg);
         } finally {
@@ -87,10 +87,10 @@ export default function InventoryPage() {
 
     useEffect(() => {
         setMounted(true);
-        syncRegistry(true);
+        syncInventory(true);
 
         // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncRegistry(false), 30000);
+        const interval = setInterval(() => syncInventory(false), 30000);
         return () => clearInterval(interval);
     }, [page]);
 
@@ -122,7 +122,7 @@ export default function InventoryPage() {
                 description: "", barcode: "", isService: false
             });
             toast.success("Product details updated");
-            syncRegistry(false);
+            syncInventory(false);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Creation failed");
         } finally {
@@ -156,7 +156,7 @@ export default function InventoryPage() {
                 description: "", barcode: "", isService: false
             });
             toast.success("Product updated");
-            syncRegistry(false);
+            syncInventory(false);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Update failed");
         } finally {
@@ -198,7 +198,7 @@ export default function InventoryPage() {
                     setUILocked(true);
                     await api.delete(`/inventory/products/${id}`);
                     toast.success("Product deleted successfully");
-                    syncRegistry(false);
+                    syncInventory(false);
                 } catch (err) {
                     toast.error("Failed to delete product");
                 } finally {
@@ -268,7 +268,7 @@ export default function InventoryPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Products Registered</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Products</CardTitle>
                         <Layers className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
@@ -358,7 +358,7 @@ export default function InventoryPage() {
                                     <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Procurement Cost</Label>
+                                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Purchase Price</Label>
                                     <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
                                 </div>
                                 <div className="space-y-2">
@@ -402,11 +402,11 @@ export default function InventoryPage() {
                     <form onSubmit={handleUpdate} className="space-y-6 pt-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                             <div className="space-y-2 lg:col-span-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Designation <span className="text-rose-500">*</span></Label>
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Name <span className="text-rose-500">*</span></Label>
                                 <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20 font-black" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset SKU (Unique)</Label>
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Code (Unique)</Label>
                                 <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" value={formData.sku} disabled />
                             </div>
                             <div className="space-y-2">
@@ -447,7 +447,7 @@ export default function InventoryPage() {
                                 <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Procurement Cost</Label>
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Purchase Price</Label>
                                 <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
                             </div>
                             <div className="space-y-2">
@@ -481,9 +481,9 @@ export default function InventoryPage() {
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                     <CardTitle className="text-slate-900 flex items-center gap-3 font-black">
                         <Brain className="h-5 w-5 text-amber-600" />
-                        Stock Analysis
+                        Inventory Forecast
                     </CardTitle>
-                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">AI-driven forecasting and consumption rates</CardDescription>
+                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Predictions and trends for stock levels</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -497,7 +497,7 @@ export default function InventoryPage() {
                                     <Badge variant="outline" className={rec.recommendation === 'Urgent Reorder'
                                         ? "border-rose-200 text-rose-600 bg-rose-50 font-black text-[9px] rounded-lg border-none"
                                         : "border-emerald-200 text-emerald-600 bg-emerald-50 font-black text-[9px] rounded-lg border-none"}>
-                                        {rec.recommendation.toUpperCase()}
+                                        {rec.recommendation === 'Urgent Reorder' ? 'RESTOCK' : 'STABLE'}
                                     </Badge>
                                 </div>
                                 <div className="space-y-2 relative z-10">
