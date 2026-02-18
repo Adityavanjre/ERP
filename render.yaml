@@ -68,6 +68,18 @@ services:
         generateValue: true
       - key: PORT
         value: 3001
+      - key: NEXUS_FRONTEND_URL
+        value: https://klypso.in/portal
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: noreply@klypso.in
 
   - type: web
     name: nexus-frontend
