@@ -1,11 +1,11 @@
 import type { NextConfig } from "next";
 
-const NEXUS_BACKEND_URL = process.env.NEXUS_BACKEND_URL;
+const KLYPSO_BACKEND_URL = process.env.KLYPSO_BACKEND_URL;
 
 const securityHeaders = [
     {
         key: 'Content-Security-Policy',
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' https://nexus-backend-3ukg.onrender.com https://klypso-gateway.onrender.com http://localhost:3001 http://localhost:5000;",
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' https://klypso-backend.onrender.com https://klypso-gateway.onrender.com http://localhost:3001 http://localhost:5000;",
     },
     {
         key: 'X-DNS-Prefetch-Control',
@@ -50,11 +50,11 @@ const nextConfig: NextConfig = {
         ];
     },
     async rewrites() {
-        if (!NEXUS_BACKEND_URL) return [];
+        if (!KLYPSO_BACKEND_URL) return [];
         return [
             {
                 source: '/api/:path*',
-                destination: `${NEXUS_BACKEND_URL}/api/:path*`,
+                destination: `${KLYPSO_BACKEND_URL}/api/:path*`,
             },
         ];
     },
