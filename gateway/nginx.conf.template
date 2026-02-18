@@ -28,9 +28,9 @@ server {
     }
 
     # 🐘 Klypso Engine API
-    location ^~ /portal/api {
+    location ^~ /portal/api/ {
         set $erp_backend_host ${KLYPSO_BACKEND_HOST};
-        proxy_pass https://$erp_backend_host/api;
+        proxy_pass https://$erp_backend_host/api/;
         proxy_ssl_server_name on;
         proxy_set_header Host $erp_backend_host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -38,8 +38,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # 🏢 Agency API (Relative to Root)
-    location /api/agency/ {
+    # 🏢 Agency API
+    location ^~ /api/agency/ {
         set $agency_backend_host ${AGENCY_BACKEND_HOST};
         proxy_pass https://$agency_backend_host/;
         proxy_ssl_server_name on;
