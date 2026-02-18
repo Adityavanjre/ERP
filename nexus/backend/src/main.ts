@@ -62,4 +62,8 @@ async function bootstrap() {
 }
 
 // ClusterService.clusterize(bootstrap);
-bootstrap();
+bootstrap().catch(err => {
+  console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend failed to initialize 🚨');
+  console.error(err);
+  process.exit(1);
+});

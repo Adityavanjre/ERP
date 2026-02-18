@@ -31,6 +31,7 @@ export class HealthController {
   checkLiveness() {
     return {
       status: 'up',
+      version: '1.0.0-ZENITH',
       timestamp: new Date().toISOString(),
     };
   }

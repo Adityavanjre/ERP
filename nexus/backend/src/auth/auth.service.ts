@@ -6,7 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { TenantType, PlanType, Role, Prisma } from '@prisma/client';
 import { TenantContextService } from '../prisma/tenant-context.service';
@@ -35,7 +35,7 @@ export class AuthService {
     }
 
     // 2. Hash password
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(dto.password, salt);
 
     // 3. Create User, Tenant, and Membership in a transaction
@@ -211,7 +211,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
     await this.prisma.user.update({

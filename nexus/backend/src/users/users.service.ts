@@ -2,7 +2,7 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { Role } from '@prisma/client';
 
 @Injectable()
@@ -42,7 +42,7 @@ export class UsersService {
     // 2. Transact: Create user (if new) and membership
     return this.prisma.$transaction(async (tx) => {
       if (!user) {
-        const salt = await bcrypt.genSalt();
+        const salt = await bcrypt.genSalt(10);
         const defaultPassword = await bcrypt.hash('password123', salt);
         user = await tx.user.create({
           data: {
@@ -119,7 +119,7 @@ export class UsersService {
 
     // Generate a random 8-char secure pattern
     const rawPassword = Math.random().toString(36).slice(-8).toUpperCase();
-    const salt = await bcrypt.genSalt();
+    const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(rawPassword, salt);
 
     await this.prisma.user.update({
