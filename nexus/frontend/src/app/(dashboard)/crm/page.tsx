@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, UserPlus, Search, Filter, Mail, Building, Phone, Sparkles, X, Save, Trash2, Upload } from "lucide-react";
+import { Users, UserPlus, Search, Filter, Mail, Building, Phone, Sparkles, X, Save, Trash2, Upload, Edit2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,6 +28,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EditCustomerDialog } from "@/components/crm/edit-customer-dialog";
 
 import { useRouter } from "next/navigation";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
@@ -42,6 +43,8 @@ export default function CrmPage() {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [showDealForm, setShowDealForm] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [customerToEdit, setCustomerToEdit] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
 
     // Edit Mode
@@ -534,14 +537,28 @@ export default function CrmPage() {
                                                 {new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}
                                             </TableCell>
                                             <TableCell className="text-right pr-8">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-9 w-9 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                                                    onClick={(e) => handleDeleteCustomer(e, c.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCustomerToEdit(c);
+                                                            setIsEditDialogOpen(true);
+                                                        }}
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                                                        onClick={(e) => handleDeleteCustomer(e, c.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -563,6 +580,13 @@ export default function CrmPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <EditCustomerDialog
+                open={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                customer={customerToEdit}
+                onSuccess={() => syncRelations(false)}
+            />
         </div>
     );
 }

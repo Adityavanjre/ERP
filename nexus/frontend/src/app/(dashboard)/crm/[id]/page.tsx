@@ -110,7 +110,7 @@ export default function CustomerDetailPage() {
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8 flex flex-row items-center justify-between print:border-b print:border-black">
                         <div>
                             <CardTitle className="text-slate-900 text-xl font-black tracking-tight print:text-black">Audit Statement</CardTitle>
-                            <CardDescription className="text-slate-500 font-medium print:text-zinc-600">Ledger history for relation: {customer.firstName} {customer.lastName}</CardDescription>
+                            <CardDescription className="text-slate-500 font-medium print:text-zinc-600">Transaction history for: {customer.firstName} {customer.lastName}</CardDescription>
                         </div>
                         <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-bold h-11 px-6 print:hidden shadow-sm" onClick={() => window.print()}>
                             <FileText className="mr-2 h-4 w-4" /> Export Record

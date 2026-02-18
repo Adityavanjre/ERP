@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Patch,
   UseGuards,
   Req,
   Param,
@@ -92,6 +93,20 @@ export class CrmController {
   @Permissions(Permission.CREATE_INVOICE)
   updateOpp(@Req() req: any, @Body() data: any, @Param('id') id: string) {
     return this.crmService.updateOpportunity(req.user.tenantId, id, data);
+  }
+
+  @Patch('customers/:id')
+  @Permissions(Permission.MANAGE_USERS)
+  update(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() updateCustomerDto: any,
+  ) {
+    return this.crmService.updateCustomer(
+      req.user.tenantId,
+      id,
+      updateCustomerDto,
+    );
   }
 
   // --- Opening Balances ---

@@ -29,6 +29,13 @@ export class WarehouseService {
     });
   }
 
+  async updateWarehouse(tenantId: string, id: string, data: any) {
+    return this.prisma.warehouse.updateMany({
+      where: { id, tenantId },
+      data,
+    });
+  }
+
   async logMovement(tenantId: string, data: {
     productId: string;
     warehouseId: string;

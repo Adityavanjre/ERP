@@ -42,6 +42,17 @@ export class InventoryController {
     return this.warehouseService.createWarehouse(tenantId, data);
   }
 
+  @Patch('warehouses/:id')
+  @Roles(Role.Owner, Role.Manager)
+  @Permissions(Permission.MANAGE_USERS)
+  updateWarehouse(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() data: any,
+  ) {
+    return this.warehouseService.updateWarehouse(tenantId, id, data);
+  }
+
   @Post('movements')
   @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
   @Permissions(Permission.ADJUST_STOCK)

@@ -33,6 +33,12 @@ export class PurchasesController {
     return this.purchasesService.getSuppliers(req.user.tenantId);
   }
 
+  @Patch('suppliers/:id')
+  @Permissions(Permission.MANAGE_USERS)
+  updateSupplier(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+    return this.purchasesService.updateSupplier(req.user.tenantId, id, dto);
+  }
+
   @Post('orders')
   @Permissions(Permission.ADJUST_STOCK)
   createPO(@Req() req: any, @Body() dto: any) {

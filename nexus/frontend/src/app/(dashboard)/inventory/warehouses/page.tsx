@@ -18,10 +18,19 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from 'react-hot-toast';
+import { CreateWarehouseDialog } from '@/components/inventory/create-warehouse-dialog';
+import { EditWarehouseDialog } from '@/components/inventory/edit-warehouse-dialog';
+import { TransferStockDialog } from '@/components/inventory/transfer-stock-dialog';
+import { WarehouseDetailsDialog } from '@/components/inventory/warehouse-details-dialog';
+import { Edit2 } from 'lucide-react';
 
 export default function WarehousesPage() {
     const [warehouses, setWarehouses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [editingWarehouse, setEditingWarehouse] = useState<any>(null);
+    const [transferringWarehouse, setTransferringWarehouse] = useState<any>(null);
+    const [detailsWarehouse, setDetailsWarehouse] = useState<any>(null);
 
     const syncWarehouses = async (showLoading = false) => {
         try {
@@ -45,6 +54,11 @@ export default function WarehousesPage() {
 
     return (
         <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
+            <CreateWarehouseDialog
+                open={isAddDialogOpen}
+                onOpenChange={setIsAddDialogOpen}
+                onSuccess={() => syncWarehouses(false)}
+            />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -55,7 +69,10 @@ export default function WarehousesPage() {
                         Stock Storage & Distribution
                     </p>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2">
+                <Button
+                    onClick={() => setIsAddDialogOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2"
+                >
                     <Plus className="h-5 w-5" /> Add Warehouse
                 </Button>
             </div>
@@ -75,7 +92,11 @@ export default function WarehousesPage() {
                             <p className="text-slate-500 text-sm max-w-xs mx-auto">
                                 Start by adding your first warehouse storage.
                             </p>
-                            <Button variant="outline" className="rounded-xl font-bold border-slate-200 hover:bg-white active:scale-95">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsAddDialogOpen(true)}
+                                className="rounded-xl font-bold border-slate-200 hover:bg-white active:scale-95"
+                            >
                                 Add First Warehouse
                             </Button>
                         </CardContent>
@@ -90,8 +111,21 @@ export default function WarehousesPage() {
                                         <MapPin className="h-3 w-3" /> {w.location || 'No address set'}
                                     </div>
                                 </div>
-                                <div className="bg-white p-2.5 rounded-2xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                    <ChevronRight className="h-5 w-5" />
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingWarehouse(w);
+                                        }}
+                                        className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl shadow-sm border border-slate-100 transition-all"
+                                    >
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <div className="bg-white p-2.5 rounded-2xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors border border-slate-100">
+                                        <ChevronRight className="h-5 w-5" />
+                                    </div>
                                 </div>
                             </div>
                         </CardHeader>
@@ -116,10 +150,22 @@ export default function WarehousesPage() {
                             <div className="h-px bg-slate-100" />
 
                             <div className="grid grid-cols-2 gap-4">
-                                <button className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 font-bold text-xs transition-colors">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setTransferringWarehouse(w);
+                                    }}
+                                    className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 font-bold text-xs transition-colors"
+                                >
                                     <ArrowRightLeft className="h-4 w-4" /> Transfer
                                 </button>
-                                <button className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-xs transition-colors">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDetailsWarehouse(w);
+                                    }}
+                                    className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-xs transition-colors"
+                                >
                                     Details
                                 </button>
                             </div>
@@ -127,6 +173,24 @@ export default function WarehousesPage() {
                     </Card>
                 ))}
             </div>
+
+            <EditWarehouseDialog
+                open={!!editingWarehouse}
+                onOpenChange={(open) => !open && setEditingWarehouse(null)}
+                warehouse={editingWarehouse}
+                onSuccess={() => syncWarehouses(false)}
+            />
+            <TransferStockDialog
+                open={!!transferringWarehouse}
+                onOpenChange={(open) => !open && setTransferringWarehouse(null)}
+                sourceWarehouse={transferringWarehouse}
+                onSuccess={() => syncWarehouses(true)}
+            />
+            <WarehouseDetailsDialog
+                open={!!detailsWarehouse}
+                onOpenChange={(open) => !open && setDetailsWarehouse(null)}
+                warehouse={detailsWarehouse}
+            />
         </div>
     );
 }

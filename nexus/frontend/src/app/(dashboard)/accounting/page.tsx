@@ -1,7 +1,7 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -192,16 +192,16 @@ export default function AccountingPage() {
                         <Button
                             variant="ghost"
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
-                            onClick={handleTallyMasters}
+                            onClick={() => setShowCreateAccount(true)}
                         >
-                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> Tally Masters
+                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> All Accounts
                         </Button>
                         <Button
                             variant="ghost"
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
-                            onClick={handleTallyExport}
+                            onClick={() => setShowCreateJournalEntry(true)}
                         >
-                            <FileDown className="mr-2 h-4 w-4 text-emerald-500" /> Export to Tally
+                            <Plus className="mr-2 h-4 w-4 text-emerald-500" /> Record Transaction
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-8 shadow-lg shadow-amber-500/20 text-white h-11" onClick={() => setShowCreateInvoice(true)}>
@@ -415,7 +415,7 @@ export default function AccountingPage() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Chart of Accounts</CardTitle>
-                                    <CardDescription className="text-slate-500 font-medium">All account ledgers and current balances.</CardDescription>
+                                    <CardDescription className="text-slate-500 font-medium">All company accounts and current balances.</CardDescription>
                                 </div>
                                 <Button onClick={() => setShowCreateAccount(true)} className="bg-amber-500 hover:bg-amber-600 font-bold shadow-lg shadow-amber-500/20 text-white">
                                     <Plus className="mr-2 h-4 w-4" /> Add Account

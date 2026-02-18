@@ -17,18 +17,23 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Truck, ShoppingBag, DollarSign, Package, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Truck, ShoppingBag, DollarSign, Package, CheckCircle2, XCircle, ShoppingCart, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { CreateSupplierDialog } from "@/components/purchases/create-supplier-dialog";
+import { EditSupplierDialog } from "@/components/purchases/edit-supplier-dialog";
+import { Edit2 } from "lucide-react";
 
 export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<any[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ totalSpent: 0, pendingPOs: 0, totalPOs: 0 });
+    const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showPODialog, setShowPODialog] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
+    const [editingSupplier, setEditingSupplier] = useState<any>(null);
 
     // Form state
     const [newPO, setNewPO] = useState({
@@ -48,10 +53,10 @@ export default function PurchasesPage() {
                 api.get("purchases/orders"),
                 api.get("purchases/stats")
             ]);
-            setSuppliers(Array.isArray(suppRes.data) ? suppRes.data : []);
-            setProducts(Array.isArray(prodRes.data) ? prodRes.data : []);
-            setPurchaseOrders(Array.isArray(poRes.data) ? poRes.data : []);
-            setStats(statsRes.data || { totalSpent: 0, pendingPOs: 0, totalPOs: 0 });
+            setSuppliers(suppRes.data);
+            setProducts(prodRes.data);
+            setPurchaseOrders(poRes.data);
+            setStats(statsRes.data);
         } catch (err) {
             console.error("Procurement Sync Failure:", err);
             setSuppliers([]);
@@ -125,20 +130,31 @@ export default function PurchasesPage() {
 
     return (
         <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50/30 min-h-screen">
+            <CreateSupplierDialog
+                open={isAddSupplierOpen}
+                onOpenChange={setIsAddSupplierOpen}
+                onSuccess={() => syncProcurement(false)}
+            />
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                        <ShoppingBag className="mr-4 h-9 w-9 text-blue-600" />
-                        Purchases & Suppliers
+                    <h2 className="text-4xl font-black tracking-tight text-slate-900 tracking-tighter flex items-center gap-3">
+                        <ShoppingCart className="h-10 w-10 text-indigo-600" /> Purchases & Suppliers
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage purchase orders, suppliers, and incoming stock.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage your supply chain and purchase orders.</p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => setIsAddSupplierOpen(true)}
+                        className="rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-6 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        <UserPlus className="h-4 w-4" /> Add Supplier
+                    </Button>
                     <Button
                         onClick={() => setShowPODialog(true)}
-                        className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
                     >
-                        <Plus className="mr-2 h-4 w-4" /> New Purchase Order
+                        New Purchase Order
                     </Button>
                 </div>
             </div>
@@ -257,7 +273,17 @@ export default function PurchasesPage() {
                                                 <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:border-blue-100 transition-all">
                                                     <Truck className="h-6 w-6 text-blue-600 transition-transform group-hover:rotate-12" />
                                                 </div>
-                                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-md border-none uppercase tracking-tighter">{s.category}</Badge>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setEditingSupplier(s)}
+                                                        className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                    >
+                                                        <Edit2 className="h-4 w-4" />
+                                                    </Button>
+                                                    <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-md border-none uppercase tracking-tighter self-start">{s.category}</Badge>
+                                                </div>
                                             </div>
                                             <CardTitle className="text-lg font-black text-slate-900 tracking-tight">{s.name}</CardTitle>
                                             <CardDescription className="text-slate-500 font-bold text-xs">{s.email}</CardDescription>
@@ -278,13 +304,20 @@ export default function PurchasesPage() {
                 </TabsContent>
             </Tabs>
 
+            <EditSupplierDialog
+                open={!!editingSupplier}
+                onOpenChange={(open) => !open && setEditingSupplier(null)}
+                supplier={editingSupplier}
+                onSuccess={() => syncProcurement(false)}
+            />
+
             {/* Purchase Order Creation Dialog */}
             <Dialog open={showPODialog} onOpenChange={setShowPODialog}>
                 <DialogContent className="sm:max-w-[500px] rounded-3xl border-none shadow-2xl">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black text-slate-900">New Purchase Order</DialogTitle>
                         <DialogDescription className="text-slate-500 font-medium">
-                            Start a new procurement cycle with a verified supplier.
+                            Start a new order with a verified supplier.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-6 py-6">

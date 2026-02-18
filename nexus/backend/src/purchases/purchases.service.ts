@@ -47,6 +47,13 @@ export class PurchasesService {
     });
   }
 
+  async updateSupplier(tenantId: string, id: string, data: any) {
+    return this.prisma.supplier.updateMany({
+      where: { id, tenantId },
+      data,
+    });
+  }
+
   // --- Purchase Orders ---
   async createPurchaseOrder(tenantId: string, data: any) {
     const { items, supplierId, ...poData } = data;

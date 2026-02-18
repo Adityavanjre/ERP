@@ -308,6 +308,40 @@ export class CrmService {
     });
   }
 
+  async updateCustomer(tenantId: string, id: string, data: any) {
+    // Security check: ensure customer belongs to tenant
+    const customer = await this.prisma.customer.findFirst({
+      where: { id, tenantId, isDeleted: false },
+    });
+    if (!customer) throw new Error('Customer not found');
+
+    // Phone deduplication check if phone is changing
+    if (data.phone && data.phone !== customer.phone && data.phone !== '0000000000') {
+      const existing = await this.prisma.customer.findFirst({
+        where: { tenantId, phone: data.phone, isDeleted: false },
+      });
+      if (existing) {
+        throw new Error(`Another customer already has the phone number ${data.phone}.`);
+      }
+    }
+
+    const { openingBalance, ...updateData } = data;
+
+    const updated = await this.prisma.customer.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await this.audit.log({
+      tenantId,
+      action: 'UPDATE_CUSTOMER',
+      resource: 'Customer',
+      details: { customerId: id, changes: updateData },
+    });
+
+    return updated;
+  }
+
   // --- Opportunities ---
   async createOpportunity(tenantId: string, data: any) {
     return this.prisma.opportunity.create({
