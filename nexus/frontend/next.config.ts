@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const NEXUS_BACKEND_URL = process.env.NEXUS_BACKEND_URL;
 
@@ -35,6 +36,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
     output: 'standalone',
+    outputFileTracingRoot: path.join(__dirname, '../../'),
     basePath: '/portal',
     images: {
         remotePatterns: [

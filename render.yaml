@@ -91,12 +91,16 @@ services:
     plan: free
     rootDir: nexus/frontend
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    startCommand: node .next/standalone/server.js
     healthCheckPath: /portal/dashboard
     autoDeploy: false
     envVars:
       - key: NEXUS_BACKEND_URL
         value: https://nexus-backend-3ukg.onrender.com
+      - key: PORT
+        value: 3000
+      - key: HOSTNAME
+        value: 0.0.0.0
 
 databases:
   - name: nexus-db
