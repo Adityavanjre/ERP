@@ -82,9 +82,9 @@ export default function AuditorDashboard() {
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                         <ShieldCheck className="w-8 h-8 text-emerald-600" />
-                        Zenith Security Auditor
+                        Financial Auditor
                     </h1>
-                    <p className="text-slate-500 font-medium mt-1">Forensic financial integrity & month-close management.</p>
+                    <p className="text-slate-500 font-medium mt-1">Review and close your monthly accounts.</p>
                 </div>
 
                 <div className="flex items-center gap-4 bg-white border border-slate-200 p-2 rounded-2xl shadow-sm">
@@ -315,9 +315,9 @@ export default function AuditorDashboard() {
                     <div className="bg-white border border-slate-200 w-full max-w-md rounded-[32px] p-10 shadow-2xl">
                         <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3 mb-2 tracking-tighter">
                             <Unlock className="w-6 h-6 text-amber-600" />
-                            Security Overrule
+                            Reopen Closed Month
                         </h3>
-                        <p className="text-slate-500 font-medium text-xs mb-8">Reopening a closed month destroys the "Audit Ready" seal. You must provide a valid compliance reason.</p>
+                        <p className="text-slate-500 font-medium text-xs mb-8">Reopening a closed month will allow new entries to be made. Please provide a reason for reopening.</p>
 
                         <textarea
                             value={reopenReason}

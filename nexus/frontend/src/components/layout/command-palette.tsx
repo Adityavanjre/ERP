@@ -72,15 +72,15 @@ export function CommandPalette() {
     }, []);
 
     const commands = [
-        { name: "Executive Dashboard", icon: LayoutGrid, path: "/dashboard", category: "Navigation" },
-        { name: "Manufacturing Operations", icon: Boxes, path: "/manufacturing", category: "Navigation" },
-        { name: "Inventory Management", icon: Package, path: "/inventory", category: "Navigation" },
-        { name: "Financial Intelligence", icon: Landmark, path: "/accounting", category: "Navigation" },
-        { name: "Customer Directory", icon: Users, path: "/crm", category: "Navigation" },
-        { name: "App Marketplace", icon: Zap, path: "/apps", category: "System" },
-        { name: "Organization Settings", icon: Settings, path: "/settings", category: "System" },
-        { name: "Predictive Analytics (AI)", icon: Cpu, path: "/dashboard", category: "AI" },
-        { name: "System Activity", icon: Activity, path: "/dashboard", category: "System" },
+        { name: "Dashboard", icon: LayoutGrid, path: "/dashboard", category: "Navigation" },
+        { name: "Manufacturing", icon: Boxes, path: "/manufacturing", category: "Navigation" },
+        { name: "Inventory", icon: Package, path: "/inventory", category: "Navigation" },
+        { name: "Accounting", icon: Landmark, path: "/accounting", category: "Navigation" },
+        { name: "Customers (CRM)", icon: Users, path: "/crm", category: "Navigation" },
+        { name: "Apps", icon: Zap, path: "/apps", category: "System" },
+        { name: "Settings", icon: Settings, path: "/settings", category: "System" },
+        { name: "AI Insights", icon: Cpu, path: "/dashboard", category: "AI" },
+        { name: "Activity", icon: Activity, path: "/dashboard", category: "System" },
     ];
 
     const filteredCommands = query === ""
@@ -117,7 +117,7 @@ export function CommandPalette() {
                     {results.length > 0 && (
                         <div className="space-y-2">
                             <div className="px-3 py-2 text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                <Search className="h-3 w-3" /> Intelligence Matches
+                                <Search className="h-3 w-3" /> Search Results
                             </div>
                             {results.map((res, i) => {
                                 const Icon = res.type === 'Product' ? Package : res.type === 'Customer' ? Users : FileText;
@@ -167,7 +167,7 @@ export function CommandPalette() {
                                                     <span className="text-slate-700 group-hover:text-slate-900 font-bold">{command.name}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Execute</span>
+                                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Go</span>
                                                     <ArrowRight className="h-4 w-4 text-blue-600" />
                                                 </div>
                                             </button>
@@ -197,7 +197,7 @@ export function CommandPalette() {
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                        <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">Nexus OS v2.10</span>
+                        <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">v2.10</span>
                     </div>
                 </div>
             </DialogContent>
