@@ -110,7 +110,7 @@ export default function CrmPage() {
                     toast.warning(`${res.data.failed} rows failed. Check console.`);
                     console.warn(res.data.errors);
                 }
-                fetchData();
+                syncRelations(true);
             } catch (err) {
                 toast.dismiss();
                 toast.error("Import failed");
@@ -128,7 +128,7 @@ export default function CrmPage() {
             setShowForm(false);
             setFormData({ firstName: "", lastName: "", email: "", phone: "", company: "", address: "", state: "", gstin: "" });
             toast.success("Customer created successfully");
-            fetchData();
+            syncRelations(true);
         } catch (err) {
             toast.error("Failed to create customer");
         } finally {
@@ -149,7 +149,7 @@ export default function CrmPage() {
                     setUILocked(true);
                     await api.delete(`/crm/customers/${id}`);
                     toast.success("Customer deleted successfully");
-                    fetchData();
+                    syncRelations(true);
                 } catch (err: any) {
                     toast.error(err.response?.data?.message || "Delete failed");
                 } finally {
@@ -170,7 +170,7 @@ export default function CrmPage() {
             setShowDealForm(false);
             setDealData({ title: "", value: "", customerId: "", stage: "New" });
             toast.success("Deal created successfully");
-            fetchData();
+            syncRelations(true);
         } catch (err) {
             toast.error("Failed to create deal");
         } finally {
@@ -193,10 +193,10 @@ export default function CrmPage() {
             });
             setEditingDeal(null);
             toast.success("Deal parameters updated");
-            fetchData();
+            syncRelations(true);
         } catch (err) {
             toast.error("Update sequence failed");
-            fetchData();
+            syncRelations(true);
         } finally {
             setUILocked(false);
         }
@@ -207,10 +207,10 @@ export default function CrmPage() {
             setOpportunities(prev => prev.map(o => o.id === id ? { ...o, stage: newStage } : o));
             await api.post(`/crm/opportunities/${id}`, { stage: newStage });
             toast.success(`Deal moved to ${newStage}`);
-            fetchData();
+            syncRelations(true);
         } catch (err) {
             toast.error("Failed to move deal");
-            fetchData();
+            syncRelations(true);
         }
     };
 
