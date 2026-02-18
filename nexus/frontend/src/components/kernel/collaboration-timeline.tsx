@@ -60,7 +60,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
             setNewComment('');
             setReplyTo(null);
             syncCommunicationFlux(true);
-            toast.success('Insight broadcasted to timeline');
+            toast.success('Comment posted');
         } catch (err) {
             toast.error('Failed to post comment');
         }
@@ -105,7 +105,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
         <Card className="p-4 bg-background/50 backdrop-blur-sm border-primary/20 shadow-xl lg:sticky lg:top-24">
             <div className="flex items-center gap-2 mb-4">
                 <MessageSquare className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-lg">Nexus Communication Flux</h3>
+                <h3 className="font-bold text-lg">Comments & Discussion</h3>
             </div>
 
             <div className="max-h-[500px] overflow-y-auto mb-4 space-y-2 pr-2 custom-scrollbar">
@@ -135,7 +135,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
                     )}
                 </AnimatePresence>
                 <Textarea
-                    placeholder="Input operational insight or instruction..."
+                    placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     className="min-h-[80px] bg-secondary/10 border-primary/10 focus:border-primary/40 transition-all text-sm"
@@ -145,7 +145,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
                         <Paperclip className="w-3 h-3" /> Attach
                     </Button>
                     <Button onClick={addComment} size="sm" className="gap-1 shadow-lg shadow-primary/20">
-                        <Send className="w-3 h-3" /> Broadcast Insight
+                        <Send className="w-3 h-3" /> Post
                     </Button>
                 </div>
             </div>

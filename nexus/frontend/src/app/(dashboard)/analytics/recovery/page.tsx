@@ -56,13 +56,13 @@ export default function RecoveryMemoryDashboard() {
                 <div className="relative z-10 max-w-3xl">
                     <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-8">
                         <Sparkles className="w-4 h-4" />
-                        Intelligence Report
+                        Insights
                     </div>
                     <h1 className="text-6xl font-black tracking-tighter mb-6 text-white leading-[1.1]">
                         System Protected <span className="text-emerald-300">₹{data.anchors.monthlyProtection.toLocaleString()}</span> This Month.
                     </h1>
                     <p className="text-xl text-blue-50 font-medium leading-relaxed mb-10 opacity-90">
-                        Nexus is your digital guardian, systematically identifying revenue leakage, preventing transaction disputes, and accelerating your cash flow cycle.
+                        Your business is protected. We automatically find missed payments, prevent disputes, and help you collect faster.
                     </p>
 
                     <div className="flex gap-12">
@@ -153,8 +153,8 @@ export default function RecoveryMemoryDashboard() {
                         <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full uppercase tracking-widest">ASSET OPTIMIZED</span>
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black mb-2 tracking-tight">Time Equity</h2>
-                        <p className="text-slate-500 font-medium">Automated protocols replacing manual labor.</p>
+                        <h2 className="text-3xl font-black mb-2 tracking-tight">Time Saved</h2>
+                        <p className="text-slate-500 font-medium">Tasks handled automatically, so you don't have to.</p>
                     </div>
                     <div className="flex items-center gap-8 pt-4">
                         <div className="space-y-1">
@@ -178,9 +178,9 @@ export default function RecoveryMemoryDashboard() {
                     <div className="text-center md:text-left">
                         <h2 className="text-4xl font-black mb-3 tracking-tighter flex items-center justify-center md:justify-start gap-4">
                             <History className="w-10 h-10 text-blue-600" />
-                            Recovery Intelligence
+                            Recovery Opportunities
                         </h2>
-                        <p className="text-slate-500 font-medium text-lg">Dormant capital identified. Reactivate these segments to reclaim projected revenue.</p>
+                        <p className="text-slate-500 font-medium text-lg">Customers who haven't purchased recently. Reach out to bring them back.</p>
                     </div>
                     <button className="flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95">
                         Bulk Export Target Leads
@@ -203,7 +203,7 @@ export default function RecoveryMemoryDashboard() {
                             <h3 className="font-black text-xl mb-2 text-slate-900 truncate">{opp.name}</h3>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">Delta: ₹{opp.lastTransaction.toLocaleString()}</p>
                             <button className="w-full py-3 bg-white border border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
-                                Dispatch System
+                                Send Reminder
                             </button>
                         </div>
                     ))}
@@ -223,7 +223,7 @@ export default function RecoveryMemoryDashboard() {
                     <div className="space-y-4 text-center lg:text-left relative z-10">
                         <h2 className="text-4xl font-black text-white tracking-tighter">Maximize System Protection.</h2>
                         <p className="text-slate-400 text-xl font-medium max-w-2xl leading-relaxed">
-                            Nexus has already delivered 10x ROI. Upgrade to <span className="text-white font-bold">Nexus Prime</span> to unlock predictive leakage detection and autonomous recovery bots.
+                            You've already saved a lot with this plan. Upgrade to <span className="text-white font-bold">Prime Plan</span> to unlock advanced overdue detection and automated follow-ups.
                         </p>
                     </div>
                     <button className="bg-blue-600 text-white px-12 py-6 rounded-[2.5rem] font-black text-xl hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/20 flex items-center gap-4 relative z-10 active:scale-95 group">
@@ -236,7 +236,7 @@ export default function RecoveryMemoryDashboard() {
             {/* Footer Info */}
             <div className="flex justify-center items-center gap-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] pt-12 pb-12">
                 <Timer className="w-4 h-4" />
-                Audited System Logs Protocol v2.1
+                Auto-updated every 30 seconds
             </div>
         </div>
     );
