@@ -595,7 +595,7 @@ export default function AccountingPage() {
                                                     <div className="p-2 bg-amber-50 rounded-xl">
                                                         <Activity className="h-5 w-5 text-amber-600" />
                                                     </div>
-                                                    Dormant Recovery List
+                                                    Inactive Customers
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent className="p-8">

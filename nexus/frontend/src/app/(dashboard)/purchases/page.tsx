@@ -106,10 +106,10 @@ export default function PurchasesPage() {
     const handleUpdateStatus = async (id: string, status: string) => {
         try {
             await api.patch(`/purchases/orders/${id}/status`, { status });
-            toast.success(`Procurement node marked as ${status}`);
+            toast.success(`Purchase order marked as ${status}`);
             syncProcurement(true);
         } catch (err) {
-            toast.error("Procurement update failure");
+            toast.error("Failed to update purchase order");
         }
     };
 

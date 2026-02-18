@@ -49,8 +49,8 @@ export default function ProjectPage() {
             setProjects(projRes.data);
             setStats(statsRes.data);
         } catch (err) {
-            console.error("Operations Flux Sync Failure:", err);
-            toast.error("Flux synchronization failed");
+            console.error("Projects load failed:", err);
+            toast.error("Failed to load projects. Please refresh.");
         } finally {
             setLoading(false);
         }
