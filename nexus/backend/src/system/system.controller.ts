@@ -8,15 +8,15 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Controller('kernel')
-export class KernelController {
+@Controller('system')
+export class SystemController {
   constructor(
     private readonly saas: SaasAnalyticsService,
     private readonly prisma: PrismaService,
   ) {}
 
   @Get('stats')
-  async getKernelStats(@Req() req: any) {
+  async getSystemStats(@Req() req: any) {
     const [apps, installed, records] = await Promise.all([
       this.prisma.app.count(),
       this.prisma.app.count({ where: { installed: true } }),

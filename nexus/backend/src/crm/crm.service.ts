@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CustomerStatus } from '@prisma/client';
-import { AuditService } from '../kernel/services/audit.service';
+import { AuditService } from '../system/services/audit.service';
 
 @Injectable()
 export class CrmService {

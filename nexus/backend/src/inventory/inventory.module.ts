@@ -5,10 +5,10 @@ import { InventoryController } from './inventory.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AccountingModule } from '../accounting/accounting.module';
 
-import { KernelModule } from '../kernel/kernel.module';
+import { SystemModule } from '../system/system.module';
 
 @Module({
-  imports: [PrismaModule, AccountingModule, KernelModule],
+  imports: [PrismaModule, AccountingModule, SystemModule],
   controllers: [InventoryController],
   providers: [InventoryService, WarehouseService],
 })

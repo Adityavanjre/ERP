@@ -30,7 +30,7 @@ export default function FounderMonitoring() {
     const syncDashboardStats = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const res = await api.get("kernel/founder-dashboard");
+            const res = await api.get("system/founder-dashboard");
             setData(res);
         } catch (err) {
             console.error("Dashboard Sync Failure:", err);
@@ -117,7 +117,7 @@ export default function FounderMonitoring() {
                 </Card>
             </div>
 
-            {/* Intervention Desk */}
+            {/* Issue Tracking Desk */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
                 {/* Top At-Risk Tenants */}

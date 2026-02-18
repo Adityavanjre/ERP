@@ -33,7 +33,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
     const syncCommunicationFlux = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const { data } = await api.get(`/kernel/collaboration/comments/${resourceType}/${resourceId}`);
+            const { data } = await api.get(`/system/collaboration/comments/${resourceType}/${resourceId}`);
             setComments(data);
         } catch (err) {
             console.error("Communication Flux Sync Failure:", err);
@@ -51,7 +51,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
     const addComment = async () => {
         if (!newComment.trim()) return;
         try {
-            await api.post('kernel/collaboration/comments', {
+            await api.post('system/collaboration/comments', {
                 resourceType,
                 resourceId,
                 content: newComment,

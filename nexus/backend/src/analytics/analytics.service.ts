@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderStatus, POStatus } from '@prisma/client';
-import { SaasAnalyticsService } from '../kernel/services/saas-analytics.service';
+import { SaasAnalyticsService } from '../system/services/saas-analytics.service';
 
 @Injectable()
 export class AnalyticsService {

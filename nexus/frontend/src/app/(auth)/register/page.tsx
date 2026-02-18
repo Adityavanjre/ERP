@@ -128,7 +128,7 @@ export default function RegisterPage() {
                     <div className="flex justify-center mb-8">
                         <div className="p-4 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-blue-500/5">
                             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-blue-500/20">
-                                Z
+                                K
                             </div>
                         </div>
                     </div>

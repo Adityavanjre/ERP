@@ -46,7 +46,7 @@ export function CommandPalette() {
             }
             setSearching(true);
             try {
-                const res = await api.get(`/kernel/search?q=${query}`);
+                const res = await api.get(`/system/search?q=${query}`);
                 setResults(res.data);
             } catch (err) {
                 console.error("Search failed", err);

@@ -29,10 +29,10 @@ export default function AppDetailPage() {
     const [app, setApp] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncModuleDetails = async (showLoading = false) => {
+    const syncAppData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const res = await api.get("/kernel/apps");
+            const res = await api.get("/system/apps");
             const found = res.data.find((a: any) => a.name === appName);
             setApp(found);
         } catch (err) {
@@ -43,28 +43,28 @@ export default function AppDetailPage() {
     };
 
     useEffect(() => {
-        syncModuleDetails(true);
-        const interval = setInterval(() => syncModuleDetails(false), 30000);
+        syncAppData(true);
+        const interval = setInterval(() => syncAppData(false), 30000);
         return () => clearInterval(interval);
     }, [appName]);
 
     const handleInstall = async () => {
         try {
-            await api.post(`/kernel/apps/${appName}/install`);
+            await api.post(`/system/apps/${appName}/install`);
             toast.success(`${app.label} activated successfully`);
-            syncModuleDetails(true);
+            syncAppData(true);
         } catch (err) {
-            toast.error("Activation sequence failed");
+            toast.error("Installation failed");
         }
     };
 
     const handleUninstall = async () => {
         try {
-            await api.post(`/kernel/apps/${appName}/uninstall`);
-            toast.success(`${app.label} decommissioned`);
-            syncModuleDetails(true);
+            await api.post(`/system/apps/${appName}/uninstall`);
+            toast.success(`${app.label} removed successfully`);
+            syncAppData(true);
         } catch (err) {
-            toast.error("Decommission error");
+            toast.error("Removal error");
         }
     };
 
@@ -107,7 +107,7 @@ export default function AppDetailPage() {
                             {app.installed ? (
                                 <>
                                     <Button variant="outline" className="border-rose-200 text-rose-500 hover:bg-rose-50 rounded-2xl px-6 font-bold transition-all" onClick={handleUninstall}>
-                                        <Trash2 className="mr-2 h-4 w-4" /> Deactivate
+                                        <Trash2 className="mr-2 h-4 w-4" /> Remove
                                     </Button>
                                     <Button className="bg-slate-900 hover:bg-blue-600 rounded-2xl px-10 text-white font-black shadow-xl shadow-slate-900/10 transition-all active:scale-95" onClick={() => router.push(`/apps/${app.name}`)}>
                                         Launch Module

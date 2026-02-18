@@ -3,7 +3,7 @@ import { ApiKeyService } from '../services/api-key.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Scopes } from '../../common/decorators/scopes.decorator';
 
-@Controller('kernel/api')
+@Controller('system/api')
 @UseGuards(JwtAuthGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}

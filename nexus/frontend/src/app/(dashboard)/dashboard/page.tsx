@@ -84,7 +84,7 @@ export default function DashboardPage() {
             try {
                 // Background sync shouldn't show global loading after first load
                 const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
-                    api.get('kernel/stats'),
+                    api.get('system/stats'),
                     api.get('analytics/summary'),
                     api.get('analytics/performance'),
                     api.get('analytics/health'),

@@ -15,7 +15,7 @@ import { Users, UserPlus, Key, Trash2, ShieldAlert } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import { ApiKeyManager } from "@/components/kernel/api-key-manager";
+import { ApiKeyManager } from "@/components/system/api-key-manager";
 
 type RoleName = 'Owner' | 'Manager' | 'Biller' | 'Storekeeper' | 'Accountant' | 'CA';
 
@@ -39,7 +39,7 @@ export default function SettingsPage() {
         try {
             const [profRes, billRes, usersRes] = await Promise.all([
                 api.get("auth/profile"),
-                api.get("kernel/billing/plan"),
+                api.get("system/billing/plan"),
                 api.get("users")
             ]);
             setTenant(profRes.data?.tenant || null);
@@ -114,7 +114,7 @@ export default function SettingsPage() {
 
     const handleUpgrade = async (plan: string) => {
         try {
-            await api.post("kernel/billing/upgrade", { plan });
+            await api.post("system/billing/upgrade", { plan });
             toast.success(`Successfully upgraded to ${plan} plan`);
             location.reload();
         } catch (err) {

@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('kernel/studio')
+@Controller('system/studio')
 export class StudioController {
   constructor(private readonly ormService: OrmService) {}
 

@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('kernel/apps')
+@Controller('system/apps')
 export class RegistryController {
   constructor(private readonly registryService: RegistryService) {}
 

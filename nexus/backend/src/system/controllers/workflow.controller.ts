@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('kernel/workflows')
+@Controller('system/workflows')
 export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 

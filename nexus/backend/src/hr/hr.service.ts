@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuditService } from '../kernel/services/audit.service';
+import { AuditService } from '../system/services/audit.service';
 import { EmployeeStatus, LeaveStatus, PayrollStatus } from '@prisma/client';
 
 @Injectable()

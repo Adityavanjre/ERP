@@ -36,7 +36,7 @@ export default function WorkflowBuilder() {
     const syncWorkflows = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const res = await api.get(`/kernel/workflows/${modelName}`);
+            const res = await api.get(`/system/workflows/${modelName}`);
             setWorkflows(res.data);
         } catch (err) {
             console.error("Workflows Sync Failure:", err);
@@ -54,7 +54,7 @@ export default function WorkflowBuilder() {
     const handleCreateWorkflow = async () => {
         try {
             if (!workflowName) return toast.error("Name required");
-            const res = await api.post("kernel/workflows", { name: workflowName, modelName });
+            const res = await api.post("system/workflows", { name: workflowName, modelName });
             toast.success("Workflow stream created");
             setWorkflowName("");
             syncWorkflows(true);
@@ -67,7 +67,7 @@ export default function WorkflowBuilder() {
     const addNode = async () => {
         if (!selectedWorkflow) return;
         try {
-            const res = await api.post(`/kernel/workflows/${selectedWorkflow.id}/nodes`, {
+            const res = await api.post(`/system/workflows/${selectedWorkflow.id}/nodes`, {
                 name: "New State",
                 type: "state",
                 config: {}

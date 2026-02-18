@@ -25,7 +25,7 @@ import { PluginManager } from './services/plugin.manager';
 import { PluginController } from './controllers/plugin.controller';
 import { MailService } from './services/mail.service';
 
-import { KernelController } from './kernel.controller';
+import { SystemController } from './system.controller';
 
 @Module({
   imports: [PrismaModule],
@@ -36,7 +36,7 @@ import { KernelController } from './kernel.controller';
     AiController,
     BillingController,
     HealthController,
-    KernelController,
+    SystemController,
     SearchController,
     CollaborationController,
     ApiKeyController,
@@ -74,4 +74,4 @@ import { KernelController } from './kernel.controller';
     MailService,
   ],
 })
-export class KernelModule {}
+export class SystemModule {}

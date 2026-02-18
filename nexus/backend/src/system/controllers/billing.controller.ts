@@ -5,7 +5,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { PlanType } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('kernel/billing')
+@Controller('system/billing')
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 

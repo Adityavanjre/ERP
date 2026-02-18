@@ -66,7 +66,7 @@ export default function LoginPage() {
                     <div className="flex justify-center mb-6">
                         <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100">
                             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-500/20">
-                                Z
+                                K
                             </div>
                         </div>
                     </div>

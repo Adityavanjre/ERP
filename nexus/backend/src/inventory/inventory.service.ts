@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
-import { BillingService } from '../kernel/services/billing.service';
+import { BillingService } from '../system/services/billing.service';
 
 @Injectable()
 export class InventoryService {

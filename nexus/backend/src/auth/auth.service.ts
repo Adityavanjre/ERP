@@ -11,7 +11,7 @@ import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { TenantType, PlanType, Role, Prisma } from '@prisma/client';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
-import { MailService } from '../kernel/services/mail.service';
+import { MailService } from '../system/services/mail.service';
 import * as crypto from 'crypto';
 
 @Injectable()

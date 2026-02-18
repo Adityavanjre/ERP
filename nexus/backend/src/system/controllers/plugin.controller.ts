@@ -14,7 +14,7 @@ import { Role } from '@prisma/client';
 import { PluginManager } from '../services/plugin.manager';
 import { PrismaService } from '../../prisma/prisma.service';
 
-@Controller('kernel/plugins')
+@Controller('system/plugins')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.Owner) // Registration/Management restricted to system owners
 export class PluginController {

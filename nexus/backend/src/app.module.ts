@@ -14,7 +14,7 @@ import { PurchasesModule } from './purchases/purchases.module';
 import { CommonModule } from './common/common.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ProjectModule } from './projects/projects.module';
-import { KernelModule } from './kernel/kernel.module';
+import { SystemModule } from './system/system.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -37,7 +37,7 @@ import { SkipThrottle } from '@nestjs/throttler';
     HrModule,
     PurchasesModule,
     ProjectModule,
-    KernelModule,
+    SystemModule,
     AnalyticsModule,
     CommonModule,
     HealthModule,

@@ -64,7 +64,7 @@ export default function InventoryPage() {
             const [prodRes, statsRes, aiRes] = await Promise.all([
                 api.get(`/inventory/products?page=${page}&limit=50`),
                 api.get("inventory/stats"),
-                api.get("kernel/ai/inventory-forecast")
+                api.get("system/ai/inventory-forecast")
             ]);
 
             if (prodRes.data?.data) {

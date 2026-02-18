@@ -13,13 +13,13 @@ services:
         value: klypso-agency-viewer.onrender.com
       - key: AGENCY_VIEWER_PORT
         value: 443
-      - key: NEXUS_FRONTEND_HOST
-        value: nexus-frontend-gz8c.onrender.com
-      - key: NEXUS_FRONTEND_PORT
+      - key: KLYPSO_FRONTEND_HOST
+        value: klypso-frontend.onrender.com
+      - key: KLYPSO_FRONTEND_PORT
         value: 443
-      - key: NEXUS_BACKEND_HOST
-        value: nexus-backend-3ukg.onrender.com
-      - key: NEXUS_BACKEND_PORT
+      - key: KLYPSO_BACKEND_HOST
+        value: klypso-backend.onrender.com
+      - key: KLYPSO_BACKEND_PORT
         value: 443
       - key: AGENCY_BACKEND_HOST
         value: klypso-agency-backend.onrender.com
@@ -52,10 +52,13 @@ services:
     startCommand: npx serve -s dist -l $PORT
     healthCheckPath: /
     autoDeploy: false
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://klypso.in/agency-api/
 
-  # --- KLYPSO NEXUS ---
+  # --- KLYPSO ERP ---
   - type: web
-    name: nexus-backend
+    name: klypso-backend
     env: node
     plan: free
     rootDir: nexus/backend
@@ -66,13 +69,13 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: nexus-db
+          name: klypso-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
         value: 3001
-      - key: NEXUS_FRONTEND_URL
+      - key: KLYPSO_FRONTEND_URL
         value: https://klypso.in/portal
       - key: SMTP_HOST
         sync: false
@@ -86,7 +89,7 @@ services:
         value: noreply@klypso.in
 
   - type: web
-    name: nexus-frontend
+    name: klypso-frontend
     env: node
     plan: free
     rootDir: nexus/frontend
@@ -95,13 +98,13 @@ services:
     healthCheckPath: /portal/dashboard
     autoDeploy: false
     envVars:
-      - key: NEXUS_BACKEND_URL
-        value: https://nexus-backend-3ukg.onrender.com
+      - key: KLYPSO_BACKEND_URL
+        value: https://klypso-backend.onrender.com
       - key: PORT
         value: 3000
       - key: HOSTNAME
         value: 0.0.0.0
 
 databases:
-  - name: nexus-db
+  - name: klypso-db
     plan: free

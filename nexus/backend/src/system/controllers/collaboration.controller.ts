@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request } from '
 import { CollaborationService } from '../services/collaboration.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
-@Controller('kernel/collaboration')
+@Controller('system/collaboration')
 @UseGuards(JwtAuthGuard)
 export class CollaborationController {
   constructor(private readonly collaborationService: CollaborationService) {}

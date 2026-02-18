@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('kernel/ai')
+@Controller('system/ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 

@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SaasAnalyticsService } from '../services/saas-analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
-@Controller('kernel/health')
+@Controller('system/health')
 export class HealthController {
   constructor(
     private prisma: PrismaService,

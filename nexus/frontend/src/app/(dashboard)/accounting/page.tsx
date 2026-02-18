@@ -21,7 +21,7 @@ import { RecordPaymentModal } from "@/components/accounting/record-payment-modal
 import { CreateInvoiceDialog } from "@/components/accounting/create-invoice-dialog";
 import { CreateAccountDialog } from "@/components/accounting/create-account-dialog";
 import { CreateJournalEntryDialog } from "@/components/accounting/create-journal-entry-dialog";
-import { CollaborationTimeline } from "@/components/kernel/collaboration-timeline";
+import { CollaborationTimeline } from "@/components/system/collaboration-timeline";
 import { ForecastingWidget } from "@/components/accounting/forecasting-widget";
 
 export default function AccountingPage() {

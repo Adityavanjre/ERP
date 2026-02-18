@@ -31,8 +31,8 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
         try {
             if (showLoading) setLoading(true);
             const [recordsRes, appsRes] = await Promise.all([
-                api.get(`/kernel/studio/records/${modelName}`),
-                api.get(`/kernel/apps`)
+                api.get(`/system/studio/records/${modelName}`),
+                api.get(`/system/apps`)
             ]);
 
             setRecords(recordsRes.data.data || recordsRes.data || []);

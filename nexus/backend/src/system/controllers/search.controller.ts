@@ -3,7 +3,7 @@ import { SearchService } from '../services/search.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
-@Controller('kernel/search')
+@Controller('system/search')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 

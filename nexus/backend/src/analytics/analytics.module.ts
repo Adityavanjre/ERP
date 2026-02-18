@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsController } from './analytics.controller';
 import { PrismaModule } from '../prisma/prisma.module';
-import { KernelModule } from '../kernel/kernel.module';
+import { SystemModule } from '../system/system.module';
 
 @Module({
-  imports: [PrismaModule, KernelModule],
+  imports: [PrismaModule, SystemModule],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
 })

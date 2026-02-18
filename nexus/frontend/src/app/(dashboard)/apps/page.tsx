@@ -19,7 +19,7 @@ export default function AppsMarketplace() {
     const syncAppData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const res = await api.get("kernel/apps");
+            const res = await api.get("system/apps");
             setApps(res.data);
         } catch (err) {
             console.error("App Sync Failure:", err);
@@ -43,7 +43,7 @@ export default function AppsMarketplace() {
             variant: "destructive",
             onConfirm: async () => {
                 try {
-                    await api.post(`/kernel/apps/${name}/uninstall`);
+                    await api.post(`/system/apps/${name}/uninstall`);
                     toast.success(`Module [${name}] removed successfully`);
                     syncAppData(true);
                     window.dispatchEvent(new CustomEvent('system-apps-updated'));
@@ -56,7 +56,7 @@ export default function AppsMarketplace() {
 
     const handleInstall = async (name: string) => {
         try {
-            await api.post(`/kernel/apps/${name}/install`);
+            await api.post(`/system/apps/${name}/install`);
             toast.success(`Module [${name}] installed successfully`);
             syncAppData(true);
             window.dispatchEvent(new CustomEvent('system-apps-updated'));
@@ -95,7 +95,7 @@ export default function AppsMarketplace() {
                             className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
                             onClick={async () => {
                                 try {
-                                    await api.post("kernel/apps/preset", { type });
+                                    await api.post("system/apps/preset", { type });
                                     toast.success(`${type} blueprint sequence initiated`);
                                     syncAppData(true);
                                     window.dispatchEvent(new CustomEvent('system-apps-updated'));

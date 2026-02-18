@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiKeyService } from '../../kernel/services/api-key.service';
+import { ApiKeyService } from '../../system/services/api-key.service';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {

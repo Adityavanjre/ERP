@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ProjectService } from './projects.service';
-import { CollaborationService } from '../kernel/services/collaboration.service';
+import { CollaborationService } from '../system/services/collaboration.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';

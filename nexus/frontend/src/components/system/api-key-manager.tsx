@@ -32,7 +32,7 @@ export function ApiKeyManager() {
 
     const fetchKeys = async () => {
         try {
-            const resp = await api.get('kernel/api/keys');
+            const resp = await api.get('system/api/keys');
             setKeys(resp.data);
         } catch (err) {
             toast.error('Failed to load API keys');
@@ -44,7 +44,7 @@ export function ApiKeyManager() {
     const generateKey = async () => {
         if (!newName.trim()) return toast.error('Key name is required');
         try {
-            const resp = await api.post('kernel/api/keys', {
+            const resp = await api.post('system/api/keys', {
                 name: newName,
                 scopes: ['read:all', 'write:all'], // Default for now
             });
@@ -60,7 +60,7 @@ export function ApiKeyManager() {
     const revokeKey = async (id: string) => {
         if (!confirm('Are you sure? This will immediately break any external integrations using this key.')) return;
         try {
-            await api.delete(`/kernel/api/keys/${id}`);
+            await api.delete(`/system/api/keys/${id}`);
             fetchKeys();
             toast.success('Key revoked');
         } catch (err) {
