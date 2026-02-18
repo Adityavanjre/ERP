@@ -61,7 +61,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         // Save current path to restore state after login
         if (typeof window !== "undefined") {
             localStorage.setItem("return_to", window.location.pathname);
-            window.location.href = "/portal/login";
+            router.push("/login");
         }
     };
 

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     siteName: "Klypso Nexus",
     images: [
       {
-        url: "/portal/og-image.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "Klypso Nexus Dashboard",
@@ -56,13 +56,13 @@ export const metadata: Metadata = {
     title: "Klypso Nexus | Enterprise Intelligence",
     description: "High-integrity enterprise intelligence platform for elite brands.",
     creator: "@klypso",
-    images: ["/portal/og-image.png"],
+    images: ["/og-image.png"],
   },
   icons: {
-    icon: "/portal/favicon.svg",
-    apple: "/portal/apple-touch-icon.png",
+    icon: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
   },
-  manifest: "/portal/manifest.json",
+  manifest: "/manifest.json",
   themeColor: "#C5A059",
 };
 
