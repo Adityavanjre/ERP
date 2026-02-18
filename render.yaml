@@ -5,7 +5,7 @@ services:
     env: docker
     plan: free
     rootDir: gateway
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: PORT
         value: 80
@@ -38,7 +38,7 @@ services:
     buildCommand: npm install
     startCommand: node index.js
     healthCheckPath: /
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: MONGO_URI
         sync: false
@@ -51,7 +51,7 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npx serve -s dist -l $PORT
     healthCheckPath: /
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://klypso.in/agency-api/
@@ -65,7 +65,7 @@ services:
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma db push --accept-data-loss && node dist/main.js
     healthCheckPath: /api/v1/health/liveness
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -96,7 +96,7 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /portal/dashboard
-    autoDeploy: true
+    autoDeploy: false
     envVars:
       - key: KLYPSO_BACKEND_URL
         value: https://klypso-backend.onrender.com
