@@ -192,10 +192,10 @@ export default function CrmPage() {
                 stage: editingDeal.stage
             });
             setEditingDeal(null);
-            toast.success("Deal parameters updated");
+            toast.success("Deal updated");
             syncRelations(true);
         } catch (err) {
-            toast.error("Update sequence failed");
+            toast.error("Failed to update deal");
             syncRelations(true);
         } finally {
             setUILocked(false);
@@ -333,7 +333,7 @@ export default function CrmPage() {
                             </div>
                             <div className="md:col-span-4 flex justify-end gap-3">
                                 <Button type="button" variant="ghost" onClick={() => setShowDealForm(false)}>Cancel</Button>
-                                <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">Launch Deal</Button>
+                                <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">Save Deal</Button>
                             </div>
                         </form>
                     </CardContent>
@@ -379,18 +379,18 @@ export default function CrmPage() {
 
             <Tabs defaultValue="pipeline" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
-                    <TabsTrigger value="pipeline" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Conversion Flow</TabsTrigger>
-                    <TabsTrigger value="customers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Entity Directory</TabsTrigger>
+                    <TabsTrigger value="pipeline" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Pipeline</TabsTrigger>
+                    <TabsTrigger value="customers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Customers</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="pipeline" className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
-                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Liquidity Forecast</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pipeline Value</CardTitle></CardHeader>
                             <CardContent><div className="text-3xl font-black text-slate-900 tracking-tighter">₹{stats.pipelineValue?.toLocaleString('en-IN')}</div></CardContent>
                         </Card>
                         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
-                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Flux Opportunities</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Open Deals</CardTitle></CardHeader>
                             <CardContent><div className="text-3xl font-black text-amber-600 tracking-tighter">{stats.openDeals}</div></CardContent>
                         </Card>
                     </div>
