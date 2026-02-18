@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, Sparkles, Brain, Clock, AlertCircle, Upload, Edit3, CheckCircle2, Info, ChevronRight, Tags } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -300,16 +301,16 @@ export default function InventoryPage() {
                 </Card>
             </div>
 
-            {(showForm || editingProduct) && (
+            {showForm && (
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
-                        <CardTitle className="text-slate-900 font-black text-xl">{editingProduct ? "Manage Product Ledger" : "Add Product"}</CardTitle>
+                        <CardTitle className="text-slate-900 font-black text-xl">Add Product</CardTitle>
                         <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-                            {editingProduct ? `Review/Update metadata for SKU ${editingProduct.sku}` : "Add a new product to your inventory"}
+                            Add a new product to your inventory
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8">
-                        <form onSubmit={editingProduct ? handleUpdate : handleCreate} className="space-y-8">
+                        <form onSubmit={handleCreate} className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div className="space-y-2 lg:col-span-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Designation <span className="text-rose-500">*</span></Label>
@@ -317,7 +318,7 @@ export default function InventoryPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset SKU (Unique)</Label>
-                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" placeholder="AUTO_GEN" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} disabled={!!editingProduct} />
+                                    <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" placeholder="AUTO_GEN" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
@@ -329,7 +330,6 @@ export default function InventoryPage() {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Brand / Manufacturer</Label>
                                     <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" placeholder="e.g. Klypso" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
@@ -353,7 +353,6 @@ export default function InventoryPage() {
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Manufacturer</Label>
                                     <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" placeholder="e.g. Acme Corp" value={formData.manufacturer} onChange={e => setFormData({ ...formData, manufacturer: e.target.value })} />
                                 </div>
-
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Selling Price (₹) <span className="text-rose-500">*</span></Label>
                                     <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
@@ -370,7 +369,6 @@ export default function InventoryPage() {
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tax (GST %) Rate</Label>
                                     <Input type="number" min="0" max="100" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" placeholder="18" value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} />
                                 </div>
-
                                 <div className="lg:col-span-4 space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Description & Attributes</Label>
                                     <textarea
@@ -381,17 +379,103 @@ export default function InventoryPage() {
                                     />
                                 </div>
                             </div>
-
                             <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-2">
-                                <Button type="button" variant="ghost" className="text-slate-400 hover:text-slate-600 font-bold rounded-xl" onClick={() => { setShowForm(false); setEditingProduct(null); }}>Abort</Button>
+                                <Button type="button" variant="ghost" className="text-slate-400 hover:text-slate-600 font-bold rounded-xl" onClick={() => { setShowForm(false); }}>Abort</Button>
                                 <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10">
-                                    {isSubmitting ? "Syncing..." : editingProduct ? "Commit Changes" : "Register Product"}
+                                    {isSubmitting ? "Syncing..." : "Register Product"}
                                 </Button>
                             </div>
                         </form>
                     </CardContent>
                 </Card>
             )}
+
+            {/* EDIT PRODUCT DIALOG */}
+            <Dialog open={!!editingProduct} onOpenChange={(open) => { if (!open) { setEditingProduct(null); setFormData({ name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "", tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0, description: "", barcode: "", isService: false }); } }}>
+                <DialogContent className="sm:max-w-[780px] bg-white border-slate-200 text-slate-900 rounded-[28px] shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="pb-4 border-b border-slate-100">
+                        <DialogTitle className="text-slate-900 font-black text-xl">Manage Product Ledger</DialogTitle>
+                        <DialogDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+                            {editingProduct ? `Review/Update metadata for SKU ${editingProduct?.sku}` : ""}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdate} className="space-y-6 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                            <div className="space-y-2 lg:col-span-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Product Designation <span className="text-rose-500">*</span></Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20 font-black" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Asset SKU (Unique)</Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" value={formData.sku} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
+                                <div className="flex gap-2">
+                                    <Input type="number" min="0" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} required />
+                                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
+                                        <input type="checkbox" id="isServiceEdit" checked={formData.isService} onChange={e => setFormData({ ...formData, isService: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                                        <label htmlFor="isServiceEdit" className="text-[10px] font-black text-slate-500 uppercase">Service</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Brand / Manufacturer</Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
+                            </div>
+                            <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
+                                <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Min Alert Stock Threshold</Label>
+                                <Input type="number" min="0" className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black" value={formData.minStockLevel} onChange={e => setFormData({ ...formData, minStockLevel: Number(e.target.value) })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tags (Comma Separated)</Label>
+                                <div className="relative group">
+                                    <Tags className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                                    <Input className="pl-9 bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" placeholder="Tag 1, Tag 2..." value={formData.tags} onChange={e => setFormData({ ...formData, tags: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Primary Category</Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Manufacturer</Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.manufacturer} onChange={e => setFormData({ ...formData, manufacturer: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Selling Price (₹) <span className="text-rose-500">*</span></Label>
+                                <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Procurement Cost</Label>
+                                <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">HSN Classification</Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono uppercase" value={formData.hsnCode} onChange={e => setFormData({ ...formData, hsnCode: e.target.value })} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tax (GST %) Rate</Label>
+                                <Input type="number" min="0" max="100" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} />
+                            </div>
+                            <div className="lg:col-span-4 space-y-2">
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Description & Attributes</Label>
+                                <textarea
+                                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-4 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm transition-all"
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                            <Button type="button" variant="ghost" className="text-slate-400 hover:text-slate-600 font-bold rounded-xl" onClick={() => { setEditingProduct(null); }}>Cancel</Button>
+                            <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10">
+                                {isSubmitting ? "Syncing..." : "Commit Changes"}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-amber-500">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
