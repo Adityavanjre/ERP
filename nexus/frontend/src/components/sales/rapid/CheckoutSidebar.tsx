@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Settings, CreditCard, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { User, Settings, CreditCard, CheckCircle2, AlertTriangle, Banknote, Smartphone } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 interface CheckoutSidebarProps {
@@ -59,7 +59,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
                                     : "bg-white border-slate-100 text-slate-500 hover:border-emerald-200"
                             )}
                         >
-                            <span className="text-3xl">💵</span>
+                            <Banknote className="w-8 h-8 mb-1" />
                             <span className="font-black text-xs uppercase tracking-tight">Cash Pay</span>
                         </button>
                         <button
@@ -71,7 +71,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
                                     : "bg-white border-slate-100 text-slate-500 hover:border-blue-200"
                             )}
                         >
-                            <span className="text-3xl">📱</span>
+                            <Smartphone className="w-8 h-8 mb-1" />
                             <span className="font-black text-xs uppercase tracking-tight">Digital UPI</span>
                         </button>
                         <button

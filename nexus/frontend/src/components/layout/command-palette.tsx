@@ -59,17 +59,23 @@ export function CommandPalette() {
         return () => clearTimeout(timer);
     }, [query]);
 
-    useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                setOpen((open) => !open);
-            }
-        };
+    const handleCommandPalette = () => {
+        setOpen((open) => !open);
+    };
 
-        document.addEventListener("keydown", down);
-        return () => document.removeEventListener("keydown", down);
-    }, []);
+    const down = (e: KeyboardEvent) => {
+        if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            handleCommandPalette();
+        }
+    };
+
+    document.addEventListener("keydown", down);
+    window.addEventListener('open-command-palette', handleCommandPalette);
+    return () => {
+        document.removeEventListener("keydown", down);
+        window.removeEventListener('open-command-palette', handleCommandPalette);
+    };
 
     const commands = [
         { name: "Dashboard", icon: LayoutGrid, path: "/dashboard", category: "Navigation" },

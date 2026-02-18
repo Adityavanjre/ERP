@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Ensure we always target the v1 API
 const baseURL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
-const API_URL = baseURL.endsWith('/') ? `${baseURL}v1/` : `${baseURL}/v1/`;
+const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
 
 export const api = axios.create({
   baseURL: API_URL,

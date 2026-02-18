@@ -21,7 +21,8 @@ import {
     Zap,
     Wand2,
     RefreshCw,
-    Command
+    Command,
+    ShieldCheck
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
 import { toast } from 'react-hot-toast';
@@ -83,8 +84,7 @@ const businessStreams: BusinessStream[] = [
         icon: Landmark,
         items: [
             { label: 'Accounts', href: '/accounting', icon: Landmark, allowedRoles: FINANCE_ROLES },
-            { label: 'Journal', href: '/accounting/journal', icon: ClipboardList, allowedRoles: FINANCE_ROLES },
-            { label: 'Export', href: '/accounting/export', icon: RefreshCw, allowedRoles: FINANCE_ROLES },
+            { label: 'Auditor', href: '/accounting/auditor', icon: ShieldCheck, allowedRoles: FINANCE_ROLES },
         ]
     }
 ];
