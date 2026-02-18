@@ -93,19 +93,20 @@ export default function DashboardPage() {
                 ]);
 
                 // Kernel stats
-                const installed = kernelRes.data.filter((a: any) => a.installed).length;
+                const kernelData = Array.isArray(kernelRes.data) ? kernelRes.data : [];
+                const installed = kernelData.filter((a: any) => a.installed).length;
                 setKernelStats(prev => ({
                     ...prev,
-                    apps: kernelRes.data.length,
+                    apps: kernelData.length,
                     installed
                 }));
 
                 // BI stats
-                setBiStats(summaryRes.data);
-                setChartData(performanceRes.data);
-                setHealthStats(healthRes.data);
-                setActivity(activityRes.data);
-                setValueChain(vcRes.data);
+                setBiStats(summaryRes.data || biStats);
+                setChartData(Array.isArray(performanceRes.data) ? performanceRes.data : []);
+                setHealthStats(healthRes.data || healthStats);
+                setActivity(Array.isArray(activityRes.data) ? activityRes.data : []);
+                setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
 
             } catch (err) {
                 console.error("Dashboard synchronization error:", err);
@@ -175,7 +176,7 @@ export default function DashboardPage() {
             {/* Value Chain Integration */}
             <div className="bg-white border border-slate-200 rounded-3xl p-1.5 shadow-xl shadow-slate-200/50">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                    {valueChain.map((step, i) => (
+                    {(valueChain || []).map((step, i) => (
                         <div key={i} className="relative group overflow-hidden p-6 rounded-2xl bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-200 transition-all cursor-default">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{step.label}</span>
@@ -221,7 +222,7 @@ export default function DashboardPage() {
 
             {/* Top Level KPIs */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {kpiCards.map((kpi, i) => (
+                {(kpiCards || []).map((kpi, i) => (
                     <Card key={i} className="bg-white border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden rounded-3xl">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">{kpi.title}</CardTitle>
@@ -278,7 +279,7 @@ export default function DashboardPage() {
                                         itemStyle={{ color: '#2563eb' }}
                                     />
                                     <Bar dataKey="revenue" radius={[10, 10, 0, 0]}>
-                                        {chartData.map((entry, index) => (
+                                        {(chartData || []).map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? '#2563eb' : '#e2e8f0'} />
                                         ))}
                                     </Bar>
