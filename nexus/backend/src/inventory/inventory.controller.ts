@@ -56,6 +56,7 @@ export class InventoryController {
     return this.inventoryService.createProduct(
       req.user.tenantId,
       createProductDto,
+      req.user.id,
     );
   }
 
@@ -113,6 +114,7 @@ export class InventoryController {
       req.user.tenantId,
       id,
       updateProductDto,
+      req.user.id,
     );
   }
 

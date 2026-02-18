@@ -25,22 +25,28 @@ export default function ManufacturingDashboard() {
     const [workOrders, setWorkOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const syncProductionLogic = async (showLoading = false) => {
+        try {
+            if (showLoading) setLoading(true);
+            const [b, w] = await Promise.all([
+                api.get("manufacturing/boms"),
+                api.get("manufacturing/work-orders")
+            ]);
+            setBoms(b.data);
+            setWorkOrders(w.data);
+        } catch (err) {
+            console.error("Production Sync Failure:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [b, w] = await Promise.all([
-                    api.get("manufacturing/boms"),
-                    api.get("manufacturing/work-orders")
-                ]);
-                setBoms(b.data);
-                setWorkOrders(w.data);
-            } catch (err) {
-                toast.error("Failed to load production data");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        syncProductionLogic(true);
+
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncProductionLogic(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const completeWO = async (id: string) => {
@@ -71,9 +77,9 @@ export default function ManufacturingDashboard() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
-                        Manufacturing Overview
+                        Nexus Production Overview
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Monitor and manage your factory floor operations.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Monitor and manage high-velocity logic execution loops.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
@@ -81,14 +87,14 @@ export default function ManufacturingDashboard() {
                         className="px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm"
                     >
                         <Settings className="w-4 h-4" />
-                        Manage BOMs
+                        Configure Logic Structs
                     </button>
                     <button
                         onClick={() => window.location.href = '/manufacturing/orders'}
                         className="px-6 py-2.5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
-                        New Production Order
+                        Execute Production Node
                     </button>
                 </div>
             </div>
@@ -100,7 +106,7 @@ export default function ManufacturingDashboard() {
                     <div className="flex items-center justify-between">
                         <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-3">
                             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                            Active Production Orders
+                            Live Execution Queues
                         </h2>
                     </div>
 
@@ -129,7 +135,7 @@ export default function ManufacturingDashboard() {
 
                                     <div className="text-right">
                                         <span className="text-4xl font-black text-slate-900 tracking-tighter">x{wo.quantity}</span>
-                                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Planned Quantity</p>
+                                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Projected Output</p>
                                     </div>
                                 </div>
 
@@ -140,7 +146,7 @@ export default function ManufacturingDashboard() {
                                                 <div key={i} className="w-8 h-8 rounded-xl bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center text-[10px] font-black text-slate-400">RC</div>
                                             ))}
                                         </div>
-                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">3 Dependencies linked</span>
+                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">3 Resource Nodes Linked</span>
                                     </div>
 
                                     {wo.status !== 'Completed' ? (
@@ -148,7 +154,7 @@ export default function ManufacturingDashboard() {
                                             onClick={() => completeWO(wo.id)}
                                             className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95"
                                         >
-                                            Complete Production
+                                            Finalize Logic Loop
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
                                     ) : (
@@ -166,19 +172,19 @@ export default function ManufacturingDashboard() {
                 {/* BOM Registry & Stats */}
                 <div className="space-y-8">
                     <section className="space-y-4">
-                        <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Production Metrics</h2>
+                        <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Execution Efficiency</h2>
                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 p-8 rounded-[40px] border-none group relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
                                 <TrendingUp className="h-24 w-24 text-blue-900" />
                             </div>
                             <div className="space-y-8 relative z-10">
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Average Cycle Time</p>
+                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Mean Execution Latency</p>
                                     <p className="text-4xl font-black text-slate-900 tracking-tighter">14.2<span className="text-sm font-bold ml-1 text-slate-400">MINS</span></p>
                                 </div>
                                 <div className="h-px bg-slate-100" />
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Material Waste</p>
+                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Entropy Loss</p>
                                     <p className="text-4xl font-black text-emerald-600 tracking-tighter">0.8<span className="text-sm font-bold ml-1">%</span></p>
                                 </div>
                             </div>
@@ -187,7 +193,7 @@ export default function ManufacturingDashboard() {
 
                     <section className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Bill of Materials</h2>
+                            <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Logic Struct Registry (BOM)</h2>
                             <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">{boms.length} BOMs</span>
                         </div>
                         <div className="space-y-3">

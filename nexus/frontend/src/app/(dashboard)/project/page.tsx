@@ -39,9 +39,9 @@ export default function ProjectPage() {
 
     const [formData, setFormData] = useState({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
 
-    const fetchData = async () => {
+    const syncOperationsFlux = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const [projRes, statsRes] = await Promise.all([
                 api.get("projects"),
                 api.get("projects/stats")
@@ -49,15 +49,17 @@ export default function ProjectPage() {
             setProjects(projRes.data);
             setStats(statsRes.data);
         } catch (err) {
-            console.error(err);
-            toast.error("Project synchronization failed");
+            console.error("Operations Flux Sync Failure:", err);
+            toast.error("Flux synchronization failed");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        syncOperationsFlux(true);
+        const interval = setInterval(() => syncOperationsFlux(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const fetchTasks = async (projectId: string) => {
@@ -75,8 +77,8 @@ export default function ProjectPage() {
             await api.post("projects", formData);
             setShowForm(false);
             setFormData({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
-            toast.success("Project created successfully");
-            fetchData();
+            toast.success("Flux initialized successfully");
+            syncOperationsFlux(true);
         } catch (err) {
             toast.error("Project creation failed");
         }
@@ -96,7 +98,7 @@ export default function ProjectPage() {
             setNewTaskTitle("");
             toast.success("Task added");
             fetchTasks(selectedProject.id);
-            fetchData(); // Refresh progress bars
+            syncOperationsFlux(true); // Refresh progress bars
         } catch (err) {
             toast.error("Task creation failed");
         }
@@ -109,7 +111,7 @@ export default function ProjectPage() {
             setProjectTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
 
             await api.patch(`/projects/tasks/${task.id}/status`, { status: newStatus });
-            fetchData(); // Refresh global progress
+            syncOperationsFlux(true); // Refresh global progress
         } catch (err) {
             toast.error("Status update failed");
             fetchTasks(selectedProject.id); // Revert
@@ -124,24 +126,24 @@ export default function ProjectPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <ClipboardList className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Projects
+                        Operations Flux
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage projects, track progress, and coordinate tasks.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Coordinate high-level operations, track progress, and manage task node flux.</p>
                 </div>
                 <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
-                    <Plus className="mr-2 h-4 w-4" /> New Project
+                    <Plus className="mr-2 h-4 w-4" /> Initialize Flux
                 </Button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Projects</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Flux Nodes</CardTitle>
                         <LayoutGrid className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.total}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Active projects</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Active flux environments</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
@@ -171,8 +173,8 @@ export default function ProjectPage() {
             {showForm && (
                 <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-8 animate-in fade-in slide-in-from-top-4">
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
-                        <CardTitle className="text-slate-900 font-black text-xl">New Project</CardTitle>
-                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Create a new project workspace</CardDescription>
+                        <CardTitle className="text-slate-900 font-black text-xl">New Flux Instance</CardTitle>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Initialize a new operational flux workspace</CardDescription>
                     </CardHeader>
                     <CardContent className="p-8">
                         <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,7 +196,7 @@ export default function ProjectPage() {
                             </div>
                             <div className="md:col-span-2 flex justify-end gap-3 pt-4">
                                 <Button type="button" variant="ghost" className="text-slate-400 font-bold" onClick={() => setShowForm(false)}>Cancel</Button>
-                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl h-12 px-8">Create Project</Button>
+                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl h-12 px-8">Initialize Flux</Button>
                             </div>
                         </form>
                     </CardContent>

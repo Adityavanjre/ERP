@@ -28,7 +28,6 @@ import {
     ArrowRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
     BarChart,
@@ -79,87 +78,82 @@ export default function DashboardPage() {
     const [activity, setActivity] = useState<any[]>([]);
     const [valueChain, setValueChain] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [mounted, setMounted] = useState(false);
-    const [fetchError, setFetchError] = useState<string | null>(null);
-
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            setFetchError(null);
-            const [kernelRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
-                api.get('kernel/stats'),
-                api.get('analytics/summary'),
-                api.get('analytics/performance'),
-                api.get('analytics/health'),
-                api.get('analytics/activity'),
-                api.get('analytics/value-chain')
-            ]);
-
-            // Kernel stats
-            const kernelData = Array.isArray(kernelRes.data) ? kernelRes.data : [];
-            const installed = kernelData.filter((a: any) => a.installed).length;
-            setKernelStats(prev => ({
-                ...prev,
-                apps: kernelData.length,
-                installed
-            }));
-
-            // BI stats
-            setBiStats(summaryRes.data || biStats);
-            setChartData(Array.isArray(performanceRes.data) ? performanceRes.data : []);
-            setHealthStats(healthRes.data || healthStats);
-            setActivity(Array.isArray(activityRes.data) ? activityRes.data : []);
-            setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
-
-        } catch (err: any) {
-            console.error(err);
-            const msg = err.isWakeup ? err.message : "Failed to synchronize analytics";
-            setFetchError(msg);
-            toast.error(msg);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
-        setMounted(true);
-        fetchData();
-    }, []);
+        const fetchData = async () => {
+            try {
+                // Background sync shouldn't show global loading after first load
+                const [kernelRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
+                    api.get('kernel/stats'),
+                    api.get('analytics/summary'),
+                    api.get('analytics/performance'),
+                    api.get('analytics/health'),
+                    api.get('analytics/activity'),
+                    api.get('analytics/value-chain')
+                ]);
 
-    if (!mounted) return null;
+                // Kernel stats
+                const kernelData = Array.isArray(kernelRes.data) ? kernelRes.data : [];
+                const installed = kernelData.filter((a: any) => a.installed).length;
+                setKernelStats(prev => ({
+                    ...prev,
+                    apps: kernelData.length,
+                    installed
+                }));
+
+                // BI stats
+                setBiStats(summaryRes.data || biStats);
+                setChartData(Array.isArray(performanceRes.data) ? performanceRes.data : []);
+                setHealthStats(healthRes.data || healthStats);
+                setActivity(Array.isArray(activityRes.data) ? activityRes.data : []);
+                setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
+
+            } catch (err) {
+                console.error("Zenith synchronization error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+
+        // AUTOMATIC SYNC: Every 30 seconds
+        const syncInterval = setInterval(fetchData, 30000);
+        return () => clearInterval(syncInterval);
+    }, []);
 
     const kpiCards = [
         {
-            title: "Total Sales",
+            title: "Gross Revenue",
             value: `₹${biStats.revenue.toLocaleString('en-IN')}`,
             icon: DollarSign,
             color: "text-emerald-500",
             bg: "bg-emerald-500/10",
-            desc: "Revenue from invoices"
+            desc: "Liquid inflow (Treasury)"
         },
         {
-            title: "Total Expenses",
+            title: "Supply Expenditures",
             value: `₹${biStats.expenses.toLocaleString('en-IN')}`,
             icon: ArrowDownRight,
             color: "text-rose-500",
             bg: "bg-rose-500/10",
-            desc: "Purchases and payouts"
+            desc: "Asset acquisitions"
         },
         {
-            title: "Total Customers",
+            title: "Strategic Relations",
             value: biStats.customerCount,
             icon: Users,
             color: "text-sky-400",
             bg: "bg-sky-500/10",
-            desc: "Customer database"
+            desc: "Validated entities"
         },
         {
-            title: "Total SKUs",
+            title: "Registry Assets",
             value: biStats.inventoryCount,
             icon: Package,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
-            desc: "Active inventory items"
+            desc: "Active SKUs & Inventory"
         }
     ];
 
@@ -169,17 +163,17 @@ export default function DashboardPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-950 flex items-center">
                         <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Business Intelligence
+                        Zenith Intelligence
                     </h2>
-                    <p className="text-slate-600 mt-2 font-medium">Management dashboard for your enterprise operations.</p>
+                    <p className="text-slate-600 mt-2 font-medium">Real-time analytical flux for your enterprise ecosystem.</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
-                        <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">System Status</p>
-                        <p className="text-xs text-slate-900 font-mono font-bold">ONLINE & SYNCED</p>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">Nexus Status</p>
+                        <p className="text-xs text-emerald-600 font-mono font-black">CONTINUOUS SYNC ACTIVE</p>
                     </div>
                     <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50/50 px-4 py-2 rounded-2xl shadow-sm">
-                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> Live Stats
+                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> Live Pulse
                     </Badge>
                 </div>
             </div>

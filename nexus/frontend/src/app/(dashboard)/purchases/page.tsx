@@ -39,9 +39,9 @@ export default function PurchasesPage() {
         orderDate: new Date().toISOString().split('T')[0]
     });
 
-    const fetchData = async () => {
+    const syncProcurement = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const [suppRes, prodRes, poRes, statsRes] = await Promise.all([
                 api.get("purchases/suppliers"),
                 api.get("inventory/products"),
@@ -53,8 +53,7 @@ export default function PurchasesPage() {
             setPurchaseOrders(Array.isArray(poRes.data) ? poRes.data : []);
             setStats(statsRes.data || { totalSpent: 0, pendingPOs: 0, totalPOs: 0 });
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to load purchases data");
+            console.error("Procurement Sync Failure:", err);
             setSuppliers([]);
             setProducts([]);
             setPurchaseOrders([]);
@@ -64,7 +63,11 @@ export default function PurchasesPage() {
     };
 
     useEffect(() => {
-        fetchData();
+        syncProcurement(true);
+
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncProcurement(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleCreatePO = async () => {
@@ -90,9 +93,9 @@ export default function PurchasesPage() {
                 items
             });
 
-            toast.success("Purchase order created successfully");
+            toast.success("Procurement node initialized successfully");
             setShowPODialog(false);
-            fetchData();
+            syncProcurement(true);
         } catch (err) {
             toast.error("Failed to create purchase order");
         } finally {
@@ -103,10 +106,10 @@ export default function PurchasesPage() {
     const handleUpdateStatus = async (id: string, status: string) => {
         try {
             await api.patch(`/purchases/orders/${id}/status`, { status });
-            toast.success(`Order marked as ${status}`);
-            fetchData();
+            toast.success(`Procurement node marked as ${status}`);
+            syncProcurement(true);
         } catch (err) {
-            toast.error("Failed to update order status");
+            toast.error("Procurement update failure");
         }
     };
 
@@ -126,16 +129,16 @@ export default function PurchasesPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <ShoppingBag className="mr-4 h-9 w-9 text-blue-600" />
-                        Purchase Orders
+                        Procurement Ledgers
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage stock procurement, suppliers, and incoming shipments.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Orchestrate asset procurement, partner nodes, and inbound flux.</p>
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
                         onClick={() => setShowPODialog(true)}
                         className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11"
                     >
-                        <Plus className="mr-2 h-4 w-4" /> New Purchase Order
+                        <Plus className="mr-2 h-4 w-4" /> Initialize Procurement
                     </Button>
                 </div>
             </div>
@@ -143,22 +146,22 @@ export default function PurchasesPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Spend</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Treasury Outflow</CardTitle>
                         <DollarSign className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.totalSpent).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Total cost of received orders</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Cumulative procurement cost</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Orders</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Procurement Nodes</CardTitle>
                         <ShoppingBag className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-amber-600 tracking-tighter">{stats.pendingPOs}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Awaiting Receipt</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Awaiting Fulfillment</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
@@ -175,8 +178,8 @@ export default function PurchasesPage() {
 
             <Tabs defaultValue="orders" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-fit">
-                    <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Order Register</TabsTrigger>
-                    <TabsTrigger value="suppliers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Suppliers</TabsTrigger>
+                    <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Procurement Registry</TabsTrigger>
+                    <TabsTrigger value="suppliers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Partner Nodes</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="orders">

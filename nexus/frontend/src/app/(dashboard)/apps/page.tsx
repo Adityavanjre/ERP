@@ -16,21 +16,23 @@ export default function AppsMarketplace() {
     const [apps, setApps] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchApps = async () => {
+    const syncNodeEcosystem = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const res = await api.get("kernel/apps");
             setApps(res.data);
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to sync with Klypso App Cloud");
+            console.error("Node Sync Failure:", err);
+            toast.error("Failed to sync Zenith Node Cloud");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchApps();
+        syncNodeEcosystem(true);
+        const interval = setInterval(() => syncNodeEcosystem(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleUninstall = (name: string) => {
@@ -43,7 +45,7 @@ export default function AppsMarketplace() {
                 try {
                     await api.post(`/kernel/apps/${name}/uninstall`);
                     toast.success(`Module [${name}] decommissioned from system`);
-                    fetchApps();
+                    syncNodeEcosystem(true);
                     window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
                 } catch (err) {
                     toast.error("Decommissioning failed");
@@ -56,7 +58,7 @@ export default function AppsMarketplace() {
         try {
             await api.post(`/kernel/apps/${name}/install`);
             toast.success(`Module [${name}] installed to enterprise system`);
-            fetchApps();
+            syncNodeEcosystem(true);
             window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
         } catch (err) {
             toast.error("Installation failed");
@@ -69,9 +71,9 @@ export default function AppsMarketplace() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <LayoutGrid className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Extension Foundry
+                        Node Extension Registry
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage and extend your business modules.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage and extend your business modules via Zenith Cloud.</p>
                 </div>
                 <Button className="rounded-2xl bg-white border border-slate-200 text-slate-600 shadow-sm font-bold h-11 px-5">
                     <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" /> System Verified
@@ -95,7 +97,7 @@ export default function AppsMarketplace() {
                                 try {
                                     await api.post("kernel/apps/preset", { type });
                                     toast.success(`${type} blueprint sequence initiated`);
-                                    fetchApps();
+                                    syncNodeEcosystem(true);
                                     window.dispatchEvent(new CustomEvent('kernel-apps-updated'));
                                 } catch (err) {
                                     toast.error("Blueprint installation failed");

@@ -18,41 +18,35 @@ export default function CustomerDetailPage() {
     const [ledger, setLedger] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const syncRelationDetail = async (showLoading = false) => {
+        if (!params.id) return;
+        try {
+            if (showLoading) setLoading(true);
+            const custRes = await api.get("/crm/customers");
+            const found = custRes.data.find((c: any) => c.id === params.id);
+            setCustomer(found);
+
+            const ledgerRes = await api.get(`/accounting/ledger/${params.id}`);
+            setLedger(ledgerRes.data);
+        } catch (err) {
+            console.error("Relation Sync Failure:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            if (!params.id) return;
-            try {
-                // Fetch customer details
-                // Assuming we have an endpoint for single customer, if not we might need to filter list or add endpoint
-                // Let's assume GET /crm/customers/:id exists or we use the list. 
-                // Actually the standard scaffold usually has GET /crm/customers/:id. 
-                // If not, we can implement it or just use the ledger endpoint if it returns customer info.
-                // The ledger endpoint I added `getCustomerLedger` returns the *ledger entries*, not the customer object.
-
-                // Let's try to get customer from list filter as a fallback if specific endpoint fails or just implement specific endpoint.
-                // Better: Create GET /crm/customers/:id in backend or filter from list. 
-                // FOR NOW: Fetch list and find. (Inefficient but safe without backend change).
-                const custRes = await api.get("/crm/customers");
-                const found = custRes.data.find((c: any) => c.id === params.id);
-                setCustomer(found);
-
-                const ledgerRes = await api.get(`/accounting/ledger/${params.id}`);
-                setLedger(ledgerRes.data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        syncRelationDetail(true);
+        const interval = setInterval(() => syncRelationDetail(false), 30000);
+        return () => clearInterval(interval);
     }, [params.id]);
 
     if (loading) {
-        return <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900"><Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" /> Loading Customer Profile...</div>;
+        return <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900"><Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" /> Initializing Node Pulse...</div>;
     }
 
     if (!customer) {
-        return <div className="text-slate-900 p-8 h-screen bg-slate-50 font-black uppercase tracking-widest flex items-center justify-center">Customer not found.</div>;
+        return <div className="text-slate-900 p-8 h-screen bg-slate-50 font-black uppercase tracking-widest flex items-center justify-center">Strategic Relation Not Found.</div>;
     }
 
     const currentBalance = ledger.length > 0 ? ledger[ledger.length - 1].balance : 0;
@@ -61,7 +55,7 @@ export default function CustomerDetailPage() {
         <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50 min-h-screen">
             <div className="flex items-center space-x-4">
                 <Button variant="ghost" className="text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl font-bold h-10 px-4" onClick={() => router.back()}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Directory
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Node Registry
                 </Button>
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 tracking-tighter">{customer.firstName} {customer.lastName}</h2>
@@ -87,7 +81,7 @@ export default function CustomerDetailPage() {
             <div className="grid gap-8 md:grid-cols-3">
                 <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] md:col-span-1 h-fit border-none">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-8">
-                        <CardTitle className="text-slate-900 text-lg font-black tracking-tight">Customer Profile</CardTitle>
+                        <CardTitle className="text-slate-900 text-lg font-black tracking-tight">Relation Metadata</CardTitle>
                     </CardHeader>
                     <CardContent className="p-8 space-y-5">
                         <div className="flex items-center text-slate-600 font-bold text-sm">
@@ -115,8 +109,8 @@ export default function CustomerDetailPage() {
                 <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] md:col-span-2 border-none overflow-hidden print:col-span-3 print:border-none print:shadow-none print:bg-white print:text-black">
                     <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8 flex flex-row items-center justify-between print:border-b print:border-black">
                         <div>
-                            <CardTitle className="text-slate-900 text-xl font-black tracking-tight print:text-black">Account Statement</CardTitle>
-                            <CardDescription className="text-slate-500 font-medium print:text-zinc-600">Statement of Account: {customer.firstName} {customer.lastName}</CardDescription>
+                            <CardTitle className="text-slate-900 text-xl font-black tracking-tight print:text-black">Audit Statement</CardTitle>
+                            <CardDescription className="text-slate-500 font-medium print:text-zinc-600">Ledger history for relation: {customer.firstName} {customer.lastName}</CardDescription>
                         </div>
                         <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-bold h-11 px-6 print:hidden shadow-sm" onClick={() => window.print()}>
                             <FileText className="mr-2 h-4 w-4" /> Export Record

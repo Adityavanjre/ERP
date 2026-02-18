@@ -24,18 +24,22 @@ export default function RecoveryMemoryDashboard() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    const syncRecoveryIntelligence = async (showLoading = false) => {
+        try {
+            if (showLoading) setLoading(true);
+            const res = await api.get("accounting/recovery-memory");
+            setData(res);
+        } catch (err) {
+            console.error("Recovery Sync Failure:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await api.get("accounting/recovery-memory");
-                setData(res);
-            } catch (err) {
-                toast.error("Failed to load recovery memory");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        syncRecoveryIntelligence(true);
+        const interval = setInterval(() => syncRecoveryIntelligence(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     if (loading) return <div className="p-8 text-zinc-400">Loading Profit Insights...</div>;

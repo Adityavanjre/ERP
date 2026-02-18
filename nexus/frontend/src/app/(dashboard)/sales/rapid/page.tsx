@@ -246,7 +246,7 @@ export default function RapidBillingPage() {
                     <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                         <Zap className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-xl font-black tracking-tighter">RAPID <span className="text-blue-600">POS</span></span>
+                    <span className="text-xl font-black tracking-tighter uppercase">Rapid <span className="text-blue-600">Commerce</span></span>
                 </div>
 
                 <div className="flex gap-4 items-center bg-slate-50 px-4 py-2 rounded-full border border-slate-100">

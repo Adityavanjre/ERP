@@ -28,9 +28,9 @@ export default function HrPage() {
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
 
-    const fetchData = async () => {
+    const syncPersonnelIntelligence = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             setFetchError(null);
             const [empRes, leaveRes, payrollRes, deptRes, statsRes] = await Promise.all([
                 api.get("hr/employees"),
@@ -45,10 +45,9 @@ export default function HrPage() {
             setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
             setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
         } catch (err: any) {
-            console.error(err);
-            const msg = err.isWakeup ? err.message : "Failed to load HR data";
+            console.error("Personnel Sync Failure:", err);
+            const msg = "Nexus personnel flux interrupted";
             setFetchError(msg);
-            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -56,7 +55,11 @@ export default function HrPage() {
 
     useEffect(() => {
         setMounted(true);
-        fetchData();
+        syncPersonnelIntelligence(true);
+
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncPersonnelIntelligence(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     if (!mounted) return null;
@@ -67,13 +70,13 @@ export default function HrPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Users className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Human Capital Intelligence
+                        Personnel Intelligence
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage personnel, payroll, and organizational structure.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage personnel nodes, disbursement integrity, and organizational clusters.</p>
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
-                        <Plus className="mr-2 h-4 w-4" /> Add Personnel
+                        <Plus className="mr-2 h-4 w-4" /> Initialize Node
                     </Button>
                 </div>
             </div>
@@ -81,12 +84,12 @@ export default function HrPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Headcount</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Resource Nodes</CardTitle>
                         <Users className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.activeEmployees}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Active personnel</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Live personnel nodes</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
@@ -101,22 +104,22 @@ export default function HrPage() {
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Payroll</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Disbursement</CardTitle>
                         <Banknote className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.totalPayroll).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Total disbursed cycle</p>
+                        <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">Total treasury flow cycle</p>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs defaultValue="employees" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
-                    <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Personnel</TabsTrigger>
-                    <TabsTrigger value="departments" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Departments</TabsTrigger>
-                    <TabsTrigger value="leaves" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Leave Flow</TabsTrigger>
-                    <TabsTrigger value="payroll" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Payroll Ledger</TabsTrigger>
+                    <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Personnel Directory</TabsTrigger>
+                    <TabsTrigger value="departments" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Operational Clusters</TabsTrigger>
+                    <TabsTrigger value="leaves" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Absence Flow</TabsTrigger>
+                    <TabsTrigger value="payroll" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Disbursement Ledger</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="employees">

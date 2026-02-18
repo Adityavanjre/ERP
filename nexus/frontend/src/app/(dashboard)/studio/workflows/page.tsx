@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function WorkflowBuilder() {
     const [workflows, setWorkflows] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
     const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
     const [modelName, setModelName] = useState("sale.order");
     const [workflowName, setWorkflowName] = useState("");
@@ -32,20 +33,22 @@ export default function WorkflowBuilder() {
     const [nodes, setNodes] = useState<any[]>([]);
     const [transitions, setTransitions] = useState<any[]>([]);
 
-    const fetchWorkflows = async () => {
+    const syncLifecycleStreams = async (showLoading = false) => {
         try {
+            if (showLoading) setLoading(true);
             const res = await api.get(`/kernel/workflows/${modelName}`);
             setWorkflows(res.data);
-            if (res.data.length > 0 && !selectedWorkflow) {
-                // Pre-select first or active
-            }
         } catch (err) {
-            console.error(err);
+            console.error("Lifecycle Sync Failure:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchWorkflows();
+        syncLifecycleStreams(true);
+        const interval = setInterval(() => syncLifecycleStreams(false), 30000);
+        return () => clearInterval(interval);
     }, [modelName]);
 
     const handleCreateWorkflow = async () => {
@@ -54,7 +57,7 @@ export default function WorkflowBuilder() {
             const res = await api.post("kernel/workflows", { name: workflowName, modelName });
             toast.success("Workflow stream created");
             setWorkflowName("");
-            fetchWorkflows();
+            syncLifecycleStreams(true);
             setSelectedWorkflow(res.data);
         } catch (err) {
             toast.error("Initialization failed");
@@ -85,7 +88,7 @@ export default function WorkflowBuilder() {
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
                         <GitBranch className="mr-3 h-8 w-8 text-emerald-600" />
-                        Workflow Engine
+                        Node Lifecycle Engine
                     </h2>
                     <p className="text-slate-500 font-medium mt-1">Design state machines and automation logic for enterprise objects.</p>
                 </div>

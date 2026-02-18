@@ -128,12 +128,12 @@ export default function RegisterPage() {
                     <div className="flex justify-center mb-8">
                         <div className="p-4 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-blue-500/5">
                             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white text-2xl shadow-lg shadow-blue-500/20">
-                                K
+                                Z
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">Create Workspace</h1>
-                    <p className="text-slate-500 font-medium">Get started with your business account.</p>
+                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">Initialize Nexus Node</h1>
+                    <p className="text-slate-500 font-medium">Deploy your Zenith ecosystem workspace.</p>
                 </div>
 
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-blue-500/5 relative z-10 rounded-[2.5rem] overflow-hidden">
@@ -309,13 +309,13 @@ export default function RegisterPage() {
                         </div>
                         {step === 1 && (
                             <div className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">
-                                Already registered? <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 hover:underline">Sign In</Link>
+                                Already networked? <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-500 hover:underline">Nexus Authorization</Link>
                             </div>
                         )}
                     </CardFooter>
                 </Card>
                 <p className="text-center text-[9px] text-slate-400 font-black uppercase tracking-[0.4em] opacity-40">
-                    Business Software v2.0
+                    Zenith Intelligence v2.0
                 </p>
             </div>
         </div>

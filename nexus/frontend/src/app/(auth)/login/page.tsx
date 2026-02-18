@@ -66,13 +66,13 @@ export default function LoginPage() {
                     <div className="flex justify-center mb-6">
                         <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100">
                             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-500/20">
-                                K
+                                Z
                             </div>
                         </div>
                     </div>
-                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
+                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Nexus Authorization</CardTitle>
                     <CardDescription className="text-center text-slate-500 font-medium">
-                        Sign in to access your account.
+                        Access the Zenith ecosystem intelligence.
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
@@ -83,7 +83,7 @@ export default function LoginPage() {
                             </div>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Work Email Address</Label>
+                            <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Strategic Node ID (Email)</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -128,9 +128,9 @@ export default function LoginPage() {
                             {loading ? "Logging in..." : "Sign In"}
                         </Button>
                         <div className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">
-                            New Partner?{" "}
+                            Nexus Prospect?{" "}
                             <Link href="/register" className="text-blue-600 hover:text-blue-700">
-                                Request Access
+                                Initialize Relations
                             </Link>
                         </div>
                     </CardFooter>

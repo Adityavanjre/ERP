@@ -36,30 +36,31 @@ export default function WorkOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
-    const fetchData = async () => {
+    const syncExecutionQueues = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const res = await api.get("manufacturing/work-orders");
             setWorkOrders(res.data);
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to load Production Orders");
+            console.error("Execution Queue Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        syncExecutionQueues(true);
+        const interval = setInterval(() => syncExecutionQueues(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const completeWO = async (id: string) => {
         try {
             await api.post(`/manufacturing/work-orders/${id}/complete`, {});
-            toast.success("Production Order Completed successfully!");
-            fetchData();
+            toast.success("Execution Pulse Finalized");
+            syncExecutionQueues(true);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to complete production order.");
+            toast.error("Execution finalization failure");
         }
     };
 
@@ -89,12 +90,12 @@ export default function WorkOrdersPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
-                        Production Orders
+                        Live Execution Queues
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Issue and track work orders for factory production cycles.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Issue and track execution cycles for production pulses.</p>
                 </div>
                 <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold px-8 shadow-lg shadow-emerald-500/20 text-white h-11">
-                    <Plus className="mr-2 h-4 w-4" /> New Order
+                    <Plus className="mr-2 h-4 w-4" /> Execute Production Pulse
                 </Button>
             </div>
 

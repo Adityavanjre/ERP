@@ -27,9 +27,9 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
     const [model, setModel] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = async () => {
+    const syncNodeData = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const [recordsRes, appsRes] = await Promise.all([
                 api.get(`/kernel/studio/records/${modelName}`),
                 api.get(`/kernel/apps`)
@@ -39,16 +39,17 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
 
             // Find model definition
             const currentApp = appsRes.data.find((a: any) => a.name === appName);
-            // This is simplified; ideally we have a dedicated /kernel/studio/models/:name endpoint
-            setLoading(false);
         } catch (err) {
-            console.error(err);
-            toast.error(`Connection to [${modelName}] failed`);
+            console.error("Node Data Sync Failure:", err);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        syncNodeData(true);
+        const interval = setInterval(() => syncNodeData(false), 30000);
+        return () => clearInterval(interval);
     }, [modelName]);
 
     return (
@@ -114,7 +115,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
                             {records.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center py-32 text-zinc-600 italic">
-                                        No data found for this object class.
+                                        No flux nodes detected in this class.
                                     </TableCell>
                                 </TableRow>
                             )}

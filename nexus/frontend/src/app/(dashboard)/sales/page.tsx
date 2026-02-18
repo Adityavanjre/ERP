@@ -42,9 +42,9 @@ export default function SalesPage() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [orderData, setOrderData] = useState({ customerId: "", productId: "", quantity: 1 });
 
-    const fetchData = async () => {
+    const syncCommerceFlow = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const [orderRes, statsRes, prodRes, custRes] = await Promise.all([
                 api.get("sales/orders"),
                 api.get("sales/stats"),
@@ -56,15 +56,17 @@ export default function SalesPage() {
             setProducts(Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data.data || []));
             setCustomers(Array.isArray(custRes.data) ? custRes.data : (custRes.data.data || []));
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to load sales data");
+            console.error("Commerce Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        syncCommerceFlow(true);
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncCommerceFlow(false), 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const handleCreateOrder = async (e: React.FormEvent) => {
@@ -92,7 +94,7 @@ export default function SalesPage() {
             setShowForm(false);
             setOrderData({ customerId: "", productId: "", quantity: 1 });
             toast.success("Sales order processed successfully");
-            fetchData();
+            syncCommerceFlow();
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Order processing failed");
         } finally {
@@ -121,23 +123,16 @@ export default function SalesPage() {
                         <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mr-5">
                             <ShoppingCart className="h-7 w-7 text-white" />
                         </div>
-                        Sales & Invoices
+                        Commerce Flow & Treasury
                     </h2>
-                    <p className="text-slate-600 mt-2 font-black uppercase text-[10px] tracking-[0.2em] ml-[68px]">Orders, Revenue & Customer Transactions</p>
+                    <p className="text-slate-600 mt-2 font-black uppercase text-[10px] tracking-[0.2em] ml-[68px]">Orders, Gross Inflow & Entity Transactions</p>
                 </div>
                 <div className="flex gap-4">
-                    <Button
-                        onClick={() => fetchData()}
-                        variant="outline"
-                        className="rounded-2xl border-slate-200 bg-white hover:bg-slate-50 text-slate-500 font-black h-12 px-6 transition-all active:scale-95"
-                    >
-                        Refresh Data
-                    </Button>
                     <Button
                         className="rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-10 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none"
                         onClick={() => setShowForm(true)}
                     >
-                        <Plus className="mr-2 h-5 w-5" /> New Order
+                        <Plus className="mr-2 h-5 w-5" /> Execute Transaction
                     </Button>
                 </div>
             </div>
@@ -145,7 +140,7 @@ export default function SalesPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Total Revenue</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Gross Inflow</CardTitle>
                         <div className="p-2.5 bg-emerald-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <TrendingUp className="h-4 w-4 text-emerald-600" />
                         </div>
@@ -161,20 +156,20 @@ export default function SalesPage() {
 
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Total Orders</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Active Transactions</CardTitle>
                         <div className="p-2.5 bg-blue-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <ShoppingCart className="h-4 w-4 text-blue-600" />
                         </div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-slate-900 tracking-tighter italic">{stats.orderCount.toString().padStart(3, '0')}</div>
-                        <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">Completed Orders</p>
+                        <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">Finalized Transmissions</p>
                     </CardContent>
                 </Card>
 
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pending Orders</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pending Queues</CardTitle>
                         <div className="p-2.5 bg-amber-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <Clock className="h-4 w-4 text-amber-600" />
                         </div>
@@ -187,7 +182,7 @@ export default function SalesPage() {
 
                 <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Avg Order Value</CardTitle>
+                        <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Mean Transaction Integrity</CardTitle>
                         <div className="p-2.5 bg-indigo-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <Package className="h-4 w-4 text-indigo-600" />
                         </div>
@@ -196,7 +191,7 @@ export default function SalesPage() {
                         <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
                             ₹{stats.orderCount > 0 ? (stats.totalRevenue / stats.orderCount).toLocaleString('en-IN', { maximumFractionDigits: 0 }) : "0"}
                         </div>
-                        <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">Per Order Average</p>
+                        <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">Per Transaction Average</p>
                     </CardContent>
                 </Card>
             </div>

@@ -59,9 +59,9 @@ export default function CrmPage() {
     const [custPage, setCustPage] = useState(1);
     const [custTotalPages, setCustTotalPages] = useState(1);
 
-    const fetchData = async () => {
+    const syncRelations = async (showLoading = false) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const [custRes, statsRes, oppRes] = await Promise.all([
                 api.get(`/crm/customers?page=${custPage}&limit=50`),
                 api.get("crm/stats"),
@@ -78,15 +78,17 @@ export default function CrmPage() {
             setStats(statsRes.data);
             setOpportunities(oppRes.data || []);
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to load CRM data");
+            console.error("Relations Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        syncRelations(true);
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncRelations(false), 30000);
+        return () => clearInterval(interval);
     }, [custPage]);
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,22 +230,22 @@ export default function CrmPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Users className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Customer Management
+                        Strategic Relations
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage customer relationships, sales pipeline, and contact lists.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Manage entity relationships, value-chain flux, and strategic contact nodes.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="relative">
                         <Input type="file" accept=".csv" onChange={handleImport} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                         <Button className="rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5">
-                            <Upload className="mr-2 h-4 w-4" /> Import CSV
+                            <Upload className="mr-2 h-4 w-4" /> Nexus Batch-Sync
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-amber-50 border border-amber-100 hover:bg-amber-100/50 text-amber-700 shadow-sm font-bold h-11 px-5" onClick={() => setShowDealForm(!showDealForm)}>
-                        <Sparkles className="mr-2 h-4 w-4" /> New Deal
+                        <Sparkles className="mr-2 h-4 w-4" /> Flux Opportunity
                     </Button>
                     <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
-                        <UserPlus className="mr-2 h-4 w-4" /> Add Customer
+                        <UserPlus className="mr-2 h-4 w-4" /> Initialize Entity
                     </Button>
                 </div>
             </div>
@@ -377,18 +379,18 @@ export default function CrmPage() {
 
             <Tabs defaultValue="pipeline" className="space-y-8">
                 <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
-                    <TabsTrigger value="pipeline" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Sales Pipeline</TabsTrigger>
-                    <TabsTrigger value="customers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Customer List</TabsTrigger>
+                    <TabsTrigger value="pipeline" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Conversion Flow</TabsTrigger>
+                    <TabsTrigger value="customers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Entity Directory</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="pipeline" className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
-                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Pipeline Value</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Liquidity Forecast</CardTitle></CardHeader>
                             <CardContent><div className="text-3xl font-black text-slate-900 tracking-tighter">₹{stats.pipelineValue?.toLocaleString('en-IN')}</div></CardContent>
                         </Card>
                         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
-                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Opportunities</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Flux Opportunities</CardTitle></CardHeader>
                             <CardContent><div className="text-3xl font-black text-amber-600 tracking-tighter">{stats.openDeals}</div></CardContent>
                         </Card>
                     </div>

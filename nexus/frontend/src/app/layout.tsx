@@ -18,12 +18,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Klypso Nexus | Enterprise Intelligence",
-  description: "High-integrity enterprise intelligence platform for elite brands. Centralized finance, inventory, and diverse operations.",
-  keywords: ["ERP", "Enterprise Resource Planning", "Klypso Nexus", "Business Intelligence", "Inventory Management", "Financial Systems"],
-  authors: [{ name: "Klypso Engineering", url: "https://klypso.agency" }],
-  creator: "Klypso Agency",
-  publisher: "Klypso Agency",
+  title: "Zenith Intelligence | Enterprise Nexus",
+  description: "High-integrity enterprise intelligence platform for elite brands. Centralized finance, inventory, and autonomous operations.",
+  keywords: ["ERP", "Enterprise Resource Planning", "Zenith Intelligence", "Business Intelligence", "Inventory Management", "Financial Systems", "Nexus"],
+  authors: [{ name: "Zenith Core Engineering", url: "https://klypso.agency" }],
+  creator: "Zenith Ecosystems",
+  publisher: "Zenith Ecosystems",
   robots: {
     index: true,
     follow: true,
@@ -36,16 +36,16 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Klypso Nexus | Enterprise Intelligence",
-    description: "Operate at the speed of thought. The comprehensive operating system for modern business.",
+    title: "Zenith Intelligence | Enterprise Nexus",
+    description: "Operate at the speed of thought. The autonomous operating system for modern enterprise.",
     url: "https://klypso.in/portal",
-    siteName: "Klypso Nexus",
+    siteName: "Zenith Intelligence",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Klypso Nexus Dashboard",
+        alt: "Zenith Intelligence Dashboard",
       },
     ],
     locale: "en_US",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Klypso Nexus | Enterprise Intelligence",
+    title: "Zenith Intelligence | Enterprise Nexus",
     description: "High-integrity enterprise intelligence platform for elite brands.",
     creator: "@klypso",
     images: ["/og-image.png"],
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
-  themeColor: "#C5A059",
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({

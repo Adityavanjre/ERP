@@ -127,6 +127,8 @@ model User {
   resetPasswordExpires DateTime?
   auditLogs            AuditLog[]
   memberships  TenantUser[]
+  productsCreated      Product[]    @relation("ProductCreator")
+  productsUpdated      Product[]    @relation("ProductUpdater")
 }
 
 model Tenant {
@@ -211,6 +213,7 @@ model Product {
   category           String?
   tags               String?
   brand              String?
+  manufacturer       String?
   weight             String?
   dimensions         String?
   minStockLevel      Decimal             @default(0.00)
@@ -220,6 +223,8 @@ model Product {
   gstRate            Decimal             @default(0.00)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  createdById        String?
+  updatedById        String?
   deletedAt          DateTime?
   isDeleted          Boolean             @default(false)
   barcode            String?
@@ -229,6 +234,8 @@ model Product {
   invoiceItems       InvoiceItem[]
   orderItems         OrderItem[]
   tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  createdBy          User?               @relation("ProductCreator", fields: [createdById], references: [id])
+  updatedBy          User?               @relation("ProductUpdater", fields: [updatedById], references: [id])
   purchaseOrderItems PurchaseOrderItem[]
   stockLocations     StockLocation[]
   stockMovements     StockMovement[]

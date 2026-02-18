@@ -52,39 +52,39 @@ const INVOICE_VIEWERS: RoleName[] = ['Owner', 'Manager', 'Biller', 'Accountant',
 
 const businessStreams: BusinessStream[] = [
     {
-        label: 'Sales & Revenue',
+        label: 'Commerce Flow',
         icon: ShoppingCart,
         items: [
             { label: 'Unified POS', href: '/sales/rapid', icon: Zap, allowedRoles: SALES_ROLES },
-            { label: 'Clients & CRM', href: '/crm', icon: Users, allowedRoles: SALES_ROLES },
-            { label: 'Invoices', href: '/sales', icon: ShoppingBag, allowedRoles: INVOICE_VIEWERS },
+            { label: 'Strategic Relations', href: '/crm', icon: Users, allowedRoles: SALES_ROLES },
+            { label: 'Treasury Ledgers', href: '/sales', icon: ShoppingBag, allowedRoles: INVOICE_VIEWERS },
         ]
     },
     {
-        label: 'Procurement & Stock',
+        label: 'Supply & Logistics',
         icon: Package,
         items: [
-            { label: 'Inventory (Products)', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
-            { label: 'Strategic Partners', href: '/purchases', icon: ShoppingBag, allowedRoles: STOCK_ROLES },
-            { label: 'Warehouses', href: '/inventory/warehouses', icon: LayoutGrid, allowedRoles: STOCK_ROLES },
+            { label: 'Asset Registry', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
+            { label: 'Vendor Ecosystem', href: '/purchases', icon: ShoppingBag, allowedRoles: STOCK_ROLES },
+            { label: 'Warehouse Nodes', href: '/inventory/warehouses', icon: LayoutGrid, allowedRoles: STOCK_ROLES },
         ]
     },
     {
-        label: 'Manufacturing',
+        label: 'Nexus Production',
         icon: Factory,
         items: [
-            { label: 'Production Overview', href: '/manufacturing', icon: Factory, allowedRoles: STOCK_ROLES },
-            { label: 'Bill of Materials', href: '/manufacturing/bom', icon: Command, allowedRoles: STOCK_ROLES },
-            { label: 'Production Orders', href: '/manufacturing/orders', icon: ClipboardList, allowedRoles: STOCK_ROLES },
+            { label: 'Core Overview', href: '/manufacturing', icon: Factory, allowedRoles: STOCK_ROLES },
+            { label: 'Logic (BOM)', href: '/manufacturing/bom', icon: Command, allowedRoles: STOCK_ROLES },
+            { label: 'Execution Orders', href: '/manufacturing/orders', icon: ClipboardList, allowedRoles: STOCK_ROLES },
         ]
     },
     {
-        label: 'Finance & Audit',
+        label: 'Forensic Finance',
         icon: Landmark,
         items: [
-            { label: 'Account Ledger', href: '/accounting', icon: Landmark, allowedRoles: FINANCE_ROLES },
-            { label: 'Journal Entries', href: '/accounting/journal', icon: ClipboardList, allowedRoles: FINANCE_ROLES },
-            { label: 'Tax & Tally Export', href: '/accounting/export', icon: RefreshCw, allowedRoles: FINANCE_ROLES },
+            { label: 'Ecosystem Ledger', href: '/accounting', icon: Landmark, allowedRoles: FINANCE_ROLES },
+            { label: 'Transaction Audit', href: '/accounting/journal', icon: ClipboardList, allowedRoles: FINANCE_ROLES },
+            { label: 'Compliance Export', href: '/accounting/export', icon: RefreshCw, allowedRoles: FINANCE_ROLES },
         ]
     }
 ];
@@ -123,7 +123,7 @@ export const Sidebar = () => {
                     >
                         <div className="flex items-center flex-1">
                             <LayoutDashboard className={cn("h-4 w-4 mr-3 transition-colors", pathname === '/dashboard' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
-                            Overview
+                            Zenith Overview
                         </div>
                     </Link>
                 </div>
@@ -166,26 +166,21 @@ export const Sidebar = () => {
                     >
                         <div className="flex items-center flex-1">
                             <Settings className={cn("h-4 w-4 mr-3 transition-colors", pathname === '/settings' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
-                            Settings
+                            System Config
                         </div>
                     </Link>
                 )}
 
                 <div className="p-5 rounded-[2rem] bg-white border border-slate-100 shadow-sm">
-                    <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter mb-4">
-                        System Active
+                    <div className="flex items-center justify-between mb-2">
+                        <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter">
+                            Auto-Sync
+                        </p>
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    </div>
+                    <p className="text-[10px] text-slate-900 font-black uppercase tracking-widest">
+                        Ecosphere Real-time
                     </p>
-                    <button
-                        onClick={() => {
-                            toast.success('Initiating System Sync...');
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
-                        }}
-                        className="flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest transition-all hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95"
-                    >
-                        <RefreshCw className="h-3 w-3" /> Refresh Data
-                    </button>
                 </div>
             </div>
         </div>

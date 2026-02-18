@@ -58,24 +58,39 @@ export class AiService {
     // 2. Fetch historical sales to determine velocity
     // For this MVP, we simulate velocity based on stock levels and a random entropy factor
     const recommendations = products.map((p) => {
-      const velocity = Math.floor(Math.random() * 5) + 1; // Simulated weekly sales
-      const daysRemaining = Math.floor(new Decimal(p.stock).toNumber() / (velocity / 7 || 0.1));
+      try {
+        const velocity = Math.floor(Math.random() * 5) + 1; // Simulated weekly sales
+        const stockNum = new Decimal(p.stock || 0).toNumber();
+        const daysRemaining = Math.floor(stockNum / (velocity / 7 || 0.1));
 
-      return {
-        productId: p.id,
-        sku: p.sku,
-        name: p.name,
-        currentStock: p.stock,
-        velocity: `${velocity} units/week`,
-        daysRemaining,
-        recommendation: daysRemaining < 14 ? 'Urgent Reorder' : 'Optimum',
-        predictedShortage:
-          daysRemaining < 7
-            ? new Date(
-                Date.now() + daysRemaining * 86400000,
-              ).toLocaleDateString()
-            : null,
-      };
+        return {
+          productId: p.id,
+          sku: p.sku,
+          name: p.name,
+          currentStock: p.stock,
+          velocity: `${velocity} units/week`,
+          daysRemaining: isNaN(daysRemaining) ? 0 : daysRemaining,
+          recommendation: daysRemaining < 14 ? 'Urgent Reorder' : 'Optimum',
+          predictedShortage:
+            daysRemaining < 7
+              ? new Date(
+                  Date.now() + (daysRemaining > 0 ? daysRemaining : 0) * 86400000,
+                ).toLocaleDateString()
+              : null,
+        };
+      } catch (err) {
+        // RESILIENCE: Prevent one bad product from failing the entire inventory sync
+        return {
+          productId: p.id,
+          sku: p.sku,
+          name: p.name,
+          currentStock: p.stock || 0,
+          velocity: 'Sync Error',
+          daysRemaining: 999,
+          recommendation: 'Manual Check Required',
+          predictedShortage: null
+        };
+      }
     });
 
     return {

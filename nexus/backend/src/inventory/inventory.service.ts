@@ -18,7 +18,7 @@ export class InventoryService {
     private billing: BillingService,
   ) {}
 
-  async createProduct(tenantId: string, data: any) {
+  async createProduct(tenantId: string, data: any, userId?: string) {
     // 0. Subscription Governance: Quota Check
     await this.billing.validateQuota(tenantId, 'maxProducts');
 
@@ -33,7 +33,7 @@ export class InventoryService {
     }
 
     return this.prisma.product.create({
-      data: { ...data, tenantId },
+      data: { ...data, tenantId, createdById: userId, updatedById: userId },
     });
   }
 
@@ -162,7 +162,7 @@ export class InventoryService {
     });
   }
 
-  async updateProduct(tenantId: string, id: string, data: any) {
+  async updateProduct(tenantId: string, id: string, data: any, userId?: string) {
     return this.prisma.$transaction(async (tx: any) => {
       // 0. Forensic Guard: Check lock INSIDE transaction
       await this.accounting.checkPeriodLock(tenantId, new Date(), tx);
@@ -171,13 +171,37 @@ export class InventoryService {
         where: { id, tenantId, isDeleted: false },
       });
 
-      if (
-        data.stock !== undefined &&
-        product &&
-        !new Decimal(product.stock as any).equals(new Decimal(data.stock))
-      ) {
-        // GLOBAL STOCK FLOOR GUARD
-        this.validateStockFloor(product.name, data.stock);
+      if (!product) throw new NotFoundException('Product not found or access denied');
+
+      // FORENSIC AUDIT: Record ALL changes
+      const changes: any = {};
+      let hasMeaningfulChange = false;
+
+      const fieldsToAudit = ['name', 'sku', 'price', 'costPrice', 'stock', 'manufacturer', 'category', 'brand'];
+      
+      for (const field of fieldsToAudit) {
+          if (data[field] !== undefined) {
+              const oldVal = product[field];
+              const newVal = data[field];
+              
+              // Handle Decimal comparison for stock/price
+              const isDecimal = ['price', 'costPrice', 'stock'].includes(field);
+              const isEqual = isDecimal 
+                ? new Decimal(oldVal as any).equals(new Decimal(newVal as any))
+                : oldVal === newVal;
+
+              if (!isEqual) {
+                  changes[field] = { from: oldVal, to: newVal };
+                  hasMeaningfulChange = true;
+              }
+          }
+      }
+
+      if (hasMeaningfulChange) {
+        // GLOBAL STOCK FLOOR GUARD if stock changed
+        if (data.stock !== undefined) {
+            this.validateStockFloor(product.name, data.stock);
+        }
 
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
@@ -185,7 +209,7 @@ export class InventoryService {
         const adjustmentCount = await tx.auditLog.count({
           where: {
             tenantId,
-            action: 'STOCK_ADJUSTMENT',
+            action: 'PRODUCT_UPDATE',
             createdAt: { gte: startOfDay },
           },
         });
@@ -193,14 +217,13 @@ export class InventoryService {
         await tx.auditLog.create({
           data: {
             tenantId,
-            action: 'STOCK_ADJUSTMENT',
+            userId,
+            action: 'PRODUCT_UPDATE',
             resource: `Product:${id}`,
             details: {
               name: product.name,
-              prevStock: product.stock,
-              newStock: data.stock,
-              diff: new Decimal(data.stock).sub(new Decimal(product.stock as any)),
-              warning: adjustmentCount >= 3 ? 'HIGH_ADJUSTMENT_FREQUENCY' : null,
+              changes,
+              warning: adjustmentCount >= 10 ? 'HIGH_UPDATE_FREQUENCY' : null,
             } as any,
           },
         });
@@ -208,7 +231,7 @@ export class InventoryService {
 
       return tx.product.update({
         where: { id, tenantId },
-        data,
+        data: { ...data, updatedById: userId },
       });
     });
   }

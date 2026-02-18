@@ -23,20 +23,25 @@ export default function WarehousesPage() {
     const [warehouses, setWarehouses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchWarehouses();
-    }, []);
-
-    const fetchWarehouses = async () => {
+    const syncNodes = async (showLoading = false) => {
         try {
+            if (showLoading) setLoading(true);
             const res = await api.get('inventory/warehouses');
             setWarehouses(res.data);
         } catch (err) {
-            console.error("Failed to fetch warehouses", err);
+            console.error("Node Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        syncNodes(true);
+
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncNodes(false), 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
@@ -44,14 +49,14 @@ export default function WarehousesPage() {
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <LayoutGrid className="h-10 w-10 text-blue-600" />
-                        Warehouse Registry
+                        Nexus Node Registry
                     </h1>
                     <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-2 ml-1">
-                        Physical Storage & Stock Distribution
+                        Aetheric Storage & Resource Distribution
                     </p>
                 </div>
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2">
-                    <Plus className="h-5 w-5" /> Add Warehouse
+                    <Plus className="h-5 w-5" /> Initialize Node
                 </Button>
             </div>
 
@@ -66,12 +71,12 @@ export default function WarehousesPage() {
                             <div className="bg-blue-50 h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <LayoutGrid className="h-8 w-8 text-blue-500" />
                             </div>
-                            <h3 className="text-lg font-black text-slate-900">No warehouses registered</h3>
+                            <h3 className="text-lg font-black text-slate-900">No core nodes initialized</h3>
                             <p className="text-slate-500 text-sm max-w-xs mx-auto">
-                                Start by adding your first physical storage location.
+                                Start by initializing your first aetheric storage node.
                             </p>
                             <Button variant="outline" className="rounded-xl font-bold border-slate-200 hover:bg-white active:scale-95">
-                                Add First Warehouse
+                                Initialize First Node
                             </Button>
                         </CardContent>
                     </Card>
@@ -93,14 +98,14 @@ export default function WarehousesPage() {
                         <CardContent className="p-6 space-y-6">
                             <div className="flex items-center justify-between">
                                 <div className="space-y-1">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Storage Manager</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Node Custodian</div>
                                     <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
                                         <User className="h-4 w-4 text-blue-500" />
                                         {w.manager || 'Unassigned'}
                                     </div>
                                 </div>
                                 <div className="text-right space-y-1">
-                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active SKUs</div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Registered Assets</div>
                                     <div className="flex items-center justify-end gap-2 text-slate-900 font-black text-lg">
                                         <Package className="h-5 w-5 text-orange-500" />
                                         {w.stocks?.length || 0}

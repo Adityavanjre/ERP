@@ -29,27 +29,29 @@ export default function AuditorDashboard() {
     const [reopenReason, setReopenReason] = useState("");
     const [isReopening, setIsReopening] = useState(false);
 
-    const fetchDashboard = async () => {
-        setLoading(true);
+    const syncAuditorIntelligence = async (showLoading = false) => {
         try {
+            if (showLoading) setLoading(true);
             const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
             setData(res);
         } catch (err) {
-            toast.error("Failed to load auditor dashboard");
+            console.error("Auditor Sync Failure:", err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchDashboard();
+        syncAuditorIntelligence(true);
+        const interval = setInterval(() => syncAuditorIntelligence(false), 30000);
+        return () => clearInterval(interval);
     }, [month, year]);
 
     const handleLock = async () => {
         try {
             await api.post("accounting/auditor/lock", { month, year });
             toast.success("Period locked successfully");
-            fetchDashboard();
+            syncAuditorIntelligence(true);
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Failed to lock period");
         }
@@ -65,7 +67,7 @@ export default function AuditorDashboard() {
             toast.success("Period reopened");
             setIsReopening(false);
             setReopenReason("");
-            fetchDashboard();
+            syncAuditorIntelligence(true);
         } catch (err) {
             toast.error("Failed to reopen period");
         }
@@ -80,7 +82,7 @@ export default function AuditorDashboard() {
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                         <ShieldCheck className="w-8 h-8 text-emerald-600" />
-                        CA Auditor Dashboard
+                        Zenith Security Auditor
                     </h1>
                     <p className="text-slate-500 font-medium mt-1">Forensic financial integrity & month-close management.</p>
                 </div>
@@ -105,11 +107,14 @@ export default function AuditorDashboard() {
                         ))}
                     </select>
                     <button
-                        onClick={fetchDashboard}
+                        onClick={() => syncAuditorIntelligence(true)}
                         className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
                     >
                         <Search className="w-4 h-4 text-zinc-400" />
                     </button>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                        <ShieldCheck className="w-3 h-3 animate-pulse" /> Auto-Sync Active
+                    </div>
                 </div>
             </div>
 

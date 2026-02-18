@@ -57,7 +57,7 @@ export default function AccountingPage() {
         }
     }, [showCreateInvoice]);
 
-    const fetchData = async (silent = false) => {
+    const syncLedgers = async (silent = false) => {
         try {
             if (!silent) setLoading(true);
             else setIsSyncing(true);
@@ -88,8 +88,8 @@ export default function AccountingPage() {
             setStats(statsRes.data);
             setInvStats(invStatsRes.data);
         } catch (err) {
-            console.error(err);
-            if (!silent) toast.error("Financial synchronization failed");
+            console.error("Ledger Sync Failure:", err);
+            if (!silent) toast.error("Nexus financial flux interrupted");
         } finally {
             setLoading(false);
             setIsSyncing(false);
@@ -156,10 +156,10 @@ export default function AccountingPage() {
     });
 
     useEffect(() => {
-        fetchData();
+        syncLedgers();
 
-        // Background synchronization every 30 seconds
-        const interval = setInterval(() => fetchData(true), 30000);
+        // CONTINUOUS BACKGROUND SYNC: 30s interval
+        const interval = setInterval(() => syncLedgers(true), 30000);
         return () => clearInterval(interval);
     }, [invoicePage]);
 
@@ -169,9 +169,9 @@ export default function AccountingPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Landmark className="mr-4 h-9 w-9 text-amber-500 shadow-sm" />
-                        Financial Engine
+                        Treasury Engine
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Unified ledger, automated billing, and capital intelligence.</p>
+                    <p className="text-slate-500 mt-2 font-medium">Unified ecosystem ledgers, automated billing, and capital intelligence.</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     {pendingDraft && !showCreateInvoice && (
@@ -180,7 +180,7 @@ export default function AccountingPage() {
                             className="bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 text-xs h-11 px-5 rounded-2xl animate-pulse font-black uppercase tracking-widest"
                             onClick={() => setShowCreateInvoice(true)}
                         >
-                            <ShoppingCart className="mr-2 h-4 w-4" /> Resume Sale
+                            <ShoppingCart className="mr-2 h-4 w-4" /> Resume Transaction
                         </Button>
                     )}
                     {isSyncing && (
@@ -194,18 +194,18 @@ export default function AccountingPage() {
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
                             onClick={handleTallyMasters}
                         >
-                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> Masters
+                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> Nexus Structs
                         </Button>
                         <Button
                             variant="ghost"
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
                             onClick={handleTallyExport}
                         >
-                            <FileDown className="mr-2 h-4 w-4 text-emerald-500" /> Vouchers
+                            <FileDown className="mr-2 h-4 w-4 text-emerald-500" /> Ledger Pulses
                         </Button>
                     </div>
                     <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-8 shadow-lg shadow-amber-500/20 text-white h-11" onClick={() => setShowCreateInvoice(true)}>
-                        <Plus className="mr-2 h-4 w-4" /> Issue Invoice
+                        <Plus className="mr-2 h-4 w-4" /> Initialize Node
                     </Button>
                 </div>
             </div>
@@ -213,7 +213,7 @@ export default function AccountingPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-emerald-500 border-none group">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Net Liquidity</CardTitle>
+                        <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Capital Velocity</CardTitle>
                         <div className="p-2.5 bg-emerald-50 rounded-2xl group-hover:scale-110 transition-transform">
                             <ArrowUpRight className="h-4 w-4 text-emerald-600" />
                         </div>
@@ -306,10 +306,10 @@ export default function AccountingPage() {
 
             <Tabs defaultValue="invoices" className="space-y-6">
                 <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto h-auto p-1.5 rounded-2xl">
-                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Invoices</TabsTrigger>
-                    <TabsTrigger value="accounts" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Chart of Accounts</TabsTrigger>
-                    <TabsTrigger value="transactions" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Transactions</TabsTrigger>
-                    <TabsTrigger value="health" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Financial Health</TabsTrigger>
+                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Treasury Invoices</TabsTrigger>
+                    <TabsTrigger value="accounts" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Ecosystem Ledgers</TabsTrigger>
+                    <TabsTrigger value="transactions" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Ledger History</TabsTrigger>
+                    <TabsTrigger value="health" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Nexus Integrity</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="invoices" className="space-y-4">
@@ -636,25 +636,25 @@ export default function AccountingPage() {
                 invoice={selectedInvoice}
                 isOpen={!!selectedInvoice}
                 onClose={() => setSelectedInvoice(null)}
-                onSuccess={fetchData}
+                onSuccess={syncLedgers}
             />
 
             <CreateInvoiceDialog
                 isOpen={showCreateInvoice}
                 onClose={() => setShowCreateInvoice(false)}
-                onSuccess={fetchData}
+                onSuccess={syncLedgers}
             />
 
             <CreateAccountDialog
                 open={showCreateAccount}
                 onOpenChange={setShowCreateAccount}
-                onSuccess={fetchData}
+                onSuccess={syncLedgers}
             />
 
             <CreateJournalEntryDialog
                 open={showCreateJournalEntry}
                 onOpenChange={setShowCreateJournalEntry}
-                onSuccess={fetchData}
+                onSuccess={syncLedgers}
                 accounts={accounts}
             />
         </div >

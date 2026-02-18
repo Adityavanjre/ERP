@@ -31,7 +31,7 @@ api.interceptors.response.use(
     if (contentType && contentType.includes('text/html') && typeof response.data === 'string') {
       if (response.data.includes('Render') || response.data.includes('Waking up')) {
         return Promise.reject({
-          message: 'Service is waking up. Please wait several seconds and try again.',
+          message: 'Nexus ecosystem is initializing. Please wait as we synchronize the aether.',
           isWakeup: true
         });
       }
