@@ -65,11 +65,9 @@ export class PrismaService
               }
             } else {
               // FAIL-CLOSE: Block ALL access if no tenantId found, unless it's a global model.
-              // This prevents potential leaks in public/developer-error routes.
-                throw new Error(
-                  `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context. (Startup/HealthCheck safety check)`,
-                );
-              }
+              throw new Error(
+                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context. (Startup/HealthCheck safety check)`,
+              );
             }
             return query(args);
           },
