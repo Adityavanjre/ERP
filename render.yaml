@@ -5,6 +5,7 @@ services:
     env: docker
     plan: free
     rootDir: gateway
+    autoDeploy: false
     envVars:
       - key: PORT
         value: 80
@@ -37,6 +38,7 @@ services:
     buildCommand: npm install
     startCommand: node index.js
     healthCheckPath: /
+    autoDeploy: false
     envVars:
       - key: MONGO_URI
         sync: false
@@ -49,6 +51,7 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npx serve -s dist -l $PORT
     healthCheckPath: /
+    autoDeploy: false
 
   # --- KLYPSO NEXUS ---
   - type: web
@@ -59,6 +62,7 @@ services:
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npx prisma db push --accept-data-loss && node dist/main.js
     healthCheckPath: /api/v1/health/liveness
+    autoDeploy: false
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -89,6 +93,7 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /portal/dashboard
+    autoDeploy: false
     envVars:
       - key: NEXUS_BACKEND_URL
         value: https://nexus-backend-3ukg.onrender.com
