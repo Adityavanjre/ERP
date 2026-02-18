@@ -25,10 +25,13 @@ export default function HrPage() {
     const [departments, setDepartments] = useState<any[]>([]);
     const [stats, setStats] = useState<any>({ activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     const fetchData = async () => {
         try {
             setLoading(true);
+            setFetchError(null);
             const [empRes, leaveRes, payrollRes, deptRes, statsRes] = await Promise.all([
                 api.get("hr/employees"),
                 api.get("hr/leaves"),
@@ -41,17 +44,22 @@ export default function HrPage() {
             setPayrolls(Array.isArray(payrollRes.data) ? payrollRes.data : []);
             setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
             setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            toast.error("Failed to load HR data");
+            const msg = err.isWakeup ? err.message : "Failed to load HR data";
+            setFetchError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        setMounted(true);
         fetchData();
     }, []);
+
+    if (!mounted) return null;
 
     return (
         <div className="flex-1 space-y-8 p-8 pt-6">

@@ -31,6 +31,8 @@ export default function InventoryPage() {
     const [showForm, setShowForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [mounted, setMounted] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: "",
         sku: "",
@@ -56,6 +58,7 @@ export default function InventoryPage() {
     const fetchData = async () => {
         try {
             setLoading(true);
+            setFetchError(null);
             const [prodRes, statsRes, aiRes] = await Promise.all([
                 api.get(`/inventory/products?page=${page}&limit=50`),
                 api.get("inventory/stats"),
@@ -72,17 +75,22 @@ export default function InventoryPage() {
 
             setStats(statsRes.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
             setForecast(aiRes.data || null);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            toast.error("Failed to sync inventory data");
+            const msg = err.isWakeup ? err.message : "Failed to sync inventory data";
+            setFetchError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        setMounted(true);
         fetchData();
     }, [page]);
+
+    if (!mounted) return null;
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -28,6 +28,7 @@ import {
     ArrowRight
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
     BarChart,
@@ -78,44 +79,54 @@ export default function DashboardPage() {
     const [activity, setActivity] = useState<any[]>([]);
     const [valueChain, setValueChain] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            setFetchError(null);
+            const [kernelRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
+                api.get('kernel/stats'),
+                api.get('analytics/summary'),
+                api.get('analytics/performance'),
+                api.get('analytics/health'),
+                api.get('analytics/activity'),
+                api.get('analytics/value-chain')
+            ]);
+
+            // Kernel stats
+            const kernelData = Array.isArray(kernelRes.data) ? kernelRes.data : [];
+            const installed = kernelData.filter((a: any) => a.installed).length;
+            setKernelStats(prev => ({
+                ...prev,
+                apps: kernelData.length,
+                installed
+            }));
+
+            // BI stats
+            setBiStats(summaryRes.data || biStats);
+            setChartData(Array.isArray(performanceRes.data) ? performanceRes.data : []);
+            setHealthStats(healthRes.data || healthStats);
+            setActivity(Array.isArray(activityRes.data) ? activityRes.data : []);
+            setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
+
+        } catch (err: any) {
+            console.error(err);
+            const msg = err.isWakeup ? err.message : "Failed to synchronize analytics";
+            setFetchError(msg);
+            toast.error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const [kernelRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
-                    api.get('kernel/stats'),
-                    api.get('analytics/summary'),
-                    api.get('analytics/performance'),
-                    api.get('analytics/health'),
-                    api.get('analytics/activity'),
-                    api.get('analytics/value-chain')
-                ]);
-
-                // Kernel stats
-                const kernelData = Array.isArray(kernelRes.data) ? kernelRes.data : [];
-                const installed = kernelData.filter((a: any) => a.installed).length;
-                setKernelStats(prev => ({
-                    ...prev,
-                    apps: kernelData.length,
-                    installed
-                }));
-
-                // BI stats
-                setBiStats(summaryRes.data || biStats);
-                setChartData(Array.isArray(performanceRes.data) ? performanceRes.data : []);
-                setHealthStats(healthRes.data || healthStats);
-                setActivity(Array.isArray(activityRes.data) ? activityRes.data : []);
-                setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
-
-            } catch (err) {
-                console.error("Dashboard synchronization error:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+        setMounted(true);
         fetchData();
     }, []);
+
+    if (!mounted) return null;
 
     const kpiCards = [
         {
