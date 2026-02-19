@@ -19,7 +19,7 @@ services:
   - key: JWT_SECRET
     sync: false
   - key: DATABASE_URL
-    value: postgresql://postgres.nyakpylctpygnlrxvhxn:UvgtMof7AgAsubaQ@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+    value: postgresql://postgres.nyakpylctpygnlrxvhxn:UvgtMof7AgAsubaQ@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres
   - key: CLOUDINARY_CLOUD_NAME
     value: Klypso
   - key: CLOUDINARY_API_KEY
