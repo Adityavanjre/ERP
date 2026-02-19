@@ -21,7 +21,7 @@ services:
   - key: DATABASE_URL
     value: postgresql://postgres.nyakpylctpygnlrxvhxn:UvgtMof7AgAsubaQ@aws-1-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
   - key: CLOUDINARY_CLOUD_NAME
-    value: Klypso
+    value: ddqppdopk
   - key: CLOUDINARY_API_KEY
     value: 181917616772918
   - key: CLOUDINARY_API_SECRET
