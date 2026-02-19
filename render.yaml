@@ -1,4 +1,4 @@
-version: "1"
+version: "1" # FORCE_DEPLOY_FINAL
 services:
 - type: web
   name: klypso-backend
