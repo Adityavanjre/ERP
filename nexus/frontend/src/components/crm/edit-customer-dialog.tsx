@@ -44,6 +44,38 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
         }
     }, [customer]);
 
+    const validate = () => {
+        // 1. Phone Validation (10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+            toast.error("Invalid Phone Number. Must be 10 digits.");
+            return false;
+        }
+
+        // 2. GSTIN Validation (Standard format)
+        // \d{2} - State Code
+        // [A-Z]{5} - PAN
+        // \d{4} - Entity Number
+        // [A-Z]{1} - Entity Type
+        // [A-Z\d]{1} - Checksum
+        // [Z]{1} - Default
+        // [A-Z\d]{1} - Checksum
+        // Simplified regex for basic structure:
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+        if (formData.gstin && !gstinRegex.test(formData.gstin)) {
+            toast.error("Invalid GSTIN format.");
+            return false;
+        }
+
+        // 3. Required State
+        if (!formData.state) {
+            toast.error("State (Tax Jurisdiction) is required.");
+            return false;
+        }
+
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -51,6 +83,8 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
             toast.error("First Name and Email are required");
             return;
         }
+
+        if (!validate()) return;
 
         setLoading(true);
         try {
@@ -151,7 +185,7 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="state" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                                State (Tax Jurisdiction)
+                                State (Tax Jurisdiction) <span className="text-rose-500">*</span>
                             </Label>
                             <Input
                                 id="state"

@@ -35,6 +35,11 @@ export default function RapidBillingPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
 
+    // Manual Search State
+    const [manualSearch, setManualSearch] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isManualSearching, setIsManualSearching] = useState(false);
+
     const searchRef = useRef<HTMLInputElement>(null!);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -109,6 +114,41 @@ export default function RapidBillingPage() {
             setSearch('');
         }
     };
+
+    // Manual Search Effect
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (!manualSearch.trim()) {
+                setSearchResults([]);
+                return;
+            }
+
+            setIsManualSearching(true);
+            try {
+                // Determine if search is numeric (likely SKU/Barcode) or text (Name)
+                const isNumeric = /^\d+$/.test(manualSearch);
+                const endpoint = isNumeric
+                    ? `/inventory/products/find-by-code?code=${manualSearch}`
+                    : `/inventory/products?search=${manualSearch}&limit=5`;
+
+                const res = await api.get(endpoint);
+
+                if (isNumeric && res.data) {
+                    setSearchResults([res.data]); // Single result for direct code match
+                } else if (!isNumeric && res.data.data) {
+                    setSearchResults(res.data.data); // List for text search
+                } else {
+                    setSearchResults([]);
+                }
+            } catch (err) {
+                console.error("Search failed", err);
+            } finally {
+                setIsManualSearching(false);
+            }
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(timer);
+    }, [manualSearch]);
 
     const addItem = (product: any, quantity: number = 1) => {
         setItems(prev => {
@@ -256,7 +296,54 @@ export default function RapidBillingPage() {
             </header>
 
             <main className="flex-1 flex overflow-hidden">
-                <section className="flex-1 flex flex-col border-r border-slate-200 bg-white">
+                <section className="flex-1 flex flex-col border-r border-slate-200 bg-white relative">
+                    {/* Manual Search Bar */}
+                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search Product by Name or SKU..."
+                                value={manualSearch}
+                                onChange={(e) => setManualSearch(e.target.value)}
+                                className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm font-medium"
+                            />
+                            <div className="absolute left-3 top-2.5 text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                            </div>
+                            {isManualSearching && (
+                                <div className="absolute right-3 top-2.5">
+                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Search Results Dropdown */}
+                        {searchResults.length > 0 && manualSearch && (
+                            <div className="absolute top-[70px] left-4 right-4 bg-white rounded-xl shadow-xl border border-slate-100 z-50 max-h-[300px] overflow-y-auto">
+                                {searchResults.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        onClick={() => {
+                                            addItem(product);
+                                            setManualSearch('');
+                                            setSearchResults([]);
+                                            toast.success(`Added ${product.name}`);
+                                        }}
+                                        className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0 transition-colors"
+                                    >
+                                        <div>
+                                            <div className="font-bold text-sm text-slate-800">{product.name}</div>
+                                            <div className="text-xs text-slate-500 font-mono">SKU: {product.sku}</div>
+                                        </div>
+                                        <div className="font-bold text-emerald-600">
+                                            ₹{parseFloat(product.price).toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <BarcodeSearch
                         search={search}
                         setSearch={setSearch}
