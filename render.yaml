@@ -19,7 +19,7 @@ services:
   - key: JWT_SECRET
     sync: false
   - key: DATABASE_URL
-    value: postgresql://postgres:Bgt9%2FG8uxGHXTv5@db.syldigwdydzcrhuscagl.supabase.co:5432/postgres
+    value: postgresql://postgres:Bgt9%2FG8uxGHXTv5@db.syldigwdydzcrhuscagl.supabase.co:6543/postgres?pgbouncer=true&connection_limit=1
   - key: CLOUDINARY_CLOUD_NAME
     value: Klypso
   - key: CLOUDINARY_API_KEY
@@ -130,6 +130,6 @@ services:
   repo: https://github.com/Adityavanjre/ERP
   buildCommand: npm install && npm run build
   staticPublishPath: dist
-  autoDeployTrigger: commit
+  autoDeployTrigger: "off"
   rootDir: agency/client
 
