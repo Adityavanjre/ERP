@@ -46,7 +46,7 @@ services:
     sync: false
   region: oregon
   buildCommand: npm install && npm run build
-  startCommand: node dist/main.js
+  startCommand: npm start
   healthCheckPath: /api/v1/health/livenesshboard
   autoDeployTrigger: "off"
   rootDir: nexus/frontend
