@@ -137,4 +137,4 @@ databases:
   ipAllowList:
   - source: 0.0.0.0/0
     description: everywhere
-  postgresMajorVersion: "16"
+  postgresMajorVersion: "18"
