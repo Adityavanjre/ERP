@@ -1,104 +1,140 @@
+version: "1"
 services:
-  # THE FRONT DOOR (Nginx Gateway)
-  - type: web
-    name: klypso-gateway
-    env: docker
-    plan: free
-    rootDir: gateway
-    autoDeploy: false
-    envVars:
-      - key: PORT
-        value: 80
-      - key: AGENCY_VIEWER_HOST
-        value: klypso-agency-viewer.onrender.com
-      - key: KLYPSO_FRONTEND_HOST
-        value: klypso-frontend.onrender.com
-      - key: KLYPSO_BACKEND_HOST
-        value: nexus-backend-3ukg.onrender.com
-      - key: AGENCY_BACKEND_HOST
-        value: klypso-agency-backend.onrender.com
-      - key: KLYPSO_FRONTEND_URL
-        value: https://klypso.in/portal
-    domains:
-      - klypso.in
-      - www.klypso.in
-
-  # --- KLYPSO AGENCY ---
-  - type: web
-    name: klypso-agency-backend
-    env: node
-    plan: free
-    rootDir: agency/server
-    buildCommand: npm install
-    startCommand: node index.js
-    healthCheckPath: /
-    autoDeploy: false
-    envVars:
-      - key: MONGO_URI
-        sync: false
-
-  - type: web
-    name: klypso-agency-viewer
-    env: node
-    plan: free
-    rootDir: agency/client
-    buildCommand: npm install && npm run build
-    startCommand: npx serve -s dist -l $PORT
-    healthCheckPath: /
-    autoDeploy: false
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        value: https://klypso.in/agency-api/
-
-  # --- KLYPSO ERP ---
-  - type: web
-    name: klypso-backend
-    env: node
-    plan: free
-    rootDir: nexus/backend
-    buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: node dist/main.js
-    healthCheckPath: /api/v1/health/liveness
-    autoDeploy: false
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: klypso-db
-          property: connectionString
-      - key: JWT_SECRET
-        generateValue: true
-      - key: PORT
-        value: 3001
-      - key: KLYPSO_FRONTEND_URL
-        value: https://klypso.in/portal
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        value: 587
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: SMTP_FROM
-        value: noreply@klypso.in
-
-  - type: web
-    name: klypso-frontend
-    env: node
-    plan: free
-    rootDir: nexus/frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    healthCheckPath: /portal/dashboard
-    autoDeploy: false
-    envVars:
-      - key: KLYPSO_BACKEND_URL
-        value: http://klypso-backend:3001
-      - key: PORT
-        value: 3000
-      - key: HOSTNAME
-        value: 0.0.0.0
-
+- type: web
+  name: klypso-backend
+  runtime: node
+  repo: https://github.com/Adityavanjre/ERP
+  plan: free
+  envVars:
+  - key: KLYPSO_FRONTEND_URL
+    sync: false
+  - key: SMTP_FROM
+    sync: false
+  - key: SMTP_PORT
+    sync: false
+  - key: NEXUS_FRONTEND_URL
+    sync: false
+  - key: PORT
+    sync: false
+  - key: JWT_SECRET
+    sync: false
+  - key: DATABASE_URL
+    fromDatabase:
+      name: klypso-db
+      property: connectionString
+  region: oregon
+  buildCommand: npm install && npx prisma generate && npm run build
+  startCommand: node dist/main.js
+  healthCheckPath: /api/v1/health/liveness
+  autoDeployTrigger: "off"
+  rootDir: nexus/backend
+- type: web
+  name: klypso-frontend
+  runtime: node
+  repo: https://github.com/Adityavanjre/ERP
+  plan: free
+  envVars:
+  - key: HOSTNAME
+    sync: false
+  - key: PORT
+    sync: false
+  - key: KLYPSO_BACKEND_URL
+    sync: false
+  region: oregon
+  buildCommand: npm install && npm run build
+  startCommand: npm start
+  healthCheckPath: /portal/dashboard
+  autoDeployTrigger: "off"
+  rootDir: nexus/frontend
+- type: web
+  name: klypso-agency-viewer
+  runtime: node
+  repo: https://github.com/Adityavanjre/ERP
+  plan: free
+  envVars:
+  - key: NEXT_PUBLIC_API_URL
+    sync: false
+  - key: PORT
+    sync: false
+  region: oregon
+  buildCommand: npm install && npm run build
+  startCommand: npx serve -s dist -l $PORT
+  healthCheckPath: /
+  autoDeployTrigger: "off"
+  rootDir: agency/client
+- type: web
+  name: klypso-gateway
+  runtime: docker
+  repo: https://github.com/Adityavanjre/ERP
+  plan: free
+  envVars:
+  - key: AGENCY_BACKEND_HOST
+    sync: false
+  - key: KLYPSO_BACKEND_HOST
+    sync: false
+  - key: KLYPSO_FRONTEND_HOST
+    sync: false
+  - key: AGENCY_VIEWER_HOST
+    sync: false
+  - key: KLYPSO_FRONTEND_URL
+    sync: false
+  - key: KLYPSO_BACKEND_PORT
+    sync: false
+  - key: KLYPSO_FRONTEND_PORT
+    sync: false
+  - key: AGENCY_BACKEND_PORT
+    sync: false
+  - key: NEXUS_BACKEND_PORT
+    sync: false
+  - key: NEXUS_BACKEND_HOST
+    sync: false
+  - key: NEXUS_FRONTEND_PORT
+    sync: false
+  - key: AGENCY_VIEWER_PORT
+    sync: false
+  - key: NEXUS_FRONTEND_HOST
+    sync: false
+  - key: PORT
+    sync: false
+  region: oregon
+  dockerContext: .
+  dockerfilePath: ./Dockerfile
+  domains:
+  - www.klypso.in
+  - klypso.in
+  autoDeployTrigger: "off"
+  rootDir: gateway
+- type: web
+  name: klypso-agency-backend
+  runtime: node
+  repo: https://github.com/Adityavanjre/ERP
+  plan: free
+  envVars:
+  - key: PORT
+    sync: false
+  - key: MONGO_URI
+    sync: false
+  region: oregon
+  buildCommand: npm install
+  startCommand: node index.js
+  healthCheckPath: /
+  autoDeployTrigger: "off"
+  rootDir: agency/server
+- type: web
+  name: klypso-agency-frontend
+  runtime: static
+  repo: https://github.com/Adityavanjre/ERP
+  buildCommand: npm install && npm run build
+  staticPublishPath: dist
+  autoDeployTrigger: commit
+  rootDir: agency/client
 databases:
-  - name: klypso-db
-    plan: free
+- name: klypso-db
+  databaseName: nexus_db_mybt
+  user: nexus_db_mybt_user
+  plan: free
+  region: oregon
+  ipAllowList:
+  - source: 0.0.0.0/0
+    description: everywhere
+  postgresMajorVersion: "16"
