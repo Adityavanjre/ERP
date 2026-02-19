@@ -1,25 +1,21 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { CollaborationService } from '../services/collaboration.service';
+import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
-@Controller('system/collaboration')
+@Controller('collaboration')
 @UseGuards(JwtAuthGuard)
 export class CollaborationController {
-  constructor(private readonly collaborationService: CollaborationService) {}
+  constructor(
+    private readonly collaborationService: CollaborationService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = extname(file.originalname);
-        callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-      },
-    }),
+    storage: memoryStorage(), // Store in memory to stream to Cloudinary
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req, file, callback) => {
       if (!file.originalname.match(/\.(jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|csv|txt)$/)) {
@@ -32,8 +28,16 @@ export class CollaborationController {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    const fileUrl = `${process.env.API_URL || 'http://localhost:3001'}/uploads/${file.filename}`;
-    return { url: fileUrl, filename: file.filename, originalName: file.originalname, mimetype: file.mimetype };
+    
+    // Upload to Cloudinary
+    const result = await this.cloudinaryService.uploadFile(file);
+    
+    return {
+      url: result.secure_url,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    };
   }
 
   @Get('comments/:type/:id')

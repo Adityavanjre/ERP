@@ -22,6 +22,12 @@ services:
     fromDatabase:
       name: klypso-db
       property: connectionString
+  - key: CLOUDINARY_CLOUD_NAME
+    sync: false
+  - key: CLOUDINARY_API_KEY
+    sync: false
+  - key: CLOUDINARY_API_SECRET
+    sync: false
   region: oregon
   buildCommand: npm install && npx prisma generate && npm run build
   startCommand: node dist/main.js
