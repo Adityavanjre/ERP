@@ -138,3 +138,4 @@ databases:
   - source: 0.0.0.0/0
     description: everywhere
   postgresMajorVersion: "18"
+# Force Sync Trigger: 2026-02-19
