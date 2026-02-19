@@ -16,6 +16,7 @@ import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SearchService } from './services/search.service';
 import { SearchController } from './controllers/search.controller';
 import { CollaborationService } from './services/collaboration.service';
+import { CloudinaryService } from './services/cloudinary.service';
 import { CollaborationController } from './controllers/collaboration.controller';
 import { ApiKeyService } from './services/api-key.service';
 import { ApiKeyController } from './controllers/api-key.controller';
@@ -57,6 +58,7 @@ import { SystemController } from './system.controller';
     SaasAnalyticsService,
     PluginManager,
     MailService,
+    CloudinaryService,
   ],
   exports: [
     RegistryService,
@@ -72,6 +74,7 @@ import { SystemController } from './system.controller';
     ForecastingService,
     PluginManager,
     MailService,
+    CloudinaryService,
   ],
 })
 export class SystemModule {}
