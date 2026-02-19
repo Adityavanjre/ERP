@@ -38,10 +38,7 @@ services:
   repo: https://github.com/Adityavanjre/ERP
   plan: free
   envVars:
-  - key: HOSTNAME
-    sync: false
-  - key: PORT
-    sync: false
+
   - key: KLYPSO_BACKEND_URL
     sync: false
   region: oregon
