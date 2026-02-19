@@ -19,15 +19,13 @@ services:
   - key: JWT_SECRET
     sync: false
   - key: DATABASE_URL
-    fromDatabase:
-      name: klypso-db
-      property: connectionString
+    value: postgresql://postgres:Bgt9/G8uxGHXTv5@db.syldigwdydzcrhuscagl.supabase.co:5432/postgres
   - key: CLOUDINARY_CLOUD_NAME
-    sync: false
+    value: Klypso
   - key: CLOUDINARY_API_KEY
-    sync: false
+    value: 181917616772918
   - key: CLOUDINARY_API_SECRET
-    sync: false
+    value: mCkwxmje-22nNYLSZ5xaTRvoQjw
   region: oregon
   buildCommand: npm install && npx prisma generate && npm run build
   startCommand: node dist/main.js
@@ -134,14 +132,4 @@ services:
   staticPublishPath: dist
   autoDeployTrigger: commit
   rootDir: agency/client
-databases:
-- name: klypso-db
-  databaseName: nexus_db_mybt
-  user: nexus_db_mybt_user
-  plan: free
-  region: oregon
-  ipAllowList:
-  - source: 0.0.0.0/0
-    description: everywhere
-  postgresMajorVersion: "18"
-# Force Sync Trigger: 2026-02-19
+
