@@ -10,8 +10,18 @@ const directHost = `db.${project}.supabase.co`;
 const poolers = [
     { region: 'ap-south-1 (Mumbai)', host: 'aws-0-ap-south-1.pooler.supabase.com' },
     { region: 'ap-southeast-1 (Singapore)', host: 'aws-0-ap-southeast-1.pooler.supabase.com' },
+    { region: 'ap-northeast-1 (Tokyo)', host: 'aws-0-ap-northeast-1.pooler.supabase.com' },
+    { region: 'ap-northeast-2 (Seoul)', host: 'aws-0-ap-northeast-2.pooler.supabase.com' },
+    { region: 'ap-southeast-2 (Sydney)', host: 'aws-0-ap-southeast-2.pooler.supabase.com' },
     { region: 'us-east-1 (Virginia)', host: 'aws-0-us-east-1.pooler.supabase.com' },
+    { region: 'us-west-1 (N. California)', host: 'aws-0-us-west-1.pooler.supabase.com' },
+    { region: 'us-west-2 (Oregon)', host: 'aws-0-us-west-2.pooler.supabase.com' },
     { region: 'eu-central-1 (Frankfurt)', host: 'aws-0-eu-central-1.pooler.supabase.com' },
+    { region: 'eu-west-1 (Ireland)', host: 'aws-0-eu-west-1.pooler.supabase.com' },
+    { region: 'eu-west-2 (London)', host: 'aws-0-eu-west-2.pooler.supabase.com' },
+    { region: 'eu-west-3 (Paris)', host: 'aws-0-eu-west-3.pooler.supabase.com' },
+    { region: 'ca-central-1 (Canada)', host: 'aws-0-ca-central-1.pooler.supabase.com' },
+    { region: 'sa-east-1 (Sao Paulo)', host: 'aws-0-sa-east-1.pooler.supabase.com' },
 ];
 
 async function resolveDNS(hostname) {
