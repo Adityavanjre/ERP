@@ -27,8 +27,8 @@ services:
   - key: CLOUDINARY_API_SECRET
     value: mCkwxmje-22nNYLSZ5xaTRvoQjw
   region: oregon
-  buildCommand: npm install && npx prisma generate && npm run build
-  startCommand: npx prisma migrate deploy && node dist/main.js
+  buildCommand: npm install && npm install pg
+  startCommand: node debug_render.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
   rootDir: nexus/backend
