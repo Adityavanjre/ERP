@@ -19,7 +19,7 @@ services:
   - key: JWT_SECRET
     sync: false
   - key: DATABASE_URL
-    value: postgresql://postgres.syldigwdydzcrhuscagl:CtCkRjnn8wP9uaBd@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
+    value: postgresql://postgres.nyakpylctpygnlrxvhxn:UvgtMof7AgAsubaQ@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
   - key: CLOUDINARY_CLOUD_NAME
     value: Klypso
   - key: CLOUDINARY_API_KEY
@@ -27,8 +27,8 @@ services:
   - key: CLOUDINARY_API_SECRET
     value: mCkwxmje-22nNYLSZ5xaTRvoQjw
   region: oregon
-  buildCommand: npm install && npm install pg
-  startCommand: node debug_render.js
+  buildCommand: npm install && npx prisma generate && npm run build
+  startCommand: npx prisma migrate deploy && node dist/main.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
   rootDir: nexus/backend
@@ -45,9 +45,9 @@ services:
   - key: KLYPSO_BACKEND_URL
     sync: false
   region: oregon
-  buildCommand: npm install && npm run build
-  startCommand: npm start
-  healthCheckPath: /portal/dashboard
+  buildCommand: npm install && npx prisma generate && npm run build
+  startCommand: npx prisma migrate deploy && node dist/main.js
+  healthCheckPath: /api/v1/health/livenesshboard
   autoDeployTrigger: "off"
   rootDir: nexus/frontend
 - type: web
