@@ -41,6 +41,8 @@ services:
 
   - key: KLYPSO_BACKEND_URL
     sync: false
+  region: oregon
+  buildCommand: npm install && npm run build
   startCommand: npx next start -H 0.0.0.0 -p $PORT
   healthCheckPath: /
   autoDeployTrigger: "off"
