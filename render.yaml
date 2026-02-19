@@ -41,11 +41,7 @@ services:
 
   - key: KLYPSO_BACKEND_URL
     sync: false
-  - key: PORT
-    value: 3000
-  region: oregon
-  buildCommand: npm install && npm run build
-  startCommand: npm start
+  startCommand: npx next start -H 0.0.0.0 -p $PORT
   healthCheckPath: /
   autoDeployTrigger: "off"
   rootDir: nexus/frontend
