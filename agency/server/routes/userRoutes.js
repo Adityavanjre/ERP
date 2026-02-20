@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authUser, registerUser, getUsers, deleteUser, updateUserRole } = require('../controllers/userController');
+const { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUserPassword } = require('../controllers/userController');
 const { restoreAdmin, diagnostic } = require('../controllers/setupController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -18,6 +18,9 @@ router.route('/:id')
 
 router.route('/:id/role')
     .put(protect, admin, updateUserRole);
+
+router.route('/:id/password')
+    .put(protect, admin, updateUserPassword);
 
 router.post('/login', authUser);
 

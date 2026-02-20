@@ -105,4 +105,28 @@ const updateUserRole = async (req, res) => {
     }
 };
 
-module.exports = { authUser, registerUser, getUsers, deleteUser, updateUserRole };
+// @desc    Update user password
+// @route   PUT /api/users/:id/password
+// @access  Private/Admin
+const updateUserPassword = async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+        if (user.email === 'admin@klypso.agency') {
+            res.status(400);
+            throw new Error('Cannot arbitrarily change root administrator password from dashboard');
+        }
+
+        user.password = req.body.password;
+
+        // The pre-save middleware in the User model will automatically hash the password
+        await user.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+};
+
+module.exports = { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUserPassword };

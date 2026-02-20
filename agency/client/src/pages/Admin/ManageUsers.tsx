@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_URL from '../../api/config';
 import { useAuth } from '../../contexts/AuthContext';
-import { Shield, Mail, Calendar, Search, Users, ShieldCheck, User, ChevronRight, Lock } from 'lucide-react';
+import { Shield, Mail, Calendar, Search, Users, ShieldCheck, User, ChevronRight, Lock, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SystemUser {
@@ -19,6 +19,8 @@ const ManageUsers = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [newPassword, setNewPassword] = useState('');
+    const [isResetting, setIsResetting] = useState(false);
 
     const selectedUser = users.find(u => u._id === selectedId);
 
@@ -38,6 +40,8 @@ const ManageUsers = () => {
             console.error('Error fetching users', error);
         } finally {
             setLoading(false);
+            setNewPassword('');
+            setIsResetting(false);
         }
     };
 
@@ -58,9 +62,34 @@ const ManageUsers = () => {
             const config = { headers: { Authorization: `Bearer ${user?.token}` } };
             await axios.delete(`${API_URL}/api/users/${id}`, config);
             setUsers(prev => prev.filter(u => u._id !== id));
-            if (selectedId === id) setSelectedId(null);
+            if (selectedId === id) {
+                setSelectedId(null);
+                setNewPassword('');
+                setIsResetting(false);
+            }
         } catch (error: any) {
             alert(error.response?.data?.message || 'Error deleting user');
+        }
+    };
+
+    const handlePasswordReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUser) return;
+        if (newPassword.length < 6) {
+            alert('Password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            setIsResetting(true);
+            const config = { headers: { Authorization: `Bearer ${user?.token}` } };
+            await axios.put(`${API_URL}/api/users/${selectedUser._id}/password`, { password: newPassword }, config);
+            alert('Password successfully updated.');
+            setNewPassword('');
+        } catch (error: any) {
+            alert(error.response?.data?.message || 'Error resetting password');
+        } finally {
+            setIsResetting(false);
         }
     };
 
@@ -111,7 +140,10 @@ const ManageUsers = () => {
                             filteredUsers.map((u) => (
                                 <button
                                     key={u._id}
-                                    onClick={() => setSelectedId(u._id)}
+                                    onClick={() => {
+                                        setSelectedId(u._id);
+                                        setNewPassword('');
+                                    }}
                                     className={`w-full text-left p-4 rounded-xl transition-all border group relative ${selectedId === u._id ? 'bg-[#C5A059]/10 border-[#C5A059]/20 shadow-lg shadow-[#C5A059]/5' : 'bg-transparent border-transparent hover:bg-white/5'}`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
@@ -198,6 +230,31 @@ const ManageUsers = () => {
                                                 </div>
                                                 <p className="text-lg font-bold text-zinc-100">{new Date(selectedUser.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                                             </div>
+                                        </div>
+
+                                        {/* Password Reset Component */}
+                                        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 space-y-4">
+                                            <div className="flex items-center gap-3 text-[#C5A059] mb-2">
+                                                <Key size={16} />
+                                                <p className="text-[10px] font-black uppercase tracking-widest">Authentication Reset</p>
+                                            </div>
+                                            <form onSubmit={handlePasswordReset} className="flex gap-4 items-center">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter new password (min 6 chars)"
+                                                    value={newPassword}
+                                                    onChange={(e) => setNewPassword(e.target.value)}
+                                                    className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#C5A059]/50 transition-all font-medium placeholder:text-zinc-600"
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    disabled={isResetting || !newPassword}
+                                                    className={`px-6 py-3 bg-[#C5A059] hover:bg-[#D4AF37] text-black font-bold text-[10px] tracking-widest uppercase rounded-xl transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                >
+                                                    {isResetting ? 'Processing...' : 'Override Key'}
+                                                </button>
+                                            </form>
+                                            <p className="text-[10px] text-zinc-500 font-medium tracking-wide">Assigning a new key will immediately invalidate the current credential tuple.</p>
                                         </div>
                                     </div>
 
