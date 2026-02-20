@@ -8,7 +8,7 @@
   "theme_color": "#d97706",
   "icons": [
     {
-      "src": "/portal/next.svg",
+      "src": "/portal/favicon.svg",
       "sizes": "192x192",
       "type": "image/svg+xml"
     }

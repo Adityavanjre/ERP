@@ -60,8 +60,14 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         setIsSessionExpired(false);
         // Save current path to restore state after login
         if (typeof window !== "undefined") {
-            localStorage.setItem("return_to", window.location.pathname);
-            router.push("/login");
+            // Stripping the basePath if it exists to avoid double-prefixing on redirect
+            const currentPath = window.location.pathname;
+            const cleanPath = currentPath.startsWith('/portal')
+                ? currentPath.replace('/portal', '')
+                : currentPath;
+
+            localStorage.setItem("return_to", cleanPath || "/");
+            router.push("/login"); // router.push handles /portal automatically
         }
     };
 
