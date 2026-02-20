@@ -5,7 +5,11 @@ const generateToken = require('../utils/generateToken');
 // @route   POST /api/users/login
 // @access  Public
 const authUser = async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    // Normalize inputs
+    if (email) email = email.trim().toLowerCase();
+    if (password) password = password.trim();
 
     const user = await User.findOne({ email });
 

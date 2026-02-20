@@ -44,7 +44,7 @@ const createAdminSafely = async () => {
             await User.create({
                 name: 'System Admin',
                 email: adminEmail,
-                password: process.env.ADMIN_PASSWORD || 'password123',
+                password: (process.env.ADMIN_PASSWORD || 'password123').trim(),
                 isAdmin: true,
             });
             console.log('✅ Admin user created successfully.');

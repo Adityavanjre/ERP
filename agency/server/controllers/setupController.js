@@ -5,7 +5,7 @@ const User = require('../models/User');
 // @access  Public (Temporal)
 const restoreAdmin = async (req, res) => {
     const email = 'admin@klypso.agency';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'password123';
+    const adminPassword = (process.env.ADMIN_PASSWORD || 'password123').trim();
 
     // Using upsert logic
     let user = await User.findOne({ email });
