@@ -42,9 +42,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       if (typeof window !== 'undefined' && !isLoginRequest) {
-        localStorage.removeItem('k_token');
-        localStorage.removeItem('k_user');
-        window.dispatchEvent(new CustomEvent('session-expired'));
+        // Only trigger if we aren't already on an auth page
+        const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
+        const isAuthPage = authPages.some(page => window.location.pathname.includes(page));
+        
+        if (!isAuthPage) {
+          localStorage.removeItem('k_token');
+          localStorage.removeItem('k_user');
+          window.dispatchEvent(new CustomEvent('session-expired'));
+        }
       }
     }
     return Promise.reject(error);

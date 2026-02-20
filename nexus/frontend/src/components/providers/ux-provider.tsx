@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface UXContextType {
@@ -65,12 +65,21 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const pathname = usePathname();
+
     useEffect(() => {
         // Global listener for custom events if needed
-        const handleSessionExpiry = () => setIsSessionExpired(true);
+        const handleSessionExpiry = () => {
+            // Don't trigger if we are already on auth pages
+            const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
+            if (authPages.some(page => pathname?.includes(page))) {
+                return;
+            }
+            setIsSessionExpired(true);
+        };
         window.addEventListener("session-expired", handleSessionExpiry);
         return () => window.removeEventListener("session-expired", handleSessionExpiry);
-    }, []);
+    }, [pathname]);
 
     return (
         <UXContext.Provider value={{ showConfirm, triggerSessionExpiry, setUILocked }}>
