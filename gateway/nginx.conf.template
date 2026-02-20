@@ -32,8 +32,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Agency API
-    location ^~ /agency-api/ {
+    # Agency API (Matching Frontend AuthContext)
+    location /api/agency/ {
         proxy_pass https://${AGENCY_BACKEND_HOST}/;
         proxy_ssl_server_name on;
         proxy_set_header Host ${AGENCY_BACKEND_HOST};
