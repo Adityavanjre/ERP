@@ -8,6 +8,7 @@ import {
     FileText,
     Send,
     Settings,
+    Users,
     Briefcase,
     Search,
     ChevronRight,
@@ -46,6 +47,7 @@ const AdminLayout = () => {
             label: "Control",
             items: [
                 { to: "/admin", icon: <LayoutDashboard size={18} />, label: "Intelligence" },
+                { to: "/admin/users", icon: <Users size={18} />, label: "Identities" },
                 { to: "/admin/enquiries", icon: <Send size={18} />, label: "Signals" },
             ]
         },

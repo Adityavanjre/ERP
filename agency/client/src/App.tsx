@@ -30,6 +30,7 @@ import EditBlog from './pages/Admin/EditBlog';
 import ManageCareers from './pages/Admin/ManageCareers';
 import AddJob from './pages/Admin/AddJob';
 import EditProject from './pages/Admin/EditProject';
+import ManageUsers from './pages/Admin/ManageUsers';
 import AdminRoute from './components/AdminRoute';
 
 import ScrollProgress from './components/ScrollProgress';
@@ -69,6 +70,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="add-project" element={<AddProject />} />
               <Route path="projects" element={<ManageProjects />} />
+              <Route path="users" element={<ManageUsers />} />
               <Route path="edit-project/:id" element={<EditProject />} />
               <Route path="enquiries" element={<ManageEnquiries />} />
               <Route path="blogs" element={<ManageBlogs />} />

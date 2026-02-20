@@ -56,4 +56,53 @@ const registerUser = async (req, res) => {
     }
 };
 
-module.exports = { authUser, registerUser };
+const getUsers = async (req, res) => {
+    const users = await User.find({}).select('-password');
+    res.json(users);
+};
+
+// @desc    Delete user
+// @route   DELETE /api/users/:id
+// @access  Private/Admin
+const deleteUser = async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+        if (user.email === 'admin@klypso.agency') {
+            res.status(400);
+            throw new Error('Cannot delete system administrator');
+        }
+        await User.deleteOne({ _id: user._id });
+        res.json({ message: 'User removed' });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+};
+
+// @desc    Update user role
+// @route   PUT /api/users/:id/role
+// @access  Private/Admin
+const updateUserRole = async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+        if (user.email === 'admin@klypso.agency') {
+            res.status(400);
+            throw new Error('Cannot modify system administrator role');
+        }
+        user.isAdmin = req.body.isAdmin;
+        const updatedUser = await user.save();
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin,
+        });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+};
+
+module.exports = { authUser, registerUser, getUsers, deleteUser, updateUserRole };
