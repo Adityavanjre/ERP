@@ -14,13 +14,13 @@ export class SetupController {
     const password = 'password123';
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 1. Ensure Tenant
+    // 1. Ensure Tenant (Match Master Seeder!)
     const tenant = await this.prisma.tenant.upsert({
-      where: { slug: 'imperial-nexus' },
+      where: { slug: 'premium-woodcraft' },
       update: {},
       create: {
-        name: 'Imperial Nexus',
-        slug: 'imperial-nexus',
+        name: 'Premium Woodcraft Industries',
+        slug: 'premium-woodcraft',
         type: TenantType.Manufacturing,
         plan: PlanType.Enterprise
       }
