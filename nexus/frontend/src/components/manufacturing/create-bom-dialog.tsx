@@ -52,10 +52,12 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
     const fetchProducts = async () => {
         try {
             const res = await api.get('/inventory/products');
-            // Backend returns { data: [...], meta: ... } so we need res.data.data
-            setProducts(res.data.data || []);
+            // Handle both paginated ({ data: [...] }) and flat ([...]) responses
+            const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            setProducts(list);
         } catch (err) {
-            toast.error("Failed to load products");
+            console.error(err);
+            toast.error("Failed to load products. Check console.");
         }
     };
 

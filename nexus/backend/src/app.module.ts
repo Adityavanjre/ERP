@@ -23,6 +23,8 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
+import { ClusterService } from './system/services/cluster.service';
+import { SetupController } from './system/controllers/setup.controller';
 import { SkipThrottle } from '@nestjs/throttler';
 
 @Module({
@@ -55,7 +57,7 @@ import { SkipThrottle } from '@nestjs/throttler';
       serveRoot: '/uploads',
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, SetupController],
   providers: [
     AppService,
     {
