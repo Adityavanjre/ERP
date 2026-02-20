@@ -39,6 +39,13 @@ const diagnostic = async (req, res) => {
     const adminEmail = 'admin@klypso.agency';
     const user = await User.findOne({ email: adminEmail });
 
+    let envMatchesHash = false;
+    let envPass = process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.trim() : null;
+
+    if (user && user.password && envPass) {
+        envMatchesHash = await require('bcryptjs').compare(envPass, user.password);
+    }
+
     res.json({
         time: new Date().toISOString(),
         database: require('mongoose').connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED',
@@ -46,12 +53,15 @@ const diagnostic = async (req, res) => {
         admin_data: user ? {
             email: user.email,
             isAdmin: user.isAdmin,
-            has_password: !!user.password
+            has_password_hash: !!user.password,
+            db_hash_start: user.password ? user.password.substring(0, 7) + '...' : null,
+            env_matches_db_hash: envMatchesHash
         } : null,
         env: {
-            node_env: process.env.NODE_ENV,
             has_mongo_uri: !!process.env.MONGO_URI,
-            port: process.env.PORT
+            admin_pwd_provided: !!process.env.ADMIN_PASSWORD,
+            admin_pwd_raw_length: process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.length : 0,
+            admin_pwd_trimmed_length: envPass ? envPass.length : 0,
         }
     });
 };
