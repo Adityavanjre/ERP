@@ -6,8 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const supplierSchema = z.object({
+    name: z.string().min(1, "Supplier name is required"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+    category: z.string().optional(),
+    address: z.string().optional()
+});
+
+type SupplierFormData = z.infer<typeof supplierSchema>;
 
 interface CreateSupplierDialogProps {
     open: boolean;
@@ -17,27 +30,24 @@ interface CreateSupplierDialogProps {
 
 export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSupplierDialogProps) {
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        phone: "",
-        category: "",
-        address: ""
+
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<SupplierFormData>({
+        resolver: zodResolver(supplierSchema),
+        defaultValues: {
+            name: "",
+            email: "",
+            phone: "",
+            category: "",
+            address: ""
+        }
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!formData.name) {
-            toast.error("Supplier name is required");
-            return;
-        }
-
+    const onSubmit = async (data: SupplierFormData) => {
         setLoading(true);
         try {
-            await api.post("purchases/suppliers", formData);
+            await api.post("purchases/suppliers", data);
             toast.success("Supplier added successfully");
-            setFormData({ name: "", email: "", phone: "", category: "", address: "" });
+            reset();
             onOpenChange(false);
             onSuccess?.();
         } catch (error: any) {
@@ -56,7 +66,7 @@ export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSu
                         Register a new vendor or supplier for your procurement needs.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
                     <div className="space-y-3">
                         <div className="grid gap-2">
                             <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -65,37 +75,36 @@ export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSu
                             <Input
                                 id="name"
                                 placeholder="Grand Logistics Ltd"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
+                                {...register("name")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
+                            {errors.name && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.name.message}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="grid gap-2">
                                 <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                                    Email
+                                    Email <span className="text-rose-500">*</span>
                                 </Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     placeholder="vendor@example.com"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    {...register("email")}
                                     className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                                 />
+                                {errors.email && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.email.message}</p>}
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                                    Phone
+                                    Phone <span className="text-rose-500">*</span>
                                 </Label>
                                 <Input
                                     id="phone"
-                                    placeholder="+91 9876543210"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    placeholder="9876543210"
+                                    {...register("phone")}
                                     className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                                 />
+                                {errors.phone && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.phone.message}</p>}
                             </div>
                         </div>
                         <div className="grid gap-2">
@@ -105,8 +114,7 @@ export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSu
                             <Input
                                 id="category"
                                 placeholder="Raw Materials / Electronics"
-                                value={formData.category}
-                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                {...register("category")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
                         </div>
@@ -117,8 +125,7 @@ export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSu
                             <Input
                                 id="address"
                                 placeholder="Full business address"
-                                value={formData.address}
-                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                {...register("address")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
                         </div>

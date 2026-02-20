@@ -8,6 +8,28 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const customerSchema = z.object({
+    firstName: z.string().min(1, "First Name is required"),
+    lastName: z.string().optional(),
+    email: z.string().email("Invalid email address").min(1, "Email is required"),
+    phone: z.string()
+        .regex(/^\d{10}$/, "Phone number must be exactly 10 digits")
+        .optional()
+        .or(z.literal("")),
+    company: z.string().optional(),
+    address: z.string().optional(),
+    state: z.string().min(1, "State is required"),
+    gstin: z.string()
+        .regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, "Invalid GSTIN format. Leave empty if not applicable.")
+        .optional()
+        .or(z.literal("")),
+});
+
+type CustomerFormValues = z.infer<typeof customerSchema>;
 
 interface EditCustomerDialogProps {
     open: boolean;
@@ -18,20 +40,30 @@ interface EditCustomerDialogProps {
 
 export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: EditCustomerDialogProps) {
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        company: "",
-        address: "",
-        state: "",
-        gstin: ""
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        reset,
+        formState: { errors },
+    } = useForm<CustomerFormValues>({
+        resolver: zodResolver(customerSchema),
+        defaultValues: {
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            company: "",
+            address: "",
+            state: "",
+            gstin: "",
+        },
     });
 
     useEffect(() => {
         if (customer) {
-            setFormData({
+            reset({
                 firstName: customer.firstName || "",
                 lastName: customer.lastName || "",
                 email: customer.email || "",
@@ -39,59 +71,19 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                 company: customer.company || "",
                 address: customer.address || "",
                 state: customer.state || "",
-                gstin: customer.gstin || ""
+                gstin: customer.gstin || "",
             });
         }
-    }, [customer]);
+    }, [customer, reset]);
 
-    const validate = () => {
-        // 1. Phone Validation (10 digits)
-        const phoneRegex = /^[0-9]{10}$/;
-        if (formData.phone && !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
-            toast.error("Invalid Phone Number. Must be 10 digits.");
-            return false;
-        }
-
-        // 2. GSTIN Validation (Standard format)
-        // \d{2} - State Code
-        // [A-Z]{5} - PAN
-        // \d{4} - Entity Number
-        // [A-Z]{1} - Entity Type
-        // [A-Z\d]{1} - Checksum
-        // [Z]{1} - Default
-        // [A-Z\d]{1} - Checksum
-        // Simplified regex for basic structure:
-        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-        if (formData.gstin && !gstinRegex.test(formData.gstin)) {
-            toast.error("Invalid GSTIN format.");
-            return false;
-        }
-
-        // 3. Required State
-        if (!formData.state) {
-            toast.error("State (Tax Jurisdiction) is required.");
-            return false;
-        }
-
-        return true;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!formData.firstName || !formData.email) {
-            toast.error("First Name and Email are required");
-            return;
-        }
-
-        if (!validate()) return;
-
+    const onSubmit = async (data: CustomerFormValues) => {
         setLoading(true);
         try {
-            await api.patch(`crm/customers/${customer.id}`, formData);
+            await api.patch(`crm/customers/${customer.id}`, data);
             toast.success("Customer record updated successfully");
             onOpenChange(false);
             onSuccess?.();
+            reset();
         } catch (error: any) {
             toast.error(error.response?.data?.message || "Failed to update customer");
         } finally {
@@ -108,7 +100,7 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                         Modify customer profile and business details.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -116,11 +108,10 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                             </Label>
                             <Input
                                 id="firstName"
-                                value={formData.firstName}
-                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                required
+                                {...register("firstName")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
+                            {errors.firstName && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.firstName.message}</p>}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -128,8 +119,7 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                             </Label>
                             <Input
                                 id="lastName"
-                                value={formData.lastName}
-                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                {...register("lastName")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
                         </div>
@@ -142,11 +132,10 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                             <Input
                                 id="email"
                                 type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                required
+                                {...register("email")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
+                            {errors.email && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.email.message}</p>}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -154,10 +143,11 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                             </Label>
                             <Input
                                 id="phone"
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                {...register("phone")}
+                                placeholder="10 Digits"
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
+                            {errors.phone && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.phone.message}</p>}
                         </div>
                     </div>
                     <div className="grid gap-2">
@@ -166,8 +156,7 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                         </Label>
                         <Input
                             id="company"
-                            value={formData.company}
-                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                            {...register("company")}
                             className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                         />
                     </div>
@@ -178,10 +167,10 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                             </Label>
                             <Input
                                 id="gstin"
-                                value={formData.gstin}
-                                onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+                                {...register("gstin")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold uppercase"
                             />
+                            {errors.gstin && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.gstin.message}</p>}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="state" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
@@ -189,10 +178,10 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                             </Label>
                             <Input
                                 id="state"
-                                value={formData.state}
-                                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                {...register("state")}
                                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
                             />
+                            {errors.state && <p className="text-xs text-rose-500 font-semibold ml-1">{errors.state.message}</p>}
                         </div>
                     </div>
                     <DialogFooter className="pt-2">

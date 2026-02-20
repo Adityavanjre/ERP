@@ -358,7 +358,7 @@ export default function RapidBillingPage() {
                         removeItem={removeItem}
                         setItems={setItems}
                     />
-                </section>
+                </section >
 
                 <CheckoutSidebar
                     customerName={customerName}
@@ -372,7 +372,7 @@ export default function RapidBillingPage() {
                     completeInvoice={completeInvoice}
                     userRole={userRole}
                 />
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }

@@ -54,7 +54,8 @@ export default function PurchasesPage() {
                 api.get("purchases/stats")
             ]);
             setSuppliers(suppRes.data);
-            setProducts(prodRes.data);
+            // Products API returns paginated response { data: [], meta: {} }
+            setProducts(prodRes.data.data || []);
             setPurchaseOrders(poRes.data);
             setStats(statsRes.data);
         } catch (err) {

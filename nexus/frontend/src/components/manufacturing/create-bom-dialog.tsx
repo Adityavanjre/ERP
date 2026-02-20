@@ -133,10 +133,10 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                             <Input placeholder="e.g. Standard Production" value={name} onChange={e => setName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label>Finished Good</Label>
+                            <Label>Finished Good (Output)</Label>
                             <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select Product" />
+                                    <SelectValue placeholder="Select Product to Manufacture" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {products.map(p => (
@@ -144,6 +144,9 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                                     ))}
                                 </SelectContent>
                             </Select>
+                            <p className="text-[10px] text-muted-foreground">
+                                Product must exist in Inventory first.
+                            </p>
                         </div>
                     </div>
 
@@ -169,9 +172,12 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
 
                     <div className="border-t pt-4">
                         <div className="flex justify-between items-center mb-4">
-                            <Label>Required Materials</Label>
+                            <div>
+                                <Label>Raw Materials / Components</Label>
+                                <p className="text-[10px] text-muted-foreground">Add the items required to build 1 unit of the finished good.</p>
+                            </div>
                             <Button size="sm" variant="outline" onClick={addItem}>
-                                <Plus className="w-4 h-4 mr-1" /> Add Item
+                                <Plus className="w-4 h-4 mr-1" /> Add Component
                             </Button>
                         </div>
 

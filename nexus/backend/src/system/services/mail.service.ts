@@ -29,8 +29,8 @@ export class MailService {
       // Mock transporter for dev/headless
       this.transporter = {
         sendMail: async (options: any) => {
-          this.logger.debug(`[MOCK MAIL] To: ${options.to} | Subject: ${options.subject}`);
-          this.logger.debug(`[MOCK MAIL] Content: ${options.text || options.html}`);
+          this.logger.log(`[MOCK MAIL] To: ${options.to} | Subject: ${options.subject}`);
+          this.logger.log(`[MOCK MAIL] Content: ${options.text || options.html}`);
           return { messageId: 'mock-id' };
         },
       } as any;
