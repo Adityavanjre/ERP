@@ -11,9 +11,22 @@ const authUser = async (req, res) => {
     if (email) email = email.trim().toLowerCase();
     if (password) password = password.trim();
 
+    console.log(`[LOGIN ATTEMPT] Email: ${email}`);
+    console.log(`[LOGIN ATTEMPT] Password Length: ${password ? password.length : 0}`);
+
     const user = await User.findOne({ email });
 
-    if (user && (await user.matchPassword(password))) {
+    if (!user) {
+        console.log(`[LOGIN FAILED] User not found for email: ${email}`);
+        res.status(401);
+        throw new Error('Invalid email or password');
+    }
+
+    const isMatch = await user.matchPassword(password);
+    console.log(`[LOGIN ATTEMPT] Password Match Result: ${isMatch}`);
+
+    if (isMatch) {
+        console.log(`[LOGIN SUCCESS] User authenticated: ${user.email}`);
         res.json({
             _id: user._id,
             name: user.name,
@@ -22,6 +35,7 @@ const authUser = async (req, res) => {
             token: generateToken(user._id),
         });
     } else {
+        console.log(`[LOGIN FAILED] Password mismatch for: ${email}`);
         res.status(401);
         throw new Error('Invalid email or password');
     }
