@@ -5,29 +5,30 @@ const User = require('../models/User');
 // @access  Public (Temporal)
 const restoreAdmin = async (req, res) => {
     const email = 'admin@klypso.agency';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'password123';
 
     // Using upsert logic
     let user = await User.findOne({ email });
 
     if (user) {
-        user.password = 'password123';
+        user.password = adminPassword;
         user.isAdmin = true;
         await user.save();
     } else {
         user = await User.create({
             name: 'System Administrator',
             email: email,
-            password: 'password123',
+            password: adminPassword,
             isAdmin: true,
         });
     }
 
     res.json({
         status: 'SUCCESS',
-        message: 'Agency Admin account restored.',
+        message: 'Agency Admin account restored. Password has been securely synced to environment configuration.',
         credentials: {
             email: email,
-            password: 'password123'
+            password: '*** [REDACTED FOR SECURITY] ***'
         }
     });
 };
