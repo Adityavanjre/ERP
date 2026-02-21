@@ -18,6 +18,7 @@ interface Product {
     category?: string;
     costPrice?: number;
     stock?: number;
+    tags?: string;
 }
 
 interface BOMItem {
@@ -142,10 +143,10 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                                     <SelectValue placeholder="Select Product to Manufacture" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {Array.from(new Set(products.map(p => p.category || 'Uncategorized'))).map(category => (
+                                    {Array.from(new Set(products.filter(p => !p.tags?.includes('RAW_MATERIAL')).map(p => p.category || 'Uncategorized'))).map(category => (
                                         <SelectGroup key={category}>
                                             <SelectLabel>{category}</SelectLabel>
-                                            {products.filter(p => (p.category || 'Uncategorized') === category).map(p => (
+                                            {products.filter(p => !p.tags?.includes('RAW_MATERIAL') && (p.category || 'Uncategorized') === category).map(p => (
                                                 <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
                                             ))}
                                         </SelectGroup>
@@ -199,10 +200,10 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                                                 <SelectValue placeholder="Select Material" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {Array.from(new Set(products.map(p => p.category || 'Uncategorized'))).map(category => (
+                                                {Array.from(new Set(products.filter(p => !p.tags?.includes('FINISHED_GOOD')).map(p => p.category || 'Uncategorized'))).map(category => (
                                                     <SelectGroup key={category}>
                                                         <SelectLabel>{category}</SelectLabel>
-                                                        {products.filter(p => (p.category || 'Uncategorized') === category).map(p => (
+                                                        {products.filter(p => !p.tags?.includes('FINISHED_GOOD') && (p.category || 'Uncategorized') === category).map(p => (
                                                             <SelectItem key={p.id} value={p.id}>{p.name} ({p.stock} avail)</SelectItem>
                                                         ))}
                                                     </SelectGroup>
