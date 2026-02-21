@@ -76,15 +76,7 @@ services:
     sync: false
   - key: KLYPSO_FRONTEND_URL
     sync: false
-  - key: SMTP_FROM
-    sync: false
-  - key: SMTP_HOST
-    sync: false
-  - key: SMTP_PORT
-    sync: false
-  - key: SMTP_USER
-    sync: false
-  - key: SMTP_PASS
+  - key: RESEND_API_KEY
     sync: false
   - key: NEXUS_FRONTEND_URL
     sync: false

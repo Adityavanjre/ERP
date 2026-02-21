@@ -1,41 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(MailService.name);
 
-  constructor(private config: ConfigService) {
-    const host = this.config.get<string>('SMTP_HOST');
-    const port = this.config.get<number>('SMTP_PORT');
-    const user = this.config.get<string>('SMTP_USER');
-    const pass = this.config.get<string>('SMTP_PASS');
-
-    if (host && port && user && pass) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: {
-          user,
-          pass,
-        },
-      });
-      this.logger.log('SMTP Transport Initialized');
-    } else {
-      this.logger.warn('SMTP Credentials missing. Emails will be logged to console only.');
-      // Mock transporter for dev/headless
-      this.transporter = {
-        sendMail: async (options: any) => {
-          this.logger.log(`[MOCK MAIL] To: ${options.to} | Subject: ${options.subject}`);
-          this.logger.log(`[MOCK MAIL] Content: ${options.text || options.html}`);
-          return { messageId: 'mock-id' };
-        },
-      } as any;
-    }
-  }
+  constructor(private config: ConfigService) {}
 
   async sendPasswordResetEmail(to: string, token: string, userName: string) {
     const resetUrl = `${this.config.get<string>('NEXUS_FRONTEND_URL')}/reset-password?token=${token}`;
@@ -54,16 +24,38 @@ export class MailService {
       </div>
     `;
 
+    const resendApiKey = this.config.get<string>('RESEND_API_KEY');
+
+    if (!resendApiKey) {
+      this.logger.warn(`No RESEND_API_KEY found. Mock sending email to ${to}`);
+      return true; // Pretend it sent for testing
+    }
+
     try {
-      await this.transporter.sendMail({
-        from: `"Klypso Nexus" <${this.config.get<string>('SMTP_FROM') || 'noreply@klypso.io'}>`,
-        to,
-        subject: 'Reset Your Password | Klypso Nexus',
-        html,
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendApiKey}`
+        },
+        body: JSON.stringify({
+          from: 'Klypso Nexus ERP <noreply@klypso.in>',
+          to: to,
+          subject: 'Reset Your Password | Klypso Nexus',
+          html: html
+        })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        this.logger.error(`Resend API Error: ${JSON.stringify(errorData)}`);
+        return false;
+      }
+
+      this.logger.log(`Password reset email sent successfully via Resend to ${to}`);
       return true;
-    } catch (error) {
-      this.logger.error(`Failed to send email to ${to}`, error.stack);
+    } catch (error: any) {
+      this.logger.error(`Failed to send email to ${to} via Resend.`, error.stack);
       return false;
     }
   }
