@@ -128,10 +128,10 @@ export default function CrmPage() {
         try {
             setIsSubmitting(true);
             setUILocked(true);
-            await api.post("crm/customers", formData);
+            await api.post("crm/customers", { ...formData, status: activeTab === 'leads' ? 'Lead' : 'Customer' });
             setShowForm(false);
             setFormData({ firstName: "", lastName: "", email: "", phone: "", company: "", address: "", state: "", gstin: "" });
-            toast.success("Customer created successfully");
+            toast.success(`${activeTab === 'leads' ? 'Lead' : 'Customer'} created successfully`);
             syncRelations(true);
         } catch (err) {
             toast.error("Failed to create customer");
@@ -255,7 +255,7 @@ export default function CrmPage() {
                         <Sparkles className="mr-2 h-4 w-4" /> Add Deal
                     </Button>
                     <Button className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap" onClick={() => setShowForm(!showForm)}>
-                        <UserPlus className="mr-2 h-4 w-4" /> Add Customer
+                        <UserPlus className="mr-2 h-4 w-4" /> {activeTab === 'leads' ? 'Add Lead' : 'Add Customer'}
                     </Button>
                 </div>
             </div>
@@ -264,7 +264,7 @@ export default function CrmPage() {
             {showForm && (
                 <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
-                        <CardTitle className="text-slate-900 font-black text-xl">Add New Customer</CardTitle>
+                        <CardTitle className="text-slate-900 font-black text-xl">{activeTab === 'leads' ? 'Add New Lead' : 'Add New Customer'}</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-8">
                         <form onSubmit={handleCreateCustomer} className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -302,7 +302,7 @@ export default function CrmPage() {
                             </div>
                             <div className="flex items-end md:col-span-1">
                                 <Button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-500/10">
-                                    {isSubmitting ? "Saving..." : "Create Customer"}
+                                    {isSubmitting ? "Saving..." : (activeTab === 'leads' ? 'Create Lead' : 'Create Customer')}
                                 </Button>
                             </div>
                         </form>
