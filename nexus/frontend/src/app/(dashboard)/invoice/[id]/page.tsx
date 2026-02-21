@@ -56,7 +56,7 @@ export default function InvoicePrintPage() {
             {/* Invoice Paper */}
             <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 md:p-12 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start gap-8 md:gap-0 border-b-2 border-zinc-100 pb-8 mb-8">
+                <div className="flex flex-col lg:flex-row justify-between items-start gap-8 lg:gap-0 border-b-2 border-zinc-100 pb-8 mb-8">
                     <div className="w-full">
                         <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">KLYPSO INVOICE</div>
                         <div className="text-sm text-zinc-500 mt-1 font-medium italic tracking-widest uppercase">Invoice No: #{invoice.invoiceNumber}</div>
@@ -140,7 +140,7 @@ export default function InvoicePrintPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-start md:items-end gap-16 md:gap-0">
+                <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col lg:flex-row justify-between items-start md:items-end gap-16 lg:gap-0">
                     <div className="text-[10px] text-zinc-400 max-w-sm w-full">
                         <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
                         <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>

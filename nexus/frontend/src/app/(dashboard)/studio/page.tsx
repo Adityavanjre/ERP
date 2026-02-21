@@ -62,7 +62,7 @@ export default function StudioPage() {
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 p-4 md:p-8 pt-2 md:pt-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
                         <Wand2 className="mr-3 h-8 w-8 text-fuchsia-600" />

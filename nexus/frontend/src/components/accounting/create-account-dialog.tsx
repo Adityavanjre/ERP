@@ -47,7 +47,7 @@ export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAcc
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">Create New Account</DialogTitle>
                     <DialogDescription>

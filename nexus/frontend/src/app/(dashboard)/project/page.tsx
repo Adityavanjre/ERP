@@ -121,8 +121,8 @@ export default function ProjectPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading Projects..." />;
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <ClipboardList className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
@@ -275,7 +275,7 @@ export default function ProjectPage() {
             </div>
 
             <Dialog open={!!selectedProject} onOpenChange={(open) => !open && setSelectedProject(null)}>
-                <DialogContent className="bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-w-2xl w-[95vw] md:w-full max-h-[90vh] flex flex-col">
+                <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-2xl bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-h-[90vh] flex flex-col">
                     <div className="bg-slate-900 p-6 md:p-10 pb-12 md:pb-16 flex-shrink-0">
                         <DialogTitle className="flex items-center gap-4 text-white text-2xl md:text-3xl font-black tracking-tight">
                             <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/40">
@@ -289,7 +289,7 @@ export default function ProjectPage() {
                     </div>
 
                     <div className="p-6 md:p-10 -mt-10 bg-white rounded-t-[32px] space-y-6 md:space-y-8 flex-1 overflow-hidden flex flex-col">
-                        <form onSubmit={handleCreateTask} className="flex flex-col md:flex-row gap-3 flex-shrink-0">
+                        <form onSubmit={handleCreateTask} className="flex flex-col lg:flex-row gap-3 flex-shrink-0">
                             <Input
                                 placeholder="New task..."
                                 className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-14 px-6 font-bold focus:ring-blue-500/20"

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -89,7 +88,7 @@ const businessStreams: BusinessStream[] = [
     }
 ];
 
-export const Sidebar = () => {
+export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const pathname = usePathname();
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller'; // Default to most restrictive
@@ -107,7 +106,7 @@ export const Sidebar = () => {
     return (
         <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
             <div className="px-6 py-10 pb-4 shrink-0">
-                <Link href="/dashboard" className="flex items-center transition-all hover:opacity-80">
+                <Link href="/dashboard" onClick={onItemClick} className="flex items-center transition-all hover:opacity-80">
                     <KlypsoLogo />
                 </Link>
             </div>
@@ -116,6 +115,7 @@ export const Sidebar = () => {
                 <div className="space-y-1 mb-6">
                     <Link
                         href="/dashboard"
+                        onClick={onItemClick}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
                             pathname === '/dashboard' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
@@ -139,6 +139,7 @@ export const Sidebar = () => {
                                 <Link
                                     key={item.href}
                                     href={item.href}
+                                    onClick={onItemClick}
                                     className={cn(
                                         "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
                                         isActive ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
@@ -159,6 +160,7 @@ export const Sidebar = () => {
                 {canAccessSettings && (
                     <Link
                         href="/settings"
+                        onClick={onItemClick}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
                             pathname === '/settings' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"

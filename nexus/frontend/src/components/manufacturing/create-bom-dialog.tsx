@@ -123,7 +123,7 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Create New Bill of Materials</DialogTitle>
                 </DialogHeader>

@@ -67,7 +67,7 @@ export default function AppsMarketplace() {
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <LayoutGrid className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />

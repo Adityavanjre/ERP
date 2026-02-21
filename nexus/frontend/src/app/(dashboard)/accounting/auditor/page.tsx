@@ -78,7 +78,7 @@ export default function AuditorDashboard() {
     return (
         <div className="p-4 md:p-8 pb-24 md:pb-20 space-y-6 md:space-y-8 bg-slate-50 text-slate-900 min-h-screen">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                         <ShieldCheck className="w-8 h-8 text-emerald-600" />

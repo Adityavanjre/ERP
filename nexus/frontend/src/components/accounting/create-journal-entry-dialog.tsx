@@ -103,7 +103,7 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">Create Journal Entry</DialogTitle>
                     <DialogDescription>

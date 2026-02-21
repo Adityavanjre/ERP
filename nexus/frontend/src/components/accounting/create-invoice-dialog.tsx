@@ -185,7 +185,7 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[800px] bg-[#09090b] text-white border-white/10 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[800px] bg-[#09090b] text-white border-white/10 max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Issue New Invoice</DialogTitle>
                     <DialogDescription className="text-zinc-400">Create a compliant tax invoice for your customer.</DialogDescription>

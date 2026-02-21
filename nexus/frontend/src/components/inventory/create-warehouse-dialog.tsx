@@ -47,7 +47,7 @@ export function CreateWarehouseDialog({ open, onOpenChange, onSuccess }: CreateW
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] rounded-[32px] border-none shadow-2xl">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[425px] rounded-[32px] border-none shadow-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-black tracking-tight text-slate-900">Add Warehouse</DialogTitle>
                     <DialogDescription className="font-medium text-slate-500">

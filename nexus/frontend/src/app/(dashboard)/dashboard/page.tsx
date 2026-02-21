@@ -158,8 +158,8 @@ export default function DashboardPage() {
     ];
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-950 flex items-center">
                         <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
@@ -203,7 +203,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
                 {[
                     { label: "Quick Invoice", icon: CreditCard, color: "bg-emerald-100 text-emerald-600", href: "/sales/rapid", roles: SALES_ROLES },
                     { label: "Add Product", icon: Plus, color: "bg-blue-100 text-blue-600", href: "/inventory", roles: STOCK_ROLES },
@@ -215,20 +215,20 @@ export default function DashboardPage() {
                     <button
                         key={i}
                         onClick={() => router.push(action.href)}
-                        className="flex flex-col items-center justify-center p-6 rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
+                        className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
                     >
-                        <div className={`p-4 rounded-2xl mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}>
-                            <action.icon className="h-6 w-6" />
+                        <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}>
+                            <action.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                         </div>
-                        <span className="text-[11px] font-black text-slate-600 uppercase tracking-widest">{action.label}</span>
+                        <span className="text-[10px] sm:text-[11px] font-black text-slate-600 uppercase tracking-widest text-center">{action.label}</span>
                     </button>
                 ))}
             </div>
 
             {/* Top Level KPIs */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {(kpiCards || []).map((kpi, i) => (
-                    <Card key={i} className="bg-white border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden rounded-3xl">
+                    <Card key={i} className="bg-white border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden rounded-[1.5rem] sm:rounded-3xl">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">{kpi.title}</CardTitle>
                             <div className={`p-2.5 rounded-2xl ${kpi.bg}`}>

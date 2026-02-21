@@ -86,8 +86,8 @@ export default function WorkOrdersPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading work orders..." />;
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
@@ -135,7 +135,7 @@ export default function WorkOrdersPage() {
 
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                         <div>
                             <CardTitle className="text-slate-900 text-xl font-black">Work Orders</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">History of all production runs</CardDescription>

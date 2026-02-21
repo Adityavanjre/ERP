@@ -65,7 +65,7 @@ export default function RecoveryMemoryDashboard() {
                         Your business is protected. We automatically find missed payments, prevent disputes, and help you collect faster.
                     </p>
 
-                    <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+                    <div className="flex flex-col lg:flex-row gap-8 md:gap-12">
                         <div>
                             <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">Lifetime Protection</p>
                             <p className="text-3xl md:text-4xl font-black flex items-center gap-3 text-white">
@@ -174,7 +174,7 @@ export default function RecoveryMemoryDashboard() {
 
             {/* Recovery Opportunities Section */}
             <div className="bg-white border border-slate-200 rounded-[3rem] p-12 shadow-sm">
-                <div className="flex flex-col md:flex-row justify-between items-center lg:items-end mb-12 gap-8">
+                <div className="flex flex-col lg:flex-row justify-between items-center lg:items-end mb-12 gap-8">
                     <div className="text-center md:text-left">
                         <h2 className="text-4xl font-black mb-3 tracking-tighter flex items-center justify-center md:justify-start gap-4">
                             <History className="w-10 h-10 text-blue-600" />

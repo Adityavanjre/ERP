@@ -59,7 +59,7 @@ export default function WarehousesPage() {
                 onOpenChange={setIsAddDialogOpen}
                 onSuccess={() => syncWarehouses(false)}
             />
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                         <LayoutGrid className="h-10 w-10 text-blue-600" />

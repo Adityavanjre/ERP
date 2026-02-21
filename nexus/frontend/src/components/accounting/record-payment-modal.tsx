@@ -60,7 +60,7 @@ export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: Reco
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px] bg-[#09090b] text-white border-white/10">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[425px] bg-[#09090b] text-white border-white/10">
                 <DialogHeader>
                     <DialogTitle>Record Payment</DialogTitle>
                     <DialogDescription className="text-zinc-400">

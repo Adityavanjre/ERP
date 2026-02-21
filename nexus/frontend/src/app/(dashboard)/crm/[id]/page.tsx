@@ -52,8 +52,8 @@ export default function CustomerDetailPage() {
     const currentBalance = ledger.length > 0 ? ledger[ledger.length - 1].balance : 0;
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50 min-h-screen">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50 min-h-screen w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row md:items-center gap-4">
                 <Button variant="ghost" className="text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl font-bold md:h-10 px-0 md:px-4 w-fit" onClick={() => router.back()}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Store
                 </Button>

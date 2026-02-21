@@ -130,13 +130,13 @@ export default function PurchasesPage() {
     };
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 bg-slate-50/30 min-h-screen">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
             <CreateSupplierDialog
                 open={isAddSupplierOpen}
                 onOpenChange={setIsAddSupplierOpen}
                 onSuccess={() => syncProcurement(false)}
             />
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center gap-3">
                         <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-indigo-600" /> Purchases & Suppliers

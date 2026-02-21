@@ -105,7 +105,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
 
             {/* Global Confirm Dialog */}
             <Dialog open={!!confirmOptions} onOpenChange={(open) => !open && setConfirmOptions(null)}>
-                <DialogContent className="bg-white border-slate-200 text-slate-900 rounded-[2rem] p-8 shadow-2xl">
+                <DialogContent className="w-11/12 sm:min-w-fit bg-white border-slate-200 text-slate-900 rounded-[2rem] p-8 shadow-2xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tight">
                             {confirmOptions?.variant === "destructive" && <AlertCircle className="h-5 w-5 text-rose-500" />}

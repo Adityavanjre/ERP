@@ -101,19 +101,19 @@ export function CommandPalette(): React.ReactNode {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-[2.5rem]">
-                <DialogHeader className="p-6 border-b border-slate-100">
-                    <div className="flex items-center gap-4">
-                        <Terminal className="h-6 w-6 text-blue-600" />
+            <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
+                <DialogHeader className="p-4 sm:p-6 border-b border-slate-100">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
                         <Input
                             autoFocus
-                            placeholder="Type a command or search..."
-                            className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-xl py-8 font-medium"
+                            placeholder="Search..."
+                            className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-6 sm:py-8 font-medium px-0 sm:px-3"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 font-black text-[10px]">ESC</Badge>
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 font-black text-[10px] hidden sm:flex">ESC</Badge>
                         </div>
                     </div>
                 </DialogHeader>
@@ -190,8 +190,8 @@ export function CommandPalette(): React.ReactNode {
                     )}
                 </div>
 
-                <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <div className="flex items-center gap-6">
+                <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
+                    <div className="hidden sm:flex items-center gap-6">
                         <div className="flex items-center gap-2">
                             <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 py-0.5 font-black">↵</Badge>
                             <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Select</span>

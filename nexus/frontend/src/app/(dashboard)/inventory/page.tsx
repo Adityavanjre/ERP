@@ -243,16 +243,16 @@ export default function InventoryPage() {
     };
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                        <Boxes className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Products & Inventory
+                        <Boxes className="mr-4 h-9 w-9 text-blue-600 shadow-sm shrink-0" />
+                        <span className="truncate">Products & Inventory</span>
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage your products, stock levels, and warehouse items.</p>
+                    <p className="text-slate-500 mt-2 font-medium truncate">Manage your products, stock levels, and warehouse items.</p>
                 </div>
-                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap gap-3 w-full lg:w-auto mt-2 lg:mt-0">
                     <div className="relative flex-1 sm:flex-none">
                         <Input type="file" accept=".csv" onChange={handleImport} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                         <Button className="w-full justify-center rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5 whitespace-nowrap">
@@ -528,7 +528,7 @@ export default function InventoryPage() {
 
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                 <CardHeader className="bg-slate-50 border-b border-slate-100 py-8">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-4">
                         <div>
                             <CardTitle className="text-slate-900 text-xl font-black">Product Inventory</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Complete list of items and current stock levels</CardDescription>

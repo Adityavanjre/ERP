@@ -65,8 +65,8 @@ export default function HrPage() {
     if (!mounted) return null;
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />

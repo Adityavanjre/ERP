@@ -228,16 +228,16 @@ export default function CrmPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading CRM data..." />;
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                        <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
-                        Customers & Deals
+                        <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm shrink-0" />
+                        <span className="truncate">Customers & Deals</span>
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage your customers, contacts, and sales deals in one place.</p>
+                    <p className="text-slate-500 mt-2 font-medium truncate">Manage your customers, contacts, and sales deals in one place.</p>
                 </div>
-                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap gap-3 w-full lg:w-auto mt-2 lg:mt-0">
                     <div className="relative flex-1 sm:flex-none">
                         <Input type="file" accept=".csv" onChange={handleImport} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                         <Button className="w-full justify-center rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5 whitespace-nowrap">

@@ -109,7 +109,7 @@ export function CreateWorkOrderDialog({ refreshData, children }: CreateWorkOrder
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Create Production Order</DialogTitle>
                 </DialogHeader>

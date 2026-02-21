@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Settings className="mr-3 h-8 w-8 text-slate-400" />
@@ -403,7 +403,7 @@ export default function SettingsPage() {
 
             {/* Add User Modal */}
             <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
-                <DialogContent className="max-w-md bg-white">
+                <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-md bg-white">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-black text-slate-900">Onboard New Team Member</DialogTitle>
                         <DialogDescription className="text-slate-500">Add an employee to your organization and assign their functional access role.</DialogDescription>
@@ -455,7 +455,7 @@ export default function SettingsPage() {
 
             {/* Password Reset Modal */}
             <Dialog open={isResetOpen} onOpenChange={setIsResetOpen}>
-                <DialogContent className="max-w-sm bg-white">
+                <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-sm bg-white">
                     <DialogHeader>
                         <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center mb-2 mx-auto">
                             <Key className="h-6 w-6 text-amber-600" />

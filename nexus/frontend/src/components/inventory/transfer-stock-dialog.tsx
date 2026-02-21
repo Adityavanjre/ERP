@@ -87,7 +87,7 @@ export function TransferStockDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl">
+            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl">
                 <DialogHeader>
                     <div className="bg-blue-50 h-12 w-12 rounded-2xl flex items-center justify-center mb-4">
                         <ArrowRightLeft className="h-6 w-6 text-blue-600" />
