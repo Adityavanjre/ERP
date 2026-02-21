@@ -53,7 +53,7 @@ export default function WarehousesPage() {
     }, []);
 
     return (
-        <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
+        <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-slate-50/50 min-h-screen">
             <CreateWarehouseDialog
                 open={isAddDialogOpen}
                 onOpenChange={setIsAddDialogOpen}

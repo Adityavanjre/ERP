@@ -52,16 +52,16 @@ export default function CustomerDetailPage() {
     const currentBalance = ledger.length > 0 ? ledger[ledger.length - 1].balance : 0;
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50 min-h-screen">
-            <div className="flex items-center space-x-4">
-                <Button variant="ghost" className="text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl font-bold h-10 px-4" onClick={() => router.back()}>
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50 min-h-screen">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <Button variant="ghost" className="text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl font-bold md:h-10 px-0 md:px-4 w-fit" onClick={() => router.back()}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back to Store
                 </Button>
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 tracking-tighter">{customer.firstName} {customer.lastName}</h2>
                     <p className="text-slate-500 font-medium text-sm">{customer.company || "Independent Client"}</p>
                 </div>
-                <div className="ml-auto">
+                <div className="md:ml-auto w-full md:w-auto">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none border-b-4 border-b-amber-500">
                         <CardContent className="p-6 flex items-center space-x-6">
                             <div className="p-3 bg-amber-50 rounded-2xl">
@@ -116,8 +116,8 @@ export default function CustomerDetailPage() {
                             <FileText className="mr-2 h-4 w-4" /> Export Record
                         </Button>
                     </CardHeader>
-                    <CardContent className="p-0 print:p-0 print:pt-4">
-                        <Table>
+                    <CardContent className="p-0 print:p-0 print:pt-4 overflow-x-auto max-w-[100vw]">
+                        <Table className="min-w-[700px]">
                             <TableHeader className="bg-slate-50/30">
                                 <TableRow className="border-slate-100 hover:bg-transparent print:border-black">
                                     <TableHead className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] pl-8 py-5">Date</TableHead>

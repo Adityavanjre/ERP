@@ -63,13 +63,13 @@ export default function BOMPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading BOM Catalog..." />;
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8">
             <BOMDetailsDialog
                 open={!!selectedBomId}
                 onOpenChange={(open) => !open && setSelectedBomId(null)}
                 bomId={selectedBomId}
             />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Command className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
@@ -85,13 +85,13 @@ export default function BOMPage() {
             </div>
 
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                <CardHeader className="bg-slate-50 border-b border-slate-100 py-8">
-                    <div className="flex items-center justify-between">
+                <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                         <div>
                             <CardTitle className="text-slate-900 text-xl font-black">BOM Directory</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Master list of assembly recipes</CardDescription>
                         </div>
-                        <div className="relative w-96">
+                        <div className="relative w-full md:w-96">
                             <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
                             <Input
                                 placeholder="Search by BOM name or product..."

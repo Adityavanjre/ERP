@@ -83,8 +83,8 @@ export default function WorkflowBuilder() {
     };
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 pt-2 md:pt-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
                         <GitBranch className="mr-3 h-8 w-8 text-emerald-600" />
@@ -143,18 +143,18 @@ export default function WorkflowBuilder() {
 
                 <Card className="bg-white border-slate-200 shadow-xl lg:col-span-3 min-h-[600px] flex flex-col rounded-3xl overflow-hidden">
                     <CardHeader className="border-b border-slate-100 bg-slate-50/30">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                             <div>
                                 <CardTitle className="text-slate-900 font-black text-xl tracking-tight">
                                     {selectedWorkflow ? selectedWorkflow.name : "Select a lifecycle stream"}
                                 </CardTitle>
                                 <CardDescription className="text-slate-500 font-medium">Graph-based logic for {modelName}</CardDescription>
                             </div>
-                            <div className="flex gap-2">
-                                <Button onClick={addNode} disabled={!selectedWorkflow} variant="outline" className="border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50">
+                            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                                <Button onClick={addNode} disabled={!selectedWorkflow} variant="outline" className="w-full sm:w-auto border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50">
                                     <Plus className="mr-2 h-4 w-4" /> Add State
                                 </Button>
-                                <Button disabled={!selectedWorkflow} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                                <Button disabled={!selectedWorkflow} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold">
                                     <Save className="mr-2 h-4 w-4" /> Commit Changes
                                 </Button>
                             </div>
@@ -205,8 +205,8 @@ export default function WorkflowBuilder() {
                         )}
 
                         {/* Legend / Stats overlay */}
-                        <div className="absolute bottom-6 right-6 p-4 rounded-2xl bg-white border border-slate-200 shadow-2xl">
-                            <div className="flex items-center gap-6 text-[10px] font-black tracking-widest uppercase">
+                        <div className="absolute bottom-6 right-6 p-4 rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-x-auto max-w-[90vw]">
+                            <div className="flex items-center gap-6 text-[10px] font-black tracking-widest uppercase flex-wrap">
                                 <div className="flex items-center gap-2">
                                     <div className="h-2 w-2 rounded-full bg-emerald-500" />
                                     <span className="text-slate-500">States: {selectedWorkflow?.nodes?.length || 0}</span>

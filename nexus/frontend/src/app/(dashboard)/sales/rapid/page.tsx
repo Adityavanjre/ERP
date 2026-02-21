@@ -295,8 +295,8 @@ export default function RapidBillingPage() {
                 </div>
             </header>
 
-            <main className="flex-1 flex overflow-hidden">
-                <section className="flex-1 flex flex-col border-r border-slate-200 bg-white relative">
+            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden overflow-y-auto lg:overflow-hidden">
+                <section className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 bg-white relative">
                     {/* Manual Search Bar */}
                     <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                         <div className="relative">

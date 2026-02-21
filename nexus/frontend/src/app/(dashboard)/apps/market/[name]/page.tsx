@@ -72,7 +72,7 @@ export default function AppDetailPage() {
     if (!app) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen font-black uppercase tracking-widest uppercase italic">Module [${appName}] not found in Klypso Store.</div>;
 
     return (
-        <div className="flex-1 space-y-10 p-10 pt-8 bg-slate-50/30 min-h-screen">
+        <div className="flex-1 space-y-8 md:space-y-10 p-4 md:p-10 pt-4 md:pt-8 bg-slate-50/30 min-h-screen">
             <Button
                 variant="ghost"
                 onClick={() => router.back()}
@@ -81,11 +81,11 @@ export default function AppDetailPage() {
                 <ChevronLeft className="mr-2 h-4 w-4" /> Back to Marketplace
             </Button>
 
-            <div className="flex flex-col lg:flex-row gap-12">
+            <div className="flex flex-col xl:flex-row gap-12">
                 <div className="flex-1 space-y-10">
-                    <div className="flex items-start justify-between">
-                        <div className="flex gap-8">
-                            <div className="h-28 w-28 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center border-none shadow-2xl shadow-blue-500/30">
+                    <div className="flex flex-col lg:flex-row items-start justify-between gap-8 md:gap-0">
+                        <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-center">
+                            <div className="h-24 w-24 sm:h-28 sm:w-28 shrink-0 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center border-none shadow-2xl shadow-blue-500/30">
                                 <Package className="h-12 w-12 text-white" />
                             </div>
                             <div className="space-y-3">
@@ -103,7 +103,7 @@ export default function AppDetailPage() {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
                             {app.installed ? (
                                 <>
                                     <Button variant="outline" className="border-rose-200 text-rose-500 hover:bg-rose-50 rounded-2xl px-6 font-bold transition-all" onClick={handleUninstall}>
@@ -122,7 +122,7 @@ export default function AppDetailPage() {
                     </div>
 
                     <Tabs defaultValue="overview" className="w-full">
-                        <TabsList className="bg-slate-100/80 border border-slate-200 p-1.5 rounded-2xl h-auto">
+                        <TabsList className="bg-slate-100/80 border border-slate-200 p-1.5 rounded-2xl h-auto flex flex-wrap max-w-full">
                             <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-10 py-3 font-bold transition-all">Overview</TabsTrigger>
                             <TabsTrigger value="technical" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-10 py-3 font-bold transition-all">Architecture</TabsTrigger>
                             <TabsTrigger value="history" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-10 py-3 font-bold transition-all">Changelog</TabsTrigger>

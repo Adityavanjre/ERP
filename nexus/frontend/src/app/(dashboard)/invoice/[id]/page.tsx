@@ -39,9 +39,9 @@ export default function InvoicePrintPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-900 p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
+        <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
             {/* Action Bar (Hidden in Print) */}
-            <div className="max-w-4xl mx-auto mb-8 flex justify-between items-center print:hidden">
+            <div className="max-w-4xl mx-auto mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
                 <h1 className="text-2xl font-black text-white tracking-tighter">Invoice</h1>
                 <div className="flex gap-3">
                     <Button variant="outline" className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all" onClick={() => window.print()}>
@@ -54,10 +54,10 @@ export default function InvoicePrintPage() {
             </div>
 
             {/* Invoice Paper */}
-            <div className="max-w-4xl mx-auto bg-white p-12 shadow-2xl print:shadow-none print:w-full">
+            <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 md:p-12 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
                 {/* Header */}
-                <div className="flex justify-between items-start border-b-2 border-zinc-100 pb-8 mb-8">
-                    <div>
+                <div className="flex flex-col md:flex-row justify-between items-start gap-8 md:gap-0 border-b-2 border-zinc-100 pb-8 mb-8">
+                    <div className="w-full">
                         <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">KLYPSO INVOICE</div>
                         <div className="text-sm text-zinc-500 mt-1 font-medium italic tracking-widest uppercase">Invoice No: #{invoice.invoiceNumber}</div>
                         <div className="mt-4 space-y-1 text-sm text-zinc-600">
@@ -68,7 +68,7 @@ export default function InvoicePrintPage() {
                             {invoice.customer.gstin && <p>GSTIN: {invoice.customer.gstin}</p>}
                         </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left md:text-right w-full md:w-auto">
                         <div className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">Klypso Ecosystems</div>
                         <div className="text-sm text-zinc-500 mt-1">
                             123 Business Park, Tech City<br />
@@ -89,31 +89,33 @@ export default function InvoicePrintPage() {
                 </div>
 
                 {/* Items Table */}
-                <table className="w-full text-sm mb-8">
-                    <thead className="border-b-2 border-zinc-900">
-                        <tr>
-                            <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">Description</th>
-                            <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">HSN</th>
-                            <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">Qty</th>
-                            <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Rate</th>
-                            <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                        {invoice.items && invoice.items.map((item: any, i: number) => (
-                            <tr key={i}>
-                                <td className="py-4 text-zinc-700 font-medium">
-                                    {item.product?.name || "Product Item"}
-                                    <div className="text-[10px] text-zinc-400 mt-0.5">{item.product?.sku}</div>
-                                </td>
-                                <td className="py-4 text-right text-zinc-500 font-mono">{item.product?.hsnCode || "-"}</td>
-                                <td className="py-4 text-right text-zinc-700">{item.quantity}</td>
-                                <td className="py-4 text-right text-zinc-700">₹{Number(item.price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                                <td className="py-4 text-right font-bold text-zinc-900">₹{(Number(item.price) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <div className="overflow-x-auto mb-8 max-w-[100vw]">
+                    <table className="w-full text-sm min-w-[500px]">
+                        <thead className="border-b-2 border-zinc-900">
+                            <tr>
+                                <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">Description</th>
+                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">HSN</th>
+                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">Qty</th>
+                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Rate</th>
+                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Amount</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100">
+                            {invoice.items && invoice.items.map((item: any, i: number) => (
+                                <tr key={i}>
+                                    <td className="py-4 text-zinc-700 font-medium">
+                                        {item.product?.name || "Product Item"}
+                                        <div className="text-[10px] text-zinc-400 mt-0.5">{item.product?.sku}</div>
+                                    </td>
+                                    <td className="py-4 text-right text-zinc-500 font-mono">{item.product?.hsnCode || "-"}</td>
+                                    <td className="py-4 text-right text-zinc-700">{item.quantity}</td>
+                                    <td className="py-4 text-right text-zinc-700">₹{Number(item.price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                    <td className="py-4 text-right font-bold text-zinc-900">₹{(Number(item.price) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
                 {/* Totals */}
                 <div className="flex justify-end border-t border-zinc-100 pt-8">
@@ -138,15 +140,15 @@ export default function InvoicePrintPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-16 pt-8 border-t border-zinc-100 flex justify-between items-end">
-                    <div className="text-[10px] text-zinc-400 max-w-sm">
+                <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-start md:items-end gap-16 md:gap-0">
+                    <div className="text-[10px] text-zinc-400 max-w-sm w-full">
                         <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
                         <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>
                         <p>2. Please quote the invoice number in all correspondence.</p>
                         <p>3. Make payment to "Klypso Ecosystems".</p>
                     </div>
-                    <div className="text-right">
-                        <div className="h-16 mb-2 flex justify-end">
+                    <div className="text-left md:text-right w-full md:w-auto">
+                        <div className="h-16 mb-2 flex justify-start md:justify-end">
                             {/* Signature Placeholder */}
                             <div className="font-script text-2xl text-zinc-400 italic font-medium pr-4 pt-4">Authorized Signature</div>
                         </div>

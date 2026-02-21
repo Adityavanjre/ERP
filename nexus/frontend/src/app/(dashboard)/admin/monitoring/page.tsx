@@ -49,9 +49,9 @@ export default function FounderMonitoring() {
     if (!data) return null;
 
     return (
-        <div className="p-10 space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-40">
+        <div className="p-4 md:p-10 space-y-8 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-40 md:pb-40">
             {/* Header Area */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-0">
                 <div>
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-4">
                         <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
@@ -122,9 +122,9 @@ export default function FounderMonitoring() {
 
                 {/* Top At-Risk Tenants */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div className="flex justify-between items-end px-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end px-2 gap-4 sm:gap-0">
                         <div>
-                            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                            <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                                 <ShieldAlert className="w-8 h-8 text-red-500" />
                                 High-Priority Action Items
                             </h2>
@@ -136,8 +136,8 @@ export default function FounderMonitoring() {
                     <div className="space-y-6">
                         {data.topAtRisk.map((tenant: any) => (
                             <Card key={tenant.tenantId} className="bg-white border-none shadow-xl shadow-slate-200/40 p-8 rounded-[40px] hover:shadow-2xl transition-all flex flex-col md:flex-row gap-8 justify-between items-start md:items-center group border-l-8 border-l-transparent hover:border-l-red-500">
-                                <div className="flex gap-8 items-center">
-                                    <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center font-black text-2xl transition-all ${tenant.status === 'RED' ? 'bg-red-50 text-red-600 shadow-lg shadow-red-500/10' : 'bg-amber-50 text-amber-600'}`}>
+                                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-start sm:items-center">
+                                    <div className={`w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-[28px] flex items-center justify-center font-black text-xl md:text-2xl transition-all ${tenant.status === 'RED' ? 'bg-red-50 text-red-600 shadow-lg shadow-red-500/10' : 'bg-amber-50 text-amber-600'}`}>
                                         {tenant.healthScore}
                                     </div>
                                     <div>
@@ -205,8 +205,8 @@ export default function FounderMonitoring() {
             </div>
 
             {/* Floating Action Bar */}
-            <div className="fixed bottom-10 left-10 right-10 bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-6 rounded-[40px] flex justify-between items-center px-12 z-[100] shadow-2xl shadow-slate-300/40 outline outline-1 outline-white/50">
-                <div className="flex items-center gap-10">
+            <div className="fixed bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 bg-white/90 md:bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-4 md:p-6 rounded-[24px] md:rounded-[40px] flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 px-6 md:px-12 z-[100] shadow-2xl shadow-slate-300/40 outline outline-1 outline-white/50">
+                <div className="flex flex-wrap items-center justify-center gap-4 md:gap-10">
                     <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">
                         <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
                         System Monitoring Active

@@ -46,9 +46,9 @@ export default function RecoveryMemoryDashboard() {
     if (!data) return null;
 
     return (
-        <div className="p-8 space-y-10 bg-slate-50 text-slate-900 min-h-screen pb-32">
+        <div className="p-4 md:p-8 space-y-8 md:space-y-10 bg-slate-50 text-slate-900 min-h-screen pb-32">
             {/* Dashboard Overview */}
-            <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 border border-blue-500/20 p-16 shadow-2xl shadow-blue-500/20">
+            <div className="relative overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 border border-blue-500/20 p-8 md:p-16 shadow-2xl shadow-blue-500/20">
                 <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
                     <Zap className="w-80 h-80 text-white" />
                 </div>
@@ -65,15 +65,15 @@ export default function RecoveryMemoryDashboard() {
                         Your business is protected. We automatically find missed payments, prevent disputes, and help you collect faster.
                     </p>
 
-                    <div className="flex gap-12">
+                    <div className="flex flex-col md:flex-row gap-8 md:gap-12">
                         <div>
                             <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">Lifetime Protection</p>
-                            <p className="text-4xl font-black flex items-center gap-3 text-white">
+                            <p className="text-3xl md:text-4xl font-black flex items-center gap-3 text-white">
                                 ₹{data.anchors.lifetimeRecovery.toLocaleString()}
                                 <Trophy className="w-7 h-7 text-amber-300" />
                             </p>
                         </div>
-                        <div className="border-l border-white/20 pl-12">
+                        <div className="border-t md:border-t-0 md:border-l border-white/20 pt-6 md:pt-0 pl-0 md:pl-12">
                             <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">Issue-free Days</p>
                             <p className="text-4xl font-black flex items-center gap-3 text-white">
                                 {data.anchors.daysSinceDrift} Days without issues
@@ -218,7 +218,7 @@ export default function RecoveryMemoryDashboard() {
 
             {/* Upsell Banner (Psychological Trigger) */}
             {data.anchors.lifetimeRecovery > 50000 && (
-                <div className="bg-slate-900 border border-slate-800 p-12 rounded-[3.5rem] flex flex-col lg:flex-row justify-between items-center gap-12 shadow-2xl relative overflow-hidden">
+                <div className="bg-slate-900 border border-slate-800 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] flex flex-col lg:flex-row justify-between items-center gap-8 md:gap-12 shadow-2xl relative overflow-hidden text-center lg:text-left">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
                     <div className="space-y-4 text-center lg:text-left relative z-10">
                         <h2 className="text-4xl font-black text-white tracking-tighter">Maximize System Protection.</h2>

@@ -61,8 +61,8 @@ export default function StudioPage() {
     };
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 md:space-y-8 p-4 md:p-8 pt-2 md:pt-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
                     <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
                         <Wand2 className="mr-3 h-8 w-8 text-fuchsia-600" />
@@ -70,12 +70,12 @@ export default function StudioPage() {
                     </h2>
                     <p className="text-slate-500 mt-1 font-medium">Design custom business objects and automated workflows without code.</p>
                 </div>
-                <div className="flex gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
-                    <Button variant="ghost" className="bg-fuchsia-50 text-fuchsia-700 font-bold rounded-lg px-6">
+                <div className="flex flex-wrap w-full md:w-auto gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                    <Button variant="ghost" className="flex-1 md:flex-none bg-fuchsia-50 text-fuchsia-700 font-bold rounded-lg px-6">
                         <Database className="mr-2 h-4 w-4" /> Object Builder
                     </Button>
-                    <Link href="/studio/workflows">
-                        <Button variant="ghost" className="text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-bold rounded-lg px-6">
+                    <Link href="/studio/workflows" className="flex-1 md:flex-none">
+                        <Button variant="ghost" className="w-full text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-bold rounded-lg px-6">
                             <GitBranch className="mr-2 h-4 w-4" /> Workflows
                         </Button>
                     </Link>
@@ -137,8 +137,8 @@ export default function StudioPage() {
                     </CardHeader>
                     <CardContent className="space-y-6 pt-6">
                         {fields.map((field, index) => (
-                            <div key={index} className="flex gap-4 items-end p-4 rounded-xl bg-slate-50/50 border border-slate-100 group relative transition-all hover:bg-white hover:shadow-md">
-                                <div className="flex-1 space-y-2">
+                            <div key={index} className="flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-end p-4 rounded-xl bg-slate-50/50 border border-slate-100 group relative transition-all hover:bg-white hover:shadow-md">
+                                <div className="flex-1 w-full sm:w-auto space-y-2">
                                     <Label className="text-[10px] text-slate-400 font-black uppercase tracking-widest">System Name</Label>
                                     <Input
                                         value={field.name}
@@ -146,7 +146,7 @@ export default function StudioPage() {
                                         className="bg-white border-slate-200 text-slate-900 h-9 text-sm font-semibold"
                                     />
                                 </div>
-                                <div className="flex-1 space-y-2">
+                                <div className="flex-1 w-full sm:w-auto space-y-2">
                                     <Label className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Label</Label>
                                     <Input
                                         value={field.label}
@@ -154,7 +154,7 @@ export default function StudioPage() {
                                         className="bg-white border-slate-200 text-slate-900 h-9 text-sm font-semibold"
                                     />
                                 </div>
-                                <div className="w-[150px] space-y-2">
+                                <div className="w-full sm:w-[150px] space-y-2">
                                     <Label className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Field Type</Label>
                                     <Select
                                         value={field.type}

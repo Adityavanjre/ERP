@@ -76,9 +76,9 @@ export default function AuditorDashboard() {
     if (loading && !data) return <div className="p-8">Loading Auditor...</div>;
 
     return (
-        <div className="p-8 pb-20 space-y-8 bg-slate-50 text-slate-900 min-h-screen">
+        <div className="p-4 md:p-8 pb-24 md:pb-20 space-y-6 md:space-y-8 bg-slate-50 text-slate-900 min-h-screen">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
                         <ShieldCheck className="w-8 h-8 text-emerald-600" />
@@ -271,7 +271,7 @@ export default function AuditorDashboard() {
             </div>
 
             {/* Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 flex justify-between items-center px-8 z-50">
+            <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 px-4 md:px-8 z-50">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${data?.isLocked ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
