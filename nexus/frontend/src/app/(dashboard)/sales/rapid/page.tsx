@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import { BarcodeSearch } from '@/components/sales/rapid/BarcodeSearch';
 import { CartTable } from '@/components/sales/rapid/CartTable';
 import { CheckoutSidebar } from '@/components/sales/rapid/CheckoutSidebar';
+import { ProductGrid } from '@/components/sales/rapid/ProductGrid';
 
 const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 
@@ -297,52 +298,14 @@ export default function RapidBillingPage() {
 
             <main className="flex-1 flex flex-col lg:flex-row overflow-hidden overflow-y-auto lg:overflow-hidden">
                 <section className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 bg-white relative">
-                    {/* Manual Search Bar */}
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search Product by Name or SKU..."
-                                value={manualSearch}
-                                onChange={(e) => setManualSearch(e.target.value)}
-                                className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm font-medium"
-                            />
-                            <div className="absolute left-3 top-2.5 text-slate-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-                            </div>
-                            {isManualSearching && (
-                                <div className="absolute right-3 top-2.5">
-                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                </div>
-                            )}
-                        </div>
+                    <ProductGrid onProductClick={(product) => {
+                        addItem(product);
+                        toast.success(`Sent ${product.name} to cart`);
+                    }} />
+                </section>
 
-                        {/* Search Results Dropdown */}
-                        {searchResults.length > 0 && manualSearch && (
-                            <div className="absolute top-[70px] left-4 right-4 bg-white rounded-xl shadow-xl border border-slate-100 z-50 max-h-[300px] overflow-y-auto">
-                                {searchResults.map((product) => (
-                                    <div
-                                        key={product.id}
-                                        onClick={() => {
-                                            addItem(product);
-                                            setManualSearch('');
-                                            setSearchResults([]);
-                                            toast.success(`Added ${product.name}`);
-                                        }}
-                                        className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0 transition-colors"
-                                    >
-                                        <div>
-                                            <div className="font-bold text-sm text-slate-800">{product.name}</div>
-                                            <div className="text-xs text-slate-500 font-mono">SKU: {product.sku}</div>
-                                        </div>
-                                        <div className="font-bold text-emerald-600">
-                                            ₹{parseFloat(product.price).toFixed(2)}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                {/* Main POS Interface (Cart + Scanner) */}
+                <section className="flex-1 flex flex-col h-full bg-slate-50 relative min-w-0 pb-20 lg:pb-0 border-r border-slate-200">
 
                     <BarcodeSearch
                         search={search}
@@ -358,7 +321,7 @@ export default function RapidBillingPage() {
                         removeItem={removeItem}
                         setItems={setItems}
                     />
-                </section >
+                </section>
 
                 <CheckoutSidebar
                     customerName={customerName}

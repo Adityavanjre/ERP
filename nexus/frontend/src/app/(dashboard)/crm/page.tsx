@@ -46,6 +46,7 @@ export default function CrmPage() {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [activeTab, setActiveTab] = useState<"customers" | "leads">("customers");
 
     // Edit Mode
     const [editingDeal, setEditingDeal] = useState<any>(null);
@@ -217,11 +218,17 @@ export default function CrmPage() {
         }
     };
 
-    const filteredCustomers = customers.filter(c =>
-        `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.company || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (c.email || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredCustomers = customers.filter(c => {
+        const matchesSearch = `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (c.company || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (c.email || "").toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesTab = activeTab === 'leads'
+            ? c.status === 'Lead' || c.status === 'Prospect'
+            : c.status !== 'Lead' && c.status !== 'Prospect';
+
+        return matchesSearch && matchesTab;
+    });
 
     const stages = ["New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
 
@@ -266,20 +273,20 @@ export default function CrmPage() {
                                 <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} required />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Name</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Last Name <span className="text-rose-500">*</span></Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} required />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Primary Email</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} type="email" />
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Primary Email <span className="text-rose-500">*</span></Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} type="email" required />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Mobile/Phone</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Mobile/Phone <span className="text-rose-500">*</span></Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} required />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Organization</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} />
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Organization <span className="text-rose-500">*</span></Label>
+                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.company} onChange={e => setFormData({ ...formData, company: e.target.value })} required />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Street Address</Label>
@@ -459,10 +466,25 @@ export default function CrmPage() {
                 <TabsContent value="customers">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-8">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mt-4 md:mt-0">
                                 <div>
-                                    <CardTitle className="text-slate-900 text-xl font-black">Customer Directory</CardTitle>
-                                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Complete list of all customers</CardDescription>
+                                    <div className="flex gap-4 mb-4">
+                                        <button
+                                            onClick={() => setActiveTab("customers")}
+                                            className={`text-xl font-black transition-colors ${activeTab === 'customers' ? 'text-slate-900 border-b-2 border-blue-600 pb-1' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Customer Directory
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab("leads")}
+                                            className={`text-xl font-black transition-colors ${activeTab === 'leads' ? 'text-slate-900 border-b-2 border-blue-600 pb-1' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            Leads & Prospects
+                                        </button>
+                                    </div>
+                                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
+                                        {activeTab === 'customers' ? 'Complete list of all active customers' : 'Potential clients and ongoing leads'}
+                                    </CardDescription>
                                 </div>
                                 <div className="flex items-center gap-3 w-full md:w-auto">
                                     <div className="relative w-full md:w-96 group">

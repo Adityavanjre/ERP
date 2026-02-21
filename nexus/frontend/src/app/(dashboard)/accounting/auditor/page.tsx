@@ -33,7 +33,7 @@ export default function AuditorDashboard() {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
-            setData(res);
+            setData(res.data);
         } catch (err) {
             console.error("Auditor Sync Failure:", err);
         } finally {

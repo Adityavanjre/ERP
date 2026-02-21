@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ interface Product {
     name: string;
     sku: string;
     unit: string;
+    category?: string;
     costPrice?: number;
     stock?: number;
 }
@@ -141,8 +142,13 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                                     <SelectValue placeholder="Select Product to Manufacture" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {products.map(p => (
-                                        <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
+                                    {Array.from(new Set(products.map(p => p.category || 'Uncategorized'))).map(category => (
+                                        <SelectGroup key={category}>
+                                            <SelectLabel>{category}</SelectLabel>
+                                            {products.filter(p => (p.category || 'Uncategorized') === category).map(p => (
+                                                <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
+                                            ))}
+                                        </SelectGroup>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -193,8 +199,13 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                                                 <SelectValue placeholder="Select Material" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {products.map(p => (
-                                                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.stock} avail)</SelectItem>
+                                                {Array.from(new Set(products.map(p => p.category || 'Uncategorized'))).map(category => (
+                                                    <SelectGroup key={category}>
+                                                        <SelectLabel>{category}</SelectLabel>
+                                                        {products.filter(p => (p.category || 'Uncategorized') === category).map(p => (
+                                                            <SelectItem key={p.id} value={p.id}>{p.name} ({p.stock} avail)</SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
                                                 ))}
                                             </SelectContent>
                                         </Select>
