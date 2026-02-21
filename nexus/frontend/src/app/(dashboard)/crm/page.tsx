@@ -228,26 +228,26 @@ export default function CrmPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading CRM data..." />;
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                        <Users className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+                        <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
                         Customers & Deals
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Manage your customers, contacts, and sales deals in one place.</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                    <div className="relative flex-1 sm:flex-none">
                         <Input type="file" accept=".csv" onChange={handleImport} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                        <Button className="rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5">
+                        <Button className="w-full justify-center rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm font-bold h-11 px-5 whitespace-nowrap">
                             <Upload className="mr-2 h-4 w-4" /> Import CSV
                         </Button>
                     </div>
-                    <Button className="rounded-2xl bg-amber-50 border border-amber-100 hover:bg-amber-100/50 text-amber-700 shadow-sm font-bold h-11 px-5" onClick={() => setShowDealForm(!showDealForm)}>
+                    <Button className="flex-1 sm:flex-none justify-center rounded-2xl bg-amber-50 border border-amber-100 hover:bg-amber-100/50 text-amber-700 shadow-sm font-bold h-11 px-5 whitespace-nowrap" onClick={() => setShowDealForm(!showDealForm)}>
                         <Sparkles className="mr-2 h-4 w-4" /> Add Deal
                     </Button>
-                    <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
+                    <Button className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap" onClick={() => setShowForm(!showForm)}>
                         <UserPlus className="mr-2 h-4 w-4" /> Add Customer
                     </Button>
                 </div>
@@ -380,10 +380,10 @@ export default function CrmPage() {
             </Dialog>
 
 
-            <Tabs defaultValue="pipeline" className="space-y-8">
-                <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
-                    <TabsTrigger value="pipeline" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Pipeline</TabsTrigger>
-                    <TabsTrigger value="customers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Customers</TabsTrigger>
+            <Tabs defaultValue="pipeline" className="space-y-6 md:space-y-8">
+                <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
+                    <TabsTrigger value="pipeline" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Pipeline</TabsTrigger>
+                    <TabsTrigger value="customers" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Customers</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="pipeline" className="space-y-6">
@@ -458,18 +458,18 @@ export default function CrmPage() {
 
                 <TabsContent value="customers">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-8">
-                            <div className="flex items-center justify-between">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-8">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Customer Directory</CardTitle>
                                     <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Complete list of all customers</CardDescription>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="relative w-96">
-                                        <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <div className="relative w-full md:w-96 group">
+                                        <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                         <Input
                                             placeholder="Search by name, organization or domain..."
-                                            className="pl-12 bg-white border-slate-200 text-slate-900 rounded-2xl h-12 shadow-inner font-semibold focus:ring-blue-500/20"
+                                            className="pl-12 bg-white border-slate-200 text-slate-900 rounded-2xl h-12 shadow-inner font-semibold focus:ring-blue-500/20 w-full"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                         />
@@ -477,8 +477,8 @@ export default function CrmPage() {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[1000px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Customer</TableHead>

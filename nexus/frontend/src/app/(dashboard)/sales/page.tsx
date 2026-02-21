@@ -116,20 +116,20 @@ export default function SalesPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading Sales Data..." />;
 
     return (
-        <div className="flex-1 space-y-10 p-10 pt-8 bg-slate-50/30">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 md:space-y-10 pt-2 md:pt-8 bg-slate-50/30">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center">
-                        <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mr-5">
-                            <ShoppingCart className="h-7 w-7 text-white" />
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900 flex items-center">
+                        <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mr-4 md:mr-5">
+                            <ShoppingCart className="h-6 w-6 md:h-7 md:w-7 text-white" />
                         </div>
                         Sales Orders
                     </h2>
-                    <p className="text-slate-600 mt-2 font-black uppercase text-[10px] tracking-[0.2em] ml-[68px]">All orders, revenue & customer transactions</p>
+                    <p className="text-slate-600 mt-3 md:mt-2 font-black uppercase text-[10px] tracking-[0.2em] ml-0 md:ml-[68px]">All orders, revenue & customer transactions</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-4 w-full md:w-auto">
                     <Button
-                        className="rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-10 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none"
+                        className="w-full md:w-auto rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-10 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none"
                         onClick={() => setShowForm(true)}
                     >
                         <Plus className="mr-2 h-5 w-5" /> New Order
@@ -198,18 +198,18 @@ export default function SalesPage() {
 
             <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[40px] overflow-hidden">
                 <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-10 px-10">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                         <div>
                             <CardTitle className="text-slate-900 text-2xl font-black tracking-tight">Sales Orders</CardTitle>
                             <CardDescription className="text-slate-600 font-black uppercase text-[10px] tracking-[0.2em] mt-2">All customer orders and invoices</CardDescription>
                         </div>
-                        <Badge variant="outline" className="border-slate-200 bg-white text-slate-500 font-black px-4 py-1.5 rounded-xl uppercase tracking-widest text-[10px]">
+                        <Badge variant="outline" className="w-fit border-slate-200 bg-white text-slate-500 font-black px-4 py-1.5 rounded-xl uppercase tracking-widest text-[10px]">
                             Live Feed
                         </Badge>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
+                <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                    <Table className="min-w-[900px]">
                         <TableHeader className="bg-slate-50/30">
                             <TableRow className="border-slate-100 hover:bg-transparent">
                                 <TableHead className="text-slate-600 font-black uppercase text-[10px] tracking-[0.2em] pl-10 h-16">Order ID</TableHead>

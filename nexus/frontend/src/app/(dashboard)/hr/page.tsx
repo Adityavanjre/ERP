@@ -65,17 +65,17 @@ export default function HrPage() {
     if (!mounted) return null;
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                        <Users className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+                        <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
                         Employees & HR
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Manage employees, payroll, leaves, and departments.</p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
+                <div className="flex gap-3 w-full md:w-auto">
+                    <Button className="w-full md:w-auto justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap">
                         <Plus className="mr-2 h-4 w-4" /> Add Employee
                     </Button>
                 </div>
@@ -114,22 +114,22 @@ export default function HrPage() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="employees" className="space-y-8">
-                <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto">
-                    <TabsTrigger value="employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Employee Directory</TabsTrigger>
-                    <TabsTrigger value="departments" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Departments</TabsTrigger>
-                    <TabsTrigger value="leaves" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Leaves & Absence</TabsTrigger>
-                    <TabsTrigger value="payroll" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Payroll Ledger</TabsTrigger>
+            <Tabs defaultValue="employees" className="space-y-6 md:space-y-8">
+                <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
+                    <TabsTrigger value="employees" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Employee Directory</TabsTrigger>
+                    <TabsTrigger value="departments" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Departments</TabsTrigger>
+                    <TabsTrigger value="leaves" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Leaves & Absence</TabsTrigger>
+                    <TabsTrigger value="payroll" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Payroll Ledger</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="employees">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Employee List</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Master database of all employees</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[800px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Employee ID</TableHead>
@@ -168,11 +168,11 @@ export default function HrPage() {
 
                 <TabsContent value="departments">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Department Groups</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Structural mapping of business departments</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-8">
+                        <CardContent className="p-4 md:p-8">
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                 {Array.isArray(departments) && departments.map((dept) => (
                                     <Card key={dept.id} className="bg-slate-50/50 border-slate-100 hover:border-blue-500/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all group rounded-2xl">
@@ -195,12 +195,12 @@ export default function HrPage() {
 
                 <TabsContent value="leaves">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Absence Records</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Personnel leave requests and availability tracking</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[800px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Requester</TableHead>
@@ -239,12 +239,12 @@ export default function HrPage() {
 
                 <TabsContent value="payroll">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Compensation Ledger</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Disbursement history and financial personnel mapping</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[800px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Cycle Period</TableHead>

@@ -164,8 +164,8 @@ export default function AccountingPage() {
     }, [invoicePage]);
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 md:space-y-8">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Landmark className="mr-4 h-9 w-9 text-amber-500 shadow-sm" />
@@ -173,38 +173,38 @@ export default function AccountingPage() {
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Manage invoices, accounts, transactions, and financial reports.</p>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-wrap items-center gap-3">
                     {pendingDraft && !showCreateInvoice && (
                         <Button
                             variant="outline"
-                            className="bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 text-xs h-11 px-5 rounded-2xl animate-pulse font-black uppercase tracking-widest"
+                            className="bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 text-xs h-11 px-5 rounded-2xl animate-pulse font-black uppercase tracking-widest w-full sm:w-auto"
                             onClick={() => setShowCreateInvoice(true)}
                         >
                             <ShoppingCart className="mr-2 h-4 w-4" /> Resume Transaction
                         </Button>
                     )}
                     {isSyncing && (
-                        <div className="flex items-center text-[10px] font-black text-slate-600 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl animate-pulse uppercase tracking-widest">
+                        <div className="flex items-center text-[10px] font-black text-slate-600 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl animate-pulse uppercase tracking-widest w-full sm:w-auto">
                             <RefreshCw className="h-3 w-3 mr-2 animate-spin text-blue-500" /> System Sync
                         </div>
                     )}
-                    <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner">
+                    <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner w-full sm:w-auto">
                         <Button
                             variant="ghost"
-                            className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
+                            className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9 flex-1 sm:flex-none"
                             onClick={() => setShowCreateAccount(true)}
                         >
                             <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> All Accounts
                         </Button>
                         <Button
                             variant="ghost"
-                            className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9"
+                            className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9 flex-1 sm:flex-none"
                             onClick={() => setShowCreateJournalEntry(true)}
                         >
-                            <Plus className="mr-2 h-4 w-4 text-emerald-500" /> Record Transaction
+                            <Plus className="mr-2 h-4 w-4 text-emerald-500" /> Record Tx
                         </Button>
                     </div>
-                    <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-8 shadow-lg shadow-amber-500/20 text-white h-11" onClick={() => setShowCreateInvoice(true)}>
+                    <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-8 shadow-lg shadow-amber-500/20 text-white h-11 w-full sm:w-auto" onClick={() => setShowCreateInvoice(true)}>
                         <Plus className="mr-2 h-4 w-4" /> New Invoice
                     </Button>
                 </div>
@@ -305,11 +305,11 @@ export default function AccountingPage() {
             )}
 
             <Tabs defaultValue="invoices" className="space-y-6">
-                <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto h-auto p-1.5 rounded-2xl">
-                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Invoices</TabsTrigger>
-                    <TabsTrigger value="accounts" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Accounts</TabsTrigger>
-                    <TabsTrigger value="transactions" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Transactions</TabsTrigger>
-                    <TabsTrigger value="health" className="data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all">Store Health</TabsTrigger>
+                <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto flex justify-start w-full scrollbar-hide h-auto p-1.5 rounded-2xl snap-x">
+                    <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
+                    <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
+                    <TabsTrigger value="transactions" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Transactions</TabsTrigger>
+                    <TabsTrigger value="health" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Store Health</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="invoices" className="space-y-4">
@@ -422,8 +422,8 @@ export default function AccountingPage() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[700px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-600 font-bold uppercase text-[10px] tracking-widest pl-8">Code</TableHead>
@@ -469,8 +469,8 @@ export default function AccountingPage() {
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[600px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-600 font-bold uppercase text-[10px] tracking-widest pl-8">Date</TableHead>

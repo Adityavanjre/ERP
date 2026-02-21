@@ -121,18 +121,20 @@ export default function ProjectPage() {
     if (loading) return <LoadingSpinner className="h-full" text="Loading Projects..." />;
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                        <ClipboardList className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+                        <ClipboardList className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
                         Projects
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Track and manage your projects, tasks, and team progress.</p>
                 </div>
-                <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11" onClick={() => setShowForm(!showForm)}>
-                    <Plus className="mr-2 h-4 w-4" /> New Project
-                </Button>
+                <div className="flex w-full md:w-auto">
+                    <Button className="w-full justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap" onClick={() => setShowForm(!showForm)}>
+                        <Plus className="mr-2 h-4 w-4" /> New Project
+                    </Button>
+                </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -172,11 +174,11 @@ export default function ProjectPage() {
 
             {showForm && (
                 <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-8 animate-in fade-in slide-in-from-top-4">
-                    <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                    <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
                         <CardTitle className="text-slate-900 font-black text-xl">New Project</CardTitle>
                         <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Fill in the details to create a new project</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8">
+                    <CardContent className="p-4 md:p-8">
                         <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2 space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Project Name</Label>
@@ -273,31 +275,31 @@ export default function ProjectPage() {
             </div>
 
             <Dialog open={!!selectedProject} onOpenChange={(open) => !open && setSelectedProject(null)}>
-                <DialogContent className="bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-w-2xl">
-                    <div className="bg-slate-900 p-10 pb-16">
-                        <DialogTitle className="flex items-center gap-4 text-white text-3xl font-black tracking-tight">
-                            <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/40">
-                                <ListTodo className="h-6 w-6 text-white" />
+                <DialogContent className="bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-w-2xl w-[95vw] md:w-full max-h-[90vh] flex flex-col">
+                    <div className="bg-slate-900 p-6 md:p-10 pb-12 md:pb-16 flex-shrink-0">
+                        <DialogTitle className="flex items-center gap-4 text-white text-2xl md:text-3xl font-black tracking-tight">
+                            <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/40">
+                                <ListTodo className="h-5 w-5 md:h-6 md:w-6 text-white" />
                             </div>
                             Task Management
                         </DialogTitle>
-                        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-6 flex items-center gap-2">
-                            Project: <span className="text-blue-400">{selectedProject?.name}</span>
+                        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-4 md:mt-6 flex flex-wrap items-center gap-2">
+                            Project: <span className="text-blue-400 break-words">{selectedProject?.name}</span>
                         </p>
                     </div>
 
-                    <div className="p-10 -mt-10 bg-white rounded-t-[32px] space-y-8">
-                        <form onSubmit={handleCreateTask} className="flex gap-3">
+                    <div className="p-6 md:p-10 -mt-10 bg-white rounded-t-[32px] space-y-6 md:space-y-8 flex-1 overflow-hidden flex flex-col">
+                        <form onSubmit={handleCreateTask} className="flex flex-col md:flex-row gap-3 flex-shrink-0">
                             <Input
                                 placeholder="New task..."
                                 className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-14 px-6 font-bold focus:ring-blue-500/20"
                                 value={newTaskTitle}
                                 onChange={(e) => setNewTaskTitle(e.target.value)}
                             />
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 rounded-2xl h-14 shadow-lg shadow-blue-500/20 active:scale-95 transition-all">Add Task</Button>
+                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 rounded-2xl h-14 shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full md:w-auto shrink-0">Add Task</Button>
                         </form>
 
-                        <div className="h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto pr-2 md:pr-4 custom-scrollbar min-h-[300px]">
                             <div className="space-y-3">
                                 {projectTasks.map((task) => (task && (
                                     <div key={task.id} className={cn(
@@ -306,28 +308,28 @@ export default function ProjectPage() {
                                             ? "bg-slate-50/50 border-slate-100"
                                             : "bg-white border-slate-200 shadow-sm hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/5"
                                     )}>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0 pr-4">
                                             <button
                                                 type="button"
                                                 onClick={() => toggleTaskStatus(task)}
                                                 className={cn(
-                                                    "h-7 w-7 rounded-xl border-2 flex items-center justify-center transition-all",
+                                                    "h-6 w-6 md:h-7 md:w-7 rounded-lg md:rounded-xl border-2 flex shrink-0 items-center justify-center transition-all",
                                                     task.status === 'Completed'
                                                         ? "bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/20"
                                                         : "border-slate-200 hover:border-blue-500"
                                                 )}
                                             >
-                                                {task.status === 'Completed' && <Check className="h-4 w-4 text-white" />}
+                                                {task.status === 'Completed' && <Check className="h-3 w-3 md:h-4 md:w-4 text-white" />}
                                             </button>
                                             <span className={cn(
-                                                "text-sm font-black tracking-tight transition-colors",
+                                                "text-sm font-black tracking-tight transition-colors truncate",
                                                 task.status === 'Completed' ? "text-slate-400 line-through" : "text-slate-900"
-                                            )}>
+                                            )} title={task.title}>
                                                 {task.title}
                                             </span>
                                         </div>
                                         <Badge variant="secondary" className={cn(
-                                            "text-[9px] font-black border-none px-3 py-1 rounded-lg uppercase tracking-widest",
+                                            "text-[9px] font-black border-none px-2 md:px-3 py-1 rounded-lg uppercase tracking-widest shrink-0 whitespace-nowrap",
                                             task.priority === 'High' ? "bg-rose-50 text-rose-600" :
                                                 task.priority === 'Medium' ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-400"
                                         )}>

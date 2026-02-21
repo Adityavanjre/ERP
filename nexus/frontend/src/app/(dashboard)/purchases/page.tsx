@@ -130,32 +130,32 @@ export default function PurchasesPage() {
     };
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6 bg-slate-50/30 min-h-screen">
+        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 bg-slate-50/30 min-h-screen">
             <CreateSupplierDialog
                 open={isAddSupplierOpen}
                 onOpenChange={setIsAddSupplierOpen}
                 onSuccess={() => syncProcurement(false)}
             />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-slate-900 tracking-tighter flex items-center gap-3">
-                        <ShoppingCart className="h-10 w-10 text-indigo-600" /> Purchases & Suppliers
+                    <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center gap-3">
+                        <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-indigo-600" /> Purchases & Suppliers
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Manage your supply chain and purchase orders.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
                     <Button
                         variant="outline"
                         onClick={() => setIsAddSupplierOpen(true)}
-                        className="rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-6 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2"
+                        className="flex-1 sm:flex-none justify-center rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-6 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
                     >
                         <UserPlus className="h-4 w-4" /> Add Supplier
                     </Button>
                     <Button
                         onClick={() => setShowPODialog(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+                        className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-8 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap"
                     >
-                        New Purchase Order
+                        New Order
                     </Button>
                 </div>
             </div>
@@ -193,20 +193,20 @@ export default function PurchasesPage() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="orders" className="space-y-8">
-                <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-fit">
-                    <TabsTrigger value="orders" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Purchase Orders</TabsTrigger>
-                    <TabsTrigger value="suppliers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-8 py-2.5 font-bold transition-all">Suppliers</TabsTrigger>
+            <Tabs defaultValue="orders" className="space-y-6 md:space-y-8">
+                <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
+                    <TabsTrigger value="orders" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Purchase Orders</TabsTrigger>
+                    <TabsTrigger value="suppliers" className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start">Suppliers</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="orders">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none text-slate-900">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
                             <CardTitle className="text-slate-900 text-xl font-black">Purchase Register</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">All purchase orders and their status</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw] sm:max-w-none">
+                            <Table className="min-w-[900px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">Order ID</TableHead>

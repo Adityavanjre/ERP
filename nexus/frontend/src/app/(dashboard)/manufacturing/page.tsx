@@ -73,9 +73,9 @@ export default function ManufacturingDashboard() {
     );
 
     return (
-        <div className="flex-1 space-y-8 p-8 pt-6">
+        <div className="flex-1 space-y-6 md:space-y-8">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
                         <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
@@ -83,17 +83,17 @@ export default function ManufacturingDashboard() {
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Monitor and manage your production orders and materials.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
                     <button
                         onClick={() => router.push('/manufacturing/bom')}
-                        className="px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm"
+                        className="flex-1 md:flex-none justify-center px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
                     >
                         <Settings className="w-4 h-4" />
                         Bill of Materials
                     </button>
                     <button
                         onClick={() => router.push('/manufacturing/orders')}
-                        className="px-6 py-2.5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+                        className="flex-1 md:flex-none justify-center px-6 py-2.5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 whitespace-nowrap"
                     >
                         <Plus className="w-4 h-4" />
                         New Work Order
@@ -117,32 +117,32 @@ export default function ManufacturingDashboard() {
                             <div key={wo.id} className="bg-white border border-slate-200 p-8 rounded-[32px] hover:border-emerald-300 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative border-none shadow-xl shadow-slate-200/40">
                                 <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-50 opacity-0 group-hover:opacity-100 blur-[80px] transition-all -z-0"></div>
 
-                                <div className="flex justify-between items-start relative z-10">
-                                    <div className="flex gap-8 items-center">
+                                <div className="flex flex-col sm:flex-row justify-between items-start relative z-10 gap-4 sm:gap-0">
+                                    <div className="flex gap-4 sm:gap-8 items-start sm:items-center">
                                         <div className={cn(
-                                            "w-16 h-16 rounded-2xl flex items-center justify-center transition-all",
+                                            "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all shrink-0",
                                             wo.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-900 text-white shadow-xl shadow-slate-900/20'
                                         )}>
-                                            {wo.status === 'Completed' ? <CheckCircle2 className="w-8 h-8" /> : <Boxes className="w-8 h-8" />}
+                                            {wo.status === 'Completed' ? <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8" /> : <Boxes className="w-6 h-6 sm:w-8 sm:h-8" />}
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] block mb-1">WO-{wo.orderNumber}</span>
-                                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">{wo.bom?.product?.name}</h3>
-                                            <div className="flex items-center gap-3 mt-2">
+                                            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{wo.bom?.product?.name}</h3>
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                                                 <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-lg border-none uppercase">Level 1 Assembly</Badge>
                                                 {wo.status !== 'Completed' && <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest animate-pulse italic">In Production</span>}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="text-right">
-                                        <span className="text-4xl font-black text-slate-900 tracking-tighter">x{wo.quantity}</span>
+                                    <div className="text-left sm:text-right w-full sm:w-auto mt-2 sm:mt-0 ml-[4rem] sm:ml-0">
+                                        <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter">x{wo.quantity}</span>
                                         <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Projected Output</p>
                                     </div>
                                 </div>
 
-                                <div className="mt-10 pt-8 border-t border-slate-100 flex justify-between items-center relative z-10">
-                                    <div className="flex gap-5 items-center">
+                                <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
+                                    <div className="flex gap-3 sm:gap-5 items-center pl-[4rem] sm:pl-0">
                                         <div className="flex -space-x-3">
                                             {[1, 2, 3].map(i => (
                                                 <div key={i} className="w-8 h-8 rounded-xl bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center text-[10px] font-black text-slate-400">RC</div>
@@ -154,13 +154,13 @@ export default function ManufacturingDashboard() {
                                     {wo.status !== 'Completed' ? (
                                         <button
                                             onClick={() => completeWO(wo.id)}
-                                            className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95"
+                                            className="w-full sm:w-auto justify-center px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95"
                                         >
                                             Mark Complete
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
                                     ) : (
-                                        <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+                                        <div className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
                                             <CheckCircle2 className="w-4 h-4" />
                                             <span className="text-[9px] font-black uppercase tracking-widest">Production Completed</span>
                                         </div>

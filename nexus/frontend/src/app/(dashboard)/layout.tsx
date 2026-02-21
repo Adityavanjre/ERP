@@ -18,7 +18,7 @@ const DashboardLayout = ({
                 <div className="md:pl-72 h-full flex flex-col overflow-hidden">
                     <Navbar />
                     <main className="flex-1 overflow-y-auto scrollbar-hide">
-                        <div className="max-w-[1700px] mx-auto min-h-full p-8 md:p-12">
+                        <div className="max-w-[1700px] mx-auto min-h-full p-4 sm:p-6 md:p-8 lg:p-12">
                             {children}
                         </div>
                     </main>
