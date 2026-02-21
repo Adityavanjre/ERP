@@ -30,7 +30,10 @@ export default function InvoicePrintPage() {
     if (!invoice) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest">Invoice not found</div>;
 
     const subtotal = Number(invoice.subtotal || invoice.totalAmount); // Fallback
-    const totalTax = Number(invoice.taxAmount || 0);
+    const totalTax = Number(invoice.totalGST || invoice.taxAmount || 0);
+    const totalCGST = Number(invoice.totalCGST || 0);
+    const totalSGST = Number(invoice.totalSGST || 0);
+    const totalIGST = Number(invoice.totalIGST || 0);
     const totalAmount = Number(invoice.totalAmount);
 
     // Helper for date formatting
@@ -104,10 +107,10 @@ export default function InvoicePrintPage() {
                             {invoice.items && invoice.items.map((item: any, i: number) => (
                                 <tr key={i}>
                                     <td className="py-4 text-zinc-700 font-medium">
-                                        {item.product?.name || "Product Item"}
+                                        {item.productName || item.product?.name || "Product Item"}
                                         <div className="text-[10px] text-zinc-400 mt-0.5">{item.product?.sku}</div>
                                     </td>
-                                    <td className="py-4 text-right text-zinc-500 font-mono">{item.product?.hsnCode || "-"}</td>
+                                    <td className="py-4 text-right text-zinc-500 font-mono">{item.hsnCode || item.product?.hsnCode || "-"}</td>
                                     <td className="py-4 text-right text-zinc-700">{item.quantity}</td>
                                     <td className="py-4 text-right text-zinc-700">₹{Number(item.price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                                     <td className="py-4 text-right font-bold text-zinc-900">₹{(Number(item.price) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -124,14 +127,24 @@ export default function InvoicePrintPage() {
                             <span>Subtotal</span>
                             <span className="font-medium">₹{(totalAmount - totalTax).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <div className="flex justify-between text-sm text-zinc-600">
-                            <span>CGST (9%)</span>
-                            <span className="font-medium">₹{(totalTax / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-zinc-600">
-                            <span>SGST (9%)</span>
-                            <span className="font-medium">₹{(totalTax / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
+                        {totalCGST > 0 && (
+                            <div className="flex justify-between text-sm text-zinc-600">
+                                <span>CGST</span>
+                                <span className="font-medium">₹{totalCGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+                        {totalSGST > 0 && (
+                            <div className="flex justify-between text-sm text-zinc-600">
+                                <span>SGST</span>
+                                <span className="font-medium">₹{totalSGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
+                        {totalIGST > 0 && (
+                            <div className="flex justify-between text-sm text-zinc-600">
+                                <span>IGST</span>
+                                <span className="font-medium">₹{totalIGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between text-xl font-bold text-zinc-900 border-t-2 border-zinc-900 pt-4 mt-4">
                             <span>Total</span>
                             <span>₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>

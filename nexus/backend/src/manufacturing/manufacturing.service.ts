@@ -69,6 +69,7 @@ export class ManufacturingService {
             productId: item.productId,
             quantity: new Decimal(item.quantity),
             unit: item.unit,
+            isByproduct: item.isByproduct || false,
           })),
         },
       },
@@ -197,7 +198,7 @@ export class ManufacturingService {
     return shortages;
   }
 
-  async completeWorkOrder(tenantId: string, woId: string, warehouseId?: string) {
+  async completeWorkOrder(tenantId: string, woId: string, producedQtyStr?: number | string, scrapQtyStr?: number | string, warehouseId?: string) {
     const wo = await this.prisma.workOrder.findFirst({
       where: { id: woId, tenantId },
       include: { bom: { include: { product: true } } },
@@ -206,11 +207,16 @@ export class ManufacturingService {
     if (!wo) throw new NotFoundException('Work Order not found');
     if (wo.status === 'Completed')
       throw new BadRequestException('Work Order already completed');
+      
+    const producedQty = producedQtyStr !== undefined ? Number(producedQtyStr) : wo.quantity;
+    const scrapQty = scrapQtyStr !== undefined ? Number(scrapQtyStr) : 0;
 
     await this.accounting.checkPeriodLock(tenantId, new Date());
 
     try {
-      const requirements: any[] = await this.explodeBOM(tenantId, wo.bomId, wo.quantity);
+      // Consume raw materials based on the sum of produced and scrap
+      const totalConsumedQty = producedQty + scrapQty;
+      const requirements: any[] = await this.explodeBOM(tenantId, wo.bomId, totalConsumedQty > 0 ? totalConsumedQty : wo.quantity);
       
       return await this.prisma.$transaction(async (tx) => {
         const targetWarehouse = warehouseId || (await tx.warehouse.findFirst({
@@ -259,21 +265,21 @@ export class ManufacturingService {
         if (fgLoc) {
             await tx.stockLocation.updateMany({
                 where: { id: fgLoc.id, warehouse: { tenantId } },
-                data: { quantity: { increment: new Decimal(wo.quantity) } }
+                data: { quantity: { increment: new Decimal(producedQty) } }
             });
         } else {
             await tx.stockLocation.create({
                 data: {
                     productId: wo.bom.productId,
                     warehouseId: targetWarehouse,
-                    quantity: new Decimal(wo.quantity)
+                    quantity: new Decimal(producedQty)
                 }
             });
         }
 
         await tx.product.updateMany({
           where: { id: wo.bom.productId, tenantId },
-          data: { stock: { increment: new Decimal(wo.quantity) } },
+          data: { stock: { increment: new Decimal(producedQty) } },
         });
 
         await tx.stockMovement.create({
@@ -281,20 +287,25 @@ export class ManufacturingService {
                 tenantId,
                 productId: wo.bom.productId,
                 warehouseId: targetWarehouse,
-                quantity: new Decimal(wo.quantity),
+                quantity: new Decimal(producedQty),
                 type: 'IN',
                 reference: wo.orderNumber,
-                notes: `Production Receipt`
+                notes: `Production Receipt (Good Qty: ${producedQty}, Scrap Qty: ${scrapQty})`
             }
         });
 
         const inventoryAccount = await tx.account.findFirst({
-          where: { tenantId, name: 'Inventory Asset' },
+          where: { tenantId, name: { in: ['Inventory Asset', 'Inventory'] } },
+        });
+        
+        const cogsAccount = await tx.account.findFirst({
+          where: { tenantId, name: { in: ['Cost of Goods Sold', 'Cost of Sales'] } },
         });
 
-        if (inventoryAccount) {
+        if (inventoryAccount && cogsAccount) {
             const costData = await this.getBOMCost(tenantId, wo.bomId);
-            const totalProductionValue = new Decimal(costData.totalCost).mul(wo.quantity);
+            // Value based on total consumed
+            const totalProductionValue = new Decimal(costData.totalCost).mul(totalConsumedQty > 0 ? totalConsumedQty : wo.quantity);
 
             await tx.journalEntry.create({
                 data: {
@@ -314,10 +325,10 @@ export class ManufacturingService {
                             },
                              {
                                 tenantId,
-                                accountId: inventoryAccount.id,
+                                accountId: cogsAccount.id,
                                 type: 'Credit',
                                 amount: totalProductionValue,
-                                description: `Production Cost Recovery - ${wo.orderNumber}`
+                                description: `Raw Material Consumption - ${wo.orderNumber}`
                             }
                         ]
                     }
@@ -327,7 +338,7 @@ export class ManufacturingService {
 
         await tx.workOrder.updateMany({
           where: { id: woId, tenantId },
-          data: { status: 'Completed', endDate: new Date() },
+          data: { status: 'Completed', endDate: new Date(), producedQuantity: producedQty, scrapQuantity: scrapQty },
         });
 
         return { success: true };

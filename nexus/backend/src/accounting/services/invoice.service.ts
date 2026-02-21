@@ -155,20 +155,32 @@ export class InvoiceService {
         const costPrice = new Decimal(product.costPrice || 0);
         totalCOGS = totalCOGS.add(costPrice.mul(qty));
 
+        let itemCgstAmount = new Decimal(0);
+        let itemSgstAmount = new Decimal(0);
+        let itemIgstAmount = new Decimal(0);
+
         if (isInterState) {
           totalIGST = totalIGST.add(taxAmount);
+          itemIgstAmount = taxAmount;
         } else {
           totalCGST = totalCGST.add(taxAmount.div(2));
           totalSGST = totalSGST.add(taxAmount.div(2));
+          itemCgstAmount = taxAmount.div(2);
+          itemSgstAmount = taxAmount.div(2);
         }
 
         invoiceItemsData.push({
           productId: product.id,
+          productName: product.name,
+          hsnCode: product.hsnCode || null,
           quantity: qty,
           unitPrice: unitPrice,
           gstRate: gstRate,
           taxableAmount: taxable,
           gstAmount: taxAmount,
+          cgstAmount: itemCgstAmount,
+          sgstAmount: itemSgstAmount,
+          igstAmount: itemIgstAmount,
           totalAmount: this.ledger.round2(taxable.add(taxAmount)),
         });
       }

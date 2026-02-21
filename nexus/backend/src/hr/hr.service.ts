@@ -1,11 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../system/services/audit.service';
+import { AccountingService } from '../accounting/accounting.service';
 import { EmployeeStatus, LeaveStatus, PayrollStatus } from '@prisma/client';
 
 @Injectable()
 export class HrService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  private readonly logger = new Logger(HrService.name);
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+    private accounting: AccountingService,
+  ) {}
 
   // --- Departments ---
   async createDepartment(tenantId: string, data: any) {
@@ -127,6 +133,33 @@ export class HrService {
       resource: 'Payroll',
       details: { id: payroll.id, employeeId, netPay },
     });
+
+    // Post journal entry: Salary Expense Dr / Cash (or Bank) Cr
+    try {
+      const salaryAccount = await this.prisma.account.findFirst({
+        where: { tenantId, name: { in: ['Salary Expense', 'Wages Expense', 'Payroll Expense'] } },
+      });
+      const cashAccount = await this.prisma.account.findFirst({
+        where: { tenantId, name: { in: ['Cash', 'Bank'] } },
+      });
+
+      if (salaryAccount && cashAccount) {
+        await this.accounting.createJournalEntry(tenantId, {
+          date: new Date().toISOString(),
+          description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
+          reference: payroll.id,
+          transactions: [
+            { accountId: salaryAccount.id, type: 'Debit', amount: netPay, description: 'Salary Disbursement' },
+            { accountId: cashAccount.id, type: 'Credit', amount: netPay, description: 'Salary Disbursement' },
+          ],
+        });
+      } else {
+        this.logger.warn(`Payroll journal skipped for tenant ${tenantId}: Salary Expense or Cash account not found in COA.`);
+      }
+    } catch (journalErr) {
+      this.logger.error(`Failed to post payroll journal for payroll ${payroll.id}`, journalErr);
+      // Do NOT fail payroll creation if journal fails - log and continue
+    }
 
     return payroll;
   }

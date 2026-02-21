@@ -56,21 +56,67 @@ export class PurchasesService {
 
   // --- Purchase Orders ---
   async createPurchaseOrder(tenantId: string, data: any) {
-    const { items, supplierId, ...poData } = data;
+    const { items, supplierId, isInterState = false, ...poData } = data;
 
     return this.prisma.$transaction(async (tx) => {
+      // Compute GST per item
+      let totalTaxable = new Decimal(0);
+      let totalGST = new Decimal(0);
+      let totalCGST = new Decimal(0);
+      let totalSGST = new Decimal(0);
+      let totalIGST = new Decimal(0);
+
+      const enrichedItems = await Promise.all(
+        items.map(async (item: any) => {
+          const product = await tx.product.findFirst({
+            where: { id: item.productId, tenantId, isDeleted: false },
+            select: { gstRate: true, hsnCode: true },
+          });
+          const qty = new Decimal(item.quantity);
+          const unitPrice = new Decimal(item.unitPrice);
+          const taxable = qty.mul(unitPrice);
+          const gstRate = new Decimal(product?.gstRate || item.gstRate || 0);
+          const gstAmount = taxable.mul(gstRate).div(100).toDecimalPlaces(2);
+
+          const cgst = isInterState ? new Decimal(0) : gstAmount.div(2).toDecimalPlaces(2);
+          const sgst = isInterState ? new Decimal(0) : gstAmount.div(2).toDecimalPlaces(2);
+          const igst = isInterState ? gstAmount : new Decimal(0);
+
+          totalTaxable = totalTaxable.add(taxable);
+          totalGST = totalGST.add(gstAmount);
+          totalCGST = totalCGST.add(cgst);
+          totalSGST = totalSGST.add(sgst);
+          totalIGST = totalIGST.add(igst);
+
+          return {
+            productId: item.productId,
+            hsnCode: product?.hsnCode || item.hsnCode || null,
+            quantity: qty,
+            unitPrice,
+            taxableAmount: taxable.toDecimalPlaces(2),
+            gstRate,
+            cgstAmount: cgst,
+            sgstAmount: sgst,
+            igstAmount: igst,
+            totalAmount: taxable.add(gstAmount).toDecimalPlaces(2),
+          };
+        }),
+      );
+
+      const totalAmount = totalTaxable.add(totalGST).toDecimalPlaces(2);
+
       const po = await tx.purchaseOrder.create({
         data: {
           ...poData,
           tenantId,
           supplierId,
-          items: {
-            create: items.map((item: any) => ({
-              productId: item.productId,
-              quantity: new Decimal(item.quantity),
-              unitPrice: new Decimal(item.unitPrice),
-            })),
-          },
+          totalAmount,
+          totalTaxable: totalTaxable.toDecimalPlaces(2),
+          totalGST: totalGST.toDecimalPlaces(2),
+          totalCGST: totalCGST.toDecimalPlaces(2),
+          totalSGST: totalSGST.toDecimalPlaces(2),
+          totalIGST: totalIGST.toDecimalPlaces(2),
+          items: { create: enrichedItems },
         },
         include: { items: true },
       });
@@ -78,6 +124,7 @@ export class PurchasesService {
       return po;
     });
   }
+
 
   async getPurchaseOrders(tenantId: string) {
     return this.prisma.purchaseOrder.findMany({

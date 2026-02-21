@@ -60,6 +60,13 @@ export class InventoryController {
     return this.warehouseService.logMovement(tenantId, data);
   }
 
+  @Post('transfers')
+  @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
+  @Permissions(Permission.ADJUST_STOCK)
+  transferStock(@TenantId() tenantId: string, @Body() data: any) {
+    return this.warehouseService.transferStock(tenantId, data);
+  }
+
   @Post('products')
   @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
   @Permissions(Permission.ADJUST_STOCK)

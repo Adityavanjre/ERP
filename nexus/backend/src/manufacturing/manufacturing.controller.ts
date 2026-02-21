@@ -94,8 +94,16 @@ export class ManufacturingController {
     @CurrentUser() user: any,
     @Param('id') id: string,
     @Body('warehouseId') warehouseId?: string,
+    @Body('producedQuantity') producedQuantity?: number,
+    @Body('scrapQuantity') scrapQuantity?: number,
   ) {
-    return this.mfgService.completeWorkOrder(user.tenantId, id, warehouseId);
+    return this.mfgService.completeWorkOrder(
+      user.tenantId, 
+      id, 
+      producedQuantity,
+      scrapQuantity,
+      warehouseId
+    );
   }
 
   // Machines

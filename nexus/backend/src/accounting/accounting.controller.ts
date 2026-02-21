@@ -221,4 +221,36 @@ export class AccountingController {
     // 2. Perform actual deletion
     return this.accountingService.deleteInvoice(req.user.tenantId, id);
   }
+
+  @Get('reports/trial-balance')
+  @Permissions(Permission.VIEW_REPORTS)
+  getTrialBalance(@Req() req: any) {
+    return this.accountingService.getTrialBalance(req.user.tenantId);
+  }
+
+  @Get('reports/profit-loss')
+  @Permissions(Permission.VIEW_REPORTS)
+  getProfitLoss(@Req() req: any) {
+    return this.accountingService.getProfitLoss(req.user.tenantId);
+  }
+
+  // --- Fixed Assets ---
+  @Get('fixed-assets')
+  @Permissions(Permission.VIEW_REPORTS)
+  getFixedAssets(@Req() req: any) {
+    return this.accountingService.getFixedAssets(req.user.tenantId);
+  }
+
+  @Post('fixed-assets')
+  @Permissions(Permission.CREATE_INVOICE)
+  createFixedAsset(@Req() req: any, @Body() body: any) {
+    return this.accountingService.createFixedAsset(req.user.tenantId, body);
+  }
+
+  @Post('fixed-assets/:id/depreciate')
+  @Permissions(Permission.VIEW_REPORTS)
+  runDepreciation(@Req() req: any, @Param('id') id: string) {
+    return this.accountingService.runMonthlyDepreciation(req.user.tenantId, id);
+  }
 }
+

@@ -14,9 +14,27 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Plus, Users, Calendar, Banknote, Building2 } from "lucide-react";
+import { Plus, Users, Calendar, Banknote, Building2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function HrPage() {
     const [employees, setEmployees] = useState<any[]>([]);
@@ -27,6 +45,11 @@ export default function HrPage() {
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
+
+    // Add Employee Dialog State
+    const [addOpen, setAddOpen] = useState(false);
+    const [addLoading, setAddLoading] = useState(false);
+    const [empForm, setEmpForm] = useState({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "" });
 
     const syncEmployeeData = async (showLoading = false) => {
         try {
@@ -62,6 +85,38 @@ export default function HrPage() {
         return () => clearInterval(interval);
     }, []);
 
+    const handleAddEmployee = async () => {
+        if (!empForm.firstName || !empForm.lastName || !empForm.employeeId) {
+            toast.error("First name, last name, and Employee ID are required.");
+            return;
+        }
+        try {
+            setAddLoading(true);
+            await api.post("/hr/employees", {
+                ...empForm,
+                salary: empForm.salary ? Number(empForm.salary) : 0,
+            });
+            toast.success("Employee added successfully");
+            setAddOpen(false);
+            setEmpForm({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "" });
+            syncEmployeeData(true);
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to add employee");
+        } finally {
+            setAddLoading(false);
+        }
+    };
+
+    const handleLeaveAction = async (leaveId: string, action: 'Approved' | 'Rejected') => {
+        try {
+            await api.patch(`/hr/leaves/${leaveId}/status`, { status: action });
+            toast.success(`Leave ${action.toLowerCase()} successfully`);
+            syncEmployeeData(false);
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Action failed");
+        }
+    };
+
     if (!mounted) return null;
 
     return (
@@ -75,9 +130,61 @@ export default function HrPage() {
                     <p className="text-slate-500 mt-2 font-medium">Manage employees, payroll, leaves, and departments.</p>
                 </div>
                 <div className="flex gap-3 w-full md:w-auto">
-                    <Button className="w-full md:w-auto justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap">
-                        <Plus className="mr-2 h-4 w-4" /> Add Employee
-                    </Button>
+                    <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="w-full md:w-auto justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap">
+                                <Plus className="mr-2 h-4 w-4" /> Add Employee
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-lg">
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-blue-600" /> New Employee</DialogTitle>
+                                <DialogDescription>Fill in the employee details below.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">First Name *</Label>
+                                        <Input value={empForm.firstName} onChange={e => setEmpForm(p => ({ ...p, firstName: e.target.value }))} placeholder="e.g. Rahul" className="h-10" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Last Name *</Label>
+                                        <Input value={empForm.lastName} onChange={e => setEmpForm(p => ({ ...p, lastName: e.target.value }))} placeholder="e.g. Sharma" className="h-10" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Employee ID *</Label>
+                                        <Input value={empForm.employeeId} onChange={e => setEmpForm(p => ({ ...p, employeeId: e.target.value }))} placeholder="e.g. EMP-001" className="h-10 font-mono" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Job Title</Label>
+                                        <Input value={empForm.jobTitle} onChange={e => setEmpForm(p => ({ ...p, jobTitle: e.target.value }))} placeholder="e.g. Engineer" className="h-10" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Email</Label>
+                                        <Input type="email" value={empForm.email} onChange={e => setEmpForm(p => ({ ...p, email: e.target.value }))} placeholder="email@company.com" className="h-10" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Phone</Label>
+                                        <Input value={empForm.phone} onChange={e => setEmpForm(p => ({ ...p, phone: e.target.value }))} placeholder="9876543210" className="h-10 font-mono" />
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Monthly Gross Salary (INR)</Label>
+                                    <Input type="number" value={empForm.salary} onChange={e => setEmpForm(p => ({ ...p, salary: e.target.value }))} placeholder="0" className="h-10 font-mono" />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setAddOpen(false)} disabled={addLoading}>Cancel</Button>
+                                <Button onClick={handleAddEmployee} disabled={addLoading} className="bg-blue-600 hover:bg-blue-700 font-bold">
+                                    {addLoading ? "Saving..." : "Add Employee"}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </div>
 
@@ -220,9 +327,21 @@ export default function HrPage() {
                                                 {new Date(leave.startDate).toLocaleDateString()} — {new Date(leave.endDate).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell className="text-right pr-8">
-                                                <Badge className={leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase' : leave.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-none font-black text-[10px] uppercase' : 'bg-rose-50 text-rose-600 border-none font-black text-[10px] uppercase'}>
-                                                    {leave.status}
-                                                </Badge>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Badge className={leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase' : leave.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-none font-black text-[10px] uppercase' : 'bg-rose-50 text-rose-600 border-none font-black text-[10px] uppercase'}>
+                                                        {leave.status}
+                                                    </Badge>
+                                                    {leave.status === 'Pending' && (
+                                                        <>
+                                                            <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600 hover:bg-emerald-50" onClick={() => handleLeaveAction(leave.id, 'Approved')} title="Approve">
+                                                                <Check className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:bg-red-50" onClick={() => handleLeaveAction(leave.id, 'Rejected')} title="Reject">
+                                                                <X className="h-4 w-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

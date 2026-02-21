@@ -21,7 +21,9 @@ import {
     Wand2,
     RefreshCw,
     Command,
-    ShieldCheck
+    ShieldCheck,
+    ArrowLeftRight,
+    BarChart2
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
 import { toast } from 'react-hot-toast';
@@ -67,6 +69,7 @@ const businessStreams: BusinessStream[] = [
             { label: 'Products', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
             { label: 'Purchases', href: '/purchases', icon: ShoppingBag, allowedRoles: STOCK_ROLES },
             { label: 'Warehouses', href: '/inventory/warehouses', icon: LayoutGrid, allowedRoles: STOCK_ROLES },
+            { label: 'Stock Movements', href: '/inventory/movements', icon: ArrowLeftRight, allowedRoles: STOCK_ROLES },
         ]
     },
     {
@@ -84,6 +87,8 @@ const businessStreams: BusinessStream[] = [
         items: [
             { label: 'Accounts', href: '/accounting', icon: Landmark, allowedRoles: FINANCE_ROLES },
             { label: 'Auditor', href: '/accounting/auditor', icon: ShieldCheck, allowedRoles: FINANCE_ROLES },
+            { label: 'Reports', href: '/accounting/reports', icon: BarChart2, allowedRoles: FINANCE_ROLES },
+            { label: 'Fixed Assets', href: '/accounting/fixed-assets', icon: Briefcase, allowedRoles: FINANCE_ROLES },
         ]
     }
 ];

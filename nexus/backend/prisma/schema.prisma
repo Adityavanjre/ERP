@@ -363,22 +363,25 @@ model BillOfMaterial {
 }
 
 model BOMItem {
-  id        String         @id @default(uuid())
-  bomId     String
-  productId String
-  quantity  Decimal
-  unit      String?
-  product   Product        @relation(fields: [productId], references: [id])
-  bom       BillOfMaterial @relation(fields: [bomId], references: [id])
+  id          String         @id @default(uuid())
+  bomId       String
+  productId   String
+  quantity    Decimal
+  unit        String?
+  isByproduct Boolean        @default(false)
+  product     Product        @relation(fields: [productId], references: [id])
+  bom         BillOfMaterial @relation(fields: [bomId], references: [id])
 }
 
 model WorkOrder {
-  id          String          @id @default(uuid())
-  tenantId    String
-  orderNumber String
-  bomId       String
-  quantity    Int
-  startDate   DateTime?
+  id               String          @id @default(uuid())
+  tenantId         String
+  orderNumber      String
+  bomId            String
+  quantity         Int
+  producedQuantity Int             @default(0)
+  scrapQuantity    Int             @default(0)
+  startDate        DateTime?
   endDate     DateTime?
   status      WorkOrderStatus @default(Planned)
   priority    Priority        @default(Medium)
@@ -488,11 +491,16 @@ model InvoiceItem {
   id            String   @id @default(uuid())
   invoiceId     String
   productId     String
+  productName   String   @default("")
+  hsnCode       String?
   quantity      Decimal
   unitPrice     Decimal
   gstRate       Decimal
   taxableAmount Decimal
   gstAmount     Decimal
+  cgstAmount    Decimal  @default(0.00)
+  sgstAmount    Decimal  @default(0.00)
+  igstAmount    Decimal  @default(0.00)
   totalAmount   Decimal
   createdAt     DateTime @default(now())
   product       Product  @relation(fields: [productId], references: [id])
@@ -644,6 +652,11 @@ model PurchaseOrder {
   orderDate    DateTime            @default(now())
   expectedDate DateTime?
   totalAmount  Decimal
+  totalTaxable Decimal             @default(0.00)
+  totalGST     Decimal             @default(0.00)
+  totalCGST    Decimal             @default(0.00)
+  totalSGST    Decimal             @default(0.00)
+  totalIGST    Decimal             @default(0.00)
   status       POStatus            @default(Draft)
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
@@ -656,10 +669,19 @@ model PurchaseOrderItem {
   id              String        @id @default(uuid())
   purchaseOrderId String
   productId       String
+  hsnCode         String?
   quantity        Decimal
   unitPrice       Decimal
+  taxableAmount   Decimal       @default(0.00)
+  gstRate         Decimal       @default(0.00)
+  cgstAmount      Decimal       @default(0.00)
+  sgstAmount      Decimal       @default(0.00)
+  igstAmount      Decimal       @default(0.00)
+  totalAmount     Decimal       @default(0.00)
   product         Product       @relation(fields: [productId], references: [id])
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+
+  @@index([purchaseOrderId, productId])
 }
 
 model Project {

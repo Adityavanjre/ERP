@@ -29,8 +29,8 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { cn } from "@/lib/utils";
 import { CreateWorkOrderDialog } from "@/components/manufacturing/create-work-order-dialog";
+import { CompleteWorkOrderDialog } from "@/components/manufacturing/complete-work-order-dialog";
 
 export default function WorkOrdersPage() {
     const [workOrders, setWorkOrders] = useState<any[]>([]);
@@ -55,15 +55,11 @@ export default function WorkOrdersPage() {
         return () => clearInterval(interval);
     }, []);
 
-    const completeWO = async (id: string) => {
-        try {
-            await api.post(`/manufacturing/work-orders/${id}/complete`, {});
-            toast.success("Work order marked complete");
-            syncExecutionQueues(true);
-        } catch (err: any) {
-            toast.error("Failed to complete work order");
-        }
-    };
+    useEffect(() => {
+        syncExecutionQueues(true);
+        const interval = setInterval(() => syncExecutionQueues(false), 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -196,12 +192,13 @@ export default function WorkOrdersPage() {
                                     </TableCell>
                                     <TableCell className="text-right pr-8">
                                         {wo.status !== 'Completed' ? (
-                                            <Button
-                                                onClick={() => completeWO(wo.id)}
-                                                className="bg-slate-900 hover:bg-emerald-600 text-white font-bold h-9 rounded-xl px-5 text-[10px] uppercase tracking-widest shadow-lg shadow-slate-900/10"
-                                            >
-                                                Mark Complete
-                                            </Button>
+                                            <CompleteWorkOrderDialog workOrder={wo} refreshData={() => syncExecutionQueues(true)}>
+                                                <Button
+                                                    className="bg-slate-900 hover:bg-emerald-600 text-white font-bold h-9 rounded-xl px-5 text-[10px] uppercase tracking-widest shadow-lg shadow-slate-900/10"
+                                                >
+                                                    Mark Complete
+                                                </Button>
+                                            </CompleteWorkOrderDialog>
                                         ) : (
                                             <div className="flex items-center justify-end text-emerald-600">
                                                 <BadgeCheck className="h-5 w-5" />

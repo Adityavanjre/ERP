@@ -125,7 +125,7 @@ services:
   repo: https://github.com/Adityavanjre/ERP
   buildCommand: npm install && npm run build
   staticPublishPath: dist
-  autoDeployTrigger: commit
+  autoDeployTrigger: "off"
   rootDir: agency/client
 databases:
 - name: klypso-db
