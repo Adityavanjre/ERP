@@ -45,14 +45,6 @@ export class PrismaService
               'User', 
               'TenantUser', 
               'Plugin', 
-              'App', 
-              'ModelDefinition', 
-              'FieldDefinition', 
-              'ModelAccess', 
-              'WorkflowDefinition', 
-              'WorkflowNode', 
-              'WorkflowTransition',
-              'AuditLog'
             ];
 
             if (globalModels.includes(model)) {

@@ -1,13 +1,9 @@
 import { Module } from '@nestjs/common';
 import { RegistryService } from './services/registry.service';
-import { OrmService } from './services/orm.service';
-import { WorkflowService } from './services/workflow.service';
 import { AiService } from './services/ai.service';
 import { AuditService } from './services/audit.service';
 import { BillingService } from './services/billing.service';
 import { RegistryController } from './controllers/registry.controller';
-import { StudioController } from './controllers/studio.controller';
-import { WorkflowController } from './controllers/workflow.controller';
 import { AiController } from './controllers/ai.controller';
 import { BillingController } from './controllers/billing.controller';
 import { HealthController } from './controllers/health.controller';
@@ -32,8 +28,6 @@ import { SystemController } from './system.controller';
   imports: [PrismaModule],
   controllers: [
     RegistryController,
-    StudioController,
-    WorkflowController,
     AiController,
     BillingController,
     HealthController,
@@ -46,8 +40,6 @@ import { SystemController } from './system.controller';
   ],
   providers: [
     RegistryService,
-    OrmService,
-    WorkflowService,
     AiService,
     AuditService,
     BillingService,
@@ -62,8 +54,6 @@ import { SystemController } from './system.controller';
   ],
   exports: [
     RegistryService,
-    OrmService,
-    WorkflowService,
     AiService,
     AuditService,
     BillingService,

@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AccountType, TransactionType } from '@prisma/client';
+import { AccountType, Prisma } from '@prisma/client';
+import { StandardAccounts } from '../constants/account-names';
 import { CreateJournalEntryDto } from '../dto/create-journal.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -10,7 +11,7 @@ export class LedgerService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: any,
-  ) {}
+  ) { }
 
   round2(val: number | string | Decimal): Decimal {
     if (val instanceof Decimal) {
@@ -47,8 +48,42 @@ export class LedgerService {
   }
 
   async createAccount(tenantId: string, data: any) {
-    return this.prisma.account.create({
-      data: { ...data, tenantId },
+    const { openingBalance, ...accountData } = data;
+
+    return this.prisma.$transaction(async (tx) => {
+      const account = await tx.account.create({
+        data: { ...accountData, tenantId, balance: 0 },
+      });
+
+      if (openingBalance && Number(openingBalance) !== 0) {
+        const obAcc = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+        });
+
+        if (obAcc) {
+          const amount = new Decimal(openingBalance);
+          const isDebitNormal = ([AccountType.Asset, AccountType.Expense] as string[]).includes(account.type as string);
+          const isDebitEntry = amount.isPositive(); // +ve amount as opening balance is treated as 'Normal' for that account type
+
+          // For Assets: +ve is Debit
+          // For Liabilities: +ve is Credit
+          const type = isDebitNormal
+            ? (isDebitEntry ? 'Debit' : 'Credit')
+            : (isDebitEntry ? 'Credit' : 'Debit');
+
+          await this.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `Opening Balance: ${account.name}`,
+            reference: `OB-${account.code || account.id.slice(0, 8)}`,
+            transactions: [
+              { accountId: account.id, type: type as any, amount: amount.abs().toNumber(), description: 'Opening Balance Entry' },
+              { accountId: obAcc.id, type: (type === 'Debit' ? 'Credit' : 'Debit') as any, amount: amount.abs().toNumber(), description: 'Opening Balance Entry' },
+            ],
+          }, tx);
+        }
+      }
+
+      return account;
     });
   }
 
@@ -59,25 +94,51 @@ export class LedgerService {
     });
   }
 
-  async initializeTenantAccounts(tenantId: string, tx?: any) {
+  async initializeTenantAccounts(tenantId: string, tx?: any, industry?: string) {
     const client = tx || this.prisma;
-    const defaults = [
-      { name: 'Accounts Receivable', type: AccountType.Asset, code: '1001' },
-      { name: 'Bank', type: AccountType.Asset, code: '1002' },
-      { name: 'Cash', type: AccountType.Asset, code: '1003' },
-      { name: 'Inventory', type: AccountType.Asset, code: '1004' },
-      { name: 'Accounts Payable', type: AccountType.Liability, code: '2001' },
-      { name: 'GST Payable', type: AccountType.Liability, code: '2002' },
-      { name: 'Sales', type: AccountType.Revenue, code: '3001' },
-      { name: 'Cost of Goods Sold', type: AccountType.Expense, code: '4001' },
-      { name: 'Rent Expense', type: AccountType.Expense, code: '4002' },
-      { name: 'Depreciation Expense', type: AccountType.Expense, code: '4003' },
-      { name: 'Retained Earnings', type: AccountType.Equity, code: '5001' },
+
+    const baseAccounts = [
+      { name: StandardAccounts.ACCOUNTS_RECEIVABLE, type: AccountType.Asset, code: '1001' },
+      { name: StandardAccounts.CASH, type: AccountType.Asset, code: '1002' },
+      { name: StandardAccounts.BANK, type: AccountType.Asset, code: '1003' },
+      { name: StandardAccounts.GST_RECEIVABLE, type: AccountType.Asset, code: '1008' },
+      { name: StandardAccounts.OPENING_BALANCE_EQUITY, type: AccountType.Equity, code: '3001' },
+      { name: StandardAccounts.ACCOUNTS_PAYABLE, type: AccountType.Liability, code: '2001' },
+      { name: StandardAccounts.OUTPUT_IGST, type: AccountType.Liability, code: '2002' },
+      { name: StandardAccounts.OUTPUT_CGST, type: AccountType.Liability, code: '2003' },
+      { name: StandardAccounts.OUTPUT_SGST, type: AccountType.Liability, code: '2004' },
+      { name: StandardAccounts.INPUT_IGST, type: AccountType.Liability, code: '2005' },
+      { name: StandardAccounts.INPUT_CGST, type: AccountType.Liability, code: '2006' },
+      { name: StandardAccounts.INPUT_SGST, type: AccountType.Liability, code: '2007' },
+      { name: StandardAccounts.SALES, type: AccountType.Revenue, code: '4001' },
+      { name: StandardAccounts.SALES_RETURNS, type: AccountType.Revenue, code: '4003' },
+      { name: StandardAccounts.COGS, type: AccountType.Expense, code: '5001' },
+      { name: StandardAccounts.PURCHASE_RETURNS, type: AccountType.Expense, code: '5005' },
+      { name: StandardAccounts.SALARY_EXPENSE, type: AccountType.Expense, code: '5002' },
+      { name: 'Retained Earnings', type: AccountType.Equity, code: '3002' },
       { name: 'Fixed Assets', type: AccountType.Asset, code: '1101' },
       { name: 'Accumulated Depreciation', type: AccountType.Asset, code: '1102' },
+      { name: 'Depreciation Expense', type: AccountType.Expense, code: '5003' },
     ];
 
-    for (const acc of defaults) {
+    const inventoryAccounts = [];
+    if (industry === 'Manufacturing') {
+      inventoryAccounts.push(
+        { name: StandardAccounts.RAW_MATERIAL_INVENTORY, type: AccountType.Asset, code: '1005' },
+        { name: StandardAccounts.FINISHED_GOODS_INVENTORY, type: AccountType.Asset, code: '1006' },
+        { name: StandardAccounts.WIP_INVENTORY, type: AccountType.Asset, code: '1007' },
+        { name: StandardAccounts.MANUFACTURING_OVERHEAD_ABSORBED, type: AccountType.Revenue, code: '4002' },
+        { name: StandardAccounts.SCRAP_EXPENSE, type: AccountType.Expense, code: '5004' }
+      );
+    } else if (industry !== 'Service') {
+      inventoryAccounts.push(
+        { name: StandardAccounts.INVENTORY_ASSET, type: AccountType.Asset, code: '1004' }
+      );
+    }
+
+    const defaultAccounts = [...baseAccounts, ...inventoryAccounts];
+
+    for (const acc of defaultAccounts) {
       const exists = await client.account.findFirst({
         where: {
           tenantId,
@@ -123,18 +184,29 @@ export class LedgerService {
   async createJournalEntry(tenantId: string, data: CreateJournalEntryDto, tx?: any) {
     const totalDebit = data.transactions
       .filter((t) => t.type === 'Debit')
-      .reduce((sum, t) => sum.add(new Decimal(t.amount)), new Decimal(0))
+      .reduce((sum, t) => sum.add(this.round2(t.amount)), new Decimal(0))
       .toDecimalPlaces(2);
 
     const totalCredit = data.transactions
       .filter((t) => t.type === 'Credit')
-      .reduce((sum, t) => sum.add(new Decimal(t.amount)), new Decimal(0))
+      .reduce((sum, t) => sum.add(this.round2(t.amount)), new Decimal(0))
       .toDecimalPlaces(2);
 
     if (!totalDebit.equals(totalCredit)) {
       throw new BadRequestException(
-        `Journal entry must balance exactly. Debit: ${totalDebit}, Credit: ${totalCredit}`,
+        `Journal entry must balance exactly using rounded amounts (2 decimal places). Debit: ${totalDebit}, Credit: ${totalCredit}`,
       );
+    }
+
+    if (totalDebit.isZero()) {
+      throw new BadRequestException('Journal entry cannot be for zero amount.');
+    }
+
+    // Verify all transactions belong to the same tenant or are valid
+    for (const t of data.transactions) {
+      if (new Decimal(t.amount).isZero()) {
+        throw new BadRequestException('Individual transactions cannot have zero amount.');
+      }
     }
 
     const execute = async (client: any) => {
@@ -151,11 +223,12 @@ export class LedgerService {
       });
 
       for (const t of data.transactions) {
+        const roundedAmount = this.round2(t.amount);
         await client.transaction.create({
           data: {
             tenantId,
             accountId: t.accountId,
-            amount: t.amount,
+            amount: roundedAmount,
             type: t.type,
             description: t.description || data.description, // Use t.description if available
             journalEntryId: journal.id,

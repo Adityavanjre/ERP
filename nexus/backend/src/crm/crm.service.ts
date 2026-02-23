@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CustomerStatus } from '@prisma/client';
 import { AuditService } from '../system/services/audit.service';
+import { LedgerService } from '../accounting/services/ledger.service';
+import { AccountType } from '@prisma/client';
 
 @Injectable()
 export class CrmService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private ledger: LedgerService,
   ) {}
 
   async createCustomer(tenantId: string, data: any) {
@@ -38,14 +41,32 @@ export class CrmService {
     });
 
     if (openingBalance && Number(openingBalance) !== 0) {
-      await this.prisma.customerOpeningBalance.create({
-        data: {
-          tenantId,
-          customerId: customer.id,
-          amount: Number(openingBalance),
-          description: 'Opening Balance Migration',
-          date: new Date(),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.customerOpeningBalance.create({
+          data: {
+            tenantId,
+            customerId: customer.id,
+            amount: Number(openingBalance),
+            description: 'Opening Balance Migration',
+            date: new Date(),
+          },
+        });
+
+        // GL Journal: Dr Accounts Receivable / Cr Opening Balance Equity
+        const arAcc = await tx.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
+        const obAcc = await tx.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
+
+        if (arAcc && obAcc) {
+          await this.ledger.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `Opening Balance: ${customer.firstName} ${customer.lastName || ''}`,
+            reference: `OB-${customer.id.slice(0, 8)}`,
+            transactions: [
+              { accountId: arAcc.id, type: 'Debit', amount: Math.abs(Number(openingBalance)), description: 'Customer Opening Balance' },
+              { accountId: obAcc.id, type: 'Credit', amount: Math.abs(Number(openingBalance)), description: 'Customer Opening Balance' },
+            ],
+          }, tx);
+        }
       });
     }
 
@@ -394,22 +415,42 @@ export class CrmService {
 
   // --- Opening Balances ---
   async addOpeningBalance(tenantId: string, customerId: string, data: any) {
-    const ob = await this.prisma.customerOpeningBalance.create({
-      data: {
-        ...data,
+    return this.prisma.$transaction(async (tx) => {
+      const ob = await tx.customerOpeningBalance.create({
+        data: {
+          ...data,
+          tenantId,
+          customerId,
+        },
+      });
+
+      const customer = await tx.customer.findUnique({ where: { id: customerId } });
+
+      // GL Journal: Dr Accounts Receivable / Cr Opening Balance Equity
+      const arAcc = await tx.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
+      const obAcc = await tx.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
+
+      if (arAcc && obAcc) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date(data.date || new Date()).toISOString(),
+          description: `Opening Balance Adjustment: ${customer?.firstName || ''}`,
+          reference: `OB-${ob.id.slice(0, 8)}`,
+          transactions: [
+            { accountId: arAcc.id, type: 'Debit', amount: Math.abs(Number(ob.amount)), description: 'Opening Balance Entry' },
+            { accountId: obAcc.id, type: 'Credit', amount: Math.abs(Number(ob.amount)), description: 'Opening Balance Entry' },
+          ],
+        }, tx);
+      }
+
+      await this.audit.log({
         tenantId,
-        customerId,
-      },
-    });
+        action: 'ADD_OPENING_BALANCE',
+        resource: 'Customer',
+        details: { customerId, balanceId: ob.id, amount: ob.amount },
+      });
 
-    await this.audit.log({
-      tenantId,
-      action: 'ADD_OPENING_BALANCE',
-      resource: 'Customer',
-      details: { customerId, balanceId: ob.id, amount: ob.amount },
+      return ob;
     });
-
-    return ob;
   }
 
   async getOpeningBalances(tenantId: string, customerId: string) {

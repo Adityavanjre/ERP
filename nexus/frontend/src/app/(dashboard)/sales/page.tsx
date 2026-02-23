@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUX } from "@/components/providers/ux-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
 import {
     Select,
     SelectContent,
@@ -41,6 +42,7 @@ export default function SalesPage() {
     const [products, setProducts] = useState<any[]>([]);
     const [customers, setCustomers] = useState<any[]>([]);
     const [orderData, setOrderData] = useState({ customerId: "", productId: "", quantity: 1 });
+    const [showConfirm, setShowConfirm] = useState(false);
 
     const syncSalesData = async (showLoading = false) => {
         try {
@@ -69,14 +71,25 @@ export default function SalesPage() {
         return () => clearInterval(interval);
     }, []);
 
-    const handleCreateOrder = async (e: React.FormEvent) => {
+    const handleConfirmSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            if (!orderData.customerId || !orderData.productId) {
-                toast.error("Please select customer and product");
-                return;
-            }
+        if (!orderData.customerId || !orderData.productId) {
+            toast.error("Please select customer and product");
+            return;
+        }
 
+        const selectedProduct = (products || []).find(p => p.id === orderData.productId);
+        const orderTotal = (selectedProduct ? Number(selectedProduct.price) : 0) * Number(orderData.quantity);
+
+        if (orderTotal > 100000) {
+            setShowConfirm(true);
+        } else {
+            submitOrder();
+        }
+    };
+
+    const submitOrder = async () => {
+        try {
             setIsSubmitting(true);
             setUILocked(true);
             const selectedProduct = (products || []).find(p => p.id === orderData.productId);
@@ -280,7 +293,7 @@ export default function SalesPage() {
                         <DialogTitle className="text-white font-black text-3xl tracking-tight">Create New Order</DialogTitle>
                         <p className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] mt-3">Add a new customer order or invoice</p>
                     </div>
-                    <form onSubmit={handleCreateOrder} className="p-10 -mt-8 bg-white rounded-t-[40px] space-y-8">
+                    <form onSubmit={handleConfirmSubmit} className="p-10 -mt-8 bg-white rounded-t-[40px] space-y-8">
                         <div className="space-y-3">
                             <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">Select Customer</Label>
                             <Select value={orderData.customerId} onValueChange={v => setOrderData({ ...orderData, customerId: v })}>
@@ -326,8 +339,11 @@ export default function SalesPage() {
                                 type="number"
                                 min="1"
                                 className="bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-14 px-5 text-2xl font-black focus:ring-blue-500/20 tabular-nums"
-                                value={orderData.quantity}
-                                onChange={e => setOrderData({ ...orderData, quantity: Math.max(1, Number(e.target.value)) })}
+                                value={orderData.quantity || ""}
+                                onChange={e => {
+                                    const val = e.target.value === "" ? 1 : parseInt(e.target.value, 10);
+                                    setOrderData({ ...orderData, quantity: isNaN(val) ? 1 : Math.max(1, val) });
+                                }}
                             />
                         </div>
                         <div className="flex gap-4 pt-6">
@@ -339,6 +355,17 @@ export default function SalesPage() {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <ConfirmationDialog
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={submitOrder}
+                title="Large Order Alert"
+                description="This order exceeds ₹1,00,000. Please verify the customer and quantities before finalizing."
+                confirmLabel="Confirm Order"
+                cancelLabel="Review Changes"
+                variant="warning"
+            />
         </div>
     );
 }

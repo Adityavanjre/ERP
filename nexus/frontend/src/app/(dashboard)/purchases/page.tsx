@@ -17,12 +17,15 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Truck, ShoppingBag, DollarSign, Package, CheckCircle2, XCircle, ShoppingCart, UserPlus } from "lucide-react";
+import { Plus, Truck, ShoppingBag, DollarSign, Package, CheckCircle2, XCircle, ShoppingCart, UserPlus, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { CreateSupplierDialog } from "@/components/purchases/create-supplier-dialog";
 import { EditSupplierDialog } from "@/components/purchases/edit-supplier-dialog";
+import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
 import { Edit2 } from "lucide-react";
+import { NumericInput } from "@/components/ui/numeric-input";
+import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
 
 export default function PurchasesPage() {
     const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -34,6 +37,8 @@ export default function PurchasesPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
     const [editingSupplier, setEditingSupplier] = useState<any>(null);
+    const [openingBalanceTarget, setOpeningBalanceTarget] = useState<any>(null);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     // Form state
     const [newPO, setNewPO] = useState({
@@ -56,7 +61,7 @@ export default function PurchasesPage() {
             setSuppliers(suppRes.data);
             // Products API returns paginated response { data: [], meta: {} }
             setProducts(prodRes.data.data || []);
-            setPurchaseOrders(poRes.data);
+            setPurchaseOrders(poRes.data.data || []);
             setStats(statsRes.data);
         } catch (err) {
             console.error("Procurement Sync Failure:", err);
@@ -76,12 +81,21 @@ export default function PurchasesPage() {
         return () => clearInterval(interval);
     }, []);
 
-    const handleCreatePO = async () => {
+    const handleConfirmSubmit = () => {
         if (!newPO.supplierId || !newPO.productId || newPO.quantity <= 0) {
             toast.error("Please fill in all required fields");
             return;
         }
 
+        const orderTotal = newPO.quantity * newPO.unitPrice;
+        if (orderTotal > 100000) {
+            setShowConfirm(true);
+        } else {
+            createPO();
+        }
+    };
+
+    const createPO = async () => {
         try {
             setIsSubmitting(true);
             const items = [{
@@ -101,6 +115,7 @@ export default function PurchasesPage() {
 
             toast.success("Purchase order created successfully");
             setShowPODialog(false);
+            setNewPO({ ...newPO, productId: "", quantity: 1, unitPrice: 0 });
             syncProcurement(true);
         } catch (err) {
             toast.error("Failed to create purchase order");
@@ -290,9 +305,19 @@ export default function PurchasesPage() {
                                             <CardDescription className="text-slate-500 font-bold text-xs">{s.email}</CardDescription>
                                         </CardHeader>
                                         <CardContent>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100/50 p-3 rounded-xl italic">
-                                                <Package className="inline mr-1.5 h-3.5 w-3.5" /> {s.address || 'Global Operations'}
-                                            </p>
+                                            <div className="flex flex-col gap-3">
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100/50 p-3 rounded-xl italic">
+                                                    <Package className="inline mr-1.5 h-3.5 w-3.5" /> {s.address || 'Global Operations'}
+                                                </p>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setOpeningBalanceTarget({ id: s.id, name: s.name })}
+                                                    className="w-full h-8 rounded-xl border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all gap-2"
+                                                >
+                                                    <Scale className="h-3.5 w-3.5" /> Set Opening Balance
+                                                </Button>
+                                            </div>
                                         </CardContent>
                                     </Card>
                                 ))}
@@ -363,11 +388,10 @@ export default function PurchasesPage() {
                                 <Label htmlFor="quantity" className="text-slate-700 font-black text-[10px] uppercase tracking-widest pl-1">
                                     Quantity <span className="text-red-500">*</span>
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id="quantity"
-                                    type="number"
                                     value={newPO.quantity}
-                                    onChange={(e) => setNewPO({ ...newPO, quantity: parseInt(e.target.value) || 0 })}
+                                    onChange={(val) => setNewPO({ ...newPO, quantity: val })}
                                     className="h-11 rounded-2xl border-slate-200 font-bold px-4"
                                 />
                             </div>
@@ -378,11 +402,11 @@ export default function PurchasesPage() {
                                 <Label htmlFor="unitPrice" className="text-slate-700 font-black text-[10px] uppercase tracking-widest pl-1">
                                     Unit Cost (₹)
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id="unitPrice"
-                                    type="number"
                                     value={newPO.unitPrice}
-                                    onChange={(e) => setNewPO({ ...newPO, unitPrice: parseFloat(e.target.value) || 0 })}
+                                    onChange={(val) => setNewPO({ ...newPO, unitPrice: val })}
+                                    decimal
                                     className="h-11 rounded-2xl border-slate-200 font-bold px-4"
                                 />
                             </div>
@@ -408,23 +432,31 @@ export default function PurchasesPage() {
                         </div>
                     </div>
                     <DialogFooter className="gap-2">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setShowPODialog(false)}
-                            className="rounded-2xl font-bold px-6"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleCreatePO}
-                            disabled={isSubmitting}
-                            className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-10 shadow-lg shadow-blue-500/20 text-white h-11"
-                        >
-                            {isSubmitting ? "Creating..." : "Create Order"}
+                        <Button variant="ghost" className="rounded-2xl h-12" onClick={() => setShowPODialog(false)}>Cancel</Button>
+                        <Button className="rounded-2xl h-12 bg-blue-600 font-bold px-8" onClick={handleConfirmSubmit} disabled={isSubmitting}>
+                            {isSubmitting ? "Creating..." : "Create Purchase Order"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <ConfirmationDialog
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={createPO}
+                title="Confirm Purchase"
+                description={`You are creating a purchase order for ₹${(newPO.quantity * newPO.unitPrice).toLocaleString('en-IN')}. Verify supplier and pricing before proceeding.`}
+                confirmLabel="Yes, Create PO"
+                cancelLabel="Review"
+                variant="warning"
+            />
+            <OpeningBalanceDialog
+                isOpen={!!openingBalanceTarget}
+                onClose={() => setOpeningBalanceTarget(null)}
+                supplierId={openingBalanceTarget?.id}
+                targetName={openingBalanceTarget?.name || ""}
+                onSuccess={() => syncProcurement(true)}
+            />
         </div>
     );
 }

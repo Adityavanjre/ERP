@@ -14,7 +14,7 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Plus, Wallet, ArrowUpRight, ArrowDownRight, Landmark, Receipt, Printer, Search, RefreshCw, ShoppingCart, MessageCircle, FileDown, Users, Activity } from "lucide-react";
+import { Plus, Wallet, ArrowUpRight, ArrowDownRight, Landmark, Receipt, Printer, Search, RefreshCw, ShoppingCart, MessageCircle, FileDown, Users, Activity, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { RecordPaymentModal } from "@/components/accounting/record-payment-modal";
@@ -23,8 +23,10 @@ import { CreateAccountDialog } from "@/components/accounting/create-account-dial
 import { CreateJournalEntryDialog } from "@/components/accounting/create-journal-entry-dialog";
 import { CollaborationTimeline } from "@/components/system/collaboration-timeline";
 import { ForecastingWidget } from "@/components/accounting/forecasting-widget";
+import { useUX } from "@/components/providers/ux-provider";
 
 export default function AccountingPage() {
+    const { setUILocked, showConfirm } = useUX();
     const [accounts, setAccounts] = useState<any[]>([]);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [invoices, setInvoices] = useState<any[]>([]);
@@ -113,6 +115,27 @@ export default function AccountingPage() {
         } catch (err) {
             toast.error("Failed to generate Tally Masters");
         }
+    };
+
+    const handleCancelInvoice = (id: string) => {
+        showConfirm({
+            title: "Cancel Invoice?",
+            description: "Are you sure you want to cancel this invoice? This will reverse all ledger entries and stock movements. This action cannot be undone.",
+            confirmText: "Yes, Cancel Invoice",
+            variant: "destructive",
+            onConfirm: async () => {
+                try {
+                    setUILocked(true);
+                    await api.post(`/accounting/invoices/${id}/cancel`, { reason: "User cancelled from dashboard" });
+                    toast.success("Invoice cancelled successfully");
+                    syncLedgers();
+                } catch (err: any) {
+                    toast.error(err.response?.data?.message || "Cancellation failed");
+                } finally {
+                    setUILocked(false);
+                }
+            }
+        });
     };
 
     const handleTallyExport = async () => {
@@ -379,7 +402,7 @@ export default function AccountingPage() {
                                                     >
                                                         <MessageCircle className="h-4 w-4" />
                                                     </Button>
-                                                    {inv.status !== 'Paid' && (
+                                                    {inv.status !== 'Paid' && inv.status !== 'Cancelled' && (
                                                         <Button
                                                             variant="default"
                                                             size="sm"
@@ -387,6 +410,17 @@ export default function AccountingPage() {
                                                             className="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl h-8 px-4 shadow-md shadow-amber-600/20"
                                                         >
                                                             Tag Payment
+                                                        </Button>
+                                                    )}
+                                                    {inv.status !== 'Cancelled' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-all"
+                                                            onClick={() => handleCancelInvoice(inv.id)}
+                                                            title="Cancel Invoice"
+                                                        >
+                                                            <Ban className="h-4 w-4" />
                                                         </Button>
                                                     )}
                                                 </div>

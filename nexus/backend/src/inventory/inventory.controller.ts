@@ -27,7 +27,7 @@ export class InventoryController {
   constructor(
     private readonly inventoryService: InventoryService,
     private readonly warehouseService: WarehouseService,
-  ) {}
+  ) { }
 
   @Get('warehouses')
   @Permissions(Permission.VIEW_PRODUCTS)
@@ -37,14 +37,14 @@ export class InventoryController {
 
   @Post('warehouses')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.ADJUST_STOCK)
   createWarehouse(@TenantId() tenantId: string, @Body() data: any) {
     return this.warehouseService.createWarehouse(tenantId, data);
   }
 
   @Patch('warehouses/:id')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.ADJUST_STOCK)
   updateWarehouse(
     @TenantId() tenantId: string,
     @Param('id') id: string,
@@ -58,6 +58,20 @@ export class InventoryController {
   @Permissions(Permission.ADJUST_STOCK)
   logMovement(@TenantId() tenantId: string, @Body() data: any) {
     return this.warehouseService.logMovement(tenantId, data);
+  }
+
+  @Post('products/:id/opening-balance')
+  @Roles(Role.Owner, Role.Manager)
+  @Permissions(Permission.ADJUST_STOCK)
+  postOpeningBalance(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() data: any
+  ) {
+    return this.warehouseService.logOpeningBalance(tenantId, {
+      ...data,
+      productId: id,
+    });
   }
 
   @Post('transfers')

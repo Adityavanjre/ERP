@@ -135,8 +135,8 @@ export default function StockMovementsPage() {
                                     type="button"
                                     onClick={() => setMovementType("TRANSFER")}
                                     className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${movementType === "TRANSFER"
-                                            ? "border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner"
-                                            : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
+                                        ? "border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner"
+                                        : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
                                         }`}
                                 >
                                     <Truck className="h-6 w-6 mb-2" />
@@ -146,8 +146,8 @@ export default function StockMovementsPage() {
                                     type="button"
                                     onClick={() => setMovementType("IN")}
                                     className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${movementType === "IN"
-                                            ? "border-emerald-600 bg-emerald-50/50 text-emerald-700 shadow-inner"
-                                            : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
+                                        ? "border-emerald-600 bg-emerald-50/50 text-emerald-700 shadow-inner"
+                                        : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
                                         }`}
                                 >
                                     <TrendingUp className="h-6 w-6 mb-2" />
@@ -157,8 +157,8 @@ export default function StockMovementsPage() {
                                     type="button"
                                     onClick={() => setMovementType("OUT")}
                                     className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${movementType === "OUT"
-                                            ? "border-red-600 bg-red-50/50 text-red-700 shadow-inner"
-                                            : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
+                                        ? "border-red-600 bg-red-50/50 text-red-700 shadow-inner"
+                                        : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
                                         }`}
                                 >
                                     <TrendingDown className="h-6 w-6 mb-2" />
@@ -306,7 +306,7 @@ export default function StockMovementsPage() {
                         <AlertCircle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
                         <div className="text-amber-900 text-sm font-medium">
                             <strong className="block text-amber-950 font-black mb-1">Financial Impact</strong>
-                            Transfers between warehouses do not affect the general ledger. However, manual Stock In/Out adjustments log directly to the global audit trail but do not currently auto-post to Cost of Goods Sold.
+                            Transfers between warehouses do not affect the general ledger. Manual Stock In/Out adjustments <b>automatically post</b> to the Inventory Adjustment account for audit compliance.
                         </div>
                     </div>
                 </div>

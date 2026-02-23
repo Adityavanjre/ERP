@@ -15,11 +15,13 @@ class OrderItemDto {
   productId: string;
 
   @IsNumber()
-  @Min(0.000001)
+  @IsNotEmpty()
+  @Min(0.000001, { message: 'Quantity must be at least 0.000001' })
   quantity: number;
 
   @IsNumber()
-  @Min(0)
+  @IsNotEmpty()
+  @Min(0, { message: 'Price cannot be negative' })
   price: number;
 }
 

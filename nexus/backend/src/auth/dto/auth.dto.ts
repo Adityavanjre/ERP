@@ -31,6 +31,17 @@ export class RegisterDto {
   companyType?: string;
 }
 
+export class CreateWorkspaceDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+}
+
 export class LoginDto {
   @IsEmail()
   @IsNotEmpty()
@@ -39,6 +50,12 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+}
+
+export class GoogleLoginDto {
+  @IsString()
+  @IsNotEmpty()
+  idToken: string;
 }
 
 export class ForgotPasswordDto {
@@ -56,4 +73,22 @@ export class ResetPasswordDto {
   @IsNotEmpty()
   @MinLength(6)
   newPassword: string;
+}
+
+export class OnboardingDto {
+  @IsString()
+  @IsNotEmpty()
+  tenantId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  industry: string;
+
+  @IsString()
+  @IsNotEmpty()
+  businessType: string;
+
+  @IsString()
+  @IsOptional()
+  gstin?: string;
 }

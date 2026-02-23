@@ -79,27 +79,25 @@ export default function DashboardPage() {
     const [valueChain, setValueChain] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [enabledModules, setEnabledModules] = useState<string[]>([]);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 // Background sync shouldn't show global loading after first load
-                const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.all([
+                const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.all([
                     api.get('system/stats'),
                     api.get('analytics/summary'),
                     api.get('analytics/performance'),
                     api.get('analytics/health'),
                     api.get('analytics/activity'),
-                    api.get('analytics/value-chain')
+                    api.get('analytics/value-chain'),
+                    api.get('system/config')
                 ]);
 
-                // System stats
-                const systemData = Array.isArray(systemRes.data) ? systemRes.data : [];
-                const installed = systemData.filter((a: any) => a.installed).length;
-                setSystemStats(prev => ({
-                    ...prev,
-                    apps: systemData.length,
-                    installed
-                }));
+                // System stats - Now using fixed business-level stats
+                setSystemStats(systemRes.data || systemStats);
+                setEnabledModules(configRes.data.enabledModules || []);
 
                 // BI stats
                 setBiStats(summaryRes.data || biStats);
@@ -211,7 +209,18 @@ export default function DashboardPage() {
                     { label: "Purchases", icon: Truck, color: "bg-amber-100 text-amber-600", href: "/purchases", roles: STOCK_ROLES },
                     { label: "Accounting", icon: FileText, color: "bg-rose-100 text-rose-600", href: "/accounting", roles: FINANCE_ROLES },
                     { label: "Apps & Modules", icon: LayoutGrid, color: "bg-fuchsia-100 text-fuchsia-600", href: "/apps", roles: ['Owner', 'Manager'] as RoleName[] },
-                ].filter(action => action.roles.includes(userRole)).map((action, i) => (
+                ].filter(action => {
+                    const roleAllowed = action.roles.includes(userRole);
+                    if (!roleAllowed) return false;
+
+                    const moduleKey = action.href.split('/')[1];
+                    if (moduleKey && enabledModules.length > 0) {
+                        // Special case: 'crm' belongs to 'sales' module
+                        if (moduleKey === 'crm') return enabledModules.includes('sales');
+                        return enabledModules.includes(moduleKey);
+                    }
+                    return true;
+                }).map((action, i) => (
                     <button
                         key={i}
                         onClick={() => router.push(action.href)}

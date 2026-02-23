@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -19,7 +20,7 @@ import { POStatus } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Controller('purchases')
 export class PurchasesController {
-  constructor(private readonly purchasesService: PurchasesService) {}
+  constructor(private readonly purchasesService: PurchasesService) { }
 
   @Post('suppliers')
   @Permissions(Permission.MANAGE_USERS)
@@ -47,8 +48,8 @@ export class PurchasesController {
 
   @Get('orders')
   @Permissions(Permission.VIEW_PRODUCTS)
-  getPOs(@Req() req: any) {
-    return this.purchasesService.getPurchaseOrders(req.user.tenantId);
+  getPOs(@Req() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.purchasesService.getPurchaseOrders(req.user.tenantId, page ? Number(page) : 1, limit ? Number(limit) : 50);
   }
 
   @Patch('orders/:id/status')

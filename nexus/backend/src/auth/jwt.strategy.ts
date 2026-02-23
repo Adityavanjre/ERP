@@ -18,25 +18,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // payload should contain userId and tenantId
+    // Basic account verification
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Account not found');
     }
 
-    // Attach role and tenant context to request.user
-    // In a real multi-tenant app, we'd check which tenant is being accessed.
-    // Here we assume the token belongs to the user's primary tenant or encoded context.
-    return {
-      userId: payload.sub,
-      tenantId: payload.tenantId,
-      email: payload.email,
-      role: payload.role,
-      customerId: payload.customerId,
-      supplierId: payload.supplierId,
-    };
+    // Pass the payload directly. 
+    // TenantMembershipGuard will verify membership if tenantId is present.
+    return payload;
   }
 }

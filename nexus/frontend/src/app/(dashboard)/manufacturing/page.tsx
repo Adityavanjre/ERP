@@ -20,6 +20,22 @@ import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function ManufacturingDashboard() {
     const [boms, setBoms] = useState<any[]>([]);
@@ -27,19 +43,62 @@ export default function ManufacturingDashboard() {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
+    const [showCompleteModal, setShowCompleteModal] = useState(false);
+    const [selectedWO, setSelectedWO] = useState<any>(null);
+    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [completionData, setCompletionData] = useState({
+        producedQty: 0,
+        scrapQty: 0,
+        warehouseId: "",
+        idempotencyKey: "",
+    });
+
     const syncManufacturingData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const [b, w] = await Promise.all([
+            const [b, w, wh] = await Promise.all([
                 api.get("manufacturing/boms"),
-                api.get("manufacturing/work-orders")
+                api.get("manufacturing/work-orders"),
+                api.get("inventory/warehouses"),
             ]);
             setBoms(b.data);
             setWorkOrders(w.data);
+            setWarehouses(wh.data || []);
         } catch (err) {
             console.error("Manufacturing Sync Failure:", err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleOpenComplete = (wo: any) => {
+        setSelectedWO(wo);
+        setCompletionData({
+            producedQty: wo.quantity,
+            scrapQty: 0,
+            warehouseId: "",
+            idempotencyKey: `wo-comp-${wo.id}-${Date.now()}`,
+        });
+        setShowCompleteModal(true);
+    };
+
+    const submitCompletion = async () => {
+        if (!completionData.warehouseId) {
+            toast.error("Please select a target warehouse");
+            return;
+        }
+        try {
+            await api.post(`/manufacturing/work-orders/${selectedWO.id}/complete`, {
+                producedQty: Number(completionData.producedQty),
+                scrapQty: Number(completionData.scrapQty),
+                warehouseId: completionData.warehouseId,
+                idempotencyKey: completionData.idempotencyKey,
+            });
+            toast.success("Production Completed! Inventory Updated.");
+            setShowCompleteModal(false);
+            syncManufacturingData();
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Production failed. Check raw materials.");
         }
     };
 
@@ -50,18 +109,6 @@ export default function ManufacturingDashboard() {
         const interval = setInterval(() => syncManufacturingData(false), 30000);
         return () => clearInterval(interval);
     }, []);
-
-    const completeWO = async (id: string) => {
-        try {
-            await api.post(`/manufacturing/work-orders/${id}/complete`, {});
-            toast.success("Production Completed! Inventory Updated.");
-            // Refresh
-            const res = await api.get("manufacturing/work-orders");
-            setWorkOrders(res.data);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Production failed. Check raw materials.");
-        }
-    };
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -153,7 +200,7 @@ export default function ManufacturingDashboard() {
 
                                     {wo.status !== 'Completed' ? (
                                         <button
-                                            onClick={() => completeWO(wo.id)}
+                                            onClick={() => handleOpenComplete(wo)}
                                             className="w-full sm:w-auto justify-center px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95"
                                         >
                                             Mark Complete
@@ -220,6 +267,79 @@ export default function ManufacturingDashboard() {
                 </div>
 
             </div>
+
+            {/* Completion Modal */}
+            <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
+                <DialogContent className="max-w-md bg-white border-none rounded-[32px] overflow-hidden p-0 shadow-2xl">
+                    <div className="bg-emerald-600 p-8 text-white">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black tracking-tight">Complete Production</DialogTitle>
+                            <p className="text-emerald-100 font-bold uppercase text-[9px] tracking-widest mt-1 opacity-80">Finalizing WO-{selectedWO?.orderNumber}</p>
+                        </DialogHeader>
+                    </div>
+
+                    <div className="p-8 space-y-6">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2 text-slate-900">
+                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Produced Quantity</Label>
+                                    <Input
+                                        type="number"
+                                        value={completionData.producedQty}
+                                        onChange={(e) => setCompletionData({ ...completionData, producedQty: Number(e.target.value) })}
+                                        className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Scrap / Rejects</Label>
+                                    <Input
+                                        type="number"
+                                        value={completionData.scrapQty}
+                                        onChange={(e) => setCompletionData({ ...completionData, scrapQty: Number(e.target.value) })}
+                                        className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg text-rose-600 focus:ring-rose-500/20"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Warehouse</Label>
+                                <Select value={completionData.warehouseId} onValueChange={(val) => setCompletionData({ ...completionData, warehouseId: val })}>
+                                    <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold">
+                                        <SelectValue placeholder="Select destination" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {warehouses.map((wh: any) => (
+                                            <SelectItem key={wh.id} value={wh.id} className="font-bold">{wh.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="bg-emerald-50 p-4 rounded-xl flex items-center gap-3">
+                            <AlertCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                            <p className="text-[10px] font-bold text-emerald-900 leading-relaxed uppercase tracking-tight">
+                                Finalizing will consume raw materials and add finished goods to selected warehouse.
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="p-8 pt-0 flex gap-3">
+                        <button
+                            onClick={() => setShowCompleteModal(false)}
+                            className="flex-1 py-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-600 transition-all"
+                        >
+                            Abort
+                        </button>
+                        <button
+                            onClick={submitCompletion}
+                            className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20"
+                        >
+                            Confirm Production
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

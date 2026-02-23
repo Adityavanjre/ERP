@@ -3,13 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 import { POStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AccountingService } from '../accounting/accounting.service';
+import { LedgerService } from '../accounting/services/ledger.service';
+import { StandardAccounts } from '../accounting/constants/account-names';
 
 @Injectable()
 export class PurchasesService {
   constructor(
     private prisma: PrismaService,
     private accounting: AccountingService,
-  ) {}
+    private ledger: LedgerService,
+  ) { }
 
   // --- Suppliers ---
   async createSupplier(tenantId: string, data: any) {
@@ -19,14 +22,35 @@ export class PurchasesService {
     });
 
     if (openingBalance && Number(openingBalance) !== 0) {
-      await (this.prisma as any).supplierOpeningBalance.create({
-        data: {
-          tenantId,
-          supplierId: supplier.id,
-          amount: Number(openingBalance),
-          description: 'Opening Balance Migration',
-          date: new Date(),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await this.accounting.ledger.checkPeriodLock(tenantId, new Date(), tx);
+
+        const obAmount = this.ledger.round2(openingBalance);
+        await tx.supplierOpeningBalance.create({
+          data: {
+            tenantId,
+            supplierId: supplier.id,
+            amount: obAmount,
+            description: 'Opening Balance Migration',
+            date: new Date(),
+          },
+        });
+
+        // GL Journal: Dr Opening Balance Equity / Cr Accounts Payable
+        const apAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
+        const obAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+
+        if (apAcc && obAcc) {
+          await this.ledger.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `Opening Balance: ${supplier.name}`,
+            reference: `OB-${supplier.id.slice(0, 8)}`,
+            transactions: [
+              { accountId: obAcc.id, type: 'Debit', amount: obAmount.abs().toNumber(), description: 'Supplier Opening Balance' },
+              { accountId: apAcc.id, type: 'Credit', amount: obAmount.abs().toNumber(), description: 'Supplier Opening Balance' },
+            ],
+          }, tx);
+        }
       });
     }
 
@@ -56,9 +80,27 @@ export class PurchasesService {
 
   // --- Purchase Orders ---
   async createPurchaseOrder(tenantId: string, data: any) {
-    const { items, supplierId, isInterState = false, ...poData } = data;
+    const { items, supplierId, ...poData } = data;
 
     return this.prisma.$transaction(async (tx) => {
+      if (data.idempotencyKey) {
+        const existing = await tx.purchaseOrder.findFirst({
+          where: { tenantId, idempotencyKey: data.idempotencyKey } as any,
+          include: { items: true },
+        });
+        if (existing) return existing;
+      }
+
+      await this.ledger.checkPeriodLock(tenantId, data.orderDate || new Date(), tx);
+
+      const [tenant, supplier] = await Promise.all([
+        tx.tenant.findUnique({ where: { id: tenantId } }),
+        tx.supplier.findUnique({ where: { id: supplierId } }),
+      ]);
+
+      const autoInterState = tenant?.state?.trim().toLowerCase() !== supplier?.state?.trim().toLowerCase();
+      const isInterState = data.isInterState !== undefined ? data.isInterState : autoInterState;
+
       // Compute GST per item
       let totalTaxable = new Decimal(0);
       let totalGST = new Decimal(0);
@@ -74,12 +116,12 @@ export class PurchasesService {
           });
           const qty = new Decimal(item.quantity);
           const unitPrice = new Decimal(item.unitPrice);
-          const taxable = qty.mul(unitPrice);
+          const taxable = this.ledger.round2(qty.mul(unitPrice));
           const gstRate = new Decimal(product?.gstRate || item.gstRate || 0);
-          const gstAmount = taxable.mul(gstRate).div(100).toDecimalPlaces(2);
+          const gstAmount = this.ledger.round2(taxable.mul(gstRate).div(100));
 
-          const cgst = isInterState ? new Decimal(0) : gstAmount.div(2).toDecimalPlaces(2);
-          const sgst = isInterState ? new Decimal(0) : gstAmount.div(2).toDecimalPlaces(2);
+          const cgst = isInterState ? new Decimal(0) : gstAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_DOWN);
+          const sgst = isInterState ? new Decimal(0) : gstAmount.sub(cgst);
           const igst = isInterState ? gstAmount : new Decimal(0);
 
           totalTaxable = totalTaxable.add(taxable);
@@ -89,33 +131,34 @@ export class PurchasesService {
           totalIGST = totalIGST.add(igst);
 
           return {
+            tenantId,
             productId: item.productId,
             hsnCode: product?.hsnCode || item.hsnCode || null,
             quantity: qty,
             unitPrice,
-            taxableAmount: taxable.toDecimalPlaces(2),
+            taxableAmount: taxable,
             gstRate,
             cgstAmount: cgst,
             sgstAmount: sgst,
             igstAmount: igst,
-            totalAmount: taxable.add(gstAmount).toDecimalPlaces(2),
+            totalAmount: this.ledger.round2(taxable.add(gstAmount)),
           };
         }),
       );
 
-      const totalAmount = totalTaxable.add(totalGST).toDecimalPlaces(2);
+      const grandTotal = this.ledger.round2(totalTaxable.add(totalGST));
 
       const po = await tx.purchaseOrder.create({
         data: {
           ...poData,
           tenantId,
           supplierId,
-          totalAmount,
-          totalTaxable: totalTaxable.toDecimalPlaces(2),
-          totalGST: totalGST.toDecimalPlaces(2),
-          totalCGST: totalCGST.toDecimalPlaces(2),
-          totalSGST: totalSGST.toDecimalPlaces(2),
-          totalIGST: totalIGST.toDecimalPlaces(2),
+          totalAmount: grandTotal,
+          totalTaxable: this.ledger.round2(totalTaxable),
+          totalGST: this.ledger.round2(totalGST),
+          totalCGST: this.ledger.round2(totalCGST),
+          totalSGST: this.ledger.round2(totalSGST),
+          totalIGST: this.ledger.round2(totalIGST),
           items: { create: enrichedItems },
         },
         include: { items: true },
@@ -126,17 +169,33 @@ export class PurchasesService {
   }
 
 
-  async getPurchaseOrders(tenantId: string) {
-    return this.prisma.purchaseOrder.findMany({
-      where: { tenantId },
-      include: {
-        supplier: true,
-        items: {
-          include: { product: true },
+  async getPurchaseOrders(tenantId: string, page: number = 1, limit: number = 50) {
+    const skip = (page - 1) * limit;
+    const [orders, total] = await Promise.all([
+      this.prisma.purchaseOrder.findMany({
+        where: { tenantId },
+        include: {
+          supplier: true,
+          items: {
+            include: { product: true },
+          },
         },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: skip,
+      }),
+      this.prisma.purchaseOrder.count({ where: { tenantId } }),
+    ]);
+
+    return {
+      data: orders,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   }
 
   async updatePOStatus(tenantId: string, id: string, status: POStatus, warehouseId?: string) {
@@ -145,6 +204,9 @@ export class PurchasesService {
 
     // Transactional Safety for Stock + Financials
     return this.prisma.$transaction(async (tx) => {
+      // 0. Audit Guard
+      await this.accounting.ledger.checkPeriodLock(tenantId, new Date(), tx);
+
       const po = await tx.purchaseOrder.findFirst({
         where: { id, tenantId },
         include: { items: true },
@@ -175,7 +237,7 @@ export class PurchasesService {
             // MAC Formula: ((oldStock * oldCost) + (newQty * newPrice)) / (oldStock + newQty)
             let newMAC = newPrice; // Default to new price if no old stock
             const totalQty = oldStock.add(newQty);
-            
+
             if (totalQty.greaterThan(0)) {
               newMAC = (oldStock.mul(oldCost).add(newQty.mul(newPrice))).div(totalQty);
             }
@@ -195,7 +257,7 @@ export class PurchasesService {
                 tenantId,
                 id: warehouseId, // Optional filter if provided
                 OR: warehouseId ? undefined : [
-                  { name: 'Main Factory Warehouse' },
+                  { name: 'Main Warehouse' },
                   {} // Fallback to any warehouse if no ID provides
                 ]
               }
@@ -204,26 +266,30 @@ export class PurchasesService {
             if (warehouse) {
               // 2. Update Stock Location
               const existingLoc = await tx.stockLocation.findUnique({
-                 where: {
-                   productId_warehouseId: {
-                     productId: item.productId,
-                     warehouseId: warehouse.id
-                   }
-                 }
+                where: {
+                  tenantId_productId_warehouseId_notes: {
+                    tenantId,
+                    productId: item.productId,
+                    warehouseId: warehouse.id,
+                    notes: ''
+                  }
+                } as any
               });
 
               if (existingLoc) {
-                await tx.stockLocation.updateMany({
-                  where: { id: existingLoc.id, warehouse: { tenantId } },
+                await tx.stockLocation.update({
+                  where: { id: existingLoc.id },
                   data: { quantity: { increment: newQty } }
                 });
               } else {
                 await tx.stockLocation.create({
                   data: {
+                    tenantId,
                     productId: item.productId,
                     warehouseId: warehouse.id,
-                    quantity: newQty
-                  }
+                    quantity: newQty,
+                    notes: ''
+                  } as any
                 });
               }
 
@@ -246,85 +312,110 @@ export class PurchasesService {
 
         // B. Financial Journal (Dr Inventory, Dr GST Receivable [ITC], Cr Accounts Payable)
         const inventoryAccount = await tx.account.findFirst({
-          where: { tenantId, name: 'Inventory Asset' },
+          where: { tenantId, name: StandardAccounts.INVENTORY_ASSET },
         });
         const apAccount = await tx.account.findFirst({
-          where: { tenantId, name: 'Accounts Payable' },
+          where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
         });
         const itcAccount = await tx.account.findFirst({
-          where: { tenantId, name: 'GST Receivable' }, // Professional ITC Account
+          where: { tenantId, name: StandardAccounts.GST_RECEIVABLE }, // Professional ITC Account
         });
 
         if (inventoryAccount && apAccount) {
+          const taxableValue = new Decimal(po.totalTaxable || 0);
+          const taxAmount = new Decimal(po.totalGST || 0);
           const totalAmount = new Decimal(po.totalAmount);
-          // Assuming 18% GST for parity if not specified, but professional ERP uses line-item tax.
-          // For the "Ultimate Seal", we derive tax from the total if not explicitly stored.
-          const taxableValue = totalAmount.div(1.18);
-          const taxAmount = totalAmount.sub(taxableValue);
 
-          // Create Journal
           const transactions = [
-            {
-              tenantId,
-              accountId: inventoryAccount.id,
-              type: 'Debit',
-              amount: taxableValue,
-              description: `Stock Value - ${po.orderNumber}`,
-            },
-            {
-              tenantId,
-              accountId: apAccount.id,
-              type: 'Credit',
-              amount: totalAmount,
-              description: `Vendor Liability - ${po.orderNumber}`,
-            },
+            { accountId: inventoryAccount.id, type: 'Debit' as any, amount: taxableValue.toNumber(), description: `Stock Value - ${po.orderNumber}` },
+            { accountId: apAccount.id, type: 'Credit' as any, amount: totalAmount.toNumber(), description: `Vendor Liability - ${po.orderNumber}` },
           ];
 
-          if (itcAccount) {
-            transactions.push({
-              tenantId,
-              accountId: itcAccount.id,
-              type: 'Debit',
-              amount: taxAmount,
-              description: `ITC Input Tax - ${po.orderNumber}`,
-            });
-          } else {
-            // Fallback: If no ITC account, book everything to inventory (Classic mode)
-            transactions[0].amount = totalAmount;
+          if (itcAccount && taxAmount.greaterThan(0)) {
+            transactions.push({ accountId: itcAccount.id, type: 'Debit' as any, amount: taxAmount.toNumber(), description: `ITC Claim - ${po.orderNumber}` });
+          } else if (!itcAccount && taxAmount.greaterThan(0)) {
+            // Fallback: If no ITC account, book tax to inventory cost (Classic mode)
+            transactions[0].amount = totalAmount.toNumber();
           }
 
-          await tx.journalEntry.create({
-            data: {
-              tenantId,
-              date: new Date(),
-              description: `PO Receipt #${po.orderNumber}`,
-              reference: po.orderNumber,
-              posted: true,
-              transactions: {
-                create: transactions as any,
-              },
-            },
-          });
-
-          // Update Account Balances
-          await tx.account.updateMany({
-            where: { id: inventoryAccount.id, tenantId },
-            data: { balance: { increment: transactions[0].amount } },
-          });
-          await tx.account.updateMany({
-            where: { id: apAccount.id, tenantId },
-            data: { balance: { increment: totalAmount } },
-          });
-          if (itcAccount && transactions.length > 2) {
-             await tx.account.updateMany({
-                where: { id: itcAccount.id, tenantId },
-                data: { balance: { increment: taxAmount } },
-             });
-          }
+          // Use LedgerService for atomic update and balance synchronization
+          await this.ledger.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `Purchase Receipt: ${po.orderNumber}`,
+            reference: po.orderNumber,
+            transactions
+          }, tx);
         } else {
           throw new Error(
             "Missing Financial Accounts: Ensure 'Inventory Asset' and 'Accounts Payable' exist.",
           );
+        }
+      }
+
+      // 2. Handle Reversal Logic (Status change FROM Received TO Cancelled)
+      if (status === POStatus.Cancelled && po.status === POStatus.Received) {
+        for (const item of po.items) {
+          // A. Decrement Stock
+          await tx.product.updateMany({
+            where: { id: item.productId, tenantId },
+            data: { stock: { decrement: item.quantity } }
+          });
+
+          // B. Find where it was received (Auditor search)
+          const movement = await tx.stockMovement.findFirst({
+            where: {
+              tenantId,
+              productId: item.productId,
+              reference: po.orderNumber,
+              type: 'IN'
+            }
+          });
+
+          if (movement) {
+            await tx.stockLocation.updateMany({
+              where: { productId: item.productId, warehouseId: movement.warehouseId, warehouse: { tenantId } },
+              data: { quantity: { decrement: item.quantity } }
+            });
+
+            await tx.stockMovement.create({
+              data: {
+                tenantId,
+                productId: item.productId,
+                warehouseId: movement.warehouseId,
+                quantity: item.quantity,
+                type: 'OUT',
+                reference: `CAN-${po.orderNumber}`,
+                notes: `PO Cancellation Reversal`
+              }
+            });
+          }
+        }
+
+        // C. Financial Reversal (Credit Inventory, Debit Accounts Payable)
+        const inventoryAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INVENTORY_ASSET } });
+        const apAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
+        const itcAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.GST_RECEIVABLE } });
+
+        if (inventoryAccount && apAccount) {
+          const taxableValue = new Decimal(po.totalTaxable || 0);
+          const taxAmount = new Decimal(po.totalGST || 0);
+          const totalAmount = new Decimal(po.totalAmount);
+
+          const transactions = [
+            { accountId: inventoryAccount.id, type: 'Credit' as any, amount: taxableValue.toNumber(), description: `Reverse: Stock Value - ${po.orderNumber}` },
+            { accountId: apAccount.id, type: 'Debit' as any, amount: totalAmount.toNumber(), description: `Reverse: Vendor Liability - ${po.orderNumber}` },
+          ];
+
+          if (itcAccount && taxAmount.greaterThan(0)) {
+            transactions.push({ accountId: itcAccount.id, type: 'Credit' as any, amount: taxAmount.toNumber(), description: `Reverse: ITC Claim - ${po.orderNumber}` });
+          }
+
+          await this.ledger.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `Cancellation of Purchase #${po.orderNumber}`,
+            reference: `CAN-${po.orderNumber}`,
+            transactions
+          }, tx);
         }
       }
 
@@ -370,19 +461,42 @@ export class PurchasesService {
 
   // --- Supplier Opening Balances ---
   async addSupplierOpeningBalance(tenantId: string, data: any) {
-     return this.prisma.supplierOpeningBalance.create({
+    return this.prisma.$transaction(async (tx) => {
+      const ob = await tx.supplierOpeningBalance.create({
         data: {
-            ...data,
-            tenantId,
-            amount: new Decimal(data.amount)
+          ...data,
+          tenantId,
+          amount: new Decimal(data.amount)
         }
-     });
+      });
+
+      const supplier = await tx.supplier.findUnique({ where: { id: data.supplierId } });
+
+      // GL Journal: Dr Opening Balance Equity / Cr Accounts Payable
+      const apAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
+      const obAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+
+      const obAmount = this.ledger.round2(ob.amount);
+      if (apAcc && obAcc) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date(data.date || new Date()).toISOString(),
+          description: `Opening Balance Adjustment: ${supplier?.name || ''}`,
+          reference: `OB-${ob.id.slice(0, 8)}`,
+          transactions: [
+            { accountId: obAcc.id, type: 'Debit', amount: obAmount.abs().toNumber(), description: 'Opening Balance Entry' },
+            { accountId: apAcc.id, type: 'Credit', amount: obAmount.abs().toNumber(), description: 'Opening Balance Entry' },
+          ],
+        }, tx);
+      }
+
+      return ob;
+    });
   }
 
   async getSupplierOpeningBalances(tenantId: string, supplierId: string) {
-     return this.prisma.supplierOpeningBalance.findMany({
-        where: { tenantId, supplierId },
-        orderBy: { date: 'desc' }
-     });
+    return this.prisma.supplierOpeningBalance.findMany({
+      where: { tenantId, supplierId },
+      orderBy: { date: 'desc' }
+    });
   }
 }

@@ -24,7 +24,7 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { ClusterService } from './system/services/cluster.service';
-import { SetupController } from './system/controllers/setup.controller';
+import { OnboardingGuard } from './common/guards/onboarding.guard';
 import { SkipThrottle } from '@nestjs/throttler';
 
 @Module({
@@ -57,12 +57,12 @@ import { SkipThrottle } from '@nestjs/throttler';
       serveRoot: '/uploads',
     }),
   ],
-  controllers: [AppController, SetupController],
+  controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: OnboardingGuard,
     },
     {
       provide: APP_INTERCEPTOR,

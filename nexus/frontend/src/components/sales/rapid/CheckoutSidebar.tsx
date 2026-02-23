@@ -1,13 +1,16 @@
 import React from 'react';
 import { User, Settings, CreditCard, CheckCircle2, AlertTriangle, Banknote, Smartphone } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { NumericInput } from "../../ui/numeric-input";
 
 interface CheckoutSidebarProps {
     customerName: string;
     paymentMode: 'CASH' | 'UPI' | 'CREDIT';
     setPaymentMode: (mode: 'CASH' | 'UPI' | 'CREDIT') => void;
-    customAmountPaid: string;
-    setCustomAmountPaid: (val: string) => void;
+    customAmountPaid: number;
+    setCustomAmountPaid: (val: number) => void;
+    subtotal: number;
+    taxTotal: number;
     total: number;
     itemsCount: number;
     isSubmitting: boolean;
@@ -21,6 +24,8 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
     setPaymentMode,
     customAmountPaid,
     setCustomAmountPaid,
+    subtotal,
+    taxTotal,
     total,
     itemsCount,
     isSubmitting,
@@ -96,12 +101,11 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Amount Received</p>
                     <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 focus-within:border-blue-600 focus-within:bg-white transition-all shadow-inner">
                         <span className="text-slate-400 font-black text-2xl">₹</span>
-                        <input
-                            type="number"
+                        <NumericInput
                             value={customAmountPaid}
-                            onChange={(e) => setCustomAmountPaid(e.target.value)}
+                            onChange={(val) => setCustomAmountPaid(val)}
                             placeholder={total.toFixed(2)}
-                            className="w-full bg-transparent text-3xl font-black text-slate-900 outline-none tabular-nums placeholder:text-slate-200"
+                            className="w-full bg-transparent text-3xl font-black text-slate-900 outline-none tabular-nums placeholder:text-slate-200 border-none shadow-none p-0 focus-visible:ring-0"
                         />
                     </div>
                 </div>
@@ -112,11 +116,11 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
                     <div className="space-y-3 bg-slate-50 rounded-2xl p-5 border border-slate-100">
                         <div className="flex justify-between text-sm font-bold text-slate-500 uppercase tracking-tight">
                             <span>Subtotal</span>
-                            <span className="tabular-nums">₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            <span className="tabular-nums">₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex justify-between text-sm font-bold text-slate-500 uppercase tracking-tight">
                             <span>Tax (GST)</span>
-                            <span className="tabular-nums">₹{(total * 0.18).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                            <span className="tabular-nums">₹{taxTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="h-px bg-slate-200/50 my-2" />
                         <div className="flex justify-between items-center">

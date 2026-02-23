@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -23,10 +24,13 @@ import {
     Command,
     ShieldCheck,
     ArrowLeftRight,
-    BarChart2
+    BarChart2,
+    Receipt,
+    Truck
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
 import { toast } from 'react-hot-toast';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 // Role-based access matrix
@@ -60,6 +64,7 @@ const businessStreams: BusinessStream[] = [
             { label: 'Quick Sale', href: '/sales/rapid', icon: Zap, allowedRoles: SALES_ROLES },
             { label: 'CRM', href: '/crm', icon: Users, allowedRoles: SALES_ROLES },
             { label: 'Sales Orders', href: '/sales', icon: ShoppingBag, allowedRoles: INVOICE_VIEWERS },
+            { label: 'Credit Notes', href: '/sales/credit-notes', icon: Receipt, allowedRoles: INVOICE_VIEWERS },
         ]
     },
     {
@@ -68,6 +73,7 @@ const businessStreams: BusinessStream[] = [
         items: [
             { label: 'Products', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
             { label: 'Purchases', href: '/purchases', icon: ShoppingBag, allowedRoles: STOCK_ROLES },
+            { label: 'Debit Notes', href: '/inventory/debit-notes', icon: Truck, allowedRoles: STOCK_ROLES },
             { label: 'Warehouses', href: '/inventory/warehouses', icon: LayoutGrid, allowedRoles: STOCK_ROLES },
             { label: 'Stock Movements', href: '/inventory/movements', icon: ArrowLeftRight, allowedRoles: STOCK_ROLES },
         ]
@@ -98,11 +104,44 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller'; // Default to most restrictive
 
-    // Filter streams: only show sections where the user has access to at least one item
+    const [enabledModules, setEnabledModules] = useState<string[]>([]);
+    const [configLoading, setConfigLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const res = await api.get('system/config');
+                setEnabledModules(res.data.enabledModules || []);
+            } catch (err) {
+                console.error("Config fetch error:", err);
+                // Fallback to sensible defaults if API fails
+                setEnabledModules(['sales', 'inventory', 'accounting']);
+            } finally {
+                setConfigLoading(false);
+            }
+        };
+        fetchConfig();
+    }, []);
+
+    // Filter streams: 
+    // 1. Role-based filtering (already present)
+    // 2. Industry-based filtering (new)
     const visibleStreams = businessStreams
         .map(stream => ({
             ...stream,
-            items: stream.items.filter(item => item.allowedRoles.includes(userRole))
+            items: stream.items.filter(item => {
+                // Check Role
+                const roleAllowed = item.allowedRoles.includes(userRole);
+                if (!roleAllowed) return false;
+
+                // Check Industry/Module enablement
+                // Map href to module key
+                const moduleKey = item.href.split('/')[1];
+                if (moduleKey && enabledModules.length > 0) {
+                    return enabledModules.includes(moduleKey);
+                }
+                return true;
+            })
         }))
         .filter(stream => stream.items.length > 0);
 
@@ -177,6 +216,24 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         </div>
                     </Link>
                 )}
+
+                <button
+                    onClick={() => {
+                        const identityToken = localStorage.getItem("k_identity");
+                        if (identityToken) {
+                            localStorage.setItem("k_token", identityToken);
+                            window.location.href = "/dashboard";
+                        } else {
+                            toast.error("Identity session lost. Please log in again.");
+                        }
+                    }}
+                    className="text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest text-slate-500"
+                >
+                    <div className="flex items-center flex-1">
+                        <RefreshCw className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                        Switch Workspace
+                    </div>
+                </button>
 
                 <div className="p-5 rounded-[2rem] bg-white border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-2">

@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { SystemModule } from '../system/system.module';
 import { AuthService } from './auth.service';
+import { GoogleAuthService } from './google-auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +9,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PassportModule } from '@nestjs/passport';
 import { AccountingModule } from '../accounting/accounting.module';
+import { LoggingService } from '../common/services/logging.service';
 
 @Module({
   imports: [
@@ -23,7 +25,7 @@ import { AccountingModule } from '../accounting/accounting.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleAuthService, LoggingService],
   controllers: [AuthController],
   exports: [AuthService],
 })

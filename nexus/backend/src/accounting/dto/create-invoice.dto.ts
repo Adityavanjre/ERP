@@ -17,12 +17,12 @@ class InvoiceItemDto {
 
   @IsNotEmpty()
   @IsNumber()
-  @Min(0.000001)
+  @Min(0.000001, { message: 'Quantity must be greater than zero' })
   quantity: number;
 
   @IsNotEmpty()
   @IsNumber()
-  @Min(0)
+  @Min(0, { message: 'Price cannot be negative' })
   price: number;
 }
 

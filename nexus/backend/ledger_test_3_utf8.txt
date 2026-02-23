@@ -1,0 +1,40 @@
+﻿node.exe : FAIL src/accounting/services/ledger.service.spec.ts
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL src/accoun...service.spec.ts:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  LedgerService (Financial Integrity)
+    Double Entry Integrity
+      ÔêÜ should block journal entries where Dr != Cr (27 ms)
+      ├ù should allow entries where Dr == Cr (3 ms)
+    Period Lock Enforcement
+      ÔêÜ should block writes to a locked period (2 ms)
+      ÔêÜ should allow writes to an unlocked period (2 ms)
+    Deterministic Rounding
+      ÔêÜ should round correctly to 2 decimal places (Standard INR) (3 ms)
+
+  ÔùÅ LedgerService (Financial Integrity) ÔÇ║ Double Entry Integrity ÔÇ║ should allow entries where Dr == Cr
+
+    TypeError: client.account.updateMany is not a function
+
+    [0m [90m 214 |[39m         }
+     [90m 215 |[39m
+    [31m[1m>[22m[39m[90m 216 |[39m         [36mawait[39m 
+client[33m.[39maccount[33m.[39mupdateMany({
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 217 |[39m           where[33m:[39m { id[33m:[39m t[33m.[39maccountId[33m,[39m tenantId 
+}[33m,[39m
+     [90m 218 |[39m           data[33m:[39m { balance[33m:[39m { increment[33m:[39m balanceChange } 
+}[33m,[39m
+     [90m 219 |[39m         })[33m;[39m[0m
+
+      at execute (accounting/services/ledger.service.ts:216:30)
+      at Object.<anonymous> (accounting/services/ledger.service.spec.ts:73:22)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 4 passed, 5 total
+Snapshots:   0 total
+Time:        0.846 s, estimated 1 s
+Ran all test suites matching d:\code\ERP\nexus\backend\src\accounting\services\ledger.service.spec.ts.

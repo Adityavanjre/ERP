@@ -18,6 +18,8 @@ const ROUTE_ACCESS: Record<string, string[]> = {
     '/apps': ['Owner', 'Manager'],
 };
 
+import { TenantSelector } from "./TenantSelector";
+
 function getRoleFromToken(): string | null {
     try {
         const token = localStorage.getItem("k_token");
@@ -49,6 +51,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const [authorized, setAuthorized] = useState(false);
+    const [needsTenantSelection, setNeedsTenantSelection] = useState(false);
 
     useEffect(() => {
         const handleSessionExpired = () => {
@@ -65,19 +68,48 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 return;
             }
 
-            const role = getRoleFromToken();
-            if (!role) {
+            try {
+                const decoded: any = jwtDecode(token);
+                const role = decoded.role;
+                const type = decoded.type;
+                const isOnboarded = decoded.isOnboarded;
+
+                // 1. Identity Token handling (No tenant selected yet)
+                if (type === 'identity') {
+                    setNeedsTenantSelection(true);
+                    setAuthorized(true);
+                    return;
+                }
+
+                // 2. Tenant Scoped handling
+                if (!role) {
+                    router.push("/login");
+                    return;
+                }
+
+                // Onboarding Enforcement
+                if (isOnboarded === false && pathname !== '/onboarding') {
+                    router.push("/onboarding");
+                    return;
+                }
+
+                // If onboarded, don't stay on onboarding page
+                if (isOnboarded === true && pathname === '/onboarding') {
+                    router.push("/dashboard");
+                    return;
+                }
+
+                // Role-based route access
+                if (!isRouteAllowed(pathname, role)) {
+                    router.push("/dashboard");
+                    return;
+                }
+
+                setAuthorized(true);
+            } catch (err) {
+                console.error("Auth check failed", err);
                 router.push("/login");
-                return;
             }
-
-            // Check if user has access to the current route
-            if (!isRouteAllowed(pathname, role)) {
-                router.push("/dashboard");
-                return;
-            }
-
-            setAuthorized(true);
         };
 
         checkAuth();
@@ -96,6 +128,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 </div>
             </div>
         );
+    }
+
+    if (needsTenantSelection) {
+        return <TenantSelector />;
     }
 
     return <>{children}</>;

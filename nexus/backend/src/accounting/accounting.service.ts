@@ -5,18 +5,23 @@ import { LedgerService } from './services/ledger.service';
 import { InvoiceService } from './services/invoice.service';
 import { PaymentService } from './services/payment.service';
 import { TallyService } from './services/tally-export.service';
+import { CreditNoteService } from './services/credit-note.service';
+import { DebitNoteService } from './services/debit-note.service';
 import { CreateJournalEntryDto } from './dto/create-journal.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { StandardAccounts } from './constants/account-names';
 
 @Injectable()
 export class AccountingService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly ledger: LedgerService,
+    public readonly ledger: LedgerService,
     private readonly invoice: InvoiceService,
     private readonly payment: PaymentService,
     private readonly tally: TallyService,
+    private readonly creditNote: CreditNoteService,
+    private readonly debitNote: DebitNoteService,
   ) {}
 
   // --- Chart of Accounts ---
@@ -28,8 +33,8 @@ export class AccountingService {
     return this.ledger.getAccounts(tenantId);
   }
 
-  async initializeTenantAccounts(tenantId: string, tx?: any) {
-    return this.ledger.initializeTenantAccounts(tenantId, tx);
+  async initializeTenantAccounts(tenantId: string, tx?: any, industry?: string) {
+    return this.ledger.initializeTenantAccounts(tenantId, tx, industry);
   }
 
   async deleteInvoice(tenantId: string, id: string) {
@@ -58,6 +63,10 @@ export class AccountingService {
     return this.invoice.createInvoicesBulk(tenantId, invoices);
   }
 
+  async cancelInvoice(tenantId: string, id: string, reason: string) {
+    return this.invoice.cancelInvoice(tenantId, id, reason);
+  }
+
   // --- Payments ---
   async createPayment(tenantId: string, data: CreatePaymentDto) {
     return this.payment.createPayment(tenantId, data);
@@ -65,6 +74,35 @@ export class AccountingService {
 
   async getCustomerLedger(tenantId: string, customerId: string) {
     return this.payment.getCustomerLedger(tenantId, customerId);
+  }
+
+  // --- Credit & Debit Notes ---
+  async createCreditNote(tenantId: string, data: any) {
+    return this.creditNote.create(tenantId, data);
+  }
+
+  async getCreditNotes(tenantId: string) {
+    return this.creditNote.findAll(tenantId);
+  }
+
+  async createDebitNote(tenantId: string, data: any) {
+    return this.debitNote.create(tenantId, data);
+  }
+
+  async getDebitNotes(tenantId: string) {
+    return this.debitNote.findAll(tenantId);
+  }
+
+  async createCustomerOpeningBalance(tenantId: string, data: any) {
+    return this.payment.createCustomerOpeningBalance(tenantId, data);
+  }
+
+  async createSupplierOpeningBalance(tenantId: string, data: any) {
+    return this.payment.createSupplierOpeningBalance(tenantId, data);
+  }
+
+  async getSupplierLedger(tenantId: string, supplierId: string) {
+    return this.payment.getSupplierLedger(tenantId, supplierId);
   }
 
 
@@ -182,8 +220,17 @@ export class AccountingService {
       const balance = new Decimal(acct.balance || 0);
       // Normal balance convention: Asset & Expense have debit normal; rest credit normal
       const isDebitNormal = acct.type === 'Asset' || acct.type === 'Expense';
-      const debit = isDebitNormal && balance.gt(0) ? balance : new Decimal(0);
-      const credit = !isDebitNormal && balance.gt(0) ? balance : new Decimal(0);
+      
+      let debit = new Decimal(0);
+      let credit = new Decimal(0);
+
+      if (isDebitNormal) {
+        if (balance.gte(0)) debit = balance;
+        else credit = balance.abs();
+      } else {
+        if (balance.gte(0)) credit = balance;
+        else debit = balance.abs();
+      }
 
       totalDebit = totalDebit.add(debit);
       totalCredit = totalCredit.add(credit);
@@ -262,7 +309,7 @@ export class AccountingService {
 
     if (fixedAssetAccount && cashAccount) {
       await this.ledger.createJournalEntry(tenantId, {
-        date: new Date().toISOString(),
+        date: new Date(data.purchaseDate || new Date()).toISOString(),
         description: `Fixed Asset Purchase: ${asset.name} (${asset.assetCode})`,
         reference: asset.id,
         transactions: [
@@ -274,45 +321,152 @@ export class AccountingService {
 
     return asset;
   }
-
   async runMonthlyDepreciation(tenantId: string, assetId: string) {
-    const asset = await this.prisma.fixedAsset.findFirst({
-      where: { id: assetId, tenantId, status: 'Active' },
-    });
-    if (!asset) throw new BadRequestException('Active fixed asset not found');
-
-    const bookValue = new Decimal(asset.purchaseValue).sub(new Decimal(asset.accumulatedDepreciation));
-    const monthlyDepreciation = bookValue.div(asset.usefulLife).toDecimalPlaces(2);
-
-    if (monthlyDepreciation.lte(0)) {
-      throw new BadRequestException('Asset is fully depreciated');
-    }
-
-    await this.prisma.fixedAsset.update({
-      where: { id: assetId },
-      data: { accumulatedDepreciation: { increment: monthlyDepreciation } },
-    });
-
-    const deprAccount = await this.prisma.account.findFirst({
-      where: { tenantId, name: { in: ['Depreciation Expense'] } },
-    });
-    const accumDeprAccount = await this.prisma.account.findFirst({
-      where: { tenantId, name: { in: ['Accumulated Depreciation'] } },
-    });
-
-    if (deprAccount && accumDeprAccount) {
-      await this.ledger.createJournalEntry(tenantId, {
-        date: new Date().toISOString(),
-        description: `Monthly Depreciation: ${asset.name}`,
-        reference: asset.id,
-        transactions: [
-          { accountId: deprAccount.id, type: 'Debit' as any, amount: Number(monthlyDepreciation), description: `Depreciation: ${asset.name}` },
-          { accountId: accumDeprAccount.id, type: 'Credit' as any, amount: Number(monthlyDepreciation), description: `Depreciation: ${asset.name}` },
-        ],
+    return this.prisma.$transaction(async (tx) => {
+      const asset = await tx.fixedAsset.findFirst({
+        where: { id: assetId, tenantId, status: 'Active' },
       });
-    }
+      if (!asset) throw new BadRequestException('Active fixed asset not found');
 
-    return { asset: asset.name, monthlyDepreciation: monthlyDepreciation.toFixed(2) };
+      const totalCost = new Decimal(asset.purchaseValue);
+      const salvage = new Decimal(asset.salvageValue || 0);
+      const monthlyDepreciation = totalCost.sub(salvage).div(asset.usefulLife).toDecimalPlaces(2);
+
+      if (monthlyDepreciation.lte(0)) {
+        throw new BadRequestException('Asset is fully depreciated');
+      }
+
+      await tx.fixedAsset.update({
+        where: { id: assetId },
+        data: { accumulatedDepreciation: { increment: monthlyDepreciation } },
+      });
+
+      const deprAccount = await tx.account.findFirst({
+        where: { tenantId, name: { in: ['Depreciation Expense'] } },
+      });
+      const accumDeprAccount = await tx.account.findFirst({
+        where: { tenantId, name: { in: ['Accumulated Depreciation'] } },
+      });
+
+      if (deprAccount && accumDeprAccount) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date().toISOString(),
+          description: `Monthly Depreciation: ${asset.name}`,
+          reference: asset.id,
+          transactions: [
+            { accountId: deprAccount.id, type: 'Debit' as any, amount: monthlyDepreciation.toNumber(), description: `Depreciation: ${asset.name}` },
+            { accountId: accumDeprAccount.id, type: 'Credit' as any, amount: monthlyDepreciation.toNumber(), description: `Depreciation: ${asset.name}` },
+          ],
+        }, tx);
+      }
+
+      return { asset: asset.name, monthlyDepreciation: monthlyDepreciation.toFixed(2) };
+    });
+  }
+
+  /**
+   * Financial Year Closing Logic
+   */
+  async closeFinancialYear(tenantId: string, year: number, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Verify all 12 months are locked
+      const locks = await tx.periodLock.findMany({
+        where: { tenantId, year, isLocked: true },
+      });
+
+      if (locks.length < 12) {
+        throw new BadRequestException(`Cannot close Financial Year ${year}. All 12 months must be locked by an Auditor first.`);
+      }
+
+      const closingDate = new Date(year, 11, 31);
+
+      // 2. Get P&L accounts (Revenue & Expense)
+      const plAccounts = await tx.account.findMany({
+        where: { tenantId, type: { in: ['Revenue', 'Expense'] } },
+      });
+
+      let netProfit = new Decimal(0);
+      const journalTransactions: any[] = [];
+
+      for (const acc of plAccounts) {
+        const bal = new Decimal(acc.balance || 0);
+        if (bal.isZero()) continue;
+
+        if (acc.type === 'Revenue') {
+          netProfit = netProfit.add(bal);
+          journalTransactions.push({
+            accountId: acc.id,
+            type: 'Debit',
+            amount: bal.toNumber(),
+            description: `Year-End Close: Zeroing ${acc.name}`,
+          });
+        } else {
+          netProfit = netProfit.sub(bal);
+          journalTransactions.push({
+            accountId: acc.id,
+            type: 'Credit',
+            amount: bal.toNumber(),
+            description: `Year-End Close: Zeroing ${acc.name}`,
+          });
+        }
+      }
+
+      if (journalTransactions.length === 0) {
+        return { message: `Year ${year} already appears closed or has no balances.`, year };
+      }
+
+      const retainedEarnings = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.RETAINED_EARNINGS },
+      });
+
+      if (!retainedEarnings) {
+        throw new BadRequestException('Retained Earnings account not found. Please initialize COA.');
+      }
+
+      if (netProfit.greaterThan(0)) {
+        journalTransactions.push({
+          accountId: retainedEarnings.id,
+          type: 'Credit',
+          amount: netProfit.toNumber(),
+          description: `Year-End Close: Transfer Net Profit to Equity`,
+        });
+      } else if (netProfit.lessThan(0)) {
+        journalTransactions.push({
+          accountId: retainedEarnings.id,
+          type: 'Debit',
+          amount: netProfit.abs().toNumber(),
+          description: `Year-End Close: Transfer Net Loss to Equity`,
+        });
+      }
+
+      await this.ledger.createJournalEntry(tenantId, {
+        date: closingDate.toISOString(),
+        description: `Financial Year ${year} Closing Entry`,
+        reference: `FY-CLOSE-${year}`,
+        transactions: journalTransactions,
+      }, tx);
+
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          userId,
+          action: 'YEAR_END_CLOSE',
+          resource: 'FinancialYear',
+          details: { 
+              year, 
+              netProfit: netProfit.toFixed(2),
+              msg: `Closed financial year ${year}`
+          },
+        },
+      });
+
+      return {
+        success: true,
+        year,
+        netProfit: netProfit.toFixed(2),
+        message: `Financial Year ${year} closed successfully. All P&L balances moved to Retained Earnings.`,
+      };
+    });
   }
 }
 

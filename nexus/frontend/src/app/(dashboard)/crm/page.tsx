@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, UserPlus, Search, Filter, Mail, Building, Phone, Sparkles, X, Save, Trash2, Upload, Edit2 } from "lucide-react";
+import { Users, UserPlus, Search, Filter, Mail, Building, Phone, Sparkles, X, Save, Trash2, Upload, Edit2, Scale } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EditCustomerDialog } from "@/components/crm/edit-customer-dialog";
+import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
+import { NumericInput } from "@/components/ui/numeric-input";
 
 import { useRouter } from "next/navigation";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
@@ -45,6 +47,7 @@ export default function CrmPage() {
     const [showDealForm, setShowDealForm] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<any>(null);
+    const [openingBalanceTarget, setOpeningBalanceTarget] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<"customers" | "leads">("customers");
 
@@ -326,7 +329,13 @@ export default function CrmPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Estimated Value (₹)</Label>
-                                <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" type="number" value={dealData.value} onChange={e => setDealData({ ...dealData, value: e.target.value })} required />
+                                <NumericInput
+                                    value={Number(dealData.value)}
+                                    onChange={val => setDealData({ ...dealData, value: val.toString() })}
+                                    decimal
+                                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11"
+                                    required
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Associated Client</Label>
@@ -364,7 +373,12 @@ export default function CrmPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest pl-1">Value (₹)</Label>
-                                <Input type="number" className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-12" value={editingDeal.value} onChange={e => setEditingDeal({ ...editingDeal, value: e.target.value })} />
+                                <NumericInput
+                                    value={Number(editingDeal.value)}
+                                    onChange={val => setEditingDeal({ ...editingDeal, value: val.toString() })}
+                                    decimal
+                                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-12"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest pl-1">Status Stage</Label>
@@ -580,6 +594,18 @@ export default function CrmPage() {
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpeningBalanceTarget({ id: c.id, name: `${c.firstName} ${c.lastName}` });
+                                                        }}
+                                                        title="Set Opening Balance"
+                                                    >
+                                                        <Scale className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -608,6 +634,14 @@ export default function CrmPage() {
                 onOpenChange={setIsEditDialogOpen}
                 customer={customerToEdit}
                 onSuccess={() => syncRelations(false)}
+            />
+
+            <OpeningBalanceDialog
+                isOpen={!!openingBalanceTarget}
+                onClose={() => setOpeningBalanceTarget(null)}
+                customerId={openingBalanceTarget?.id}
+                targetName={openingBalanceTarget?.name || ""}
+                onSuccess={() => syncRelations(true)}
             />
         </div>
     );

@@ -3,13 +3,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { InvoiceStatus, AccountType, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LedgerService } from './ledger.service';
+import { StandardAccounts, AccountSelectors } from '../constants/account-names';
 
 @Injectable()
 export class InvoiceService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
-  ) {}
+  ) { }
 
   async createInvoice(
     tenantId: string,
@@ -18,6 +19,10 @@ export class InvoiceService {
     deductStock: boolean = true,
   ) {
     const { items, customerId, dueDate, idempotencyKey } = data;
+
+    if (!items || items.length === 0) {
+      throw new BadRequestException('Compliance Error: Invoice must have at least one item.');
+    }
 
     const runInTransaction = async (tx: any) => {
       if (idempotencyKey) {
@@ -44,9 +49,14 @@ export class InvoiceService {
         where: { id: customerId, tenantId, isDeleted: false },
       });
 
+      if (!tenant?.state) {
+        throw new BadRequestException('Compliance Error: Tenant state is missing. Please update company profile before invoicing.');
+      }
+      if (!customer?.state) {
+        throw new BadRequestException('Compliance Error: Customer state is missing. GST calculation requires place of supply.');
+      }
+
       const isInterState =
-        tenant?.state &&
-        customer?.state &&
         tenant.state.toLowerCase() !== customer.state.toLowerCase();
 
       const sortedItems = [...items].sort((a, b) =>
@@ -60,14 +70,18 @@ export class InvoiceService {
         if (!product)
           throw new NotFoundException(`Product ${item.productId} not found`);
 
+        if (!product.hsnCode) {
+          throw new BadRequestException(`Compliance Error: HSN Code is missing for product ${product.name}. Required for GST invoices.`);
+        }
+
         const qty = new Decimal(item.quantity);
         const unitPrice = this.ledger.round2(item.price);
 
         if (qty.isZero()) {
-            throw new BadRequestException(`Invalid quantity for ${product.name}: Zero not allowed.`);
+          throw new BadRequestException(`Invalid quantity for ${product.name}: Zero not allowed.`);
         }
         if (unitPrice.isNegative() || unitPrice.isZero()) {
-             throw new BadRequestException(`Invalid price for ${product.name}: ${unitPrice}. Must be positive.`);
+          throw new BadRequestException(`Invalid price for ${product.name}: ${unitPrice}. Must be positive.`);
         }
 
         if (deductStock) {
@@ -96,7 +110,7 @@ export class InvoiceService {
             where: {
               tenantId,
               OR: [
-                { name: 'Main Factory Warehouse' },
+                { name: 'Main Warehouse' },
                 {} // Fallback
               ]
             }
@@ -106,25 +120,29 @@ export class InvoiceService {
             // 2. Decrement Stock Location
             const existingLoc = await tx.stockLocation.findUnique({
               where: {
-                productId_warehouseId: {
+                tenantId_productId_warehouseId_notes: {
+                  tenantId,
                   productId: item.productId,
                   warehouseId: warehouse.id,
+                  notes: ''
                 },
               },
             });
 
             if (existingLoc) {
-              await tx.stockLocation.updateMany({
-                where: { id: existingLoc.id, warehouse: { tenantId } },
+              await tx.stockLocation.update({
+                where: { id: existingLoc.id },
                 data: { quantity: { decrement: qty } }
               });
             } else {
-              // Create negative entry if allowed by global settings, but here we just ensure consistency
+              // Create negative entry if allowed by global settings
               await tx.stockLocation.create({
                 data: {
+                  tenantId,
                   productId: item.productId,
                   warehouseId: warehouse.id,
-                  quantity: qty.negated()
+                  quantity: qty.negated(),
+                  notes: ''
                 }
               });
             }
@@ -163,13 +181,19 @@ export class InvoiceService {
           totalIGST = totalIGST.add(taxAmount);
           itemIgstAmount = taxAmount;
         } else {
-          totalCGST = totalCGST.add(taxAmount.div(2));
-          totalSGST = totalSGST.add(taxAmount.div(2));
-          itemCgstAmount = taxAmount.div(2);
-          itemSgstAmount = taxAmount.div(2);
+          // Fix Industrial Rounding Drift: Compute CGST floor and SGST rest
+          const cgstFloor = taxAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_DOWN);
+          const sgstRest = taxAmount.sub(cgstFloor);
+
+          itemCgstAmount = cgstFloor;
+          itemSgstAmount = sgstRest;
+
+          totalCGST = totalCGST.add(itemCgstAmount);
+          totalSGST = totalSGST.add(itemSgstAmount);
         }
 
         invoiceItemsData.push({
+          tenantId,
           productId: product.id,
           productName: product.name,
           hsnCode: product.hsnCode || null,
@@ -191,6 +215,10 @@ export class InvoiceService {
       totalSGST = this.ledger.round2(totalSGST);
       totalIGST = this.ledger.round2(totalIGST);
       grandTotal = this.ledger.round2(totalTaxable.add(totalGST));
+
+      if (totalTaxable.isZero() && totalGST.greaterThan(0)) {
+        throw new BadRequestException('Compliance Violation: Tax-only invoices are not allowed. Please include a taxable base.');
+      }
 
       const invoiceNumber = data.invoiceNumber || `INV-${Date.now()}`;
       const existingInvoice = await tx.invoice.findFirst({
@@ -250,97 +278,96 @@ export class InvoiceService {
       }
 
       const arAccount = await tx.account.findFirst({
-        where: { tenantId, type: AccountType.Asset, name: 'Accounts Receivable' },
+        where: { tenantId, type: AccountType.Asset, name: StandardAccounts.ACCOUNTS_RECEIVABLE },
       });
       const revenueAccount = await tx.account.findFirst({
-        where: { tenantId, type: AccountType.Revenue, name: { contains: 'Sales' } },
+        where: { tenantId, type: AccountType.Revenue, name: StandardAccounts.SALES },
       });
-      const taxAccount = await tx.account.findFirst({
-        where: { tenantId, type: AccountType.Liability, name: 'GST Payable' },
+
+      // Split tax ledgers
+      const cgstAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.OUTPUT_CGST },
+      });
+      const sgstAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.OUTPUT_SGST },
+      });
+      const igstAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.OUTPUT_IGST },
       });
 
       if (!arAccount || !revenueAccount)
         throw new BadRequestException('Ledger Configuration Error: Missing Accounts.');
 
       const transactionsList = [
-        { accountId: arAccount.id, type: 'Debit', amount: grandTotal },
-        { accountId: revenueAccount.id, type: 'Credit', amount: totalTaxable },
+        { accountId: arAccount.id, type: 'Debit', amount: grandTotal, description: `Invoice #${invoice.invoiceNumber}` },
+        { accountId: revenueAccount.id, type: 'Credit', amount: totalTaxable, description: `Sales: Invoice #${invoice.invoiceNumber}` },
       ];
 
-      if (amountPaidAtStart.greaterThan(0)) {
-        const bankAccount = await tx.account.findFirst({
-          where: { tenantId, type: AccountType.Asset, name: 'Bank' },
-        });
-        if (bankAccount) {
-            transactionsList.push({ accountId: bankAccount.id, type: 'Debit', amount: amountPaidAtStart });
-            transactionsList.push({ accountId: arAccount.id, type: 'Credit', amount: amountPaidAtStart });
+      if (totalIGST.greaterThan(0) && igstAccount) {
+        transactionsList.push({ accountId: igstAccount.id, type: 'Credit', amount: totalIGST, description: `IGST: Invoice #${invoice.invoiceNumber}` });
+      } else {
+        if (totalCGST.greaterThan(0) && cgstAccount) {
+          transactionsList.push({ accountId: cgstAccount.id, type: 'Credit', amount: totalCGST, description: `CGST: Invoice #${invoice.invoiceNumber}` });
         }
-      }
-
-      if (totalGST.greaterThan(0) && taxAccount) {
-        transactionsList.push({ accountId: taxAccount.id, type: 'Credit', amount: totalGST });
+        if (totalSGST.greaterThan(0) && sgstAccount) {
+          transactionsList.push({ accountId: sgstAccount.id, type: 'Credit', amount: totalSGST, description: `SGST: Invoice #${invoice.invoiceNumber}` });
+        }
       }
 
       // COGS Ledger Entry
       if (totalCOGS.greaterThan(0)) {
-         const cogsAccount = await tx.account.findFirst({
-            where: { tenantId, type: AccountType.Expense, name: 'Cost of Goods Sold' },
-         });
-         const inventoryAccount = await tx.account.findFirst({
-            where: { 
-                tenantId, 
-                type: AccountType.Asset, 
-                name: { in: ['Inventory', 'Inventory Asset', 'Finished Goods Inventory'] } 
-            },
-         });
-         
-         if (cogsAccount && inventoryAccount) {
-            transactionsList.push({ accountId: cogsAccount.id, type: 'Debit', amount: totalCOGS });
-            transactionsList.push({ accountId: inventoryAccount.id, type: 'Credit', amount: totalCOGS });
-         }
+        const cogsAccount = await tx.account.findFirst({
+          where: { tenantId, type: AccountType.Expense, name: StandardAccounts.COGS },
+        });
+        const inventoryAccount = await tx.account.findFirst({
+          where: {
+            tenantId,
+            name: { in: AccountSelectors.FINISHED_GOODS }
+          },
+        });
+
+        if (cogsAccount && inventoryAccount) {
+          transactionsList.push({ accountId: cogsAccount.id, type: 'Debit', amount: totalCOGS, description: `COGS: #${invoice.invoiceNumber}` });
+          transactionsList.push({ accountId: inventoryAccount.id, type: 'Credit', amount: totalCOGS, description: `Inventory: #${invoice.invoiceNumber}` });
+        }
       }
 
-      await tx.journalEntry.create({
-        data: {
-          tenantId,
-          date: invoice.issueDate,
-          description: `Invoice #${invoice.invoiceNumber}`,
-          reference: invoice.invoiceNumber,
-          posted: true,
-          transactions: {
-            create: transactionsList.map((t) => ({
-              tenantId,
-              accountId: t.accountId,
-              amount: new Decimal(t.amount).abs(),
-              type: t.type as TransactionType,
-              description: `Invoice #${invoice.invoiceNumber}`,
-            })),
-          },
-        },
-      });
+      // 1. Create Invoice Journal
+      await this.ledger.createJournalEntry(tenantId, {
+        date: invoice.issueDate,
+        description: `Invoice #${invoice.invoiceNumber}`,
+        reference: invoice.invoiceNumber,
+        transactions: transactionsList.map(t => ({
+          accountId: t.accountId,
+          type: t.type as any,
+          amount: t.amount.toNumber(),
+          description: t.description
+        }))
+      }, tx);
 
-      const balanceUpdates = [...transactionsList].sort((a, b) =>
-        a.accountId.localeCompare(b.accountId),
-      );
-
-      for (const t of balanceUpdates) {
-        const acct = await tx.account.findFirst({ where: { id: t.accountId, tenantId } });
-        if (!acct) continue;
-
-        const balanceChange = new Decimal(t.amount);
-        const isNormalBalance =
-          (acct.type === AccountType.Asset && t.type === 'Debit') ||
-          (acct.type === AccountType.Expense && t.type === 'Debit') ||
-          (acct.type === AccountType.Liability && t.type === 'Credit') ||
-          (acct.type === AccountType.Equity && t.type === 'Credit') ||
-          (acct.type === AccountType.Revenue && t.type === 'Credit');
-
-        const finalChange = isNormalBalance ? balanceChange : balanceChange.negated();
-
-        await tx.account.updateMany({
-          where: { id: t.accountId, tenantId },
-          data: { balance: { increment: finalChange } },
+      // 2. Create Payment Journal if upfront payment exists
+      if (amountPaidAtStart.greaterThan(0)) {
+        const bankAccount = await tx.account.findFirst({
+          where: { tenantId, type: AccountType.Asset, name: StandardAccounts.BANK },
         });
+        if (bankAccount) {
+          const paymentTransactions = [
+            { accountId: bankAccount.id, type: 'Debit', amount: amountPaidAtStart, description: `Payment: In-#${invoice.invoiceNumber}` },
+            { accountId: arAccount.id, type: 'Credit', amount: amountPaidAtStart, description: `Payment: In-#${invoice.invoiceNumber}` },
+          ];
+
+          await this.ledger.createJournalEntry(tenantId, {
+            date: invoice.issueDate,
+            description: `Payment for Invoice #${invoice.invoiceNumber}`,
+            reference: `PAY-${invoice.invoiceNumber}`,
+            transactions: paymentTransactions.map(t => ({
+              accountId: t.accountId,
+              type: t.type as any,
+              amount: t.amount.toNumber(),
+              description: t.description
+            }))
+          }, tx);
+        }
       }
 
       const entryLag = Math.floor((Date.now() - new Date(invoice.issueDate).getTime()) / (1000 * 60));
@@ -372,8 +399,14 @@ export class InvoiceService {
 
     // Audit Guard: Check lock for EXISTING record date
     await this.ledger.checkPeriodLock(tenantId, inv.issueDate);
-    // Audit Guard: Check lock for NEW record date if changed
-    if (data.issueDate) await this.ledger.checkPeriodLock(tenantId, data.issueDate);
+
+    // Block financial/audit-critical changes in update
+    const internalFields = ['totalAmount', 'totalTaxable', 'totalGST', 'customerId', 'invoiceNumber'];
+    const hasForbiddenChanges = internalFields.some(f => data[f] !== undefined && data[f] !== (inv as any)[f]);
+
+    if (hasForbiddenChanges) {
+      throw new BadRequestException('Audit Violation: Amount, Customer, or Invoice Number cannot be modified once saved. Please Cancel the invoice and create a new one for corrections.');
+    }
 
     return this.prisma.invoice.updateMany({
       where: { id, tenantId },
@@ -381,19 +414,112 @@ export class InvoiceService {
     });
   }
 
+  async cancelInvoice(tenantId: string, id: string, reason: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const inv = await tx.invoice.findFirst({
+        where: { id, tenantId },
+        include: { items: true },
+      });
+
+      if (!inv) throw new NotFoundException('Invoice not found');
+      if (inv.status === 'Cancelled') throw new BadRequestException('Invoice is already cancelled');
+
+      await this.ledger.checkPeriodLock(tenantId, inv.issueDate, tx);
+
+      // 1. Reverse Stock
+      // 1. Reverse Stock
+      for (const item of inv.items) {
+        const originalMovement = await tx.stockMovement.findFirst({
+          where: { tenantId, productId: item.productId, reference: inv.invoiceNumber, type: 'OUT' }
+        });
+
+        const warehouseId = originalMovement?.warehouseId ||
+          (await tx.warehouse.findFirst({ where: { tenantId } }))?.id || '';
+
+        await tx.product.updateMany({
+          where: { id: item.productId, tenantId },
+          data: { stock: { increment: item.quantity } },
+        });
+
+        await tx.stockLocation.upsert({
+          where: {
+            tenantId_productId_warehouseId_notes: {
+              tenantId,
+              productId: item.productId,
+              warehouseId: warehouseId,
+              notes: ''
+            }
+          },
+          update: { quantity: { increment: item.quantity } },
+          create: {
+            tenantId,
+            productId: item.productId,
+            warehouseId: warehouseId,
+            quantity: item.quantity,
+            notes: ''
+          }
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            tenantId,
+            productId: item.productId,
+            warehouseId: warehouseId,
+            quantity: item.quantity,
+            type: 'IN',
+            reference: inv.invoiceNumber,
+            notes: `Invoice Cancellation Reversal`
+          }
+        });
+      }
+
+      // 1.5 Fetch Payments associated with this invoice
+      const payments = await tx.payment.findMany({
+        where: { invoiceId: id, tenantId },
+      });
+      const paymentRefs = payments.map(p => p.reference).filter(Boolean);
+
+      // 2. Reverse Journals
+      const journals = await tx.journalEntry.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { reference: inv.invoiceNumber },
+            { reference: { in: paymentRefs as string[] } },
+            { reference: `Initial-POS-${inv.invoiceNumber}` },
+            { reference: `PAY-${inv.invoiceNumber}` },
+          ]
+        },
+        include: { transactions: true },
+      });
+
+      // Safety: exclude journals that are already reversals or cancelled
+      const filteredJournals = journals.filter(j => !j.reference?.startsWith('CAN-'));
+
+      for (const journal of filteredJournals) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date().toISOString(),
+          description: `Cancellation of Voucher #${journal.reference}`,
+          reference: `CAN-${journal.reference}`,
+          transactions: journal.transactions.map(t => ({
+            accountId: t.accountId,
+            type: (t.type === 'Debit' ? 'Credit' : 'Debit') as any, // Flip Dr/Cr
+            amount: new Decimal(t.amount).toNumber(),
+            description: `Reversal: ${t.description}`
+          }))
+        }, tx);
+      }
+
+      // 3. Update Invoice Status
+      return (tx.invoice as any).update({
+        where: { id },
+        data: { status: 'Cancelled', cancellationReason: reason }
+      });
+    });
+  }
+
   async deleteInvoice(tenantId: string, id: string) {
-    const inv = await this.prisma.invoice.findFirst({
-      where: { id, tenantId },
-    });
-    if (!inv) throw new NotFoundException('Invoice not found');
-
-    await this.ledger.checkPeriodLock(tenantId, inv.issueDate);
-
-    // Hard delete for now as per hardening requirements (cascade test)
-    // In production, consider soft-delete if preferred.
-    return this.prisma.invoice.deleteMany({
-      where: { id, tenantId },
-    });
+    throw new BadRequestException('Data Integrity Violation: Hard deletion of invoices is forbidden to maintain audit trails. Please use the Cancel Invoice function instead.');
   }
 
   async getInvoices(tenantId: string, page: number = 1, limit: number = 50) {

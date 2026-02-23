@@ -97,14 +97,53 @@ export class AccountingController {
   createPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     return this.accountingService.createPayment(req.user.tenantId, dto);
   }
-
   @Get('ledger/:customerId')
   @Permissions(Permission.VIEW_REPORTS)
   getLedger(@Req() req: any, @Param('customerId') customerId: string) {
-    return this.accountingService.getCustomerLedger(
-      req.user.tenantId,
-      customerId,
-    );
+    return this.accountingService.getCustomerLedger(req.user.tenantId, customerId);
+  }
+
+
+  @Post('credit-notes')
+  @Permissions(Permission.CREATE_INVOICE)
+  createCreditNote(@Req() req: any, @Body() dto: any) {
+    return this.accountingService.createCreditNote(req.user.tenantId, dto);
+  }
+
+  @Get('credit-notes')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getCreditNotes(@Req() req: any) {
+    return this.accountingService.getCreditNotes(req.user.tenantId);
+  }
+
+  @Post('debit-notes')
+  @Permissions(Permission.CREATE_INVOICE)
+  createDebitNote(@Req() req: any, @Body() dto: any) {
+    return this.accountingService.createDebitNote(req.user.tenantId, dto);
+  }
+
+  @Get('debit-notes')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getDebitNotes(@Req() req: any) {
+    return this.accountingService.getDebitNotes(req.user.tenantId);
+  }
+
+  @Post('customers/:id/opening-balance')
+  @Permissions(Permission.LOCK_MONTH)
+  createCustomerOpeningBalance(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+    return this.accountingService.createCustomerOpeningBalance(req.user.tenantId, { ...dto, customerId: id });
+  }
+
+  @Post('suppliers/:id/opening-balance')
+  @Permissions(Permission.LOCK_MONTH)
+  createSupplierOpeningBalance(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+    return this.accountingService.createSupplierOpeningBalance(req.user.tenantId, { ...dto, supplierId: id });
+  }
+
+  @Get('suppliers/:id/ledger')
+  @Permissions(Permission.VIEW_REPORTS)
+  getSupplierLedger(@Req() req: any, @Param('id') id: string) {
+    return this.accountingService.getSupplierLedger(req.user.tenantId, id);
   }
 
   @Get('transactions')
@@ -221,6 +260,15 @@ export class AccountingController {
     // 2. Perform actual deletion
     return this.accountingService.deleteInvoice(req.user.tenantId, id);
   }
+  @Post('invoices/:id/cancel')
+  @Permissions(Permission.CREATE_INVOICE)
+  async cancelInvoice(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+  ) {
+    return this.accountingService.cancelInvoice(req.user.tenantId, id, reason);
+  }
 
   @Get('reports/trial-balance')
   @Permissions(Permission.VIEW_REPORTS)
@@ -251,6 +299,16 @@ export class AccountingController {
   @Permissions(Permission.VIEW_REPORTS)
   runDepreciation(@Req() req: any, @Param('id') id: string) {
     return this.accountingService.runMonthlyDepreciation(req.user.tenantId, id);
+  }
+
+  @Post('close-year')
+  @Permissions(Permission.LOCK_MONTH)
+  closeFinancialYear(@Req() req: any, @Body('year') year: number) {
+    return this.accountingService.closeFinancialYear(
+      req.user.tenantId,
+      year,
+      req.user.id,
+    );
   }
 }
 

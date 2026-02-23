@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,7 +138,10 @@ export default function FixedAssetsPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Purchase Value (₹)</Label>
-                                    <Input type="number" value={form.purchaseValue} onChange={e => setForm(f => ({ ...f, purchaseValue: e.target.value }))} placeholder="500000" />
+                                    <Input type="number" value={form.purchaseValue || ""} onChange={e => {
+                                        const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                        setForm(f => ({ ...f, purchaseValue: isNaN(val) ? "0" : val.toString() }));
+                                    }} placeholder="500000" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Salvage Value (₹)</Label>
@@ -147,7 +150,10 @@ export default function FixedAssetsPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Useful Life (months)</Label>
-                                <Input type="number" value={form.usefulLife} onChange={e => setForm(f => ({ ...f, usefulLife: e.target.value }))} placeholder="60" />
+                                <Input type="number" value={form.usefulLife || ""} onChange={e => {
+                                    const val = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                                    setForm(f => ({ ...f, usefulLife: isNaN(val) ? "0" : val.toString() }));
+                                }} placeholder="60" />
                             </div>
                             <Button onClick={handleAdd} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl">
                                 Add Fixed Asset

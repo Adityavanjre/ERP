@@ -35,6 +35,7 @@ export default function LoginPage() {
         try {
             const res = await api.post("auth/login", { email, password })
             localStorage.setItem("k_token", res.data.accessToken)
+            localStorage.setItem("k_identity", res.data.accessToken)
             localStorage.setItem("k_user", JSON.stringify(res.data.user))
 
             // Restore session flow

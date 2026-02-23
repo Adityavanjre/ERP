@@ -8,6 +8,7 @@ import { BarcodeSearch } from '@/components/sales/rapid/BarcodeSearch';
 import { CartTable } from '@/components/sales/rapid/CartTable';
 import { CheckoutSidebar } from '@/components/sales/rapid/CheckoutSidebar';
 import { ProductGrid } from '@/components/sales/rapid/ProductGrid';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 
 const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 
@@ -31,7 +32,7 @@ export default function RapidBillingPage() {
     const [pendingSync, setPendingSync] = useState(0);
     const [paymentMode, setPaymentMode] = useState<'CASH' | 'UPI' | 'CREDIT'>('CASH');
     const [lastScanFailed, setLastScanFailed] = useState(false);
-    const [customAmountPaid, setCustomAmountPaid] = useState<string>('');
+    const [customAmountPaid, setCustomAmountPaid] = useState<number>(0);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
@@ -40,6 +41,7 @@ export default function RapidBillingPage() {
     const [manualSearch, setManualSearch] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isManualSearching, setIsManualSearching] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     const searchRef = useRef<HTMLInputElement>(null!);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,7 +181,26 @@ export default function RapidBillingPage() {
         setItems(prev => prev.filter(i => i.productId !== id));
     };
 
-    const total = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const round2 = (val: number) => Math.round((val + Number.EPSILON) * 100) / 100;
+
+    const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    const taxTotal = items.reduce((sum, i) => {
+        const itemTaxable = i.price * i.quantity;
+        const itemTax = (itemTaxable * (i.gstRate || 0)) / 100;
+        return sum + itemTax;
+    }, 0);
+    const total = round2(subtotal + taxTotal);
+
+    const handleCompletePress = () => {
+        if (items.length === 0 || isSubmitting) return;
+
+        // Show confirmation for large amounts
+        if (total > 100000) {
+            setShowConfirm(true);
+        } else {
+            completeInvoice();
+        }
+    };
 
     const completeInvoice = async () => {
         if (items.length === 0 || isSubmitting) return;
@@ -188,7 +209,7 @@ export default function RapidBillingPage() {
         const idempotencyKey = `POS-${Date.now()}-${generateId()}`;
         const invoiceNumber = `INV-${Date.now()}-${generateId().substring(0, 4).toUpperCase()}`;
 
-        const amountPaid = customAmountPaid ? parseFloat(customAmountPaid) : (paymentMode === 'CREDIT' ? 0 : total);
+        const amountPaid = customAmountPaid > 0 ? customAmountPaid : (paymentMode === 'CREDIT' ? 0 : total);
 
         const invoiceData = {
             customerId: customerId || undefined,
@@ -260,13 +281,13 @@ export default function RapidBillingPage() {
         setStartTime(null);
         setElapsed(0);
         setSearch('');
-        setCustomAmountPaid('');
+        setCustomAmountPaid(0);
         if (timerRef.current) clearInterval(timerRef.current);
     };
 
     useEffect(() => {
         const handleKeys = (e: KeyboardEvent) => {
-            if (e.key === 'F1') { e.preventDefault(); completeInvoice(); }
+            if (e.key === 'F1') { e.preventDefault(); handleCompletePress(); }
             if (e.key === 'F2') {
                 e.preventDefault();
                 const modes: any[] = ['CASH', 'UPI', 'CREDIT'];
@@ -329,13 +350,26 @@ export default function RapidBillingPage() {
                     setPaymentMode={setPaymentMode}
                     customAmountPaid={customAmountPaid}
                     setCustomAmountPaid={setCustomAmountPaid}
+                    subtotal={subtotal}
+                    taxTotal={taxTotal}
                     total={total}
                     itemsCount={items.length}
                     isSubmitting={isSubmitting}
-                    completeInvoice={completeInvoice}
+                    completeInvoice={handleCompletePress}
                     userRole={userRole}
                 />
             </main >
+
+            <ConfirmationDialog
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={completeInvoice}
+                title="High Value Invoice"
+                description={`You are about to generate an invoice for ₹${total.toLocaleString('en-IN')}. Are you sure you want to proceed?`}
+                confirmLabel="Yes, Generate"
+                cancelLabel="Review"
+                variant="warning"
+            />
         </div >
     );
 }

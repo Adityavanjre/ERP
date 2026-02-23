@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { Plus, Trash2, Save, Loader2 } from 'lucide-react';
@@ -162,12 +163,12 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                     <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                             <Label>Output Quantity</Label>
-                            <Input type="number" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
+                            <NumericInput value={quantity} onChange={setQuantity} />
                         </div>
                         <div className="space-y-2">
                             <Label>Extra Cost % (Overhead)</Label>
                             <div className="flex gap-2">
-                                <Input type="number" min="0" value={overheadRate} onChange={e => setOverheadRate(Number(e.target.value))} />
+                                <NumericInput decimal value={overheadRate} onChange={setOverheadRate} />
                                 <Button
                                     variant="outline"
                                     className={`w-12 ${isOverheadFixed ? 'bg-primary text-primary-foreground' : ''}`}
@@ -213,7 +214,7 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                                     </div>
                                     <div className="w-24 space-y-1">
                                         <Label className="text-xs text-muted-foreground">Qty</Label>
-                                        <Input type="number" min="0" step="0.1" value={item.quantity} onChange={e => updateItem(index, 'quantity', Number(e.target.value))} />
+                                        <NumericInput decimal value={item.quantity} onChange={v => updateItem(index, 'quantity', v)} />
                                     </div>
                                     <div className="w-20 space-y-1">
                                         <Label className="text-xs text-muted-foreground">Unit</Label>

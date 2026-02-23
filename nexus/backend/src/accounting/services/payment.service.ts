@@ -4,6 +4,7 @@ import { PaymentMode, AccountType, InvoiceStatus } from '@prisma/client';
 import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LedgerService } from './ledger.service';
+import { StandardAccounts } from '../constants/account-names';
 
 @Injectable()
 export class PaymentService {
@@ -87,24 +88,15 @@ export class PaymentService {
           });
         }
 
-        await tx.journalEntry.create({
-          data: {
-            tenantId,
-            date: payment.date,
-            description: `Payment Recv: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
-            reference: payment.reference,
-            posted: true,
-            transactions: {
-              create: [
-                { tenantId, accountId: bankAccount.id, type: 'Debit', amount: data.amount, description: 'Customer Payment' },
-                { tenantId, accountId: arAccount.id, type: 'Credit', amount: data.amount, description: 'Customer Payment' },
-              ],
-            },
-          },
-        });
-
-        await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { increment: data.amount } } });
-        await tx.account.updateMany({ where: { id: arAccount.id, tenantId }, data: { balance: { decrement: data.amount } } });
+        await this.ledger.createJournalEntry(tenantId, {
+          date: payment.date.toISOString(),
+          description: `Payment Recv: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
+          reference: payment.reference || `PAY-${payment.id.slice(0, 8)}`,
+          transactions: [
+            { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
+            { accountId: arAccount.id, type: 'Credit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
+          ],
+        }, tx);
 
         await tx.auditLog.create({
           data: {
@@ -129,27 +121,86 @@ export class PaymentService {
           },
         });
 
-        await tx.journalEntry.create({
-          data: {
-            tenantId,
-            date: payment.date,
-            description: `Vendor Payment: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
-            reference: payment.reference,
-            posted: true,
-            transactions: {
-              create: [
-                { tenantId, accountId: apAccount.id, type: 'Debit', amount: data.amount, description: 'Supplier Payment' },
-                { tenantId, accountId: bankAccount.id, type: 'Credit', amount: data.amount, description: 'Supplier Payment' },
-              ],
-            },
-          },
-        });
-
-        await tx.account.updateMany({ where: { id: apAccount.id, tenantId }, data: { balance: { decrement: data.amount } } });
-        await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { decrement: data.amount } } });
+        await this.ledger.createJournalEntry(tenantId, {
+          date: payment.date.toISOString(),
+          description: `Vendor Payment: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
+          reference: payment.reference || `VEND-PAY-${payment.id.slice(0, 8)}`,
+          transactions: [
+            { accountId: apAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Supplier Payment' },
+            { accountId: bankAccount.id, type: 'Credit', amount: new Decimal(data.amount).toNumber(), description: 'Supplier Payment' },
+          ],
+        }, tx);
       }
 
       return payment;
+    });
+  }
+
+  async cancelPayment(tenantId: string, id: string, reason: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const pay = await tx.payment.findFirst({
+        where: { id, tenantId },
+        include: { invoice: true },
+      });
+      if (!pay) throw new NotFoundException('Payment not found');
+      if (pay.notes?.includes('CANCELLED')) throw new BadRequestException('Payment is already cancelled');
+
+      await this.ledger.checkPeriodLock(tenantId, pay.date, tx);
+
+      // 1. Find the Journal Entry associated with this payment
+      const journal = await tx.journalEntry.findFirst({
+        where: { tenantId, reference: pay.reference || undefined, description: { contains: pay.id.slice(0, 8) } },
+        include: { transactions: true }
+      });
+
+      // 2. Reverse the Journal Entry
+      if (journal) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date().toISOString(),
+          description: `Reversal: ${journal.description} (Reason: ${reason})`,
+          reference: `CAN-${journal.reference || pay.id.slice(0,8)}`,
+          transactions: journal.transactions.map(t => ({
+            accountId: t.accountId,
+            type: (t.type === 'Debit' ? 'Credit' : 'Debit') as any,
+            amount: new Decimal(t.amount).toNumber(),
+            description: `Reversal of ${t.description}`
+          }))
+        }, tx);
+      } else {
+         // Fallback if no journal found (direct balance reversal)
+         const bankAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: { contains: 'Bank' } } });
+         if (pay.customerId) {
+            const arAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: 'Accounts Receivable' } });
+            if (bankAccount && arAccount) {
+               await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { decrement: pay.amount } } });
+               await tx.account.updateMany({ where: { id: arAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+            }
+         } else if (pay.supplierId) {
+            const apAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Liability, name: 'Accounts Payable' } });
+            if (apAccount && bankAccount) {
+               await tx.account.updateMany({ where: { id: apAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+               await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+            }
+         }
+      }
+
+      // 3. Update Invoice Outstanding if linked
+      if (pay.invoiceId && pay.invoice) {
+        const newAmountPaid = new Decimal(pay.invoice.amountPaid).sub(new Decimal(pay.amount));
+        await tx.invoice.update({
+          where: { id: pay.invoiceId },
+          data: { 
+            amountPaid: newAmountPaid, 
+            status: newAmountPaid.lessThanOrEqualTo(0) ? InvoiceStatus.Unpaid : InvoiceStatus.Partial 
+          }
+        });
+      }
+
+      // 4. Mark Payment as Cancelled
+      return tx.payment.update({
+        where: { id },
+        data: { notes: `CANCELLED: ${reason} (Original: ${pay.notes || ''})`.trim() }
+      });
     });
   }
 
@@ -164,6 +215,16 @@ export class PaymentService {
     // Audit Guard: Check lock for NEW record date if changed
     if (data.date) await this.ledger.checkPeriodLock(tenantId, data.date);
 
+    // FINANCIAL INTEGRITY GUARD: Block direct updates to critical fields
+    const criticalFields = ['amount', 'date', 'invoiceId', 'customerId', 'supplierId'];
+    for (const field of criticalFields) {
+      if (data[field] !== undefined && data[field] !== (pay as any)[field]) {
+        throw new BadRequestException(
+          `Financial Integrity Violation: Cannot directly update '${field}'. Please cancel and re-create the payment if correction is needed.`,
+        );
+      }
+    }
+
     return this.prisma.payment.updateMany({
       where: { id, tenantId },
       data,
@@ -171,18 +232,7 @@ export class PaymentService {
   }
 
   async deletePayment(tenantId: string, id: string) {
-    const pay = await this.prisma.payment.findFirst({
-      where: { id, tenantId },
-    });
-    if (!pay) throw new NotFoundException('Payment not found');
-
-    await this.ledger.checkPeriodLock(tenantId, pay.date);
-
-    // In double-entry, we don't just "delete". We must reverse or mark as cancelled.
-    return this.prisma.payment.updateMany({
-      where: { id, tenantId },
-      data: { notes: `CANCELLED: ${pay.notes || ''}`.trim() },
-    });
+    return this.cancelPayment(tenantId, id, 'Payment deleted by user');
   }
 
   async getCustomerLedger(tenantId: string, customerId: string) {
@@ -201,6 +251,91 @@ export class PaymentService {
     let balance = new Decimal(0);
     return ledger.map((entry) => {
       balance = balance.add(entry.debit).sub(entry.credit);
+      return { ...entry, balance };
+    });
+  }
+
+  async createCustomerOpeningBalance(tenantId: string, data: any) {
+    return this.prisma.$transaction(async (tx) => {
+      const ob = await tx.customerOpeningBalance.create({
+        data: {
+          tenantId,
+          customerId: data.customerId,
+          amount: data.amount,
+          date: new Date(data.date || new Date()),
+          description: data.description || 'Opening Balance',
+        },
+      });
+
+      // Dr Accounts Receivable / Cr Opening Balance Equity
+      const arAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_RECEIVABLE } });
+      const obeAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+
+      if (arAccount && obeAccount) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: ob.date.toISOString(),
+          description: `Customer Opening Balance: ${data.customerId}`,
+          reference: ob.id,
+          transactions: [
+            { accountId: arAccount.id, type: 'Debit', amount: Number(data.amount), description: 'Opening Balance' },
+            { accountId: obeAccount.id, type: 'Credit', amount: Number(data.amount), description: 'Opening Balance' },
+          ],
+        }, tx);
+      }
+
+      return ob;
+    });
+  }
+
+  async createSupplierOpeningBalance(tenantId: string, data: any) {
+    return this.prisma.$transaction(async (tx) => {
+      const ob = await tx.supplierOpeningBalance.create({
+        data: {
+          tenantId,
+          supplierId: data.supplierId,
+          amount: data.amount,
+          date: new Date(data.date || new Date()),
+          description: data.description || 'Opening Balance',
+        },
+      });
+
+      // Dr Opening Balance Equity / Cr Accounts Payable
+      const obeAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+      const apAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
+
+      if (obeAccount && apAccount) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: ob.date.toISOString(),
+          description: `Supplier Opening Balance: ${data.supplierId}`,
+          reference: ob.id,
+          transactions: [
+            { accountId: obeAccount.id, type: 'Debit', amount: Number(data.amount), description: 'Opening Balance' },
+            { accountId: apAccount.id, type: 'Credit', amount: Number(data.amount), description: 'Opening Balance' },
+          ],
+        }, tx);
+      }
+
+      return ob;
+    });
+  }
+
+  async getSupplierLedger(tenantId: string, supplierId: string) {
+    const [orders, payments, openingBalances] = await Promise.all([
+      this.prisma.purchaseOrder.findMany({ where: { tenantId, supplierId }, orderBy: { createdAt: 'asc' } }),
+      this.prisma.payment.findMany({ where: { tenantId, supplierId }, orderBy: { date: 'asc' } }),
+      this.prisma.supplierOpeningBalance.findMany({ where: { tenantId, supplierId } }),
+    ]);
+
+    const ledger = [
+      ...openingBalances.map((ob) => ({ id: ob.id, date: ob.date, type: 'OPENING', ref: 'OB', debit: 0, credit: Number(ob.amount) })),
+      ...orders.map((o) => ({ id: o.id, date: o.createdAt, type: 'PURCHASE', ref: o.orderNumber, debit: 0, credit: new Decimal(o.totalAmount) })),
+      ...payments.map((p) => ({ id: p.id, date: p.date, type: 'PAYMENT', ref: p.reference || 'PAY', debit: new Decimal(p.amount), credit: 0 })),
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    let balance = new Decimal(0); // Credit normal for suppliers
+    return ledger.map((entry) => {
+      // Balance = Credit - Debit
+      balance = balance.add(entry.credit).sub(entry.debit);
       return { ...entry, balance };
     });
   }

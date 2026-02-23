@@ -20,14 +20,17 @@ export class CreateProductDto {
   description?: string;
 
   @IsNumber()
+  @IsNotEmpty()
   @Min(0)
   price: number;
 
   @IsNumber()
+  @IsNotEmpty()
   @Min(0)
   costPrice: number;
 
   @IsNumber()
+  @IsNotEmpty()
   @Min(0)
   stock: number;
 

@@ -6,8 +6,10 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, Sparkles, Brain, Clock, AlertCircle, Upload, Edit3, CheckCircle2, Info, ChevronRight, Tags } from "lucide-react";
+import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, Sparkles, Brain, Clock, AlertCircle, Upload, Edit3, CheckCircle2, Info, ChevronRight, Tags, Scale } from "lucide-react";
+import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Label } from "@/components/ui/label";
 import {
     Table,
@@ -32,6 +34,7 @@ export default function InventoryPage() {
     const [showForm, setShowForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [obProduct, setObProduct] = useState<any>(null);
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -323,7 +326,11 @@ export default function InventoryPage() {
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
                                     <div className="flex gap-2">
-                                        <Input type="number" min="0" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} required />
+                                        <NumericInput
+                                            className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                            value={formData.stock}
+                                            onChange={val => setFormData({ ...formData, stock: val })}
+                                        />
                                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
                                             <input type="checkbox" id="isService" checked={formData.isService} onChange={e => setFormData({ ...formData, isService: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                                             <label htmlFor="isService" className="text-[10px] font-black text-slate-500 uppercase">Service</label>
@@ -336,7 +343,11 @@ export default function InventoryPage() {
                                 </div>
                                 <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
                                     <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Low Stock Alert Level</Label>
-                                    <Input type="number" min="0" className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black" value={formData.minStockLevel} onChange={e => setFormData({ ...formData, minStockLevel: Number(e.target.value) })} />
+                                    <NumericInput
+                                        className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black"
+                                        value={formData.minStockLevel}
+                                        onChange={val => setFormData({ ...formData, minStockLevel: val })}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tags (Comma Separated)</Label>
@@ -355,11 +366,21 @@ export default function InventoryPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Selling Price (₹) <span className="text-rose-500">*</span></Label>
-                                    <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
+                                    <NumericInput
+                                        decimal
+                                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                        value={formData.price}
+                                        onChange={val => setFormData({ ...formData, price: val })}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Purchase Price</Label>
-                                    <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
+                                    <NumericInput
+                                        decimal
+                                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                        value={formData.costPrice}
+                                        onChange={val => setFormData({ ...formData, costPrice: val })}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">HSN Classification</Label>
@@ -367,7 +388,13 @@ export default function InventoryPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tax (GST %) Rate</Label>
-                                    <Input type="number" min="0" max="100" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" placeholder="18" value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} />
+                                    <NumericInput
+                                        decimal
+                                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11"
+                                        placeholder="18"
+                                        value={formData.gstRate}
+                                        onChange={val => setFormData({ ...formData, gstRate: val })}
+                                    />
                                 </div>
                                 <div className="lg:col-span-4 space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Description & Attributes</Label>
@@ -412,7 +439,11 @@ export default function InventoryPage() {
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
                                 <div className="flex gap-2">
-                                    <Input type="number" min="0" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} required />
+                                    <NumericInput
+                                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                        value={formData.stock}
+                                        onChange={val => setFormData({ ...formData, stock: val })}
+                                    />
                                     <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
                                         <input type="checkbox" id="isServiceEdit" checked={formData.isService} onChange={e => setFormData({ ...formData, isService: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                                         <label htmlFor="isServiceEdit" className="text-[10px] font-black text-slate-500 uppercase">Service</label>
@@ -425,7 +456,11 @@ export default function InventoryPage() {
                             </div>
                             <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
                                 <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">Min Alert Stock Threshold</Label>
-                                <Input type="number" min="0" className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black" value={formData.minStockLevel} onChange={e => setFormData({ ...formData, minStockLevel: Number(e.target.value) })} />
+                                <NumericInput
+                                    className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black"
+                                    value={formData.minStockLevel}
+                                    onChange={val => setFormData({ ...formData, minStockLevel: val })}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tags (Comma Separated)</Label>
@@ -444,11 +479,21 @@ export default function InventoryPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Selling Price (₹) <span className="text-rose-500">*</span></Label>
-                                <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} required />
+                                <NumericInput
+                                    decimal
+                                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                    value={formData.price}
+                                    onChange={val => setFormData({ ...formData, price: val })}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Purchase Price</Label>
-                                <Input type="number" min="0" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20" value={formData.costPrice} onChange={e => setFormData({ ...formData, costPrice: Number(e.target.value) })} />
+                                <NumericInput
+                                    decimal
+                                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                    value={formData.costPrice}
+                                    onChange={val => setFormData({ ...formData, costPrice: val })}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">HSN Classification</Label>
@@ -456,7 +501,12 @@ export default function InventoryPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Tax (GST %) Rate</Label>
-                                <Input type="number" min="0" max="100" step="0.01" className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11" value={formData.gstRate} onChange={e => setFormData({ ...formData, gstRate: Number(e.target.value) })} />
+                                <NumericInput
+                                    decimal
+                                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11"
+                                    value={formData.gstRate}
+                                    onChange={val => setFormData({ ...formData, gstRate: val })}
+                                />
                             </div>
                             <div className="lg:col-span-4 space-y-2">
                                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Description & Attributes</Label>
@@ -620,6 +670,15 @@ export default function InventoryPage() {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
+                                                className="h-8 w-8 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
+                                                onClick={() => setObProduct(p)}
+                                                title="Set Opening Balance"
+                                            >
+                                                <Scale className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
                                                 className="h-8 w-8 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                                 onClick={() => startEdit(p)}
                                             >
@@ -653,6 +712,13 @@ export default function InventoryPage() {
                     </div>
                 </CardContent>
             </Card>
+            <OpeningBalanceDialog
+                isOpen={!!obProduct}
+                onClose={() => setObProduct(null)}
+                productId={obProduct?.id}
+                targetName={obProduct?.name || ""}
+                onSuccess={() => syncInventory(false)}
+            />
         </div>
     );
 }

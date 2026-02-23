@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../system/services/audit.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { EmployeeStatus, LeaveStatus, PayrollStatus } from '@prisma/client';
+import { AccountSelectors } from '../accounting/constants/account-names';
 
 @Injectable()
 export class HrService {
@@ -65,7 +66,7 @@ export class HrService {
     if (!employee) throw new Error('Employee not found in this tenant context');
 
     const leave = await this.prisma.leave.create({
-      data,
+      data: { ...data, tenantId },
       include: { employee: true },
     });
     await this.audit.log({
@@ -115,13 +116,26 @@ export class HrService {
     const employee = await this.prisma.employee.findFirst({
       where: { id: employeeId, tenantId },
     });
-    if (!employee) throw new Error('Employee not found in this tenant context');
+    if (!employee) throw new BadRequestException('Employee not found in this tenant context');
+
+    // Verify necessary accounts exist BEFORE creating payroll record to ensure audit trail
+    const salaryAccount = await this.prisma.account.findFirst({
+        where: { tenantId, name: { in: AccountSelectors.SALARY } },
+    });
+    const cashAccount = await this.prisma.account.findFirst({
+        where: { tenantId, name: { in: AccountSelectors.CASH_BANK } },
+    });
+
+    if (!salaryAccount || !cashAccount) {
+        throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
+    }
 
     const netPay = Number(basicSalary) + Number(bonuses) - Number(deductions);
 
     const payroll = await this.prisma.payroll.create({
       data: {
         ...data,
+        tenantId,
         netPay,
       },
       include: { employee: true },
@@ -134,16 +148,7 @@ export class HrService {
       details: { id: payroll.id, employeeId, netPay },
     });
 
-    // Post journal entry: Salary Expense Dr / Cash (or Bank) Cr
     try {
-      const salaryAccount = await this.prisma.account.findFirst({
-        where: { tenantId, name: { in: ['Salary Expense', 'Wages Expense', 'Payroll Expense'] } },
-      });
-      const cashAccount = await this.prisma.account.findFirst({
-        where: { tenantId, name: { in: ['Cash', 'Bank'] } },
-      });
-
-      if (salaryAccount && cashAccount) {
         await this.accounting.createJournalEntry(tenantId, {
           date: new Date().toISOString(),
           description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
@@ -153,12 +158,10 @@ export class HrService {
             { accountId: cashAccount.id, type: 'Credit', amount: netPay, description: 'Salary Disbursement' },
           ],
         });
-      } else {
-        this.logger.warn(`Payroll journal skipped for tenant ${tenantId}: Salary Expense or Cash account not found in COA.`);
-      }
     } catch (journalErr) {
       this.logger.error(`Failed to post payroll journal for payroll ${payroll.id}`, journalErr);
-      // Do NOT fail payroll creation if journal fails - log and continue
+      // Re-throw as BadRequest to alert the user even if record was made (or wrap in transaction)
+      throw new BadRequestException(`Payroll journal posting failed: ${journalErr.message}. The record was created but financial posting failed.`);
     }
 
     return payroll;

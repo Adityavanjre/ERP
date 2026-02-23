@@ -7,119 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model App {
-  id           String            @id @default(uuid())
-  name         String            @unique
-  label        String
-  description  String?
-  version      String            @default("1.0.0")
-  author       String?
-  website      String?
-  category     String?
-  installed    Boolean           @default(false)
-  dependencies String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  models       ModelDefinition[]
-}
-
-model ModelDefinition {
-  id           String            @id @default(uuid())
-  moduleId     String
-  name         String
-  label        String
-  description  String?
-  isSystem     Boolean           @default(false)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  fields       FieldDefinition[]
-  accessRights ModelAccess[]
-  module       App               @relation(fields: [moduleId], references: [id])
-}
-
-model FieldDefinition {
-  id               String          @id @default(uuid())
-  modelId          String
-  name             String
-  label            String
-  type             FieldType
-  help             String?
-  required         Boolean         @default(false)
-  readonly         Boolean         @default(false)
-  index            Boolean         @default(false)
-  defaultValue     String?
-  selectionOptions Json?
-  targetModel      String?
-  model            ModelDefinition @relation(fields: [modelId], references: [id])
-}
-
-model Record {
-  id        String   @id @default(uuid())
-  tenantId  String
-  modelName String
-  data      Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-
-  @@index([modelName])
-  @@index([tenantId])
-}
-
-model WorkflowDefinition {
-  id          String               @id @default(uuid())
-  modelName   String
-  name        String
-  isActive    Boolean              @default(true)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  nodes       WorkflowNode[]
-  transitions WorkflowTransition[]
-}
-
-model WorkflowNode {
-  id         String               @id @default(uuid())
-  workflowId String
-  name       String
-  type       String               @default("state")
-  config     Json?
-  workflow   WorkflowDefinition   @relation(fields: [workflowId], references: [id])
-  incoming   WorkflowTransition[] @relation("node_to")
-  outgoing   WorkflowTransition[] @relation("node_from")
-}
-
-model WorkflowTransition {
-  id          String             @id @default(uuid())
-  workflowId  String
-  fromNodeId  String
-  toNodeId    String
-  triggerType String
-  condition   String?
-  label       String?
-  toNode      WorkflowNode       @relation("node_to", fields: [toNodeId], references: [id])
-  fromNode    WorkflowNode       @relation("node_from", fields: [fromNodeId], references: [id])
-  workflow    WorkflowDefinition @relation(fields: [workflowId], references: [id])
-}
-
-model ModelAccess {
-  id         String          @id @default(uuid())
-  modelId    String
-  role       Role
-  permRead   Boolean         @default(false)
-  permWrite  Boolean         @default(false)
-  permCreate Boolean         @default(false)
-  permUnlink Boolean         @default(false)
-  model      ModelDefinition @relation(fields: [modelId], references: [id])
-
-  @@unique([modelId, role])
-}
-
 model User {
   id           String       @id @default(uuid())
   email        String       @unique
-  passwordHash String
+  passwordHash String?
   fullName     String?
   avatarUrl    String?
+  authProvider AuthProvider @default(Email)
+  providerId   String?      // e.g., Google ID
   isSuperAdmin Boolean      @default(false)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
@@ -136,6 +31,9 @@ model Tenant {
   name            String
   slug            String                   @unique
   type            TenantType               @default(Retail)
+  industry        String?
+  businessType    String?
+  isOnboarded     Boolean                  @default(false)
   plan            PlanType                 @default(Free)
   logoUrl         String?
   address         String?
@@ -160,7 +58,6 @@ model Tenant {
   products        Product[]
   projects        Project[]
   purchaseOrders  PurchaseOrder[]
-  records         Record[]
   suppliers       Supplier[]
   supplierOpeningBalances SupplierOpeningBalance[]
   tasks           Task[]
@@ -172,6 +69,16 @@ model Tenant {
   fixedAssets     FixedAsset[]
   comments        Comment[]
   apiKeys         ApiKey[]
+  creditNotes     CreditNote[]
+  debitNotes      DebitNote[]
+  payrolls        Payroll[]
+  leaves          Leave[]
+  invoiceItems    InvoiceItem[]
+  poItems         PurchaseOrderItem[]
+  bomItems        BOMItem[]
+  stockLocations  StockLocation[]
+  cnItems         CreditNoteItem[]
+  dnItems         DebitNoteItem[]
 }
 
 model PeriodLock {
@@ -239,6 +146,8 @@ model Product {
   purchaseOrderItems PurchaseOrderItem[]
   stockLocations     StockLocation[]
   stockMovements     StockMovement[]
+  creditNoteItems    CreditNoteItem[]
+  debitNoteItems     DebitNoteItem[]
 
   @@unique([tenantId, sku])
   @@unique([tenantId, barcode])
@@ -274,6 +183,7 @@ model Customer {
   projects        Project[]
   orders          Order[]
   payments        Payment[]
+  creditNotes     CreditNote[]
 
   @@index([tenantId, email])
   @@index([tenantId, company])
@@ -298,17 +208,17 @@ model Opportunity {
 }
 
 model Order {
-  id         String      @id @default(uuid())
-  tenantId   String
-  customerId String?
-  total      Decimal     @default(0.00)
-  status     OrderStatus @default(Draft)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  customer   Customer?   @relation(fields: [customerId], references: [id])
-  tenant     Tenant      @relation(fields: [tenantId], references: [id])
-  items      OrderItem[]
-  idempotencyKey String? 
+  id             String      @id @default(uuid())
+  tenantId       String
+  customerId     String?
+  total          Decimal     @default(0.00)
+  status         OrderStatus @default(Draft)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  customer       Customer?   @relation(fields: [customerId], references: [id])
+  tenant         Tenant      @relation(fields: [tenantId], references: [id])
+  items          OrderItem[]
+  idempotencyKey String?
 
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
@@ -364,6 +274,7 @@ model BillOfMaterial {
 
 model BOMItem {
   id          String         @id @default(uuid())
+  tenantId    String
   bomId       String
   productId   String
   quantity    Decimal
@@ -371,6 +282,9 @@ model BOMItem {
   isByproduct Boolean        @default(false)
   product     Product        @relation(fields: [productId], references: [id])
   bom         BillOfMaterial @relation(fields: [bomId], references: [id])
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
 }
 
 model WorkOrder {
@@ -382,13 +296,17 @@ model WorkOrder {
   producedQuantity Int             @default(0)
   scrapQuantity    Int             @default(0)
   startDate        DateTime?
-  endDate     DateTime?
-  status      WorkOrderStatus @default(Planned)
-  priority    Priority        @default(Medium)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  bom         BillOfMaterial  @relation(fields: [bomId], references: [id])
-  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  endDate          DateTime?
+  status           WorkOrderStatus @default(Planned)
+  priority         Priority        @default(Medium)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  idempotencyKey   String?
+  completionLog    Json?
+  bom              BillOfMaterial  @relation(fields: [bomId], references: [id])
+  tenant           Tenant          @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, idempotencyKey])
 }
 
 model Machine {
@@ -419,16 +337,19 @@ model Account {
 }
 
 model JournalEntry {
-  id           String        @id @default(uuid())
-  tenantId     String
-  date         DateTime      @default(now())
-  description  String
-  reference    String?
-  posted       Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  tenant       Tenant        @relation(fields: [tenantId], references: [id])
-  transactions Transaction[]
+  id             String        @id @default(uuid())
+  tenantId       String
+  date           DateTime      @default(now())
+  description    String
+  reference      String?
+  posted         Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tenant         Tenant        @relation(fields: [tenantId], references: [id])
+  transactions   Transaction[]
+  invoice        Invoice?      @relation("InvoiceJournal")
+  creditNote     CreditNote?   @relation("CreditNoteJournal")
+  debitNote      DebitNote?    @relation("DebitNoteJournal")
 
   @@index([tenantId, date])
   @@index([reference])
@@ -454,30 +375,35 @@ model Transaction {
 }
 
 model Invoice {
-  id                 String        @id @default(uuid())
-  tenantId           String
-  customerId         String?
-  invoiceNumber      String
-  issueDate          DateTime      @default(now())
-  dueDate            DateTime
-  totalAmount        Decimal
-  amountPaid         Decimal       @default(0.00)
-  totalTaxable       Decimal       @default(0.00)
-  totalGST           Decimal       @default(0.00)
-  totalCGST          Decimal       @default(0.00)
-  totalSGST          Decimal       @default(0.00)
-  totalIGST          Decimal       @default(0.00)
-  status             InvoiceStatus @default(Unpaid)
-  billingTimeSeconds Int?
-  isLocked           Boolean       @default(false)
-  idempotencyKey     String?
-  tallyExported      Boolean       @default(false)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  customer           Customer?     @relation(fields: [customerId], references: [id])
-  tenant             Tenant        @relation(fields: [tenantId], references: [id])
-  items              InvoiceItem[]
-  payments           Payment[]
+  id                  String        @id @default(uuid())
+  tenantId            String
+  customerId          String?
+  invoiceNumber       String
+  issueDate           DateTime      @default(now())
+  dueDate             DateTime
+  totalAmount         Decimal
+  amountPaid          Decimal       @default(0.00)
+  totalTaxable        Decimal       @default(0.00)
+  totalGST            Decimal       @default(0.00)
+  totalCGST           Decimal       @default(0.00)
+  totalSGST           Decimal       @default(0.00)
+  totalIGST           Decimal       @default(0.00)
+  status              InvoiceStatus @default(Unpaid)
+  billingTimeSeconds  Int?
+  isLocked            Boolean       @default(false)
+  idempotencyKey      String?
+  tallyExported       Boolean       @default(false)
+  cancellationReason  String?
+  isInterState        Boolean?      @default(false)
+  journalEntryId      String?       @unique
+  journalEntry        JournalEntry? @relation("InvoiceJournal", fields: [journalEntryId], references: [id])
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  customer            Customer?     @relation(fields: [customerId], references: [id])
+  tenant              Tenant        @relation(fields: [tenantId], references: [id])
+  creditNotes         CreditNote[]
+  items               InvoiceItem[]
+  payments            Payment[]
 
   @@unique([tenantId, invoiceNumber])
   @@unique([tenantId, idempotencyKey])
@@ -489,6 +415,7 @@ model Invoice {
 
 model InvoiceItem {
   id            String   @id @default(uuid())
+  tenantId      String
   invoiceId     String
   productId     String
   productName   String   @default("")
@@ -505,8 +432,10 @@ model InvoiceItem {
   createdAt     DateTime @default(now())
   product       Product  @relation(fields: [productId], references: [id])
   invoice       Invoice  @relation(fields: [invoiceId], references: [id])
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
 
   @@index([invoiceId, productId])
+  @@index([tenantId])
 }
 
 model Payment {
@@ -584,6 +513,7 @@ model Department {
 
 model Payroll {
   id          String        @id @default(uuid())
+  tenantId    String
   employeeId  String
   periodStart DateTime
   periodEnd   DateTime
@@ -595,10 +525,14 @@ model Payroll {
   processedAt DateTime?
   createdAt   DateTime      @default(now())
   employee    Employee      @relation(fields: [employeeId], references: [id])
+  tenant      Tenant        @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
 }
 
 model Leave {
   id         String      @id @default(uuid())
+  tenantId   String
   employeeId String
   type       LeaveType
   startDate  DateTime
@@ -607,10 +541,13 @@ model Leave {
   status     LeaveStatus @default(Pending)
   createdAt  DateTime    @default(now())
   employee   Employee    @relation(fields: [employeeId], references: [id])
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, status])
 }
 
 model Supplier {
-  id             String          @id @default(uuid())
+  id             String                   @id @default(uuid())
   tenantId       String
   name           String
   contactName    String?
@@ -620,14 +557,15 @@ model Supplier {
   state          String?
   gstin          String?
   category       String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  isDeleted      Boolean         @default(false)
-  userId         String?         @unique
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  isDeleted      Boolean                  @default(false)
+  userId         String?                  @unique
   payments       Payment[]
   purchaseOrders PurchaseOrder[]
-  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  tenant         Tenant                   @relation(fields: [tenantId], references: [id])
   openingBalances SupplierOpeningBalance[]
+  debitNotes     DebitNote[]
 }
 
 model SupplierOpeningBalance {
@@ -645,28 +583,34 @@ model SupplierOpeningBalance {
 }
 
 model PurchaseOrder {
-  id           String              @id @default(uuid())
-  tenantId     String
-  supplierId   String
-  orderNumber  String
-  orderDate    DateTime            @default(now())
-  expectedDate DateTime?
-  totalAmount  Decimal
-  totalTaxable Decimal             @default(0.00)
-  totalGST     Decimal             @default(0.00)
-  totalCGST    Decimal             @default(0.00)
-  totalSGST    Decimal             @default(0.00)
-  totalIGST    Decimal             @default(0.00)
-  status       POStatus            @default(Draft)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  supplier     Supplier            @relation(fields: [supplierId], references: [id])
-  tenant       Tenant              @relation(fields: [tenantId], references: [id])
-  items        PurchaseOrderItem[]
+  id             String              @id @default(uuid())
+  tenantId       String
+  supplierId     String
+  orderNumber    String
+  orderDate      DateTime            @default(now())
+  expectedDate   DateTime?
+  totalAmount    Decimal
+  totalTaxable   Decimal             @default(0.00)
+  totalGST       Decimal             @default(0.00)
+  totalCGST      Decimal             @default(0.00)
+  totalSGST      Decimal             @default(0.00)
+  totalIGST      Decimal             @default(0.00)
+  status         POStatus            @default(Draft)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  idempotencyKey String?
+  supplier       Supplier            @relation(fields: [supplierId], references: [id])
+  tenant         Tenant              @relation(fields: [tenantId], references: [id])
+  items          PurchaseOrderItem[]
+  debitNotes     DebitNote[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, orderNumber])
 }
 
 model PurchaseOrderItem {
   id              String        @id @default(uuid())
+  tenantId        String
   purchaseOrderId String
   productId       String
   hsnCode         String?
@@ -680,8 +624,110 @@ model PurchaseOrderItem {
   totalAmount     Decimal       @default(0.00)
   product         Product       @relation(fields: [productId], references: [id])
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  tenant          Tenant        @relation(fields: [tenantId], references: [id])
 
   @@index([purchaseOrderId, productId])
+  @@index([tenantId])
+}
+
+model CreditNote {
+  id             String         @id @default(uuid())
+  tenantId       String
+  customerId     String
+  invoiceId      String?
+  noteNumber     String
+  date           DateTime       @default(now())
+  totalAmount    Decimal
+  totalTaxable   Decimal        @default(0.00)
+  totalGST       Decimal        @default(0.00)
+  totalCGST      Decimal        @default(0.00)
+  totalSGST      Decimal        @default(0.00)
+  totalIGST      Decimal        @default(0.00)
+  reason         String?
+  journalEntryId String?        @unique
+  journalEntry   JournalEntry?  @relation("CreditNoteJournal", fields: [journalEntryId], references: [id])
+  invoice        Invoice?       @relation(fields: [invoiceId], references: [id])
+  customer       Customer       @relation(fields: [customerId], references: [id])
+  tenant         Tenant         @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  idempotencyKey String?
+  items          CreditNoteItem[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, noteNumber])
+  @@index([tenantId, customerId])
+}
+
+model CreditNoteItem {
+  id            String     @id @default(uuid())
+  tenantId      String
+  creditNoteId  String
+  productId     String
+  quantity      Decimal
+  unitPrice     Decimal
+  taxableAmount Decimal
+  gstRate       Decimal
+  gstAmount     Decimal @default(0.00)
+  cgstAmount    Decimal @default(0.00)
+  sgstAmount    Decimal @default(0.00)
+  igstAmount    Decimal @default(0.00)
+  totalAmount   Decimal
+  product       Product    @relation(fields: [productId], references: [id])
+  creditNote    CreditNote @relation(fields: [creditNoteId], references: [id])
+  tenant        Tenant     @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model DebitNote {
+  id              String         @id @default(uuid())
+  tenantId        String
+  supplierId      String
+  purchaseOrderId String?
+  noteNumber      String
+  date            DateTime       @default(now())
+  totalAmount     Decimal
+  totalTaxable    Decimal        @default(0.00)
+  totalGST        Decimal        @default(0.00)
+  totalCGST       Decimal        @default(0.00)
+  totalSGST       Decimal        @default(0.00)
+  totalIGST       Decimal        @default(0.00)
+  reason          String?
+  journalEntryId  String?        @unique
+  journalEntry    JournalEntry?  @relation("DebitNoteJournal", fields: [journalEntryId], references: [id])
+  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
+  supplier        Supplier       @relation(fields: [supplierId], references: [id])
+  tenant          Tenant         @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  idempotencyKey  String?
+  items           DebitNoteItem[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, noteNumber])
+  @@index([tenantId, supplierId])
+}
+
+model DebitNoteItem {
+  id            String    @id @default(uuid())
+  tenantId      String
+  debitNoteId   String
+  productId     String
+  quantity      Decimal
+  unitPrice     Decimal
+  taxableAmount Decimal
+  gstRate       Decimal
+  gstAmount     Decimal @default(0.00)
+  cgstAmount    Decimal @default(0.00)
+  sgstAmount    Decimal @default(0.00)
+  igstAmount    Decimal @default(0.00)
+  totalAmount   Decimal
+  product       Product   @relation(fields: [productId], references: [id])
+  debitNote     DebitNote @relation(fields: [debitNoteId], references: [id])
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
 }
 
 model Project {
@@ -732,13 +778,17 @@ model Warehouse {
 
 model StockLocation {
   id          String    @id @default(uuid())
+  tenantId    String
   productId   String
   warehouseId String
   quantity    Decimal   @default(0.00)
+  notes       String    @default("")
   product     Product   @relation(fields: [productId], references: [id])
   warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
 
-  @@unique([productId, warehouseId])
+  @@unique([tenantId, productId, warehouseId, notes])
+  @@index([tenantId])
 }
 
 enum MovementType {
@@ -791,6 +841,11 @@ enum Role {
   CA
   Customer
   Supplier
+}
+
+enum AuthProvider {
+  Email
+  Google
 }
 
 enum PlanType {
@@ -981,7 +1036,7 @@ model Comment {
   resourceId   String    // The ID of the specific resource
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  
+
   tenant       Tenant    @relation(fields: [tenantId], references: [id])
   parent       Comment?  @relation("ThreadedComments", fields: [parentId], references: [id])
   replies      Comment[] @relation("ThreadedComments")
@@ -999,7 +1054,7 @@ model ApiKey {
   scopes       Json      @default("[]") // Scoped permissions (e.g., ["read:invoices", "write:orders"])
   usageCount   Int       @default(0)
   quotaLimit   Int?      // Null means unlimited
-                                                                                                                      lastUsedAt   DateTime?
+  lastUsedAt   DateTime?
   expiresAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -1008,14 +1063,4 @@ model ApiKey {
 
   @@index([tenantId])
   @@index([prefix])
-}
-
-model Plugin {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  version     String
-  isActive    Boolean  @default(false)
-  config      Json?
-  installedAt DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }

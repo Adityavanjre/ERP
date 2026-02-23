@@ -18,12 +18,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Klypso | Business Management",
-  description: "A simple, all-in-one business management platform. Manage your sales, inventory, purchases, HR, and accounting in one place.",
-  keywords: ["ERP", "Business Management", "Inventory", "Accounting", "HR", "Sales", "Manufacturing"],
-  authors: [{ name: "Klypso Core Engineering", url: "https://klypso.agency" }],
-  creator: "Klypso Ecosystems",
-  publisher: "Klypso Ecosystems",
+  title: "Nexus ERP | Advanced Business OS for Manufacturing & GST Compliance",
+  description: "The imperial standard for SME management. Professional ERP with Tally Prime sync, automated GST GSTR-1 compliance, manufacturing BOM/WIP tracking, and double-entry accounting.",
+  keywords: [
+    "Best ERP for Manufacturing India",
+    "GST Accounting Software",
+    "Tally Prime Integration ERP",
+    "SME Business Management India",
+    "Automated GSTR-1 Software",
+    "Cloud ERP for Small Factory",
+    "Double Entry Accounting Software",
+    "Inventory Management System India",
+    "Bill of Materials Software",
+    "Work Order Management ERP"
+  ],
+  authors: [{ name: "Klypso Engineering", url: "https://klypso.agency" }],
+  creator: "Nexus Ecosystems",
+  publisher: "Nexus Ecosystems",
   robots: {
     index: true,
     follow: true,
@@ -36,25 +47,25 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Klypso | Business Management",
-    description: "The easiest way to manage your business — from inventory to accounting.",
-    url: "https://klypso.in/portal",
-    siteName: "Klypso",
+    title: "Nexus ERP | The OS for Modern Indian Business",
+    description: "Scale your factory or retail business with elite-grade accounting and inventory.",
+    url: "https://nexus.klypso.in",
+    siteName: "Nexus ERP",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Klypso Dashboard",
+        alt: "Nexus ERP Dashboard",
       },
     ],
-    locale: "en_US",
+    locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Klypso | Business Management",
-    description: "Manage your business in one place — sales, inventory, HR, purchases, and accounting.",
+    title: "Nexus ERP | Manufacturing & Accounting Refined",
+    description: "Built for Tally users, loved by manufacturers. The most powerful ERP for Indian SMEs.",
     creator: "@klypso",
     images: ["/og-image.png"],
   },
@@ -62,8 +73,8 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     apple: "/apple-touch-icon.png",
   },
-  manifest: "/portal/manifest.json",
-  themeColor: "#2563eb",
+  manifest: "/manifest.json",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({

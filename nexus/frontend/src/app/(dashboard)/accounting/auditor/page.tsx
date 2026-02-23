@@ -19,7 +19,7 @@ import {
     Package
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function AuditorDashboard() {
     const [data, setData] = useState<any>(null);
@@ -70,6 +70,56 @@ export default function AuditorDashboard() {
             syncAuditorData(true);
         } catch (err) {
             toast.error("Failed to reopen period");
+        }
+    };
+
+    const handleCloseYear = async () => {
+        if (!confirm(`Are you sure you want to CLOSE the Financial Year ${year}? This will zero out all Revenue/Expense accounts and move profit to Retained Earnings.`)) return;
+
+        try {
+            const res = await api.post("accounting/close-year", { year });
+            toast.success(res.data.message);
+            syncAuditorData(true);
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to close year");
+        }
+    };
+
+    const handleTallyExport = async () => {
+        try {
+            toast.info(`Generating Tally Vouchers for ${new Date(0, month - 1).toLocaleString('default', { month: 'long' })} ${year}...`);
+            const response = await api.get(`/accounting/export/tally?month=${month}&year=${year}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Tally_Vouchers_${month}_${year}.xml`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("Vouchers exported successfully");
+        } catch (err) {
+            toast.error("Failed to generate Tally Export");
+        }
+    };
+
+    const handleTallyMasters = async () => {
+        try {
+            toast.info("Generating Tally Masters (Ledgers + Items)...");
+            const response = await api.get(`/accounting/export/masters`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Tally_Masters.xml`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("Masters exported successfully");
+        } catch (err) {
+            toast.error("Failed to generate Tally Masters");
         }
     };
 
@@ -290,7 +340,22 @@ export default function AuditorDashboard() {
                                 Reopen Month
                             </button>
                             <button
-                                className="px-6 py-2.5 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-white/5"
+                                onClick={handleCloseYear}
+                                className="px-6 py-2.5 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30 rounded-xl font-bold flex items-center gap-2 transition-all border border-emerald-900/30"
+                            >
+                                <ShieldCheck className="w-4 h-4" />
+                                Close Year {year}
+                            </button>
+                            <button
+                                onClick={handleTallyMasters}
+                                className="px-6 py-2.5 bg-white/50 text-slate-600 hover:bg-white rounded-xl font-bold flex items-center gap-2 transition-all border border-slate-200"
+                            >
+                                <ArrowRightLeft className="w-4 h-4" />
+                                Sync Masters
+                            </button>
+                            <button
+                                onClick={handleTallyExport}
+                                className="px-6 py-2.5 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-white/5 border border-slate-200"
                             >
                                 <Download className="w-4 h-4" />
                                 Final Tally Export

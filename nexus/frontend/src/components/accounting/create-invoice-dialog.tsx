@@ -280,10 +280,13 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
                                     <TableCell>
                                         <Input
                                             type="number"
-                                            min="1"
+                                            min="0"
                                             className="h-8 bg-transparent border-white/10 text-white w-20"
-                                            value={item.quantity}
-                                            onChange={(e) => handleQuantityChange(index, Number(e.target.value))}
+                                            value={item.quantity || ""}
+                                            onChange={(e) => {
+                                                const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                                handleQuantityChange(index, isNaN(val) ? 0 : val);
+                                            }}
                                         />
                                     </TableCell>
                                     <TableCell className="text-right text-white font-mono">

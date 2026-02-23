@@ -9,6 +9,7 @@ import { AccountingService } from '../accounting/accounting.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 import { BillingService } from '../system/services/billing.service';
+import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
 
 @Injectable()
 export class InventoryService {
@@ -22,18 +23,93 @@ export class InventoryService {
     // 0. Subscription Governance: Quota Check
     await this.billing.validateQuota(tenantId, 'maxProducts');
 
+    const { stock, warehouseId, ...productData } = data;
+
     // Forensic SKU Uniqueness Guard
-    if (data.sku) {
+    if (productData.sku) {
         const existing = await this.prisma.product.findFirst({
-            where: { tenantId, sku: data.sku }
+            where: { tenantId, sku: productData.sku }
         });
         if (existing) {
-            throw new Error(`Integrity Violation: SKU '${data.sku}' already exists${existing.isDeleted ? ' (in archive)' : ''}. Please resolve collision before creation.`);
+            throw new Error(`Integrity Violation: SKU '${productData.sku}' already exists${existing.isDeleted ? ' (in archive)' : ''}. Please resolve collision before creation.`);
         }
     }
 
-    return this.prisma.product.create({
-      data: { ...data, tenantId, createdById: userId, updatedById: userId },
+    return this.prisma.$transaction(async (tx) => {
+        const product = await tx.product.create({
+            data: { 
+                ...productData, 
+                stock: 0, // Initial stock is handled via movement logic
+                tenantId, 
+                createdById: userId, 
+                updatedById: userId 
+            },
+        });
+
+        // If initial stock is provided, log it as an opening balance
+        if (Number(stock) > 0) {
+            let targetWhId = warehouseId;
+            if (!targetWhId) {
+                const firstWh = await tx.warehouse.findFirst({ where: { tenantId } });
+                targetWhId = firstWh?.id;
+            }
+
+            if (targetWhId) {
+                // We use WarehouseService to maintain consistency
+                // Since we are inside a transaction, we should ideally use tx
+                // However, WarehouseService has internal transactions. 
+                // We can either refactor or just call it after (but that's not atomic).
+                // Actually, the logOpeningBalance method I just added takes 'tx' but doesn't use it yet (it creates its own).
+                // I should refactor logOpeningBalance to allow passing a tx. 
+                // For now, I'll just write the logic here directly to ensure atomicity.
+
+                await tx.stockMovement.create({
+                    data: {
+                        tenantId,
+                        productId: product.id,
+                        warehouseId: targetWhId,
+                        quantity: Number(stock),
+                        type: 'IN',
+                        reference: 'OPENING-BALANCE',
+                        notes: 'Initial stock on product creation',
+                    },
+                });
+
+                await tx.stockLocation.upsert({
+                    where: { productId_warehouseId: { productId: product.id, warehouseId: targetWhId } },
+                    create: { productId: product.id, warehouseId: targetWhId, quantity: Number(stock) },
+                    update: { quantity: { increment: Number(stock) } },
+                });
+
+                await tx.product.update({
+                    where: { id: product.id },
+                    data: { stock: { increment: Number(stock) } },
+                });
+
+                // Ledger sync
+                const cost = Number(product.costPrice) || 0;
+                if (cost > 0) {
+                    const invAccount = await tx.account.findFirst({ where: { tenantId, name: { in: AccountSelectors.INVENTORY } } });
+                    const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+                    
+                    if (invAccount && equityAccount) {
+                        const totalValue = new Decimal(cost).mul(new Decimal(stock));
+                        // Since ledger.createJournalEntry supports passing a tx, we are safe
+                        await this.accounting.ledger.createJournalEntry(tenantId, {
+                            date: new Date().toISOString(),
+                            description: `Opening Stock: ${product.name} @ ${cost}`,
+                            reference: `OB-${product.sku}`,
+                            transactions: [
+                                { accountId: invAccount.id, type: 'Debit', amount: totalValue.toNumber(), description: 'Opening Stock Entry' },
+                                { accountId: equityAccount.id, type: 'Credit', amount: totalValue.toNumber(), description: 'Opening Stock Entry' }
+                            ]
+                        }, tx);
+                    }
+                }
+            }
+        }
+
+        return product;
     });
   }
 
@@ -201,6 +277,43 @@ export class InventoryService {
         // GLOBAL STOCK FLOOR GUARD if stock changed
         if (data.stock !== undefined) {
             this.validateStockFloor(product.name, data.stock);
+            
+            // --- INVENTORY-LEDGER SYNC ---
+            const oldStock = new Decimal(product.stock as any);
+            const newStock = new Decimal(data.stock as any);
+            const diff = newStock.sub(oldStock);
+            
+            if (!diff.isZero()) {
+                const adjAccount = await tx.account.findFirst({
+                    where: { tenantId, name: StandardAccounts.INVENTORY_ADJUSTMENT }
+                });
+                const invAccount = await tx.account.findFirst({
+                    where: { tenantId, name: { in: AccountSelectors.INVENTORY } }
+                });
+
+                if (adjAccount && invAccount) {
+                    const valueDiff = diff.mul(new Decimal(product.costPrice as any));
+                    await this.accounting.ledger.createJournalEntry(tenantId, {
+                        date: new Date().toISOString(),
+                        description: `Stock Adjustment: ${product.name} (Manual Edit)`,
+                        reference: `ADJ-${id.slice(0, 8)}`,
+                        transactions: [
+                            { 
+                                accountId: invAccount.id, 
+                                type: valueDiff.isPositive() ? 'Debit' : 'Credit', 
+                                amount: valueDiff.abs().toNumber(), 
+                                description: `Qty Adj: ${oldStock} -> ${newStock}` 
+                            },
+                            { 
+                                accountId: adjAccount.id, 
+                                type: valueDiff.isPositive() ? 'Credit' : 'Debit', 
+                                amount: valueDiff.abs().toNumber(), 
+                                description: `Qty Adj: ${oldStock} -> ${newStock}` 
+                            },
+                        ]
+                    }, tx);
+                }
+            }
         }
 
         const startOfDay = new Date();
@@ -290,7 +403,14 @@ export class InventoryService {
         created: 0,
         updated: 0,
         errors: [] as string[],
+        imported: 0, // Matching frontend expectations
+        failed: 0
       };
+
+      const wh = await tx.warehouse.findFirst({ where: { tenantId } });
+      if (!wh) throw new BadRequestException("Import Failed: No warehouse found. Create at least one warehouse first.");
+
+      let totalOpeningValue = new Decimal(0);
 
       for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
@@ -322,14 +442,14 @@ export class InventoryService {
             },
           });
 
+          let product;
           if (existing) {
-            // Audit Requirement: Prevent resurrection of deleted inventory via import
             if (existing.isDeleted) {
-               throw new ConflictException(`Line ${i}: Product ${barcode || sku} was previously deleted. Resurrection via import is blocked for high security compliance. Please restore manually.`);
+               throw new ConflictException(`Line ${i}: Product ${barcode || sku} was previously deleted. Resurrection via import is blocked.`);
             }
 
-            await tx.product.updateMany({
-              where: { id: existing.id, tenantId },
+            product = await tx.product.update({
+              where: { id: existing.id },
               data: {
                 name: data.name || existing.name,
                 category: data.category || existing.category,
@@ -337,33 +457,85 @@ export class InventoryService {
                 brand: data.brand || existing.brand,
                 description: data.description || existing.description,
                 price: data.price ? new Decimal(data.price) : existing.price,
-                stock: data.stock ? { increment: new Decimal(data.stock) as any } : undefined,
+                costPrice: data.costPrice ? new Decimal(data.costPrice) : existing.costPrice,
                 minStockLevel: data.minStockLevel ? new Decimal(data.minStockLevel) : existing.minStockLevel,
               },
             });
             results.updated++;
           } else {
-            await tx.product.create({
+            product = await tx.product.create({
               data: {
                 tenantId,
                 name: data.name,
                 barcode,
-                sku: sku || `SKU-${Date.now()}`,
+                sku: sku || `SKU-${Date.now()}-${i}`,
                 category: data.category || 'Uncategorized',
                 tags: data.tags,
                 brand: data.brand,
                 description: data.description,
                 price: new Decimal(data.price || 0),
-                stock: new Decimal(data.stock || 0) as any,
+                costPrice: new Decimal(data.costPrice || 0),
+                stock: 0, // Handled below
                 minStockLevel: new Decimal(data.minStockLevel || 0),
-                gstRate: new Decimal(data.gstRate || 18),
+                gstRate: data.gstRate !== undefined ? new Decimal(data.gstRate) : new Decimal(0),
               },
             });
             results.created++;
           }
+
+          // Handle Stock Import
+          const importStock = Number(data.stock || 0);
+          if (importStock > 0) {
+              await tx.stockMovement.create({
+                  data: {
+                      tenantId,
+                      productId: product.id,
+                      warehouseId: wh.id,
+                      quantity: importStock,
+                      type: 'IN',
+                      reference: 'IMPORT-OB',
+                      notes: 'Bulk stock import'
+                  }
+              });
+
+              await tx.stockLocation.upsert({
+                  where: { productId_warehouseId: { productId: product.id, warehouseId: wh.id } },
+                  create: { productId: product.id, warehouseId: wh.id, quantity: importStock },
+                  update: { quantity: { increment: importStock } }
+              });
+
+              await tx.product.update({
+                  where: { id: product.id },
+                  data: { stock: { increment: importStock } }
+              });
+
+              const cost = Number(product.costPrice) || 0;
+              totalOpeningValue = totalOpeningValue.add(new Decimal(cost).mul(importStock));
+          }
+
+          results.imported++;
         } catch (err: any) {
+          results.failed++;
           results.errors.push(err.message);
         }
+      }
+
+      // Final Ledger Sync for the whole batch
+      if (totalOpeningValue.gt(0)) {
+          const invAccount = await tx.account.findFirst({ where: { tenantId, name: { in: AccountSelectors.INVENTORY } } });
+          const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+
+          if (invAccount && equityAccount) {
+              await this.accounting.ledger.createJournalEntry(tenantId, {
+                  date: new Date().toISOString(),
+                  description: `Bulk Opening Stock Sync (${results.created + results.updated} items)`,
+                  reference: `IMPORT-OB-${Date.now()}`,
+                  transactions: [
+                      { accountId: invAccount.id, type: 'Debit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' },
+                      { accountId: equityAccount.id, type: 'Credit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' }
+                  ]
+              }, tx);
+          }
       }
 
       return results;
@@ -396,14 +568,14 @@ export class InventoryService {
       new Decimal(p.stock as any).lessThan(new Decimal(p.minStockLevel as any))
     ).length;
 
-    // Calculate total inventory value (stock * price)
+    // Calculate total inventory value (stock * costPrice)
     const products = await this.prisma.product.findMany({
       where: { tenantId, isDeleted: false },
-      select: { stock: true, price: true },
+      select: { stock: true, costPrice: true },
     });
 
     const totalValue = products.reduce((sum, product) => {
-      return sum + (Number(product.stock) * Number(product.price || 0));
+      return sum + (Number(product.stock) * Number(product.costPrice || 0));
     }, 0);
 
 
