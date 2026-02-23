@@ -9,6 +9,8 @@ import { PaymentService } from './services/payment.service';
 import { TallyService } from './services/tally-export.service';
 import { CreditNoteService } from './services/credit-note.service';
 import { DebitNoteService } from './services/debit-note.service';
+import { FixedAssetService } from './services/fixed-asset.service';
+
 
 @Module({
   imports: [PrismaModule, SystemModule],
@@ -21,7 +23,9 @@ import { DebitNoteService } from './services/debit-note.service';
     TallyService,
     CreditNoteService,
     DebitNoteService,
+    FixedAssetService,
   ],
+
   exports: [
     AccountingService,
     LedgerService,
@@ -30,6 +34,8 @@ import { DebitNoteService } from './services/debit-note.service';
     TallyService,
     CreditNoteService,
     DebitNoteService,
+    FixedAssetService,
   ],
+
 })
-export class AccountingModule {}
+export class AccountingModule { }

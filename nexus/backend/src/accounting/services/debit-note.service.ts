@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LedgerService } from './ledger.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { StandardAccounts } from '../constants/account-names';
 
 @Injectable()
 export class DebitNoteService {
@@ -94,12 +95,12 @@ export class DebitNoteService {
       });
 
       // 3. Accounting Impact (Purchase Return)
-      const supplierLedger = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Accounts Payable' } } });
-      const purchaseReturnAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Purchase Returns' } } });
+      const supplierLedger = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
+      const purchaseReturnAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.PURCHASE_RETURNS } });
 
-      const cgstAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Input CGST' } } });
-      const sgstAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Input SGST' } } });
-      const igstAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Input IGST' } } });
+      const cgstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INPUT_CGST } });
+      const sgstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INPUT_SGST } });
+      const igstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INPUT_IGST } });
 
       if (supplierLedger && purchaseReturnAccount) {
         const journalTransactions = [
@@ -141,7 +142,7 @@ export class DebitNoteService {
 
         // Decrement Location Stock
         if (warehouse) {
-          await tx.stockLocation.update({
+          await tx.stockLocation.upsert({
             where: {
               tenantId_productId_warehouseId_notes: {
                 tenantId,
@@ -150,7 +151,14 @@ export class DebitNoteService {
                 notes: ''
               }
             } as any,
-            data: { quantity: { decrement: item.quantity } }
+            update: { quantity: { decrement: item.quantity } },
+            create: {
+              tenantId,
+              productId: item.productId,
+              warehouseId: warehouse.id,
+              quantity: item.quantity.negated(),
+              notes: ''
+            } as any
           });
 
 

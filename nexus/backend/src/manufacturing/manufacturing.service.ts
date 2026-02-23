@@ -133,8 +133,7 @@ export class ManufacturingService {
     const requirements = await this.explodeBOM(tenantId, wo.bomId, wo.quantity);
 
     return await this.prisma.$transaction(async (tx) => {
-      const idempotencyKey = (arguments[2] as any)?.idempotencyKey; // Or handle via data object
-      if (idempotencyKey) {
+      if (arguments[2]?.idempotencyKey) {
         const existing = await tx.workOrder.findFirst({ where: { id: woId, tenantId, status: 'InProgress' } });
         if (existing) return { success: true, alreadyStarted: true };
       }
@@ -142,14 +141,10 @@ export class ManufacturingService {
       await this.accounting.ledger.checkPeriodLock(tenantId, new Date(), tx);
 
       const warehouse = await tx.warehouse.findFirst({
-        where: {
-          tenantId,
-          OR: [
-            { name: 'Main Warehouse' },
-            {}
-          ]
-        },
-      });
+        where: { tenantId, id: warehouseId || undefined }
+      }) || await tx.warehouse.findFirst({ where: { tenantId } });
+
+      if (!warehouse) throw new BadRequestException('No warehouse found. Please create a warehouse first.');
       const targetWarehouse = warehouseId || warehouse?.id;
 
       if (!targetWarehouse) throw new Error('No valid warehouse found for production storage.');
@@ -260,7 +255,16 @@ export class ManufacturingService {
         data: { status: 'InProgress', startDate: new Date() }
       });
 
-      return { success: true, message: 'Production Started: Materials Issued to WIP & Ledger Synced' };
+      await tx.auditLog.create({
+        data: {
+          tenantId,
+          action: 'MANUFACTURING_STARTED',
+          resource: `WorkOrder:${wo.id}`,
+          details: { orderNumber: wo.orderNumber, warehouseId: warehouse.id } as any,
+        }
+      });
+
+      return { success: true, orderNumber: wo.orderNumber };
     });
   }
 
@@ -347,7 +351,7 @@ export class ManufacturingService {
     return shortages;
   }
 
-  async completeWorkOrder(tenantId: string, woId: string, producedQtyStr?: number | string, scrapQtyStr?: number | string, warehouseId?: string, idempotencyKey?: string) {
+  async completeWorkOrder(tenantId: string, woId: string, producedQtyStr?: number | string, scrapQtyStr?: number | string, machineId?: string, machineTimeHours?: number, operatorName?: string, warehouseId?: string, idempotencyKey?: string) {
     const wo = await this.prisma.workOrder.findFirst({
       where: { id: woId, tenantId },
       include: { bom: { include: { product: true } } },
@@ -387,7 +391,12 @@ export class ManufacturingService {
           if (isFromWIP) {
             // Consume from WIP Bin
             const wipLoc = await tx.stockLocation.findFirst({
-              where: { productId: req.productId, warehouseId: targetWarehouse, notes: 'WIP_BIN' }
+              where: {
+                tenantId,
+                productId: req.productId,
+                warehouseId: targetWarehouse,
+                notes: 'WIP_BIN'
+              }
             });
             if (!wipLoc || wipLoc.quantity.lessThan(req.quantity)) {
               throw new BadRequestException(`WIP inconsistency for ${req.productName}. Please check production floor stock.`);
@@ -399,7 +408,12 @@ export class ManufacturingService {
           } else {
             // Direct consumption from Store
             const loc = await tx.stockLocation.findFirst({
-              where: { productId: req.productId, warehouseId: targetWarehouse, notes: null }
+              where: {
+                tenantId,
+                productId: req.productId,
+                warehouseId: targetWarehouse,
+                notes: ''
+              }
             });
 
             if (!loc || loc.quantity.lessThan(req.quantity)) {
@@ -489,10 +503,20 @@ export class ManufacturingService {
 
         if (fgAccount && (wipAccount || rmAccount)) {
           const costData = await this.getBOMCost(tenantId, wo.bomId);
-          const totalProductionValue = new Decimal(costData.totalCost).mul(producedQty);
+          let totalProductionValue = new Decimal(costData.totalCost).mul(producedQty);
           const materialValueConsumed = new Decimal(costData.materialCost).mul(totalConsumedQty);
           const scrapValue = new Decimal(costData.materialCost).mul(scrapQty);
-          const overheadValue = new Decimal(costData.overheadCost).mul(producedQty);
+          let overheadValue = new Decimal(costData.overheadCost).mul(producedQty);
+
+          // If machine info is provided, override overhead calculation for precision
+          if (machineId && machineTimeHours) {
+            const machine = await tx.machine.findFirst({ where: { id: machineId, tenantId } });
+            if (machine && machine.hourlyRate) {
+              const machineCost = new Decimal(machine.hourlyRate).mul(machineTimeHours);
+              overheadValue = machineCost; // Precision Overhead
+              totalProductionValue = materialValueConsumed.sub(scrapValue).add(overheadValue);
+            }
+          }
 
           const isFromWIP = wo.status === 'InProgress';
           const creditAccount = (isFromWIP && wipAccount) ? wipAccount : rmAccount!;
@@ -533,10 +557,33 @@ export class ManufacturingService {
             endDate: new Date(),
             producedQuantity: producedQty,
             scrapQuantity: scrapQty,
+            machineId: machineId || null,
+            machineTimeHours: machineTimeHours || null,
+            operatorName: operatorName || null,
             idempotencyKey: idempotencyKey,
             completionLog: completionLog as any
           } as any,
         });
+
+        await tx.auditLog.create({
+          data: {
+            tenantId,
+            action: 'MANUFACTURING_COMPLETED',
+            resource: `WorkOrder:${wo.id}`,
+            details: {
+              orderNumber: wo.orderNumber,
+              producedQuantity: producedQty,
+              scrapQuantity: scrapQty,
+              machineId,
+              operatorName
+            } as any,
+          },
+        });
+
+        // Set machine to Idle if it was Running
+        if (machineId) {
+          await tx.machine.update({ where: { id: machineId }, data: { status: 'Idle' } });
+        }
 
         return completionLog;
       });

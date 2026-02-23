@@ -7,7 +7,9 @@ import { PaymentService } from './services/payment.service';
 import { TallyService } from './services/tally-export.service';
 import { CreditNoteService } from './services/credit-note.service';
 import { DebitNoteService } from './services/debit-note.service';
+import { FixedAssetService } from './services/fixed-asset.service';
 import { CreateJournalEntryDto } from './dto/create-journal.dto';
+
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { StandardAccounts } from './constants/account-names';
@@ -22,7 +24,9 @@ export class AccountingService {
     private readonly tally: TallyService,
     private readonly creditNote: CreditNoteService,
     private readonly debitNote: DebitNoteService,
-  ) {}
+    private readonly fixedAsset: FixedAssetService,
+  ) { }
+
 
   // --- Chart of Accounts ---
   async createAccount(tenantId: string, data: any) {
@@ -220,7 +224,7 @@ export class AccountingService {
       const balance = new Decimal(acct.balance || 0);
       // Normal balance convention: Asset & Expense have debit normal; rest credit normal
       const isDebitNormal = acct.type === 'Asset' || acct.type === 'Expense';
-      
+
       let debit = new Decimal(0);
       let credit = new Decimal(0);
 
@@ -288,80 +292,15 @@ export class AccountingService {
 
   // --- Fixed Assets ---
   async getFixedAssets(tenantId: string) {
-    return this.prisma.fixedAsset.findMany({
-      where: { tenantId },
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.fixedAsset.findAll(tenantId);
   }
 
   async createFixedAsset(tenantId: string, data: any) {
-    const asset = await this.prisma.fixedAsset.create({
-      data: { ...data, tenantId },
-    });
-
-    // Post journal: Dr Fixed Assets / Cr Cash or Accounts Payable
-    const fixedAssetAccount = await this.prisma.account.findFirst({
-      where: { tenantId, name: { in: ['Fixed Assets', 'Property Plant & Equipment'] } },
-    });
-    const cashAccount = await this.prisma.account.findFirst({
-      where: { tenantId, name: { in: ['Cash', 'Bank', 'Accounts Payable'] } },
-    });
-
-    if (fixedAssetAccount && cashAccount) {
-      await this.ledger.createJournalEntry(tenantId, {
-        date: new Date(data.purchaseDate || new Date()).toISOString(),
-        description: `Fixed Asset Purchase: ${asset.name} (${asset.assetCode})`,
-        reference: asset.id,
-        transactions: [
-          { accountId: fixedAssetAccount.id, type: 'Debit' as any, amount: Number(data.purchaseValue), description: `Asset: ${asset.name}` },
-          { accountId: cashAccount.id, type: 'Credit' as any, amount: Number(data.purchaseValue), description: `Asset: ${asset.name}` },
-        ],
-      });
-    }
-
-    return asset;
+    return this.fixedAsset.create(tenantId, data);
   }
+
   async runMonthlyDepreciation(tenantId: string, assetId: string) {
-    return this.prisma.$transaction(async (tx) => {
-      const asset = await tx.fixedAsset.findFirst({
-        where: { id: assetId, tenantId, status: 'Active' },
-      });
-      if (!asset) throw new BadRequestException('Active fixed asset not found');
-
-      const totalCost = new Decimal(asset.purchaseValue);
-      const salvage = new Decimal(asset.salvageValue || 0);
-      const monthlyDepreciation = totalCost.sub(salvage).div(asset.usefulLife).toDecimalPlaces(2);
-
-      if (monthlyDepreciation.lte(0)) {
-        throw new BadRequestException('Asset is fully depreciated');
-      }
-
-      await tx.fixedAsset.update({
-        where: { id: assetId },
-        data: { accumulatedDepreciation: { increment: monthlyDepreciation } },
-      });
-
-      const deprAccount = await tx.account.findFirst({
-        where: { tenantId, name: { in: ['Depreciation Expense'] } },
-      });
-      const accumDeprAccount = await tx.account.findFirst({
-        where: { tenantId, name: { in: ['Accumulated Depreciation'] } },
-      });
-
-      if (deprAccount && accumDeprAccount) {
-        await this.ledger.createJournalEntry(tenantId, {
-          date: new Date().toISOString(),
-          description: `Monthly Depreciation: ${asset.name}`,
-          reference: asset.id,
-          transactions: [
-            { accountId: deprAccount.id, type: 'Debit' as any, amount: monthlyDepreciation.toNumber(), description: `Depreciation: ${asset.name}` },
-            { accountId: accumDeprAccount.id, type: 'Credit' as any, amount: monthlyDepreciation.toNumber(), description: `Depreciation: ${asset.name}` },
-          ],
-        }, tx);
-      }
-
-      return { asset: asset.name, monthlyDepreciation: monthlyDepreciation.toFixed(2) };
-    });
+    return this.fixedAsset.runMonthlyDepreciation(tenantId, assetId);
   }
 
   /**
@@ -452,11 +391,11 @@ export class AccountingService {
           userId,
           action: 'YEAR_END_CLOSE',
           resource: 'FinancialYear',
-          details: { 
-              year, 
-              netProfit: netProfit.toFixed(2),
-              msg: `Closed financial year ${year}`
-          },
+          details: {
+            year,
+            netProfit: netProfit.toFixed(2),
+            msg: `Closed financial year ${year}`
+          } as any,
         },
       });
 
@@ -469,4 +408,5 @@ export class AccountingService {
     });
   }
 }
+
 

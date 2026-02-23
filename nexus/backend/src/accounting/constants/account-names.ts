@@ -35,7 +35,12 @@ export const StandardAccounts = {
   MANUFACTURING_OVERHEAD_ABSORBED: 'Manufacturing Overhead Absorbed',
   INVENTORY_ADJUSTMENT: 'Inventory Adjustment',
   SCRAP_EXPENSE: 'Scrap Expense',
+  FIXED_ASSETS: 'Fixed Assets',
+  ACCUMULATED_DEPRECIATION: 'Accumulated Depreciation',
+  DEPRECIATION_EXPENSE: 'Depreciation Expense',
+  ROUNDING_OFF: 'Rounding Off',
 };
+
 
 export const AccountSelectors = {
   INVENTORY: [StandardAccounts.INVENTORY_ASSET, 'Inventory'],

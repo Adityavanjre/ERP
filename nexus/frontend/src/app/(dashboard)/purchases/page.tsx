@@ -109,7 +109,6 @@ export default function PurchasesPage() {
                 orderDate: new Date(newPO.orderDate),
                 totalAmount: newPO.quantity * newPO.unitPrice,
                 status: 'Ordered',
-                orderNumber: `PO-${Math.floor(1000 + Math.random() * 9000)}`,
                 items
             });
 

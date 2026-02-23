@@ -116,9 +116,10 @@ export class LedgerService {
       { name: StandardAccounts.PURCHASE_RETURNS, type: AccountType.Expense, code: '5005' },
       { name: StandardAccounts.SALARY_EXPENSE, type: AccountType.Expense, code: '5002' },
       { name: 'Retained Earnings', type: AccountType.Equity, code: '3002' },
-      { name: 'Fixed Assets', type: AccountType.Asset, code: '1101' },
-      { name: 'Accumulated Depreciation', type: AccountType.Asset, code: '1102' },
-      { name: 'Depreciation Expense', type: AccountType.Expense, code: '5003' },
+      { name: StandardAccounts.FIXED_ASSETS, type: AccountType.Asset, code: '1101' },
+      { name: StandardAccounts.ACCUMULATED_DEPRECIATION, type: AccountType.Asset, code: '1102' },
+      { name: StandardAccounts.DEPRECIATION_EXPENSE, type: AccountType.Expense, code: '5003' },
+
     ];
 
     const inventoryAccounts = [];

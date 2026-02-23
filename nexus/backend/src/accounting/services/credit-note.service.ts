@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LedgerService } from './ledger.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { StandardAccounts } from '../constants/account-names';
 
 @Injectable()
 export class CreditNoteService {
@@ -94,12 +95,12 @@ export class CreditNoteService {
       });
 
       // 3. Automated Accounting Impact (Sales Return)
-      const salesReturnAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Sales Returns' } } });
-      const customerLedger = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Accounts Receivable' } } });
+      const salesReturnAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.SALES_RETURNS } });
+      const customerLedger = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_RECEIVABLE } });
 
-      const cgstAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Output CGST' } } });
-      const sgstAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Output SGST' } } });
-      const igstAccount = await tx.account.findFirst({ where: { tenantId, name: { contains: 'Output IGST' } } });
+      const cgstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OUTPUT_CGST } });
+      const sgstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OUTPUT_SGST } });
+      const igstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OUTPUT_IGST } });
 
       if (salesReturnAccount && customerLedger) {
         const journalTransactions = [

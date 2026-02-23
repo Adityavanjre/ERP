@@ -16,7 +16,15 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Plus, PlayCircle } from "lucide-react";
+import { Building2, Plus, PlayCircle, History } from "lucide-react";
+
+interface DepreciationLog {
+    id: string;
+    amount: string;
+    date: string;
+    description: string;
+}
+
 
 interface FixedAsset {
     id: string;
@@ -28,7 +36,9 @@ interface FixedAsset {
     usefulLife: number;
     accumulatedDepreciation: string;
     status: string;
+    depreciationLogs?: DepreciationLog[];
 }
+
 
 export default function FixedAssetsPage() {
     const [assets, setAssets] = useState<FixedAsset[]>([]);
@@ -70,7 +80,9 @@ export default function FixedAssetsPage() {
                 salvageValue: parseFloat(form.salvageValue || "0"),
                 usefulLife: parseInt(form.usefulLife),
                 purchaseDate: new Date(form.purchaseDate).toISOString(),
+                idempotencyKey: `FA-${form.assetCode}-${Date.now()}`,
             });
+
             toast.success("Fixed asset added");
             setDialogOpen(false);
             setForm({ name: "", assetCode: "", purchaseDate: new Date().toISOString().split("T")[0], purchaseValue: "", salvageValue: "0", usefulLife: "60" });
@@ -204,7 +216,7 @@ export default function FixedAssetsPage() {
                                             {asset.status}
                                         </span>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="flex gap-2">
                                         {asset.status === "Active" && (
                                             <Button
                                                 size="sm"
@@ -216,7 +228,38 @@ export default function FixedAssetsPage() {
                                                 Depreciate
                                             </Button>
                                         )}
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button size="sm" variant="ghost" className="rounded-xl text-xs font-bold text-slate-500 hover:text-slate-900">
+                                                    <History className="h-3 w-3 mr-1" />
+                                                    History
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-md">
+                                                <DialogHeader>
+                                                    <DialogTitle>Depreciation History: {asset.name}</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="space-y-4 pt-2">
+                                                    {!asset.depreciationLogs || asset.depreciationLogs.length === 0 ? (
+                                                        <p className="text-center py-8 text-slate-400 text-sm">No depreciation logs found.</p>
+                                                    ) : (
+                                                        <div className="space-y-3">
+                                                            {asset.depreciationLogs.map((log) => (
+                                                                <div key={log.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                                                    <div>
+                                                                        <p className="font-bold text-slate-900">₹{parseFloat(log.amount).toLocaleString("en-IN")}</p>
+                                                                        <p className="text-[10px] text-slate-500">{new Date(log.date).toLocaleDateString()}</p>
+                                                                    </div>
+                                                                    <Badge variant="outline" className="text-[10px] font-bold border-slate-200">{log.description}</Badge>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
                                     </TableCell>
+
                                 </TableRow>
                             ))}
                         </TableBody>

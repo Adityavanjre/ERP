@@ -11,7 +11,7 @@ export class WarehouseService {
   constructor(
     private prisma: PrismaService,
     private accounting: AccountingService,
-  ) {}
+  ) { }
 
   async createWarehouse(tenantId: string, data: any) {
     return this.prisma.warehouse.create({
@@ -75,15 +75,19 @@ export class WarehouseService {
       // 2. Update stock location
       const stockLoc = await tx.stockLocation.upsert({
         where: {
-          productId_warehouseId: {
+          tenantId_productId_warehouseId_notes: {
+            tenantId,
             productId: data.productId,
             warehouseId: data.warehouseId,
+            notes: data.notes || '',
           },
         },
         create: {
+          tenantId,
           productId: data.productId,
           warehouseId: data.warehouseId,
           quantity: data.quantity,
+          notes: data.notes || '',
         },
         update: {
           quantity: {
@@ -105,39 +109,39 @@ export class WarehouseService {
       // 4. LEDGER SYNC: If not part of a PO or Invoice, post an adjustment journal
       if (!data.reference || (!data.reference.startsWith('INV-') && !data.reference.startsWith('PO-') && !data.reference.startsWith('WO-'))) {
         const isOB = data.reference?.startsWith('OB-') || data.reference?.startsWith('OPENING-');
-        
+
         const invAccount = await tx.account.findFirst({
-            where: { tenantId, name: { in: AccountSelectors.INVENTORY } }
+          where: { tenantId, name: { in: AccountSelectors.INVENTORY } }
         });
-        
+
         const adjAccountName = isOB ? StandardAccounts.OPENING_BALANCE_EQUITY : StandardAccounts.INVENTORY_ADJUSTMENT;
         const adjAccount = await tx.account.findFirst({
-            where: { tenantId, name: adjAccountName }
+          where: { tenantId, name: adjAccountName }
         });
 
         if (invAccount && adjAccount) {
-            const movementValue = new Decimal(product.costPrice as any).mul(new Decimal(data.quantity));
-            const isEntry = data.type === MovementType.IN;
+          const movementValue = new Decimal(product.costPrice as any).mul(new Decimal(data.quantity));
+          const isEntry = data.type === MovementType.IN;
 
-            await this.accounting.ledger.createJournalEntry(tenantId, {
-                date: new Date().toISOString(),
-                description: `${isOB ? 'Opening Stock' : 'Manual Movement'}: ${product.name} (${data.notes || 'No notes'})`,
-                reference: data.reference || `WH-MOV-${movement.id.slice(0, 8)}`,
-                transactions: [
-                    { 
-                        accountId: invAccount.id, 
-                        type: isEntry ? 'Debit' : 'Credit', 
-                        amount: movementValue.toNumber(), 
-                        description: `Warehouse Adjustment: ${data.type}` 
-                    },
-                    { 
-                        accountId: adjAccount.id, 
-                        type: isEntry ? 'Credit' : 'Debit', 
-                        amount: movementValue.toNumber(), 
-                        description: `Warehouse Adjustment: ${data.type}` 
-                    }
-                ]
-            }, tx);
+          await this.accounting.ledger.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `${isOB ? 'Opening Stock' : 'Manual Movement'}: ${product.name} (${data.notes || 'No notes'})`,
+            reference: data.reference || `WH-MOV-${movement.id.slice(0, 8)}`,
+            transactions: [
+              {
+                accountId: invAccount.id,
+                type: isEntry ? 'Debit' : 'Credit',
+                amount: movementValue.toNumber(),
+                description: `Warehouse Adjustment: ${data.type}`
+              },
+              {
+                accountId: adjAccount.id,
+                type: isEntry ? 'Credit' : 'Debit',
+                amount: movementValue.toNumber(),
+                description: `Warehouse Adjustment: ${data.type}`
+              }
+            ]
+          }, tx);
         }
       }
 
@@ -183,15 +187,19 @@ export class WarehouseService {
       // 2. Update stock location
       await tx.stockLocation.upsert({
         where: {
-          productId_warehouseId: {
+          tenantId_productId_warehouseId_notes: {
+            tenantId,
             productId: data.productId,
             warehouseId: data.warehouseId,
+            notes: data.notes || '',
           },
         },
         create: {
+          tenantId,
           productId: data.productId,
           warehouseId: data.warehouseId,
           quantity: data.quantity,
+          notes: data.notes || '',
         },
         update: {
           quantity: { increment: data.quantity },
@@ -254,7 +262,14 @@ export class WarehouseService {
 
       // 2. Logic: Decrement From
       const fromLoc = await tx.stockLocation.findUnique({
-        where: { productId_warehouseId: { productId: data.productId, warehouseId: data.fromWarehouseId } }
+        where: {
+          tenantId_productId_warehouseId_notes: {
+            tenantId,
+            productId: data.productId,
+            warehouseId: data.fromWarehouseId,
+            notes: '' // Assuming transfer from main stock
+          }
+        }
       });
       if (!fromLoc || fromLoc.quantity.lt(qty)) {
         throw new Error(`Insufficient stock in warehouse ${fromWH.name}`);
@@ -267,11 +282,20 @@ export class WarehouseService {
 
       // 3. Logic: Increment To
       await tx.stockLocation.upsert({
-        where: { productId_warehouseId: { productId: data.productId, warehouseId: data.toWarehouseId } },
+        where: {
+          tenantId_productId_warehouseId_notes: {
+            tenantId,
+            productId: data.productId,
+            warehouseId: data.toWarehouseId,
+            notes: ''
+          }
+        },
         create: {
+          tenantId,
           productId: data.productId,
           warehouseId: data.toWarehouseId,
-          quantity: qty
+          quantity: qty,
+          notes: ''
         },
         update: { quantity: { increment: qty } }
       });

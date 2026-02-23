@@ -4,6 +4,7 @@ import { InvoiceStatus, AccountType, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LedgerService } from './ledger.service';
 import { StandardAccounts, AccountSelectors } from '../constants/account-names';
+import { normalizeState } from '../constants/states';
 
 @Injectable()
 export class InvoiceService {
@@ -56,8 +57,11 @@ export class InvoiceService {
         throw new BadRequestException('Compliance Error: Customer state is missing. GST calculation requires place of supply.');
       }
 
+      const tenantState = normalizeState(tenant.state || '');
+      const customerState = normalizeState(customer.state || '');
+
       const isInterState =
-        tenant.state.toLowerCase() !== customer.state.toLowerCase();
+        tenantState.toLowerCase() !== customerState.toLowerCase();
 
       const sortedItems = [...items].sort((a, b) =>
         a.productId.localeCompare(b.productId),

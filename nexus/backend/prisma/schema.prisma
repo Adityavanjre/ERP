@@ -39,6 +39,10 @@ model Tenant {
   address         String?
   state           String?
   gstin           String?
+  fyStartMonth    Int                      @default(4)
+  fyStartDay      Int                      @default(1)
+  currency        String                   @default("INR")
+
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   accounts        Account[]
@@ -64,6 +68,7 @@ model Tenant {
   users           TenantUser[]
   transactions    Transaction[]
   workOrders      WorkOrder[]
+  records         Record[]
   warehouses      Warehouse[]
   stockMovements  StockMovement[]
   fixedAssets     FixedAsset[]
@@ -295,6 +300,9 @@ model WorkOrder {
   quantity         Int
   producedQuantity Int             @default(0)
   scrapQuantity    Int             @default(0)
+  machineId        String?
+  machineTimeHours Decimal?
+  operatorName     String?
   startDate        DateTime?
   endDate          DateTime?
   status           WorkOrderStatus @default(Planned)
@@ -304,6 +312,7 @@ model WorkOrder {
   idempotencyKey   String?
   completionLog    Json?
   bom              BillOfMaterial  @relation(fields: [bomId], references: [id])
+  machine          Machine?        @relation(fields: [machineId], references: [id])
   tenant           Tenant          @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, idempotencyKey])
@@ -316,9 +325,11 @@ model Machine {
   code            String
   type            String?
   status          MachineStatus @default(Idle)
+  hourlyRate      Decimal?      @default(0.00)
   lastMaintenance DateTime?
   createdAt       DateTime      @default(now())
   tenant          Tenant        @relation(fields: [tenantId], references: [id])
+  workOrders      WorkOrder[]
 }
 
 model Account {
@@ -1012,13 +1023,31 @@ model FixedAsset {
   usefulLife              Int         // in months
   accumulatedDepreciation Decimal     @default(0.00)
   status                  AssetStatus @default(Active)
+  idempotencyKey          String?
   createdAt               DateTime    @default(now())
   updatedAt               DateTime    @updatedAt
   tenant                  Tenant      @relation(fields: [tenantId], references: [id])
+  depreciationLogs        DepreciationLog[]
 
   @@unique([tenantId, assetCode])
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId])
 }
+
+model DepreciationLog {
+  id             String     @id @default(uuid())
+  tenantId       String
+  assetId        String
+  amount         Decimal
+  date           DateTime   @default(now())
+  description    String?
+  journalEntryId String?    @unique
+  asset          FixedAsset @relation(fields: [assetId], references: [id])
+  createdAt      DateTime   @default(now())
+
+  @@index([tenantId, assetId])
+}
+
 
 enum AssetStatus {
   Active
@@ -1063,4 +1092,115 @@ model ApiKey {
 
   @@index([tenantId])
   @@index([prefix])
+}
+
+model App {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  label        String
+  description  String?
+  version      String
+  category     String
+  author       String?
+  website      String?
+  dependencies String?
+  installed    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Plugin {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  version     String   @default("1.0.0")
+  isActive    Boolean  @default(false)
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ModelDefinition {
+  id           String             @id @default(uuid())
+  moduleId     String?
+  name         String             @unique
+  label        String
+  description  String?
+  isSystem     Boolean            @default(false)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  fields       FieldDefinition[]
+  accessRights AccessRight[]
+}
+
+model FieldDefinition {
+  id               String          @id @default(uuid())
+  modelId          String
+  name             String
+  label            String
+  type             FieldType
+  required         Boolean         @default(false)
+  targetModel      String?
+  selectionOptions Json?
+  model            ModelDefinition @relation(fields: [modelId], references: [id], onDelete: Cascade)
+}
+
+model AccessRight {
+  id         String          @id @default(uuid())
+  modelId    String
+  role       String
+  permRead   Boolean         @default(true)
+  permWrite  Boolean         @default(false)
+  permCreate Boolean         @default(false)
+  permUnlink Boolean         @default(false)
+  model      ModelDefinition @relation(fields: [modelId], references: [id], onDelete: Cascade)
+}
+
+model Record {
+  id        String   @id @default(uuid())
+  tenantId  String
+  modelName String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, modelName])
+}
+
+model WorkflowDefinition {
+  id          String               @id @default(uuid())
+  name        String
+  modelName   String
+  isActive    Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  nodes       WorkflowNode[]
+  transitions WorkflowTransition[]
+
+  @@index([modelName])
+}
+
+model WorkflowNode {
+  id         String             @id @default(uuid())
+  workflowId String
+  name       String
+  type       String
+  config     Json               @default("{}")
+  workflow   WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+}
+
+model WorkflowTransition {
+  id          String             @id @default(uuid())
+  workflowId  String
+  fromNodeId  String
+  toNodeId    String
+  triggerType String
+  label       String?
+  condition   String?
+  workflow    WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
 }

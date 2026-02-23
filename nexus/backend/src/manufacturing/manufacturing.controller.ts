@@ -22,7 +22,7 @@ import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 @Controller('manufacturing')
 @UseInterceptors(AuditInterceptor)
 export class ManufacturingController {
-  constructor(private readonly mfgService: ManufacturingService) {}
+  constructor(private readonly mfgService: ManufacturingService) { }
 
   // BOMs
   @Post('boms')
@@ -96,13 +96,21 @@ export class ManufacturingController {
     @Body('warehouseId') warehouseId?: string,
     @Body('producedQuantity') producedQuantity?: number,
     @Body('scrapQuantity') scrapQuantity?: number,
+    @Body('machineId') machineId?: string,
+    @Body('machineTimeHours') machineTimeHours?: number,
+    @Body('operatorName') operatorName?: string,
+    @Body('idempotencyKey') idempotencyKey?: string,
   ) {
     return this.mfgService.completeWorkOrder(
-      user.tenantId, 
-      id, 
+      user.tenantId,
+      id,
       producedQuantity,
       scrapQuantity,
-      warehouseId
+      machineId,
+      machineTimeHours,
+      operatorName,
+      warehouseId,
+      idempotencyKey
     );
   }
 

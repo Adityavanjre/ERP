@@ -148,11 +148,15 @@ export class PurchasesService {
 
       const grandTotal = this.ledger.round2(totalTaxable.add(totalGST));
 
+      const poCount = await tx.purchaseOrder.count({ where: { tenantId } });
+      const orderNumber = data.orderNumber || `PO-${(poCount + 1).toString().padStart(4, '0')}`;
+
       const po = await tx.purchaseOrder.create({
         data: {
           ...poData,
           tenantId,
           supplierId,
+          orderNumber,
           totalAmount: grandTotal,
           totalTaxable: this.ledger.round2(totalTaxable),
           totalGST: this.ledger.round2(totalGST),

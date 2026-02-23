@@ -13,8 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { CheckCircle2, Factory } from "lucide-react";
+import { CheckCircle2, Factory, Cpu, User } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export function CompleteWorkOrderDialog({
     workOrder,
@@ -31,6 +38,16 @@ export function CompleteWorkOrderDialog({
     // Real-world defaults
     const [producedQuantity, setProducedQuantity] = useState(workOrder.quantity.toString());
     const [scrapQuantity, setScrapQuantity] = useState("0");
+    const [machineId, setMachineId] = useState("");
+    const [machineTimeHours, setMachineTimeHours] = useState("0");
+    const [operatorName, setOperatorName] = useState("");
+    const [machines, setMachines] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        if (open) {
+            api.get("manufacturing/machines").then(res => setMachines(res.data || [])).catch(() => { });
+        }
+    }, [open]);
 
     const handleComplete = async () => {
         try {
@@ -50,7 +67,10 @@ export function CompleteWorkOrderDialog({
 
             await api.post(`/manufacturing/work-orders/${workOrder.id}/complete`, {
                 producedQuantity: prodQty,
-                scrapQuantity: scrQty
+                scrapQuantity: scrQty,
+                machineId: machineId || undefined,
+                machineTimeHours: Number(machineTimeHours),
+                operatorName: operatorName
             });
 
             toast.success("Work order completed successfully.");
@@ -112,6 +132,44 @@ export function CompleteWorkOrderDialog({
                             className="font-mono text-lg text-red-600"
                         />
                         <p className="text-[10px] text-slate-500 mt-1">Materials consumed but did not result in finished goods.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="grid gap-2">
+                            <Label className="text-slate-700 font-bold">Machine</Label>
+                            <Select value={machineId} onValueChange={setMachineId}>
+                                <SelectTrigger className="h-10">
+                                    <SelectValue placeholder="Select machine" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {machines.map((m: any) => (
+                                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label className="text-slate-700 font-bold text-xs uppercase">Run Time (Hrs)</Label>
+                            <Input
+                                type="number"
+                                step="0.1"
+                                value={machineTimeHours}
+                                onChange={(e) => setMachineTimeHours(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label className="text-slate-700 font-bold">Operator Name</Label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                            <Input
+                                className="pl-9"
+                                placeholder="Employee Name"
+                                value={operatorName}
+                                onChange={e => setOperatorName(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
 

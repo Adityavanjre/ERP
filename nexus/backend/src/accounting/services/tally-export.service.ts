@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountType, InvoiceStatus, POStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -35,19 +35,11 @@ export class TallyService {
     const [tenant, invoices, purchases, payments] = await Promise.all([
       this.prisma.tenant.findUnique({ where: { id: tenantId } }),
       this.prisma.invoice.findMany({
-        where: {
-          tenantId,
-          issueDate: { gte: startDate, lte: endDate },
-          status: { not: 'Cancelled' },
-        },
+        where: { tenantId, issueDate: { gte: startDate, lte: endDate }, status: { not: 'Cancelled' } },
         include: { customer: true, items: { include: { product: true } } },
       }),
       this.prisma.purchaseOrder.findMany({
-        where: {
-          tenantId,
-          orderDate: { gte: startDate, lte: endDate },
-          status: 'Received',
-        },
+        where: { tenantId, orderDate: { gte: startDate, lte: endDate }, status: POStatus.Received },
         include: { supplier: true, items: { include: { product: true } } },
       }),
       this.prisma.payment.findMany({
@@ -59,6 +51,8 @@ export class TallyService {
     const errors: string[] = [];
     const warnings: string[] = [];
     const vchNumbers = new Set<string>();
+    let hsnCoverage = 0;
+    let totalItems = 0;
 
     const summary: any = {
       totalSales: 0,
@@ -69,43 +63,30 @@ export class TallyService {
       netBalanceDr: 0,
       netBalanceCr: 0,
       status: 'PENDING',
-      totalInvoices: 0,
+      totalInvoices: invoices.length,
     };
 
     for (const inv of invoices) {
       const invNo = inv.invoiceNumber.trim();
-      if (vchNumbers.has(invNo))
-        errors.push(`BLOCKER: Duplicate Invoice Number found: ${invNo}`);
+      if (vchNumbers.has(invNo)) errors.push(`BLOCKER: Duplicate Invoice Number: ${invNo}`);
       vchNumbers.add(invNo);
 
       summary.totalSales += Number(inv.totalTaxable);
       summary.totalGST += Number(inv.totalGST);
       summary.netBalanceDr += Number(inv.totalAmount);
 
-      const diff = Math.abs(
-        Number(inv.totalAmount) -
-        (Number(inv.totalTaxable) + Number(inv.totalGST)),
-      );
-      if (diff > 0.011) {
+      for (const item of inv.items) {
+        totalItems++;
+        if (item.product.hsnCode) hsnCoverage++;
+        else warnings.push(`Invoice #${inv.invoiceNumber}: Product ${item.product.name} missing HSN Code.`);
+      }
+
+      // Balance Check
+      const itemsSum = inv.items.reduce((s, i) => s.add(i.taxableAmount), new Decimal(0));
+      const taxSum = inv.totalCGST.add(inv.totalSGST).add(inv.totalIGST);
+      const diff = inv.totalAmount.minus(itemsSum.add(taxSum)).abs();
+      if (diff.gt(0.011)) {
         errors.push(`BLOCKER: Imbalanced Voucher ${invNo}. Drift: ${diff.toFixed(2)}`);
-      } else if (diff > 0) {
-        warnings.push(`INFO: ${invNo} has a rounding adjustment of ${diff.toFixed(2)}`);
-      }
-
-      const custState = inv.customer?.state?.trim().toLowerCase();
-      const tenState = tenant?.state?.trim().toLowerCase();
-
-      if (!custState || !tenState) {
-        warnings.push(`INFO: ${invNo} has missing state information. Interstate check may be unreliable.`);
-      }
-
-      const isInterstate = custState && tenState && custState !== tenState;
-
-      if (isInterstate && Number(inv.totalIGST) === 0 && Number(inv.totalGST) > 0) {
-        errors.push(`BLOCKER: Interstate Invoice ${invNo} missing IGST.`);
-      }
-      if (!isInterstate && Number(inv.totalIGST) > 0 && tenState) {
-        errors.push(`BLOCKER: Local Invoice ${invNo} should not have IGST.`);
       }
     }
 
@@ -124,30 +105,12 @@ export class TallyService {
       }
     }
 
-    summary.totalInvoices = invoices.length;
     summary.status = errors.length > 0 ? 'FAIL' : 'PASS';
+    const coverageScore = totalItems > 0 ? (hsnCoverage / totalItems) * 100 : 100;
 
     const riskFlags = [];
-
-    // 1. Backdated Check
-    const backdated = invoices.filter(inv => {
-      const issued = new Date(inv.issueDate).toDateString();
-      const created = new Date(inv.createdAt).toDateString();
-      return issued !== created;
-    }).length;
-    if (backdated > 0) riskFlags.push({ type: 'BACKDATED', count: backdated, severity: 'WARNING' });
-
-    // 2. Unlinked Payments
-    const unlinked = payments.filter(p => p.customerId && !p.invoiceId).length;
-    if (unlinked > 0) riskFlags.push({ type: 'UNLINKED_PAYMENTS', count: unlinked, severity: 'WARNING' });
-
-    // 3. Negative Stock Risk (Already calculated in getAuditorDashboard, but we can double check here)
     const negStock = await this.prisma.product.count({ where: { tenantId, stock: { lt: 0 }, isDeleted: false } });
     if (negStock > 0) riskFlags.push({ type: 'NEGATIVE_STOCK', count: negStock, severity: 'BLOCKER' });
-
-    const totalInvoices = invoices.length;
-    const hasHSNCount = invoices.filter(inv => inv.items.every(item => !!item.hsnCode)).length;
-    const hsnCoverage = (totalInvoices > 0) ? (hasHSNCount / totalInvoices) * 100 : 100;
 
     return {
       isValid: errors.length === 0,
@@ -155,7 +118,7 @@ export class TallyService {
       warnings,
       summary,
       riskFlags,
-      hsnCoverage,
+      hsnCoverage: coverageScore,
       confidenceScore: Math.max(0, 100 - (errors.length * 15) - (riskFlags.filter(f => f.severity === 'BLOCKER').length * 25)),
     };
   }
@@ -228,7 +191,7 @@ export class TallyService {
     const startDate = new Date(targetYear, targetMonth - 1, 1);
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
-    const [tenant, invoices, payments, purchases, creditNotes, debitNotes] = await Promise.all([
+    const [tenant, invoices, payments, purchases, creditNotes, debitNotes, fixedAssets, depreciationLogs] = await Promise.all([
       this.prisma.tenant.findUnique({ where: { id: tenantId } }),
       this.prisma.invoice.findMany({
         where: { tenantId, issueDate: { gte: startDate, lte: endDate }, status: { not: 'Cancelled' } },
@@ -249,6 +212,13 @@ export class TallyService {
       this.prisma.debitNote.findMany({
         where: { tenantId, date: { gte: startDate, lte: endDate } },
         include: { supplier: true, purchaseOrder: true, items: { include: { product: true } } },
+      }),
+      (this.prisma as any).fixedAsset.findMany({
+        where: { tenantId, purchaseDate: { gte: startDate, lte: endDate } },
+      }),
+      (this.prisma as any).depreciationLog.findMany({
+        where: { tenantId, date: { gte: startDate, lte: endDate } },
+        include: { asset: true },
       }),
     ]);
 
@@ -280,7 +250,7 @@ export class TallyService {
       xml += `              </BILLALLOCATIONS.LIST>\n`;
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
 
-      // Cr Inventory per item (Required for GSTR-1 in Tally)
+      // Cr Inventory per item
       for (const item of inv.items) {
         xml += `            <INVENTORYENTRIES.LIST>\n`;
         xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
@@ -288,8 +258,8 @@ export class TallyService {
         xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
         xml += `              <RATE>${item.unitPrice}</RATE>\n`;
         xml += `              <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
-        xml += `              <ACTUALQTY>${item.quantity}</ACTUALQTY>\n`;
-        xml += `              <BILLEDQTY>${item.quantity}</BILLEDQTY>\n`;
+        xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
+        xml += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
         xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
         xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES)}</LEDGERNAME>\n`;
         xml += `                <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
@@ -299,11 +269,30 @@ export class TallyService {
       }
 
       // Tax Ledgers
+      let taxSum = new Decimal(0);
       if (inv.totalIGST.greaterThan(0)) {
         xml += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, inv.totalIGST, true);
+        taxSum = taxSum.add(inv.totalIGST);
       } else {
-        if (inv.totalCGST.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, inv.totalCGST, true);
-        if (inv.totalSGST.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, inv.totalSGST, true);
+        if (inv.totalCGST.greaterThan(0)) {
+          xml += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, inv.totalCGST, true);
+          taxSum = taxSum.add(inv.totalCGST);
+        }
+        if (inv.totalSGST.greaterThan(0)) {
+          xml += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, inv.totalSGST, true);
+          taxSum = taxSum.add(inv.totalSGST);
+        }
+      }
+
+      // Rounding Ledger
+      const totalItemsAndTax = inv.items.reduce((sum, item) => sum.add(item.taxableAmount), new Decimal(0)).add(taxSum);
+      const diff = inv.totalAmount.minus(totalItemsAndTax);
+      if (diff.abs().greaterThan(0)) {
+        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
+        xml += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.ROUNDING_OFF)}</LEDGERNAME>\n`;
+        xml += `              <ISDEEMEDPOSITIVE>${diff.isPositive() ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
+        xml += `              <AMOUNT>${diff.isPositive() ? diff.abs() : diff.abs().negated()}</AMOUNT>\n`;
+        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
       }
 
       xml += `          </VOUCHER>\n`;
@@ -344,8 +333,8 @@ export class TallyService {
         xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
         xml += `              <RATE>${item.unitPrice}</RATE>\n`;
         xml += `              <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
-        xml += `              <ACTUALQTY>${item.quantity}</ACTUALQTY>\n`;
-        xml += `              <BILLEDQTY>${item.quantity}</BILLEDQTY>\n`;
+        xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
+        xml += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
         xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
         xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.INVENTORY_ASSET)}</LEDGERNAME>\n`;
         xml += `                <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
@@ -382,14 +371,14 @@ export class TallyService {
       xml += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
       xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
 
-      // Entry 1: Bank/Cash
+      // Bank/Cash entry
       xml += `            <ALLLEDGERENTRIES.LIST>\n`;
       xml += `              <LEDGERNAME>${this.escapeXml(pay.mode === 'Cash' ? StandardAccounts.CASH : StandardAccounts.BANK)}</LEDGERNAME>\n`;
       xml += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'YES' : 'NO'}</ISDEEMEDPOSITIVE>\n`;
       xml += `              <AMOUNT>${isReceipt ? '-' : ''}${pay.amount}</AMOUNT>\n`;
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
 
-      // Entry 2: Party
+      // Party entry
       xml += `            <ALLLEDGERENTRIES.LIST>\n`;
       xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
       xml += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
@@ -432,31 +421,30 @@ export class TallyService {
       }
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
 
-      // Dr Sales Returns / Products
+      // Dr Sales Returns / Inventory
       for (const item of cn.items) {
         xml += `            <INVENTORYENTRIES.LIST>\n`;
         xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
         xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
         xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-        xml += `              <RATE>${item.unitPrice}</RATE>\n`;
         xml += `              <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
-        xml += `              <ACTUALQTY>${item.quantity}</ACTUALQTY>\n`;
-        xml += `              <BILLEDQTY>${item.quantity}</BILLEDQTY>\n`;
+        xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
+        xml += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
         xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-        xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES_RETURNS || 'Sales Returns')}</LEDGERNAME>\n`;
+        xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES_RETURNS)}</LEDGERNAME>\n`;
         xml += `                <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
         xml += `                <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
         xml += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
         xml += `            </INVENTORYENTRIES.LIST>\n`;
       }
 
-      // Dr Tax
+      // Dr Tax (Reversal)
       const cnAny = cn as any;
-      if (cnAny.totalIGST?.greaterThan(0)) {
+      if (cnAny.totalIGST && new Decimal(cnAny.totalIGST).gt(0)) {
         xml += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, cnAny.totalIGST, false);
       } else {
-        if (cnAny.totalCGST?.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, cnAny.totalCGST, false);
-        if (cnAny.totalSGST?.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, cnAny.totalSGST, false);
+        if (cnAny.totalCGST && new Decimal(cnAny.totalCGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, cnAny.totalCGST, false);
+        if (cnAny.totalSGST && new Decimal(cnAny.totalSGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, cnAny.totalSGST, false);
       }
 
       xml += `          </VOUCHER>\n`;
@@ -474,7 +462,6 @@ export class TallyService {
       xml += `            <DATE>${dateStr}</DATE>\n`;
       xml += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
       xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
-
       // Dr Supplier
       xml += `            <ALLLEDGERENTRIES.LIST>\n`;
       xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
@@ -489,35 +476,120 @@ export class TallyService {
       }
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
 
-      // Cr Inventory / Purchase Returns
+      // Cr Purchase Returns / Inventory
       for (const item of dn.items) {
         xml += `            <INVENTORYENTRIES.LIST>\n`;
         xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
         xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
         xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-        xml += `              <RATE>${item.unitPrice}</RATE>\n`;
         xml += `              <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
-        xml += `              <ACTUALQTY>${item.quantity}</ACTUALQTY>\n`;
-        xml += `              <BILLEDQTY>${item.quantity}</BILLEDQTY>\n`;
+        xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
         xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-        xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.PURCHASE_RETURNS || 'Purchase Returns')}</LEDGERNAME>\n`;
+        xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.PURCHASE_RETURNS)}</LEDGERNAME>\n`;
         xml += `                <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
         xml += `                <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
         xml += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
         xml += `            </INVENTORYENTRIES.LIST>\n`;
       }
 
-      // Cr Tax
+      // Cr Tax (Reversal)
       const dnAny = dn as any;
-      if (dnAny.totalIGST?.greaterThan(0)) {
+      if (dnAny.totalIGST && new Decimal(dnAny.totalIGST).gt(0)) {
         xml += this.generateTaxLedger(StandardAccounts.INPUT_IGST, dnAny.totalIGST, true);
       } else {
-        if (dnAny.totalCGST?.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_CGST, dnAny.totalCGST, true);
-        if (dnAny.totalSGST?.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_SGST, dnAny.totalSGST, true);
+        if (dnAny.totalCGST && new Decimal(dnAny.totalCGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_CGST, dnAny.totalCGST, true);
+        if (dnAny.totalSGST && new Decimal(dnAny.totalSGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_SGST, dnAny.totalSGST, true);
       }
 
       xml += `          </VOUCHER>\n`;
       xml += `        </TALLYMESSAGE>\n`;
+    }
+
+    // 6. Export Manufacturing Stock Journals (Work Orders)
+    const workOrders = await this.prisma.workOrder.findMany({
+      where: { tenantId, endDate: { gte: startDate, lte: endDate }, status: 'Completed' },
+      include: { bom: { include: { product: true, items: { include: { product: true } } } } },
+    });
+
+    for (const wo of workOrders) {
+      const dateStr = wo.endDate!.toISOString().split('T')[0].replace(/-/g, '');
+      const guid = `WO-${wo.id}`;
+      const vchNo = wo.orderNumber;
+
+      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+      xml += `          <VOUCHER VCHTYPE="Stock Journal" ACTION="Create" OBJVIEW="InventoryVchView">\n`;
+      xml += `            <DATE>${dateStr}</DATE>\n`;
+      xml += `            <VOUCHERNUMBER>${this.escapeXml(vchNo)}</VOUCHERNUMBER>\n`;
+      xml += `            <PERSISTEDVIEW>InventoryVchView</PERSISTEDVIEW>\n`;
+      xml += `            <GUID>${guid}</GUID>\n`;
+
+      // PRODUCTION (Finished Goods)
+      xml += `            <INVENTORYENTRIES.LIST>\n`;
+      xml += `              <STOCKITEMNAME>${this.escapeXml(wo.bom.product.name)}</STOCKITEMNAME>\n`;
+      xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+      xml += `              <HSNCODE>${this.escapeXml(wo.bom.product.hsnCode || '')}</HSNCODE>\n`;
+      xml += `              <RATE>${wo.bom.product.costPrice}</RATE>\n`;
+      xml += `              <AMOUNT>-${Number(wo.producedQuantity) * Number(wo.bom.product.costPrice)}</AMOUNT>\n`;
+      xml += `              <ACTUALQTY>${wo.producedQuantity} Nos</ACTUALQTY>\n`;
+      xml += `              <BILLEDQTY>${wo.producedQuantity} Nos</BILLEDQTY>\n`;
+      xml += `            </INVENTORYENTRIES.LIST>\n`;
+
+      // CONSUMPTION (Raw Materials)
+      for (const item of wo.bom.items) {
+        const consumedQty = Number(item.quantity) * Number(wo.producedQuantity + wo.scrapQuantity);
+        xml += `            <INVENTORYENTRIES.LIST>\n`;
+        xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
+        xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+        xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
+        xml += `              <AMOUNT>${consumedQty * Number(item.product.costPrice)}</AMOUNT>\n`;
+        xml += `              <ACTUALQTY>${consumedQty} Nos</ACTUALQTY>\n              <BILLEDQTY>${consumedQty} Nos</BILLEDQTY>\n`;
+        xml += `            </INVENTORYENTRIES.LIST>\n`;
+      }
+
+      xml += `          </VOUCHER>\n`;
+      xml += `        </TALLYMESSAGE>\n`;
+    }
+
+    // 7. Fixed Assets
+    for (const asset of (fixedAssets as any[])) {
+      const dateStr = asset.purchaseDate.toISOString().split('T')[0].replace(/-/g, '');
+      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n` +
+        `          <VOUCHER VCHTYPE="Journal" ACTION="Create">\n` +
+        `            <DATE>${dateStr}</DATE>\n` +
+        `            <VOUCHERNUMBER>${this.escapeXml(asset.assetCode)}</VOUCHERNUMBER>\n` +
+        `            <ALLLEDGERENTRIES.LIST>\n` +
+        `              <LEDGERNAME>${this.escapeXml(StandardAccounts.FIXED_ASSETS)}</LEDGERNAME>\n` +
+        `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n` +
+        `              <AMOUNT>-${asset.purchaseValue}</AMOUNT>\n` +
+        `            </ALLLEDGERENTRIES.LIST>\n` +
+        `            <ALLLEDGERENTRIES.LIST>\n` +
+        `              <LEDGERNAME>${this.escapeXml(StandardAccounts.BANK)}</LEDGERNAME>\n` +
+        `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n` +
+        `              <AMOUNT>${asset.purchaseValue}</AMOUNT>\n` +
+        `            </ALLLEDGERENTRIES.LIST>\n` +
+        `          </VOUCHER>\n` +
+        `        </TALLYMESSAGE>\n`;
+    }
+
+    // 8. Depreciation
+    for (const log of (depreciationLogs as any[])) {
+      const dateStr = log.date.toISOString().split('T')[0].replace(/-/g, '');
+      xml += `        <TALLYMESSAGE xmlns:UDF="TALLYUDF">\n` +
+        `          <VOUCHER VCHTYPE="Journal" ACTION="Create">\n` +
+        `            <DATE>${dateStr}</DATE>\n` +
+        `            <VOUCHERNUMBER>${this.escapeXml(`DEP-${log.asset.assetCode}-${dateStr}`)}</VOUCHERNUMBER>\n` +
+        `            <ALLLEDGERENTRIES.LIST>\n` +
+        `              <LEDGERNAME>${this.escapeXml(StandardAccounts.DEPRECIATION_EXPENSE)}</LEDGERNAME>\n` +
+        `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n` +
+        `              <AMOUNT>-${log.amount}</AMOUNT>\n` +
+        `            </ALLLEDGERENTRIES.LIST>\n` +
+        `            <ALLLEDGERENTRIES.LIST>\n` +
+        `              <LEDGERNAME>${this.escapeXml(StandardAccounts.ACCUMULATED_DEPRECIATION)}</LEDGERNAME>\n` +
+        `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n` +
+        `              <AMOUNT>${log.amount}</AMOUNT>\n` +
+        `            </ALLLEDGERENTRIES.LIST>\n` +
+        `          </VOUCHER>\n` +
+        `        </TALLYMESSAGE>\n`;
     }
 
     xml += `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;
@@ -525,8 +597,6 @@ export class TallyService {
   }
 
   private generateTaxLedger(name: string, amount: any, isSales: boolean) {
-    // Tally SIGNAGE: Debit is Negative, Credit is Positive
-    // Sales GST is Credit (+ve). Input GST is Debit (-ve).
     const sign = isSales ? '' : '-';
     const deemed = isSales ? 'NO' : 'YES';
 
@@ -565,19 +635,10 @@ export class TallyService {
     };
   }
 
-  async togglePeriodLock(
-    tenantId: string,
-    month: number,
-    year: number,
-    userId: string,
-    action: 'LOCK' | 'UNLOCK',
-    reason?: string,
-  ) {
+  async togglePeriodLock(tenantId: string, month: number, year: number, userId: string, action: 'LOCK' | 'UNLOCK', reason?: string) {
     if (action === 'LOCK') {
       const validation = await this.validateTallyData(tenantId, month, year);
-      if (!validation.isValid) {
-        throw new BadRequestException('Cannot lock period with critical validation errors.');
-      }
+      if (!validation.isValid) throw new BadRequestException('Cannot lock period with critical validation errors.');
 
       return (this.prisma as any).periodLock.upsert({
         where: { tenantId_month_year: { tenantId, month, year } },
@@ -602,11 +663,9 @@ export class TallyService {
 
     let xml = `<?xml version="1.0"?>\n<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <IMPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
 
-    // 1. Export Standard GL Accounts
     for (const acc of accounts) {
       let tallyGroup = acc.type.toString();
       const escapedName = this.escapeXml(acc.name);
-
       if (acc.name === StandardAccounts.ACCOUNTS_RECEIVABLE) tallyGroup = 'Sundry Debtors';
       if (acc.name === StandardAccounts.ACCOUNTS_PAYABLE) tallyGroup = 'Sundry Creditors';
       if (acc.type === AccountType.Revenue) tallyGroup = 'Sales Accounts';
@@ -622,7 +681,6 @@ export class TallyService {
       xml += `        </TALLYMESSAGE>\n`;
     }
 
-    // 2. Export Customers
     for (const cust of customers) {
       const escapedName = this.escapeXml(cust.company || `${cust.firstName} ${cust.lastName}`);
       const ob = cust.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
@@ -631,15 +689,12 @@ export class TallyService {
       xml += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
       xml += `            <PARENT>Sundry Debtors</PARENT>\n`;
       xml += `            <OPENINGBALANCE>-${ob}</OPENINGBALANCE>\n`;
-      xml += `            <ISBILLWISEON>YES</ISBILLWISEON>\n`;
-      xml += `            <LEDGERSTATE>${this.escapeXml(cust.state || '')}</LEDGERSTATE>\n`;
       xml += `            <GSTREGISTRATIONTYPE>${cust.gstin ? 'Regular' : 'Unregistered'}</GSTREGISTRATIONTYPE>\n`;
       if (cust.gstin) xml += `            <PARTYGSTIN>${this.escapeXml(cust.gstin)}</PARTYGSTIN>\n`;
       xml += `          </LEDGER>\n`;
       xml += `        </TALLYMESSAGE>\n`;
     }
 
-    // 3. Export Suppliers
     for (const supp of suppliers) {
       const escapedName = this.escapeXml(supp.name);
       const ob = supp.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
@@ -648,14 +703,11 @@ export class TallyService {
       xml += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
       xml += `            <PARENT>Sundry Creditors</PARENT>\n`;
       xml += `            <OPENINGBALANCE>${ob}</OPENINGBALANCE>\n`;
-      xml += `            <ISBILLWISEON>YES</ISBILLWISEON>\n`;
-      xml += `            <LEDGERSTATE>${this.escapeXml(supp.state || '')}</LEDGERSTATE>\n`;
       if (supp.gstin) xml += `            <PARTYGSTIN>${this.escapeXml(supp.gstin)}</PARTYGSTIN>\n`;
       xml += `          </LEDGER>\n`;
       xml += `        </TALLYMESSAGE>\n`;
     }
 
-    // 4. Export Stock Items
     for (const prod of products) {
       xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
       xml += `          <STOCKITEM NAME="${this.escapeXml(prod.name)}" ACTION="Create">\n`;
@@ -664,7 +716,6 @@ export class TallyService {
       xml += `            <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>\n`;
       xml += `            <HSNCODE>${this.escapeXml(prod.hsnCode || '')}</HSNCODE>\n`;
       xml += `            <OPENINGBALANCE>${prod.stock}</OPENINGBALANCE>\n`;
-      xml += `            <OPENINGVALUE>-${Number(prod.stock) * Number(prod.costPrice)}</OPENINGVALUE>\n`;
       xml += `          </STOCKITEM>\n`;
       xml += `        </TALLYMESSAGE>\n`;
     }

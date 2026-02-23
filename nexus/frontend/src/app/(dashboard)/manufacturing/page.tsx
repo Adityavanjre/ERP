@@ -13,7 +13,8 @@ import {
     Plus,
     ArrowRight,
     TrendingUp,
-    Boxes
+    Boxes,
+    Cpu
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -46,24 +47,30 @@ export default function ManufacturingDashboard() {
     const [showCompleteModal, setShowCompleteModal] = useState(false);
     const [selectedWO, setSelectedWO] = useState<any>(null);
     const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [machines, setMachines] = useState<any[]>([]);
     const [completionData, setCompletionData] = useState({
         producedQty: 0,
         scrapQty: 0,
         warehouseId: "",
+        machineId: "",
+        machineTimeHours: 0,
+        operatorName: "",
         idempotencyKey: "",
     });
 
     const syncManufacturingData = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const [b, w, wh] = await Promise.all([
+            const [b, w, wh, m] = await Promise.all([
                 api.get("manufacturing/boms"),
                 api.get("manufacturing/work-orders"),
                 api.get("inventory/warehouses"),
+                api.get("manufacturing/machines"),
             ]);
             setBoms(b.data);
             setWorkOrders(w.data);
             setWarehouses(wh.data || []);
+            setMachines(m.data || []);
         } catch (err) {
             console.error("Manufacturing Sync Failure:", err);
         } finally {
@@ -77,6 +84,9 @@ export default function ManufacturingDashboard() {
             producedQty: wo.quantity,
             scrapQty: 0,
             warehouseId: "",
+            machineId: "",
+            machineTimeHours: 0,
+            operatorName: "",
             idempotencyKey: `wo-comp-${wo.id}-${Date.now()}`,
         });
         setShowCompleteModal(true);
@@ -89,8 +99,11 @@ export default function ManufacturingDashboard() {
         }
         try {
             await api.post(`/manufacturing/work-orders/${selectedWO.id}/complete`, {
-                producedQty: Number(completionData.producedQty),
-                scrapQty: Number(completionData.scrapQty),
+                producedQuantity: Number(completionData.producedQty),
+                scrapQuantity: Number(completionData.scrapQty),
+                machineId: completionData.machineId,
+                machineTimeHours: Number(completionData.machineTimeHours),
+                operatorName: completionData.operatorName,
                 warehouseId: completionData.warehouseId,
                 idempotencyKey: completionData.idempotencyKey,
             });
@@ -137,6 +150,13 @@ export default function ManufacturingDashboard() {
                     >
                         <Settings className="w-4 h-4" />
                         Bill of Materials
+                    </button>
+                    <button
+                        onClick={() => router.push('/manufacturing/machines')}
+                        className="flex-1 md:flex-none justify-center px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
+                    >
+                        <Cpu className="w-4 h-4 shadow-sm" />
+                        Machines
                     </button>
                     <button
                         onClick={() => router.push('/manufacturing/orders')}
@@ -299,6 +319,43 @@ export default function ManufacturingDashboard() {
                                         className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg text-rose-600 focus:ring-rose-500/20"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Machine</Label>
+                                    <Select value={completionData.machineId} onValueChange={(val) => setCompletionData({ ...completionData, machineId: val })}>
+                                        <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold">
+                                            <SelectValue placeholder="Select machine" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {machines.map((m: any) => (
+                                                <SelectItem key={m.id} value={m.id} className="font-bold">{m.name} ({m.code})</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Machine Hours</Label>
+                                    <Input
+                                        type="number"
+                                        step="0.1"
+                                        placeholder="0.0"
+                                        value={completionData.machineTimeHours}
+                                        onChange={(e) => setCompletionData({ ...completionData, machineTimeHours: Number(e.target.value) })}
+                                        className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operator Name</Label>
+                                <Input
+                                    placeholder="John Doe"
+                                    value={completionData.operatorName}
+                                    onChange={(e) => setCompletionData({ ...completionData, operatorName: e.target.value })}
+                                    className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold focus:ring-emerald-500/20"
+                                />
                             </div>
 
                             <div className="space-y-2">

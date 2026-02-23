@@ -144,6 +144,7 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
     };
 
     const { subtotal, totalTax, grandTotal } = calculateTotals();
+    const { showConfirm } = useUX();
 
     const handleSubmit = async () => {
         if (!customerId) {
@@ -154,6 +155,21 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
             toast.error("Please select products for all lines");
             return;
         }
+
+        const customerName = customers.find(c => c.id === customerId)?.company || "Selected Customer";
+
+        showConfirm({
+            title: "Confirm Tax Invoice Posting",
+            description: `You are about to post a compliant tax invoice for ₹${grandTotal.toLocaleString('en-IN')} to ${customerName}. This action will affect your accounting ledgers and cannot be deleted once saved (only cancelled).`,
+            confirmText: "Issue & Post",
+            cancelText: "Review",
+            onConfirm: async () => {
+                await executeSubmit();
+            }
+        });
+    };
+
+    const executeSubmit = async () => {
 
         setLoading(true);
         setUILocked(true);
