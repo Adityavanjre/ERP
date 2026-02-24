@@ -191,7 +191,7 @@ export class TallyService {
     const startDate = new Date(targetYear, targetMonth - 1, 1);
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
-    const [tenant, invoices, payments, purchases, creditNotes, debitNotes, fixedAssets, depreciationLogs] = await Promise.all([
+    const [tenant, invoices, payments, purchases, creditNotes, debitNotes, fixedAssets, depreciationLogs, journalEntries] = await Promise.all([
       this.prisma.tenant.findUnique({ where: { id: tenantId } }),
       this.prisma.invoice.findMany({
         where: { tenantId, issueDate: { gte: startDate, lte: endDate }, status: { not: 'Cancelled' } },
@@ -219,6 +219,17 @@ export class TallyService {
       (this.prisma as any).depreciationLog.findMany({
         where: { tenantId, date: { gte: startDate, lte: endDate } },
         include: { asset: true },
+      }),
+      this.prisma.journalEntry.findMany({
+        where: {
+          tenantId,
+          date: { gte: startDate, lte: endDate },
+          // Audit Rule: Don't double-export journals that are automatically created by Invoices/Payments
+          invoice: null,
+          creditNote: null,
+          debitNote: null,
+        },
+        include: { transactions: { include: { account: true } } },
       }),
     ]);
 
@@ -313,17 +324,29 @@ export class TallyService {
       xml += `            <PERSISTEDVIEW>AccountingVchView</PERSISTEDVIEW>\n`;
       xml += `            <GUID>${guid}</GUID>\n`;
 
-      // Cr Supplier
+      // Cr Supplier (Net)
+      const netAmount = (po as any).netAmount || po.totalAmount;
+      const tdsAmount = (po as any).tdsAmount || 0;
+
       xml += `            <ALLLEDGERENTRIES.LIST>\n`;
       xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
       xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-      xml += `              <AMOUNT>${po.totalAmount}</AMOUNT>\n`;
+      xml += `              <AMOUNT>${netAmount}</AMOUNT>\n`;
       xml += `              <BILLALLOCATIONS.LIST>\n`;
       xml += `                <NAME>${this.escapeXml(po.orderNumber)}</NAME>\n`;
       xml += `                <BILLTYPE>New Ref</BILLTYPE>\n`;
-      xml += `                <AMOUNT>${po.totalAmount}</AMOUNT>\n`;
+      xml += `                <AMOUNT>${netAmount}</AMOUNT>\n`;
       xml += `              </BILLALLOCATIONS.LIST>\n`;
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+
+      // TDS Entry
+      if (new Decimal(tdsAmount).gt(0)) {
+        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
+        xml += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.TDS_PAYABLE)}</LEDGERNAME>\n`;
+        xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+        xml += `              <AMOUNT>${tdsAmount}</AMOUNT>\n`;
+        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+      }
 
       // Dr Inventory per item
       for (const item of po.items) {
@@ -365,29 +388,42 @@ export class TallyService {
       const refNo = this.escapeXml(pay.reference || (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8));
       const vchType = isReceipt ? 'Receipt' : 'Payment';
 
+      const payAmount = new Decimal(pay.amount);
+      const tdsAmount = new Decimal((pay as any).tdsAmount || 0);
+      const netAmount = payAmount.sub(tdsAmount);
+
       xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
       xml += `          <VOUCHER VCHTYPE="${vchType}" ACTION="Create">\n`;
       xml += `            <DATE>${dateStr}</DATE>\n`;
       xml += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
       xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
 
-      // Bank/Cash entry
+      // Bank/Cash entry (Net)
       xml += `            <ALLLEDGERENTRIES.LIST>\n`;
       xml += `              <LEDGERNAME>${this.escapeXml(pay.mode === 'Cash' ? StandardAccounts.CASH : StandardAccounts.BANK)}</LEDGERNAME>\n`;
       xml += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'YES' : 'NO'}</ISDEEMEDPOSITIVE>\n`;
-      xml += `              <AMOUNT>${isReceipt ? '-' : ''}${pay.amount}</AMOUNT>\n`;
+      xml += `              <AMOUNT>${isReceipt ? '-' : ''}${netAmount}</AMOUNT>\n`;
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
 
-      // Party entry
+      // TDS Entry
+      if (tdsAmount.gt(0)) {
+        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
+        xml += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.TDS_PAYABLE)}</LEDGERNAME>\n`;
+        xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+        xml += `              <AMOUNT>${tdsAmount}</AMOUNT>\n`;
+        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+      }
+
+      // Party entry (Gross)
       xml += `            <ALLLEDGERENTRIES.LIST>\n`;
       xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
       xml += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
-      xml += `              <AMOUNT>${isReceipt ? '' : '-'}${pay.amount}</AMOUNT>\n`;
+      xml += `              <AMOUNT>${isReceipt ? '' : '-'}${payAmount}</AMOUNT>\n`;
       if (pay.invoice) {
         xml += `              <BILLALLOCATIONS.LIST>\n`;
         xml += `                <NAME>${this.escapeXml(pay.invoice.invoiceNumber)}</NAME>\n`;
         xml += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
-        xml += `                <AMOUNT>${pay.amount}</AMOUNT>\n`;
+        xml += `                <AMOUNT>${payAmount}</AMOUNT>\n`;
         xml += `              </BILLALLOCATIONS.LIST>\n`;
       }
       xml += `            </ALLLEDGERENTRIES.LIST>\n`;
@@ -536,7 +572,7 @@ export class TallyService {
 
       // CONSUMPTION (Raw Materials)
       for (const item of wo.bom.items) {
-        const consumedQty = Number(item.quantity) * Number(wo.producedQuantity + wo.scrapQuantity);
+        const consumedQty = Number(item.quantity) * (Number(wo.producedQuantity) + Number(wo.scrapQuantity));
         xml += `            <INVENTORYENTRIES.LIST>\n`;
         xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
         xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
@@ -590,6 +626,28 @@ export class TallyService {
         `            </ALLLEDGERENTRIES.LIST>\n` +
         `          </VOUCHER>\n` +
         `        </TALLYMESSAGE>\n`;
+    }
+
+    // 9. Manual Journal Entries (The final piece of the audit puzzle)
+    for (const j of (journalEntries as any[])) {
+      const dateStr = j.date.toISOString().split('T')[0].replace(/-/g, '');
+      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+      xml += `          <VOUCHER VCHTYPE="Journal" ACTION="Create">\n`;
+      xml += `            <DATE>${dateStr}</DATE>\n`;
+      xml += `            <VOUCHERNUMBER>${this.escapeXml(j.reference || `JV-${j.id.slice(0, 8)}`)}</VOUCHERNUMBER>\n`;
+      xml += `            <NARRATION>${this.escapeXml(j.description)}</NARRATION>\n`;
+
+      for (const t of j.transactions) {
+        const isDebit = t.type === 'Debit';
+        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
+        xml += `              <LEDGERNAME>${this.escapeXml(t.account.name)}</LEDGERNAME>\n`;
+        xml += `              <ISDEEMEDPOSITIVE>${isDebit ? 'YES' : 'NO'}</ISDEEMEDPOSITIVE>\n`;
+        xml += `              <AMOUNT>${isDebit ? '-' : ''}${t.amount}</AMOUNT>\n`;
+        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+      }
+
+      xml += `          </VOUCHER>\n`;
+      xml += `        </TALLYMESSAGE>\n`;
     }
 
     xml += `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;

@@ -6,6 +6,8 @@ import { Toaster as HotToaster } from 'react-hot-toast';
 import { UXProvider } from "@/components/providers/ux-provider";
 import { LoadingBar } from "@/components/ui/loading-bar";
 import { Suspense } from "react";
+import { PerformanceMonitor } from "@/components/seo/performance-monitor";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,8 +20,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://nexus.klypso.in/portal'),
   title: "Nexus ERP | Advanced Business OS for Manufacturing & GST Compliance",
   description: "The imperial standard for SME management. Professional ERP with Tally Prime sync, automated GST GSTR-1 compliance, manufacturing BOM/WIP tracking, and double-entry accounting.",
+  alternates: {
+    canonical: 'https://nexus.klypso.in/portal',
+  },
   keywords: [
     "Best ERP for Manufacturing India",
     "GST Accounting Software",
@@ -77,6 +83,32 @@ export const metadata: Metadata = {
   themeColor: "#0f172a",
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Nexus ERP",
+  "alternateName": "Klypso Nexus",
+  "url": "https://nexus.klypso.in/portal",
+  "logo": "https://nexus.klypso.in/portal/favicon.svg",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+91-XXXXXXXXXX",
+    "contactType": "customer service",
+    "contactOption": "TollFree",
+    "areaServed": "IN",
+    "availableLanguage": "en"
+  },
+  "sameAs": [
+    "https://twitter.com/klypso",
+    "https://linkedin.com/company/klypso"
+  ],
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://nexus.klypso.in/portal/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -84,10 +116,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="ai-content" content="index, follow" />
+        <meta name="discovery" content="https://nexus.klypso.in/portal/sitemap.xml" />
+        <link rel="dns-prefetch" href="https://klypso-backend.onrender.com" />
+        <link rel="preconnect" href="https://klypso-backend.onrender.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="preconnect" href="https://images.unsplash.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <UXProvider>
+          <Script
+            id="organization-jsonld"
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          />
+          <PerformanceMonitor />
           <Suspense fallback={null}>
             <LoadingBar />
           </Suspense>

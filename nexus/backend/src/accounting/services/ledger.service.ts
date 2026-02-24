@@ -5,12 +5,14 @@ import { AccountType, Prisma } from '@prisma/client';
 import { StandardAccounts } from '../constants/account-names';
 import { CreateJournalEntryDto } from '../dto/create-journal.dto';
 import { Decimal } from '@prisma/client/runtime/library';
+import { TraceService } from '../../common/services/trace.service';
 
 @Injectable()
 export class LedgerService {
   constructor(
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: any,
+    private readonly traceService: TraceService,
   ) { }
 
   round2(val: number | string | Decimal): Decimal {
@@ -18,6 +20,72 @@ export class LedgerService {
       return val.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
     }
     return new Decimal(val).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+  }
+
+  /**
+   * Trial Balance Importer (The CA Onboarding Special)
+   * Allows importing current balances of all ledgers during migration.
+   */
+  async importTrialBalance(tenantId: string, csvContent: string) {
+    const lines = csvContent.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+
+    return this.prisma.$transaction(async (tx) => {
+      const obAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+      if (!obAcc) throw new BadRequestException("Onboarding Blocked: Opening Balance Equity account missing.");
+
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const cols = lines[i].split(',').map(c => c.trim());
+        const data: any = {};
+        headers.forEach((h, idx) => { data[h] = cols[idx]; });
+
+        try {
+          const name = data.accountName || data.name;
+          const type = (data.type as AccountType) || AccountType.Asset;
+          const ob = parseFloat(data.openingBalance || data.balance || "0");
+
+          if (!name) throw new Error("Account Name is required");
+          if (ob === 0) continue; // Skip zero balances
+
+          let account = await tx.account.findFirst({ where: { tenantId, name } });
+          if (!account) {
+            account = await tx.account.create({
+              data: { tenantId, name, type, code: data.code || `OB-${Date.now().toString().slice(-6)}`, balance: 0 }
+            });
+          }
+
+          // Check if an OB journal already exists for this account to prevent double-entry on re-import
+          const existingJournal = await tx.journalEntry.findFirst({
+            where: { tenantId, reference: `OB-${account.code}`, description: { contains: 'Opening Balance' } }
+          });
+
+          if (!existingJournal) {
+            const amount = new Decimal(ob);
+            const isDebitNormal = [AccountType.Asset, AccountType.Expense].includes(account.type as any);
+            const entryType = isDebitNormal
+              ? (amount.isPositive() ? 'Debit' : 'Credit')
+              : (amount.isPositive() ? 'Credit' : 'Debit');
+
+            await this.createJournalEntry(tenantId, {
+              date: new Date().toISOString(),
+              description: `Opening Balance: ${account.name}`,
+              reference: `OB-${account.code}`,
+              transactions: [
+                { accountId: account.id, type: entryType as any, amount: amount.abs().toNumber(), description: 'Trial Balance Migration' },
+                { accountId: obAcc.id, type: (entryType === 'Debit' ? 'Credit' : 'Debit') as any, amount: amount.abs().toNumber(), description: 'Offsetting Equity' }
+              ]
+            }, tx);
+            results.imported++;
+          }
+        } catch (e: any) {
+          results.failed++;
+          results.errors.push(`Line ${i}: ${e.message}`);
+        }
+      }
+      return results;
+    });
   }
 
   async checkPeriodLock(tenantId: string, date: Date | string, tx?: any) {
@@ -122,22 +190,53 @@ export class LedgerService {
 
     ];
 
-    const inventoryAccounts = [];
+    const verticalAccounts: any[] = [];
+
+    // Vertical-Specific Chart of Accounts (COA) DNA
     if (industry === 'Manufacturing') {
-      inventoryAccounts.push(
+      verticalAccounts.push(
         { name: StandardAccounts.RAW_MATERIAL_INVENTORY, type: AccountType.Asset, code: '1005' },
         { name: StandardAccounts.FINISHED_GOODS_INVENTORY, type: AccountType.Asset, code: '1006' },
         { name: StandardAccounts.WIP_INVENTORY, type: AccountType.Asset, code: '1007' },
         { name: StandardAccounts.MANUFACTURING_OVERHEAD_ABSORBED, type: AccountType.Revenue, code: '4002' },
         { name: StandardAccounts.SCRAP_EXPENSE, type: AccountType.Expense, code: '5004' }
       );
+    } else if (industry === 'Healthcare') {
+      verticalAccounts.push(
+        { name: 'Pharmacy Inventory', type: AccountType.Asset, code: '1004H' },
+        { name: 'Insurance Receivables', type: AccountType.Asset, code: '1009H' },
+        { name: 'Patient Service Revenue', type: AccountType.Revenue, code: '4004H' },
+        { name: 'Medical Consumables', type: AccountType.Expense, code: '5006H' }
+      );
+    } else if (industry === 'Construction') {
+      verticalAccounts.push(
+        { name: 'Project WIP Assets', type: AccountType.Asset, code: '1010C' },
+        { name: 'Material at Site', type: AccountType.Asset, code: '1011C' },
+        { name: 'Sub-contractor Payables', type: AccountType.Liability, code: '2101C' },
+        { name: 'Retention Money Payable', type: AccountType.Liability, code: '2102C' }
+      );
+    } else if (industry === 'Logistics') {
+      verticalAccounts.push(
+        { name: 'Fleet Fixed Assets', type: AccountType.Asset, code: '1103L' },
+        { name: 'Fuel Control Account', type: AccountType.Expense, code: '5101L' },
+        { name: 'Freight Income', type: AccountType.Revenue, code: '4101L' },
+        { name: 'Driver Advances', type: AccountType.Asset, code: '1201L' }
+      );
+    } else if (industry === 'NBFC') {
+      verticalAccounts.push(
+        { name: 'Loan Portfolio Principal', type: AccountType.Asset, code: '1301F' },
+        { name: 'Interest Income - Loans', type: AccountType.Revenue, code: '4301F' },
+        { name: 'Risk Provision Reserves', type: AccountType.Equity, code: '3301F' },
+        { name: 'KYC & Compliance Expense', type: AccountType.Expense, code: '5301F' }
+      );
     } else if (industry !== 'Service') {
-      inventoryAccounts.push(
+      // Default Retail/General Inventory
+      verticalAccounts.push(
         { name: StandardAccounts.INVENTORY_ASSET, type: AccountType.Asset, code: '1004' }
       );
     }
 
-    const defaultAccounts = [...baseAccounts, ...inventoryAccounts];
+    const defaultAccounts = [...baseAccounts, ...verticalAccounts];
 
     for (const acc of defaultAccounts) {
       const exists = await client.account.findFirst({
@@ -182,7 +281,7 @@ export class LedgerService {
     };
   }
 
-  async createJournalEntry(tenantId: string, data: CreateJournalEntryDto, tx?: any) {
+  async createJournalEntry(tenantId: string, data: CreateJournalEntryDto & { userId?: string }, tx?: any) {
     const totalDebit = data.transactions
       .filter((t) => t.type === 'Debit')
       .reduce((sum, t) => sum.add(this.round2(t.amount)), new Decimal(0))
@@ -219,6 +318,8 @@ export class LedgerService {
           date: new Date(data.date),
           description: data.description,
           reference: data.reference,
+          correlationId: data.correlationId || this.traceService.getCorrelationId(),
+          createdById: data.userId,
           posted: true,
         },
       });
@@ -231,8 +332,9 @@ export class LedgerService {
             accountId: t.accountId,
             amount: roundedAmount,
             type: t.type,
-            description: t.description || data.description, // Use t.description if available
+            description: t.description || data.description,
             journalEntryId: journal.id,
+            correlationId: journal.correlationId, // Forensic Propagation
           },
         });
 

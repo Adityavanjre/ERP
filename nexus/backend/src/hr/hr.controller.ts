@@ -19,11 +19,14 @@ import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { LeaveStatus } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
+import { Module } from '../common/decorators/module.decorator';
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
+@Module('hr')
 @Controller('hr')
 export class HrController {
-  constructor(private readonly hrService: HrService) {}
+  constructor(private readonly hrService: HrService) { }
 
   // Departments
   @Post('departments')
@@ -49,6 +52,16 @@ export class HrController {
   @Permissions(Permission.VIEW_PRODUCTS)
   getEmployees(@CurrentUser() user: any) {
     return this.hrService.getEmployees(user.tenantId);
+  }
+
+  @Post('import')
+  @Permissions(Permission.MANAGE_USERS)
+  importEmployees(@CurrentUser() user: any, @Body() body: any) {
+    const csvContent = body.csv || body;
+    return this.hrService.importEmployees(
+      user.tenantId,
+      typeof csvContent === 'string' ? csvContent : '',
+    );
   }
 
   // Leaves

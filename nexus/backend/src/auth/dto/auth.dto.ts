@@ -92,3 +92,23 @@ export class OnboardingDto {
   @IsOptional()
   gstin?: string;
 }
+
+export class MfaVerifyDto {
+  @IsString()
+  @IsNotEmpty()
+  token: string; // Temporary token from login
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(6)
+  totpCode: string;
+}
+
+export class MfaSetupDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(6)
+  @MaxLength(6)
+  totpCode: string;
+}

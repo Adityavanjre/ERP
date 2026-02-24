@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { RegistryService } from './services/registry.service';
 import { AiService } from './services/ai.service';
 import { AuditService } from './services/audit.service';
+import { AuditVerificationService } from './services/audit-verification.service';
 import { BillingService } from './services/billing.service';
 import { RegistryController } from './controllers/registry.controller';
 import { AiController } from './controllers/ai.controller';
@@ -21,7 +22,7 @@ import { B2BController } from './controllers/b2b.controller';
 import { PluginManager } from './services/plugin.manager';
 import { PluginController } from './controllers/plugin.controller';
 import { MailService } from './services/mail.service';
-
+import { SystemAuditService } from './services/system-audit.service';
 import { SystemController } from './system.controller';
 
 @Module({
@@ -51,6 +52,7 @@ import { SystemController } from './system.controller';
     PluginManager,
     MailService,
     CloudinaryService,
+    SystemAuditService,
   ],
   exports: [
     RegistryService,
@@ -65,6 +67,7 @@ import { SystemController } from './system.controller';
     PluginManager,
     MailService,
     CloudinaryService,
+    SystemAuditService,
   ],
 })
-export class SystemModule {}
+export class SystemModule { }

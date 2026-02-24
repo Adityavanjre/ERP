@@ -17,7 +17,10 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { POStatus } from '@prisma/client';
 
+import { Module } from '../common/decorators/module.decorator';
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('purchases')
 @Controller('purchases')
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) { }
@@ -38,6 +41,16 @@ export class PurchasesController {
   @Permissions(Permission.MANAGE_USERS)
   updateSupplier(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
     return this.purchasesService.updateSupplier(req.user.tenantId, id, dto);
+  }
+
+  @Post('import')
+  @Permissions(Permission.MANAGE_USERS)
+  importSuppliers(@Req() req: any, @Body() body: any) {
+    const csvContent = body.csv || body;
+    return this.purchasesService.importSuppliers(
+      req.user.tenantId,
+      typeof csvContent === 'string' ? csvContent : '',
+    );
   }
 
   @Post('orders')

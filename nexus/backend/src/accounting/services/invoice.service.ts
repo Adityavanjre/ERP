@@ -3,15 +3,27 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { InvoiceStatus, AccountType, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LedgerService } from './ledger.service';
+import { HsnService } from '../../inventory/services/hsn.service';
 import { StandardAccounts, AccountSelectors } from '../constants/account-names';
 import { normalizeState } from '../constants/states';
+import { TraceService } from '../../common/services/trace.service';
+import { InventoryService } from '../../inventory/inventory.service';
 
 @Injectable()
 export class InvoiceService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
+    private hsn: HsnService,
+    private traceService: TraceService,
+    private inventoryService: InventoryService,
   ) { }
+
+  private validateGstin(gstin: string): boolean {
+    if (!gstin) return true; // Unregistered
+    const regex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    return regex.test(gstin.trim().toUpperCase());
+  }
 
   async createInvoice(
     tenantId: string,
@@ -36,184 +48,16 @@ export class InvoiceService {
 
       await this.ledger.checkPeriodLock(tenantId, data.issueDate || new Date(), tx);
 
-      let totalTaxable = new Decimal(0);
-      let totalGST = new Decimal(0);
-      let totalCGST = new Decimal(0);
-      let totalSGST = new Decimal(0);
-      let totalIGST = new Decimal(0);
-      let grandTotal = new Decimal(0);
-      let totalCOGS = new Decimal(0);
-      const invoiceItemsData = [];
+      const calculation = await this.calculateTotals(tenantId, customerId, items, tx);
+      let {
+        totalTaxable, totalGST, totalCGST, totalSGST, totalIGST,
+        grandTotal, totalCOGS, invoiceItemsData
+      } = calculation;
 
-      const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
-      const customer = await tx.customer.findFirst({
-        where: { id: customerId, tenantId, isDeleted: false },
-      });
-
-      if (!tenant?.state) {
-        throw new BadRequestException('Compliance Error: Tenant state is missing. Please update company profile before invoicing.');
-      }
-      if (!customer?.state) {
-        throw new BadRequestException('Compliance Error: Customer state is missing. GST calculation requires place of supply.');
+      if (deductStock) {
+        await this.handleInventoryDeduction(tenantId, invoiceItemsData, tx);
       }
 
-      const tenantState = normalizeState(tenant.state || '');
-      const customerState = normalizeState(customer.state || '');
-
-      const isInterState =
-        tenantState.toLowerCase() !== customerState.toLowerCase();
-
-      const sortedItems = [...items].sort((a, b) =>
-        a.productId.localeCompare(b.productId),
-      );
-
-      for (const item of sortedItems) {
-        const product = await tx.product.findFirst({
-          where: { id: item.productId, tenantId, isDeleted: false },
-        });
-        if (!product)
-          throw new NotFoundException(`Product ${item.productId} not found`);
-
-        if (!product.hsnCode) {
-          throw new BadRequestException(`Compliance Error: HSN Code is missing for product ${product.name}. Required for GST invoices.`);
-        }
-
-        const qty = new Decimal(item.quantity);
-        const unitPrice = this.ledger.round2(item.price);
-
-        if (qty.isZero()) {
-          throw new BadRequestException(`Invalid quantity for ${product.name}: Zero not allowed.`);
-        }
-        if (unitPrice.isNegative() || unitPrice.isZero()) {
-          throw new BadRequestException(`Invalid price for ${product.name}: ${unitPrice}. Must be positive.`);
-        }
-
-        if (deductStock) {
-          const stockGuard = qty.isPositive() ? { gte: qty } : {};
-          const updateResult = await tx.product.updateMany({
-            where: {
-              id: item.productId,
-              tenantId,
-              stock: stockGuard,
-            },
-            data: { stock: { decrement: qty } },
-          });
-
-          if (updateResult.count === 0) {
-            const p = await tx.product.findFirst({
-              where: { id: item.productId, tenantId },
-            });
-            throw new BadRequestException(
-              `Insufficient stock for ${product.name}. Requested: ${qty}, Available: ${p?.stock}`,
-            );
-          }
-
-          // --- INVENTORY 2.0: MULTI-WAREHOUSE DEDUCTION ---
-          // 1. Find Source Warehouse (Default to 'Main Factory Warehouse' or first available)
-          const warehouse = await tx.warehouse.findFirst({
-            where: {
-              tenantId,
-              OR: [
-                { name: 'Main Warehouse' },
-                {} // Fallback
-              ]
-            }
-          });
-
-          if (warehouse) {
-            // 2. Decrement Stock Location
-            const existingLoc = await tx.stockLocation.findUnique({
-              where: {
-                tenantId_productId_warehouseId_notes: {
-                  tenantId,
-                  productId: item.productId,
-                  warehouseId: warehouse.id,
-                  notes: ''
-                },
-              },
-            });
-
-            if (existingLoc) {
-              await tx.stockLocation.update({
-                where: { id: existingLoc.id },
-                data: { quantity: { decrement: qty } }
-              });
-            } else {
-              // Create negative entry if allowed by global settings
-              await tx.stockLocation.create({
-                data: {
-                  tenantId,
-                  productId: item.productId,
-                  warehouseId: warehouse.id,
-                  quantity: qty.negated(),
-                  notes: ''
-                }
-              });
-            }
-
-            // 3. Create Audit Trail (StockMovement)
-            await tx.stockMovement.create({
-              data: {
-                tenantId,
-                productId: item.productId,
-                warehouseId: warehouse.id,
-                quantity: qty,
-                type: 'OUT', // MovementType.OUT
-                reference: data.invoiceNumber || 'NEW_INV',
-                notes: `Invoice Sale`
-              }
-            });
-          }
-        }
-
-        const gstRate = new Decimal(product.gstRate || 0);
-        const taxable = this.ledger.round2(qty.mul(unitPrice));
-        const taxAmount = this.ledger.round2(taxable.mul(gstRate).div(100));
-
-        totalTaxable = totalTaxable.add(taxable);
-        totalGST = totalGST.add(taxAmount);
-
-        // COGS Accumulation
-        const costPrice = new Decimal(product.costPrice || 0);
-        totalCOGS = totalCOGS.add(costPrice.mul(qty));
-
-        let itemCgstAmount = new Decimal(0);
-        let itemSgstAmount = new Decimal(0);
-        let itemIgstAmount = new Decimal(0);
-
-        if (isInterState) {
-          totalIGST = totalIGST.add(taxAmount);
-          itemIgstAmount = taxAmount;
-        } else {
-          // Fix Industrial Rounding Drift: Compute CGST floor and SGST rest
-          const cgstFloor = taxAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_DOWN);
-          const sgstRest = taxAmount.sub(cgstFloor);
-
-          itemCgstAmount = cgstFloor;
-          itemSgstAmount = sgstRest;
-
-          totalCGST = totalCGST.add(itemCgstAmount);
-          totalSGST = totalSGST.add(itemSgstAmount);
-        }
-
-        invoiceItemsData.push({
-          tenantId,
-          productId: product.id,
-          productName: product.name,
-          hsnCode: product.hsnCode || null,
-          quantity: qty,
-          unitPrice: unitPrice,
-          gstRate: gstRate,
-          taxableAmount: taxable,
-          gstAmount: taxAmount,
-          cgstAmount: itemCgstAmount,
-          sgstAmount: itemSgstAmount,
-          igstAmount: itemIgstAmount,
-          totalAmount: this.ledger.round2(taxable.add(taxAmount)),
-        });
-      }
-
-      totalTaxable = this.ledger.round2(totalTaxable);
       totalGST = this.ledger.round2(totalGST);
       totalCGST = this.ledger.round2(totalCGST);
       totalSGST = this.ledger.round2(totalSGST);
@@ -224,7 +68,7 @@ export class InvoiceService {
         throw new BadRequestException('Compliance Violation: Tax-only invoices are not allowed. Please include a taxable base.');
       }
 
-      const invoiceNumber = data.invoiceNumber || `INV-${Date.now()}`;
+      const invoiceNumber = data.invoiceNumber || await this.generateInvoiceNumber(tenantId, tx);
       const existingInvoice = await tx.invoice.findFirst({
         where: { tenantId, invoiceNumber },
       });
@@ -252,6 +96,7 @@ export class InvoiceService {
           totalIGST,
           amountPaid: amountPaidAtStart,
           idempotencyKey: data.idempotencyKey,
+          correlationId: this.traceService.getCorrelationId(), // Forensic Trace
           status:
             amountPaidAtStart.greaterThanOrEqualTo(grandTotal)
               ? InvoiceStatus.Paid
@@ -277,6 +122,7 @@ export class InvoiceService {
             mode: data.paymentMode || 'Cash',
             reference: `Initial-POS-${invoiceNumber}`,
             notes: 'POS Rapid Billing Payment',
+            correlationId: this.traceService.getCorrelationId(), // Propagate Trace
           },
         });
       }
@@ -384,6 +230,7 @@ export class InvoiceService {
             invoiceNumber: invoice.invoiceNumber,
             amount: invoice.totalAmount,
             entryLagMinutes: entryLag,
+            gstOverridesUsed: invoiceItemsData.some(i => i.isGstOverride),
           } as any,
         },
       });
@@ -401,19 +248,23 @@ export class InvoiceService {
     });
     if (!inv) throw new NotFoundException('Invoice not found');
 
-    // Audit Guard: Check lock for EXISTING record date
-    await this.ledger.checkPeriodLock(tenantId, inv.issueDate);
-
-    // Block financial/audit-critical changes in update
-    const internalFields = ['totalAmount', 'totalTaxable', 'totalGST', 'customerId', 'invoiceNumber'];
-    const hasForbiddenChanges = internalFields.some(f => data[f] !== undefined && data[f] !== (inv as any)[f]);
-
-    if (hasForbiddenChanges) {
-      throw new BadRequestException('Audit Violation: Amount, Customer, or Invoice Number cannot be modified once saved. Please Cancel the invoice and create a new one for corrections.');
+    // Rule: Cannot edit Paid or Cancelled invoices
+    if (inv.status === InvoiceStatus.Paid || inv.status === InvoiceStatus.Cancelled) {
+      throw new BadRequestException(`Audit Violation: Cannot edit an invoice with status '${inv.status}'`);
     }
 
-    return this.prisma.invoice.updateMany({
-      where: { id, tenantId },
+    await this.ledger.checkPeriodLock(tenantId, inv.issueDate);
+
+    // Whitelist approach: Only minor metadata can be updated
+    const allowed = ['notes', 'summary', 'dueDate', 'billingTimeSeconds'];
+    const forbidden = Object.keys(data).filter(k => !allowed.includes(k));
+
+    if (forbidden.length > 0) {
+      throw new BadRequestException(`Forensic Guard: Editing financial fields (${forbidden.join(', ')}) is forbidden. Use reversals for corrections.`);
+    }
+
+    return this.prisma.invoice.update({
+      where: { id },
       data,
     });
   }
@@ -445,34 +296,38 @@ export class InvoiceService {
           data: { stock: { increment: item.quantity } },
         });
 
-        await tx.stockLocation.upsert({
-          where: {
-            tenantId_productId_warehouseId_notes: {
+        // 1.5 Manual Reconciliation (Safest approach for composite keys in multi-user env)
+        const location = await (tx.stockLocation as any).findFirst({
+          where: { tenantId, productId: item.productId, warehouseId: warehouseId, notes: '' }
+        });
+
+        if (location) {
+          await (tx.stockLocation as any).update({
+            where: { id: location.id },
+            data: { quantity: { increment: item.quantity } }
+          });
+        } else {
+          await (tx.stockLocation as any).create({
+            data: {
               tenantId,
               productId: item.productId,
               warehouseId: warehouseId,
+              quantity: item.quantity,
               notes: ''
             }
-          },
-          update: { quantity: { increment: item.quantity } },
-          create: {
-            tenantId,
-            productId: item.productId,
-            warehouseId: warehouseId,
-            quantity: item.quantity,
-            notes: ''
-          }
-        });
+          });
+        }
 
-        await tx.stockMovement.create({
+        await (tx as any).stockMovement.create({
           data: {
             tenantId,
             productId: item.productId,
             warehouseId: warehouseId,
             quantity: item.quantity,
             type: 'IN',
-            reference: inv.invoiceNumber,
-            notes: `Invoice Cancellation Reversal`
+            reference: `CNL-${inv.invoiceNumber}`,
+            notes: `Invoice Cancellation Reversal`,
+            correlationId: (this.traceService as any).getCorrelationId(), // Forensic Reversal Link
           }
         });
       }
@@ -566,5 +421,163 @@ export class InvoiceService {
       }
     }
     return { total: invoices.length, successCount: results.length, errorCount: errors.length, results, errors };
+  }
+
+  async generateInvoiceNumber(tenantId: string, tx: any): Promise<string> {
+    const year = new Date().getFullYear();
+    const count = await tx.invoice.count({ where: { tenantId } });
+    return `INV/${year}/${(count + 1).toString().padStart(4, '0')}`;
+  }
+
+  async calculateTotals(tenantId: string, customerId: string, items: any[], tx: any) {
+    let totalTaxable = new Decimal(0);
+    let totalGST = new Decimal(0);
+    let totalCGST = new Decimal(0);
+    let totalSGST = new Decimal(0);
+    let totalIGST = new Decimal(0);
+    let totalCOGS = new Decimal(0);
+    const invoiceItemsData = [];
+
+    const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
+    const customer = await tx.customer.findFirst({
+      where: { id: customerId, tenantId, isDeleted: false },
+    });
+
+    if (!tenant?.state) {
+      throw new BadRequestException('Compliance Error: Tenant state is missing. Please update company profile before invoicing.');
+    }
+    if (!customer?.state) {
+      throw new BadRequestException('Compliance Error: Customer state is missing. GST calculation requires place of supply.');
+    }
+
+    const tenantState = normalizeState(tenant.state || '');
+    const customerState = normalizeState(customer.state || '');
+    const isInterState = tenantState.toLowerCase() !== customerState.toLowerCase();
+
+    if (customer.gstin && !this.validateGstin(customer.gstin)) {
+      throw new BadRequestException(`Compliance Error: Invalid GSTIN format for customer ${customer.company || customer.firstName}. Statutory reporting requires valid GSTIN.`);
+    }
+
+    const sortedItems = [...items].sort((a, b) => a.productId.localeCompare(b.productId));
+
+    for (const item of sortedItems) {
+      const product = await tx.product.findFirst({
+        where: { id: item.productId, tenantId, isDeleted: false },
+      });
+      if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
+
+      if (!product.hsnCode) {
+        throw new BadRequestException(`Compliance Error: HSN Code is missing for product ${product.name}. Required for GST invoices.`);
+      }
+
+      const qty = new Decimal(item.quantity);
+      const unitPrice = this.ledger.round2(item.price);
+      const gstRate = new Decimal(product.gstRate || 0);
+
+      // Verify GST rate against HSN Master
+      const { isValid, officialRate } = await this.hsn.validateGstRate(
+        tenantId,
+        product.hsnCode,
+        gstRate,
+      );
+
+      if (!isValid && !item.isGstOverride) {
+        throw new BadRequestException(
+          `Compliance Error: GST Rate mismatch for product ${product.name} (HSN: ${product.hsnCode}). ` +
+          `Official Rate: ${officialRate}%, Invoice Rate: ${gstRate}%. ` +
+          `Set 'isGstOverride' to true to allow this manual override.`
+        );
+      }
+
+      const taxable = this.ledger.round2(qty.mul(unitPrice));
+      const taxAmount = this.ledger.round2(taxable.mul(gstRate).div(100));
+
+      totalTaxable = totalTaxable.add(taxable);
+      totalGST = totalGST.add(taxAmount);
+      totalCOGS = totalCOGS.add(new Decimal(product.costPrice || 0).mul(qty));
+
+      let itemCgstAmount = new Decimal(0);
+      let itemSgstAmount = new Decimal(0);
+      let itemIgstAmount = new Decimal(0);
+
+      if (isInterState) {
+        totalIGST = totalIGST.add(taxAmount);
+        itemIgstAmount = taxAmount;
+      } else {
+        const cgstFloor = taxAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_DOWN);
+        const sgstRest = taxAmount.sub(cgstFloor);
+        itemCgstAmount = cgstFloor;
+        itemSgstAmount = sgstRest;
+        totalCGST = totalCGST.add(itemCgstAmount);
+        totalSGST = totalSGST.add(itemSgstAmount);
+      }
+
+      invoiceItemsData.push({
+        tenantId,
+        productId: product.id,
+        productName: product.name,
+        hsnCode: product.hsnCode || null,
+        quantity: qty,
+        unitPrice: unitPrice,
+        gstRate: gstRate,
+        isGstOverride: item.isGstOverride || false,
+        taxableAmount: taxable,
+        gstAmount: taxAmount,
+        cgstAmount: itemCgstAmount,
+        sgstAmount: itemSgstAmount,
+        igstAmount: itemIgstAmount,
+        totalAmount: this.ledger.round2(taxable.add(taxAmount)),
+      });
+    }
+
+    return {
+      totalTaxable,
+      totalGST,
+      totalCGST,
+      totalSGST,
+      totalIGST,
+      grandTotal: totalTaxable.add(totalGST),
+      totalCOGS,
+      invoiceItemsData,
+    };
+  }
+
+  async handleInventoryDeduction(tenantId: string, invoiceItems: any[], tx: any) {
+    for (const item of invoiceItems) {
+      const qty = new Decimal(item.quantity);
+      const stockGuard = qty.isPositive() ? { gte: qty } : {};
+
+      const updateResult = await tx.product.updateMany({
+        where: { id: item.productId, tenantId, stock: stockGuard },
+        data: { stock: { decrement: qty } },
+      });
+
+      if (updateResult.count === 0) {
+        const p = await tx.product.findFirst({ where: { id: item.productId, tenantId } });
+        throw new BadRequestException(`Insufficient stock for ${item.productName}. Requested: ${qty}, Available: ${p?.stock}`);
+      }
+
+      const warehouse = await tx.warehouse.findFirst({
+        where: { tenantId },
+        orderBy: { id: 'asc' }
+      });
+
+      if (warehouse) {
+        await this.inventoryService.deductStock(tx, item.productId, warehouse.id, qty, '');
+
+        await (tx as any).stockMovement.create({
+          data: {
+            tenantId,
+            productId: item.productId,
+            warehouseId: warehouse.id,
+            quantity: qty,
+            type: 'OUT',
+            reference: 'SALE',
+            notes: `Invoice Sale`,
+            correlationId: this.traceService.getCorrelationId(), // Trace Link
+          }
+        });
+      }
+    }
   }
 }

@@ -3,12 +3,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { SecurityStorageService } from '../common/services/security-storage.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private security: SecurityStorageService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -18,7 +20,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Basic account verification
+    // 1. JTI Blacklist Check (Revocation Logic)
+    if (payload.jti && await this.security.isTokenBlacklisted(payload.jti)) {
+      throw new UnauthorizedException('This session has been revoked.');
+    }
+
+    // 2. Basic account verification
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });

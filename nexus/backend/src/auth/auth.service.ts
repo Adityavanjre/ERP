@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +17,8 @@ import { AccountingService } from '../accounting/accounting.service';
 import { LoggingService } from '../common/services/logging.service';
 import { MailService } from '../system/services/mail.service';
 import * as crypto from 'crypto';
+const { authenticator } = require('otplib');
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class AuthService {
@@ -139,12 +142,19 @@ export class AuthService {
           },
         });
 
+        // 4. Initialize Industry-Specific Accounts (Rule: Real money from day 1)
+        await this.accountingService.initializeTenantAccounts(
+          tenant.id,
+          tx,
+          tenant.type as string,
+        );
+
         // Telemetry (Phase 4)
         await this.logging.log({
           userId: user.id,
           action: 'USER_REGISTERED',
           resource: 'User',
-          details: { email: dto.email, tenant: dto.tenantName },
+          details: { email: dto.email, tenant: dto.tenantName, industry: tenant.type },
         });
 
         return user;
@@ -157,7 +167,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, ipAddress?: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: {
@@ -180,15 +190,50 @@ export class AuthService {
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+
+    await this.checkBruteForce(user);
+
     if (!isPasswordValid) {
+      await this.recordLoginFailure(user);
+      await this.logging.log({
+        userId: user.id,
+        action: 'USER_LOGIN_FAILURE',
+        resource: 'Identity',
+        details: { method: 'Email', reason: 'Invalid Password' },
+        ipAddress,
+      });
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    await this.resetLoginAttempts(user.id);
+
+    // MFA Enforcement
+    const userAny = user as any;
+    const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
+    const hasSensitiveRole = user.memberships.some((m: any) => rolesRequiringMfa.includes(m.role));
+
+    if (userAny.mfaEnabled || (hasSensitiveRole && user.authProvider === AuthProvider.Email)) {
+      if (!userAny.mfaEnabled) {
+        return {
+          requiresMfaSetup: true,
+          setupToken: this.jwtService.sign({ sub: user.id, type: 'mfa_setup' }),
+          user: { id: user.id, email: user.email }
+        };
+      }
+
+      return {
+        requiresMfa: true,
+        tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge' }),
+        user: { id: user.id, email: user.email }
+      };
     }
 
     await this.logging.log({
       userId: user.id,
-      action: 'USER_LOGIN',
+      action: 'USER_LOGIN_SUCCESS',
       resource: 'Identity',
-      details: { method: 'Email', memberships: user.memberships.length },
+      details: { method: 'Email', memberships: user.memberships.length, role: hasSensitiveRole ? 'Administrative' : 'Standard' },
+      ipAddress,
     });
 
     return this.generateAuthResponse(user);
@@ -234,7 +279,26 @@ export class AuthService {
       }) as any;
     }
 
-    const finalUser = user!;
+    const finalUser = user! as any;
+
+    // MFA Enforcement for Google Login
+    const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
+    const hasSensitiveRole = (finalUser.memberships || []).some((m: any) => rolesRequiringMfa.includes(m.role));
+
+    if (finalUser.mfaEnabled || hasSensitiveRole) {
+      if (!finalUser.mfaEnabled) {
+        return {
+          requiresMfaSetup: true,
+          setupToken: this.jwtService.sign({ sub: finalUser.id, type: 'mfa_setup' }),
+          user: { id: finalUser.id, email: finalUser.email }
+        };
+      }
+      return {
+        requiresMfa: true,
+        tempToken: this.jwtService.sign({ sub: finalUser.id, type: 'mfa_challenge' }),
+        user: { id: finalUser.id, email: finalUser.email }
+      };
+    }
 
     await this.logging.log({
       userId: finalUser.id,
@@ -246,12 +310,16 @@ export class AuthService {
     return this.generateAuthResponse(finalUser);
   }
 
-  private generateAuthResponse(user: any) {
+  private generateAuthResponse(user: any, isMfaVerifiedOverride?: boolean) {
     // Generate an "Identity Token" (No tenantId scope yet)
+    const userAny = user as any;
     const payload = {
       sub: user.id,
       email: user.email,
       type: 'identity',
+      jti: crypto.randomBytes(16).toString('hex'),
+      isMfaVerified: isMfaVerifiedOverride !== undefined ? isMfaVerifiedOverride : !!userAny.isMfaVerified,
+      mfaEnabled: !!userAny.mfaEnabled,
     };
 
     return {
@@ -260,6 +328,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
+        mfaEnabled: !!userAny.mfaEnabled,
       },
       tenants: user.memberships.map((m: any) => ({
         id: m.tenant.id,
@@ -272,7 +341,7 @@ export class AuthService {
     };
   }
 
-  async selectTenant(userId: string, tenantId: string) {
+  async selectTenant(userId: string, tenantId: string, isMfaVerified: boolean = false) {
     // 1. Verify membership (Rule B)
     const membership = await this.prisma.tenantUser.findUnique({
       where: { userId_tenantId: { userId, tenantId } },
@@ -291,16 +360,23 @@ export class AuthService {
       ]);
     });
 
+    const userRecord = await this.prisma.user.findUnique({ where: { id: userId } });
+
     // 3. Generate Scoped Token
     const payload = {
       sub: userId,
-      email: (await this.prisma.user.findUnique({ where: { id: userId } }))?.email,
+      email: userRecord?.email,
       tenantId: membership.tenantId,
       role: membership.role,
+      jti: crypto.randomBytes(16).toString('hex'),
+      mfaEnabled: (userRecord as any)?.mfaEnabled || false,
       customerId: customer?.id || null,
       supplierId: supplier?.id || null,
       type: 'tenant_scoped',
-      isOnboarded: membership.tenant.isOnboarded, // Crucial for OnboardingGuard
+      isOnboarded: membership.tenant.isOnboarded,
+      industry: membership.tenant.industry,
+      tenantType: membership.tenant.type,
+      isMfaVerified: isMfaVerified || false,
     };
 
     await this.logging.log({
@@ -469,5 +545,156 @@ export class AuthService {
       role: m.role,
       isOnboarded: m.tenant.isOnboarded,
     }));
+  }
+
+  // --- MFA (TOTP) Implementation ---
+
+  async setupMfa(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri(user.email, 'NexusERP', secret);
+    const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaSecret: secret } as any,
+    });
+
+    return {
+      secret,
+      qrCodeDataUrl,
+    };
+  }
+
+  async verifyMfaSetup(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
+    if (!user || !user.mfaSecret) throw new BadRequestException('MFA setup not initiated');
+
+    const isValid = authenticator.verify({ token, secret: user.mfaSecret });
+    if (!isValid) throw new UnauthorizedException('Invalid MFA token');
+
+    const recoveryCodes = Array.from({ length: 10 }, () => crypto.randomBytes(4).toString('hex'));
+    const hashedRecoveryCodes = await Promise.all(recoveryCodes.map(code => bcrypt.hash(code, 10)));
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        mfaEnabled: true,
+        mfaRecoveryCodes: hashedRecoveryCodes,
+      } as any,
+    });
+
+    await this.logging.log({
+      userId,
+      action: 'MFA_ENABLED',
+      resource: 'User',
+      details: { method: 'TOTP' },
+    });
+
+    return { recoveryCodes };
+  }
+
+  async verifyMfaLogin(tempToken: string, totpCode: string) {
+    try {
+      const payload = this.jwtService.verify(tempToken) as any;
+      if (payload.type !== 'mfa_challenge') throw new UnauthorizedException('Invalid challenge token');
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        include: { memberships: { include: { tenant: true } } },
+      }) as any;
+
+      if (!user || !user.mfaSecret) throw new UnauthorizedException('MFA not configured');
+
+      const isValid = authenticator.verify({ token: totpCode, secret: user.mfaSecret });
+
+      if (!isValid) {
+        let isRecovery = false;
+        for (const hashed of (user.mfaRecoveryCodes || [])) {
+          if (await bcrypt.compare(totpCode, hashed)) {
+            isRecovery = true;
+            await this.prisma.user.update({
+              where: { id: user.id },
+              data: {
+                mfaRecoveryCodes: user.mfaRecoveryCodes.filter((c: string) => c !== hashed)
+              } as any
+            });
+            break;
+          }
+        }
+
+        if (!isRecovery) {
+          await this.logging.log({
+            userId: user.id,
+            action: 'MFA_FAILED',
+            resource: 'Identity',
+            details: { reason: 'Invalid Token' },
+          });
+          throw new UnauthorizedException('Invalid MFA token');
+        }
+      }
+
+      await this.logging.log({
+        userId: user.id,
+        action: 'MFA_VERIFIED',
+        resource: 'Identity',
+        details: { method: 'TOTP' },
+      });
+
+      await this.resetLoginAttempts(user.id);
+
+      return this.generateAuthResponse(user, true);
+    } catch (e) {
+      if (e instanceof UnauthorizedException && e.message === 'Invalid MFA token') {
+        // Already logged above
+        throw e;
+      }
+
+      // For other errors (like invalid temp token), we might not have a userId yet
+      // but if we do, log it
+      throw new UnauthorizedException(e.message || 'MFA Verification Failed');
+    }
+  }
+
+  // --- Brute Force Protection ---
+
+  private async checkBruteForce(user: any) {
+    if (user.lockoutUntil && new Date(user.lockoutUntil) > new Date()) {
+      const minutesLeft = Math.ceil((new Date(user.lockoutUntil).getTime() - Date.now()) / 60000);
+      throw new UnauthorizedException(`Account locked. Try again in ${minutesLeft} minutes.`);
+    }
+  }
+
+  private async recordLoginFailure(user: any) {
+    const attempts = (user.failedLoginAttempts || 0) + 1;
+    let lockoutUntil = null;
+
+    if (attempts >= 5) {
+      lockoutUntil = new Date(Date.now() + 15 * 60000);
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginAttempts: attempts,
+        lockoutUntil,
+      } as any,
+    });
+
+    if (attempts >= 5) {
+      throw new UnauthorizedException('Account locked due to too many failed attempts. Try again in 15 minutes.');
+    }
+  }
+
+  private async resetLoginAttempts(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        failedLoginAttempts: 0,
+        lockoutUntil: null,
+      } as any,
+    });
   }
 }

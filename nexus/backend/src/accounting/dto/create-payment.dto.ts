@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  IsUUID,
 } from 'class-validator';
 import { PaymentMode } from '@prisma/client';
 
@@ -46,4 +47,12 @@ export class CreatePaymentDto {
   @IsOptional()
   @IsString()
   idempotencyKey?: string;
+
+  @IsOptional()
+  @IsString()
+  tdsSection?: string;
+
+  @IsOptional()
+  @IsUUID()
+  correlationId?: string;
 }

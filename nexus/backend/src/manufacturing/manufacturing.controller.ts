@@ -17,12 +17,25 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
+import { Module } from '../common/decorators/module.decorator';
+
+import { AiService } from '../system/services/ai.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('manufacturing')
 @Controller('manufacturing')
 @UseInterceptors(AuditInterceptor)
 export class ManufacturingController {
-  constructor(private readonly mfgService: ManufacturingService) { }
+  constructor(
+    private readonly mfgService: ManufacturingService,
+    private readonly aiService: AiService
+  ) { }
+
+  @Get('boms/:id/yield-analysis')
+  @Permissions(Permission.VIEW_REPORTS)
+  getYieldAnalysis(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.aiService.getYieldAnalysis(user.tenantId, id);
+  }
 
   // BOMs
   @Post('boms')
@@ -35,6 +48,16 @@ export class ManufacturingController {
   @Permissions(Permission.VIEW_PRODUCTS)
   getBOMs(@CurrentUser() user: any) {
     return this.mfgService.getBOMs(user.tenantId);
+  }
+
+  @Post('import/boms')
+  @Permissions(Permission.ADJUST_STOCK)
+  importBoms(@CurrentUser() user: any, @Body() body: any) {
+    const csvContent = body.csv || body;
+    return this.mfgService.importBoms(
+      user.tenantId,
+      typeof csvContent === 'string' ? csvContent : '',
+    );
   }
 
   @Get('boms/:id')

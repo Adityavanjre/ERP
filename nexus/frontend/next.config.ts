@@ -35,11 +35,18 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
     basePath: '/portal',
+    compress: true,
+    poweredByHeader: false,
+    reactStrictMode: true,
     images: {
+        formats: ['image/avif', 'image/webp'],
         remotePatterns: [
             { protocol: 'https', hostname: 'images.unsplash.com' },
             { protocol: 'https', hostname: 'ui-avatars.com' }
         ],
+    },
+    compiler: {
+        removeConsole: process.env.NODE_ENV === 'production',
     },
     async headers() {
         return [
@@ -57,6 +64,17 @@ const nextConfig: NextConfig = {
                 destination: `${KLYPSO_BACKEND_URL}/api/:path*`,
             },
         ];
+    },
+    webpack: (config, { isServer }) => {
+        // Enforce performance budgets for the client bundle
+        if (!isServer) {
+            config.performance = {
+                hints: 'warning',
+                maxAssetSize: 500000, // 500kb
+                maxEntrypointSize: 1000000, // 1mb
+            };
+        }
+        return config;
     },
 };
 

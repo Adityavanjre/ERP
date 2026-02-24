@@ -5,12 +5,14 @@ import { MovementType } from '@prisma/client';
 import { AccountingService } from '../accounting/accounting.service';
 import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
 import { Decimal } from '@prisma/client/runtime/library';
+import { TraceService } from '../common/services/trace.service';
 
 @Injectable()
 export class WarehouseService {
   constructor(
     private prisma: PrismaService,
     private accounting: AccountingService,
+    private readonly traceService: TraceService,
   ) { }
 
   async createWarehouse(tenantId: string, data: any) {
@@ -69,6 +71,7 @@ export class WarehouseService {
         data: {
           ...data,
           tenantId,
+          correlationId: this.traceService.getCorrelationId(),
         },
       });
 
@@ -181,6 +184,7 @@ export class WarehouseService {
           type: MovementType.IN,
           reference: 'OPENING-BALANCE',
           notes: data.notes || 'Initial opening balance',
+          correlationId: this.traceService.getCorrelationId(),
         },
       });
 
@@ -311,7 +315,8 @@ export class WarehouseService {
             quantity: qty,
             type: MovementType.OUT,
             reference,
-            notes: `Transfer to ${toWH.name}. ${data.notes || ''}`
+            notes: `Transfer to ${toWH.name}. ${data.notes || ''}`,
+            correlationId: this.traceService.getCorrelationId(),
           },
           {
             tenantId,
@@ -320,7 +325,8 @@ export class WarehouseService {
             quantity: qty,
             type: MovementType.IN,
             reference,
-            notes: `Transfer from ${fromWH.name}. ${data.notes || ''}`
+            notes: `Transfer from ${fromWH.name}. ${data.notes || ''}`,
+            correlationId: this.traceService.getCorrelationId(),
           }
         ]
       });

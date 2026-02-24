@@ -20,10 +20,24 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { HttpCacheInterceptor } from '../common/interceptors/cache.interceptor';
 import { CacheTTL } from '@nestjs/cache-manager';
 
+import { Module } from '../common/decorators/module.decorator';
+
+import { PosService } from './services/pos.service';
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('sales')
 @Controller('sales')
 export class SalesController {
-  constructor(private readonly salesService: SalesService) {}
+  constructor(
+    private readonly salesService: SalesService,
+    private readonly posService: PosService
+  ) { }
+
+  @Post('pos/checkout')
+  @Permissions(Permission.CREATE_INVOICE)
+  quickCheckout(@Req() req: any, @Body() dto: any) {
+    return this.posService.quickCheckout(req.user.tenantId, dto);
+  }
 
   @Post('orders')
   @Permissions(Permission.CREATE_INVOICE)

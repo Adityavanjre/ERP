@@ -20,8 +20,10 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { TenantId } from '../common/decorators/tenant-id.decorator';
+import { Module } from '../common/decorators/module.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('inventory')
 @Controller('inventory')
 export class InventoryController {
   constructor(
@@ -87,7 +89,7 @@ export class InventoryController {
   create(@Req() req: any, @Body() createProductDto: any) {
     return this.inventoryService.createProduct(
       req.user.tenantId,
-      createProductDto,
+      { ...createProductDto, correlationId: req['correlationId'] },
       req.user.id,
     );
   }
@@ -95,14 +97,17 @@ export class InventoryController {
   @Post('import')
   @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
   @Permissions(Permission.ADJUST_STOCK)
-  uploadFile(@Req() req: any, @Body() body: any) {
+  uploadFile(
+    @Req() req: any,
+    @Body() body: any,
+    @Query('dryRun') dryRun?: string,
+  ) {
     // Basic text/csv handling
-    // In a real app we'd use FileInterceptor, but for survival mode without new deps:
-    // User sends raw string in body if possible, or { csv: "..." } JSON
     const csvContent = body.csv || body;
     return this.inventoryService.importProducts(
       req.user.tenantId,
       typeof csvContent === 'string' ? csvContent : '',
+      { dryRun: dryRun === 'true', correlationId: req['correlationId'] }
     );
   }
 

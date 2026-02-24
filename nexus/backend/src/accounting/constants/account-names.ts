@@ -18,6 +18,7 @@ export const StandardAccounts = {
   INPUT_IGST: 'Input IGST',
   INPUT_CGST: 'Input CGST',
   INPUT_SGST: 'Input SGST',
+  TDS_PAYABLE: 'TDS Payable',
 
   // Equity
   RETAINED_EARNINGS: 'Retained Earnings',

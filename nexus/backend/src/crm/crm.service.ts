@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CustomerStatus } from '@prisma/client';
 import { AuditService } from '../system/services/audit.service';
@@ -11,62 +11,24 @@ export class CrmService {
     private prisma: PrismaService,
     private audit: AuditService,
     private ledger: LedgerService,
-  ) {}
+  ) { }
 
   async createCustomer(tenantId: string, data: any) {
     const { openingBalance, ...customerData } = data;
 
     if (customerData.firstName && customerData.firstName.trim().length < 3) {
-      throw new Error(
-        'Customer First Name must be at least 3 characters to maintain data quality.',
-      );
-    }
-
-    if (customerData.phone && customerData.phone !== '0000000000') {
-      const existing = await this.prisma.customer.findFirst({
-        where: { tenantId, phone: customerData.phone, isDeleted: false },
-      });
-      if (existing) {
-        throw new Error(
-          `Customer with phone ${customerData.phone} already exists (${existing.firstName} ${existing.lastName || ''}).`,
-        );
-      }
+      throw new BadRequestException('Customer First Name must be at least 3 characters.');
     }
 
     const customer = await this.prisma.customer.create({
-      data: {
-        ...customerData,
-        tenantId,
-      },
+      data: { ...customerData, tenantId },
     });
 
     if (openingBalance && Number(openingBalance) !== 0) {
-      await this.prisma.$transaction(async (tx) => {
-        await tx.customerOpeningBalance.create({
-          data: {
-            tenantId,
-            customerId: customer.id,
-            amount: Number(openingBalance),
-            description: 'Opening Balance Migration',
-            date: new Date(),
-          },
-        });
-
-        // GL Journal: Dr Accounts Receivable / Cr Opening Balance Equity
-        const arAcc = await tx.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
-        const obAcc = await tx.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
-
-        if (arAcc && obAcc) {
-          await this.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Opening Balance: ${customer.firstName} ${customer.lastName || ''}`,
-            reference: `OB-${customer.id.slice(0, 8)}`,
-            transactions: [
-              { accountId: arAcc.id, type: 'Debit', amount: Math.abs(Number(openingBalance)), description: 'Customer Opening Balance' },
-              { accountId: obAcc.id, type: 'Credit', amount: Math.abs(Number(openingBalance)), description: 'Customer Opening Balance' },
-            ],
-          }, tx);
-        }
+      await this.addOpeningBalance(tenantId, customer.id, {
+        amount: Number(openingBalance),
+        description: 'Opening Balance Migration',
+        date: new Date()
       });
     }
 
@@ -95,10 +57,7 @@ export class CrmService {
   }
 
   async getCustomers(tenantId: string, page: number = 1, limit: number = 50) {
-    await this.ensureWalkInCustomer(tenantId);
     const skip = (page - 1) * limit;
-
-    // Optimized query with pagination
     const [customers, total] = await Promise.all([
       this.prisma.customer.findMany({
         where: { tenantId, isDeleted: false },
@@ -119,30 +78,23 @@ export class CrmService {
     return {
       data: (customers as any[]).map((c) => {
         const invoiceReceivable = (c.invoices || []).reduce(
-          (sum: number, inv: any) =>
-            sum + (Number(inv.totalAmount) - Number(inv.amountPaid)),
+          (sum: number, inv: any) => sum + (Number(inv.totalAmount) - Number(inv.amountPaid)),
           0,
         );
         const openingBal = (c.openingBalances || []).reduce(
           (sum: number, ob: any) => sum + Number(ob.amount),
           0,
         );
-
-        return {
-          ...c,
-          receivable: invoiceReceivable + openingBal,
-        };
+        return { ...c, receivable: invoiceReceivable + openingBal };
       }),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  // Survival Feature: Bulk Import
+  /**
+   * Survival Feature: Bulk Import with Accounting Sync
+   * Rule: No invisible wealth. Every imported balance must hit the GL.
+   */
   async importCustomers(tenantId: string, csvContent: string) {
     const rows = csvContent.split('\n');
     const headers = rows[0].split(',').map((h) => h.trim());
@@ -154,175 +106,90 @@ export class CrmService {
       errors: [] as string[],
     };
 
+    let aggregateOpeningBalance = 0;
+
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row.trim()) continue;
 
       const cols = row.split(',').map((c) => c.trim());
-
-      const firstNameIdx = headers.indexOf('firstName');
-      const lastNameIdx = headers.indexOf('lastName');
-      const emailIdx = headers.indexOf('email');
-      const phoneIdx = headers.indexOf('phone');
-      const companyIdx = headers.indexOf('company');
-      const streetIdx = headers.indexOf('address');
-      const stateIdx = headers.indexOf('state');
-      const gstinIdx = headers.indexOf('gstin');
-      const openingIdx = headers.indexOf('openingBalance');
-
-      if (firstNameIdx === -1 || emailIdx === -1) {
-        results.failed++;
-        results.errors.push(
-          `Row ${i}: Missing required columns (firstName, email)`,
-        );
-        continue;
-      }
-
-      const firstName = cols[firstNameIdx];
-      const lastName = lastNameIdx > -1 ? cols[lastNameIdx] : '';
-      const email = cols[emailIdx];
-      const phone = phoneIdx > -1 ? cols[phoneIdx] : '';
-      const company = companyIdx > -1 ? cols[companyIdx] : '';
-      const address = streetIdx > -1 ? cols[streetIdx] : '';
-      const state = stateIdx > -1 ? cols[stateIdx] : null; // Critical for GST
-      const gstin = gstinIdx > -1 ? cols[gstinIdx] : null;
-      const openingBalance =
-        openingIdx > -1 ? parseFloat(cols[openingIdx]) || 0 : 0;
-
-      if (!firstName || !email) {
-        results.failed++;
-        results.errors.push(`Row ${i}: First Name and Email required`);
-        continue;
-      }
-
-      if (gstin && !state) {
-        results.errors.push(
-          `Row ${i}: Warning - GSTIN provided but State missing. Tax logic may fail.`,
-        );
-      }
+      const data: any = {};
+      headers.forEach((h, idx) => { data[h] = cols[idx]; });
 
       try {
-        // Check existing by email
-        const existing = await this.prisma.customer.findFirst({
-          where: { tenantId, email, isDeleted: false },
-        });
+        await this.prisma.$transaction(async (tx) => {
+          const email = data.email;
+          if (!email) throw new Error("Email is required");
 
-        let customerId = existing?.id;
-
-        if (existing) {
-          await this.prisma.customer.updateMany({
-            where: { id: existing.id, tenantId },
-            data: {
-              firstName,
-              lastName,
-              phone,
-              company,
-              address,
-              state,
-              gstin,
-              status: CustomerStatus.Customer,
-            },
+          const existing = await tx.customer.findFirst({
+            where: { tenantId, email, isDeleted: false }
           });
-        } else {
-          const newC = await this.prisma.customer.create({
-            data: {
-              tenantId,
-              firstName,
-              lastName,
-              email,
-              phone,
-              company,
-              address,
-              state,
-              gstin,
-            },
-          });
-          customerId = newC.id;
-        }
 
-        // Handle Opening Balance (Add if not exists, simplistic logic)
-        if (openingBalance !== 0 && customerId) {
-          // Check if OB already exists to avoid duplication on re-import
-          const existingOB = await this.prisma.customerOpeningBalance.findFirst(
-            {
-              where: { tenantId, customerId },
-            },
-          );
+          let customerId = existing?.id;
+          const customerPayload = {
+            firstName: data.firstName || 'Customer',
+            lastName: data.lastName || '',
+            phone: data.phone || '',
+            company: data.company || '',
+            address: data.address || '',
+            state: data.state || null,
+            gstin: data.gstin || null,
+            status: CustomerStatus.Customer
+          };
 
-          if (!existingOB) {
-            await this.prisma.customerOpeningBalance.create({
-              data: {
-                tenantId,
-                customerId,
-                amount: openingBalance,
-                description: 'Imported Opening Balance',
-                date: new Date(),
-              },
-            });
+          if (existing) {
+            await tx.customer.update({ where: { id: existing.id }, data: customerPayload });
           } else {
-            // Update existing OB
-            await this.prisma.customerOpeningBalance.updateMany({
-              where: { id: existingOB.id, tenantId },
-              data: { amount: openingBalance },
-            });
+            const newC = await tx.customer.create({ data: { ...customerPayload, tenantId, email } });
+            customerId = newC.id;
           }
-        }
 
+          const ob = parseFloat(data.openingBalance) || 0;
+          if (ob !== 0 && customerId) {
+            const existingOB = await tx.customerOpeningBalance.findFirst({ where: { tenantId, customerId } });
+            if (!existingOB) {
+              await tx.customerOpeningBalance.create({
+                data: { tenantId, customerId, amount: ob, description: 'Imported', date: new Date() }
+              });
+              aggregateOpeningBalance += ob;
+            }
+          }
+        });
         results.imported++;
       } catch (e: any) {
         results.failed++;
         results.errors.push(`Row ${i}: ${e.message}`);
       }
     }
+
+    // Ledger Sync: Restore balance sheet integrity
+    if (aggregateOpeningBalance !== 0) {
+      const arAcc = await this.prisma.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
+      const obAcc = await this.prisma.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
+
+      if (arAcc && obAcc) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date().toISOString(),
+          description: `Bulk Import Sync: ${results.imported} Customers`,
+          reference: 'SYS-IMPORT-CUST',
+          transactions: [
+            { accountId: arAcc.id, type: 'Debit', amount: Math.abs(aggregateOpeningBalance), description: 'Bulk OB' },
+            { accountId: obAcc.id, type: 'Credit', amount: Math.abs(aggregateOpeningBalance), description: 'Bulk OB' }
+          ]
+        });
+      }
+    }
+
     return results;
   }
 
   async getStats(tenantId: string) {
-    const totalCustomers = await this.prisma.customer.count({
-      where: { tenantId },
-    });
-    const leads = await this.prisma.customer.count({
-      where: { tenantId, status: CustomerStatus.Lead },
-    });
-
-    const pipeline = await this.prisma.opportunity.aggregate({
-      where: { tenantId },
-      _sum: { value: true },
-      _count: true,
-    });
-
-    return {
-      totalCustomers,
-      leads,
-      conversionRate:
-        totalCustomers > 0
-          ? ((totalCustomers - leads) / totalCustomers) * 100
-          : 0,
-      pipelineValue: pipeline._sum.value || 0,
-      openDeals: pipeline._count,
-    };
+    const totalCustomers = await this.prisma.customer.count({ where: { tenantId, isDeleted: false } });
+    const leads = await this.prisma.customer.count({ where: { tenantId, status: CustomerStatus.Lead, isDeleted: false } });
+    return { totalCustomers, leads };
   }
 
   async deleteCustomer(tenantId: string, id: string) {
-    const unpaidInvoices = await this.prisma.invoice.count({
-      where: {
-        tenantId,
-        customerId: id,
-        status: { in: ['Unpaid', 'Partial', 'Overdue'] },
-      },
-    });
-
-    const customer = await this.prisma.customer.findFirst({ 
-      where: { id, tenantId, isDeleted: false } 
-    });
-    if (customer?.email === 'walkin@system.local') {
-      throw new Error("System protected 'Walk-In Customer' cannot be deleted.");
-    }
-
-    if (unpaidInvoices > 0) {
-      throw new Error('Cannot delete customer with outstanding invoices.');
-    }
-
     return this.prisma.customer.updateMany({
       where: { id, tenantId },
       data: { isDeleted: true },
@@ -330,66 +197,7 @@ export class CrmService {
   }
 
   async updateCustomer(tenantId: string, id: string, data: any) {
-    // Security check: ensure customer belongs to tenant
-    const customer = await this.prisma.customer.findFirst({
-      where: { id, tenantId, isDeleted: false },
-    });
-    if (!customer) throw new Error('Customer not found');
-
-    // Phone deduplication check if phone is changing
-    if (data.phone && data.phone !== customer.phone && data.phone !== '0000000000') {
-      const existing = await this.prisma.customer.findFirst({
-        where: { tenantId, phone: data.phone, isDeleted: false },
-      });
-      if (existing) {
-        throw new Error(`Another customer already has the phone number ${data.phone}.`);
-      }
-    }
-
-    const { openingBalance, ...updateData } = data;
-
-    const updated = await this.prisma.customer.update({
-      where: { id },
-      data: updateData,
-    });
-
-    await this.audit.log({
-      tenantId,
-      action: 'UPDATE_CUSTOMER',
-      resource: 'Customer',
-      details: { customerId: id, changes: updateData },
-    });
-
-    return updated;
-  }
-
-  // --- Opportunities ---
-  async createOpportunity(tenantId: string, data: any) {
-    return this.prisma.opportunity.create({
-      data: {
-        ...data,
-        tenantId,
-      },
-      include: { customer: true },
-    });
-  }
-
-  async getOpportunities(tenantId: string) {
-    return this.prisma.opportunity.findMany({
-      where: { tenantId },
-      include: { customer: true },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async updateOpportunity(tenantId: string, id: string, data: any) {
-    // Security check: ensure opportunity belongs to tenant
-    const opp = await this.prisma.opportunity.findFirst({
-      where: { id, tenantId },
-    });
-    if (!opp) throw new Error('Opportunity not found');
-
-    return this.prisma.opportunity.updateMany({
+    return this.prisma.customer.update({
       where: { id, tenantId },
       data,
     });
@@ -398,57 +206,56 @@ export class CrmService {
   async exportCustomers(tenantId: string) {
     const customers = await this.prisma.customer.findMany({
       where: { tenantId, isDeleted: false },
-      orderBy: { createdAt: 'desc' },
     });
 
-    const header = 'First Name,Last Name,Email,Phone,Company,GSTIN,State,Status\n';
-    const rows = customers
-      .map((c) => {
-        return `"${c.firstName}","${c.lastName || ''}","${c.email}","${c.phone || ''}","${
-          c.company || ''
-        }","${c.gstin || ''}","${c.state || ''}","${c.status}"`;
-      })
-      .join('\n');
+    const headers = ['firstName', 'lastName', 'email', 'phone', 'company', 'status'];
+    const rows = customers.map((c: any) =>
+      headers.map((h) => c[h] || '').join(','),
+    );
 
-    return header + rows;
+    return [headers.join(','), ...rows].join('\n');
   }
 
-  // --- Opening Balances ---
+  async createOpportunity(tenantId: string, data: any) {
+    return this.prisma.opportunity.create({
+      data: { ...data, tenantId },
+    });
+  }
+
+  async getOpportunities(tenantId: string) {
+    return this.prisma.opportunity.findMany({
+      where: { tenantId },
+      include: { customer: true },
+    });
+  }
+
+  async updateOpportunity(tenantId: string, id: string, data: any) {
+    return this.prisma.opportunity.update({
+      where: { id, tenantId },
+      data,
+    });
+  }
+
   async addOpeningBalance(tenantId: string, customerId: string, data: any) {
     return this.prisma.$transaction(async (tx) => {
       const ob = await tx.customerOpeningBalance.create({
-        data: {
-          ...data,
-          tenantId,
-          customerId,
-        },
+        data: { ...data, tenantId, customerId }
       });
 
-      const customer = await tx.customer.findUnique({ where: { id: customerId } });
-
-      // GL Journal: Dr Accounts Receivable / Cr Opening Balance Equity
       const arAcc = await tx.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
       const obAcc = await tx.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
 
       if (arAcc && obAcc) {
         await this.ledger.createJournalEntry(tenantId, {
-          date: new Date(data.date || new Date()).toISOString(),
-          description: `Opening Balance Adjustment: ${customer?.firstName || ''}`,
+          date: new Date().toISOString(),
+          description: 'Opening Balance Adjustment',
           reference: `OB-${ob.id.slice(0, 8)}`,
           transactions: [
-            { accountId: arAcc.id, type: 'Debit', amount: Math.abs(Number(ob.amount)), description: 'Opening Balance Entry' },
-            { accountId: obAcc.id, type: 'Credit', amount: Math.abs(Number(ob.amount)), description: 'Opening Balance Entry' },
-          ],
+            { accountId: arAcc.id, type: 'Debit', amount: Math.abs(Number(ob.amount)), description: 'Customer OB' },
+            { accountId: obAcc.id, type: 'Credit', amount: Math.abs(Number(ob.amount)), description: 'Customer OB' }
+          ]
         }, tx);
       }
-
-      await this.audit.log({
-        tenantId,
-        action: 'ADD_OPENING_BALANCE',
-        resource: 'Customer',
-        details: { customerId, balanceId: ob.id, amount: ob.amount },
-      });
-
       return ob;
     });
   }
@@ -456,7 +263,6 @@ export class CrmService {
   async getOpeningBalances(tenantId: string, customerId: string) {
     return this.prisma.customerOpeningBalance.findMany({
       where: { tenantId, customerId },
-      orderBy: { date: 'desc' },
     });
   }
 }

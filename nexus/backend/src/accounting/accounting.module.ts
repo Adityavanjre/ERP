@@ -10,11 +10,16 @@ import { TallyService } from './services/tally-export.service';
 import { CreditNoteService } from './services/credit-note.service';
 import { DebitNoteService } from './services/debit-note.service';
 import { FixedAssetService } from './services/fixed-asset.service';
+import { TdsService } from './services/tds.service';
+import { TdsController } from './controllers/tds.controller';
+import { BrsService } from './services/brs.service';
+import { BrsController } from './controllers/brs.controller';
+import { InventoryModule } from '../inventory/inventory.module';
 
 
 @Module({
-  imports: [PrismaModule, SystemModule],
-  controllers: [AccountingController],
+  imports: [PrismaModule, SystemModule, InventoryModule],
+  controllers: [AccountingController, TdsController, BrsController],
   providers: [
     AccountingService,
     LedgerService,
@@ -24,6 +29,7 @@ import { FixedAssetService } from './services/fixed-asset.service';
     CreditNoteService,
     DebitNoteService,
     FixedAssetService,
+    TdsService,
   ],
 
   exports: [
@@ -35,6 +41,7 @@ import { FixedAssetService } from './services/fixed-asset.service';
     CreditNoteService,
     DebitNoteService,
     FixedAssetService,
+    TdsService,
   ],
 
 })

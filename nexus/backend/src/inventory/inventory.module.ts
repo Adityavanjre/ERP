@@ -6,10 +6,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AccountingModule } from '../accounting/accounting.module';
 
 import { SystemModule } from '../system/system.module';
+import { HsnService } from './services/hsn.service';
 
 @Module({
   imports: [PrismaModule, AccountingModule, SystemModule],
   controllers: [InventoryController],
-  providers: [InventoryService, WarehouseService],
+  providers: [InventoryService, WarehouseService, HsnService],
+  exports: [InventoryService, HsnService],
 })
-export class InventoryModule {}
+export class InventoryModule { }

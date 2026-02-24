@@ -7,6 +7,7 @@ import {
   IsEnum,
   IsNumber,
   Min,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransactionType } from '@prisma/client';
@@ -44,4 +45,8 @@ export class CreateJournalEntryDto {
   @IsString()
   @IsNotEmpty()
   reference: string;
+
+  @IsString()
+  @IsOptional()
+  correlationId?: string;
 }

@@ -10,33 +10,33 @@ export class SalesService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
-  ) {}
+  ) { }
 
   async createOrder(tenantId: string, data: any) {
     const { items, customerId, idempotencyKey, ...orderData } = data;
 
     // 0. Idempotency Check
     if (idempotencyKey) {
-        const existingOrder = await this.prisma.order.findUnique({
-            where: { 
-                tenantId_idempotencyKey: {
-                    tenantId,
-                    idempotencyKey
-                }
-            },
-        });
-        if (existingOrder) return existingOrder;
+      const existingOrder = await this.prisma.order.findUnique({
+        where: {
+          tenantId_idempotencyKey: {
+            tenantId,
+            idempotencyKey
+          }
+        },
+      });
+      if (existingOrder) return existingOrder;
     }
 
     // 1. Create Order & Invoice within a single transaction
-    return this.prisma.$transaction(async (tx) => {
+    return (this.prisma as any).$transaction(async (tx: any) => {
       // Validate customer exists
       if (customerId) {
         const customer = await tx.customer.findFirst({
           where: { id: customerId, tenantId, isDeleted: false },
         });
         if (!customer)
-          throw new BadRequestException(`Customer ${customerId} not found`);
+          throw new BadRequestException(`Compliance Error: Customer ${customerId} not found or inactive. Cannot link sale to non-customer party.`);
       }
 
       // Create Order

@@ -1,0 +1,38 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  financial-integrity-check:
+    name: Financial Integrity Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package.json
+      
+      - name: Install Dependencies
+        run: npm install
+        working-directory: nexus/backend
+
+      - name: Run Pre-Deployment Quality Checks
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: npm run audit:pre-deploy
+        working-directory: nexus/backend
+
+  deploy:
+    name: Deploy to Production
+    needs: financial-integrity-check
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Deploy Step
+        run: echo "Deploying to production..."
+        # Actual deploy logic (e.g., Capistrano, Render deploy, etc.)

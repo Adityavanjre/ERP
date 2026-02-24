@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../system/services/audit.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { EmployeeStatus, LeaveStatus, PayrollStatus } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 import { AccountSelectors } from '../accounting/constants/account-names';
 
 @Injectable()
@@ -12,7 +13,7 @@ export class HrService {
     private prisma: PrismaService,
     private audit: AuditService,
     private accounting: AccountingService,
-  ) {}
+  ) { }
 
   // --- Departments ---
   async createDepartment(tenantId: string, data: any) {
@@ -112,7 +113,7 @@ export class HrService {
   // --- Payroll ---
   async generatePayroll(tenantId: string, data: any) {
     const { employeeId, bonuses, deductions, basicSalary } = data;
-    
+
     const employee = await this.prisma.employee.findFirst({
       where: { id: employeeId, tenantId },
     });
@@ -120,14 +121,14 @@ export class HrService {
 
     // Verify necessary accounts exist BEFORE creating payroll record to ensure audit trail
     const salaryAccount = await this.prisma.account.findFirst({
-        where: { tenantId, name: { in: AccountSelectors.SALARY } },
+      where: { tenantId, name: { in: AccountSelectors.SALARY } },
     });
     const cashAccount = await this.prisma.account.findFirst({
-        where: { tenantId, name: { in: AccountSelectors.CASH_BANK } },
+      where: { tenantId, name: { in: AccountSelectors.CASH_BANK } },
     });
 
     if (!salaryAccount || !cashAccount) {
-        throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
+      throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
     }
 
     const netPay = Number(basicSalary) + Number(bonuses) - Number(deductions);
@@ -149,15 +150,15 @@ export class HrService {
     });
 
     try {
-        await this.accounting.createJournalEntry(tenantId, {
-          date: new Date().toISOString(),
-          description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
-          reference: payroll.id,
-          transactions: [
-            { accountId: salaryAccount.id, type: 'Debit', amount: netPay, description: 'Salary Disbursement' },
-            { accountId: cashAccount.id, type: 'Credit', amount: netPay, description: 'Salary Disbursement' },
-          ],
-        });
+      await this.accounting.createJournalEntry(tenantId, {
+        date: new Date().toISOString(),
+        description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
+        reference: payroll.id,
+        transactions: [
+          { accountId: salaryAccount.id, type: 'Debit', amount: netPay, description: 'Salary Disbursement' },
+          { accountId: cashAccount.id, type: 'Credit', amount: netPay, description: 'Salary Disbursement' },
+        ],
+      });
     } catch (journalErr) {
       this.logger.error(`Failed to post payroll journal for payroll ${payroll.id}`, journalErr);
       // Re-throw as BadRequest to alert the user even if record was made (or wrap in transaction)
@@ -165,6 +166,73 @@ export class HrService {
     }
 
     return payroll;
+  }
+
+  async importEmployees(tenantId: string, csvContent: string) {
+    const lines = csvContent.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const cols = lines[i].split(',').map(c => c.trim());
+      const data: any = {};
+      headers.forEach((h, idx) => { data[h] = cols[idx]; });
+
+      try {
+        const firstName = data.firstName;
+        const lastName = data.lastName || '';
+        const email = data.email;
+        const employeeId = data.employeeId || `EMP-${Date.now().toString().slice(-4)}-${i}`;
+
+        if (!firstName || !email) throw new Error("First Name and Email are required");
+
+        // Look up department by name if provided
+        let departmentId = data.departmentId;
+        if (data.departmentName && !departmentId) {
+          const dept = await this.prisma.department.findFirst({ where: { tenantId, name: data.departmentName } });
+          departmentId = dept?.id;
+        }
+
+        const existing = await this.prisma.employee.findFirst({
+          where: { tenantId, OR: [{ email }, { employeeId }] }
+        });
+
+        if (existing) {
+          await this.prisma.employee.update({
+            where: { id: existing.id },
+            data: {
+              firstName,
+              lastName,
+              phone: data.phone || existing.phone,
+              departmentId: departmentId || existing.departmentId,
+              jobTitle: data.jobTitle || data.designation || existing.jobTitle,
+              salary: data.basicSalary ? new Decimal(data.basicSalary) : existing.salary,
+              status: (data.status as EmployeeStatus) || existing.status
+            }
+          });
+        } else {
+          await this.prisma.employee.create({
+            data: {
+              tenantId,
+              firstName,
+              lastName,
+              email,
+              phone: data.phone || '',
+              employeeId,
+              jobTitle: data.jobTitle || data.designation || 'Staff',
+              departmentId,
+              salary: new Decimal(data.basicSalary || data.salary || 0),
+            }
+          });
+        }
+        results.imported++;
+      } catch (e: any) {
+        results.failed++;
+        results.errors.push(`Line ${i}: ${e.message}`);
+      }
+    }
+    return results;
   }
 
   async getPayrolls(tenantId: string) {

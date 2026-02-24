@@ -7,10 +7,15 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PrismaService } from '../../prisma/prisma.service';
+import { TraceService } from '../services/trace.service';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly traceService: TraceService,
+  ) { }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
@@ -20,6 +25,11 @@ export class AuditInterceptor implements NestInterceptor {
     // and exclude auth routes to avoid password logging
     const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
     const isAuth = url.includes('/auth');
+    const startTime = Date.now();
+    const correlationId = this.traceService.getCorrelationId() || randomUUID();
+
+    // Attach to request for downstream services
+    req['correlationId'] = correlationId;
 
     if (!isMutation || isAuth) {
       return next.handle();
@@ -38,6 +48,8 @@ export class AuditInterceptor implements NestInterceptor {
               action: method,
               resource: url,
               ipAddress: req.ip || req.get('X-Forwarded-For') || 'unknown',
+              correlationId: correlationId,
+              responseTimeMs: Date.now() - startTime,
               details: {
                 body: this.sanitizePayload(req.body),
                 query: this.sanitizePayload(req.query),

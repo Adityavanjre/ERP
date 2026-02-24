@@ -1,6 +1,8 @@
 import { Controller, Get, UseGuards, Req } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
+import { SystemAuditService } from './services/system-audit.service';
+import { getIndustryConfig } from '../common/constants/industry-config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
@@ -12,6 +14,7 @@ import { Permission } from '../common/constants/permissions';
 export class SystemController {
   constructor(
     private readonly saas: SaasAnalyticsService,
+    private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
   ) { }
 
@@ -36,32 +39,19 @@ export class SystemController {
 
   @Get('config')
   async getModuleConfig(@Req() req: any) {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: req.user.tenantId },
-      select: { type: true, industry: true },
-    });
-
-    const type = tenant?.type || 'Retail';
-
-    // Industry-to-Module Mapping based on TenantType enum
-    const moduleMap: Record<string, string[]> = {
-      Manufacturing: ['sales', 'inventory', 'manufacturing', 'accounting', 'hr'],
-      Retail: ['sales', 'inventory', 'accounting'],
-      Wholesale: ['sales', 'inventory', 'purchases', 'accounting'],
-      Service: ['sales', 'accounting', 'project', 'hr'],
-      Construction: ['accounting', 'inventory', 'project', 'hr'],
-      Healthcare: ['accounting', 'hr', 'crm'],
-      Logistics: ['sales', 'inventory', 'accounting', 'hr'],
-      Education: ['accounting', 'hr'],
-      RealEstate: ['sales', 'accounting', 'crm'],
-      Gov: ['accounting', 'hr', 'inventory'],
-    };
+    const industry = req.user.industry || req.user.tenantType || 'General';
+    const config = getIndustryConfig(industry);
 
     return {
-      enabledModules: moduleMap[type] || ['sales', 'inventory', 'accounting'],
-      industry: tenant?.industry,
-      type: tenant?.type,
+      ...config,
+      industry: industry,
     };
+  }
+
+  @Get('audit')
+  @Permissions(Permission.VIEW_REPORTS)
+  async getIntegrityAudit(@Req() req: any) {
+    return this.audit.verifyFinancialIntegrity(req.user.tenantId);
   }
 
   @Get('founder-dashboard')

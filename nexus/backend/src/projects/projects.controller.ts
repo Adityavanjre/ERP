@@ -21,14 +21,17 @@ import { Permission } from '../common/constants/permissions';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { ProjectStatus, TaskStatus } from '@prisma/client';
 
+import { Module } from '../common/decorators/module.decorator';
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
+@Module('project')
 @Controller('projects')
 export class ProjectController {
   constructor(
     private readonly projectService: ProjectService,
     private readonly collaboration: CollaborationService,
-  ) {}
+  ) { }
 
   @Post()
   @Permissions(Permission.MANAGE_USERS)
@@ -87,7 +90,7 @@ export class ProjectController {
   async deleteProject(@Req() req: any, @Param('id') id: string) {
     // 1. Cascade Deletion for Project Discussion
     await this.collaboration.deleteCommentsByResource(req.user.tenantId, 'Project', id);
-    
+
     // 2. Perform actual deletion
     return this.projectService.deleteProject(req.user.tenantId, id);
   }

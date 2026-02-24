@@ -10,7 +10,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, GoogleLoginDto, OnboardingDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, GoogleLoginDto, OnboardingDto, MfaVerifyDto, MfaSetupDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AllowUnboarded } from '../common/decorators/allow-unboarded.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -23,8 +23,8 @@ export class AuthController {
   // Limit login to 15 attempts per minute
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Post('login')
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Request() req: any, @Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto, req.ip || req.get('X-Forwarded-For'));
   }
 
   @HttpCode(HttpStatus.OK)
@@ -40,7 +40,7 @@ export class AuthController {
   @AllowUnboarded()
   @Post('select-tenant')
   async selectTenant(@Request() req: any, @Body('tenantId') tenantId: string) {
-    return this.authService.selectTenant(req.user.sub, tenantId);
+    return this.authService.selectTenant(req.user.sub, tenantId, req.user.isMfaVerified);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -99,5 +99,26 @@ export class AuthController {
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
+  // --- MFA Endpoints ---
+
+  @UseGuards(JwtAuthGuard)
+  @Post('mfa/setup')
+  async setupMfa(@Request() req: any) {
+    return this.authService.setupMfa(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('mfa/verify-setup')
+  async verifyMfaSetup(@Request() req: any, @Body() dto: MfaSetupDto) {
+    return this.authService.verifyMfaSetup(req.user.sub, dto.totpCode);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('mfa/verify-login')
+  async verifyMfaLogin(@Body() dto: MfaVerifyDto) {
+    return this.authService.verifyMfaLogin(dto.token, dto.totpCode);
   }
 }

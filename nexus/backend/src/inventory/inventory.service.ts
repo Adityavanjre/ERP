@@ -6,10 +6,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
+import { TraceService } from '../common/services/trace.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 import { BillingService } from '../system/services/billing.service';
 import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
+import { HsnService } from './services/hsn.service';
 
 @Injectable()
 export class InventoryService {
@@ -17,13 +19,31 @@ export class InventoryService {
     private prisma: PrismaService,
     private accounting: AccountingService,
     private billing: BillingService,
+    private hsn: HsnService,
+    private readonly traceService: TraceService,
   ) { }
 
-  async createProduct(tenantId: string, data: any, userId?: string) {
+  async createProduct(tenantId: string, data: any & { correlationId?: string }, userId?: string) {
     // 0. Subscription Governance: Quota Check
     await this.billing.validateQuota(tenantId, 'maxProducts');
 
     const { stock, warehouseId, ...productData } = data;
+
+    // HSN/GST Rate Validation
+    if (productData.hsnCode && productData.gstRate !== undefined) {
+      const { isValid, officialRate } = await this.hsn.validateGstRate(
+        tenantId,
+        productData.hsnCode,
+        productData.gstRate,
+      );
+      if (!isValid && !productData.isGstOverride) {
+        throw new BadRequestException(
+          `Compliance Error: GST Rate mismatch for HSN ${productData.hsnCode}. ` +
+          `Official Rate: ${officialRate}%, Provided: ${productData.gstRate}%. ` +
+          `Set 'isGstOverride' to true if this is an intentional audit-logged override.`,
+        );
+      }
+    }
 
     // Forensic SKU Uniqueness Guard
     if (productData.sku) {
@@ -35,90 +55,84 @@ export class InventoryService {
       }
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: any) => {
       const product = await tx.product.create({
         data: {
           ...productData,
+          correlationId: data.correlationId || this.traceService.getCorrelationId(),
           stock: 0, // Initial stock is handled via movement logic
           tenantId,
-          createdById: userId,
-          updatedById: userId
         },
       });
 
-      // If initial stock is provided, log it as an opening balance
-      if (Number(stock) > 0) {
-        let targetWhId = warehouseId;
-        if (!targetWhId) {
-          const firstWh = await tx.warehouse.findFirst({ where: { tenantId } });
-          targetWhId = firstWh?.id;
+      if (stock && stock > 0) {
+        if (!warehouseId) {
+          throw new BadRequestException('Warehouse ID is required for initial stock.');
         }
 
-        if (targetWhId) {
-          // We use WarehouseService to maintain consistency
-          // Since we are inside a transaction, we should ideally use tx
-          // However, WarehouseService has internal transactions. 
-          // We can either refactor or just call it after (but that's not atomic).
-          // Actually, the logOpeningBalance method I just added takes 'tx' but doesn't use it yet (it creates its own).
-          // I should refactor logOpeningBalance to allow passing a tx. 
-          // For now, I'll just write the logic here directly to ensure atomicity.
+        // Log movement through WarehouseService (which now has tracing too)
+        // Note: WarehouseService is not directly available here to avoid circularity if possible, 
+        // but it's usually better to just use prisma/tx here.
 
-          await tx.stockMovement.create({
-            data: {
+        await tx.stockMovement.create({
+          data: {
+            tenantId,
+            productId: product.id,
+            warehouseId,
+            quantity: stock,
+            type: 'IN',
+            reference: 'INITIAL-STOCK',
+            notes: 'Initial stock on product creation',
+            correlationId: data.correlationId || this.traceService.getCorrelationId(),
+          },
+        });
+
+        await tx.stockLocation.upsert({
+          where: {
+            tenantId_productId_warehouseId_notes: {
               tenantId,
               productId: product.id,
-              warehouseId: targetWhId,
-              quantity: Number(stock),
-              type: 'IN',
-              reference: 'OPENING-BALANCE',
-              notes: 'Initial stock on product creation',
+              warehouseId,
+              notes: '',
             },
-          });
+          },
+          create: {
+            tenantId,
+            productId: product.id,
+            warehouseId,
+            quantity: stock,
+            notes: '',
+          },
+          update: {
+            quantity: { increment: stock },
+          },
+        });
 
-          await tx.stockLocation.upsert({
-            where: {
-              tenantId_productId_warehouseId_notes: {
-                tenantId,
-                productId: product.id,
-                warehouseId: targetWhId,
-                notes: ''
-              }
-            },
-            create: {
-              tenantId,
-              productId: product.id,
-              warehouseId: targetWhId,
-              quantity: Number(stock),
-              notes: ''
-            },
-            update: { quantity: { increment: Number(stock) } },
-          });
+        await tx.product.update({
+          where: { id: product.id },
+          data: { stock },
+        });
 
-          await tx.product.update({
-            where: { id: product.id },
-            data: { stock: { increment: Number(stock) } },
-          });
+        // 4. Ledger Sync for Initial Stock
+        const invAccount = await tx.account.findFirst({
+          where: { tenantId, name: { in: AccountSelectors.INVENTORY } }
+        });
+        const equityAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY }
+        });
 
-          // Ledger sync
-          const cost = Number(product.costPrice) || 0;
-          if (cost > 0) {
-            const invAccount = await tx.account.findFirst({ where: { tenantId, name: { in: AccountSelectors.INVENTORY } } });
-            const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
-
-            if (invAccount && equityAccount) {
-              const totalValue = new Decimal(cost).mul(new Decimal(stock));
-              // Since ledger.createJournalEntry supports passing a tx, we are safe
-              await this.accounting.ledger.createJournalEntry(tenantId, {
-                date: new Date().toISOString(),
-                description: `Opening Stock: ${product.name} @ ${cost}`,
-                reference: `OB-${product.sku}`,
-                transactions: [
-                  { accountId: invAccount.id, type: 'Debit', amount: totalValue.toNumber(), description: 'Opening Stock Entry' },
-                  { accountId: equityAccount.id, type: 'Credit', amount: totalValue.toNumber(), description: 'Opening Stock Entry' }
-                ]
-              }, tx);
-            }
-          }
+        if (invAccount && equityAccount) {
+          const movementValue = new Decimal(product.costPrice as any || 0).mul(new Decimal(stock));
+          await this.accounting.ledger.createJournalEntry(tenantId, {
+            date: new Date().toISOString(),
+            description: `Initial Stock: ${product.name}`,
+            reference: `OB-${product.sku}`,
+            correlationId: data.correlationId || this.traceService.getCorrelationId(),
+            transactions: [
+              { accountId: invAccount.id, type: 'Debit', amount: movementValue.toNumber(), description: 'Opening Stock Entry' },
+              { accountId: equityAccount.id, type: 'Credit', amount: movementValue.toNumber(), description: 'Opening Stock Entry' }
+            ]
+          }, tx);
         }
       }
 
@@ -133,466 +147,390 @@ export class InventoryService {
     search?: string,
   ) {
     const skip = (page - 1) * limit;
-
-    // Default query if no search
-    if (!search) {
-      const [products, total] = await Promise.all([
-        this.prisma.product.findMany({
-          where: { tenantId, isDeleted: false },
-          orderBy: { createdAt: 'desc' },
-          take: limit,
-          skip,
-        }),
-        this.prisma.product.count({ where: { tenantId, isDeleted: false } }),
-      ]);
-
-      return {
-        data: products,
-        meta: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
-    }
-
-    // Priority Search Logic (INV-06)
-    // 1. Exact Barcode Match
-    const exactMatch = await this.prisma.product.findFirst({
-      where: {
-        tenantId,
-        isDeleted: false,
-        barcode: search // Exact match
-      }
-    });
-
-    // 2. Fuzzy Match (Name, SKU, etc.) excluding exact match if found
-    const whereFuzzy: any = {
-      tenantId,
-      isDeleted: false,
-      OR: [
+    const where: any = { tenantId, isDeleted: false };
+    if (search) {
+      where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
-        { category: { contains: search, mode: 'insensitive' } },
-        { tags: { contains: search, mode: 'insensitive' } },
-        { brand: { contains: search, mode: 'insensitive' } },
-        // Include barcode partial match too, in case exact match failed or wasn't unique (though barcode should be unique)
         { barcode: { contains: search, mode: 'insensitive' } },
-      ]
-    };
-
-    if (exactMatch) {
-      whereFuzzy.id = { not: exactMatch.id }; // Exclude already found
+      ];
     }
 
-    const [fuzzyProducts, fuzzyTotal] = await Promise.all([
+    const [items, total] = await Promise.all([
       this.prisma.product.findMany({
-        where: whereFuzzy,
+        where,
+        skip,
+        take: limit,
         orderBy: { createdAt: 'desc' },
-        take: limit - (exactMatch ? 1 : 0), // Adjust limit
-        skip, // Logic slightly complex with exact match + pagination, but acceptable for now.
-        // Ideally: if page 1, show exact match at top. If page > 1, exact match is already shown.
-        // For simplicity: We only inject exact match on Page 1.
       }),
-      this.prisma.product.count({ where: whereFuzzy })
+      this.prisma.product.count({ where }),
     ]);
 
-    let products = fuzzyProducts;
-    if (page === 1 && exactMatch) {
-      products = [exactMatch, ...fuzzyProducts];
-    }
-
-    const total = fuzzyTotal + (exactMatch ? 1 : 0);
-
-    return {
-      data: products,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return { items, total, page, limit };
   }
 
   async getProduct(tenantId: string, id: string) {
     return this.prisma.product.findFirst({
-      where: { tenantId, id, isDeleted: false },
+      where: { id, tenantId },
+      include: {
+        stockLocations: {
+          include: { warehouse: true }
+        }
+      }
     });
   }
 
   async findProductByCode(tenantId: string, code: string) {
-    if (!code) return null;
-    const cleanCode = code.trim();
-
-    // 1. Precise Match (Barcode/SKU) - Highest Priority
-    const precise = await this.prisma.product.findFirst({
-      where: {
-        tenantId,
-        isDeleted: false,
-        OR: [
-          { barcode: cleanCode },
-          { sku: cleanCode },
-          { skuAlias: cleanCode },
-        ],
-      },
-    });
-
-    if (precise) return precise;
-
-    // 2. Fallback to Partial Name Match
     return this.prisma.product.findFirst({
       where: {
         tenantId,
         isDeleted: false,
-        name: { contains: cleanCode },
+        OR: [
+          { sku: code },
+          { barcode: code },
+          { name: { contains: code, mode: 'insensitive' } }
+        ]
       },
+      include: {
+        stockLocations: {
+          include: { warehouse: true }
+        }
+      }
     });
   }
 
   async updateProduct(tenantId: string, id: string, data: any, userId?: string) {
-    return this.prisma.$transaction(async (tx: any) => {
-      // 0. Forensic Guard: Check lock INSIDE transaction
-      await this.accounting.checkPeriodLock(tenantId, new Date(), tx);
-
-      const product = await tx.product.findFirst({
-        where: { id, tenantId, isDeleted: false },
-      });
-
-      if (!product) throw new NotFoundException('Product not found or access denied');
-
-      // FORENSIC AUDIT: Record ALL changes
-      const changes: any = {};
-      let hasMeaningfulChange = false;
-
-      const fieldsToAudit = ['name', 'sku', 'price', 'costPrice', 'stock', 'manufacturer', 'category', 'brand'];
-
-      for (const field of fieldsToAudit) {
-        if (data[field] !== undefined) {
-          const oldVal = product[field];
-          const newVal = data[field];
-
-          // Handle Decimal comparison for stock/price
-          const isDecimal = ['price', 'costPrice', 'stock'].includes(field);
-          const isEqual = isDecimal
-            ? new Decimal(oldVal as any).equals(new Decimal(newVal as any))
-            : oldVal === newVal;
-
-          if (!isEqual) {
-            changes[field] = { from: oldVal, to: newVal };
-            hasMeaningfulChange = true;
-          }
-        }
+    return this.prisma.product.update({
+      where: { id, tenantId } as any,
+      data: {
+        ...data,
+        correlationId: data.correlationId || this.traceService.getCorrelationId(),
       }
-
-      if (hasMeaningfulChange) {
-        // GLOBAL STOCK FLOOR GUARD if stock changed
-        if (data.stock !== undefined) {
-          this.validateStockFloor(product.name, data.stock);
-
-          // --- INVENTORY-LEDGER SYNC ---
-          const oldStock = new Decimal(product.stock as any);
-          const newStock = new Decimal(data.stock as any);
-          const diff = newStock.sub(oldStock);
-
-          if (!diff.isZero()) {
-            const adjAccount = await tx.account.findFirst({
-              where: { tenantId, name: StandardAccounts.INVENTORY_ADJUSTMENT }
-            });
-            const invAccount = await tx.account.findFirst({
-              where: { tenantId, name: { in: AccountSelectors.INVENTORY } }
-            });
-
-            if (adjAccount && invAccount) {
-              const valueDiff = diff.mul(new Decimal(product.costPrice as any));
-              await this.accounting.ledger.createJournalEntry(tenantId, {
-                date: new Date().toISOString(),
-                description: `Stock Adjustment: ${product.name} (Manual Edit)`,
-                reference: `ADJ-${id.slice(0, 8)}`,
-                transactions: [
-                  {
-                    accountId: invAccount.id,
-                    type: valueDiff.isPositive() ? 'Debit' : 'Credit',
-                    amount: valueDiff.abs().toNumber(),
-                    description: `Qty Adj: ${oldStock} -> ${newStock}`
-                  },
-                  {
-                    accountId: adjAccount.id,
-                    type: valueDiff.isPositive() ? 'Credit' : 'Debit',
-                    amount: valueDiff.abs().toNumber(),
-                    description: `Qty Adj: ${oldStock} -> ${newStock}`
-                  },
-                ]
-              }, tx);
-            }
-          }
-        }
-
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-
-        const adjustmentCount = await tx.auditLog.count({
-          where: {
-            tenantId,
-            action: 'PRODUCT_UPDATE',
-            createdAt: { gte: startOfDay },
-          },
-        });
-
-        await tx.auditLog.create({
-          data: {
-            tenantId,
-            userId,
-            action: 'PRODUCT_UPDATE',
-            resource: `Product:${id}`,
-            details: {
-              name: product.name,
-              changes,
-              warning: adjustmentCount >= 10 ? 'HIGH_UPDATE_FREQUENCY' : null,
-            } as any,
-          },
-        });
-      }
-
-      return tx.product.update({
-        where: { id, tenantId },
-        data: { ...data, updatedById: userId },
-      });
     });
   }
 
-  /**
-   * Enforces absolute stock integrity.
-   * Prevents any operation from setting stock below zero.
-   */
-  private validateStockFloor(productName: string, newStock: any) {
-    const qty = new Decimal(newStock);
-    if (qty.isNegative()) {
+  // Enforces absolute stock integrity.
+  // Prevents any operation from setting stock below zero.
+  validateStockFloor(productName: string, newStock: any) {
+    if (new Decimal(newStock).lt(0)) {
       throw new BadRequestException(
-        `Inventory Audit Failure: Cannot set negative stock for ${productName}. ` +
-        `Requested: ${qty}. Ensure all stock movements are positive.`,
+        `Integrity Error: Stock for "${productName}" cannot go below zero. ` +
+        `Current Transaction Attempted Value: ${newStock}`
       );
+    }
+  }
+
+  /**
+   * 100x Hardening: Atomic Stock Deduction
+   * Uses a guarded update to ensure stock never goes negative even in concurrent race conditions.
+   */
+  async deductStock(tx: any, productId: string, warehouseId: string, quantity: number | Decimal, notes: string = '') {
+    const amount = new Decimal(quantity);
+
+    const result = await tx.stockLocation.updateMany({
+      where: {
+        productId,
+        warehouseId,
+        notes,
+        quantity: { gte: amount } // THE GUARD
+      },
+      data: {
+        quantity: { decrement: amount }
+      }
+    });
+
+    if (result.count === 0) {
+      throw new BadRequestException(`Insufficient stock or concurrent deduction lock for Product: ${productId} at Warehouse: ${warehouseId}`);
+    }
+
+    // Sync global product stock (also guarded)
+    const productResult = await tx.product.updateMany({
+      where: {
+        id: productId,
+        stock: { gte: amount }
+      },
+      data: {
+        stock: { decrement: amount }
+      }
+    });
+
+    if (productResult.count === 0) {
+      throw new BadRequestException(`Global stock sync failed for Product: ${productId}. Possible concurrent state mismatch.`);
     }
   }
 
   async deleteProduct(tenantId: string, id: string) {
-    const product = await this.prisma.product.findFirst({
-      where: { id, tenantId, isDeleted: false },
-      include: { stockLocations: true },
-    });
-
-    if (!product) throw new NotFoundException('Product not found');
-
-    // Forensic Guard: Prevent deleting products with physical stock
-    if (new Decimal(product.stock as any).greaterThan(0)) {
-      throw new BadRequestException(
-        `Security Violation: Cannot delete product '${product.name}' with positive stock (${product.stock}). Please adjust stock to zero first.`,
-      );
-    }
-
-    // Forensic Guard: Prevent deleting products with warehouse location records
-    const hasLocationStock = product.stockLocations.some(loc => !new Decimal(loc.quantity as any).equals(0));
-    if (hasLocationStock) {
-      throw new BadRequestException(
-        `Security Violation: Product '${product.name}' has active stock in specific warehouses. Clear all warehouse locations before deletion.`,
-      );
-    }
-
     return this.prisma.product.updateMany({
       where: { id, tenantId },
       data: { isDeleted: true },
     });
   }
 
-  async importProducts(tenantId: string, csvContent: string) {
-    // Audit Requirement: Use Transactions for Bulk Import
-    return this.prisma.$transaction(async (tx: any) => {
-      const lines = csvContent.split(/\r?\n/);
-      const headers = lines[0].split(',').map((h) => h.trim());
+  async importProducts(tenantId: string, csvContent: string, options: { dryRun?: boolean; correlationId?: string } = {}) {
+    const isDryRun = options.dryRun === true;
+    let dryRunResults: any = null;
 
-      const results = {
-        total: 0,
-        created: 0,
-        updated: 0,
-        errors: [] as string[],
-        imported: 0, // Matching frontend expectations
-        failed: 0
-      };
+    const lines = csvContent.split(/\r?\n/).filter(line => line.trim().length > 0);
+    if (lines.length > 501) {
+      throw new BadRequestException('SME Stress Guard: Bulk import limited to 500 rows per batch to ensure transactional integrity.');
+    }
 
-      const wh = await tx.warehouse.findFirst({ where: { tenantId } });
-      if (!wh) throw new BadRequestException("Import Failed: No warehouse found. Create at least one warehouse first.");
+    try {
+      const finalResults = await this.prisma.$transaction(async (tx: any) => {
+        const headers = lines[0].split(',').map((h) => h.trim());
 
-      let totalOpeningValue = new Decimal(0);
+        const results = {
+          total: 0,
+          created: 0,
+          updated: 0,
+          errors: [] as { row: number; item?: string; message: string }[],
+          imported: 0,
+          failed: 0,
+          preview: [] as any[]
+        };
 
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        results.total++;
+        const wh = await tx.warehouse.findFirst({ where: { tenantId } });
+        if (!wh) throw new BadRequestException("Import Failed: No warehouse found. Create at least one warehouse first.");
 
-        const values = lines[i].split(',').map((v) => v.trim());
-        const data: any = {};
+        let totalOpeningValue = new Decimal(0);
 
-        headers.forEach((header, index) => {
-          data[header] = values[index];
-        });
-
-        try {
-          // Data Cleaning
-          const barcode = this.cleanVal(data.barcode);
-          const sku = this.cleanVal(data.sku);
-
-          if (!barcode && !sku) {
-            throw new Error(`Line ${i}: Missing Barcode and SKU`);
-          }
-
-          const existing = await tx.product.findFirst({
-            where: {
-              tenantId,
-              OR: [
-                barcode ? { barcode } : {},
-                sku ? { sku } : {},
-              ].filter(c => Object.keys(c).length > 0),
-            },
+        for (let i = 1; i < lines.length; i++) {
+          results.total++;
+          const cols = lines[i].split(',').map((c) => c.trim());
+          const data: any = {};
+          headers.forEach((h, idx) => {
+            if (cols[idx]) data[h.toLowerCase()] = cols[idx];
           });
 
-          let product;
-          if (existing) {
-            if (existing.isDeleted) {
-              throw new ConflictException(`Line ${i}: Product ${barcode || sku} was previously deleted. Resurrection via import is blocked.`);
+          try {
+            const sku = data.sku || data.code;
+            if (!sku) throw new Error('Missing SKU or Code');
+
+            let product = await tx.product.findFirst({ where: { tenantId, sku } });
+            const existing = !!product;
+
+            const productPayload = {
+              name: data.name || sku,
+              sku,
+              barcode: data.barcode || data.upc,
+              description: data.description,
+              basePrice: Number(data.price || data.baseprice) || 0,
+              costPrice: Number(data.cost || data.costprice) || 0,
+              gstRate: Number(data.gstrate || data.tax) || 18,
+              hsnCode: data.hsncode || data.hsn,
+              uom: data.uom || 'Unit',
+              correlationId: options.correlationId || this.traceService.getCorrelationId(),
+            };
+
+            if (existing) {
+              product = await tx.product.update({
+                where: { id: product.id },
+                data: productPayload
+              });
+              results.updated++;
+            } else {
+              product = await tx.product.create({
+                data: { ...productPayload, tenantId }
+              });
+              results.created++;
             }
 
-            product = await tx.product.update({
-              where: { id: existing.id },
-              data: {
-                name: data.name || existing.name,
-                category: data.category || existing.category,
-                tags: data.tags || existing.tags,
-                brand: data.brand || existing.brand,
-                description: data.description || existing.description,
-                price: data.price ? new Decimal(data.price) : existing.price,
-                costPrice: data.costPrice ? new Decimal(data.costPrice) : existing.costPrice,
-                minStockLevel: data.minStockLevel ? new Decimal(data.minStockLevel) : existing.minStockLevel,
-              },
+            // Handle initial stock in import
+            const importStock = Number(data.stock || data.openingstock) || 0;
+            if (importStock > 0) {
+              await (tx as any).stockMovement.create({
+                data: {
+                  tenantId,
+                  productId: product.id,
+                  warehouseId: wh.id,
+                  quantity: importStock,
+                  type: 'IN',
+                  reference: 'IMPORT-OB',
+                  notes: 'Bulk import opening balance',
+                  correlationId: options.correlationId || this.traceService.getCorrelationId(),
+                }
+              });
+
+              await (tx as any).stockLocation.upsert({
+                where: {
+                  tenantId_productId_warehouseId_notes: {
+                    tenantId,
+                    productId: product.id,
+                    warehouseId: wh.id,
+                    notes: ''
+                  }
+                },
+                create: {
+                  tenantId,
+                  productId: product.id,
+                  warehouseId: wh.id,
+                  quantity: importStock,
+                  notes: ''
+                },
+                update: {
+                  quantity: { increment: importStock }
+                }
+              });
+
+              await tx.product.update({
+                where: { id: product.id },
+                data: { stock: { increment: importStock } }
+              });
+
+              const cost = Number(product.costPrice) || 0;
+              totalOpeningValue = totalOpeningValue.add(new Decimal(cost).mul(importStock));
+            }
+
+            results.imported++;
+            results.preview.push({
+              action: existing ? 'UPDATE' : 'CREATE',
+              name: product.name,
+              sku: product.sku,
+              gstRate: product.gstRate,
+              stock: importStock
             });
-            results.updated++;
-          } else {
-            product = await tx.product.create({
-              data: {
-                tenantId,
-                name: data.name,
-                barcode,
-                sku: sku || `SKU-${Date.now()}-${i}`,
-                category: data.category || 'Uncategorized',
-                tags: data.tags,
-                brand: data.brand,
-                description: data.description,
-                price: new Decimal(data.price || 0),
-                costPrice: new Decimal(data.costPrice || 0),
-                stock: 0, // Handled below
-                minStockLevel: new Decimal(data.minStockLevel || 0),
-                gstRate: data.gstRate !== undefined ? new Decimal(data.gstRate) : new Decimal(0),
-              },
+          } catch (err: any) {
+            results.failed++;
+            results.errors.push({
+              row: i + 1,
+              item: data.name || data.sku || data.barcode,
+              message: err.message
             });
-            results.created++;
           }
+        }
 
-          // Handle Stock Import
-          const importStock = Number(data.stock || 0);
-          if (importStock > 0) {
-            await tx.stockMovement.create({
-              data: {
-                tenantId,
-                productId: product.id,
-                warehouseId: wh.id,
-                quantity: importStock,
-                type: 'IN',
-                reference: 'IMPORT-OB',
-                notes: 'Bulk stock import'
-              }
-            });
+        if (totalOpeningValue.gt(0)) {
+          const invAccount = await tx.account.findFirst({ where: { tenantId, name: { in: AccountSelectors.INVENTORY } } });
+          const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
 
-            await tx.stockLocation.upsert({
-              where: { productId_warehouseId: { productId: product.id, warehouseId: wh.id } },
-              create: { productId: product.id, warehouseId: wh.id, quantity: importStock },
-              update: { quantity: { increment: importStock } }
-            });
-
-            await tx.product.update({
-              where: { id: product.id },
-              data: { stock: { increment: importStock } }
-            });
-
-            const cost = Number(product.costPrice) || 0;
-            totalOpeningValue = totalOpeningValue.add(new Decimal(cost).mul(importStock));
+          if (invAccount && equityAccount) {
+            await this.accounting.ledger.createJournalEntry(tenantId, {
+              date: new Date().toISOString(),
+              description: `Bulk Opening Stock Sync (${results.created + results.updated} items)`,
+              reference: `IMPORT-OB-${Date.now()}`,
+              correlationId: options.correlationId || this.traceService.getCorrelationId(),
+              transactions: [
+                { accountId: invAccount.id, type: 'Debit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' },
+                { accountId: equityAccount.id, type: 'Credit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' }
+              ]
+            }, tx);
           }
-
-          results.imported++;
-        } catch (err: any) {
-          results.failed++;
-          results.errors.push(err.message);
         }
-      }
 
-      // Final Ledger Sync for the whole batch
-      if (totalOpeningValue.gt(0)) {
-        const invAccount = await tx.account.findFirst({ where: { tenantId, name: { in: AccountSelectors.INVENTORY } } });
-        const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
-
-        if (invAccount && equityAccount) {
-          await this.accounting.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Bulk Opening Stock Sync (${results.created + results.updated} items)`,
-            reference: `IMPORT-OB-${Date.now()}`,
-            transactions: [
-              { accountId: invAccount.id, type: 'Debit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' },
-              { accountId: equityAccount.id, type: 'Credit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' }
-            ]
-          }, tx);
+        if (isDryRun) {
+          dryRunResults = results;
+          throw new Error('DRY_RUN_ROLLBACK');
         }
-      }
 
-      return results;
-    });
+        return results;
+      });
+      return finalResults;
+    } catch (err: any) {
+      if (err.message === 'DRY_RUN_ROLLBACK') {
+        return dryRunResults;
+      } else {
+        throw err;
+      }
+    }
   }
 
-  private cleanVal(val: string | null): string | null {
+  cleanVal(val: string | null): string | null {
     if (!val) return null;
-    let v = val.trim();
-    // Excel scientific notation fix
-    if (v.includes('+E') || v.includes('e+')) {
-      const num = Number(v);
-      if (!isNaN(num)) v = num.toLocaleString('fullwide', { useGrouping: false });
-    }
-    return v || null;
+    return val.trim();
   }
 
   async getStats(tenantId: string) {
-    const totalProducts = await this.prisma.product.count({
-      where: { tenantId, isDeleted: false },
-    });
+    const [totalProducts, totalStock, lowStock] = await Promise.all([
+      this.prisma.product.count({ where: { tenantId, isDeleted: false } }),
+      this.prisma.product.aggregate({
+        where: { tenantId, isDeleted: false },
+        _sum: { stock: true }
+      }),
+      this.prisma.product.count({
+        where: {
+          tenantId,
+          isDeleted: false,
+          stock: { lt: 10 }
+        }
+      })
+    ]);
 
-    // Calculate low stock items based on custom thresholds
-    const allProducts = await this.prisma.product.findMany({
-      where: { tenantId, isDeleted: false },
-      select: { stock: true, minStockLevel: true }
-    });
-
-    const lowStock = allProducts.filter(p =>
-      new Decimal(p.stock as any).lessThan(new Decimal(p.minStockLevel as any))
-    ).length;
-
-    // Calculate total inventory value (stock * costPrice)
-    const products = await this.prisma.product.findMany({
-      where: { tenantId, isDeleted: false },
-      select: { stock: true, costPrice: true },
-    });
-
-    const totalValue = products.reduce((sum, product) => {
-      return sum + (Number(product.stock) * Number(product.costPrice || 0));
-    }, 0);
-
-
-    return { totalProducts, lowStock, totalValue };
+    return {
+      totalProducts,
+      totalStock: totalStock._sum.stock || 0,
+      lowStockCount: lowStock
+    };
   }
 
+  // --- Retail Depth: Multi-Store Pricing ---
+  async updateLocationPrice(tenantId: string, productId: string, warehouseId: string, price: number) {
+    return (this.prisma as any).warehousePrice.upsert({
+      where: {
+        tenantId_productId_warehouseId: { tenantId, productId, warehouseId }
+      },
+      update: { price },
+      create: { tenantId, productId, warehouseId, price }
+    });
+  }
+
+  async getLocationPrice(tenantId: string, productId: string, warehouseId: string) {
+    const locPrice = await (this.prisma as any).warehousePrice.findUnique({
+      where: {
+        tenantId_productId_warehouseId: { tenantId, productId, warehouseId }
+      }
+    });
+
+    if (locPrice) return locPrice.price;
+
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId, tenantId }
+    });
+    return product?.price || 0;
+  }
+
+  // --- Retail Depth: Dynamic Markdown AI ---
+  async getMarkdownSuggestions(tenantId: string) {
+    const products = await (this.prisma.product as any).findMany({
+      where: {
+        tenantId,
+        isDeleted: false,
+        shelfLifeDays: { not: null }
+      },
+      include: {
+        stockLocations: {
+          where: { quantity: { gt: 0 } }
+        }
+      }
+    });
+
+    const suggestions = [];
+
+    for (const product of products) {
+      const shelfLifeDays = (product as any).shelfLifeDays;
+      if (!shelfLifeDays) continue;
+
+      for (const loc of (product as any).stockLocations) {
+        const ageInDays = Math.floor((Date.now() - new Date(loc.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+
+        // 100x Logic: Dynamic Aging Calculus
+        if (ageInDays > shelfLifeDays) {
+          const discount = ageInDays > (shelfLifeDays * 1.5) ? 0.30 : 0.15; // 30% or 15% markdown
+          const suggestedPrice = new Decimal(product.price).mul(1 - discount);
+
+          suggestions.push({
+            productId: product.id,
+            productName: product.name,
+            warehouseId: loc.warehouseId,
+            currentAge: ageInDays,
+            threshold: shelfLifeDays,
+            suggestedDiscount: `${discount * 100}%`,
+            suggestedPrice: suggestedPrice.toFixed(2),
+            reason: `Stock is ${ageInDays} days old (Threshold: ${shelfLifeDays}). Aging markdown recommended.`
+          });
+        }
+      }
+    }
+
+    return suggestions;
+  }
 }

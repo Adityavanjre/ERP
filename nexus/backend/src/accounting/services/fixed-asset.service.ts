@@ -62,6 +62,62 @@ export class FixedAssetService {
         });
     }
 
+    /**
+     * Forensic Asset Register Importer
+     * Populates the internal asset register without doubling up on Trial Balance entries.
+     * Rule: Assumes Trial Balance has already set the ledger totals.
+     */
+    async importAssets(tenantId: string, csvContent: string) {
+        const lines = csvContent.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cols = lines[i].split(',').map(c => c.trim());
+            const data: any = {};
+            headers.forEach((h, idx) => { data[h] = cols[idx]; });
+
+            try {
+                const name = data.name;
+                const code = data.assetCode || data.code;
+                if (!name || !code) throw new Error("Name and Asset Code are required");
+
+                const existing = await (this.prisma.fixedAsset as any).findFirst({
+                    where: { tenantId, assetCode: code }
+                });
+
+                const payload = {
+                    tenantId,
+                    name,
+                    assetCode: code,
+                    purchaseDate: new Date(data.purchaseDate || new Date()),
+                    purchaseValue: new Decimal(data.purchaseValue || 0),
+                    salvageValue: new Decimal(data.salvageValue || 0),
+                    usefulLife: parseInt(data.usefulLife || "60"), // Default 5 years
+                    accumulatedDepreciation: new Decimal(data.accumulatedDepreciation || 0),
+                    status: (data.status as AssetStatus) || AssetStatus.Active
+                };
+
+                if (existing) {
+                    await (this.prisma.fixedAsset as any).update({
+                        where: { id: existing.id },
+                        data: payload
+                    });
+                } else {
+                    await (this.prisma.fixedAsset as any).create({
+                        data: payload
+                    });
+                }
+                results.imported++;
+            } catch (e: any) {
+                results.failed++;
+                results.errors.push(`Line ${i}: ${e.message}`);
+            }
+        }
+        return results;
+    }
+
     async findAll(tenantId: string) {
         return this.prisma.fixedAsset.findMany({
             where: { tenantId },

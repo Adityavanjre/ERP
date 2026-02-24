@@ -9,10 +9,12 @@ import {
   Query,
   Header,
   Delete,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { SaasAnalyticsService } from '../system/services/saas-analytics.service';
 import { CollaborationService } from '../system/services/collaboration.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -21,14 +23,20 @@ import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+import { Module } from '../common/decorators/module.decorator';
+import { MfaGuard } from '../common/guards/mfa.guard';
+import { MfaRequired } from '../common/decorators/mfa-required.decorator';
+
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard, MfaGuard)
+@Module('accounting')
 @Controller('accounting')
+@UseInterceptors(AuditInterceptor)
 export class AccountingController {
   constructor(
     private readonly accountingService: AccountingService,
     private readonly saas: SaasAnalyticsService,
     private readonly collaboration: CollaborationService,
-  ) {}
+  ) { }
 
   @Get('health-score')
   @Permissions(Permission.ACCESS_HEALTH_CORE)
@@ -220,46 +228,22 @@ export class AccountingController {
     );
   }
 
-  @Post('auditor/lock')
-  @Permissions(Permission.LOCK_MONTH)
-  lockPeriod(@Req() req: any, @Body() body: any) {
-    return this.accountingService.togglePeriodLock(
-      req.user.tenantId,
-      body.month,
-      body.year,
-      req.user.id,
-      'LOCK',
-    );
-  }
-
-  @Post('auditor/unlock')
-  @Permissions(Permission.MANAGE_USERS) // Only Owner/Manager through MANAGE_USERS
-  unlockPeriod(@Req() req: any, @Body() body: any) {
-    return this.accountingService.togglePeriodLock(
-      req.user.tenantId,
-      body.month,
-      body.year,
-      req.user.id,
-      'UNLOCK',
-      body.reason,
-    );
-  }
-
   @Post('setup/coa')
   @Permissions(Permission.MANAGE_USERS)
   initializeAccounts(@Req() req: any) {
     return this.accountingService.initializeTenantAccounts(req.user.tenantId);
   }
 
-  @Delete('invoices/:id')
-  @Permissions(Permission.CREATE_INVOICE)
-  async deleteInvoice(@Req() req: any, @Param('id') id: string) {
-    // 1. Cascade Deletion for Discussion Threads
-    await this.collaboration.deleteCommentsByResource(req.user.tenantId, 'Invoice', id);
-    
-    // 2. Perform actual deletion
-    return this.accountingService.deleteInvoice(req.user.tenantId, id);
+  @Post('import/trial-balance')
+  @Permissions(Permission.MANAGE_USERS)
+  importTrialBalance(@Req() req: any, @Body() body: any) {
+    const csvContent = body.csv || body;
+    return this.accountingService.ledger.importTrialBalance(
+      req.user.tenantId,
+      typeof csvContent === 'string' ? csvContent : '',
+    );
   }
+
   @Post('invoices/:id/cancel')
   @Permissions(Permission.CREATE_INVOICE)
   async cancelInvoice(
@@ -289,6 +273,16 @@ export class AccountingController {
     return this.accountingService.getFixedAssets(req.user.tenantId);
   }
 
+  @Post('import/fixed-assets')
+  @Permissions(Permission.MANAGE_USERS)
+  importFixedAssets(@Req() req: any, @Body() body: any) {
+    const csvContent = body.csv || body;
+    return this.accountingService.importFixedAssets(
+      req.user.tenantId,
+      typeof csvContent === 'string' ? csvContent : '',
+    );
+  }
+
   @Post('fixed-assets')
   @Permissions(Permission.CREATE_INVOICE)
   createFixedAsset(@Req() req: any, @Body() body: any) {
@@ -301,8 +295,42 @@ export class AccountingController {
     return this.accountingService.runMonthlyDepreciation(req.user.tenantId, id);
   }
 
+  @Post('lock-period')
+  @Permissions(Permission.LOCK_MONTH)
+  @MfaRequired()
+  lockPeriod(
+    @Req() req: any,
+    @Body('month') month: number,
+    @Body('year') year: number,
+  ) {
+    return this.accountingService.lockPeriod(
+      req.user.tenantId,
+      month,
+      year,
+      req.user.id,
+    );
+  }
+
+  @Post('unlock-period')
+  @Permissions(Permission.LOCK_MONTH)
+  @MfaRequired()
+  unlockPeriod(
+    @Req() req: any,
+    @Body('month') month: number,
+    @Body('year') year: number,
+    @Body('reason') reason: string,
+  ) {
+    return this.accountingService.unlockPeriod(
+      req.user.tenantId,
+      month,
+      year,
+      reason,
+    );
+  }
+
   @Post('close-year')
   @Permissions(Permission.LOCK_MONTH)
+  @MfaRequired()
   closeFinancialYear(@Req() req: any, @Body('year') year: number) {
     return this.accountingService.closeFinancialYear(
       req.user.tenantId,

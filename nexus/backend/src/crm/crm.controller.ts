@@ -21,11 +21,14 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { Role } from '@prisma/client';
 
+import { Module } from '../common/decorators/module.decorator';
+
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
+@Module('crm')
 @Controller('crm')
 export class CrmController {
-  constructor(private readonly crmService: CrmService) {}
+  constructor(private readonly crmService: CrmService) { }
 
   @Post('customers')
   @Permissions(Permission.MANAGE_USERS)

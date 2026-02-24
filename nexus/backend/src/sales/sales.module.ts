@@ -7,10 +7,13 @@ import { AccountingModule } from '../accounting/accounting.module';
 
 import { CommonModule } from '../common/common.module';
 
+import { InventoryModule } from '../inventory/inventory.module';
+import { PosService } from './services/pos.service';
+
 @Module({
-  imports: [PrismaModule, AccountingModule, CommonModule],
+  imports: [PrismaModule, AccountingModule, CommonModule, InventoryModule],
   controllers: [SalesController],
-  providers: [SalesService],
-  exports: [SalesService],
+  providers: [SalesService, PosService],
+  exports: [SalesService, PosService],
 })
-export class SalesModule {}
+export class SalesModule { }

@@ -9,18 +9,22 @@ import {
   Param,
   UseGuards,
   Request,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { MfaGuard } from '../common/guards/mfa.guard';
+import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, MfaGuard)
+@UseInterceptors(AuditInterceptor)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get()
   @Roles(Role.Owner, Role.Manager)

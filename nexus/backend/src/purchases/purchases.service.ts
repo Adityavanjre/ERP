@@ -5,6 +5,8 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { AccountingService } from '../accounting/accounting.service';
 import { LedgerService } from '../accounting/services/ledger.service';
 import { StandardAccounts } from '../accounting/constants/account-names';
+import { TdsService } from '../accounting/services/tds.service';
+import { TraceService } from '../common/services/trace.service';
 
 @Injectable()
 export class PurchasesService {
@@ -12,6 +14,8 @@ export class PurchasesService {
     private prisma: PrismaService,
     private accounting: AccountingService,
     private ledger: LedgerService,
+    private tds: TdsService,
+    private readonly traceService: TraceService,
   ) { }
 
   // --- Suppliers ---
@@ -76,6 +80,90 @@ export class PurchasesService {
       where: { id, tenantId },
       data,
     });
+  }
+
+  /**
+   * Forensic Bulk Import for Suppliers
+   * Rule: No silent liabilities.
+   */
+  async importSuppliers(tenantId: string, csvContent: string) {
+    const lines = csvContent.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+    let aggregateAP = 0;
+
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      const cols = lines[i].split(',').map(c => c.trim());
+      const data: any = {};
+      headers.forEach((h, idx) => { data[h] = cols[idx]; });
+
+      try {
+        await this.prisma.$transaction(async (tx) => {
+          const name = data.name;
+          const email = data.email;
+          if (!name) throw new Error("Supplier Name is required");
+
+          const existing = await tx.supplier.findFirst({
+            where: { tenantId, name, isDeleted: false }
+          });
+
+          let supplierId = existing?.id;
+          const supplierPayload = {
+            name,
+            email,
+            phone: data.phone || '',
+            company: data.company || '',
+            address: data.address || '',
+            gstin: data.gstin || null,
+            isDeleted: false
+          };
+
+          if (existing) {
+            await tx.supplier.update({ where: { id: existing.id }, data: supplierPayload });
+          } else {
+            const newS = await tx.supplier.create({ data: { ...supplierPayload, tenantId } });
+            supplierId = newS.id;
+          }
+
+          const ob = parseFloat(data.openingBalance) || 0;
+          if (ob !== 0 && supplierId) {
+            const existingOB = await tx.supplierOpeningBalance.findFirst({ where: { tenantId, supplierId } });
+            if (!existingOB) {
+              await tx.supplierOpeningBalance.create({
+                data: { tenantId, supplierId, amount: ob, description: 'Bulk Import', date: new Date(), correlationId: this.traceService.getCorrelationId() } as any
+              });
+              aggregateAP += ob;
+            }
+          }
+        });
+        results.imported++;
+      } catch (e: any) {
+        results.failed++;
+        results.errors.push(`Row ${i}: ${e.message}`);
+      }
+    }
+
+    // Ledger Sync: Restore Liability integrity
+    if (aggregateAP !== 0) {
+      const apAcc = await this.prisma.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
+      const obAcc = await this.prisma.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+
+      if (apAcc && obAcc) {
+        await this.ledger.createJournalEntry(tenantId, {
+          date: new Date().toISOString(),
+          description: `Bulk Import Sync: ${results.imported} Suppliers`,
+          reference: 'SYS-IMPORT-SUPP',
+          transactions: [
+            { accountId: obAcc.id, type: 'Debit', amount: Math.abs(aggregateAP), description: 'Bulk OB' },
+            { accountId: apAcc.id, type: 'Credit', amount: Math.abs(aggregateAP), description: 'Bulk OB' }
+          ],
+          correlationId: this.traceService.getCorrelationId()
+        });
+      }
+    }
+
+    return results;
   }
 
   // --- Purchase Orders ---
@@ -157,6 +245,7 @@ export class PurchasesService {
           tenantId,
           supplierId,
           orderNumber,
+          tdsSection: poData.tdsSection,
           totalAmount: grandTotal,
           totalTaxable: this.ledger.round2(totalTaxable),
           totalGST: this.ledger.round2(totalGST),
@@ -306,15 +395,16 @@ export class PurchasesService {
                   quantity: newQty,
                   type: 'IN', // MovementType.IN
                   reference: po.orderNumber,
-                  notes: `PO Receipt`
-                }
+                  notes: `PO Receipt`,
+                  correlationId: this.traceService.getCorrelationId()
+                } as any
               });
             }
             // -------------------------------------------
           }
         }
 
-        // B. Financial Journal (Dr Inventory, Dr GST Receivable [ITC], Cr Accounts Payable)
+        // B. Financial Journal (Dr Inventory, Dr GST Receivable [ITC], Cr Accounts Payable, Cr TDS Payable)
         const inventoryAccount = await tx.account.findFirst({
           where: { tenantId, name: StandardAccounts.INVENTORY_ASSET },
         });
@@ -322,24 +412,57 @@ export class PurchasesService {
           where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
         });
         const itcAccount = await tx.account.findFirst({
-          where: { tenantId, name: StandardAccounts.GST_RECEIVABLE }, // Professional ITC Account
+          where: { tenantId, name: StandardAccounts.GST_RECEIVABLE },
         });
 
         if (inventoryAccount && apAccount) {
-          const taxableValue = new Decimal(po.totalTaxable || 0);
+          const taxableValue = new Decimal(po.totalAmount).sub(new Decimal(po.totalGST || 0));
           const taxAmount = new Decimal(po.totalGST || 0);
           const totalAmount = new Decimal(po.totalAmount);
 
+          // TDS Logic
+          let tdsAmount = new Decimal(0);
+          let netAmount = totalAmount;
+          let ruleId: string | undefined;
+
+          const supplier = await tx.supplier.findFirst({ where: { id: po.supplierId, tenantId } });
+          const poAny = po as any;
+          const activeTdsSection = poAny.tdsSection || (supplier as any)?.defaultTdsSection;
+
+          if (activeTdsSection) {
+            const res = await this.tds.calculateTds(tenantId, po.supplierId, activeTdsSection, totalAmount.toNumber());
+            tdsAmount = res.tdsAmount;
+            netAmount = res.netAmount;
+            ruleId = res.ruleId;
+          }
+
           const transactions = [
             { accountId: inventoryAccount.id, type: 'Debit' as any, amount: taxableValue.toNumber(), description: `Stock Value - ${po.orderNumber}` },
-            { accountId: apAccount.id, type: 'Credit' as any, amount: totalAmount.toNumber(), description: `Vendor Liability - ${po.orderNumber}` },
+            { accountId: apAccount.id, type: 'Credit' as any, amount: netAmount.toNumber(), description: `Vendor Liability (Net of TDS) - ${po.orderNumber}` },
           ];
 
           if (itcAccount && taxAmount.greaterThan(0)) {
             transactions.push({ accountId: itcAccount.id, type: 'Debit' as any, amount: taxAmount.toNumber(), description: `ITC Claim - ${po.orderNumber}` });
-          } else if (!itcAccount && taxAmount.greaterThan(0)) {
-            // Fallback: If no ITC account, book tax to inventory cost (Classic mode)
-            transactions[0].amount = totalAmount.toNumber();
+          }
+
+          if (tdsAmount.greaterThan(0)) {
+            const tdsPayableAccount = await tx.account.findFirst({
+              where: { tenantId, name: StandardAccounts.TDS_PAYABLE },
+            });
+            if (!tdsPayableAccount) throw new Error(`Missing '${StandardAccounts.TDS_PAYABLE}' account.`);
+            transactions.push({ accountId: tdsPayableAccount.id, type: 'Credit' as any, amount: tdsAmount.toNumber(), description: `TDS Deducted (${poAny.tdsSection})` });
+
+            // Record TDS Transaction
+            if (ruleId) {
+              await this.tds.recordTdsTransaction(tenantId, {
+                ruleId,
+                supplierId: po.supplierId,
+                amount: totalAmount,
+                tdsAmount,
+                purchaseOrderId: po.id,
+                date: new Date(),
+              }, tx);
+            }
           }
 
           // Use LedgerService for atomic update and balance synchronization
@@ -347,8 +470,15 @@ export class PurchasesService {
             date: new Date().toISOString(),
             description: `Purchase Receipt: ${po.orderNumber}`,
             reference: po.orderNumber,
-            transactions
+            transactions,
+            correlationId: this.traceService.getCorrelationId()
           }, tx);
+
+          // Update PO with TDS info
+          await (tx.purchaseOrder as any).update({
+            where: { id: po.id },
+            data: { tdsAmount, netAmount, status } as any
+          });
         } else {
           throw new Error(
             "Missing Financial Accounts: Ensure 'Inventory Asset' and 'Accounts Payable' exist.",
@@ -389,8 +519,9 @@ export class PurchasesService {
                 quantity: item.quantity,
                 type: 'OUT',
                 reference: `CAN-${po.orderNumber}`,
-                notes: `PO Cancellation Reversal`
-              }
+                notes: `PO Cancellation Reversal`,
+                correlationId: this.traceService.getCorrelationId()
+              } as any
             });
           }
         }
@@ -418,7 +549,8 @@ export class PurchasesService {
             date: new Date().toISOString(),
             description: `Cancellation of Purchase #${po.orderNumber}`,
             reference: `CAN-${po.orderNumber}`,
-            transactions
+            transactions,
+            correlationId: this.traceService.getCorrelationId()
           }, tx);
         }
       }

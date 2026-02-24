@@ -17,7 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "audit:financials": "ts-node scripts/audit-financials.ts",
+    "audit:migrations": "ts-node scripts/enforce-migration-tags.ts",
+    "audit:pre-deploy": "npm run audit:migrations && npm run audit:financials",
+    "migrate:rollback": "ts-node scripts/rollback-last-migration.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",
@@ -45,9 +49,11 @@
     "helmet": "^8.1.0",
     "nest-winston": "^1.10.2",
     "nodemailer": "^8.0.1",
+    "otplib": "^13.3.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "prisma": "^6.19.2",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "streamifier": "^0.1.1",
@@ -66,6 +72,7 @@
     "@types/node": "^22.19.11",
     "@types/nodemailer": "^7.0.10",
     "@types/passport-jwt": "^4.0.1",
+    "@types/qrcode": "^1.5.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",

@@ -5,13 +5,17 @@ import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LedgerService } from './ledger.service';
 import { StandardAccounts } from '../constants/account-names';
+import { TdsService } from './tds.service';
+import { TraceService } from '../../common/services/trace.service';
 
 @Injectable()
 export class PaymentService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
-  ) {}
+    private tds: TdsService,
+    private readonly traceService: TraceService,
+  ) { }
 
   async createPayment(tenantId: string, data: CreatePaymentDto) {
     if (!data.customerId && !data.supplierId) {
@@ -27,7 +31,7 @@ export class PaymentService {
 
       if (data.idempotencyKey) {
         const existing = await tx.payment.findFirst({
-          where: { 
+          where: {
             tenantId,
             idempotencyKey: data.idempotencyKey
           },
@@ -74,6 +78,7 @@ export class PaymentService {
             reference: data.reference,
             notes: data.notes,
             idempotencyKey: data.idempotencyKey,
+            correlationId: data.correlationId || this.traceService.getCorrelationId(),
           },
         });
 
@@ -96,6 +101,7 @@ export class PaymentService {
             { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
             { accountId: arAccount.id, type: 'Credit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
           ],
+          correlationId: payment.correlationId,
         }, tx);
 
         await tx.auditLog.create({
@@ -108,27 +114,76 @@ export class PaymentService {
         });
       } else {
         if (!apAccount) throw new BadRequestException("Missing 'Accounts Payable' account.");
+
+        // TDS Logic
+        let tdsAmount = new Decimal(0);
+        let netAmount = new Decimal(data.amount);
+        let ruleId: string | undefined;
+
+        const supplier = await tx.supplier.findFirst({
+          where: { id: data.supplierId!, tenantId }
+        });
+        const activeTdsSection = data.tdsSection || (supplier as any)?.defaultTdsSection;
+
+        if (activeTdsSection) {
+          const res = await this.tds.calculateTds(tenantId, data.supplierId!, activeTdsSection, data.amount);
+          tdsAmount = res.tdsAmount;
+          netAmount = res.netAmount;
+          ruleId = res.ruleId;
+        }
+
         payment = await tx.payment.create({
           data: {
             tenantId,
             supplierId: data.supplierId,
             amount: data.amount,
+            tdsAmount: tdsAmount as any,
+            netAmount: netAmount as any,
             date: new Date(data.date || new Date()),
             mode: data.mode,
             reference: data.reference,
             notes: data.notes,
             idempotencyKey: data.idempotencyKey,
-          },
+            correlationId: data.correlationId || this.traceService.getCorrelationId(),
+          } as any,
         });
+
+        if (ruleId && tdsAmount.greaterThan(0)) {
+          await this.tds.recordTdsTransaction(tenantId, {
+            ruleId,
+            supplierId: data.supplierId!,
+            amount: new Decimal(data.amount),
+            tdsAmount,
+            paymentId: payment.id,
+            date: payment.date,
+          }, tx);
+        }
+
+        const tdsPayableAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.TDS_PAYABLE },
+        });
+
+        const ledgerTransactions = [
+          { accountId: apAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Supplier Payment' },
+          { accountId: bankAccount.id, type: 'Credit', amount: netAmount.toNumber(), description: 'Supplier Payment' },
+        ];
+
+        if (tdsAmount.greaterThan(0)) {
+          if (!tdsPayableAccount) throw new BadRequestException(`Missing '${StandardAccounts.TDS_PAYABLE}' account.`);
+          ledgerTransactions.push({
+            accountId: tdsPayableAccount.id,
+            type: 'Credit' as any,
+            amount: tdsAmount.toNumber(),
+            description: `TDS Deducted (${data.tdsSection})`,
+          });
+        }
 
         await this.ledger.createJournalEntry(tenantId, {
           date: payment.date.toISOString(),
           description: `Vendor Payment: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
           reference: payment.reference || `VEND-PAY-${payment.id.slice(0, 8)}`,
-          transactions: [
-            { accountId: apAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Supplier Payment' },
-            { accountId: bankAccount.id, type: 'Credit', amount: new Decimal(data.amount).toNumber(), description: 'Supplier Payment' },
-          ],
+          correlationId: payment.correlationId as any,
+          transactions: ledgerTransactions as any,
         }, tx);
       }
 
@@ -158,30 +213,31 @@ export class PaymentService {
         await this.ledger.createJournalEntry(tenantId, {
           date: new Date().toISOString(),
           description: `Reversal: ${journal.description} (Reason: ${reason})`,
-          reference: `CAN-${journal.reference || pay.id.slice(0,8)}`,
+          reference: `CAN-${journal.reference || pay.id.slice(0, 8)}`,
           transactions: journal.transactions.map(t => ({
             accountId: t.accountId,
             type: (t.type === 'Debit' ? 'Credit' : 'Debit') as any,
             amount: new Decimal(t.amount).toNumber(),
             description: `Reversal of ${t.description}`
-          }))
+          })),
+          correlationId: this.traceService.getCorrelationId(),
         }, tx);
       } else {
-         // Fallback if no journal found (direct balance reversal)
-         const bankAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: { contains: 'Bank' } } });
-         if (pay.customerId) {
-            const arAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: 'Accounts Receivable' } });
-            if (bankAccount && arAccount) {
-               await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { decrement: pay.amount } } });
-               await tx.account.updateMany({ where: { id: arAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
-            }
-         } else if (pay.supplierId) {
-            const apAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Liability, name: 'Accounts Payable' } });
-            if (apAccount && bankAccount) {
-               await tx.account.updateMany({ where: { id: apAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
-               await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
-            }
-         }
+        // Fallback if no journal found (direct balance reversal)
+        const bankAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: { contains: 'Bank' } } });
+        if (pay.customerId) {
+          const arAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: 'Accounts Receivable' } });
+          if (bankAccount && arAccount) {
+            await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { decrement: pay.amount } } });
+            await tx.account.updateMany({ where: { id: arAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+          }
+        } else if (pay.supplierId) {
+          const apAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Liability, name: 'Accounts Payable' } });
+          if (apAccount && bankAccount) {
+            await tx.account.updateMany({ where: { id: apAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+            await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+          }
+        }
       }
 
       // 3. Update Invoice Outstanding if linked
@@ -189,17 +245,22 @@ export class PaymentService {
         const newAmountPaid = new Decimal(pay.invoice.amountPaid).sub(new Decimal(pay.amount));
         await tx.invoice.update({
           where: { id: pay.invoiceId },
-          data: { 
-            amountPaid: newAmountPaid, 
-            status: newAmountPaid.lessThanOrEqualTo(0) ? InvoiceStatus.Unpaid : InvoiceStatus.Partial 
+          data: {
+            amountPaid: newAmountPaid,
+            status: newAmountPaid.lessThanOrEqualTo(0) ? InvoiceStatus.Unpaid : InvoiceStatus.Partial
           }
         });
       }
 
       // 4. Mark Payment as Cancelled
-      return tx.payment.update({
+      await tx.payment.update({
         where: { id },
         data: { notes: `CANCELLED: ${reason} (Original: ${pay.notes || ''})`.trim() }
+      });
+
+      // 5. Cleanup TDS Transactions to reverse threshold calculation
+      return (tx as any).tdsTransaction.deleteMany({
+        where: { tenantId, paymentId: id }
       });
     });
   }

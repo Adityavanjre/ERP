@@ -295,6 +295,10 @@ export class AccountingService {
     return this.fixedAsset.findAll(tenantId);
   }
 
+  async importFixedAssets(tenantId: string, csvContent: string) {
+    return this.fixedAsset.importAssets(tenantId, csvContent);
+  }
+
   async createFixedAsset(tenantId: string, data: any) {
     return this.fixedAsset.create(tenantId, data);
   }
@@ -399,13 +403,71 @@ export class AccountingService {
         },
       });
 
+      // 3. Lock all months in the closed year to prevent post-close tampering
+      for (let m = 1; m <= 12; m++) {
+        await this.lockPeriod(tenantId, m, year, userId, tx);
+      }
+
       return {
         success: true,
         year,
         netProfit: netProfit.toFixed(2),
-        message: `Financial Year ${year} closed successfully. All P&L balances moved to Retained Earnings.`,
+        message: `Financial Year ${year} closed successfully. All P&L balances moved to Retained Earnings and all periods locked.`,
       };
     });
+  }
+
+  async lockPeriod(tenantId: string, month: number, year: number, userId: string, tx?: any) {
+    const client = tx || this.prisma;
+    const lock = await client.periodLock.upsert({
+      where: {
+        tenantId_month_year: { tenantId, month, year },
+      },
+      update: {
+        isLocked: true,
+        lockedBy: userId,
+        lockedAt: new Date(),
+      },
+      create: {
+        tenantId,
+        month,
+        year,
+        isLocked: true,
+        lockedBy: userId,
+        lockedAt: new Date(),
+      },
+    });
+
+    // Invalidate Cache for this specific period in LedgerService
+    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
+    await (this.ledger as any).cacheManager.delete(cacheKey);
+
+    return lock;
+  }
+
+  async unlockPeriod(tenantId: string, month: number, year: number, reason: string) {
+    if (!reason) {
+      throw new BadRequestException('Compliance Requirement: A reason must be provided for reopening a locked period.');
+    }
+
+    const lock = await this.prisma.periodLock.update({
+      where: {
+        tenantId_month_year: { tenantId, month, year },
+      },
+      data: {
+        isLocked: false,
+        lockedAt: null,
+        lockedBy: null,
+        reopenedAt: new Date(),
+        reopenReason: reason,
+      },
+    });
+
+    // Invalidate Cache
+    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
+    await (this.ledger as any).cacheManager.delete(cacheKey);
+
+    return lock;
   }
 }
 
