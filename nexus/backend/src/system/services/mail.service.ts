@@ -5,11 +5,11 @@ import { ConfigService } from '@nestjs/config';
 export class MailService {
   private readonly logger = new Logger(MailService.name);
 
-  constructor(private config: ConfigService) {}
+  constructor(private config: ConfigService) { }
 
   async sendPasswordResetEmail(to: string, token: string, userName: string) {
     const resetUrl = `${this.config.get<string>('NEXUS_FRONTEND_URL')}/reset-password?token=${token}`;
-    
+
     const html = `
       <div style="font-family: sans-serif; background-color: #0f172a; color: #f8fafc; padding: 40px; border-radius: 8px;">
         <h2 style="color: #38bdf8;">Klypso Nexus Password Recovery</h2>
@@ -27,8 +27,9 @@ export class MailService {
     const resendApiKey = this.config.get<string>('RESEND_API_KEY');
 
     if (!resendApiKey) {
-      this.logger.warn(`No RESEND_API_KEY found. Mock sending email to ${to}`);
-      return true; // Pretend it sent for testing
+      this.logger.warn(`No RESEND_API_KEY found. SIMULATING email to ${to}`);
+      // In 100% Offline Testability Mode, we ensure the "Send" is traceable
+      return true;
     }
 
     try {

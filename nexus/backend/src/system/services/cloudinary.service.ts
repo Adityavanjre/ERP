@@ -13,6 +13,15 @@ export class CloudinaryService {
   }
 
   uploadFile(file: Express.Multer.File): Promise<any> {
+    if (!process.env.CLOUDINARY_API_KEY) {
+      console.log(`[SIMULATION] Cloudinary Upload: ${file.originalname} (${file.size} bytes)`);
+      return Promise.resolve({
+        url: `https://simulation-storage.local/${file.originalname}`,
+        public_id: `sim_${Date.now()}`,
+        secure_url: `https://simulation-storage.local/${file.originalname}`
+      });
+    }
+
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         (error, result) => {
