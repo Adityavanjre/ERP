@@ -17,7 +17,7 @@ config.resolver.nodeModulesPaths = [
     path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-// 3. Force Metro to resolve modules from the project's node_modules first
-config.resolver.disableHierarchicalLookup = true;
+// 3. Revert dangerous override as per expo-doctor advice
+config.resolver.disableHierarchicalLookup = false;
 
 module.exports = config;
