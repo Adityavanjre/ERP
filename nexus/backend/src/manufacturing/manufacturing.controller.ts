@@ -18,6 +18,7 @@ import { Permission } from '../common/constants/permissions';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { Module } from '../common/decorators/module.decorator';
+import { MobileAction } from '../common/decorators/mobile-action.decorator';
 
 import { AiService } from '../system/services/ai.service';
 
@@ -103,6 +104,20 @@ export class ManufacturingController {
     @Body('status') status: any,
   ) {
     return this.mfgService.updateWorkOrderStatus(user.tenantId, id, status);
+  }
+
+  @Post('work-orders/:id/approve')
+  @Permissions(Permission.ADJUST_STOCK)
+  @MobileAction('APPROVE_WO')
+  approveWO(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.mfgService.approveWorkOrder(user.tenantId, id, user);
+  }
+
+  @Post('work-orders/:id/reject')
+  @Permissions(Permission.ADJUST_STOCK)
+  @MobileAction('REJECT_WO')
+  rejectWO(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.mfgService.rejectWorkOrder(user.tenantId, id, user);
   }
 
   @Get('work-orders/:id/shortages')

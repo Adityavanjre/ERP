@@ -12,6 +12,7 @@ import * as bcrypt from 'bcryptjs';
 import { GoogleAuthService } from './google-auth.service';
 import { LoginDto, RegisterDto, GoogleLoginDto, OnboardingDto, CreateWorkspaceDto } from './dto/auth.dto';
 import { TenantType, PlanType, Role, Prisma, AuthProvider } from '@prisma/client';
+import { AccessChannel } from '@nexus/shared';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { LoggingService } from '../common/services/logging.service';
@@ -167,7 +168,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto, ipAddress?: string) {
+  async login(dto: LoginDto, channel: AccessChannel, ipAddress?: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: {
@@ -216,14 +217,14 @@ export class AuthService {
       if (!userAny.mfaEnabled) {
         return {
           requiresMfaSetup: true,
-          setupToken: this.jwtService.sign({ sub: user.id, type: 'mfa_setup' }),
+          setupToken: this.jwtService.sign({ sub: user.id, type: 'mfa_setup', channel }),
           user: { id: user.id, email: user.email }
         };
       }
 
       return {
         requiresMfa: true,
-        tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge' }),
+        tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge', channel }),
         user: { id: user.id, email: user.email }
       };
     }
@@ -232,14 +233,14 @@ export class AuthService {
       userId: user.id,
       action: 'USER_LOGIN_SUCCESS',
       resource: 'Identity',
-      details: { method: 'Email', memberships: user.memberships.length, role: hasSensitiveRole ? 'Administrative' : 'Standard' },
+      details: { method: 'Email', memberships: user.memberships.length, role: hasSensitiveRole ? 'Administrative' : 'Standard', channel },
       ipAddress,
     });
 
-    return this.generateAuthResponse(user);
+    return this.generateAuthResponse(user, false, channel);
   }
 
-  async googleLogin(dto: GoogleLoginDto) {
+  async googleLogin(dto: GoogleLoginDto, channel: AccessChannel) {
     const googleUser = await this.googleAuth.verifyIdToken(dto.idToken);
 
     let user = await this.prisma.user.findUnique({
@@ -304,13 +305,13 @@ export class AuthService {
       userId: finalUser.id,
       action: 'USER_LOGIN',
       resource: 'Identity',
-      details: { method: 'Google', isNewUser: isNewUser },
+      details: { method: 'Google', isNewUser: isNewUser, channel },
     });
 
-    return this.generateAuthResponse(finalUser);
+    return this.generateAuthResponse(finalUser, false, channel);
   }
 
-  private generateAuthResponse(user: any, isMfaVerifiedOverride?: boolean) {
+  private generateAuthResponse(user: any, isMfaVerifiedOverride?: boolean, channel: AccessChannel = 'MOBILE') {
     // Generate an "Identity Token" (No tenantId scope yet)
     const userAny = user as any;
     const payload = {
@@ -320,6 +321,7 @@ export class AuthService {
       jti: crypto.randomBytes(16).toString('hex'),
       isMfaVerified: isMfaVerifiedOverride !== undefined ? isMfaVerifiedOverride : !!userAny.isMfaVerified,
       mfaEnabled: !!userAny.mfaEnabled,
+      channel: channel || 'MOBILE',
     };
 
     return {
@@ -341,7 +343,7 @@ export class AuthService {
     };
   }
 
-  async selectTenant(userId: string, tenantId: string, isMfaVerified: boolean = false) {
+  async selectTenant(userId: string, tenantId: string, isMfaVerified: boolean = false, channel: AccessChannel = 'MOBILE') {
     // 1. Verify membership (Rule B)
     const membership = await this.prisma.tenantUser.findUnique({
       where: { userId_tenantId: { userId, tenantId } },
@@ -377,6 +379,7 @@ export class AuthService {
       industry: membership.tenant.industry,
       tenantType: membership.tenant.type,
       isMfaVerified: isMfaVerified || false,
+      channel: channel || 'MOBILE',
     };
 
     await this.logging.log({
@@ -406,6 +409,14 @@ export class AuthService {
 
     if (!membership || membership.role !== Role.Owner) {
       throw new ForbiddenException('Only the company owner can complete onboarding.');
+    }
+
+    const currentTenant = await this.prisma.tenant.findUnique({
+      where: { id: dto.tenantId },
+    });
+
+    if (currentTenant?.isOnboarded) {
+      throw new ForbiddenException('Compliance Violation: Industry vertical is locked after onboarding. Mid-flight mutation is forbidden to prevent accounting drift.');
     }
 
     // 2. Update Tenant Info (Rule C)
@@ -645,7 +656,7 @@ export class AuthService {
 
       await this.resetLoginAttempts(user.id);
 
-      return this.generateAuthResponse(user, true);
+      return this.generateAuthResponse(user, true, payload.channel);
     } catch (e) {
       if (e instanceof UnauthorizedException && e.message === 'Invalid MFA token') {
         // Already logged above

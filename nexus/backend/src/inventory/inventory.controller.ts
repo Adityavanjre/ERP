@@ -21,6 +21,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { TenantId } from '../common/decorators/tenant-id.decorator';
 import { Module } from '../common/decorators/module.decorator';
+import { MobileAction } from '../common/decorators/mobile-action.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('inventory')
@@ -113,6 +114,7 @@ export class InventoryController {
 
   @Get('products')
   @Permissions(Permission.VIEW_PRODUCTS)
+  @MobileAction('VIEW_PRODUCTS')
   findAll(
     @Req() req: any,
     @Query('page') page?: number,

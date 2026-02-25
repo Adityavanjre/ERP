@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LayoutGrid, Download, Trash2, ExternalLink, ShieldCheck, CheckCircle, Package, Zap } from "lucide-react";
+import { LayoutGrid, Download, Trash2, ExternalLink, ShieldCheck, CheckCircle, Package, Zap, Smartphone, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -80,35 +80,70 @@ export default function AppsMarketplace() {
                 </Button>
             </div>
 
-            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500 mt-4">
-                <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
-                    <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
-                        <Zap className="h-5 w-5 text-blue-600" />
-                        Business Blueprints
-                    </CardTitle>
-                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Install pre-configured business setups in a single click</CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-4 pt-8">
-                    {["Manufacturing", "Retail", "Wholesale", "Services"].map(type => (
-                        <Button
-                            key={type}
-                            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
-                            onClick={async () => {
-                                try {
-                                    await api.post("system/apps/preset", { type });
-                                    toast.success(`${type} blueprint sequence initiated`);
-                                    syncAppData(true);
-                                    window.dispatchEvent(new CustomEvent('system-apps-updated'));
-                                } catch (err) {
-                                    toast.error("Blueprint installation failed");
-                                }
-                            }}
-                        >
-                            {type} Profile
-                        </Button>
-                    ))}
-                </CardContent>
-            </Card>
+            <div className="grid gap-8 lg:grid-cols-2">
+                <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-emerald-500">
+                    <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-6">
+                        <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
+                            <Smartphone className="h-5 w-5 text-emerald-600" />
+                            Nexus Mobile Gateway
+                        </CardTitle>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Direct Enterprise Rollout • Build 1.0.0 (Hardened)</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
+                        <div className="flex-1 space-y-4">
+                            <p className="text-slate-600 font-medium leading-relaxed">
+                                Access your ERP from the shop floor with the native Android application.
+                                Securely anchored to your enterprise identity.
+                            </p>
+                            <div className="flex gap-4">
+                                <Button
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-emerald-500/20"
+                                    onClick={() => {
+                                        toast.success("Initializing Secure Download...");
+                                        window.open("/nexus-gateway-v1.apk", "_blank");
+                                    }}
+                                >
+                                    <Download className="mr-2 h-5 w-5" /> Download APK
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="hidden md:flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <QrCode className="h-24 w-24 text-slate-300 mb-2" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Scan to Install</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500">
+                    <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+                        <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
+                            <Zap className="h-5 w-5 text-blue-600" />
+                            Business Blueprints
+                        </CardTitle>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Install pre-configured business setups in a single click</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap gap-4 pt-8">
+                        {["Manufacturing", "Retail", "Wholesale", "Services"].map(type => (
+                            <Button
+                                key={type}
+                                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
+                                onClick={async () => {
+                                    try {
+                                        await api.post("system/apps/preset", { type });
+                                        toast.success(`${type} blueprint sequence initiated`);
+                                        syncAppData(true);
+                                        window.dispatchEvent(new CustomEvent('system-apps-updated'));
+                                    } catch (err) {
+                                        toast.error("Blueprint installation failed");
+                                    }
+                                }}
+                            >
+                                {type} Profile
+                            </Button>
+                        ))}
+                    </CardContent>
+                </Card>
+            </div>
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {apps.map((app) => (

@@ -1,0 +1,25 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "ES2023",
+        "lib": [
+            "ES2023"
+        ],
+        "types": [
+            "node"
+        ],
+        "noImplicitAny": true,
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@nexus/shared": [
+                "../../packages/shared/src/index"
+            ]
+        }
+    },
+    "include": [
+        "**/*"
+    ],
+    "exclude": []
+}

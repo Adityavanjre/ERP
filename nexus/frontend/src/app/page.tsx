@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe, Cpu, CheckCircle2, Settings2 } from "lucide-react";
+import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe, Cpu, CheckCircle2, Settings2, Smartphone, Download } from "lucide-react";
 import { KlypsoLogo } from "@/components/brand/logo";
 import Script from "next/script";
 import { InternalLink } from "@/components/seo/internal-link";
@@ -83,6 +83,9 @@ export default function Home() {
           </Link>
           <Link className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors hidden md:block" href="#solutions">
             Solutions
+          </Link>
+          <Link className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors hidden md:block font-bold flex items-center gap-1" href="#mobile">
+            <Smartphone className="h-4 w-4" /> Mobile App
           </Link>
           <div className="h-4 w-px bg-slate-200 hidden md:block" />
           <Link href="/login">
@@ -210,6 +213,58 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Mobile Download Section */}
+        <section id="mobile" className="py-24 bg-slate-900 border-y border-slate-800 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -z-0" />
+          <div className="container px-4 md:px-6 mx-auto relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-16">
+              <div className="flex-1 text-center lg:text-left space-y-8">
+                <div className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm font-bold text-blue-400 shadow-sm">
+                  <Smartphone className="mr-2 h-4 w-4" />
+                  Nexus Mobile Gateway
+                </div>
+                <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-tight">
+                  Take the shop floor <br />
+                  <span className="text-blue-500">In Your Pocket.</span>
+                </h2>
+                <p className="max-w-[600px] text-slate-400 text-lg font-medium">
+                  The native companion for Nexus ERP. Securely view inventory, track production, and manage sales drafts while on the move.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <Link href="/nexus-gateway-v1.apk" target="_blank">
+                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg shadow-lg shadow-blue-500/20">
+                      <Download className="mr-2 h-5 w-5" /> Download for Android
+                    </Button>
+                  </Link>
+                </div>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
+                  Build 1.0.0 • Hardened Enterprise Edition
+                </p>
+              </div>
+              <div className="flex-1 w-full max-w-[400px]">
+                <div className="aspect-[9/18] bg-slate-800 rounded-[3rem] border-8 border-slate-700 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute inset-x-0 top-0 h-8 bg-slate-700 flex items-center justify-center">
+                    <div className="w-16 h-1 bg-slate-600 rounded-full" />
+                  </div>
+                  <div className="p-6 pt-12 space-y-6">
+                    <div className="h-4 w-3/4 bg-slate-700 rounded-lg animate-pulse" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="aspect-square bg-slate-700/50 rounded-2xl animate-pulse" />
+                      <div className="aspect-square bg-slate-700/50 rounded-2xl animate-pulse" />
+                    </div>
+                    <div className="h-32 w-full bg-slate-700/50 rounded-2xl animate-pulse" />
+                    <div className="h-4 w-1/2 bg-slate-700 rounded-lg animate-pulse" />
+                    <div className="h-20 w-full bg-blue-500/10 border border-blue-500/20 rounded-2xl" />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="px-6 py-3 bg-white text-slate-900 rounded-full font-black text-sm uppercase">Mobile Governance Layer</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
@@ -230,6 +285,7 @@ export default function Home() {
                 <li><InternalLink>Construction</InternalLink></li>
                 <li><InternalLink>Logistics</InternalLink></li>
                 <li><InternalLink>Retail</InternalLink></li>
+                <li><Link href="#mobile" className="text-blue-500 font-bold">Mobile App</Link></li>
               </ul>
             </div>
             <div>

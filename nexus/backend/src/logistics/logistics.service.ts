@@ -12,10 +12,23 @@ export class LogisticsService {
 
     // --- Fleet Management ---
     async registerVehicle(tenantId: string, data: any) {
+        // --- INDUSTRY INVARIANT: LOGISTICS SCOPE ---
+        const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+        const industry = tenant?.industry || tenant?.type;
+
+        if (industry !== 'Logistics' && industry !== 'Manufacturing' && industry !== 'Construction') {
+            throw new BadRequestException('Vertical Compliance Violation: Vehicle registration is restricted to Logistics, Manufacturing, or Construction verticals.');
+        }
+
+        // --- SAFETY INVARIANT: REGISTRATION FORMAT ---
+        if (!data.registrationNo || data.registrationNo.length < 5) {
+            throw new BadRequestException('Compliance Error: Invalid registration number. Must be a valid legal registration for fleet tracking.');
+        }
+
         return (this.prisma as any).vehicle.create({
             data: {
                 tenantId,
-                registrationNo: data.registrationNo,
+                registrationNo: data.registrationNo.toUpperCase(),
                 model: data.model,
                 type: data.type,
                 capacity: data.capacity,

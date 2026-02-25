@@ -3,11 +3,13 @@ import {
   ConflictException,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
 import { TraceService } from '../common/services/trace.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Industry } from '@nexus/shared';
 
 import { BillingService } from '../system/services/billing.service';
 import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
@@ -26,6 +28,19 @@ export class InventoryService {
   async createProduct(tenantId: string, data: any & { correlationId?: string }, userId?: string) {
     // 0. Subscription Governance: Quota Check
     await this.billing.validateQuota(tenantId, 'maxProducts');
+
+    // --- INDUSTRY INVARIANT: NBFC BLOCK ---
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const industry = tenant?.industry || tenant?.type;
+
+    if (industry === Industry.NBFC) {
+      throw new ForbiddenException('Vertical Compliance Violation: NBFC tenants are legally restricted from creating physical inventory items. Please use the NBFC Loan Management module for loan products.');
+    }
+
+    // --- INDUSTRY INVARIANT: HEALTHCARE SAFETY ---
+    if (industry === Industry.Healthcare && !data.expiryDate && !data.isNonExpiring) {
+      throw new BadRequestException('Compliance Requirement: Healthcare vertical requires an Expiry Date (or isNonExpiring flag) for all medical/pharmacy items to ensure patient safety.');
+    }
 
     const { stock, warehouseId, ...productData } = data;
 
@@ -291,6 +306,13 @@ export class InventoryService {
 
         const wh = await tx.warehouse.findFirst({ where: { tenantId } });
         if (!wh) throw new BadRequestException("Import Failed: No warehouse found. Create at least one warehouse first.");
+
+        // --- INDUSTRY INVARIANT: NBFC BLOCK ---
+        const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
+        const industry = tenant?.industry || tenant?.type;
+        if (industry === Industry.NBFC) {
+          throw new ForbiddenException('Migration Blocked: NBFC tenants cannot import physical inventory. Integrity Drift detected.');
+        }
 
         let totalOpeningValue = new Decimal(0);
 

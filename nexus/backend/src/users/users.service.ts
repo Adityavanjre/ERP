@@ -3,11 +3,11 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
 import * as bcrypt from 'bcryptjs';
-import { Role } from '@prisma/client';
+import { Role } from '@nexus/shared';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(tenantId: string) {
     const memberships = await this.prisma.tenantUser.findMany({

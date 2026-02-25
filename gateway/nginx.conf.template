@@ -22,20 +22,18 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Klypso Engine API
+    # Klypso Engine API (Nexus)
     location ^~ /portal/api/ {
-        proxy_pass https://${KLYPSO_BACKEND_HOST}/api/;
-        proxy_ssl_server_name on;
+        proxy_pass http://${KLYPSO_BACKEND_HOST}/api/;
         proxy_set_header Host ${KLYPSO_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Agency API (Matching Frontend AuthContext)
-    location /api/agency/ {
-        proxy_pass https://${AGENCY_BACKEND_HOST}/;
-        proxy_ssl_server_name on;
+    # Klypso Agency API
+    location ^~ /agency-api/ {
+        proxy_pass http://${AGENCY_BACKEND_HOST}/;
         proxy_set_header Host ${AGENCY_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

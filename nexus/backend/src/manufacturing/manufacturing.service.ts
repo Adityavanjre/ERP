@@ -113,6 +113,14 @@ export class ManufacturingService {
     const headers = lines[0].split(',').map(h => h.trim());
     const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
 
+    // --- INDUSTRY INVARIANT: MANUFACTURING BLOCK ---
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const industry = tenant?.industry || tenant?.type;
+
+    if (industry !== 'Manufacturing' && industry !== 'Construction') {
+      throw new BadRequestException('Migration Blocked: BOM imports are reserved for Manufacturing or Construction verticals. Integrity Drift detected.');
+    }
+
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
       const cols = lines[i].split(',').map(c => c.trim());
@@ -189,6 +197,81 @@ export class ManufacturingService {
       where: { id, tenantId },
       data: { status: status as any },
     });
+  }
+
+  async approveWorkOrder(tenantId: string, id: string, user: any) {
+    const channel = user.channel || 'WEB';
+    const role = user.role;
+
+    // Mobile Governance: Owners/Managers only
+    if (channel === 'MOBILE' && role !== 'Owner' && role !== 'Manager') {
+      throw new BadRequestException('Governance Error: Only Owners or Managers can approve job cards from mobile.');
+    }
+
+    const wo = await this.prisma.workOrder.findFirst({
+      where: { id, tenantId },
+    });
+    if (!wo) throw new NotFoundException('Work Order not found');
+
+    const updated = await this.prisma.workOrder.update({
+      where: { id },
+      data: { status: 'Confirmed' },
+    });
+
+    await (this.prisma as any).auditLog.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        action: 'MOBILE_JOB_CARD_APPROVAL',
+        resource: `WorkOrder:${id}`,
+        channel,
+        details: {
+          role,
+          previousStatus: wo.status,
+          newStatus: 'Confirmed',
+          mobileIntent: 'MOBILE_INTENT_ONLY',
+        },
+      },
+    });
+
+    return updated;
+  }
+
+  async rejectWorkOrder(tenantId: string, id: string, user: any) {
+    const channel = user.channel || 'WEB';
+    const role = user.role;
+
+    if (channel === 'MOBILE' && role !== 'Owner' && role !== 'Manager') {
+      throw new BadRequestException('Governance Error: Only Owners or Managers can reject job cards from mobile.');
+    }
+
+    const wo = await this.prisma.workOrder.findFirst({
+      where: { id, tenantId },
+    });
+    if (!wo) throw new NotFoundException('Work Order not found');
+
+    const updated = await this.prisma.workOrder.update({
+      where: { id },
+      data: { status: 'Cancelled' },
+    });
+
+    await (this.prisma as any).auditLog.create({
+      data: {
+        tenantId,
+        userId: user.id,
+        action: 'MOBILE_JOB_CARD_REJECTION',
+        resource: `WorkOrder:${id}`,
+        channel,
+        details: {
+          role,
+          previousStatus: wo.status,
+          newStatus: 'Cancelled',
+          mobileIntent: 'MOBILE_INTENT_ONLY',
+        },
+      },
+    });
+
+    return updated;
   }
 
   async startWorkOrder(tenantId: string, woId: string, warehouseId?: string, idempotencyKey?: string) {
@@ -667,6 +750,14 @@ export class ManufacturingService {
       where: { id: data.bomId, tenantId },
     });
     if (!bom) throw new NotFoundException('BOM not found');
+
+    // --- INDUSTRY INVARIANT: MANUFACTURING BLOCK ---
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const industry = tenant?.industry || tenant?.type;
+
+    if (industry !== 'Manufacturing' && industry !== 'Construction') {
+      throw new BadRequestException('Vertical Compliance Violation: Work Orders are reserved for Manufacturing or Construction fabrication flows.');
+    }
 
     const count = await this.prisma.workOrder.count({ where: { tenantId } });
     const orderNumber = `WO-${(count + 1).toString().padStart(4, '0')}`;

@@ -22,7 +22,7 @@ async function bootstrap() {
   app.use(require('compression')());
 
   app.enableCors({
-    origin: ['https://klypso.in', 'https://www.klypso.in', 'https://klypso-gateway.onrender.com', 'http://localhost:3000'],
+    origin: ['https://klypso.in', 'https://www.klypso.in', 'https://nexus.klypso.in', 'https://klypso-gateway.onrender.com', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

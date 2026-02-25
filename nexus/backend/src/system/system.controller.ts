@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Query } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SystemAuditService } from './services/system-audit.service';
@@ -8,8 +8,10 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
+import { Module } from '../common/decorators/module.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('system')
 @Controller('system')
 export class SystemController {
   constructor(
@@ -52,6 +54,20 @@ export class SystemController {
   @Permissions(Permission.VIEW_REPORTS)
   async getIntegrityAudit(@Req() req: any) {
     return this.audit.verifyFinancialIntegrity(req.user.tenantId);
+  }
+
+  @Get('audit/logs')
+  @Permissions(Permission.VIEW_REPORTS)
+  async getAuditLogs(
+    @Req() req: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.audit.getAuditLogs(
+      req.user.tenantId,
+      Number(page) || 1,
+      Number(limit) || 50,
+    );
   }
 
   @Get('founder-dashboard')

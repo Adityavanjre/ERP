@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountType, Prisma } from '@prisma/client';
+import { Industry } from '@nexus/shared';
 import { StandardAccounts } from '../constants/account-names';
 import { CreateJournalEntryDto } from '../dto/create-journal.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -193,7 +194,7 @@ export class LedgerService {
     const verticalAccounts: any[] = [];
 
     // Vertical-Specific Chart of Accounts (COA) DNA
-    if (industry === 'Manufacturing') {
+    if (industry === Industry.Manufacturing) {
       verticalAccounts.push(
         { name: StandardAccounts.RAW_MATERIAL_INVENTORY, type: AccountType.Asset, code: '1005' },
         { name: StandardAccounts.FINISHED_GOODS_INVENTORY, type: AccountType.Asset, code: '1006' },
@@ -201,35 +202,35 @@ export class LedgerService {
         { name: StandardAccounts.MANUFACTURING_OVERHEAD_ABSORBED, type: AccountType.Revenue, code: '4002' },
         { name: StandardAccounts.SCRAP_EXPENSE, type: AccountType.Expense, code: '5004' }
       );
-    } else if (industry === 'Healthcare') {
+    } else if (industry === Industry.Healthcare) {
       verticalAccounts.push(
         { name: 'Pharmacy Inventory', type: AccountType.Asset, code: '1004H' },
         { name: 'Insurance Receivables', type: AccountType.Asset, code: '1009H' },
         { name: 'Patient Service Revenue', type: AccountType.Revenue, code: '4004H' },
         { name: 'Medical Consumables', type: AccountType.Expense, code: '5006H' }
       );
-    } else if (industry === 'Construction') {
+    } else if (industry === Industry.Construction) {
       verticalAccounts.push(
         { name: 'Project WIP Assets', type: AccountType.Asset, code: '1010C' },
         { name: 'Material at Site', type: AccountType.Asset, code: '1011C' },
         { name: 'Sub-contractor Payables', type: AccountType.Liability, code: '2101C' },
         { name: 'Retention Money Payable', type: AccountType.Liability, code: '2102C' }
       );
-    } else if (industry === 'Logistics') {
+    } else if (industry === Industry.Logistics) {
       verticalAccounts.push(
         { name: 'Fleet Fixed Assets', type: AccountType.Asset, code: '1103L' },
         { name: 'Fuel Control Account', type: AccountType.Expense, code: '5101L' },
         { name: 'Freight Income', type: AccountType.Revenue, code: '4101L' },
         { name: 'Driver Advances', type: AccountType.Asset, code: '1201L' }
       );
-    } else if (industry === 'NBFC') {
+    } else if (industry === Industry.NBFC) {
       verticalAccounts.push(
         { name: 'Loan Portfolio Principal', type: AccountType.Asset, code: '1301F' },
         { name: 'Interest Income - Loans', type: AccountType.Revenue, code: '4301F' },
         { name: 'Risk Provision Reserves', type: AccountType.Equity, code: '3301F' },
         { name: 'KYC & Compliance Expense', type: AccountType.Expense, code: '5301F' }
       );
-    } else if (industry !== 'Service') {
+    } else if (industry !== Industry.Service) {
       // Default Retail/General Inventory
       verticalAccounts.push(
         { name: StandardAccounts.INVENTORY_ASSET, type: AccountType.Asset, code: '1004' }

@@ -20,8 +20,8 @@ async function bootstrap() {
         console.log(`Auditing Tenant: ${tenant.name} (${tenant.id})...`);
         const report = await auditService.verifyFinancialIntegrity(tenant.id);
 
-        if (report.integrity.trialBalance.status === 'Corrupted') {
-            console.error(`[CRITICAL] Trial Balance Mismatch in ${tenant.name}: Drift = ${report.integrity.trialBalance.drift}`);
+        if (report.forensicReport.invariants.globalDrCr === 'FAILED') {
+            console.error(`[CRITICAL] Trial Balance Mismatch in ${tenant.name}: Drift = ${report.forensicReport.financials.tbDrift}`);
             hasErrors = true;
         }
     }

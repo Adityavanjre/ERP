@@ -1,0 +1,199 @@
+export enum Industry {
+    Manufacturing = 'Manufacturing',
+    Retail = 'Retail',
+    Wholesale = 'Wholesale',
+    Construction = 'Construction',
+    Healthcare = 'Healthcare',
+    Education = 'Education',
+    Logistics = 'Logistics',
+    RealEstate = 'RealEstate',
+    NBFC = 'NBFC',
+    Service = 'Service',
+    Gov = 'Gov',
+    General = 'General'
+}
+
+export enum Role {
+    Owner = 'Owner',
+    Manager = 'Manager',
+    Biller = 'Biller',
+    Storekeeper = 'Storekeeper',
+    Accountant = 'Accountant',
+    CA = 'CA',
+    Customer = 'Customer',
+    Supplier = 'Supplier'
+}
+
+export enum Permission {
+    // Invoices
+    CREATE_INVOICE = 'CREATE_INVOICE',
+    EDIT_INVOICE = 'EDIT_INVOICE',
+    DELETE_INVOICE = 'DELETE_INVOICE',
+
+    // Payments
+    RECORD_PAYMENT = 'RECORD_PAYMENT',
+
+    // Inventory
+    ADJUST_STOCK = 'ADJUST_STOCK',
+    VIEW_PRODUCTS = 'VIEW_PRODUCTS',
+
+    // Accounting
+    LOCK_MONTH = 'LOCK_MONTH',
+    EXPORT_TALLY = 'EXPORT_TALLY',
+    VIEW_REPORTS = 'VIEW_REPORTS',
+
+    // Advanced
+    ACCESS_HEALTH_CORE = 'ACCESS_HEALTH_CORE',
+    MANAGE_USERS = 'MANAGE_USERS',
+}
+
+export type AccessChannel = 'WEB' | 'MOBILE' | 'API';
+
+export interface IndustryModuleConfig {
+    enabledModules: string[];
+    mobileRestrictedModules?: string[]; // Modules disabled for MOBILE channel
+    terminology: Record<string, string>;
+}
+
+export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
+    [Industry.Manufacturing]: {
+        enabledModules: ['accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases'],
+        mobileRestrictedModules: ['accounting'], // Risk management: No heavy accounting on mobile
+        terminology: {
+            customer: 'Customer',
+            product: 'Item/Product',
+            inventory: 'Stock',
+            department: 'Production Department',
+            'Work Order': 'Job Card'
+        }
+    },
+    [Industry.Retail]: {
+        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
+        terminology: {
+            customer: 'Customer',
+            product: 'Product/SKU',
+            inventory: 'Inventory',
+            department: 'Store Section'
+        }
+    },
+    [Industry.Construction]: {
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction'],
+        terminology: {
+            customer: 'Client',
+            product: 'Material',
+            inventory: 'Site Stock',
+            department: 'Site Team'
+        }
+    },
+    [Industry.Healthcare]: {
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'healthcare'],
+        terminology: {
+            customer: 'Patient',
+            product: 'Medicine/Service',
+            inventory: 'Pharmacy Stock',
+            department: 'Ward/Unit'
+        }
+    },
+    [Industry.Logistics]: {
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'logistics'],
+        terminology: {
+            customer: 'Client/Receiver',
+            product: 'Consumable/Fuel',
+            inventory: 'Warehouse Stock',
+            department: 'Fleet Team'
+        }
+    },
+    [Industry.NBFC]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'nbfc'],
+        terminology: {
+            customer: 'Borrower',
+            product: 'Loan Product',
+            inventory: 'Collateral Assets',
+            department: 'Branch/Unit'
+        }
+    },
+    [Industry.Service]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects'],
+        terminology: {
+            customer: 'Client',
+            product: 'Service Item',
+            inventory: 'Supplies',
+            department: 'Department'
+        }
+    },
+    [Industry.Wholesale]: {
+        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
+        terminology: {
+            customer: 'Retailer/Buyer',
+            product: 'Bulk Item',
+            inventory: 'Warehouse Stock',
+            department: 'Distribution Unit'
+        }
+    },
+    [Industry.Education]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases'],
+        terminology: {
+            customer: 'Student/Parent',
+            product: 'Course/Service',
+            inventory: 'Institutional Supplies',
+            department: 'Academic Dept'
+        }
+    },
+    [Industry.RealEstate]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects'],
+        terminology: {
+            customer: 'Buyer/Tenant',
+            product: 'Property/Unit',
+            inventory: 'Building Materials',
+            department: 'Project Team'
+        }
+    },
+    [Industry.Gov]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases'],
+        terminology: {
+            customer: 'Citizen',
+            product: 'Service',
+            inventory: 'Public Assets',
+            department: 'Department'
+        }
+    },
+    [Industry.General]: {
+        enabledModules: ['accounting', 'inventory', 'hr', 'crm', 'purchases'],
+        terminology: {
+            customer: 'Customer',
+            product: 'Product',
+            inventory: 'Inventory',
+            department: 'Department'
+        }
+    }
+};
+
+export const RolePermissions: Record<string, Permission[]> = {
+    [Role.Owner]: Object.values(Permission),
+    [Role.Manager]: [
+        Permission.CREATE_INVOICE,
+        Permission.EDIT_INVOICE,
+        Permission.RECORD_PAYMENT,
+        Permission.ADJUST_STOCK,
+        Permission.VIEW_PRODUCTS,
+        Permission.VIEW_REPORTS,
+        Permission.EXPORT_TALLY,
+    ],
+    [Role.Biller]: [
+        Permission.CREATE_INVOICE,
+        Permission.RECORD_PAYMENT,
+        Permission.VIEW_PRODUCTS,
+    ],
+    [Role.Storekeeper]: [Permission.ADJUST_STOCK, Permission.VIEW_PRODUCTS],
+    [Role.Accountant]: [
+        Permission.VIEW_REPORTS,
+        Permission.LOCK_MONTH,
+        Permission.EXPORT_TALLY,
+        Permission.VIEW_PRODUCTS,
+    ],
+    [Role.CA]: [Permission.VIEW_REPORTS, Permission.VIEW_PRODUCTS],
+    [Role.Customer]: [],
+    [Role.Supplier]: [],
+};
+
+export * from './mobile-whitelist';

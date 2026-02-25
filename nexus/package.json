@@ -1,0 +1,10 @@
+{
+  "name": "nexus-root",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "mobile",
+    "packages/*"
+  ]
+}

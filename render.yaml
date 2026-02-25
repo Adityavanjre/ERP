@@ -86,7 +86,7 @@ services:
     sync: false
   region: oregon
   buildCommand: npm install && npx prisma generate && npm run build
-  startCommand: node dist/main.js
+  startCommand: npx prisma migrate deploy && node dist/main.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
   rootDir: nexus/backend
@@ -135,13 +135,3 @@ services:
   staticPublishPath: dist
   autoDeployTrigger: "off"
   rootDir: agency/client
-databases:
-- name: klypso-db
-  databaseName: nexus_db_mybt
-  user: nexus_db_mybt_user
-  plan: free
-  region: oregon
-  ipAllowList:
-  - source: 0.0.0.0/0
-    description: everywhere
-  postgresMajorVersion: "18"

@@ -20,6 +20,7 @@ import { LeaveStatus } from '@prisma/client';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 import { Module } from '../common/decorators/module.decorator';
+import { MobileAction } from '../common/decorators/mobile-action.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
@@ -73,12 +74,14 @@ export class HrController {
 
   @Get('leaves')
   @Permissions(Permission.VIEW_PRODUCTS)
+  @MobileAction('VIEW_LEAVES')
   getLeaves(@CurrentUser() user: any) {
     return this.hrService.getLeaves(user.tenantId);
   }
 
   @Patch('leaves/:id/status')
   @Permissions(Permission.MANAGE_USERS)
+  @MobileAction('APPROVE_LEAVE')
   updateLeaveStatus(
     @CurrentUser() user: any,
     @Param('id') id: string,

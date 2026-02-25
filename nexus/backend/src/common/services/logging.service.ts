@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class LoggingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async log(data: {
     userId?: string;
@@ -11,6 +11,7 @@ export class LoggingService {
     action: string;
     resource: string;
     details?: any;
+    channel?: string;
     ipAddress?: string;
   }) {
     try {
@@ -21,6 +22,7 @@ export class LoggingService {
           action: data.action,
           resource: data.resource,
           details: data.details || {},
+          channel: data.channel,
           ipAddress: data.ipAddress,
         },
       });

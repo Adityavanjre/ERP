@@ -27,8 +27,11 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { OnboardingGuard } from './common/guards/onboarding.guard';
 import { ModuleGuard } from './common/guards/module.guard';
+import { PermissionsGuard } from './common/guards/permissions.guard';
+import { MobileWhitelistGuard } from './common/guards/mobile-whitelist.guard';
 import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
 
@@ -71,11 +74,23 @@ import { TraceMiddleware } from './common/services/trace.middleware';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: OnboardingGuard,
+      useClass: JwtAuthGuard, // First: Authenticate user (req.user populated)
+    },
+    {
+      provide: APP_GUARD,
+      useClass: OnboardingGuard, // Second: Check if onboarding is needed
     },
     {
       provide: APP_GUARD,
       useClass: ModuleGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard, // Hardens Governance: Mobile Safety Contract enforced globally
+    },
+    {
+      provide: APP_GUARD,
+      useClass: MobileWhitelistGuard, // Enforces functional whitelist for Mobile
     },
     {
       provide: APP_GUARD,

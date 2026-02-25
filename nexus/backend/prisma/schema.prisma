@@ -301,6 +301,7 @@ model AuditLog {
   action    String
   resource  String
   details   Json?
+  channel   String?
   ipAddress       String?
   correlationId   String?  @default(uuid())
   responseTimeMs  Int?
@@ -483,6 +484,8 @@ model Invoice {
   journalEntry        JournalEntry? @relation("InvoiceJournal", fields: [journalEntryId], references: [id])
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+  projectId           String?
+  project             Project?      @relation(fields: [projectId], references: [id])
   customer            Customer?     @relation(fields: [customerId], references: [id])
   tenant              Tenant        @relation(fields: [tenantId], references: [id])
   creditNotes         CreditNote[]
@@ -495,6 +498,7 @@ model Invoice {
   @@index([tenantId, status])
   @@index([correlationId])
   @@index([invoiceNumber])
+  @@index([projectId])
   @@index([tenantId, status, issueDate])
 }
 
@@ -863,6 +867,7 @@ model Project {
   boq             BOQ?
   siteInventory   SiteInventory[]
   retentionSchedules RetentionSchedule[]
+  invoices        Invoice[]
 }
 
 model Task {
@@ -1005,6 +1010,7 @@ enum TenantType {
   Service
   Gov
   NBFC
+  General
 }
 
 enum CustomerStatus {

@@ -41,20 +41,22 @@ export class AuditInterceptor implements NestInterceptor {
         if (!user || !user.tenantId) return;
 
         try {
-          await this.prisma.auditLog.create({
+          const channel = user.channel || 'WEB';
+          await (this.prisma as any).auditLog.create({
             data: {
-              tenantId: user.tenantId,
-              userId: user.userId,
-              action: method,
-              resource: url,
-              ipAddress: req.ip || req.get('X-Forwarded-For') || 'unknown',
-              correlationId: correlationId,
-              responseTimeMs: Date.now() - startTime,
+              tenantId: req.user.tenantId,
+              userId: req.user.id,
+              action: `${req.method} ${req.url.split('?')[0]}`,
+              resource: req.url.split('/')[2] || 'unknown',
+              channel: channel,
               details: {
-                body: this.sanitizePayload(req.body),
-                query: this.sanitizePayload(req.query),
-                params: this.sanitizePayload(req.params),
+                payload: this.sanitizePayload(req.body),
+                query: req.query,
+                params: req.params,
+                correlationId: req['correlationId'],
+                ...(channel === 'MOBILE' ? { mobileIntent: 'MOBILE_INTENT_ONLY' } : {}),
               },
+              ipAddress: req.ip,
             },
           });
         } catch (error) {

@@ -21,6 +21,7 @@ import { HttpCacheInterceptor } from '../common/interceptors/cache.interceptor';
 import { CacheTTL } from '@nestjs/cache-manager';
 
 import { Module } from '../common/decorators/module.decorator';
+import { MobileAction } from '../common/decorators/mobile-action.decorator';
 
 import { PosService } from './services/pos.service';
 
@@ -41,12 +42,14 @@ export class SalesController {
 
   @Post('orders')
   @Permissions(Permission.CREATE_INVOICE)
+  @MobileAction('CREATE_ORDER')
   createOrder(@Req() req: any, @Body() dto: CreateOrderDto) {
-    return this.salesService.createOrder(req.user.tenantId, dto);
+    return this.salesService.createOrder(req.user.tenantId, dto, req.user);
   }
 
   @Get('orders')
   @Permissions(Permission.CREATE_INVOICE)
+  @MobileAction('VIEW_ORDERS')
   getOrders(@Req() req: any) {
     return this.salesService.getOrders(req.user.tenantId);
   }
@@ -67,8 +70,23 @@ export class SalesController {
     return this.salesService.updateOrderStatus(req.user.tenantId, id, status);
   }
 
+  @Post('orders/:id/approve')
+  @Permissions(Permission.CREATE_INVOICE)
+  @MobileAction('APPROVE_ORDER')
+  approveOrder(@Req() req: any, @Param('id') id: string) {
+    return this.salesService.approveOrder(req.user.tenantId, id, req.user);
+  }
+
+  @Post('orders/:id/reject')
+  @Permissions(Permission.CREATE_INVOICE)
+  @MobileAction('REJECT_ORDER')
+  rejectOrder(@Req() req: any, @Param('id') id: string) {
+    return this.salesService.rejectOrder(req.user.tenantId, id, req.user);
+  }
+
   @Get('stats')
   @Permissions(Permission.VIEW_REPORTS)
+  @MobileAction('VIEW_SALES_STATS')
   @CacheTTL(60 * 1000) // Cache for 1 min
   @UseInterceptors(HttpCacheInterceptor)
   getStats(@Req() req: any) {

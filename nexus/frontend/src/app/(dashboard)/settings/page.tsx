@@ -16,8 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { ApiKeyManager } from "@/components/system/api-key-manager";
+import { Role } from "@nexus/shared";
 
-type RoleName = 'Owner' | 'Manager' | 'Biller' | 'Storekeeper' | 'Accountant' | 'CA';
+// Use shared Role enum instead of local string literals
 
 export default function SettingsPage() {
     const [tenant, setTenant] = useState<any>(null);
@@ -25,13 +26,13 @@ export default function SettingsPage() {
     const [billingInfo, setBillingInfo] = useState<any>(null);
     const [members, setMembers] = useState<any[]>([]);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-    const [newUser, setNewUser] = useState({ fullName: '', email: '', role: 'Biller' as RoleName });
+    const [newUser, setNewUser] = useState({ fullName: '', email: '', role: Role.Biller });
     const [isResetOpen, setIsResetOpen] = useState(false);
     const [tempPassword, setTempPassword] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { user: currentUser } = useAuth();
-    const isOwner = currentUser?.role === 'Owner';
+    const isOwner = currentUser?.role === Role.Owner;
 
     const fetchSettings = async () => {
         setLoading(true);
@@ -73,7 +74,7 @@ export default function SettingsPage() {
         }
     };
 
-    const handleUpdateRole = async (userId: string, role: RoleName) => {
+    const handleUpdateRole = async (userId: string, role: Role) => {
         try {
             await api.patch(`/users/${userId}/role`, { role });
             toast.success("Role updated successfully");
@@ -231,8 +232,8 @@ export default function SettingsPage() {
                                                 </div>
 
                                                 <div className="flex flex-wrap items-center gap-4">
-                                                    <Badge className={`font-black ${member.role === 'Owner' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                        member.role === 'Manager' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                    <Badge className={`font-black ${member.role === Role.Owner ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                        member.role === Role.Manager ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                                             'bg-slate-50 text-slate-500 border-slate-100'
                                                         }`}>
                                                         {member.role ? member.role.toUpperCase() : 'UNKNOWN'}
@@ -246,7 +247,7 @@ export default function SettingsPage() {
                                                                         <SelectValue placeholder="Change Role" />
                                                                     </SelectTrigger>
                                                                     <SelectContent className="bg-white">
-                                                                        {['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'].map(r => (
+                                                                        {[Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA].map(r => (
                                                                             <SelectItem key={r} value={r} className="text-xs font-bold">{r}</SelectItem>
                                                                         ))}
                                                                     </SelectContent>
@@ -437,11 +438,11 @@ export default function SettingsPage() {
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
-                                    <SelectItem value="Owner" className="font-bold">Owner (Full System Access)</SelectItem>
-                                    <SelectItem value="Manager" className="font-bold">Manager (Operational Admin)</SelectItem>
-                                    <SelectItem value="Biller" className="font-bold">Biller (Checkout & Sales)</SelectItem>
-                                    <SelectItem value="Storekeeper" className="font-bold">Storekeeper (Stock & Logistics)</SelectItem>
-                                    <SelectItem value="Accountant" className="font-bold">Accountant (Finance & Audit)</SelectItem>
+                                    <SelectItem value={Role.Owner} className="font-bold">Owner (Full System Access)</SelectItem>
+                                    <SelectItem value={Role.Manager} className="font-bold">Manager (Operational Admin)</SelectItem>
+                                    <SelectItem value={Role.Biller} className="font-bold">Biller (Checkout & Sales)</SelectItem>
+                                    <SelectItem value={Role.Storekeeper} className="font-bold">Storekeeper (Stock & Logistics)</SelectItem>
+                                    <SelectItem value={Role.Accountant} className="font-bold">Accountant (Finance & Audit)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { InvoiceStatus, AccountType, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Industry } from '@nexus/shared';
 import { LedgerService } from './ledger.service';
 import { HsnService } from '../../inventory/services/hsn.service';
 import { StandardAccounts, AccountSelectors } from '../constants/account-names';
@@ -35,6 +36,14 @@ export class InvoiceService {
 
     if (!items || items.length === 0) {
       throw new BadRequestException('Compliance Error: Invoice must have at least one item.');
+    }
+
+    // --- INDUSTRY INVARIANT: CONSTRUCTION PROJECT LINKAGE ---
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const industry = tenant?.industry || tenant?.type;
+
+    if (industry === Industry.Construction && !data.projectId) {
+      throw new BadRequestException('Vertical Compliance Violation: Construction invoices must be linked to a specific Project for job-costing and revenue attribution.');
     }
 
     const runInTransaction = async (tx: any) => {
@@ -88,6 +97,7 @@ export class InvoiceService {
           invoiceNumber,
           issueDate: issueDate,
           dueDate: new Date(dueDate),
+          projectId: data.projectId || null,
           totalAmount: grandTotal,
           totalTaxable,
           totalGST,

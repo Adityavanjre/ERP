@@ -18,10 +18,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "audit:financials": "ts-node scripts/audit-financials.ts",
-    "audit:migrations": "ts-node scripts/enforce-migration-tags.ts",
-    "audit:pre-deploy": "npm run audit:migrations && npm run audit:financials",
-    "migrate:rollback": "ts-node scripts/rollback-last-migration.ts"
+    "audit:financials": "ts-node -r tsconfig-paths/register scripts/audit-financials.ts",
+    "audit:mobile": "ts-node -r tsconfig-paths/register scripts/enforce-mobile-governance.ts",
+    "audit:migrations": "ts-node -r tsconfig-paths/register scripts/enforce-migration-tags.ts",
+    "audit:pre-deploy": "npm run audit:migrations && npm run audit:financials && npm run audit:mobile",
+    "test:hostile": "ts-node -r tsconfig-paths/register scripts/simulate-hostile-attacks.ts",
+    "migrate:rollback": "ts-node -r tsconfig-paths/register scripts/rollback-last-migration.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.0",
@@ -87,7 +89,8 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0"
+    "typescript-eslint": "^8.20.0",
+    "zod": "^4.3.6"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -104,6 +107,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
+    "moduleNameMapper": {
+      "^@nexus/shared$": "<rootDir>/../../packages/shared/src/index",
+      "^@nexus/shared/(.*)$": "<rootDir>/../../packages/shared/src/$1"
+    },
     "testEnvironment": "node"
   }
 }

@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Logs an enterprise-grade audit trail entry.
@@ -17,16 +17,23 @@ export class AuditService {
     resource: string;
     details?: any;
     ipAddress?: string;
+    channel?: string;
   }) {
     try {
+      const finalDetails = {
+        ...(data.details || {}),
+        ...(data.channel === 'MOBILE' ? { mobileIntent: 'MOBILE_INTENT_ONLY' } : {}),
+      };
+
       return await this.prisma.auditLog.create({
         data: {
           tenantId: data.tenantId,
           userId: data.userId,
           action: data.action,
           resource: data.resource,
-          details: data.details || {},
+          details: finalDetails,
           ipAddress: data.ipAddress,
+          channel: data.channel,
         },
       });
     } catch (err) {

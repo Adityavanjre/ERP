@@ -78,8 +78,8 @@ export class PaymentService {
             reference: data.reference,
             notes: data.notes,
             idempotencyKey: data.idempotencyKey,
-            correlationId: data.correlationId || this.traceService.getCorrelationId(),
-          },
+            correlationId: (data.correlationId || this.traceService.getCorrelationId()) as any,
+          } as any,
         });
 
         if (invoice) {
@@ -101,7 +101,7 @@ export class PaymentService {
             { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
             { accountId: arAccount.id, type: 'Credit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
           ],
-          correlationId: payment.correlationId,
+          correlationId: (payment as any).correlationId || undefined,
         }, tx);
 
         await tx.auditLog.create({
@@ -144,7 +144,7 @@ export class PaymentService {
             reference: data.reference,
             notes: data.notes,
             idempotencyKey: data.idempotencyKey,
-            correlationId: data.correlationId || this.traceService.getCorrelationId(),
+            correlationId: (data.correlationId || this.traceService.getCorrelationId()) as any,
           } as any,
         });
 
@@ -182,7 +182,7 @@ export class PaymentService {
           date: payment.date.toISOString(),
           description: `Vendor Payment: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
           reference: payment.reference || `VEND-PAY-${payment.id.slice(0, 8)}`,
-          correlationId: payment.correlationId as any,
+          correlationId: (payment as any).correlationId || undefined,
           transactions: ledgerTransactions as any,
         }, tx);
       }

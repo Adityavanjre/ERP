@@ -1,12 +1,13 @@
-
 import { Controller, Get } from '@nestjs/common';
+import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { Role, TenantType, PlanType } from '@prisma/client';
 
+@Public()
 @Controller('system/setup')
 export class SetupController {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   @Get('restore-admin')
   async restoreAdmin() {

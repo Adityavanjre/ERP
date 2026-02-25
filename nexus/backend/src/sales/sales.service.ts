@@ -1,8 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderStatus } from '@prisma/client';
+import { Industry, Role } from '@nexus/shared';
 
 import { AccountingService } from '../accounting/accounting.service';
+import { AuditService } from '../system/services/audit.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -10,10 +12,21 @@ export class SalesService {
   constructor(
     private prisma: PrismaService,
     private accountingService: AccountingService,
+    private audit: AuditService,
   ) { }
 
-  async createOrder(tenantId: string, data: any) {
+  async createOrder(tenantId: string, data: any, user?: any) {
     const { items, customerId, idempotencyKey, ...orderData } = data;
+    const channel = user?.channel || 'WEB';
+    const role = user?.role;
+
+    // Architecture Guide Enforcement:
+    // MOBILE: Create Sales Order -> Draft only for non-owners
+    // Backend enforces this regardless of client payload to prevent status spoofing.
+    let forceDraft = false;
+    if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
+      forceDraft = true;
+    }
 
     // 0. Idempotency Check
     if (idempotencyKey) {
@@ -46,7 +59,7 @@ export class SalesService {
           tenantId,
           customerId,
           idempotencyKey,
-          status: OrderStatus.Pending,
+          status: forceDraft ? OrderStatus.Draft : OrderStatus.Pending,
           total: items.reduce(
             (sum: Decimal, item: any) =>
               sum.add(new Decimal(item.price).mul(new Decimal(item.quantity))),
@@ -63,22 +76,39 @@ export class SalesService {
       });
 
       // 2. Generate Invoice (Strict: must succeed or whole order rolls back)
-      // Stock deduction now happens inside AccountingService.createInvoice
-      await this.accountingService.createInvoice(
-        tenantId,
-        {
-          customerId,
-          invoiceNumber: `INV-${order.id.split('-')[0].toUpperCase()}`,
-          issueDate: new Date(),
-          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          items: items.map((i: any) => ({
-            productId: i.productId,
-            quantity: new Decimal(i.quantity),
-            price: new Decimal(i.price),
-          })),
-        },
-        tx, // PASSING THE TRANSACTION
-      );
+      // Only for non-draft orders. Mobile drafts are VISIBILITY-ONLY for inventory.
+      if (!forceDraft) {
+        await this.accountingService.createInvoice(
+          tenantId,
+          {
+            customerId,
+            invoiceNumber: `INV-${order.id.split('-')[0].toUpperCase()}`,
+            issueDate: new Date(),
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            items: items.map((i: any) => ({
+              productId: i.productId,
+              quantity: new Decimal(i.quantity),
+              price: new Decimal(i.price),
+            })),
+          },
+          tx, // PASSING THE TRANSACTION
+        );
+      } else {
+        // Log forced governance transition
+        await this.audit.log({
+          tenantId,
+          userId: user?.id,
+          action: 'FORCE_DRAFT_ON_MOBILE',
+          resource: `Order:${order.id}`,
+          details: {
+            channel,
+            role,
+            originalStatus: data.status,
+            forcedStatus: 'Draft',
+            reason: 'Mobile write governance enforced'
+          },
+        });
+      }
 
       return order;
     });
@@ -117,6 +147,89 @@ export class SalesService {
       where: { id, tenantId },
       data: { status },
     });
+  }
+
+  async approveOrder(tenantId: string, id: string, user: any) {
+    const channel = user.channel || 'WEB';
+    const role = user.role;
+
+    // Architecture Guide Enforcement:
+    // MOBILE: Approve/Reject only. No edits. No amount changes.
+    // Only Owners or Managers can approve on mobile.
+    if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
+      throw new BadRequestException('Governance Error: Only Owners or Managers can approve orders from mobile.');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!order) throw new BadRequestException('Order not found');
+
+    // Binary Approval: Pending -> Pending (wait for Web) or Rejected
+    // Actually, Prompt 3 says "Approve / Reject only".
+    // If we "Approve", we mark it Pending? No, Draft -> Pending.
+    // If it's already Pending, Approved? 
+    // Let's assume Draft -> Pending (Ready for Web finalization) is the "Approval" from mobile.
+
+    const newStatus = OrderStatus.Pending;
+
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: { status: newStatus },
+    });
+
+    await (this.audit as any).log({
+      tenantId,
+      userId: user.id,
+      action: 'MOBILE_APPROVAL',
+      resource: `Order:${id}`,
+      channel,
+      details: {
+        role,
+        previousStatus: order.status,
+        newStatus,
+        mobileIntent: 'MOBILE_INTENT_ONLY',
+      },
+    });
+
+    return updated;
+  }
+
+  async rejectOrder(tenantId: string, id: string, user: any) {
+    const channel = user.channel || 'WEB';
+    const role = user.role;
+
+    if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
+      throw new BadRequestException('Governance Error: Only Owners or Managers can reject orders from mobile.');
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!order) throw new BadRequestException('Order not found');
+
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: { status: OrderStatus.Cancelled },
+    });
+
+    await (this.audit as any).log({
+      tenantId,
+      userId: user.id,
+      action: 'MOBILE_REJECTION',
+      resource: `Order:${id}`,
+      channel,
+      details: {
+        role,
+        previousStatus: order.status,
+        newStatus: OrderStatus.Cancelled,
+        mobileIntent: 'MOBILE_INTENT_ONLY',
+      },
+    });
+
+    return updated;
   }
 
   async getSalesStats(tenantId: string) {

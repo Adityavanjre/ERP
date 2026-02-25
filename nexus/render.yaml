@@ -5,7 +5,8 @@ services:
   repo: https://github.com/Adityavanjre/ERP
   plan: free
   envVars:
-  - key: NEXT_PUBLIC_API_URL
+  - key: VITE_API_URL
+    value: https://nexus.klypso.in/agency-api/api
     sync: false
   - key: PORT
     sync: false
@@ -33,10 +34,18 @@ services:
     sync: false
   - key: JWT_SECRET
     sync: false
+  - key: RESEND_API_KEY
+    sync: false
+  - key: GOOGLE_CLIENT_ID
+    sync: false
+  - key: CLOUDINARY_CLOUD_NAME
+    sync: false
+  - key: CLOUDINARY_API_KEY
+    sync: false
+  - key: CLOUDINARY_API_SECRET
+    sync: false
   - key: DATABASE_URL
-    fromDatabase:
-      name: klypso-db
-      property: connectionString
+    sync: false
   region: oregon
   buildCommand: npm install && npx prisma generate && npm run build
   startCommand: npx prisma migrate deploy && node dist/main.js
@@ -81,6 +90,7 @@ services:
   dockerContext: .
   dockerfilePath: ./Dockerfile
   domains:
+  - nexus.klypso.in
   - www.klypso.in
   - klypso.in
   autoDeployTrigger: "off"
@@ -96,6 +106,9 @@ services:
   - key: PORT
     sync: false
   - key: KLYPSO_BACKEND_URL
+    sync: false
+  - key: NEXT_PUBLIC_API_URL
+    value: https://nexus.klypso.in/portal/api
     sync: false
   region: oregon
   buildCommand: npm install && npm run build
@@ -127,13 +140,3 @@ services:
   staticPublishPath: dist
   autoDeployTrigger: "off"
   rootDir: agency/client
-databases:
-- name: klypso-db
-  databaseName: nexus_db_mybt
-  user: nexus_db_mybt_user
-  plan: free
-  region: oregon
-  ipAllowList:
-  - source: 0.0.0.0/0
-    description: everywhere
-  postgresMajorVersion: "16"

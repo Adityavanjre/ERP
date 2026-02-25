@@ -22,6 +22,7 @@ import { Permission } from '../common/constants/permissions';
 import { Role } from '@prisma/client';
 
 import { Module } from '../common/decorators/module.decorator';
+import { MobileAction } from '../common/decorators/mobile-action.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
@@ -49,6 +50,7 @@ export class CrmController {
 
   @Get('customers')
   @Permissions(Permission.VIEW_PRODUCTS) // View Customers is grouped with VIEW_PRODUCTS in this system
+  @MobileAction('VIEW_LEADS')
   findAll(
     @Req() req: any,
     @Query('page') page?: number,
@@ -69,12 +71,14 @@ export class CrmController {
 
   @Post('opportunities')
   @Permissions(Permission.CREATE_INVOICE) // Sales pipeline access
+  @MobileAction('CREATE_LEAD')
   createOpp(@Req() req: any, @Body() data: any) {
     return this.crmService.createOpportunity(req.user.tenantId, data);
   }
 
   @Get('opportunities')
   @Permissions(Permission.CREATE_INVOICE)
+  @MobileAction('VIEW_LEADS')
   getOpps(@Req() req: any) {
     return this.crmService.getOpportunities(req.user.tenantId);
   }

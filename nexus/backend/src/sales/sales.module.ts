@@ -10,8 +10,10 @@ import { CommonModule } from '../common/common.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { PosService } from './services/pos.service';
 
+import { SystemModule } from '../system/system.module';
+
 @Module({
-  imports: [PrismaModule, AccountingModule, CommonModule, InventoryModule],
+  imports: [PrismaModule, AccountingModule, CommonModule, InventoryModule, SystemModule],
   controllers: [SalesController],
   providers: [SalesService, PosService],
   exports: [SalesService, PosService],

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { Industry } from '@nexus/shared';
 import { StandardAccounts } from '../../accounting/constants/account-names';
 
 @Injectable()
@@ -82,8 +83,11 @@ export class SystemAuditService {
 
         const inventoryParity = physicalStockValue.equals(ledgerStockValue);
 
+        // 6. Industry-Specific Anomaly Audit
+        const industryAnomalies = await this.runIndustrySpecificAudit(tenantId);
+
         // 5. Audit Risk Assessment
-        const riskScore = this.calculateForensicRisk(unbalancedJournals.length, orphanedTx.length, documentsMissingTrace.total);
+        const riskScore = this.calculateForensicRisk(unbalancedJournals.length, orphanedTx.length, documentsMissingTrace.total, industryAnomalies.length);
         const status = riskScore === 0 ? 'CLEAN' : 'FAIL';
 
         return {
@@ -106,13 +110,14 @@ export class SystemAuditService {
                 },
                 violations: {
                     unbalancedJournalIds: unbalancedJournals.slice(0, 10).map(j => j.id),
+                    industryAnomalies: industryAnomalies,
                     gapsByModule: {
                         ...documentsMissingTrace.breakdown,
                         stockMovements: stockMissingTrace
                     }
                 }
             },
-            recommendations: this.generateForensicRecommendations(unbalancedJournals.length, orphanedTx.length, documentsMissingTrace.total + stockMissingTrace, mutationCount)
+            recommendations: this.generateForensicRecommendations(unbalancedJournals.length, orphanedTx.length, documentsMissingTrace.total + stockMissingTrace, mutationCount, industryAnomalies.length)
         };
     }
 
@@ -139,19 +144,65 @@ export class SystemAuditService {
         };
     }
 
-    private calculateForensicRisk(unbalanced: number, orphans: number, gaps: number): number {
-        // High weights for Dr!=Cr (corruption indicator)
-        return (unbalanced * 100) + (orphans * 50) + (gaps * 10);
+    private async runIndustrySpecificAudit(tenantId: string): Promise<string[]> {
+        const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+        const industry = tenant?.industry || tenant?.type;
+        const anomalies: string[] = [];
+
+        if (industry === Industry.NBFC) {
+            const unverifiedKyc = await (this.prisma as any).kYCRecord.count({
+                where: { tenantId, verificationStatus: { not: 'Verified' } }
+            });
+            if (unverifiedKyc > 0) anomalies.push(`NBFC Risk: ${unverifiedKyc} loans have unverified KYC. Potential compliance breach.`);
+        }
+
+        if (industry === Industry.Construction) {
+            const unlinkedInvoices = await (this.prisma.invoice as any).count({
+                where: { tenantId, projectId: null }
+            });
+            if (unlinkedInvoices > 0) anomalies.push(`Construction Risk: ${unlinkedInvoices} invoices are missing Project linkage. Forensic job-costing compromised.`);
+        }
+
+        if (industry === Industry.Healthcare) {
+            const batchCount = await (this.prisma as any).pharmacyBatch.count({
+                where: { tenantId }
+            });
+            if (batchCount === 0) anomalies.push(`Healthcare Warning: No pharmaceutical batch records found. Patient safety trace-back disabled.`);
+        }
+
+        return anomalies;
     }
 
-    private generateForensicRecommendations(unbalanced: number, orphans: number, gaps: number, mutations: number): string[] {
+    private calculateForensicRisk(unbalanced: number, orphans: number, gaps: number, anomalies: number): number {
+        // High weights for Dr!=Cr (corruption indicator)
+        return (unbalanced * 100) + (orphans * 50) + (gaps * 10) + (anomalies * 25);
+    }
+
+    private generateForensicRecommendations(unbalanced: number, orphans: number, gaps: number, mutations: number, anomalies: number): string[] {
         const recs: string[] = [];
         if (unbalanced > 0) recs.push(`CRITICAL: ${unbalanced} journals violates Dr=Cr. Manual intervention required to restore ledger integrity.`);
         if (mutations > 0) recs.push(`CRITICAL: ${mutations} direct edits detected. System immutability bypassed. Investigate potential fraud.`);
         if (orphans > 0) recs.push(`WARNING: ${orphans} transactions have no CorrelationId. Possible destructive edit bypass detected.`);
+        if (anomalies > 0) recs.push(`COMPLIANCE: ${anomalies} industry-specific invariants violated. Review vertical hardening logs.`);
         if (gaps > 0) recs.push(`Note: ${gaps} documents are missing forensic links. Complete trace propagation to all sub-modules.`);
-        if (unbalanced === 0 && orphans === 0 && gaps === 0 && mutations === 0) recs.push("CERTIFIED: The system state is mathematically consistent. Financial corruption is impossible.");
+        if (unbalanced === 0 && orphans === 0 && gaps === 0 && mutations === 0 && anomalies === 0) recs.push("CERTIFIED: The system state is mathematically consistent. Financial corruption is impossible.");
         return recs;
+    }
+
+    async getAuditLogs(tenantId: string, page: number = 1, limit: number = 50) {
+        const skip = (page - 1) * limit;
+        const [items, total] = await Promise.all([
+            this.prisma.auditLog.findMany({
+                where: { tenantId },
+                include: { user: { select: { fullName: true, email: true } } },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            this.prisma.auditLog.count({ where: { tenantId } }),
+        ]);
+
+        return { items, total, page, limit };
     }
 
     private async calculatePhysicalStockValue(tenantId: string): Promise<Decimal> {
