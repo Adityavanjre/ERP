@@ -63,20 +63,20 @@ export default function LoginPage() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent)] pointer-events-none" />
 
             <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-10 rounded-[2.5rem] p-4">
-                <CardHeader className="space-y-1 pb-8">
-                    <div className="flex justify-center mb-6">
-                        <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100">
-                            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-500/20">
-                                K
+                <form onSubmit={handleLogin}>
+                    <CardHeader className="space-y-1 pb-8">
+                        <div className="flex justify-center mb-6">
+                            <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100">
+                                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-500/20">
+                                    K
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
-                    <CardDescription className="text-center text-slate-500 font-medium">
-                        Welcome back. Enter your details to continue.
-                    </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleLogin}>
+                        <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
+                        <CardDescription className="text-center text-slate-500 font-medium">
+                            Welcome back. Enter your details to continue.
+                        </CardDescription>
+                    </CardHeader>
                     <CardContent className="space-y-6">
                         {error && (
                             <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider animate-in fade-in zoom-in-95" role="alert">
@@ -88,6 +88,8 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
+                                name="email"
+                                autoComplete="username"
                                 placeholder="name@company.com"
                                 className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4"
                                 value={email}
@@ -108,6 +110,8 @@ export default function LoginPage() {
                             <div className="relative">
                                 <Input
                                     id="password"
+                                    name="password"
+                                    autoComplete="current-password"
                                     type={showPassword ? "text" : "password"}
                                     className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10"
                                     value={password}
