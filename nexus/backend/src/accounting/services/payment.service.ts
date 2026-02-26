@@ -322,6 +322,13 @@ export class PaymentService {
 
   async createCustomerOpeningBalance(tenantId: string, data: any) {
     return this.prisma.$transaction(async (tx) => {
+      const existingOb = await tx.customerOpeningBalance.findFirst({
+        where: { tenantId, customerId: data.customerId }
+      });
+      if (existingOb) {
+        throw new BadRequestException('Opening balance already exists for this customer.');
+      }
+
       const ob = await tx.customerOpeningBalance.create({
         data: {
           tenantId,
@@ -354,6 +361,13 @@ export class PaymentService {
 
   async createSupplierOpeningBalance(tenantId: string, data: any) {
     return this.prisma.$transaction(async (tx) => {
+      const existingOb = await tx.supplierOpeningBalance.findFirst({
+        where: { tenantId, supplierId: data.supplierId }
+      });
+      if (existingOb) {
+        throw new BadRequestException('Opening balance already exists for this supplier.');
+      }
+
       const ob = await tx.supplierOpeningBalance.create({
         data: {
           tenantId,

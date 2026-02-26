@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { loggerConfig } from './common/logger.config';
 import { ClusterService } from './system/services/cluster.service';
@@ -45,6 +46,9 @@ async function bootstrap() {
 
   // Global Exception Filter
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Global Timeouts (15s limit)
+  app.useGlobalInterceptors(new TimeoutInterceptor());
 
   // Swagger Documentation
   const config = new DocumentBuilder()
