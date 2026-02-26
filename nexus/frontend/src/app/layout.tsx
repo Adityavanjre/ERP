@@ -76,10 +76,10 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: "/favicon.svg",
-    apple: "/apple-touch-icon.png",
+    icon: "/portal/favicon.svg",
+    apple: "/portal/apple-touch-icon.png",
   },
-  manifest: "/manifest.json",
+  manifest: "/portal/manifest.json",
   themeColor: "#0f172a",
 };
 
