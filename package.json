@@ -2,6 +2,14 @@
   "name": "klypso-ecosystem",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "nexus/backend",
+    "nexus/frontend",
+    "nexus/mobile",
+    "agency/server",
+    "agency/client",
+    "packages/*"
+  ],
   "scripts": {
     "start:agency": "concurrently \"npm run agency:server\" \"npm run agency:client\"",
     "agency:server": "cd agency/server && npm start",
@@ -12,9 +20,12 @@
     "start:all": "concurrently \"npm run start:agency\" \"npm run start:nexus\""
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "@types/react": "19.2.4"
   },
   "dependencies": {
-    "pg": "^8.18.0"
+    "pg": "^8.18.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   }
 }

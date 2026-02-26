@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InvoiceStatus, AccountType, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -17,6 +17,7 @@ export class InvoiceService {
     private ledger: LedgerService,
     private hsn: HsnService,
     private traceService: TraceService,
+    @Inject(forwardRef(() => InventoryService))
     private inventoryService: InventoryService,
   ) { }
 

@@ -4,6 +4,8 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -19,6 +21,7 @@ import { HsnService } from './services/hsn.service';
 export class InventoryService {
   constructor(
     private prisma: PrismaService,
+    @Inject(forwardRef(() => AccountingService))
     private accounting: AccountingService,
     private billing: BillingService,
     private hsn: HsnService,

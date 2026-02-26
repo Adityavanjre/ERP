@@ -98,7 +98,7 @@ services:
   envVars:
   - key: PORT
     sync: false
-  - key: HOSTNAME
+  - key: HOSTNAMEs
     sync: false
   - key: KLYPSO_BACKEND_URL
     sync: false
