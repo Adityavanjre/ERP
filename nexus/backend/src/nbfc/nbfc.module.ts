@@ -3,9 +3,10 @@ import { NbfcService } from './nbfc.service';
 import { NbfcController } from './nbfc.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AccountingModule } from '../accounting/accounting.module';
+import { SystemModule } from '../system/system.module';
 
 @Module({
-    imports: [PrismaModule, AccountingModule],
+    imports: [SystemModule, PrismaModule, AccountingModule],
     controllers: [NbfcController],
     providers: [NbfcService],
     exports: [NbfcService],
