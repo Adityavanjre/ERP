@@ -5,7 +5,7 @@ const KLYPSO_BACKEND_URL = process.env.KLYPSO_BACKEND_URL;
 const securityHeaders = [
     {
         key: 'Content-Security-Policy',
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' https://klypso-backend.onrender.com https://klypso-gateway.onrender.com https://klypso-frontend.onrender.com http://localhost:3001 http://localhost:3000 http://localhost:5000;",
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' https://nexus-backend-3ukg.onrender.com https://klypso-backend.onrender.com https://klypso-gateway.onrender.com https://klypso-frontend.onrender.com http://localhost:3001 http://localhost:3000 http://localhost:5000;",
     },
     {
         key: 'X-DNS-Prefetch-Control',
