@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { RegistryService } from './services/registry.service';
 import { AiService } from './services/ai.service';
 import { AuditService } from './services/audit.service';
@@ -25,6 +25,7 @@ import { MailService } from './services/mail.service';
 import { SystemAuditService } from './services/system-audit.service';
 import { SystemController } from './system.controller';
 
+@Global()
 @Module({
   imports: [PrismaModule],
   controllers: [
