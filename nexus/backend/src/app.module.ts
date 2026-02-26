@@ -35,8 +35,11 @@ import { MobileWhitelistGuard } from './common/guards/mobile-whitelist.guard';
 import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
 
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
+
 @Module({
   imports: [
+    InfrastructureModule,
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

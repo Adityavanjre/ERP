@@ -25,8 +25,8 @@ import { LoggingService } from '../common/services/logging.service';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, GoogleAuthService, LoggingService],
+  providers: [AuthService, JwtStrategy, GoogleAuthService],
   controllers: [AuthController],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule { }
