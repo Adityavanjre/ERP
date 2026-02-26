@@ -103,7 +103,7 @@ services:
   - key: KLYPSO_BACKEND_URL
     sync: false
   region: oregon
-  buildCommand: npm install && npm run build
+  buildCommand: cd .. && npm install && cd frontend && npm run build
   startCommand: npx next start -H 0.0.0.0 -p 10000
   autoDeployTrigger: "off"
   rootDir: nexus/frontend
