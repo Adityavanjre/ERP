@@ -55,6 +55,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const handleSessionExpired = () => {
+            console.log("[AuthGuard] Event 'session-expired' received, redirecting to /login");
             setAuthorized(false);
             router.push("/login");
         };
@@ -63,7 +64,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         const checkAuth = () => {
             const token = localStorage.getItem("k_token");
+            console.log("[AuthGuard] checkAuth initiated. Token exists?", !!token);
             if (!token) {
+                console.log("[AuthGuard] No token found in localStorage, redirecting to /login");
                 router.push("/login");
                 return;
             }
@@ -83,6 +86,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
                 // 2. Tenant Scoped handling
                 if (!role) {
+                    console.log("[AuthGuard] Token decoded but no role found. Redirecting to /login. Decoded payload:", decoded);
                     router.push("/login");
                     return;
                 }
@@ -107,7 +111,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
                 setAuthorized(true);
             } catch (err) {
-                console.error("Auth check failed", err);
+                console.error("[AuthGuard] Auth check failed or token invalid", err);
                 router.push("/login");
             }
         };

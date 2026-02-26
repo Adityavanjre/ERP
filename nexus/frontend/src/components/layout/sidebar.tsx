@@ -110,6 +110,16 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     useEffect(() => {
         const fetchConfig = async () => {
             try {
+                const token = localStorage.getItem('k_token');
+                const identity = localStorage.getItem('k_identity');
+
+                // If the token is just the identity token, do not hit tenant-scoped APIs
+                if (token && identity && token === identity) {
+                    setEnabledModules(['sales', 'inventory', 'accounting']);
+                    setConfigLoading(false);
+                    return;
+                }
+
                 const res = await api.get('system/config');
                 setEnabledModules(res.data.enabledModules || []);
             } catch (err) {

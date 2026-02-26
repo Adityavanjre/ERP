@@ -84,6 +84,14 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const token = localStorage.getItem('k_token');
+                const identity = localStorage.getItem('k_identity');
+                // If the token is just the identity token, do not hit tenant-scoped APIs
+                if (token && identity && token === identity) {
+                    setLoading(false);
+                    return;
+                }
+
                 // Background sync shouldn't show global loading after first load
                 const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.all([
                     api.get('system/stats'),
