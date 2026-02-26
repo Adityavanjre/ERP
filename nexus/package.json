@@ -6,5 +6,12 @@
     "frontend",
     "mobile",
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "@types/react": "19.2.4"
+  },
+  "dependencies": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
 }
