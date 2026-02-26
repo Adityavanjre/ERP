@@ -4,12 +4,11 @@ import { ManufacturingController } from './manufacturing.controller';
 import { MachineService } from './machine.service';
 import { MachineController } from './machine.controller';
 import { PrismaModule } from '../prisma/prisma.module';
-import { SystemModule } from '../system/system.module';
-import { AccountingModule } from '../accounting/accounting.module';
+import { CoreDomainModule } from '../core-domain/core-domain.module';
 
 @Module({
-  imports: [PrismaModule, SystemModule, AccountingModule],
+  imports: [PrismaModule, CoreDomainModule],
   controllers: [ManufacturingController, MachineController],
   providers: [ManufacturingService, MachineService],
 })
-export class ManufacturingModule {}
+export class ManufacturingModule { }
