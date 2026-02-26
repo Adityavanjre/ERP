@@ -27,13 +27,36 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setLoading(true)
         setError("")
 
+        let finalEmail = email;
+        let finalPassword = password;
+
         try {
-            const res = await api.post("auth/login/web", { email, password })
+            // Force read from DOM to bypass Autofill React state desync
+            const formData = new FormData(e.currentTarget);
+            const domEmail = formData.get("email")?.toString() || "";
+            const domPassword = formData.get("password")?.toString() || "";
+
+            if (domEmail) finalEmail = domEmail;
+            if (domPassword) finalPassword = domPassword;
+
+            // Sync back to state just in case
+            setEmail(finalEmail);
+            setPassword(finalPassword);
+
+            if (!finalEmail || !finalPassword) {
+                setError("Email and Password are required.");
+                setLoading(false);
+                return;
+            }
+
+            console.log("Submitting login payload:", { email: finalEmail, passwordLength: finalPassword.length });
+
+            const res = await api.post("auth/login/web", { email: finalEmail, password: finalPassword })
             localStorage.setItem("k_token", res.data.accessToken)
             localStorage.setItem("k_identity", res.data.accessToken)
             localStorage.setItem("k_user", JSON.stringify(res.data.user))
@@ -91,7 +114,7 @@ export default function LoginPage() {
                                 name="email"
                                 autoComplete="username"
                                 placeholder="name@company.com"
-                                className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4"
+                                className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4 autocomplete-disable"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -113,7 +136,7 @@ export default function LoginPage() {
                                     name="password"
                                     autoComplete="current-password"
                                     type={showPassword ? "text" : "password"}
-                                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10"
+                                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10 autocomplete-disable"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
