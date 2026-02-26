@@ -1,13 +1,51 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import AuthGuard from "@/components/auth/auth-guard";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { jwtDecode } from "jwt-decode";
+import { Loader2 } from "lucide-react";
 
 const DashboardLayout = ({
     children
 }: {
     children: React.ReactNode;
 }) => {
+    const [isIdentityState, setIsIdentityState] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        try {
+            const token = localStorage.getItem("k_token");
+            if (token) {
+                const decoded: any = jwtDecode(token);
+                setIsIdentityState(decoded.type === 'identity');
+            } else {
+                setIsIdentityState(false);
+            }
+        } catch {
+            setIsIdentityState(false);
+        }
+    }, []);
+
+    // Prevent hydration flashes
+    if (isIdentityState === null) {
+        return (
+            <div className="flex bg-slate-50 h-screen w-screen items-center justify-center">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            </div>
+        );
+    }
+
+    if (isIdentityState) {
+        return (
+            <AuthGuard>
+                {children}
+            </AuthGuard>
+        );
+    }
+
     return (
         <AuthGuard>
             <div className="h-screen bg-white text-slate-900 overflow-hidden relative">

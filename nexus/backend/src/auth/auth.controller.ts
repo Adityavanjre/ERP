@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, GoogleLoginDto, OnboardingDto, MfaVerifyDto, MfaSetupDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AllowUnboarded } from '../common/decorators/allow-unboarded.decorator';
+import { AllowIdentity } from '../common/decorators/allow-identity.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
 import { Module } from '../common/decorators/module.decorator';
@@ -68,6 +69,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @AllowIdentity()
   @MobileAction('VIEW_TENANTS')
   @Get('tenants')
   async getTenants(@Request() req: any) {
@@ -76,6 +78,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @AllowIdentity()
   @AllowUnboarded()
   @MobileAction('ONBOARDING')
   @Post('onboarding')
@@ -102,6 +105,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
+  @AllowIdentity()
   @MobileAction('CREATE_WORKSPACE')
   @Post('create-workspace')
   async createWorkspace(@Request() req: any, @Body() dto: any) {
@@ -109,6 +113,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @AllowIdentity()
   @AllowUnboarded()
   @MobileAction('VIEW_PROFILE')
   @Get('profile')
@@ -135,12 +140,14 @@ export class AuthController {
   // --- MFA Endpoints ---
 
   @UseGuards(JwtAuthGuard)
+  @AllowIdentity()
   @Post('mfa/setup')
   async setupMfa(@Request() req: any) {
     return this.authService.setupMfa(req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)
+  @AllowIdentity()
   @Post('mfa/verify-setup')
   async verifyMfaSetup(@Request() req: any, @Body() dto: MfaSetupDto) {
     return this.authService.verifyMfaSetup(req.user.sub, dto.totpCode);

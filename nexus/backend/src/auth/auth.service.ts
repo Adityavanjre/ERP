@@ -324,6 +324,8 @@ export class AuthService {
       channel: channel || 'MOBILE',
     };
 
+    console.log("[AUTH AUDIT] Generating Identity Token. Payload:", JSON.stringify(payload));
+
     return {
       accessToken: this.jwtService.sign(payload),
       user: {
@@ -381,6 +383,8 @@ export class AuthService {
       isMfaVerified: isMfaVerified || false,
       channel: channel || 'MOBILE',
     };
+
+    console.log("[AUTH AUDIT] Generating Tenant Scoped Token. Payload:", JSON.stringify(payload));
 
     await this.logging.log({
       userId,
