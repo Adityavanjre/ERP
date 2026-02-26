@@ -53,22 +53,9 @@ export class AuditService {
   }
 
   /**
-   * Prunes logs older than 90 days to prevent table explosion.
-   * Suggested Trigger: Monthly maintenance or CRON.
+   * Audit logs are strictly immutable and cannot be pruned from the application layer
+   * to enforce forensic compliance and non-repudiation.
+   * Archival (if necessary for storage) must occur via direct DBA operations and cold storage,
+   * never via API soft-wipes.
    */
-  async pruneOldLogs() {
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-
-    const result = await this.prisma.auditLog.deleteMany({
-      where: {
-        createdAt: { lt: ninetyDaysAgo },
-      },
-    });
-
-    this.logger.log(
-      `Pruned ${result.count} audit log entries older than 90 days.`,
-    );
-    return result.count;
-  }
 }

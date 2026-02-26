@@ -8,7 +8,7 @@ export class MachineService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) {}
+  ) { }
 
   async createMachine(tenantId: string, data: any) {
     const machine = await this.prisma.machine.create({
@@ -68,8 +68,9 @@ export class MachineService {
       throw new NotFoundException(`Machine ${id} not found`);
     }
 
-    await this.prisma.machine.deleteMany({
+    await this.prisma.machine.updateMany({
       where: { id, tenantId },
+      data: { status: 'Offline' as MachineStatus },
     });
 
     await this.audit.log({

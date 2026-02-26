@@ -5,7 +5,7 @@ import { ProjectStatus, TaskStatus, Priority } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
-  constructor(private prisma: PrismaService, private audit: AuditService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService) { }
 
   // --- Projects ---
   async createProject(tenantId: string, data: any) {
@@ -114,8 +114,9 @@ export class ProjectService {
       details: { id, name: project.name },
     });
 
-    return this.prisma.project.deleteMany({
+    return this.prisma.project.updateMany({
       where: { id, tenantId },
+      data: { status: 'Cancelled' as ProjectStatus },
     });
   }
 }

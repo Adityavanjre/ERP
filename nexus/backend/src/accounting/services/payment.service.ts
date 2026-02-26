@@ -258,9 +258,13 @@ export class PaymentService {
         data: { notes: `CANCELLED: ${reason} (Original: ${pay.notes || ''})`.trim() }
       });
 
-      // 5. Cleanup TDS Transactions to reverse threshold calculation
-      return (tx as any).tdsTransaction.deleteMany({
-        where: { tenantId, paymentId: id }
+      // 5. Cleanup TDS Transactions to reverse threshold calculation without hard-deleting
+      return (tx as any).tdsTransaction.updateMany({
+        where: { tenantId, paymentId: id },
+        data: {
+          amount: 0,
+          tdsAmount: 0,
+        }
       });
     });
   }
