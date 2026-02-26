@@ -30,6 +30,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     DebitNoteService,
     FixedAssetService,
     TdsService,
+    BrsService,
   ],
 
   exports: [
@@ -42,6 +43,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     DebitNoteService,
     FixedAssetService,
     TdsService,
+    BrsService,
   ],
 
 })
