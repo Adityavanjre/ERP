@@ -36,6 +36,7 @@ import { MobileWhitelistGuard } from './common/guards/mobile-whitelist.guard';
 import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
 import { CsrfGuard } from './common/guards/csrf.guard';
+import { PlanGuard } from './common/guards/plan.guard';
 
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 
@@ -104,6 +105,10 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
     {
       provide: APP_GUARD,
       useClass: CsrfGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PlanGuard, // Subscription enforcement — runs after auth, fail-open on billing errors
     },
     {
       provide: APP_INTERCEPTOR,

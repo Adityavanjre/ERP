@@ -52,6 +52,13 @@ model Tenant {
   fyStartDay      Int                      @default(1)
   currency        String                   @default("INR")
 
+  // Subscription lifecycle
+  subscriptionStatus  SubscriptionStatus   @default(Active)
+  planExpiresAt       DateTime?            // When current paid period ends
+  gracePeriodEndsAt   DateTime?            // 14-day payment overdue window
+  suspendedAt         DateTime?            // Timestamp of suspension
+  suspendReason       String?              // non-payment | abuse | admin
+
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   accounts        Account[]
@@ -1009,8 +1016,34 @@ enum AuthProvider {
 
 enum PlanType {
   Free
-  Pro
+  Starter
+  Growth
+  Business
   Enterprise
+}
+
+enum SubscriptionStatus {
+  Active
+  GracePeriod  // Payment overdue — writes still allowed for 14 days
+  ReadOnly     // Grace expired — reads only, no writes
+  Suspended    // Admin-suspended — all access blocked (410)
+}
+
+model BillingEvent {
+  id           String   @id @default(uuid())
+  tenantId     String
+  event        String   // PLAN_UPGRADED | SUSPENDED | REACTIVATED | GRACE_PERIOD_ENTERED | READ_ONLY_DOWNGRADE
+  fromStatus   String?
+  toStatus     String?
+  fromPlan     String?
+  toPlan       String?
+  reason       String?
+  performedBy  String?  // userId or 'system'
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([event])
 }
 
 enum TenantType {

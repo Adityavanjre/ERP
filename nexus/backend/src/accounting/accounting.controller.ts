@@ -29,6 +29,7 @@ import { Permission } from '../common/constants/permissions';
 import { Module } from '../common/decorators/module.decorator';
 import { MfaGuard } from '../common/guards/mfa.guard';
 import { MfaRequired } from '../common/decorators/mfa-required.decorator';
+import { PlanLimit } from '../common/guards/plan.guard';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard, MfaGuard)
 @Module('accounting')
@@ -73,18 +74,21 @@ export class AccountingController {
 
   @Post('journals')
   @Permissions(Permission.LOCK_MONTH)
+  @PlanLimit('maxLedgerEntries')
   createJournal(@Req() req: any, @Body() dto: CreateJournalEntryDto) {
     return this.accountingService.createJournalEntry(req.user.tenantId, dto);
   }
 
   @Post('invoices')
   @Permissions(Permission.CREATE_INVOICE)
+  @PlanLimit('maxInvoicesPerMonth')
   createInvoice(@Req() req: any, @Body() dto: CreateInvoiceDto) {
     return this.accountingService.createInvoice(req.user.tenantId, dto);
   }
 
   @Post('invoices/bulk')
   @Permissions(Permission.CREATE_INVOICE)
+  @PlanLimit('maxInvoicesPerMonth')
   createInvoicesBulk(@Req() req: any, @Body() dto: any[]) {
     return this.accountingService.createInvoicesBulk(req.user.tenantId, dto);
   }
@@ -105,6 +109,7 @@ export class AccountingController {
 
   @Post('payments')
   @Permissions(Permission.RECORD_PAYMENT)
+  @PlanLimit('maxLedgerEntries')
   createPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
     return this.accountingService.createPayment(req.user.tenantId, dto);
   }
@@ -117,6 +122,7 @@ export class AccountingController {
 
   @Post('credit-notes')
   @Permissions(Permission.CREATE_INVOICE)
+  @PlanLimit('maxLedgerEntries')
   createCreditNote(@Req() req: any, @Body() dto: CreateCreditNoteDto) {
     return this.accountingService.createCreditNote(req.user.tenantId, dto);
   }
@@ -129,6 +135,7 @@ export class AccountingController {
 
   @Post('debit-notes')
   @Permissions(Permission.CREATE_INVOICE)
+  @PlanLimit('maxLedgerEntries')
   createDebitNote(@Req() req: any, @Body() dto: CreateDebitNoteDto) {
     return this.accountingService.createDebitNote(req.user.tenantId, dto);
   }
@@ -179,6 +186,7 @@ export class AccountingController {
 
   @Get('export/tally')
   @Permissions(Permission.EXPORT_TALLY)
+  @PlanLimit('maxExportsPerDay')
   @Header('Content-Type', 'application/xml')
   @Header('Content-Disposition', 'attachment; filename=tally_export.xml')
   getTallyExport(
@@ -210,6 +218,7 @@ export class AccountingController {
 
   @Get('export/masters')
   @Permissions(Permission.EXPORT_TALLY)
+  @PlanLimit('maxExportsPerDay')
   @Header('Content-Type', 'application/xml')
   @Header('Content-Disposition', 'attachment; filename=tally_masters.xml')
   getLedgerMasters(@Req() req: any) {

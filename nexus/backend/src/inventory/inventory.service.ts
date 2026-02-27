@@ -30,7 +30,7 @@ export class InventoryService {
 
   async createProduct(tenantId: string, data: any & { correlationId?: string }, userId?: string) {
     // 0. Subscription Governance: Quota Check
-    await this.billing.validateQuota(tenantId, 'maxProducts');
+    await this.billing.checkQuota(tenantId, 'maxProducts');
 
     // --- INDUSTRY INVARIANT: NBFC BLOCK ---
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
