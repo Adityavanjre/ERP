@@ -46,6 +46,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           status = HttpStatus.BAD_REQUEST;
           message = 'Relation violation: the change would break a required relation.';
           break;
+        case 'P2022':
+          status = HttpStatus.INTERNAL_SERVER_ERROR;
+          const missingColumn = (exception.meta as any)?.column_name || 'unknown';
+          message = `Database error (P2022): The column '${missingColumn}' does not exist in the current database. Please contact support.`;
+          this.logger.error(`P2022 Missing column: ${missingColumn}`, exception.message);
+          break;
         default:
           status = HttpStatus.BAD_REQUEST;
           message = `Database error (${exception.code}). Please try again or contact support.`;
