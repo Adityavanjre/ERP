@@ -3,8 +3,7 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
-
-const { Resource } = require('@opentelemetry/resources');
+import { resourceFromAttributes } from '@opentelemetry/resources';
 
 // For troubleshooting, set the log level to DiagLogLevel.DEBUG
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
@@ -14,7 +13,7 @@ const otlpExporter = new OTLPTraceExporter({
 });
 
 export const otracing = new NodeSDK({
-    resource: new Resource({
+    resource: resourceFromAttributes({
         [SemanticResourceAttributes.SERVICE_NAME]: 'nexus-backend',
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
     }),
