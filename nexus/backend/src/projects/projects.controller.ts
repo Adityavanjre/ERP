@@ -19,9 +19,9 @@ import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { ProjectStatus, TaskStatus } from '@prisma/client';
-
+import { TaskStatus } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
+import { CreateProjectDto, UpdateProjectDto, CreateTaskDto } from './dto/projects.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
@@ -35,7 +35,7 @@ export class ProjectController {
 
   @Post()
   @Permissions(Permission.MANAGE_USERS)
-  create(@Req() req: any, @Body() data: any) {
+  create(@Req() req: any, @Body() data: CreateProjectDto) {
     return this.projectService.createProject(req.user.tenantId, data);
   }
 
@@ -59,14 +59,13 @@ export class ProjectController {
 
   @Patch(':id')
   @Permissions(Permission.MANAGE_USERS)
-  update(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+  update(@Req() req: any, @Param('id') id: string, @Body() data: UpdateProjectDto) {
     return this.projectService.updateProject(req.user.tenantId, id, data);
   }
 
-  // Tasks
   @Post(':id/tasks')
-  @Permissions(Permission.ADJUST_STOCK) // Operational task management
-  createTask(@Req() req: any, @Param('id') projectId: string, @Body() dto: any) {
+  @Permissions(Permission.ADJUST_STOCK)
+  createTask(@Req() req: any, @Param('id') projectId: string, @Body() dto: CreateTaskDto) {
     return this.projectService.createTask(req.user.tenantId, { ...dto, projectId });
   }
 
@@ -88,10 +87,7 @@ export class ProjectController {
 
   @Delete(':id')
   async deleteProject(@Req() req: any, @Param('id') id: string) {
-    // 1. Cascade Deletion for Project Discussion
     await this.collaboration.deleteCommentsByResource(req.user.tenantId, 'Project', id);
-
-    // 2. Perform actual deletion
     return this.projectService.deleteProject(req.user.tenantId, id);
   }
 }

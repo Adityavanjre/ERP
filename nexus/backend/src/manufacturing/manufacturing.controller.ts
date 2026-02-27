@@ -19,8 +19,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
-
 import { AiService } from '../system/services/ai.service';
+import { CreateBOMDto, CreateWorkOrderDto, CreateMachineDto, CompleteWorkOrderDto } from './dto/manufacturing.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('manufacturing')
@@ -41,7 +41,7 @@ export class ManufacturingController {
   // BOMs
   @Post('boms')
   @Permissions(Permission.ADJUST_STOCK)
-  createBOM(@CurrentUser() user: any, @Body() dto: any) {
+  createBOM(@CurrentUser() user: any, @Body() dto: CreateBOMDto) {
     return this.mfgService.createBOM(user.tenantId, dto);
   }
 
@@ -86,7 +86,7 @@ export class ManufacturingController {
   // Work Orders
   @Post('work-orders')
   @Permissions(Permission.ADJUST_STOCK)
-  createWO(@CurrentUser() user: any, @Body() dto: any) {
+  createWO(@CurrentUser() user: any, @Body() dto: CreateWorkOrderDto) {
     return this.mfgService.createWorkOrder(user.tenantId, dto);
   }
 
@@ -131,31 +131,25 @@ export class ManufacturingController {
   completeWO(
     @CurrentUser() user: any,
     @Param('id') id: string,
-    @Body('warehouseId') warehouseId?: string,
-    @Body('producedQuantity') producedQuantity?: number,
-    @Body('scrapQuantity') scrapQuantity?: number,
-    @Body('machineId') machineId?: string,
-    @Body('machineTimeHours') machineTimeHours?: number,
-    @Body('operatorName') operatorName?: string,
-    @Body('idempotencyKey') idempotencyKey?: string,
+    @Body() dto: CompleteWorkOrderDto,
   ) {
     return this.mfgService.completeWorkOrder(
       user.tenantId,
       id,
-      producedQuantity,
-      scrapQuantity,
-      machineId,
-      machineTimeHours,
-      operatorName,
-      warehouseId,
-      idempotencyKey
+      dto.producedQuantity,
+      dto.scrapQuantity,
+      dto.machineId,
+      dto.machineTimeHours,
+      dto.operatorName,
+      dto.warehouseId,
+      dto.idempotencyKey
     );
   }
 
   // Machines
   @Post('machines')
   @Permissions(Permission.ADJUST_STOCK)
-  createMachine(@CurrentUser() user: any, @Body() data: any) {
+  createMachine(@CurrentUser() user: any, @Body() data: CreateMachineDto) {
     return this.mfgService.createMachine(user.tenantId, data);
   }
 

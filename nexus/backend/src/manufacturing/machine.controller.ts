@@ -16,16 +16,17 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { MachineStatus, Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CreateMachineDto } from './dto/manufacturing.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(AuditInterceptor)
 @Controller('manufacturing/machines')
 export class MachineController {
-  constructor(private readonly machineService: MachineService) {}
+  constructor(private readonly machineService: MachineService) { }
 
   @Post()
   @Roles(Role.Owner, Role.Manager)
-  create(@Req() req: any, @Body() data: any) {
+  create(@Req() req: any, @Body() data: CreateMachineDto) {
     return this.machineService.createMachine(req.user.tenantId, data);
   }
 

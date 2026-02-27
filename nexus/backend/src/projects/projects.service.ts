@@ -26,6 +26,7 @@ export class ProjectService {
       where: { tenantId },
       include: { _count: { select: { tasks: true } } },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
 
@@ -69,6 +70,7 @@ export class ProjectService {
       },
       include: { project: true },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
 

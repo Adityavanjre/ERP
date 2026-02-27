@@ -18,6 +18,7 @@ import { AccountingService } from '../accounting/accounting.service';
 import { LoggingService } from '../common/services/logging.service';
 import { MailService } from '../system/services/mail.service';
 import * as crypto from 'crypto';
+import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 const { authenticator } = require('otplib');
 import * as QRCode from 'qrcode';
 
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly mailService: MailService,
     private readonly googleAuth: GoogleAuthService,
     private readonly logging: LoggingService,
+    private readonly anomalyAlert: AnomalyAlertService,
   ) { }
 
   async createWorkspace(userId: string, dto: CreateWorkspaceDto) {
@@ -203,6 +205,11 @@ export class AuthService {
         details: { method: 'Email', reason: 'Invalid Password' },
         ipAddress,
       });
+      // Anomaly detection: check for brute-force burst from same IP
+      if (ipAddress) {
+        // Non-blocking: anomaly check must not defer the error response
+        this.anomalyAlert.checkAuthFailureBurst(ipAddress).catch(() => { /* never block login flow */ });
+      }
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -238,6 +245,49 @@ export class AuthService {
     });
 
     return this.generateAuthResponse(user, false, channel);
+  }
+
+  async adminLogin(dto: LoginDto, ipAddress?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user || !user.isSuperAdmin) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash || '');
+    if (!isPasswordValid) {
+      await this.recordLoginFailure(user);
+      await this.logging.log({
+        userId: user.id,
+        action: 'ADMIN_LOGIN_FAILURE',
+        resource: 'Identity',
+        details: { reason: 'Invalid Password' },
+        ipAddress,
+      });
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    await this.resetLoginAttempts(user.id);
+
+    // Mandate MFA for Admin Login
+    if (user.mfaEnabled) {
+      return {
+        requiresMfa: true,
+        tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge', isAdminFlow: true }),
+        user: { id: user.id, email: user.email }
+      };
+    }
+
+    await this.logging.log({
+      userId: user.id,
+      action: 'ADMIN_LOGIN_SUCCESS',
+      resource: 'Identity',
+      ipAddress,
+    });
+
+    return this.generateAuthResponse(user, false, 'WEB', true);
   }
 
   async googleLogin(dto: GoogleLoginDto, channel: AccessChannel) {
@@ -288,16 +338,25 @@ export class AuthService {
 
     if (finalUser.mfaEnabled || hasSensitiveRole) {
       if (!finalUser.mfaEnabled) {
+        // SECURITY: This token may ONLY be used for POST /auth/mfa/verify-setup.
+        // It has a 10-minute expiry and the type 'mfa_setup_pending'.
+        // ModuleGuard/RolesGuard must reject this token on all other endpoints.
         return {
           requiresMfaSetup: true,
-          setupToken: this.jwtService.sign({ sub: finalUser.id, type: 'mfa_setup' }),
-          user: { id: finalUser.id, email: finalUser.email }
+          setupToken: this.jwtService.sign(
+            { sub: finalUser.id, type: 'mfa_setup_pending' },
+            { expiresIn: '10m' },
+          ),
+          user: { id: finalUser.id, email: finalUser.email },
         };
       }
       return {
         requiresMfa: true,
-        tempToken: this.jwtService.sign({ sub: finalUser.id, type: 'mfa_challenge' }),
-        user: { id: finalUser.id, email: finalUser.email }
+        tempToken: this.jwtService.sign(
+          { sub: finalUser.id, type: 'mfa_challenge' },
+          { expiresIn: '10m' },
+        ),
+        user: { id: finalUser.id, email: finalUser.email },
       };
     }
 
@@ -311,20 +370,21 @@ export class AuthService {
     return this.generateAuthResponse(finalUser, false, channel);
   }
 
-  private generateAuthResponse(user: any, isMfaVerifiedOverride?: boolean, channel: AccessChannel = 'MOBILE') {
+  private generateAuthResponse(user: any, isMfaVerifiedOverride?: boolean, channel: AccessChannel = 'MOBILE', isAdminFlow: boolean = false) {
     // Generate an "Identity Token" (No tenantId scope yet)
     const userAny = user as any;
     const payload = {
       sub: user.id,
       email: user.email,
-      type: 'identity',
       jti: crypto.randomBytes(16).toString('hex'),
       isMfaVerified: isMfaVerifiedOverride !== undefined ? isMfaVerifiedOverride : !!userAny.isMfaVerified,
       mfaEnabled: !!userAny.mfaEnabled,
+      isSuperAdmin: !!user.isSuperAdmin,
+      type: user.isSuperAdmin && isAdminFlow && (isMfaVerifiedOverride || !!userAny.isMfaVerified) ? 'admin' : 'identity',
       channel: channel || 'MOBILE',
     };
 
-    console.log("[AUTH AUDIT] Generating Identity Token. Payload:", JSON.stringify(payload));
+
 
     return {
       accessToken: this.jwtService.sign(payload),
@@ -333,6 +393,7 @@ export class AuthService {
         email: user.email,
         fullName: user.fullName,
         mfaEnabled: !!userAny.mfaEnabled,
+        isSuperAdmin: !!user.isSuperAdmin,
       },
       tenants: user.memberships.map((m: any) => ({
         id: m.tenant.id,
@@ -381,10 +442,11 @@ export class AuthService {
       industry: membership.tenant.industry,
       tenantType: membership.tenant.type,
       isMfaVerified: isMfaVerified || false,
+      isSuperAdmin: !!userRecord?.isSuperAdmin,
       channel: channel || 'MOBILE',
     };
 
-    console.log("[AUTH AUDIT] Generating Tenant Scoped Token. Payload:", JSON.stringify(payload));
+
 
     await this.logging.log({
       userId,
@@ -485,14 +547,29 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
+    // SECURITY AR-1: Timing equalization to prevent email enumeration.
+    // Without this, the response is fast when the email does not exist (no DB write, no email send)
+    // and slow when it does (DB write + email send). An attacker can distinguish valid emails
+    // by measuring response time. Both paths now wait a minimum of 250ms before returning.
+    const MINIMUM_RESPONSE_TIME_MS = 250;
+    const startTime = Date.now();
+
+    const conditionalWait = async () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = MINIMUM_RESPONSE_TIME_MS - elapsed;
+      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+    };
+
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: { memberships: true }
     });
 
+    const SAFE_RESPONSE = { message: 'If an account exists with this email, a reset link has been sent.' };
+
     if (!user || user.memberships.length === 0) {
-      // Security: Don't reveal if user exists or is inactive
-      return { message: 'If an account exists with this email, a reset link has been sent.' };
+      await conditionalWait();
+      return SAFE_RESPONSE;
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -509,7 +586,8 @@ export class AuthService {
 
     await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName || '');
 
-    return { message: 'If an account exists with this email, a reset link has been sent.' };
+    await conditionalWait();
+    return SAFE_RESPONSE;
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -660,7 +738,7 @@ export class AuthService {
 
       await this.resetLoginAttempts(user.id);
 
-      return this.generateAuthResponse(user, true, payload.channel);
+      return this.generateAuthResponse(user, true, payload.channel, !!payload.isAdminFlow);
     } catch (e) {
       if (e instanceof UnauthorizedException && e.message === 'Invalid MFA token') {
         // Already logged above

@@ -3,6 +3,7 @@ import { BrsService } from '../services/brs.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UploadBrsStatementDto } from '../dto/brs.dto';
 
 @Controller('accounting/brs')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -14,7 +15,7 @@ export class BrsController {
     async uploadStatement(
         @Req() req: any,
         @Param('accountId') accountId: string,
-        @Body() data: any,
+        @Body() data: UploadBrsStatementDto,
     ) {
         return this.brsService.uploadStatement(req.user.tenantId, accountId, data);
     }

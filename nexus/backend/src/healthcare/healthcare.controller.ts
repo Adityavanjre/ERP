@@ -6,6 +6,12 @@ import { ModuleGuard } from '../common/guards/module.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
+import {
+    CreatePatientDto,
+    CreateMedicalRecordDto,
+    ScheduleAppointmentDto,
+    AddPharmacyBatchDto,
+} from './dto/healthcare.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleGuard)
 @Module('healthcare')
@@ -15,7 +21,7 @@ export class HealthcareController {
 
     @Post('patients')
     @Roles(Role.Owner, Role.Manager, Role.Biller)
-    createPatient(@Req() req: any, @Body() data: any) {
+    createPatient(@Req() req: any, @Body() data: CreatePatientDto) {
         return this.healthcareService.registerPatient(req.user.tenantId, data);
     }
 
@@ -32,14 +38,14 @@ export class HealthcareController {
     }
 
     @Post('medical-records')
-    @Roles(Role.Owner, Role.Manager) // Usually restricted to doctors/managers
-    createRecord(@Req() req: any, @Body() data: any) {
+    @Roles(Role.Owner, Role.Manager)
+    createRecord(@Req() req: any, @Body() data: CreateMedicalRecordDto) {
         return this.healthcareService.createMedicalRecord(req.user.tenantId, data);
     }
 
     @Post('appointments')
     @Roles(Role.Owner, Role.Manager, Role.Biller)
-    schedule(@Req() req: any, @Body() data: any) {
+    schedule(@Req() req: any, @Body() data: ScheduleAppointmentDto) {
         return this.healthcareService.scheduleAppointment(req.user.tenantId, data);
     }
 
@@ -57,7 +63,7 @@ export class HealthcareController {
 
     @Post('pharmacy/batches')
     @Roles(Role.Owner, Role.Manager)
-    addBatch(@Req() req: any, @Body() data: any) {
+    addBatch(@Req() req: any, @Body() data: AddPharmacyBatchDto) {
         return this.healthcareService.addPharmacyBatch(req.user.tenantId, data);
     }
 }

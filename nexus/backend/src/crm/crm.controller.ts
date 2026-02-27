@@ -20,9 +20,14 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { Role } from '@prisma/client';
-
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
+import {
+  CreateOpportunityDto,
+  UpdateOpportunityDto,
+  UpdateCustomerDto,
+  AddOpeningBalanceDto,
+} from './dto/crm.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
@@ -33,14 +38,13 @@ export class CrmController {
 
   @Post('customers')
   @Permissions(Permission.MANAGE_USERS)
-  create(@Req() req: any, @Body() createCustomerDto: any) {
+  create(@Req() req: any, @Body() createCustomerDto: UpdateCustomerDto) {
     return this.crmService.createCustomer(req.user.tenantId, createCustomerDto);
   }
 
   @Post('import')
   @Permissions(Permission.MANAGE_USERS)
   uploadFile(@Req() req: any, @Body() body: any) {
-    // Basic text/csv handling
     const csvContent = body.csv || body;
     return this.crmService.importCustomers(
       req.user.tenantId,
@@ -49,7 +53,7 @@ export class CrmController {
   }
 
   @Get('customers')
-  @Permissions(Permission.VIEW_PRODUCTS) // View Customers is grouped with VIEW_PRODUCTS in this system
+  @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_LEADS')
   findAll(
     @Req() req: any,
@@ -70,9 +74,9 @@ export class CrmController {
   }
 
   @Post('opportunities')
-  @Permissions(Permission.CREATE_INVOICE) // Sales pipeline access
+  @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('CREATE_LEAD')
-  createOpp(@Req() req: any, @Body() data: any) {
+  createOpp(@Req() req: any, @Body() data: CreateOpportunityDto) {
     return this.crmService.createOpportunity(req.user.tenantId, data);
   }
 
@@ -98,7 +102,7 @@ export class CrmController {
 
   @Post('opportunities/:id')
   @Permissions(Permission.CREATE_INVOICE)
-  updateOpp(@Req() req: any, @Body() data: any, @Param('id') id: string) {
+  updateOpp(@Req() req: any, @Body() data: UpdateOpportunityDto, @Param('id') id: string) {
     return this.crmService.updateOpportunity(req.user.tenantId, id, data);
   }
 
@@ -107,7 +111,7 @@ export class CrmController {
   update(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() updateCustomerDto: any,
+    @Body() updateCustomerDto: UpdateCustomerDto,
   ) {
     return this.crmService.updateCustomer(
       req.user.tenantId,
@@ -116,14 +120,13 @@ export class CrmController {
     );
   }
 
-  // --- Opening Balances ---
   @Post('customers/:id/opening-balance')
   @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   addOpeningBalance(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() data: any,
+    @Body() data: AddOpeningBalanceDto,
   ) {
     return this.crmService.addOpeningBalance(req.user.tenantId, id, data);
   }

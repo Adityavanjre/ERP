@@ -18,10 +18,16 @@ import { LoggingService } from '../common/services/logging.service';
     forwardRef(() => AccountingModule),
     forwardRef(() => SystemModule),
     JwtModule.registerAsync({
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'supersecreterpkey',
-        signOptions: { expiresIn: '1d' },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const jwtSecret = configService.get<string>('JWT_SECRET');
+        if (!jwtSecret) {
+          throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.');
+        }
+        return {
+          secret: jwtSecret,
+          signOptions: { expiresIn: '1d' },
+        };
+      },
       inject: [ConfigService],
     }),
   ],

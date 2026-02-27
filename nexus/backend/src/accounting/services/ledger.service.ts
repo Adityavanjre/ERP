@@ -171,14 +171,18 @@ export class LedgerService {
       { name: StandardAccounts.CASH, type: AccountType.Asset, code: '1002' },
       { name: StandardAccounts.BANK, type: AccountType.Asset, code: '1003' },
       { name: StandardAccounts.GST_RECEIVABLE, type: AccountType.Asset, code: '1008' },
+      // INPUT GST accounts (ITC claimable) are Assets — they represent tax paid
+      // to suppliers that is recoverable from the government. Classifying these as
+      // Liability was a statutory error that produced incorrect Balance Sheets.
+      { name: StandardAccounts.INPUT_IGST, type: AccountType.Asset, code: '1009' },
+      { name: StandardAccounts.INPUT_CGST, type: AccountType.Asset, code: '1010' },
+      { name: StandardAccounts.INPUT_SGST, type: AccountType.Asset, code: '1011' },
       { name: StandardAccounts.OPENING_BALANCE_EQUITY, type: AccountType.Equity, code: '3001' },
       { name: StandardAccounts.ACCOUNTS_PAYABLE, type: AccountType.Liability, code: '2001' },
+      // OUTPUT GST accounts (GST charged to customers) remain Liability
       { name: StandardAccounts.OUTPUT_IGST, type: AccountType.Liability, code: '2002' },
       { name: StandardAccounts.OUTPUT_CGST, type: AccountType.Liability, code: '2003' },
       { name: StandardAccounts.OUTPUT_SGST, type: AccountType.Liability, code: '2004' },
-      { name: StandardAccounts.INPUT_IGST, type: AccountType.Liability, code: '2005' },
-      { name: StandardAccounts.INPUT_CGST, type: AccountType.Liability, code: '2006' },
-      { name: StandardAccounts.INPUT_SGST, type: AccountType.Liability, code: '2007' },
       { name: StandardAccounts.SALES, type: AccountType.Revenue, code: '4001' },
       { name: StandardAccounts.SALES_RETURNS, type: AccountType.Revenue, code: '4003' },
       { name: StandardAccounts.COGS, type: AccountType.Expense, code: '5001' },
@@ -325,40 +329,62 @@ export class LedgerService {
         },
       });
 
+      const correlationId = journal.correlationId;
+
+      // 1. Prefetch all accounts referenced in this entry in ONE query
+      const accountIds = [...new Set(data.transactions.map((t) => t.accountId))];
+      const accounts = await client.account.findMany({
+        where: { id: { in: accountIds }, tenantId },
+      });
+      const accountMap = new Map<string, any>(accounts.map((a: any) => [a.id, a]));
+
       for (const t of data.transactions) {
+        if (!accountMap.has(t.accountId)) {
+          throw new BadRequestException(`Account ${t.accountId} not found or does not belong to tenant`);
+        }
+      }
+
+      // 2. Batch-create all transaction legs in ONE INSERT
+      await client.transaction.createMany({
+        data: data.transactions.map((t) => ({
+          tenantId,
+          accountId: t.accountId,
+          amount: this.round2(t.amount),
+          type: t.type,
+          description: t.description || data.description,
+          journalEntryId: journal.id,
+          correlationId,
+        })),
+      });
+
+      // 3. Compute net balance delta per account in-memory, then ONE updateMany per account
+      const balanceDeltas = new Map<string, Decimal>();
+      for (const t of data.transactions) {
+        const account = accountMap.get(t.accountId);
         const roundedAmount = this.round2(t.amount);
-        await client.transaction.create({
-          data: {
-            tenantId,
-            accountId: t.accountId,
-            amount: roundedAmount,
-            type: t.type,
-            description: t.description || data.description,
-            journalEntryId: journal.id,
-            correlationId: journal.correlationId, // Forensic Propagation
-          },
-        });
-
-        const account = await client.account.findFirst({
-          where: { id: t.accountId, tenantId },
-        });
-        if (!account) throw new BadRequestException(`Account ${t.accountId} not found`);
-
-        let balanceChange = new Decimal(t.amount);
         const isDebit = t.type === 'Debit';
         const isAssetOrExpense = ([AccountType.Asset, AccountType.Expense] as AccountType[]).includes(account.type);
 
+        let delta: Decimal;
         if (isAssetOrExpense) {
-          balanceChange = isDebit ? balanceChange : balanceChange.negated();
+          delta = isDebit ? roundedAmount : roundedAmount.negated();
         } else {
-          balanceChange = isDebit ? balanceChange.negated() : balanceChange;
+          delta = isDebit ? roundedAmount.negated() : roundedAmount;
         }
 
-        await client.account.updateMany({
-          where: { id: t.accountId, tenantId },
-          data: { balance: { increment: balanceChange } },
-        });
+        const prev = balanceDeltas.get(t.accountId) || new Decimal(0);
+        balanceDeltas.set(t.accountId, prev.add(delta));
       }
+
+      // Apply one atomic increment per distinct account
+      await Promise.all(
+        Array.from(balanceDeltas.entries()).map(([accountId, delta]) =>
+          client.account.updateMany({
+            where: { id: accountId, tenantId },
+            data: { balance: { increment: delta } },
+          }),
+        ),
+      );
 
       return journal;
     };
@@ -372,3 +398,4 @@ export class LedgerService {
     });
   }
 }
+

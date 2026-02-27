@@ -11,14 +11,18 @@ import {
 import { OrmService } from '../services/orm.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
+import { DefineModelDto } from '../dto/system.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.Owner, Role.Manager)
 @Controller('system/studio')
 export class StudioController {
-  constructor(private readonly ormService: OrmService) {}
+  constructor(private readonly ormService: OrmService) { }
 
   @Post('models')
-  defineModel(@Body() dto: any) {
+  defineModel(@Body() dto: DefineModelDto) {
     // Expected DTO: { appName, name, label, fields: [...] }
     return this.ormService.defineModel(dto.appName, dto);
   }
@@ -32,7 +36,7 @@ export class StudioController {
   createRecord(
     @Req() req: any,
     @Param('modelName') modelName: string,
-    @Body() data: any,
+    @Body() data: Record<string, any>,
   ) {
     return this.ormService.createRecord(req.user.tenantId, modelName, data);
   }
@@ -51,7 +55,7 @@ export class StudioController {
     @Req() req: any,
     @Param('modelName') modelName: string,
     @Param('id') id: string,
-    @Body() data: any,
+    @Body() data: Record<string, any>,
   ) {
     return this.ormService.updateRecord(req.user.tenantId, modelName, id, data);
   }

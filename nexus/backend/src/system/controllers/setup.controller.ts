@@ -1,60 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
-import { Public } from '../../common/decorators/public.decorator';
-import { PrismaService } from '../../prisma/prisma.service';
-import * as bcrypt from 'bcryptjs';
-import { Role, TenantType, PlanType } from '@prisma/client';
-
-@Public()
-@Controller('system/setup')
-export class SetupController {
-  constructor(private prisma: PrismaService) { }
-
-  @Get('restore-admin')
-  async restoreAdmin() {
-    const email = 'admin@klypso.agency';
-    const password = 'password123';
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 1. Ensure Tenant (Match Master Seeder!)
-    const tenant = await this.prisma.tenant.upsert({
-      where: { slug: 'premium-woodcraft' },
-      update: {},
-      create: {
-        name: 'Premium Woodcraft Industries',
-        slug: 'premium-woodcraft',
-        type: TenantType.Manufacturing,
-        plan: PlanType.Enterprise
-      }
-    });
-
-    // 2. Ensure User
-    const user = await this.prisma.user.upsert({
-      where: { email },
-      update: { passwordHash: hashedPassword, isSuperAdmin: true },
-      create: {
-        email,
-        passwordHash: hashedPassword,
-        fullName: 'System Administrator',
-        isSuperAdmin: true
-      }
-    });
-
-    // 3. Ensure Membership
-    await this.prisma.tenantUser.upsert({
-      where: { userId_tenantId: { userId: user.id, tenantId: tenant.id } },
-      update: { role: Role.Owner },
-      create: {
-        userId: user.id,
-        tenantId: tenant.id,
-        role: Role.Owner
-      }
-    });
-
-    return {
-      status: 'SUCCESS',
-      message: 'Admin account restored.',
-      credentials: { email, password },
-      loginUrl: 'https://klypso-frontend.onrender.com/login'
-    };
-  }
-}
+/**
+ * SetupController: DISABLED
+ *
+ * The restore-admin endpoint has been permanently removed. It was a @Public()
+ * unauthenticated endpoint that hardcoded admin credentials and returned them
+ * in plaintext HTTP responses. This constitutes a catastrophic security vulnerability.
+ *
+ * Admin account recovery is now handled via:
+ *   1. Direct DB seeding in controlled infrastructure environments only.
+ *   2. A one-time CLI command requiring server-level access.
+ *
+ * DO NOT restore this endpoint.
+ */

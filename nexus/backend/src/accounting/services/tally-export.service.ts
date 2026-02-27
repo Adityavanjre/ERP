@@ -133,8 +133,8 @@ export class TallyService {
       where: { tenantId, status: InvoiceStatus.Partial },
     });
     const partialAmount = partiallyPaid.reduce(
-      (sum, inv) => sum + (Number(inv.totalAmount) - Number(inv.amountPaid)),
-      0,
+      (sum, inv) => sum.add(new Decimal(inv.totalAmount).sub(new Decimal(inv.amountPaid))),
+      new Decimal(0),
     );
 
     const income = await this.prisma.account.aggregate({
@@ -161,8 +161,8 @@ export class TallyService {
     });
 
     const overdueAmount = overdue.reduce(
-      (sum, inv) => sum + (Number(inv.totalAmount) - Number(inv.amountPaid)),
-      0,
+      (sum, inv) => sum.add(new Decimal(inv.totalAmount).sub(new Decimal(inv.amountPaid))),
+      new Decimal(0),
     );
 
     const totalPayable = await this.prisma.purchaseOrder.aggregate({
@@ -170,18 +170,20 @@ export class TallyService {
       _sum: { totalAmount: true },
     });
 
+    const baseReceivable = new Decimal(totalReceivable._sum.totalAmount ?? 0);
+    const basePayable = new Decimal(totalPayable._sum.totalAmount ?? 0);
+    const baseIncome = new Decimal(income._sum.balance ?? 0);
+    const baseExpenses = new Decimal(expenses._sum.balance ?? 0);
+    const baseGst = new Decimal(gstLiability._sum.totalGST ?? 0);
+
     return {
-      receivable: this.ledger.round2(
-        (Number(totalReceivable._sum.totalAmount) || 0) + partialAmount,
-      ),
-      payable: this.ledger.round2(Number(totalPayable._sum.totalAmount) || 0),
+      receivable: this.ledger.round2(baseReceivable.add(partialAmount)),
+      payable: this.ledger.round2(basePayable),
       overdueAmount: this.ledger.round2(overdueAmount),
-      income: this.ledger.round2(Number(income._sum.balance) || 0),
-      expenses: this.ledger.round2(Number(expenses._sum.balance) || 0),
-      gstLiability: this.ledger.round2(Number(gstLiability._sum.totalGST) || 0),
-      netProfit: this.ledger.round2(
-        (Number(income._sum.balance) || 0) - (Number(expenses._sum.balance) || 0),
-      ),
+      income: this.ledger.round2(baseIncome),
+      expenses: this.ledger.round2(baseExpenses),
+      gstLiability: this.ledger.round2(baseGst),
+      netProfit: this.ledger.round2(baseIncome.sub(baseExpenses)),
     };
   }
 

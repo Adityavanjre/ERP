@@ -131,6 +131,25 @@ export class HrService {
       throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
     }
 
+    // IDEMPOTENCY GUARD: prevent double salary disbursement for the same period.
+    // A unique DB constraint (employeeId + periodStart + periodEnd) is the ultimate guard,
+    // but this application-layer check provides a meaningful error message.
+    const existingPayroll = await this.prisma.payroll.findFirst({
+      where: {
+        employee: { tenantId },
+        employeeId: data.employeeId,
+        periodStart: data.periodStart,
+        periodEnd: data.periodEnd,
+      },
+    });
+    if (existingPayroll) {
+      throw new BadRequestException(
+        `Payroll Integrity Block: A payroll record already exists for Employee ${employeeId} ` +
+        `for the period ${data.periodStart} – ${data.periodEnd}. ` +
+        `Use a reversal entry to correct errors. Reference ID: ${existingPayroll.id}`,
+      );
+    }
+
     const netPay = Number(basicSalary) + Number(bonuses) - Number(deductions);
 
     const payroll = await this.prisma.payroll.create({

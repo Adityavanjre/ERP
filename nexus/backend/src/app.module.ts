@@ -25,6 +25,7 @@ import { NbfcModule } from './nbfc/nbfc.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
+import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -34,6 +35,7 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
 import { MobileWhitelistGuard } from './common/guards/mobile-whitelist.guard';
 import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
+import { CsrfGuard } from './common/guards/csrf.guard';
 
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 
@@ -100,8 +102,16 @@ import { InfrastructureModule } from './infrastructure/infrastructure.module';
       useClass: RoleThrottlerGuard,
     },
     {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
+    },
+    {
       provide: APP_INTERCEPTOR,
       useClass: TenantInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: IdempotencyInterceptor,
     },
   ],
 })

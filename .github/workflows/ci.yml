@@ -1,0 +1,154 @@
+name: Nexus ERP CI
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexus/backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
+  security-and-audit:
+    name: Security Audit (SAST + Deps)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexus/backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package-lock.json
+      - run: npm ci
+      - name: Dependency Audit
+        run: npm audit --audit-level=high
+      - name: Run SAST Scan (ESLint Security)
+        run: npm run lint
+
+  migration-gate:
+    name: Migration Safety Gate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexus/backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Verify Migration Files
+        run: npx prisma migrate status --exit-code
+        env:
+          # Register this secret in repo Settings → Secrets → Actions as DATABASE_URL
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  build-check:
+    name: TypeScript Compile Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nexus/backend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  test-auth:
+    name: Auth & Token Lifecycle Tests
+    runs-on: ubuntu-latest
+    needs: [lint, build-check]
+    defaults:
+      run:
+        working-directory: nexus/backend
+    env:
+      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-production
+      # Unit tests use SQLite — no live database secret required
+      DATABASE_URL: file:./test-ci.db
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package-lock.json
+      - run: npm ci
+      - name: Run auth tests
+        run: npm run test -- --testPathPattern="auth"
+
+  test-accounting:
+    name: Accounting Invariants Tests
+    runs-on: ubuntu-latest
+    needs: [lint, build-check]
+    defaults:
+      run:
+        working-directory: nexus/backend
+    env:
+      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-production
+      # Unit tests use SQLite — no live database secret required
+      DATABASE_URL: file:./test-ci.db
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package-lock.json
+      - run: npm ci
+      - name: Run accounting invariant tests
+        run: npm run test -- --testPathPattern="(ledger|accounting|payroll)"
+
+  test-tenant-isolation:
+    name: Multi-Tenant Isolation Tests
+    runs-on: ubuntu-latest
+    needs: [lint, build-check]
+    defaults:
+      run:
+        working-directory: nexus/backend
+    env:
+      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-production
+      # Unit tests use SQLite — no live database secret required
+      DATABASE_URL: file:./test-ci.db
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nexus/backend/package-lock.json
+      - run: npm ci
+      - name: Run tenant isolation tests
+        run: npm run test -- --testPathPattern="(tenant|prisma-extension|isolation)"
+
+  all-gates-pass:
+    name: All Gates Passed (Required for Merge)
+    runs-on: ubuntu-latest
+    needs: [lint, build-check, security-and-audit, migration-gate, test-auth, test-accounting, test-tenant-isolation]
+    steps:
+      - run: echo "All required quality gates passed (including Security & Migrations). Merge is permitted."

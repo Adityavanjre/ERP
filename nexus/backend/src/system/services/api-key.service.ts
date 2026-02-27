@@ -10,7 +10,7 @@ export class ApiKeyService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) {}
+  ) { }
 
   async generateKey(tenantId: string, name: string, scopes: string[], data: { quotaLimit?: number } = {}) {
     const prefix = 'klp_' + crypto.randomBytes(4).toString('hex');
@@ -59,20 +59,27 @@ export class ApiKeyService {
       throw new UnauthorizedException('API Key Quota Exceeded');
     }
 
-    // 2. Rate Limiting Logic (Simplified for MVP)
+    // 2. Atomic Rate Limiting: single conditional update prevents the race condition
+    // where two concurrent requests both pass the read-check before either write completes.
     const now = new Date();
-    if (keyRecord.lastUsedAt && (now.getTime() - keyRecord.lastUsedAt.getTime() < 1000)) {
-        throw new UnauthorizedException('Rate limit exceeded: 1 req/sec');
-    }
-
-    // 3. Update last used AND increment usage count (Atomic-ish)
-    await this.prisma.apiKey.update({
-      where: { id: keyRecord.id },
-      data: { 
-        lastUsedAt: new Date(),
-        usageCount: { increment: 1 }
+    const oneSecondAgo = new Date(now.getTime() - 1000);
+    const updateResult = await this.prisma.apiKey.updateMany({
+      where: {
+        id: keyRecord.id,
+        OR: [
+          { lastUsedAt: null },
+          { lastUsedAt: { lt: oneSecondAgo } },
+        ],
+      },
+      data: {
+        lastUsedAt: now,
+        usageCount: { increment: 1 },
       },
     });
+
+    if (updateResult.count === 0) {
+      throw new UnauthorizedException('Rate limit exceeded: 1 req/sec');
+    }
 
     return keyRecord;
   }
@@ -81,13 +88,13 @@ export class ApiKeyService {
     return this.prisma.apiKey.findMany({
       where: { tenantId },
       select: {
-          id: true,
-          name: true,
-          prefix: true,
-          scopes: true,
-          lastUsedAt: true,
-          expiresAt: true,
-          createdAt: true
+        id: true,
+        name: true,
+        prefix: true,
+        scopes: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        createdAt: true
       }
     });
   }

@@ -312,13 +312,28 @@ export class AccountingService {
    */
   async closeFinancialYear(tenantId: string, year: number, userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Verify all 12 months are locked
+      // 1. Verify all 12 months are locked AND form a contiguous sequence
+      // Checking count=12 is insufficient: 12 arbitrary months could satisfy it
+      // without covering the actual fiscal year range.
       const locks = await tx.periodLock.findMany({
         where: { tenantId, year, isLocked: true },
+        orderBy: { month: 'asc' },
       });
 
       if (locks.length < 12) {
-        throw new BadRequestException(`Cannot close Financial Year ${year}. All 12 months must be locked by an Auditor first.`);
+        throw new BadRequestException(`Cannot close Financial Year ${year}. Only ${locks.length} of 12 months are locked.`);
+      }
+
+      // Contiguity check: locked months must be exactly 1 through 12
+      const lockedMonths = locks.map((l) => l.month).sort((a, b) => a - b);
+      const expectedMonths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+      const isContiguous = expectedMonths.every((m, i) => lockedMonths[i] === m);
+      if (!isContiguous) {
+        const missing = expectedMonths.filter((m) => !lockedMonths.includes(m));
+        throw new BadRequestException(
+          `Cannot close Financial Year ${year}. Months ${missing.join(', ')} are not locked. ` +
+          `All 12 calendar months must be locked in sequence before closure.`,
+        );
       }
 
       const closingDate = new Date(year, 11, 31);

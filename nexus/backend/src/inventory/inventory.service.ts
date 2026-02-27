@@ -525,7 +525,8 @@ export class InventoryService {
         stockLocations: {
           where: { quantity: { gt: 0 } }
         }
-      }
+      },
+      take: 100,
     });
 
     const suggestions = [];

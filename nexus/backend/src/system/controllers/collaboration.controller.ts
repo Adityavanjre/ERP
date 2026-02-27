@@ -4,6 +4,7 @@ import { memoryStorage } from 'multer';
 import { CollaborationService } from '../services/collaboration.service';
 import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { validateFileMagicBytes, validateFileSize, ALLOWED_MIME_TYPES } from '../../common/utils/file-magic.util';
 
 @Controller('collaboration')
 @UseGuards(JwtAuthGuard)
@@ -11,27 +12,25 @@ export class CollaborationController {
   constructor(
     private readonly collaborationService: CollaborationService,
     private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(), // Store in memory to stream to Cloudinary
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: (req, file, callback) => {
-      if (!file.originalname.match(/\.(jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx|csv|txt)$/)) {
-        return callback(new BadRequestException('Only image, PDF, and office document files are allowed!'), false);
-      }
-      callback(null, true);
-    },
+    storage: memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB hard limit at transport layer
   }))
   async uploadFile(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    
-    // Upload to Cloudinary
+
+    // SECURITY: Validate file by its actual binary content (magic bytes), not its filename.
+    // A malicious actor can rename any executable to .jpg to bypass extension checks.
+    validateFileSize(file, 5 * 1024 * 1024);
+    validateFileMagicBytes(file, ALLOWED_MIME_TYPES.ALL);
+
     const result = await this.cloudinaryService.uploadFile(file);
-    
+
     return {
       url: result.secure_url,
       filename: file.originalname,

@@ -490,10 +490,15 @@ export class PurchasesService {
       if (status === POStatus.Cancelled && po.status === POStatus.Received) {
         for (const item of po.items) {
           // A. Decrement Stock
-          await tx.product.updateMany({
-            where: { id: item.productId, tenantId },
+          // ATOMIC stock decrement: guarded with gte to prevent race-condition negative stock.
+          // This mirrors the pattern in InventoryService.deductStock().
+          const stockResult = await tx.product.updateMany({
+            where: { id: item.productId, tenantId, stock: { gte: item.quantity } },
             data: { stock: { decrement: item.quantity } }
           });
+          if (stockResult.count === 0) {
+            throw new Error(`Stock integrity check failed for Product ${item.productId}: stock may have already been adjusted by a concurrent operation.`);
+          }
 
           // B. Find where it was received (Auditor search)
           const movement = await tx.stockMovement.findFirst({

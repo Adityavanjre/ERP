@@ -89,12 +89,17 @@ const RootNavigator = () => {
             case 'orders':
                 return <OrderListScreen onSelectOrder={(id) => { setSelectedOrderId(id); setCurrentScreen('order-detail'); }} />;
             case 'order-detail':
-                return selectedOrderId ? (
+                if (!selectedOrderId) {
+                    // Guard: no order selected — go back to list instead of blank white screen
+                    setCurrentScreen('orders');
+                    return null;
+                }
+                return (
                     <OrderDetailScreen
                         orderId={selectedOrderId}
                         onBack={() => setCurrentScreen('orders')}
                     />
-                ) : null;
+                );
             case 'notifications':
                 return <NotificationsScreen />;
             case 'create-order':

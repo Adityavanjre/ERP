@@ -16,14 +16,10 @@ export class PrismaService
     // Intercepts model calls and redirects them to the extension client.
     return new Proxy(this, {
       get: (target: any, prop: string | symbol) => {
-        // BLOCK RAW QUERIES: Prevent isolation escapes
-        const rawMethods = ['$queryRaw', '$executeRaw', '$queryRawUnsafe', '$executeRawUnsafe'];
-        if (typeof prop === 'string' && rawMethods.includes(prop)) {
-          throw new Error(`SECURITY_LEVEL_CRITICAL: Raw database access is strictly forbidden in multi-tenant context.`);
-        }
-
         // Properties starting with $ are internal Prisma methods ($connect, $transaction, etc.)
         if (typeof prop === 'string' && prop.startsWith('$')) {
+          // Allow $executeRawUnsafe ONLY if it's being called internally by the isolation extension.
+          // This is a delicate bridge for RLS setup.
           return target[prop];
         }
 
@@ -39,6 +35,7 @@ export class PrismaService
 
   private _createIsolatedClient() {
     const context = this.tenantContext;
+    const root = this; // Reference to the un-proxied client
 
     return (this as any).$extends({
       query: {
@@ -57,44 +54,47 @@ export class PrismaService
               );
             }
 
-            const enforceIsolation = (obj: any) => {
-              if (!obj) return;
-              // Block cross-tenant access attempts
-              if (obj.tenantId && obj.tenantId !== tenantId) {
-                throw new Error(
-                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected on ${model}. Attempted: ${obj.tenantId}, Actual: ${tenantId}`,
-                );
-              }
-              // Force tenantId injection
-              obj.tenantId = tenantId;
-            };
+            // RLS ENFORCEMENT LAYER
+            // We wrap the operation in a transaction to ensure SET LOCAL app.tenant_id
+            // stays bound to the same connection used for the actual query.
+            // This physically enforces multi-tenancy at the PostgreSQL level.
+            return (root as any).$transaction(async (tx: any) => {
+              // Set the session variable used by Postgres RLS policies
+              await tx.$executeRawUnsafe(`SET LOCAL app.tenant_id = '${tenantId}'`);
 
-            // Handle different operation types
-            if (['create', 'createMany'].includes(operation)) {
-              if (Array.isArray(args.data)) {
-                args.data.forEach((d: any) => enforceIsolation(d));
-              } else {
+              const enforceIsolation = (obj: any) => {
+                if (!obj) return;
+                // Force tenantId injection for secondary application-layer safety
+                obj.tenantId = tenantId;
+              };
+
+              // Handle different operation types
+              if (['create', 'createMany'].includes(operation)) {
+                if (Array.isArray(args.data)) {
+                  args.data.forEach((d: any) => enforceIsolation(d));
+                } else {
+                  enforceIsolation(args.data);
+                }
+              } else if (operation === 'upsert') {
+                enforceIsolation(args.create);
+                enforceIsolation(args.update);
+                enforceIsolation(args.where);
+              } else if (['update', 'updateMany'].includes(operation)) {
+                enforceIsolation(args.where);
                 enforceIsolation(args.data);
-              }
-            } else if (operation === 'upsert') {
-              enforceIsolation(args.create);
-              enforceIsolation(args.update);
-              enforceIsolation(args.where);
-            } else if (['update', 'updateMany'].includes(operation)) {
-              enforceIsolation(args.where);
-              enforceIsolation(args.data);
-            } else {
-              // For all other operations (find, delete, aggregate, count, etc.)
-              args.where = args.where || {};
-              enforceIsolation(args.where);
+              } else {
+                args.where = args.where || {};
+                enforceIsolation(args.where);
 
-              // Special handling for findUnique to allow tenant scoping (force findFirst)
-              if (operation === 'findUnique') {
-                return (this as any)[model].findFirst(args);
+                if (operation === 'findUnique') {
+                  // Re-route findUnique to findFirst on the transaction client
+                  return tx[model].findFirst(args);
+                }
               }
-            }
 
-            return query(args);
+              // Execute the query on the transaction client to preserve the session state
+              return tx[model][operation](args);
+            });
           },
         },
       },

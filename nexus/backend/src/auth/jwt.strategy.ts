@@ -12,10 +12,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private config: ConfigService,
     private security: SecurityStorageService,
   ) {
+    const jwtSecret = config.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.');
+    }
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (req: any) => {
+          return req?.cookies?.nexus_token || null;
+        },
+      ]),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_SECRET') || 'supersecreterpkey',
+      secretOrKey: jwtSecret,
     });
   }
 

@@ -46,11 +46,12 @@ api.interceptors.response.use(
         const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
         const isAuthPage = authPages.some(page => window.location.pathname.includes(page));
 
-        // Let AuthGuard handle identity tokens, don't unilaterally wipe them if it's just a missing tenant scope
+        // Only trigger session wipe if we get an explicit TOKEN_EXPIRED code
+        const isTokenExpired = error.response?.data?.code === 'TOKEN_EXPIRED';
         const isIdentityScopeError = error.response?.data?.message?.includes("A tenant-scoped token is required");
         const isForbidden = error.response?.status === 403;
 
-        if (!isAuthPage && !isIdentityScopeError && !isForbidden) {
+        if (isTokenExpired && !isAuthPage && !isIdentityScopeError && !isForbidden) {
           localStorage.removeItem('k_token');
           localStorage.removeItem('k_user');
           window.dispatchEvent(new CustomEvent('session-expired'));

@@ -6,6 +6,14 @@ import { ModuleGuard } from '../common/guards/module.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
+import {
+    RegisterVehicleDto,
+    LogFuelDto,
+    CreateRouteDto,
+    UpdateRouteStatusDto,
+    CompleteMaintenanceDto,
+    ScheduleMaintenanceDto,
+} from './dto/logistics.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleGuard)
 @Module('logistics')
@@ -15,7 +23,7 @@ export class LogisticsController {
 
     @Post('vehicles')
     @Roles(Role.Owner, Role.Manager)
-    register(@Req() req: any, @Body() data: any) {
+    register(@Req() req: any, @Body() data: RegisterVehicleDto) {
         return this.logisticsService.registerVehicle(req.user.tenantId, data);
     }
 
@@ -27,31 +35,31 @@ export class LogisticsController {
 
     @Post('fuel-logs')
     @Roles(Role.Owner, Role.Manager, Role.Accountant)
-    logFuel(@Req() req: any, @Body() data: any) {
+    logFuel(@Req() req: any, @Body() data: LogFuelDto) {
         return this.logisticsService.logFuel(req.user.tenantId, data);
     }
 
     @Post('routes')
     @Roles(Role.Owner, Role.Manager)
-    createRoute(@Req() req: any, @Body() data: any) {
+    createRoute(@Req() req: any, @Body() data: CreateRouteDto) {
         return this.logisticsService.createRouteLog(req.user.tenantId, data);
     }
 
     @Patch('routes/:id/status')
     @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
-    updateRouteStatus(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+    updateRouteStatus(@Req() req: any, @Param('id') id: string, @Body() data: UpdateRouteStatusDto) {
         return this.logisticsService.updateRouteLogStatus(req.user.tenantId, id, data.status, data.arrivalDate);
     }
 
     @Patch('maintenance/:id/complete')
     @Roles(Role.Owner, Role.Manager)
-    completeMaintenance(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+    completeMaintenance(@Req() req: any, @Param('id') id: string, @Body() data: CompleteMaintenanceDto) {
         return this.logisticsService.completeMaintenance(req.user.tenantId, id, data);
     }
 
     @Post('maintenance')
     @Roles(Role.Owner, Role.Manager)
-    schedule(@Req() req: any, @Body() data: any) {
+    schedule(@Req() req: any, @Body() data: ScheduleMaintenanceDto) {
         return this.logisticsService.scheduleMaintenance(req.user.tenantId, data);
     }
 }

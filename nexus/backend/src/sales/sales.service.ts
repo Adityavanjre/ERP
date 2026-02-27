@@ -42,7 +42,7 @@ export class SalesService {
     }
 
     // 1. Create Order & Invoice within a single transaction
-    return (this.prisma as any).$transaction(async (tx: any) => {
+    return this.prisma.$transaction(async (tx) => {
       // Validate customer exists
       if (customerId) {
         const customer = await tx.customer.findFirst({

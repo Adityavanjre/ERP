@@ -22,6 +22,15 @@ import { Role } from '@prisma/client';
 import { TenantId } from '../common/decorators/tenant-id.decorator';
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
+import {
+  CreateWarehouseDto,
+  UpdateWarehouseDto,
+  LogMovementDto,
+  PostOpeningBalanceDto,
+  TransferStockDto,
+  CreateProductDto,
+  UpdateProductDto
+} from './dto/inventory.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('inventory')
@@ -41,7 +50,7 @@ export class InventoryController {
   @Post('warehouses')
   @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
-  createWarehouse(@TenantId() tenantId: string, @Body() data: any) {
+  createWarehouse(@TenantId() tenantId: string, @Body() data: CreateWarehouseDto) {
     return this.warehouseService.createWarehouse(tenantId, data);
   }
 
@@ -51,7 +60,7 @@ export class InventoryController {
   updateWarehouse(
     @TenantId() tenantId: string,
     @Param('id') id: string,
-    @Body() data: any,
+    @Body() data: UpdateWarehouseDto,
   ) {
     return this.warehouseService.updateWarehouse(tenantId, id, data);
   }
@@ -59,7 +68,7 @@ export class InventoryController {
   @Post('movements')
   @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
   @Permissions(Permission.ADJUST_STOCK)
-  logMovement(@TenantId() tenantId: string, @Body() data: any) {
+  logMovement(@TenantId() tenantId: string, @Body() data: LogMovementDto) {
     return this.warehouseService.logMovement(tenantId, data);
   }
 
@@ -69,7 +78,7 @@ export class InventoryController {
   postOpeningBalance(
     @TenantId() tenantId: string,
     @Param('id') id: string,
-    @Body() data: any
+    @Body() data: PostOpeningBalanceDto
   ) {
     return this.warehouseService.logOpeningBalance(tenantId, {
       ...data,
@@ -80,14 +89,14 @@ export class InventoryController {
   @Post('transfers')
   @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
   @Permissions(Permission.ADJUST_STOCK)
-  transferStock(@TenantId() tenantId: string, @Body() data: any) {
+  transferStock(@TenantId() tenantId: string, @Body() data: TransferStockDto) {
     return this.warehouseService.transferStock(tenantId, data);
   }
 
   @Post('products')
   @Roles(Role.Owner, Role.Manager, Role.Storekeeper)
   @Permissions(Permission.ADJUST_STOCK)
-  create(@Req() req: any, @Body() createProductDto: any) {
+  create(@Req() req: any, @Body() createProductDto: CreateProductDto) {
     return this.inventoryService.createProduct(
       req.user.tenantId,
       { ...createProductDto, correlationId: req['correlationId'] },
@@ -147,7 +156,7 @@ export class InventoryController {
   update(
     @Req() req: any,
     @Param('id') id: string,
-    @Body() updateProductDto: any,
+    @Body() updateProductDto: UpdateProductDto,
   ) {
     return this.inventoryService.updateProduct(
       req.user.tenantId,

@@ -6,6 +6,7 @@ import { ModuleGuard } from '../common/guards/module.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
+import { LoanApplicationDto, LoanDisbursementDto, KycSubmitDto } from './dto/nbfc.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleGuard)
 @Module('nbfc')
@@ -15,7 +16,7 @@ export class NbfcController {
 
     @Post('loans')
     @Roles(Role.Owner, Role.Manager)
-    apply(@Req() req: any, @Body() data: any) {
+    apply(@Req() req: any, @Body() data: LoanApplicationDto) {
         return this.nbfcService.applyForLoan(req.user.tenantId, data);
     }
 
@@ -27,7 +28,7 @@ export class NbfcController {
 
     @Post('loans/:id/disburse')
     @Roles(Role.Owner, Role.Accountant)
-    disburse(@Req() req: any, @Param('id') id: string, @Body() data: any) {
+    disburse(@Req() req: any, @Param('id') id: string, @Body() data: LoanDisbursementDto) {
         return this.nbfcService.disburseLoan(req.user.tenantId, id, data);
     }
 
@@ -39,7 +40,7 @@ export class NbfcController {
 
     @Post('kyc/:loanId')
     @Roles(Role.Owner, Role.Manager)
-    submitKYC(@Req() req: any, @Param('loanId') loanId: string, @Body() data: any) {
+    submitKYC(@Req() req: any, @Param('loanId') loanId: string, @Body() data: KycSubmitDto) {
         return this.nbfcService.submitKYC(req.user.tenantId, loanId, data);
     }
 

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { InvoiceStatus, AccountType, TransactionType } from '@prisma/client';
+import { InvoiceStatus, AccountType, TransactionType, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Industry } from '@nexus/shared';
 import { LedgerService } from './ledger.service';
@@ -250,7 +250,9 @@ export class InvoiceService {
     };
 
     if (txOverride) return runInTransaction(txOverride);
-    return this.prisma.$transaction(runInTransaction);
+    return this.prisma.$transaction(runInTransaction, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
   }
 
   async updateInvoice(tenantId: string, id: string, data: any) {

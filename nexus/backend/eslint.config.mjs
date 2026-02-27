@@ -3,6 +3,7 @@ import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import securityPlugin from 'eslint-plugin-security';
 
 export default tseslint.config(
   {
@@ -10,6 +11,7 @@ export default tseslint.config(
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
+  securityPlugin.configs.recommended,
   eslintPluginPrettierRecommended,
   {
     languageOptions: {

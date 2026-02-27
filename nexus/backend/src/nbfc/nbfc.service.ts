@@ -153,45 +153,60 @@ export class NbfcService {
             where: { tenantId, status: 'Active' },
         });
 
-        const accruals = [];
+        if (activeLoans.length === 0) return { accrued: 0 };
+
+        // Compute all accruals in-memory — no DB calls per loan
+        const today = new Date().toISOString();
+        const accrualData: { tenantId: string; loanId: string; amount: Decimal; correlationId: string | null }[] = [];
+
         for (const loan of activeLoans) {
-            // Daily interest = (Principal * AnnualRate) / (100 * 365)
             const dailyInterest = new Decimal(loan.loanAmount).mul(loan.interestRate).div(100).div(365);
-
-            accruals.push(this.prisma.$transaction(async (tx) => {
-                const journal = await this.ledger.createJournalEntry(tenantId, {
-                    date: new Date().toISOString(),
-                    description: `Daily interest accrual for loan ${loan.id}`,
-                    reference: `INT_ACCR_${loan.id}_${Date.now()}`,
-                    transactions: [
-                        {
-                            accountId: 'INT_RECEIVABLE_ACC', // Placeholder
-                            type: 'Debit',
-                            amount: Number(dailyInterest),
-                            description: 'Interest Receivable',
-                        },
-                        {
-                            accountId: 'INT_REVENUE_ACC', // Placeholder
-                            type: 'Credit',
-                            amount: Number(dailyInterest),
-                            description: 'Interest Revenue',
-                        },
-                    ],
-                }, tx);
-
-                return (tx as any).interestAccrual.create({
-                    data: {
-                        tenantId,
-                        loanId: loan.id,
-                        amount: dailyInterest,
-                        journalEntryId: journal.id,
-                        correlationId: this.traceService.getCorrelationId(), // Trace Link
-                    },
-                });
-            }));
+            accrualData.push({
+                tenantId,
+                loanId: loan.id,
+                amount: dailyInterest,
+                correlationId: this.traceService.getCorrelationId() ?? null,
+            });
         }
-        return Promise.all(accruals);
+
+        // Single transaction: bulk-create journal entry + all accrual records
+        return this.prisma.$transaction(async (tx) => {
+            // Batch journal entry for all accruals (single compound entry)
+            const journal = await this.ledger.createJournalEntry(tenantId, {
+                date: today,
+                description: `Batch daily interest accrual — ${accrualData.length} loans`,
+                reference: `BATCH_INT_ACCR_${Date.now()}`,
+                transactions: accrualData.flatMap(a => ([
+                    {
+                        accountId: 'INT_RECEIVABLE_ACC',
+                        type: 'Debit' as const,
+                        amount: Number(a.amount),
+                        description: `Interest receivable: loan ${a.loanId}`,
+                    },
+                    {
+                        accountId: 'INT_REVENUE_ACC',
+                        type: 'Credit' as const,
+                        amount: Number(a.amount),
+                        description: `Interest revenue: loan ${a.loanId}`,
+                    },
+                ])),
+            }, tx);
+
+            // Bulk-create all accrual records in a single INSERT
+            await (tx as any).interestAccrual.createMany({
+                data: accrualData.map(a => ({
+                    tenantId: a.tenantId,
+                    loanId: a.loanId,
+                    amount: a.amount,
+                    journalEntryId: journal.id,
+                    correlationId: a.correlationId,
+                })),
+            });
+
+            return { accrued: accrualData.length, journalId: journal.id };
+        });
     }
+
 
     // --- KYC Workflow ---
     async submitKYC(tenantId: string, loanId: string, data: any) {

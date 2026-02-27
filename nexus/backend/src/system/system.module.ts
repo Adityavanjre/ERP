@@ -24,6 +24,7 @@ import { PluginController } from './controllers/plugin.controller';
 import { MailService } from './services/mail.service';
 import { SystemAuditService } from './services/system-audit.service';
 import { SystemController } from './system.controller';
+import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 
 @Global()
 @Module({
@@ -54,6 +55,7 @@ import { SystemController } from './system.controller';
     MailService,
     CloudinaryService,
     SystemAuditService,
+    AnomalyAlertService,
   ],
   exports: [
     RegistryService,
@@ -69,6 +71,7 @@ import { SystemController } from './system.controller';
     MailService,
     CloudinaryService,
     SystemAuditService,
+    AnomalyAlertService,
   ],
 })
 export class SystemModule { }

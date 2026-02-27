@@ -1,11 +1,69 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { safeFetch } from '../../common/utils/ssrf.util';
+
+const RESEND_API_URL = 'https://api.resend.com/emails';
+const MAX_RETRIES = 3;
+const RETRY_DELAYS_MS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
 
   constructor(private config: ConfigService) { }
+
+  /**
+   * Internal send with exponential backoff retry.
+   * Retries up to MAX_RETRIES times on transient network or API failures.
+   * Permanent failures (4xx) are not retried.
+   */
+  private async sendWithRetry(payload: object, attempt = 0): Promise<boolean> {
+    const resendApiKey = this.config.get<string>('RESEND_API_KEY');
+
+    try {
+      const response = await safeFetch(RESEND_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        return true;
+      }
+
+      const errorData = await response.json().catch(() => ({}));
+
+      // Do not retry client errors (4xx) — they indicate a configuration issue
+      if (response.status >= 400 && response.status < 500) {
+        this.logger.error(`Resend API client error (${response.status}): ${JSON.stringify(errorData)}`);
+        return false;
+      }
+
+      // Server error (5xx) or unexpected — retry if attempts remain
+      if (attempt < MAX_RETRIES - 1) {
+        const delay = RETRY_DELAYS_MS[attempt] ?? 4000;
+        this.logger.warn(`Resend API server error (${response.status}). Retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.sendWithRetry(payload, attempt + 1);
+      }
+
+      this.logger.error(`Resend API failed after ${MAX_RETRIES} attempts: ${JSON.stringify(errorData)}`);
+      return false;
+    } catch (error: any) {
+      // Network-level failure — retry if attempts remain
+      if (attempt < MAX_RETRIES - 1) {
+        const delay = RETRY_DELAYS_MS[attempt] ?? 4000;
+        this.logger.warn(`Resend network error. Retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${error.message}`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return this.sendWithRetry(payload, attempt + 1);
+      }
+      this.logger.error(`Resend permanently failed after ${MAX_RETRIES} attempts.`, error.stack);
+      return false;
+    }
+  }
 
   async sendPasswordResetEmail(to: string, token: string, userName: string) {
     const resetUrl = `${this.config.get<string>('NEXUS_FRONTEND_URL')}/reset-password?token=${token}`;
@@ -28,36 +86,22 @@ export class MailService {
 
     if (!resendApiKey) {
       this.logger.warn(`No RESEND_API_KEY found. SIMULATING email to ${to}`);
-      // In 100% Offline Testability Mode, we ensure the "Send" is traceable
       return true;
     }
 
-    try {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendApiKey}`
-        },
-        body: JSON.stringify({
-          from: 'Klypso Nexus ERP <noreply@klypso.in>',
-          to: to,
-          subject: 'Reset Your Password | Klypso Nexus',
-          html: html
-        })
-      });
+    const success = await this.sendWithRetry({
+      from: 'Klypso Nexus ERP <noreply@klypso.in>',
+      to,
+      subject: 'Reset Your Password | Klypso Nexus',
+      html,
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        this.logger.error(`Resend API Error: ${JSON.stringify(errorData)}`);
-        return false;
-      }
-
-      this.logger.log(`Password reset email sent successfully via Resend to ${to}`);
-      return true;
-    } catch (error: any) {
-      this.logger.error(`Failed to send email to ${to} via Resend.`, error.stack);
-      return false;
+    if (success) {
+      this.logger.log(`Password reset email sent successfully to ${to}`);
+    } else {
+      this.logger.error(`Failed to deliver password reset email to ${to} after ${MAX_RETRIES} attempts.`);
     }
+
+    return success;
   }
 }

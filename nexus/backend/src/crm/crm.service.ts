@@ -4,6 +4,7 @@ import { CustomerStatus } from '@prisma/client';
 import { AuditService } from '../system/services/audit.service';
 import { LedgerService } from '../accounting/services/ledger.service';
 import { AccountType } from '@prisma/client';
+import { objectsToSafeCsv } from '../common/utils/csv-sanitize.util';
 
 @Injectable()
 export class CrmService {
@@ -209,11 +210,13 @@ export class CrmService {
     });
 
     const headers = ['firstName', 'lastName', 'email', 'phone', 'company', 'status'];
-    const rows = customers.map((c: any) =>
-      headers.map((h) => c[h] || '').join(','),
-    );
+    const exportData = customers.map((c: any) => {
+      const row: any = {};
+      headers.forEach(h => row[h] = c[h] || '');
+      return row;
+    });
 
-    return [headers.join(','), ...rows].join('\n');
+    return objectsToSafeCsv(exportData);
   }
 
   async createOpportunity(tenantId: string, data: any) {
@@ -226,6 +229,8 @@ export class CrmService {
     return this.prisma.opportunity.findMany({
       where: { tenantId },
       include: { customer: true },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
 
@@ -263,6 +268,7 @@ export class CrmService {
   async getOpeningBalances(tenantId: string, customerId: string) {
     return this.prisma.customerOpeningBalance.findMany({
       where: { tenantId, customerId },
+      take: 100,
     });
   }
 }

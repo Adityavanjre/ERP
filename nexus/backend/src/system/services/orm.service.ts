@@ -5,13 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from './audit.service';
 import { FieldType } from '@prisma/client';
 
 @Injectable()
 export class OrmService {
   private readonly logger = new Logger(OrmService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) { }
 
   /**
    * Define a new model in the system metadata.
@@ -195,8 +199,23 @@ export class OrmService {
   }
 
   async deleteRecord(tenantId: string, modelName: string, id: string) {
-    return this.prisma.record.deleteMany({
+    const record = await this.prisma.record.findFirst({
       where: { id, tenantId, modelName },
+    });
+    if (!record) throw new NotFoundException(`Record ${id} not found`);
+
+    // Write audit log BEFORE soft-delete — ensures forensic trace even if update fails
+    await this.audit.log({
+      tenantId,
+      action: 'DELETE',
+      resource: `OrmRecord:${modelName}`,
+      details: { id, modelName, snapshot: record.data },
+    });
+
+    // Soft-delete: mark as deleted rather than destroying the record
+    return this.prisma.record.updateMany({
+      where: { id, tenantId, modelName },
+      data: { data: { ...(record.data as object), _isDeleted: true, _deletedAt: new Date().toISOString() } },
     });
   }
 }

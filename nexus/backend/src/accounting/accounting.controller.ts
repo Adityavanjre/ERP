@@ -19,6 +19,9 @@ import { SaasAnalyticsService } from '../system/services/saas-analytics.service'
 import { CollaborationService } from '../system/services/collaboration.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateJournalEntryDto } from './dto/create-journal.dto';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { CreateCreditNoteDto, CreateDebitNoteDto } from './dto/create-note.dto';
+import { CreateFixedAssetDto } from './dto/create-fixed-asset.dto';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
@@ -76,7 +79,7 @@ export class AccountingController {
 
   @Post('invoices')
   @Permissions(Permission.CREATE_INVOICE)
-  createInvoice(@Req() req: any, @Body() dto: any) {
+  createInvoice(@Req() req: any, @Body() dto: CreateInvoiceDto) {
     return this.accountingService.createInvoice(req.user.tenantId, dto);
   }
 
@@ -114,7 +117,7 @@ export class AccountingController {
 
   @Post('credit-notes')
   @Permissions(Permission.CREATE_INVOICE)
-  createCreditNote(@Req() req: any, @Body() dto: any) {
+  createCreditNote(@Req() req: any, @Body() dto: CreateCreditNoteDto) {
     return this.accountingService.createCreditNote(req.user.tenantId, dto);
   }
 
@@ -126,7 +129,7 @@ export class AccountingController {
 
   @Post('debit-notes')
   @Permissions(Permission.CREATE_INVOICE)
-  createDebitNote(@Req() req: any, @Body() dto: any) {
+  createDebitNote(@Req() req: any, @Body() dto: CreateDebitNoteDto) {
     return this.accountingService.createDebitNote(req.user.tenantId, dto);
   }
 
@@ -285,7 +288,7 @@ export class AccountingController {
 
   @Post('fixed-assets')
   @Permissions(Permission.CREATE_INVOICE)
-  createFixedAsset(@Req() req: any, @Body() body: any) {
+  createFixedAsset(@Req() req: any, @Body() body: CreateFixedAssetDto) {
     return this.accountingService.createFixedAsset(req.user.tenantId, body);
   }
 
