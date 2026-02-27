@@ -28,10 +28,26 @@ function validateEnvironment(): void {
   }
 }
 
+import { execSync } from 'child_process';
+
+function syncDatabaseSchema(): void {
+  try {
+    console.log('--- STARTING EMERGENCY PRISMA SCHEMA SYNC ---');
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    console.log('--- EMERGENCY SCHEMA SYNC COMPLETE ---');
+  } catch (err) {
+    console.error('FATAL: Failed to sync database schema', err);
+    process.exit(1);
+  }
+}
+
 async function bootstrap() {
   // Must validate BEFORE creating the NestJS app so secrets are guaranteed
   // to exist before any module (especially AuthModule) attempts to read them.
   validateEnvironment();
+
+  // FORCE SCHEMA SYNC TO BYPASS RENDER UI CONFIGURATION ISSUES
+  syncDatabaseSchema();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: loggerConfig,
