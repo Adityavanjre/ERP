@@ -36,8 +36,21 @@ export class ModuleGuard implements CanActivate {
 
         const { user } = context.switchToHttp().getRequest();
 
-        // --- FIX-01: Fail-Closed Channel Enforcement ---
-        // We no longer default to MOBILE. The channel MUST be present in the anchored JWT.
+        // --- Core Infrastructure Bypass (MUST run before channel check) ---
+        // Core modules (auth, system, health) are always accessible with a valid token.
+        // Do NOT gate these on channel presence — identity tokens for auth/tenants
+        // must never be blocked by a missing channel field.
+        const CORE_MODULES = ['auth', 'system', 'health'];
+        const isCoreModule = CORE_MODULES.includes(moduleName || '');
+
+        if (isCoreModule) {
+            if (user && user.type !== 'identity' && !user.tenantId) {
+                throw new ForbiddenException('Tenant context missing');
+            }
+            return true;
+        }
+
+        // --- FIX-01: Fail-Closed Channel Enforcement (non-core modules only) ---
         const channel = user?.channel;
         if (!channel) {
             throw new ForbiddenException('Security Violation: Channel identity is missing. Please re-login to anchor your session.');
@@ -61,18 +74,6 @@ export class ModuleGuard implements CanActivate {
             return true; // No module restriction defined
         }
 
-        // --- Core Infrastructure Bypass ---
-        const CORE_MODULES = ['auth', 'system', 'health'];
-        const isCoreModule = CORE_MODULES.includes(moduleName);
-
-        // Rule: Core modules are always enabled regardless of industry, 
-        // and Identity tokens are allowed to access them without a tenantId.
-        if (isCoreModule) {
-            if (user.type !== 'identity' && !user.tenantId) {
-                throw new ForbiddenException('Tenant context missing');
-            }
-            return true;
-        }
 
         if (!user || !user.tenantId) {
             throw new ForbiddenException('User or Tenant context missing');
