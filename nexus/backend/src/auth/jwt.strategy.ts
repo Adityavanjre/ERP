@@ -45,7 +45,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // 3. Global Invalidation (Password Change)
-    if (payload.tokenVersion && user.tokenVersion !== payload.tokenVersion) {
+    // Use the same fallback as generateAuthResponse (|| 1) so null DB values
+    // don't cause a false mismatch against tokens signed with tokenVersion: 1.
+    if (payload.tokenVersion && (user.tokenVersion ?? 1) !== payload.tokenVersion) {
       throw new UnauthorizedException('Session revoked due to password change. Please log in again.');
     }
 
