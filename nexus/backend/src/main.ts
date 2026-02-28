@@ -47,6 +47,10 @@ async function bootstrap() {
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 
+  // Intercept Render's port-binding HEAD / probe at the Express level
+  // before NestJS routing picks it up and throws a NotFoundException.
+  expressApp.head('/', (_req: any, res: any) => res.status(200).end());
+
   app.use(cookieParser());
   app.use(require('hpp')());
 
