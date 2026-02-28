@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Head } from '@nestjs/common';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 
@@ -8,7 +8,8 @@ export class AppController {
   constructor(private readonly appService: AppService) { }
 
   @Get()
+  @Head()
   getHello(): string {
-    return this.appService.getHello();
+    return 'Nexus ERP API Gateway is Operational';
   }
 }

@@ -1,0 +1,25 @@
+﻿node.exe : D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:859
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (D:\code\ERP\nex...rc\index.ts:859:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: Ô¿» Unable to compile TypeScript:
+src/system/system.controller.ts(76,17): error TS2304: Cannot find name 'ForbiddenException'.
+
+    at createTSError (D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1708:10
+    at Object.require.extensions.<computed> [as .ts] 
+(D:\code\ERP\nexus\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1318:32)
+    at Function._load (node:internal/modules/cjs/loader:1128:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2304 ]
+}
