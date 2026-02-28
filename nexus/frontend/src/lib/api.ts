@@ -12,12 +12,18 @@ export const api = axios.create({
   },
 });
 
-// Add a request interceptor to add the JWT token to headers
+// Add a request interceptor to add the JWT token to headers.
+// IMPORTANT: Only set Authorization if not already explicitly set by the caller.
+// This prevents the interceptor from overwriting per-request headers (e.g. in TenantSelector).
 api.interceptors.request.use(
   (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!config.headers.Authorization) {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
+      // Guard against stored strings like "undefined" or "null" from previous broken sessions
+      const isValidToken = token && token !== 'undefined' && token !== 'null' && token.startsWith('ey');
+      if (isValidToken) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
