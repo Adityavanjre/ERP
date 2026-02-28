@@ -130,7 +130,7 @@ export class AuthService {
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-') // Strictly alphanumeric
           .replace(/^-+|-+$/g, ''); // Trim hyphens
-          
+
         if (!slug || slug.length < 3) {
           throw new BadRequestException('Company name must contain at least 3 alphanumeric characters');
         }
@@ -190,8 +190,16 @@ export class AuthService {
         return user;
       });
 
+      // Re-fetch user with memberships so generateAuthResponse can map tenants correctly.
+      // tx.user.create() does not return relation data even when a TenantUser was created
+      // inside the same transaction, so we must query it after the transaction commits.
+      const userWithMemberships = await this.prisma.user.findUnique({
+        where: { id: newUser!.id },
+        include: { memberships: { include: { tenant: true } } },
+      });
+
       // Identity response (Rule A)
-      return this.generateAuthResponse(newUser!);
+      return this.generateAuthResponse(userWithMemberships!);
     } catch (err: any) {
       console.error('[AUTH_REGISTER_ERROR]', err);
       throw err;
@@ -243,20 +251,12 @@ export class AuthService {
 
     await this.resetLoginAttempts(user.id);
 
-    // MFA Enforcement
+    // MFA Enforcement — only if user has explicitly enabled MFA
     const userAny = user as any;
     const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
     const hasSensitiveRole = user.memberships.some((m: any) => rolesRequiringMfa.includes(m.role));
 
-    if (userAny.mfaEnabled || (hasSensitiveRole && user.authProvider === AuthProvider.Email)) {
-      if (!userAny.mfaEnabled) {
-        return {
-          requiresMfaSetup: true,
-          setupToken: this.jwtService.sign({ sub: user.id, type: 'mfa_setup', channel }),
-          user: { id: user.id, email: user.email }
-        };
-      }
-
+    if (userAny.mfaEnabled) {
       return {
         requiresMfa: true,
         tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge', channel }),
