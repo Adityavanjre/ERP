@@ -61,7 +61,7 @@ export class PrismaService
         $allModels: {
           async $allOperations({ model, operation, args, query }: any) {
             const tenantId = context.getTenantId();
-            const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin'];
+            const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
 
             if (globalModels.includes(model)) {
               return query(args);
