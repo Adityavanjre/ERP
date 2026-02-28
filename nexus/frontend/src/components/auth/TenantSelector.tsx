@@ -1,12 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+// Build the API base URL without any Axios interceptors.
+// Using fetch() directly — the same approach the console test proved works.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
+const API_V1 = BASE_URL.endsWith('/') ? `${BASE_URL}v1` : `${BASE_URL}/v1`;
+
+async function authFetch(path: string, options: RequestInit = {}) {
+    const token = localStorage.getItem("k_identity") || localStorage.getItem("k_token");
+    const res = await fetch(`${API_V1}/${path}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...(options.headers || {}),
+        },
+    });
+    if (!res.ok) {
+        const err: any = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        try { err.data = await res.json(); } catch { err.data = {}; }
+        throw err;
+    }
+    return res.json();
+}
 
 interface Tenant {
     id: string;
@@ -25,17 +48,8 @@ export function TenantSelector() {
     useEffect(() => {
         const fetchTenants = async () => {
             try {
-                // Ensure we use the identity token for fetching tenants
-                const token = localStorage.getItem("k_identity") || localStorage.getItem("k_token");
-                const res = await api.get("auth/tenants", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const data: Tenant[] = await authFetch("auth/tenants");
 
-                const data: Tenant[] = res.data;
-
-                // If the user has NO tenants, send them to onboarding immediately.
-                // Do NOT show toast — this is expected for accounts whose workspace
-                // creation crashed mid-registration.
                 if (data.length === 0) {
                     router.push("/onboarding");
                     return;
@@ -43,16 +57,14 @@ export function TenantSelector() {
 
                 setTenants(data);
             } catch (err: any) {
-                // Only log out if the request actually failed (network/auth error)
-                // 401/403 means token is bad; anything else show a generic error
-                const status = err?.response?.status;
+                const status = err?.status;
                 if (status === 401 || status === 403) {
                     toast.error("Session expired. Please log in again.");
                     handleLogout();
                 } else {
                     toast.error("Could not load workspaces. Please try again.");
+                    console.error("Failed to fetch tenants", err);
                 }
-                console.error("Failed to fetch tenants", err);
             } finally {
                 setLoading(false);
             }
@@ -64,14 +76,12 @@ export function TenantSelector() {
     const handleSelect = async (tenantId: string) => {
         setSelecting(tenantId);
         try {
-            const token = localStorage.getItem("k_identity") || localStorage.getItem("k_token");
-            const res = await api.post("auth/select-tenant",
-                { tenantId },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            localStorage.setItem("k_token", res.data.accessToken);
-
-            // Force a hard reload to reset all states/context with the new scoped token
+            const data = await authFetch("auth/select-tenant", {
+                method: 'POST',
+                body: JSON.stringify({ tenantId }),
+            });
+            localStorage.setItem("k_token", data.accessToken);
+            // Hard reload to reset all React state with the new scoped token
             window.location.href = "/dashboard";
         } catch (err) {
             toast.error("Failed to select workspace");
