@@ -17,12 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.');
     }
     super({
-      jwtFromRequest: ExtractJwt.fromExtractors([
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
-        (req: any) => {
-          return req?.cookies?.nexus_token || null;
-        },
-      ]),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
       algorithms: ['HS256'],
