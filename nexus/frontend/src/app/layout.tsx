@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -80,6 +80,9 @@ export const metadata: Metadata = {
     apple: "/portal/apple-touch-icon.png",
   },
   manifest: "/portal/manifest.json",
+};
+
+export const viewport: Viewport = {
   themeColor: "#0f172a",
 };
 
