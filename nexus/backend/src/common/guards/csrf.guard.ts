@@ -54,8 +54,8 @@ export class CsrfGuard implements CanActivate {
         // A cross-site attacker cannot forge the Authorization header (unlike cookies).
         // The frontend and backend are on different domains, so the cookie-based
         // double-submit CSRF pattern cannot function. Skip CSRF for Bearer token requests.
-        const authHeader: string = request.headers?.['authorization'] || '';
-        if (authHeader.startsWith('Bearer ')) {
+        const authHeader = (request.headers?.authorization || request.headers?.Authorization || '') as string;
+        if (authHeader.toLowerCase().startsWith('bearer ')) {
             return true;
         }
 
