@@ -91,6 +91,19 @@ export class LedgerService {
 
   async checkPeriodLock(tenantId: string, date: Date | string, tx?: any) {
     const d = new Date(date);
+
+    // SECURITY (ACC-004): Temporal Bounding against absurd dates that crash archiving or distort ledgers
+    const now = new Date();
+    const futureBound = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
+    const pastBound = new Date(now.getTime() - 5 * 365 * 24 * 60 * 60 * 1000); // -5 years
+
+    if (d > futureBound) {
+      throw new BadRequestException('Temporal Integrity Violation: Future-dating beyond 30 days is prohibited.');
+    }
+    if (d < pastBound) {
+      throw new BadRequestException('Temporal Integrity Violation: Backdating beyond 5 years is prohibited.');
+    }
+
     const month = d.getMonth() + 1;
     const year = d.getFullYear();
     const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
@@ -192,6 +205,8 @@ export class LedgerService {
       { name: StandardAccounts.FIXED_ASSETS, type: AccountType.Asset, code: '1101' },
       { name: StandardAccounts.ACCUMULATED_DEPRECIATION, type: AccountType.Asset, code: '1102' },
       { name: StandardAccounts.DEPRECIATION_EXPENSE, type: AccountType.Expense, code: '5003' },
+      { name: StandardAccounts.SUPPLIER_ADVANCE, type: AccountType.Asset, code: '1012' },
+      { name: StandardAccounts.CUSTOMER_ADVANCE, type: AccountType.Liability, code: '2005' },
 
     ];
 
@@ -307,10 +322,11 @@ export class LedgerService {
       throw new BadRequestException('Journal entry cannot be for zero amount.');
     }
 
-    // Verify all transactions belong to the same tenant or are valid
+    // SECURITY (ACC-001): Enforce strict positive amounts. 
+    // Negative amounts can act as silent contra-entries and bypass standard ledger reconciliation.
     for (const t of data.transactions) {
-      if (new Decimal(t.amount).isZero()) {
-        throw new BadRequestException('Individual transactions cannot have zero amount.');
+      if (new Decimal(t.amount).lte(0)) {
+        throw new BadRequestException('Individual transaction amounts must be strictly greater than zero.');
       }
     }
 

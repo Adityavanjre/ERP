@@ -6,10 +6,12 @@ import {
   MaxLength,
   IsOptional,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RegisterDto {
   @IsEmail()
   @IsNotEmpty()
+  @Transform(({ value }) => value?.toLowerCase())
   email: string;
 
   @IsString()
@@ -45,6 +47,7 @@ export class CreateWorkspaceDto {
 export class LoginDto {
   @IsEmail()
   @IsNotEmpty()
+  @Transform(({ value }) => value?.toLowerCase())
   email: string;
 
   @IsString()
@@ -61,6 +64,7 @@ export class GoogleLoginDto {
 export class ForgotPasswordDto {
   @IsEmail()
   @IsNotEmpty()
+  @Transform(({ value }) => value?.toLowerCase())
   email: string;
 }
 

@@ -25,10 +25,12 @@ import { MailService } from './services/mail.service';
 import { SystemAuditService } from './services/system-audit.service';
 import { SystemController } from './system.controller';
 import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
+import { WebhookController } from './controllers/webhook.controller';
+import { ConfigModule } from '@nestjs/config';
 
 @Global()
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ConfigModule],
   controllers: [
     RegistryController,
     AiController,
@@ -40,6 +42,7 @@ import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
     ApiKeyController,
     B2BController,
     PluginController,
+    WebhookController,
   ],
   providers: [
     RegistryService,

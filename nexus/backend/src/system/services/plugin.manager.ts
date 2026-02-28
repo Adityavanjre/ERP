@@ -15,12 +15,16 @@ export class PluginManager implements OnModuleInit {
   private readonly logger = new Logger('PluginManager');
   private readonly pluginsPath = path.join(process.cwd(), 'plugins');
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async onModuleInit() {
     this.logger.log('Klypso Nexus: Initializing Plugin System...');
-    await this.ensurePluginsDir();
-    await this.syncInstalledPlugins();
+    try {
+      await this.ensurePluginsDir();
+      await this.syncInstalledPlugins();
+    } catch (error) {
+      this.logger.error('Failed to initialize Plugin System. Carrying on without plugins.', error);
+    }
   }
 
   private async ensurePluginsDir() {

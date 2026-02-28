@@ -26,14 +26,17 @@ export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAcc
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.name || !formData.code || !formData.type) {
-            toast.error("Please fill in all required fields");
+        const name = formData.name.trim();
+        const code = formData.code.trim();
+
+        if (!name || !code || !formData.type) {
+            toast.error("Please fill in all required fields (no whitespace only)");
             return;
         }
 
         setLoading(true);
         try {
-            await api.post("accounting/accounts", formData);
+            await api.post("accounting/accounts", { ...formData, name, code });
             toast.success(`Account "${formData.name}" created successfully`);
             setFormData({ name: "", code: "", type: "Asset" });
             onOpenChange(false);

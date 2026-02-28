@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Query, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SystemAuditService } from './services/system-audit.service';
@@ -71,8 +71,10 @@ export class SystemController {
   }
 
   @Get('founder-dashboard')
-  getFounderDashboard() {
-    // Note: In real production, this would be restricted to SUPER_ADMIN role
+  async getFounderDashboard(@Req() req: any) {
+    if (!req.user.isSuperAdmin) {
+      throw new ForbiddenException('Management Oversight Restricted: This view is reserved for system administrators.');
+    }
     return this.saas.getFounderDashboard();
   }
 }

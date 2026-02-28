@@ -37,6 +37,9 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isOpen) return;
+            if (e.key === "Escape" && isOpen && !loading) {
+                onClose();
+            }
             if (e.altKey && e.key === "n") {
                 e.preventDefault();
                 handleAddItem();
@@ -147,8 +150,8 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
     const { showConfirm } = useUX();
 
     const handleSubmit = async () => {
-        if (!customerId) {
-            toast.error("Please select a customer");
+        if (!customerId || !customerId.trim()) {
+            toast.error("Please select a valid customer");
             return;
         }
         if (items.some(i => !i.productId)) {

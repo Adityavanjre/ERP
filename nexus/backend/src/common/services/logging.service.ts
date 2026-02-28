@@ -41,6 +41,24 @@ export class LoggingService {
     return val.replace(/[\r\n\t]/g, ' ').trim();
   }
 
+  private scrubDetails(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map((item) => this.scrubDetails(item));
+
+    const sensitiveKeys = ['password', 'token', 'secret', 'jwt', 'creditCard', 'cvv', 'mfaSecret', 'totp', 'apiKey'];
+    const scrubbed: any = {};
+    for (const key in obj) {
+      if (sensitiveKeys.some((sk) => key.toLowerCase().includes(sk.toLowerCase()))) {
+        scrubbed[key] = '[REDACTED]';
+      } else if (typeof obj[key] === 'object') {
+        scrubbed[key] = this.scrubDetails(obj[key]);
+      } else {
+        scrubbed[key] = obj[key];
+      }
+    }
+    return scrubbed;
+  }
+
   /**
    * Computes HMAC-SHA256 over the canonical audit entry fields.
    * Input: prevHash (or 'GENESIS' for first entry) + action + resource + ISO timestamp + JSON details
@@ -53,12 +71,13 @@ export class LoggingService {
     createdAt: Date,
     details: any,
   ): string {
+    const scrubbedDetails = this.scrubDetails(details);
     const canonicalInput = [
       prevHash ?? 'GENESIS',
       this.sanitizeString(action),
       this.sanitizeString(resource),
       createdAt.toISOString(),
-      JSON.stringify(details ?? {}),
+      JSON.stringify(scrubbedDetails ?? {}),
     ].join('|');
 
     return crypto
@@ -107,13 +126,15 @@ export class LoggingService {
             );
           }
 
+          const scrubbedDetails = this.scrubDetails(data.details);
+
           return await (tx as any).auditLog.create({
             data: {
               userId: data.userId,
               tenantId: data.tenantId,
               action: this.sanitizeString(data.action),
               resource: this.sanitizeString(data.resource),
-              details: data.details || {},
+              details: scrubbedDetails || {},
               channel: data.channel,
               ipAddress: data.ipAddress,
               correlationId,

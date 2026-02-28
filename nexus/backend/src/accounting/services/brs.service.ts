@@ -7,6 +7,21 @@ export class BrsService {
     constructor(private prisma: PrismaService) { }
 
     async uploadStatement(tenantId: string, accountId: string, data: any) {
+        // SECURITY (BNK-002): Sanitize bank statement lines (remove blanks, prevent duplicates)
+        const uniqueLines = new Map<string, any>();
+        for (const line of data.lines || []) {
+            if (!line.date || !line.amount) continue; // Skip blank/invalid lines
+            
+            // Generate a deterministic hash for deduplication
+            const lineHash = `${new Date(line.date).toISOString().split('T')[0]}_${line.amount}_${line.reference || line.description}`;
+            uniqueLines.set(lineHash, line);
+        }
+
+        const sanitizedLines = Array.from(uniqueLines.values());
+        if (sanitizedLines.length === 0) {
+            throw new Error('Import Blocked: No valid statement lines found in payload after deduplication.');
+        }
+
         return this.prisma.bankStatement.create({
             data: {
                 tenantId,
@@ -16,7 +31,7 @@ export class BrsService {
                 openingBalance: data.openingBalance,
                 closingBalance: data.closingBalance,
                 lines: {
-                    create: data.lines.map((line: any) => ({
+                    create: sanitizedLines.map((line: any) => ({
                         tenantId,
                         date: new Date(line.date),
                         description: line.description,
@@ -94,6 +109,28 @@ export class BrsService {
             });
 
             return recon;
+        });
+    }
+
+    // SECURITY (BNK-003): Safe un-matching workflow
+    async unmatchTransaction(tenantId: string, lineId: string, reconId: string) {
+        return this.prisma.$transaction(async (tx) => {
+            const recon = await tx.bankReconciliation.findFirst({
+                where: { id: reconId, tenantId, statementLineId: lineId }
+            });
+
+            if (!recon) throw new Error('Reconciliation record not found');
+
+            await tx.bankReconciliation.delete({
+                where: { id: reconId }
+            });
+
+            await tx.bankStatementLine.update({
+                where: { id: lineId },
+                data: { reconciled: false },
+            });
+
+            return { success: true, message: 'Transaction successfully unmatched' };
         });
     }
 

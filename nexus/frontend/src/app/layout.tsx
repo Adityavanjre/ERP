@@ -109,6 +109,8 @@ const organizationJsonLd = {
   }
 };
 
+import { ErrorBoundary } from "@/components/providers/error-boundary";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -127,20 +129,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UXProvider>
-          <Script
-            id="organization-jsonld"
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-          />
-          <PerformanceMonitor />
-          <Suspense fallback={null}>
-            <LoadingBar />
-          </Suspense>
-          {children}
-          <Toaster />
-          <HotToaster position="bottom-right" />
-        </UXProvider>
+        <ErrorBoundary>
+          <UXProvider>
+            <Script
+              id="organization-jsonld"
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+            />
+            <PerformanceMonitor />
+            <Suspense fallback={null}>
+              <LoadingBar />
+            </Suspense>
+            {children}
+            <Toaster />
+            <HotToaster position="bottom-right" />
+          </UXProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

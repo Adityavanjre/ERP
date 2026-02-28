@@ -332,8 +332,10 @@ export class PurchasesService {
             const totalQty = oldStock.add(newQty);
 
             if (totalQty.greaterThan(0)) {
-              newMAC = (oldStock.mul(oldCost).add(newQty.mul(newPrice))).div(totalQty);
+              const exactMAC = (oldStock.mul(oldCost).add(newQty.mul(newPrice))).div(totalQty);
+              newMAC = this.ledger.round2(exactMAC);
             }
+            newMAC = this.ledger.round2(newMAC);
 
             await tx.product.updateMany({
               where: { id: item.productId, tenantId },

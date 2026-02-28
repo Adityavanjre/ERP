@@ -5,6 +5,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { LedgerService } from './ledger.service';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { TdsService } from './tds.service';
+import { TraceService } from '../../common/services/trace.service';
 
 describe('PaymentService (Integrity)', () => {
   let service: PaymentService;
@@ -18,12 +20,23 @@ describe('PaymentService (Integrity)', () => {
     checkPeriodLock: jest.fn(),
   };
 
+  const mockTds = {
+    calculateTds: jest.fn(),
+    recordTdsTransaction: jest.fn(),
+  };
+
+  const mockTrace = {
+    getCorrelationId: jest.fn().mockReturnValue('test-trace-id'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PaymentService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: LedgerService, useValue: mockLedger },
+        { provide: TdsService, useValue: mockTds },
+        { provide: TraceService, useValue: mockTrace },
       ],
     }).compile();
 
@@ -32,11 +45,11 @@ describe('PaymentService (Integrity)', () => {
   });
 
   it('should block direct updates to amount', async () => {
-    const existingPayment = { 
-      id: 'p1', 
-      amount: new Decimal(100), 
+    const existingPayment = {
+      id: 'p1',
+      amount: new Decimal(100),
       date: new Date('2024-01-01'),
-      tenantId: 't1' 
+      tenantId: 't1'
     };
     mockPrisma.payment.findFirst.mockResolvedValue(existingPayment);
 

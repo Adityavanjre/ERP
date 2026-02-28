@@ -15,6 +15,7 @@ import { TdsController } from './controllers/tds.controller';
 import { BrsService } from './services/brs.service';
 import { BrsController } from './controllers/brs.controller';
 import { InventoryModule } from '../inventory/inventory.module';
+import { EWayBillService } from './services/eway-bill.service';
 
 
 @Module({
@@ -31,6 +32,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     FixedAssetService,
     TdsService,
     BrsService,
+    EWayBillService,
   ],
 
   exports: [
@@ -44,6 +46,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     FixedAssetService,
     TdsService,
     BrsService,
+    EWayBillService,
   ],
 
 })

@@ -8,6 +8,7 @@ export const StandardAccounts = {
   CASH: 'Cash',
   BANK: 'Bank',
   GST_RECEIVABLE: 'GST Receivable',
+  SUPPLIER_ADVANCE: 'Supplier Advance',
 
   // Liability
   ACCOUNTS_PAYABLE: 'Accounts Payable',
@@ -19,6 +20,7 @@ export const StandardAccounts = {
   INPUT_CGST: 'Input CGST',
   INPUT_SGST: 'Input SGST',
   TDS_PAYABLE: 'TDS Payable',
+  CUSTOMER_ADVANCE: 'Customer Advance',
 
   // Equity
   RETAINED_EARNINGS: 'Retained Earnings',

@@ -25,7 +25,7 @@ import { LoggingService } from '../common/services/logging.service';
         }
         return {
           secret: jwtSecret,
-          signOptions: { expiresIn: '1d' },
+          signOptions: { expiresIn: '1d', algorithm: 'HS256' },
         };
       },
       inject: [ConfigService],

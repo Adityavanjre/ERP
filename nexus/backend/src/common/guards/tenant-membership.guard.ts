@@ -9,7 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class TenantMembershipGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -45,7 +45,23 @@ export class TenantMembershipGuard implements CanActivate {
       throw new ForbiddenException('Access Denied: You are not a member of this tenant.');
     }
 
-    // 4. Attach Verified Metadata
+    // 4. Subscription & Suspension Check (Rule S - STABLE-001)
+    const tenant = membership.tenant;
+    const method = request.method;
+
+    if (tenant.subscriptionStatus === 'Suspended') {
+      throw new ForbiddenException(
+        `Tenant Suspended: This account has been deactivated. Reason: ${tenant.suspendReason || 'Administrative'}`,
+      );
+    }
+
+    if (tenant.subscriptionStatus === 'ReadOnly' && method !== 'GET') {
+      throw new ForbiddenException(
+        'Subscription Restricted: This account is in Read-Only mode. Please settle pending dues to resume operations.',
+      );
+    }
+
+    // 5. Attach Verified Metadata
     // Override the user object with DB-verified role to prevent JWT spoofing
     user.role = membership.role;
     user.tenant = membership.tenant;

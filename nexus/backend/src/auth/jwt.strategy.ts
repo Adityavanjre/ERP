@@ -25,6 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ]),
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
+      algorithms: ['HS256'],
     });
   }
 
@@ -41,6 +42,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user) {
       throw new UnauthorizedException('Account not found');
+    }
+
+    // 3. Global Invalidation (Password Change)
+    if (payload.tokenVersion && user.tokenVersion !== payload.tokenVersion) {
+      throw new UnauthorizedException('Session revoked due to password change. Please log in again.');
     }
 
     // Pass the payload directly. 

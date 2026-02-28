@@ -43,6 +43,25 @@ export default function InvoicePrintPage() {
 
     return (
         <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
+            <style jsx global>{`
+                @media print {
+                    @page {
+                        margin: 20mm;
+                    }
+                    thead {
+                        display: table-header-group;
+                    }
+                    tfoot {
+                        display: table-footer-group;
+                    }
+                    tr {
+                        page-break-inside: avoid;
+                    }
+                    .print-header {
+                        position: running(header);
+                    }
+                }
+            `}</style>
             {/* Action Bar (Hidden in Print) */}
             <div className="max-w-4xl mx-auto mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
                 <h1 className="text-2xl font-black text-white tracking-tighter">Invoice</h1>

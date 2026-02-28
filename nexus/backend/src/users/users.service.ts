@@ -124,7 +124,10 @@ export class UsersService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: { 
+        passwordHash,
+        tokenVersion: { increment: 1 }, 
+      },
     });
 
     return { temporaryPassword: rawPassword };

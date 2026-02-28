@@ -26,6 +26,7 @@ import { ForecastingWidget } from "@/components/accounting/forecasting-widget";
 import { useUX } from "@/components/providers/ux-provider";
 import { FixedAssetTab } from "@/components/accounting/fixed-asset-tab";
 import { AuditorDashboard } from "@/components/accounting/auditor-dashboard";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function AccountingPage() {
     const { setUILocked, showConfirm } = useUX();
@@ -48,6 +49,7 @@ export default function AccountingPage() {
     const [recoveryMemory, setRecoveryMemory] = useState<any[]>([]);
     const [showCreateAccount, setShowCreateAccount] = useState(false);
     const [showCreateJournalEntry, setShowCreateJournalEntry] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
 
     useEffect(() => {
         const draft = localStorage.getItem("invoice_draft");
@@ -91,6 +93,7 @@ export default function AccountingPage() {
 
             setStats(statsRes.data);
             setInvStats(invStatsRes.data);
+            setLastSyncTime(Date.now());
         } catch (err) {
             console.error("Ledger Sync Failure:", err);
             if (!silent) toast.error("Failed to load accounting data. Please refresh.");
@@ -120,6 +123,16 @@ export default function AccountingPage() {
     };
 
     const handleCancelInvoice = (id: string) => {
+        // UI-005: Stale State Protection
+        if (Date.now() - lastSyncTime > 60000) {
+            toast.warning("Accounting data might be stale. Syncing before action...", { icon: <RefreshCw className="h-4 w-4 animate-spin" /> });
+            syncLedgers().then(() => proceedWithCancellation(id));
+            return;
+        }
+        proceedWithCancellation(id);
+    };
+
+    const proceedWithCancellation = (id: string) => {
         showConfirm({
             title: "Cancel Invoice?",
             description: "Are you sure you want to cancel this invoice? This will reverse all ledger entries and stock movements. This action cannot be undone.",
@@ -431,9 +444,17 @@ export default function AccountingPage() {
                                             </TableCell>
                                         </TableRow>
                                     ))}
-                                    {filteredInvoices.length === 0 && (
+                                    {filteredInvoices.length === 0 && !loading && (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="text-center py-24 text-zinc-600 italic">No invoices found.</TableCell>
+                                            <TableCell colSpan={6} className="py-12 px-6">
+                                                <EmptyState 
+                                                    icon={Receipt}
+                                                    title="No Invoices Found"
+                                                    description="You haven't issued any tax invoices yet. Start by creating your first compliant invoice."
+                                                    actionText="Issue New Invoice"
+                                                    onAction={() => setShowCreateInvoice(true)}
+                                                />
+                                            </TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>

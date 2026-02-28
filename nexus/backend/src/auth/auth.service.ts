@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  GoneException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,7 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
 import { GoogleAuthService } from './google-auth.service';
 import { LoginDto, RegisterDto, GoogleLoginDto, OnboardingDto, CreateWorkspaceDto } from './dto/auth.dto';
-import { TenantType, PlanType, Role, Prisma, AuthProvider } from '@prisma/client';
+import { TenantType, PlanType, Role, Prisma, AuthProvider, SubscriptionStatus } from '@prisma/client';
 import { AccessChannel } from '@nexus/shared';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -19,7 +20,7 @@ import { LoggingService } from '../common/services/logging.service';
 import { MailService } from '../system/services/mail.service';
 import * as crypto from 'crypto';
 import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
-const { authenticator } = require('otplib');
+import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 
 @Injectable()
@@ -45,7 +46,15 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const slug = dto.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
+    const sanitizedName = dto.name.trim();
+    const slug = sanitizedName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    if (!slug || slug.length < 3) {
+      throw new BadRequestException('Workspace name must contain at least 3 alphanumeric characters');
+    }
     let finalSlug = slug;
     const slugCount = await this.prisma.tenant.count({
       where: { slug: { startsWith: slug } },
@@ -116,7 +125,16 @@ export class AuthService {
         });
 
         // Create Tenant (Company)
-        const slug = dto.tenantName.toLowerCase().replace(/ /g, '-');
+        const sanitizedName = dto.tenantName.trim();
+        const slug = sanitizedName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-') // Strictly alphanumeric
+          .replace(/^-+|-+$/g, ''); // Trim hyphens
+          
+        if (!slug || slug.length < 3) {
+          throw new BadRequestException('Company name must contain at least 3 alphanumeric characters');
+        }
+
         // Minimal collision handling for slug
         let finalSlug = slug;
         const slugCount = await tx.tenant.count({
@@ -132,6 +150,7 @@ export class AuthService {
             slug: finalSlug,
             type: (dto.companyType as TenantType) || TenantType.Retail,
             plan: PlanType.Free,
+            subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
             isOnboarded: false,
           },
         });
@@ -146,19 +165,27 @@ export class AuthService {
         });
 
         // 4. Initialize Industry-Specific Accounts (Rule: Real money from day 1)
-        await this.accountingService.initializeTenantAccounts(
-          tenant.id,
-          tx,
-          tenant.type as string,
-        );
+        try {
+          await this.accountingService.initializeTenantAccounts(
+            tenant.id,
+            tx,
+            tenant.type as string,
+          );
+        } catch (accErr) {
+          console.error('[AUTH_REGISTER_WARN] Accounting init failed, continuing anyway:', accErr);
+        }
 
         // Telemetry (Phase 4)
-        await this.logging.log({
-          userId: user.id,
-          action: 'USER_REGISTERED',
-          resource: 'User',
-          details: { email: dto.email, tenant: dto.tenantName, industry: tenant.type },
-        });
+        try {
+          await this.logging.log({
+            userId: user.id,
+            action: 'USER_REGISTERED',
+            resource: 'User',
+            details: { email: dto.email, tenant: dto.tenantName, industry: tenant.type },
+          });
+        } catch (logErr) {
+          console.error('[AUTH_REGISTER_WARN] Telemetry logging failed, continuing anyway:', logErr);
+        }
 
         return user;
       });
@@ -166,7 +193,8 @@ export class AuthService {
       // Identity response (Rule A)
       return this.generateAuthResponse(newUser!);
     } catch (err: any) {
-      throw new Error(`Registration Failed: ${err.message}`);
+      console.error('[AUTH_REGISTER_ERROR]', err);
+      throw err;
     }
   }
 
@@ -377,6 +405,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       jti: crypto.randomBytes(16).toString('hex'),
+      tokenVersion: userAny.tokenVersion || 1,
       isMfaVerified: isMfaVerifiedOverride !== undefined ? isMfaVerifiedOverride : !!userAny.isMfaVerified,
       mfaEnabled: !!userAny.mfaEnabled,
       isSuperAdmin: !!user.isSuperAdmin,
@@ -417,6 +446,13 @@ export class AuthService {
       throw new UnauthorizedException('You do not have access to this tenant.');
     }
 
+    // 1.1 Enforcement (TEN-003): Block access if workspace is suspended
+    if (membership.tenant.subscriptionStatus === SubscriptionStatus.Suspended) {
+      throw new GoneException(
+        'This workspace has been suspended due to billing or compliance issues. Please contact support.',
+      );
+    }
+
     // 2. B2B Context (Keep existing logic)
     const [customer, supplier] = await this.tenantContext.run(tenantId, async () => {
       return Promise.all([
@@ -434,6 +470,7 @@ export class AuthService {
       tenantId: membership.tenantId,
       role: membership.role,
       jti: crypto.randomBytes(16).toString('hex'),
+      tokenVersion: userRecord?.tokenVersion || 1,
       mfaEnabled: (userRecord as any)?.mfaEnabled || false,
       customerId: customer?.id || null,
       supplierId: supplier?.id || null,
@@ -519,6 +556,8 @@ export class AuthService {
 
     return { success: true, message: 'Onboarding completed successfully', tenant };
   }
+
+
 
   async getTenantSecurityLogs(userId: string, tenantId: string) {
     // 1. Verify Owner/Admin Role
@@ -611,6 +650,7 @@ export class AuthService {
         passwordHash,
         resetPasswordToken: null,
         resetPasswordExpires: null,
+        tokenVersion: { increment: 1 },
       },
     });
 

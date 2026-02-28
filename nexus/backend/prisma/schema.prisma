@@ -27,6 +27,7 @@ model User {
   mfaRecoveryCodes   String[]     // Hashed recovery codes
   failedLoginAttempts Int          @default(0)
   lockoutUntil        DateTime?
+  tokenVersion        Int          @default(1)
   
   auditLogs            AuditLog[]
   memberships          TenantUser[]
@@ -58,6 +59,10 @@ model Tenant {
   gracePeriodEndsAt   DateTime?            // 14-day payment overdue window
   suspendedAt         DateTime?            // Timestamp of suspension
   suspendReason       String?              // non-payment | abuse | admin
+
+  // Razorpay Integration (SUB-002)
+  razorpayCustomerId      String?
+  razorpaySubscriptionId  String?
 
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt

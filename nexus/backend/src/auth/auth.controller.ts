@@ -127,6 +127,8 @@ export class AuthController {
     return this.authService.getTenantSecurityLogs(req.user.sub, req.user.tenantId);
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {

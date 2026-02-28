@@ -107,6 +107,12 @@ export class AccountingController {
     );
   }
 
+  @Get('invoices/:id')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  getInvoice(@Req() req: any, @Param('id') id: string) {
+    return this.accountingService.getInvoiceById(req.user.tenantId, id);
+  }
+
   @Post('payments')
   @Permissions(Permission.RECORD_PAYMENT)
   @PlanLimit('maxLedgerEntries')

@@ -63,6 +63,10 @@ export class AccountingService {
     return this.invoice.getInvoices(tenantId, page, limit);
   }
 
+  async getInvoiceById(tenantId: string, id: string) {
+    return this.invoice.findOne(tenantId, id);
+  }
+
   async createInvoicesBulk(tenantId: string, invoices: any[]) {
     return this.invoice.createInvoicesBulk(tenantId, invoices);
   }
@@ -336,7 +340,16 @@ export class AccountingService {
         );
       }
 
-      const closingDate = new Date(year, 11, 31);
+      // SECURITY/COMPLIANCE (ACC-006): Dynamic Fiscal Year Boundaries
+      const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
+
+      if (!tenant) {
+        throw new BadRequestException('Tenant configuration not found. Closure aborted.');
+      }
+
+      const fyEndMonth = tenant.fyStartMonth === 1 ? 11 : tenant.fyStartMonth - 2; // zero-indexed. If start=4 (April), end=2 (March)
+      const closeYear = tenant.fyStartMonth === 1 ? year : year + 1; // FY 2023 ends Mar 2024
+      const closingDate = new Date(closeYear, fyEndMonth + 1, 0); // Last day of fyEndMonth
 
       // 2. Get P&L accounts (Revenue & Expense)
       const plAccounts = await tx.account.findMany({

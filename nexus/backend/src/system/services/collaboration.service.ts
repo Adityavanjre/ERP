@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from './audit.service';
 
@@ -52,22 +52,22 @@ export class CollaborationService {
   }
 
   async deleteComment(id: string, tenantId: string) {
-    const comment = await this.prisma.comment.findUnique({
+    const comment = await this.prisma.comment.findFirst({
       where: { id, tenantId },
       select: { resourceType: true, resourceId: true },
     });
 
-    if (comment) {
-      await this.audit.log({
-        tenantId,
-        action: 'COMMENT_DELETED',
-        resource: `${comment.resourceType}:${comment.resourceId}`,
-        details: { commentId: id },
-      });
-    }
+    if (!comment) throw new NotFoundException('Comment not found or access denied');
+
+    await this.audit.log({
+      tenantId,
+      action: 'COMMENT_DELETED',
+      resource: `${comment.resourceType}:${comment.resourceId}`,
+      details: { commentId: id },
+    });
 
     return this.prisma.comment.delete({
-      where: { id, tenantId },
+      where: { id },
     });
   }
 

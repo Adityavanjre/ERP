@@ -4,6 +4,7 @@ import { LedgerService } from './ledger.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
+import { TraceService } from '../../common/services/trace.service';
 
 describe('LedgerService (Financial Integrity)', () => {
   let service: LedgerService;
@@ -15,6 +16,7 @@ describe('LedgerService (Financial Integrity)', () => {
     },
     account: {
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       updateMany: jest.fn(),
     },
     journalEntry: {
@@ -22,8 +24,13 @@ describe('LedgerService (Financial Integrity)', () => {
     },
     transaction: {
       create: jest.fn(),
+      createMany: jest.fn(),
     },
     $transaction: jest.fn((cb) => cb(mockPrisma)),
+  };
+
+  const mockTrace = {
+    getCorrelationId: jest.fn().mockReturnValue('test-trace-id'),
   };
 
   beforeEach(async () => {
@@ -31,6 +38,7 @@ describe('LedgerService (Financial Integrity)', () => {
       providers: [
         LedgerService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: TraceService, useValue: mockTrace },
         { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
       ],
     }).compile();
@@ -69,6 +77,10 @@ describe('LedgerService (Financial Integrity)', () => {
       mockPrisma.journalEntry.create.mockResolvedValue({ id: 'j1' });
       mockPrisma.transaction.create.mockResolvedValue({ id: 't-tx-1' });
       mockPrisma.account.findFirst.mockResolvedValue({ id: 'a-1', name: 'Test Account' });
+      mockPrisma.account.findMany.mockResolvedValue([
+        { id: 'a1', type: 'Asset' },
+        { id: 'a2', type: 'Liability' }
+      ]);
       mockPrisma.account.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.periodLock.findUnique.mockResolvedValue(null); // Not locked
 

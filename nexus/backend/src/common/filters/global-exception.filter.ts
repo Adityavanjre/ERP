@@ -75,7 +75,38 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     };
 
+    const sanitizedBody = this.scrubSensitiveData(request.body);
+
+    this.logger.error(`[CRASH_REPORT] URL: ${request.url}`);
+    this.logger.error(`[CRASH_REPORT] Body: ${JSON.stringify(sanitizedBody)}`);
+    this.logger.error(`[CRASH_REPORT] UserId: ${(request as any).user?.id || 'none'}`);
+    this.logger.error(`[CRASH_REPORT] Exception: ${exception instanceof Error ? exception.message : 'Unknown'}`);
+    if (exception instanceof Error) {
+      this.logger.error(`[CRASH_REPORT] Stack: ${exception.stack}`);
+    }
+    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      this.logger.error(`[CRASH_REPORT] Prisma Code: ${exception.code}`);
+    }
+
     this.logger.warn(`[${status}] ${request.method} ${request.url} - ${JSON.stringify(message)}`);
     response.status(status).json(responseBody);
+  }
+
+  private scrubSensitiveData(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map((item) => this.scrubSensitiveData(item));
+
+    const sensitiveKeys = ['password', 'token', 'secret', 'jwt', 'creditCard', 'cvv', 'mfaSecret', 'totp', 'apiKey', 'authorization', 'signature'];
+    const scrubbed: any = {};
+    for (const key in obj) {
+      if (sensitiveKeys.some((sk) => key.toLowerCase().includes(sk.toLowerCase()))) {
+        scrubbed[key] = '[REDACTED]';
+      } else if (typeof obj[key] === 'object') {
+        scrubbed[key] = this.scrubSensitiveData(obj[key]);
+      } else {
+        scrubbed[key] = obj[key];
+      }
+    }
+    return scrubbed;
   }
 }

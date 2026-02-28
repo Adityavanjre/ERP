@@ -56,15 +56,35 @@ export class PaymentService {
         if (!arAccount) throw new BadRequestException("Missing 'Accounts Receivable' account.");
 
         let invoice: any = null;
+        let appliedToInvoice = new Decimal(0);
+        let excessToAdvance = new Decimal(0);
+
         if (data.invoiceId) {
           invoice = await tx.invoice.findFirst({ where: { id: data.invoiceId, tenantId } });
           if (!invoice) throw new NotFoundException('Invoice not found');
           if (invoice.isLocked) throw new BadRequestException('This invoice is locked.');
 
           const outstanding = this.ledger.round2(new Decimal(invoice.totalAmount).sub(new Decimal(invoice.amountPaid)));
-          if (new Decimal(data.amount).greaterThan(outstanding.add(new Decimal('0.001')))) {
-            throw new BadRequestException(`Payment ₹${data.amount} exceeds outstanding ₹${this.ledger.round2(outstanding)}`);
+          appliedToInvoice = Decimal.min(new Decimal(data.amount), outstanding);
+          excessToAdvance = new Decimal(data.amount).sub(appliedToInvoice);
+
+          const newAmountPaid = this.ledger.round2(new Decimal(invoice.amountPaid).add(appliedToInvoice));
+          const totalAmt = new Decimal(invoice.totalAmount);
+          const isFullyPaid = newAmountPaid.greaterThanOrEqualTo(totalAmt.sub(new Decimal('0.01')));
+
+          // SECURITY (ACC-003): Optimistic Concurrency Control (OCC)
+          const updateResult = await tx.invoice.updateMany({
+            where: { id: invoice.id, tenantId, amountPaid: invoice.amountPaid },
+            data: { amountPaid: newAmountPaid, status: isFullyPaid ? InvoiceStatus.Paid : InvoiceStatus.Partial },
+          });
+
+          if (updateResult.count === 0) {
+            throw new BadRequestException('Concurrent payment processing detected. Payment aborted.');
           }
+        } else {
+          // If no invoiceId, treat entire amount as Advance
+          excessToAdvance = new Decimal(data.amount);
+          appliedToInvoice = new Decimal(0);
         }
 
         payment = await tx.payment.create({
@@ -82,25 +102,28 @@ export class PaymentService {
           } as any,
         });
 
-        if (invoice) {
-          const newAmountPaid = this.ledger.round2(new Decimal(invoice.amountPaid).add(new Decimal(data.amount)));
-          const totalAmt = new Decimal(invoice.totalAmount);
-          const isFullyPaid = newAmountPaid.greaterThanOrEqualTo(totalAmt.sub(new Decimal('0.01')));
+        const customerAdvanceAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.CUSTOMER_ADVANCE },
+        });
 
-          await tx.invoice.updateMany({
-            where: { id: invoice.id, tenantId },
-            data: { amountPaid: newAmountPaid, status: isFullyPaid ? InvoiceStatus.Paid : InvoiceStatus.Partial },
-          });
+        const transactions: any[] = [
+          { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
+        ];
+
+        if (appliedToInvoice.gt(0)) {
+          transactions.push({ accountId: arAccount.id, type: 'Credit', amount: appliedToInvoice.toNumber(), description: `Invoice Payment: ${invoice?.invoiceNumber || ''}` });
+        }
+
+        if (excessToAdvance.gt(0)) {
+          if (!customerAdvanceAccount) throw new BadRequestException(`Missing '${StandardAccounts.CUSTOMER_ADVANCE}' account.`);
+          transactions.push({ accountId: customerAdvanceAccount.id, type: 'Credit', amount: excessToAdvance.toNumber(), description: 'Advance Payment' });
         }
 
         await this.ledger.createJournalEntry(tenantId, {
           date: payment.date.toISOString(),
           description: `Payment Recv: ${payment.reference || 'REF-' + payment.id.slice(0, 8)}`,
           reference: payment.reference || `PAY-${payment.id.slice(0, 8)}`,
-          transactions: [
-            { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
-            { accountId: arAccount.id, type: 'Credit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
-          ],
+          transactions,
           correlationId: (payment as any).correlationId || undefined,
         }, tx);
 

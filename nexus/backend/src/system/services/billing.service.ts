@@ -217,15 +217,24 @@ export class BillingService {
 
   /**
    * Check a specific resource quota.
+   * SECURITY (SUB-001): Supports optional Transaction Client for atomic locking.
    */
-  async checkQuota(tenantId: string, resource: PlanResource): Promise<void> {
+  async checkQuota(tenantId: string, resource: PlanResource, tx?: any): Promise<void> {
+    const db = tx || this.prisma;
     let tenant: any;
     try {
-      tenant = await this.prisma.tenant.findUnique({
+      // If in transaction, perform row-level lock on Tenant to prevent concurrent quota bypass
+      if (tx) {
+        await tx.$queryRawUnsafe(`SELECT id FROM "Tenant" WHERE id = '${tenantId}' FOR UPDATE`);
+      }
+
+      tenant = await db.tenant.findUnique({
         where: { id: tenantId },
         select: { plan: true, subscriptionStatus: true },
       });
-    } catch {
+    } catch (err) {
+      if (err instanceof ForbiddenException) throw err;
+      this.logger.error(`[BillingService] Quota check failed — fail-open`, err);
       return; // fail-open
     }
     if (!tenant) return;
@@ -234,7 +243,7 @@ export class BillingService {
     const planName = tenant.plan as string;
 
     if (resource === 'maxProducts') {
-      const count = await this.prisma.product.count({ where: { tenantId } });
+      const count = await db.product.count({ where: { tenantId } });
       if (count >= quotas.maxProducts) {
         throw new ForbiddenException(
           `SKU limit reached (${quotas.maxProducts.toLocaleString('en-IN')} on ${planName} plan). Upgrade to add more products.`,
@@ -243,7 +252,7 @@ export class BillingService {
     }
 
     if (resource === 'maxUsers') {
-      const count = await this.prisma.tenantUser.count({ where: { tenantId } });
+      const count = await db.tenantUser.count({ where: { tenantId } });
       if (count >= quotas.maxUsers) {
         throw new ForbiddenException(
           `User seat limit reached (${quotas.maxUsers} on ${planName} plan). Upgrade to add more staff.`,
@@ -252,7 +261,7 @@ export class BillingService {
     }
 
     if (resource === 'maxLedgerEntries') {
-      const count = await this.prisma.transaction.count({ where: { tenantId } });
+      const count = await db.transaction.count({ where: { tenantId } });
       if (count >= quotas.maxLedgerEntries) {
         throw new ForbiddenException(
           `Ledger entry limit reached (${quotas.maxLedgerEntries.toLocaleString('en-IN')} on ${planName} plan). Upgrade for higher limits.`,
@@ -263,12 +272,14 @@ export class BillingService {
     if (resource === 'maxInvoicesPerMonth') {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const count = await this.prisma.invoice.count({
+      // PERFORMANCE: Using count is acceptable for small tenants, but for Enterprise 
+      // we already have a row-level lock above on the Tenant record.
+      const count = await db.invoice.count({
         where: { tenantId, createdAt: { gte: startOfMonth } },
       });
       if (count >= quotas.maxInvoicesPerMonth) {
         throw new ForbiddenException(
-          `Monthly invoice limit reached (${quotas.maxInvoicesPerMonth} on ${planName} plan). Upgrade or wait for next month.`,
+          `Monthly invoice limit reached (${quotas.maxInvoicesPerMonth.toLocaleString('en-IN')} on ${planName} plan). Upgrade or wait for next month.`,
         );
       }
     }
@@ -276,7 +287,7 @@ export class BillingService {
     if (resource === 'maxExportsPerDay') {
       const startOfDay = new Date();
       startOfDay.setUTCHours(0, 0, 0, 0);
-      const count = await (this.prisma as any).billingEvent.count({
+      const count = await (db as any).billingEvent.count({
         where: {
           tenantId,
           event: 'EXPORT_GENERATED',
@@ -525,6 +536,37 @@ export class BillingService {
         performedBy: 'system',
       },
     });
+  }
+
+  // --- Webhook Integration (SUB-002) ---
+
+  async handleSubscriptionFailure(razorpaySubscriptionId: string, reason: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { razorpaySubscriptionId },
+      select: { id: true, subscriptionStatus: true },
+    });
+    if (!tenant) {
+      this.logger.error(`[Billing] Tenant not found for sub: ${razorpaySubscriptionId}`);
+      return;
+    }
+
+    if (tenant.subscriptionStatus !== SubscriptionStatus.ReadOnly) {
+      this.logger.warn(`[Billing] Auto-downgrading tenant ${tenant.id} due to payment failure`);
+      await this.downgradeToReadOnly(tenant.id, `Webhook: ${reason}`);
+    }
+  }
+
+  async handleSubscriptionSuccess(razorpaySubscriptionId: string) {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { razorpaySubscriptionId },
+      select: { id: true, subscriptionStatus: true },
+    });
+    if (!tenant) return;
+
+    if (tenant.subscriptionStatus !== SubscriptionStatus.Active) {
+      this.logger.log(`[Billing] Auto-reactivating tenant ${tenant.id} due to payment success`);
+      await this.reactivateTenant(tenant.id, undefined, 'webhook');
+    }
   }
 
   async getBillingHistory(tenantId: string) {

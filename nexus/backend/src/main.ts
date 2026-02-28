@@ -17,7 +17,7 @@ import cookieParser from 'cookie-parser';
 // The application refuses to start if any critical secret is absent.
 // This prevents accidental deployment with missing credentials.
 // ─────────────────────────────────────────────────────────────────────────────
-const REQUIRED_ENV_VARS = ['JWT_SECRET', 'DATABASE_URL', 'AUDIT_HMAC_SECRET'];
+const REQUIRED_ENV_VARS = ['JWT_SECRET', 'DATABASE_URL', 'AUDIT_HMAC_SECRET', 'CLOUDINARY_URL'];
 
 function validateEnvironment(): void {
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);

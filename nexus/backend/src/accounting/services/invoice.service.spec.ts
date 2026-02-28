@@ -4,6 +4,10 @@ import { InvoiceService } from './invoice.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LedgerService } from './ledger.service';
 import { BadRequestException } from '@nestjs/common';
+import { HsnService } from '../../inventory/services/hsn.service';
+import { TraceService } from '../../common/services/trace.service';
+import { BillingService } from '../../system/services/billing.service';
+import { InventoryService } from '../../inventory/inventory.service';
 
 describe('InvoiceService (Compliance)', () => {
   let service: InvoiceService;
@@ -22,12 +26,32 @@ describe('InvoiceService (Compliance)', () => {
     checkPeriodLock: jest.fn(),
   };
 
+  const mockHsn = {
+    validateGstRate: jest.fn().mockResolvedValue({ isValid: true, officialRate: 18 }),
+  };
+
+  const mockTrace = {
+    getCorrelationId: jest.fn().mockReturnValue('test-trace-id'),
+  };
+
+  const mockBilling = {
+    checkQuota: jest.fn().mockResolvedValue(true),
+  };
+
+  const mockInventory = {
+    deductStock: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoiceService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: LedgerService, useValue: mockLedger },
+        { provide: HsnService, useValue: mockHsn },
+        { provide: TraceService, useValue: mockTrace },
+        { provide: BillingService, useValue: mockBilling },
+        { provide: InventoryService, useValue: mockInventory },
       ],
     }).compile();
 
@@ -39,9 +63,9 @@ describe('InvoiceService (Compliance)', () => {
     mockPrisma.tenant.findUnique.mockResolvedValue({ id: 't1', name: 'T1' }); // No state
     mockPrisma.customer.findFirst.mockResolvedValue({ id: 'c1', state: 'MH' });
 
-    await expect(service.createInvoice('t1', { customerId: 'c1', items: [] }))
+    await expect(service.createInvoice('t1', { customerId: 'c1', items: [{ productId: 'p1', quantity: 1, price: 100 }] }))
       .rejects.toThrow(BadRequestException);
-    await expect(service.createInvoice('t1', { customerId: 'c1', items: [] }))
+    await expect(service.createInvoice('t1', { customerId: 'c1', items: [{ productId: 'p1', quantity: 1, price: 100 }] }))
       .rejects.toThrow(/Tenant state is missing/);
   });
 
@@ -49,9 +73,9 @@ describe('InvoiceService (Compliance)', () => {
     mockPrisma.tenant.findUnique.mockResolvedValue({ id: 't1', state: 'MH' });
     mockPrisma.customer.findFirst.mockResolvedValue({ id: 'c1' }); // No state
 
-    await expect(service.createInvoice('t1', { customerId: 'c1', items: [] }))
+    await expect(service.createInvoice('t1', { customerId: 'c1', items: [{ productId: 'p1', quantity: 1, price: 100 }] }))
       .rejects.toThrow(BadRequestException);
-    await expect(service.createInvoice('t1', { customerId: 'c1', items: [] }))
+    await expect(service.createInvoice('t1', { customerId: 'c1', items: [{ productId: 'p1', quantity: 1, price: 100 }] }))
       .rejects.toThrow(/Customer state is missing/);
   });
 
@@ -75,12 +99,12 @@ describe('InvoiceService (Compliance)', () => {
     // This will still fail later in the function due to missing more mocks (e.g. stock deduction),
     // but it should get PAST the initial compliance checks.
     try {
-        await service.createInvoice('t1', {
-            customerId: 'c1',
-            items: [{ productId: 'p1', quantity: 1, price: 100 }]
-        });
+      await service.createInvoice('t1', {
+        customerId: 'c1',
+        items: [{ productId: 'p1', quantity: 1, price: 100 }]
+      });
     } catch (e) {
-        expect(e.message).not.toMatch(/Compliance Error/);
+      expect(e.message).not.toMatch(/Compliance Error/);
     }
   });
 });

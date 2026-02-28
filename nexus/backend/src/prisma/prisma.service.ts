@@ -33,6 +33,25 @@ export class PrismaService
     });
   }
 
+  async onModuleInit() {
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        await (this as any).$connect();
+        break;
+      } catch (err) {
+        retries--;
+        console.error(`[PrismaService] Failed to connect to DB.Retries left: ${retries} `);
+        if (retries === 0) throw err;
+        await new Promise((res) => setTimeout(res, 5000));
+      }
+    }
+  }
+
+  async onModuleDestroy() {
+    await (this as any).$disconnect();
+  }
+
   private _createIsolatedClient() {
     const context = this.tenantContext;
     const root = this; // Reference to the un-proxied client
@@ -50,8 +69,26 @@ export class PrismaService
 
             if (!tenantId) {
               throw new Error(
-                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context. Query cannot be scoped.`,
+                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked.Missing Tenant Context.Query cannot be scoped.`,
               );
+            }
+
+            // Application-layer Cross-tenant Isolation Check
+            const checkIsolation = (data: any, source: string) => {
+              if (data && data.tenantId && data.tenantId !== tenantId) {
+                throw new Error(
+                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected in ${source} clause on ${model}. Operation blocked.`,
+                );
+              }
+            };
+
+            if (args.where) checkIsolation(args.where, 'where');
+            if (args.data) {
+              if (Array.isArray(args.data)) {
+                args.data.forEach((d: any) => checkIsolation(d, 'data'));
+              } else {
+                checkIsolation(args.data, 'data');
+              }
             }
 
             // RLS ENFORCEMENT LAYER
@@ -99,13 +136,5 @@ export class PrismaService
         },
       },
     });
-  }
-
-  async onModuleInit() {
-    await this.$connect();
-  }
-
-  async onModuleDestroy() {
-    await this.$disconnect();
   }
 }

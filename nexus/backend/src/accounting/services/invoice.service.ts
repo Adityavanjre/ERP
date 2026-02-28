@@ -10,6 +10,8 @@ import { normalizeState } from '../constants/states';
 import { TraceService } from '../../common/services/trace.service';
 import { InventoryService } from '../../inventory/inventory.service';
 
+import { BillingService } from '../../system/services/billing.service';
+
 @Injectable()
 export class InvoiceService {
   constructor(
@@ -17,6 +19,7 @@ export class InvoiceService {
     private ledger: LedgerService,
     private hsn: HsnService,
     private traceService: TraceService,
+    private billing: BillingService,
     @Inject(forwardRef(() => InventoryService))
     private inventoryService: InventoryService,
   ) { }
@@ -58,6 +61,9 @@ export class InvoiceService {
 
       await this.ledger.checkPeriodLock(tenantId, data.issueDate || new Date(), tx);
 
+      // SECURITY (SUB-001): Atomic Quota Check with Row-Level Lock
+      await this.billing.checkQuota(tenantId, 'maxInvoicesPerMonth', tx);
+
       const calculation = await this.calculateTotals(tenantId, customerId, items, tx);
       let {
         totalTaxable, totalGST, totalCGST, totalSGST, totalIGST,
@@ -72,7 +78,11 @@ export class InvoiceService {
       totalCGST = this.ledger.round2(totalCGST);
       totalSGST = this.ledger.round2(totalSGST);
       totalIGST = this.ledger.round2(totalIGST);
-      grandTotal = this.ledger.round2(totalTaxable.add(totalGST));
+
+      // ACC-007: Round-Off Ledger Implementation
+      const unroundedGrandTotal = totalTaxable.add(totalGST);
+      grandTotal = new Decimal(Math.round(unroundedGrandTotal.toNumber()));
+      const roundingDifference = grandTotal.minus(unroundedGrandTotal);
 
       if (totalTaxable.isZero() && totalGST.greaterThan(0)) {
         throw new BadRequestException('Compliance Violation: Tax-only invoices are not allowed. Please include a taxable base.');
@@ -163,6 +173,21 @@ export class InvoiceService {
         { accountId: arAccount.id, type: 'Debit', amount: grandTotal, description: `Invoice #${invoice.invoiceNumber}` },
         { accountId: revenueAccount.id, type: 'Credit', amount: totalTaxable, description: `Sales: Invoice #${invoice.invoiceNumber}` },
       ];
+
+      // Round-Off Entry (ACC-007)
+      if (!roundingDifference.isZero()) {
+        const roundingAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.ROUNDING_OFF },
+        });
+        if (roundingAccount) {
+          transactionsList.push({
+            accountId: roundingAccount.id,
+            type: roundingDifference.greaterThan(0) ? 'Credit' : 'Debit',
+            amount: roundingDifference.abs(),
+            description: `Round Off: Invoice #${invoice.invoiceNumber}`,
+          });
+        }
+      }
 
       if (totalIGST.greaterThan(0) && igstAccount) {
         transactionsList.push({ accountId: igstAccount.id, type: 'Credit', amount: totalIGST, description: `IGST: Invoice #${invoice.invoiceNumber}` });
@@ -390,6 +415,27 @@ export class InvoiceService {
     });
   }
 
+  async findOne(tenantId: string, id: string) {
+    const invoice = await this.prisma.invoice.findFirst({
+      where: { id, tenantId },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true,
+          }
+        },
+        project: true,
+      },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException(`Invoice with ID ${id} not found.`);
+    }
+
+    return invoice;
+  }
+
   async deleteInvoice(tenantId: string, id: string) {
     throw new BadRequestException('Data Integrity Violation: Hard deletion of invoices is forbidden to maintain audit trails. Please use the Cancel Invoice function instead.');
   }
@@ -463,8 +509,8 @@ export class InvoiceService {
       throw new BadRequestException('Compliance Error: Customer state is missing. GST calculation requires place of supply.');
     }
 
-    const tenantState = normalizeState(tenant.state || '');
-    const customerState = normalizeState(customer.state || '');
+    const tenantState = normalizeState(tenant.state || undefined); // Changed '' to undefined
+    const customerState = normalizeState(customer.state || undefined); // Changed '' to undefined
     const isInterState = tenantState.toLowerCase() !== customerState.toLowerCase();
 
     if (customer.gstin && !this.validateGstin(customer.gstin)) {

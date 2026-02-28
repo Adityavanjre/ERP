@@ -66,9 +66,22 @@ export class RolesGuard implements CanActivate {
       }
     }
 
-    // If no roles are strictly required for a tenant-token, they can pass.
+    // If no roles are strictly required for a tenant-token:
     if (!requiredRoles) {
-      return true;
+      // SECURITY (AUTH-004): Strict Fail-Closed for Mutations.
+      // Every POST/PUT/PATCH/DELETE *must* explicitly declare who is allowed to run it.
+      if (request.method !== 'GET' && request.method !== 'OPTIONS') {
+        this.logging.log({
+          userId: user.sub,
+          action: 'SECURITY_VIOLATION_MISSING_RBAC',
+          resource: context.getClass().name,
+          details: { handler: context.getHandler().name, reason: 'Mutation endpoint is missing @Roles() decorator' },
+          ipAddress: request.ip,
+        }).catch(err => console.error('Failed to log security violation', err));
+
+        throw new ForbiddenException('Strict RBAC Enforcement: This mutation is missing an explicit @Roles() assignment and has been blocked.');
+      }
+      return true; // GET requests default to any valid tenant member.
     }
 
     // Assuming the user object is attached by the JWT guard
