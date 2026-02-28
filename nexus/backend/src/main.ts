@@ -17,14 +17,21 @@ import cookieParser from 'cookie-parser';
 // The application refuses to start if any critical secret is absent.
 // This prevents accidental deployment with missing credentials.
 // ─────────────────────────────────────────────────────────────────────────────
-const REQUIRED_ENV_VARS = ['JWT_SECRET', 'DATABASE_URL', 'AUDIT_HMAC_SECRET', 'CLOUDINARY_URL'];
+const CRITICAL_VARS = ['JWT_SECRET', 'DATABASE_URL'];
+const OPTIONAL_VARS = ['AUDIT_HMAC_SECRET', 'CLOUDINARY_API_KEY', 'RESEND_API_KEY'];
 
 function validateEnvironment(): void {
-  const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
-  if (missing.length > 0) {
-    console.error(`FATAL_STARTUP_ERROR: The following required environment variables are not set: ${missing.join(', ')}`);
-    console.error('The application cannot start in an insecure or misconfigured state. Exiting.');
+  const missingCritical = CRITICAL_VARS.filter((key) => !process.env[key]);
+  if (missingCritical.length > 0) {
+    console.error(`[FATAL] Missing Critical Environment Variables: ${missingCritical.join(', ')}`);
+    console.error('The application cannot start without these. Exiting.');
     process.exit(1);
+  }
+
+  const missingOptional = OPTIONAL_VARS.filter((key) => !process.env[key]);
+  if (missingOptional.length > 0) {
+    console.warn(`[WARN] Missing Optional Environment Variables: ${missingOptional.join(', ')}`);
+    console.warn('Some features (MFA, Email, File Storage, Audit Hashing) may run in simulation or degraded mode.');
   }
 }
 
