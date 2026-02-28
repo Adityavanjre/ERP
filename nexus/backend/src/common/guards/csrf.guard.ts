@@ -50,6 +50,15 @@ export class CsrfGuard implements CanActivate {
             return true;
         }
 
+        // Bearer token auth in the Authorization header is inherently CSRF-immune.
+        // A cross-site attacker cannot forge the Authorization header (unlike cookies).
+        // The frontend and backend are on different domains, so the cookie-based
+        // double-submit CSRF pattern cannot function. Skip CSRF for Bearer token requests.
+        const authHeader: string = request.headers?.['authorization'] || '';
+        if (authHeader.startsWith('Bearer ')) {
+            return true;
+        }
+
         // CSRF only applies to web channel (mobile uses Authorization header, no cookies)
         const user = request.user;
         if (!user) {
