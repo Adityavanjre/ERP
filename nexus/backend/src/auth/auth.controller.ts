@@ -85,6 +85,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @AllowIdentity()
   @AllowUnboarded()
   @MobileAction('SELECT_TENANT')
   @Post('select-tenant')
