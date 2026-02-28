@@ -30,16 +30,29 @@ export function TenantSelector() {
                 const res = await api.get("auth/tenants", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                setTenants(res.data);
 
-                // If the user has NO tenants, they MUST onboard.
-                if (res.data.length === 0) {
+                const data: Tenant[] = res.data;
+
+                // If the user has NO tenants, send them to onboarding immediately.
+                // Do NOT show toast — this is expected for accounts whose workspace
+                // creation crashed mid-registration.
+                if (data.length === 0) {
                     router.push("/onboarding");
+                    return;
                 }
-            } catch (err) {
+
+                setTenants(data);
+            } catch (err: any) {
+                // Only log out if the request actually failed (network/auth error)
+                // 401/403 means token is bad; anything else show a generic error
+                const status = err?.response?.status;
+                if (status === 401 || status === 403) {
+                    toast.error("Session expired. Please log in again.");
+                    handleLogout();
+                } else {
+                    toast.error("Could not load workspaces. Please try again.");
+                }
                 console.error("Failed to fetch tenants", err);
-                toast.error("Session expired. Please log in again.");
-                handleLogout();
             } finally {
                 setLoading(false);
             }
@@ -68,6 +81,7 @@ export function TenantSelector() {
 
     const handleLogout = () => {
         localStorage.removeItem("k_token");
+        localStorage.removeItem("k_identity");
         localStorage.removeItem("k_user");
         router.push("/login");
     };
