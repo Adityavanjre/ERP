@@ -87,8 +87,10 @@ export default function RegisterPage() {
             const response = await api.post('auth/register', payload);
             const { accessToken } = response.data;
 
-            // Login
+            // Store both keys the same way login does — TenantSelector reads k_identity first
             localStorage.setItem('k_token', accessToken);
+            localStorage.setItem('k_identity', accessToken);
+            localStorage.setItem('k_user', JSON.stringify(response.data.user));
 
             toast.success('Registration successful!', {
                 description: 'Welcome to your new business account.',

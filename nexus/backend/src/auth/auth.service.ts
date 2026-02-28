@@ -198,8 +198,9 @@ export class AuthService {
         include: { memberships: { include: { tenant: true } } },
       });
 
-      // Identity response (Rule A)
-      return this.generateAuthResponse(userWithMemberships!);
+      // Identity response — pass 'WEB' channel so the token matches what login/web produces.
+      // Without this the default is 'MOBILE' and the user would hit mobile-only restrictions.
+      return this.generateAuthResponse(userWithMemberships!, false, 'WEB');
     } catch (err: any) {
       console.error('[AUTH_REGISTER_ERROR]', err);
       throw err;
