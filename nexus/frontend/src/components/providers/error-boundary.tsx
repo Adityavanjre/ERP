@@ -37,14 +37,14 @@ export class ErrorBoundary extends Component<Props, State> {
               A critical UI error occurred. Our engineers have been notified.
             </p>
             <div className="flex flex-col gap-3">
-              <Button 
-                onClick={() => window.location.reload()} 
+              <Button
+                onClick={() => window.location.reload()}
                 className="bg-white text-black hover:bg-zinc-200 font-bold rounded-2xl h-12"
               >
                 <RefreshCcw className="mr-2 h-4 w-4" /> Hard Reload App
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => this.setState({ hasError: false })}
                 className="text-zinc-500 hover:text-white"
               >
@@ -62,6 +62,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.children;
+    return this.props.children;
   }
 }
