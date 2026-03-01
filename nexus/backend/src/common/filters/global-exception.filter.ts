@@ -28,11 +28,15 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         typeof res === 'object' && res !== null
           ? (res as any).message || res
           : res;
-    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      switch (exception.code) {
+      // The original code incorrectly assumed HttpException could directly have Prisma error codes.
+      // Prisma errors are typically caught by `PrismaClientKnownRequestError` or `PrismaClientValidationError`.
+      // This block should handle generic HttpExceptions.
+    } else if (exception && (exception as any).constructor?.name === 'PrismaClientKnownRequestError') {
+      const prismaErr = exception as any;
+      switch (prismaErr.code) {
         case 'P2002':
           status = HttpStatus.CONFLICT;
-          message = `Duplicate entry: a record with this ${(exception.meta?.target as string[])?.join(', ') || 'value'} already exists.`;
+          message = `Duplicate entry: a record with this ${prismaErr.meta?.target || 'value'} already exists.`;
           break;
         case 'P2025':
           status = HttpStatus.NOT_FOUND;
@@ -48,16 +52,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           break;
         case 'P2022':
           status = HttpStatus.INTERNAL_SERVER_ERROR;
-          const missingColumn = (exception.meta as any)?.column_name || 'unknown';
+          const missingColumn = prismaErr.meta?.column_name || 'unknown';
           message = `Database error (P2022): The column '${missingColumn}' does not exist in the current database. Please contact support.`;
-          this.logger.error(`P2022 Missing column: ${missingColumn}`, exception.message);
+          this.logger.error(`P2022 Missing column: ${missingColumn}`, prismaErr.message);
           break;
         default:
           status = HttpStatus.BAD_REQUEST;
-          message = `Database error (${exception.code}). Please try again or contact support.`;
-          this.logger.error(`Unhandled Prisma error: ${exception.code}`, exception.message);
+          message = `Database error (${prismaErr.code}). Please try again or contact support.`;
+          this.logger.error(`Unhandled Prisma error: ${prismaErr.code}`, prismaErr.message);
       }
-    } else if (exception instanceof Prisma.PrismaClientValidationError) {
+    } else if (exception && (exception as any).constructor?.name === 'PrismaClientValidationError') {
       status = HttpStatus.BAD_REQUEST;
       message = 'Invalid data provided. Please check your input and try again.';
     } else if (exception instanceof Error) {
@@ -77,18 +81,23 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     const sanitizedBody = this.scrubSensitiveData(request.body);
 
-    this.logger.error(`[CRASH_REPORT] URL: ${request.url}`);
-    this.logger.error(`[CRASH_REPORT] Body: ${JSON.stringify(sanitizedBody)}`);
-    this.logger.error(`[CRASH_REPORT] UserId: ${(request as any).user?.id || 'none'}`);
-    this.logger.error(`[CRASH_REPORT] Exception: ${exception instanceof Error ? exception.message : 'Unknown'}`);
-    if (exception instanceof Error) {
-      this.logger.error(`[CRASH_REPORT] Stack: ${exception.stack}`);
-    }
-    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-      this.logger.error(`[CRASH_REPORT] Prisma Code: ${exception.code}`);
+    // Only log actual crashes (500s) as errors. 
+    // 4xx errors (Bad Request, Unauthorized, Not Found) are normal client behavior.
+    if (status >= 500) {
+      this.logger.error(`[CRASH_REPORT] URL: ${request.url}`);
+      this.logger.error(`[CRASH_REPORT] Body: ${JSON.stringify(sanitizedBody)}`);
+      this.logger.error(`[CRASH_REPORT] UserId: ${(request as any).user?.id || 'none'}`);
+      this.logger.error(`[CRASH_REPORT] Exception: ${exception instanceof Error ? exception.message : 'Unknown'}`);
+      if (exception instanceof Error) {
+        this.logger.error(`[CRASH_REPORT] Stack: ${exception.stack}`);
+      }
+      if (exception instanceof (Prisma as any).PrismaClientKnownRequestError) {
+        this.logger.error(`[CRASH_REPORT] Prisma Code: ${(exception as any).code}`);
+      }
+    } else {
+      this.logger.warn(`[CLIENT_ERR] ${status} ${request.method} ${request.url} - ${JSON.stringify(message)}`);
     }
 
-    this.logger.warn(`[${status}] ${request.method} ${request.url} - ${JSON.stringify(message)}`);
     response.status(status).json(responseBody);
   }
 

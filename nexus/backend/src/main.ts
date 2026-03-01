@@ -82,7 +82,14 @@ async function bootstrap() {
 
   // Intercept Render's port-binding HEAD / probe at the Express level
   // before NestJS routing picks it up and throws a NotFoundException.
-  expressApp.head('/', (_req: any, res: any) => res.status(200).end());
+  // Intercept Render's port-binding HEAD / probe at the Express level
+  // before NestJS routing picks it up and throws a NotFoundException.
+  expressApp.all('/', (_req: any, res: any) => res.status(200).json({
+    status: 'online',
+    service: 'Nexus Enterprise API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  }));
 
   app.use(cookieParser());
   app.use(hpp());
