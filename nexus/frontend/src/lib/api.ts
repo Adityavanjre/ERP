@@ -2,6 +2,8 @@
 import axios from 'axios';
 
 // Ensure we always target the v1 API
+// PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
+// This eliminates CORS delays and masks the internal backend URL.
 const baseURL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
 const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
 
