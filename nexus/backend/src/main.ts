@@ -1,8 +1,4 @@
 import { otracing } from './tracing';
-if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
-  otracing.start();
-}
-
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
@@ -11,8 +7,10 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { loggerConfig } from './common/logger.config';
-import { ClusterService } from './system/services/cluster.service';
 import cookieParser from 'cookie-parser';
+import hpp from 'hpp';
+import helmet from 'helmet';
+import compression from 'compression';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PHASE 0 — FAIL-FAST ENVIRONMENT VALIDATION
@@ -25,35 +23,52 @@ const OPTIONAL_VARS = ['AUDIT_HMAC_SECRET', 'CLOUDINARY_API_KEY', 'RESEND_API_KE
 function validateEnvironment(): void {
   const isProd = process.env.NODE_ENV === 'production';
   console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`[BOOT] Checking Critical Environment Variables...`);
+
+  // Masked logging for debugging on Render
+  CRITICAL_VARS.forEach(v => {
+    const val = process.env[v];
+    console.log(`[BOOT] ${v}: ${val ? 'SET (********)' : 'MISSING ❌'}`);
+  });
 
   const missingCritical = CRITICAL_VARS.filter((key) => !process.env[key]);
 
   // PROD-002: Always treat Audit HMAC as critical in production to ensure forensic integrity.
-  if (isProd && !process.env.AUDIT_HMAC_SECRET) {
+  const auditSecret = process.env.AUDIT_HMAC_SECRET;
+  console.log(`[BOOT] AUDIT_HMAC_SECRET: ${auditSecret ? 'SET (********)' : 'MISSING ⚠️'}`);
+  if (isProd && !auditSecret) {
     missingCritical.push('AUDIT_HMAC_SECRET');
   }
 
   if (missingCritical.length > 0) {
-    console.error(`[FATAL] Missing Critical Environment Variables: ${missingCritical.join(', ')}`);
-    if (isProd && missingCritical.includes('AUDIT_HMAC_SECRET')) {
-      console.error('PROD-SEC-ERR: AUDIT_HMAC_SECRET must be set in production to enable foreclosure-compliant hash chains.');
-    }
-    console.error('The application cannot start without these. Exiting.');
+    console.error(`[FATAL_CONFIG] Missing Critical Environment Variables: ${missingCritical.join(', ')}`);
+    console.error('The application refuses to start to prevent data corruption or insecurity. Exiting with Status 1.');
     process.exit(1);
   }
 
   const missingOptional = OPTIONAL_VARS.filter((key) => !process.env[key]);
   if (missingOptional.length > 0) {
     console.warn(`[WARN] Missing Optional Environment Variables: ${missingOptional.join(', ')}`);
-    console.warn('Some features (Email, File Storage) may run in simulation or degraded mode.');
   }
 }
 
 async function bootstrap() {
-  // Must validate BEFORE creating the NestJS app so secrets are guaranteed
-  // to exist before any module (especially AuthModule) attempts to read them.
+  console.log('--- [BOOTSTRAP ENGINE STARTING] ---');
+
+  // Safe Tracing Initialization
+  if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+    try {
+      console.log('[BOOT] Initializing OpenTelemetry Tracing...');
+      otracing.start();
+    } catch (otelErr) {
+      console.warn('[BOOT] Tracing failed to start. Continuing without tracing:', otelErr);
+    }
+  }
+
+  // Must validate BEFORE creating the NestJS app
   validateEnvironment();
 
+  console.log('[BOOT] Initializing NestJS App Instance...');
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: loggerConfig,
   });
@@ -66,10 +81,10 @@ async function bootstrap() {
   expressApp.head('/', (_req: any, res: any) => res.status(200).end());
 
   app.use(cookieParser());
-  app.use(require('hpp')());
+  app.use(hpp());
 
   // Security Headers with explicit CSP and HSTS
-  app.use(require('helmet')({
+  app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
@@ -93,7 +108,7 @@ async function bootstrap() {
   }));
 
   // Compression for performance
-  app.use(require('compression')());
+  app.use(compression());
 
   // Build allowed cross-origin list dynamically based on environment
   const allowedOrigins: (string | RegExp)[] = [
@@ -162,7 +177,10 @@ async function bootstrap() {
 // PROD-004: Hard-locked to Single Process Mode to prevent OOM on Cloud Free Tiers (512MB RAM).
 // Previously, enabling clustering would spawn process per CPU core (e.g. 8 cores = 8x RAM usage), instantly crashing.
 bootstrap().catch(err => {
-  console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend failed to initialize');
-  console.error(err);
+  console.error('\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+  console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend crashed during boot.');
+  console.error('Reason:', err.message || 'Unknown Error');
+  if (err.stack) console.error('Stack Trace:', err.stack);
+  console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
   process.exit(1);
 });
