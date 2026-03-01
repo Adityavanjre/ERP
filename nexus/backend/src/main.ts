@@ -126,6 +126,7 @@ async function bootstrap() {
     'https://klypso.in',
     'https://www.klypso.in',
     'https://nexus.klypso.in',
+    'https://klypso-frontend.onrender.com', // Added explicit frontend host
     'http://localhost:3000'
   ];
 
