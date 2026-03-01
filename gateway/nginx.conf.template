@@ -25,6 +25,8 @@ server {
         # and rewrite them so the browser stays on the Gateway.
         proxy_redirect https://${KLYPSO_BACKEND_HOST}/api/ /portal/api/;
         proxy_redirect http://${KLYPSO_BACKEND_HOST}/api/ /portal/api/;
+        proxy_redirect https://${KLYPSO_BACKEND_HOST}/api /portal/api;
+        proxy_redirect http://${KLYPSO_BACKEND_HOST}/api /portal/api;
     }
 
     # Klypso ERP Portal
