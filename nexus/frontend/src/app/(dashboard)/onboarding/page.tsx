@@ -18,7 +18,10 @@ import { useAuth } from "@/hooks/use-auth";
 const onboardingSchema = z.object({
     industry: z.string().min(1, "Please select an industry"),
     businessType: z.string().min(1, "Please select a business type"),
-    gstin: z.string().min(15, "Invalid GSTIN format").max(15, "Invalid GSTIN format").optional().or(z.literal("")),
+    gstin: z.union([
+        z.string().length(15, "GSTIN must be exactly 15 characters"),
+        z.literal(""),
+    ]).optional(),
 });
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
