@@ -1,4 +1,8 @@
 import { otracing } from './tracing';
+// Force resolution of critical validation packages before NestJS starts
+import 'class-validator';
+import 'class-transformer';
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
