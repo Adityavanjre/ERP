@@ -22,6 +22,18 @@ async function authFetch(path: string, options: RequestInit = {}) {
             ...(options.headers || {}),
         },
     });
+
+    // Detect Render cold-start HTML splash page returned instead of JSON
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+        const text = await res.text();
+        if (text.includes('Render') || text.includes('Waking up') || text.includes('Application loading')) {
+            const wakeErr: any = new Error('Klypso is starting up. Please wait...');
+            wakeErr.isWakeup = true;
+            throw wakeErr;
+        }
+    }
+
     if (!res.ok) {
         const err: any = new Error(`HTTP ${res.status}`);
         err.status = res.status;
@@ -58,7 +70,11 @@ export function TenantSelector() {
                 setTenants(data);
             } catch (err: any) {
                 const status = err?.status;
-                if (status === 401 || status === 403) {
+                if (err?.isWakeup) {
+                    toast.error("Klypso is starting up. Please wait a moment and try again.");
+                    console.warn("[TenantSelector] Backend is waking up on Render, retrying in 5s...");
+                    setTimeout(fetchTenants, 5000);
+                } else if (status === 401 || status === 403) {
                     toast.error("Session expired. Please log in again.");
                     handleLogout();
                 } else {

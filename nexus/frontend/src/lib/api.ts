@@ -90,8 +90,12 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401) {
+      // Exempt identity-token-only routes from triggering a forced logout.
+      // /auth/tenants and /auth/select-tenant are valid with an identity token;
+      // errors there should NOT be treated as a global session expiry.
       const isLoginRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
-      if (typeof window !== 'undefined' && !isLoginRequest && !originalRequest._retry) {
+      const isIdentityFlowRequest = originalRequest.url?.includes('/auth/tenants') || originalRequest.url?.includes('/auth/select-tenant');
+      if (typeof window !== 'undefined' && !isLoginRequest && !isIdentityFlowRequest && !originalRequest._retry) {
 
         const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
         const isAuthPage = authPages.some(page => window.location.pathname.includes(page));
