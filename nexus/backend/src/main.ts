@@ -159,16 +159,10 @@ async function bootstrap() {
   console.log(`[BOOT] Nexus Backend successfully listening on port ${port}`);
 }
 
-// PROD-003: Opt-in Multi-Core scaling (Vertical)
-// If running on a multi-core machine and ENABLE_CLUSTERING is true, 
-// the app will spawn workers for each CPU core.
-if (process.env.ENABLE_CLUSTERING === 'true' && process.env.NODE_ENV === 'production') {
-  console.log('[BOOT] Cluster Mode Requested: Probing CPU capacity...');
-  ClusterService.clusterize(bootstrap);
-} else {
-  bootstrap().catch(err => {
-    console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend failed to initialize');
-    console.error(err);
-    process.exit(1);
-  });
-}
+// PROD-004: Hard-locked to Single Process Mode to prevent OOM on Cloud Free Tiers (512MB RAM).
+// Previously, enabling clustering would spawn process per CPU core (e.g. 8 cores = 8x RAM usage), instantly crashing.
+bootstrap().catch(err => {
+  console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend failed to initialize');
+  console.error(err);
+  process.exit(1);
+});
