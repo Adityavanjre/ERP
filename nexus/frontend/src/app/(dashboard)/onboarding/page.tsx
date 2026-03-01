@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,7 +41,12 @@ export default function OnboardingPage() {
     });
 
     const onSubmit = async (data: OnboardingFormData) => {
-        if (!user?.tenantId) return;
+        if (!user?.tenantId) {
+            toast.error("Session error", {
+                description: "Could not read your workspace. Please refresh the page.",
+            });
+            return;
+        }
 
         setIsLoading(true);
         try {
@@ -50,14 +55,33 @@ export default function OnboardingPage() {
                 tenantId: user.tenantId,
             });
 
+            // Refresh the token so it includes isOnboarded: true,
+            // then go directly to the dashboard without forcing re-login.
+            try {
+                const { data: refreshData } = await api.post("auth/refresh", {}, { withCredentials: true });
+                if (refreshData?.accessToken) {
+                    localStorage.setItem("k_token", refreshData.accessToken);
+                    if (refreshData.user) {
+                        localStorage.setItem("k_user", JSON.stringify(refreshData.user));
+                    }
+                }
+            } catch {
+                // If refresh fails, clear the token and fall back to login
+                localStorage.removeItem("k_token");
+                localStorage.removeItem("k_user");
+                toast.success("Onboarding complete!", {
+                    description: "Please log in again to access your dashboard.",
+                });
+                router.push("/login");
+                return;
+            }
+
             toast.success("Onboarding complete!", {
-                description: "Your workspace is ready. Please log in again to refresh your session.",
+                description: "Your workspace is ready.",
             });
 
-            // Redirect to login to get a fresh token with isOnboarded: true
-            // In a more advanced setup, we would refresh the token silently.
-            localStorage.removeItem("k_token");
-            router.push("/login");
+            // Hard reload to flush all React state with the new isOnboarded token
+            window.location.href = "/dashboard";
         } catch (error: any) {
             toast.error("Onboarding failed", {
                 description: error.response?.data?.message || "Something went wrong.",
