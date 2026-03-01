@@ -1,5 +1,7 @@
 import { otracing } from './tracing';
-otracing.start();
+if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+  otracing.start();
+}
 
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
