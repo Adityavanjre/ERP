@@ -2,7 +2,7 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { Role } from '@nexus/shared';
 
 @Injectable()
@@ -124,9 +124,9 @@ export class UsersService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         passwordHash,
-        tokenVersion: { increment: 1 }, 
+        tokenVersion: { increment: 1 },
       },
     });
 

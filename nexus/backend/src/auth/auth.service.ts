@@ -9,7 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { GoogleAuthService } from './google-auth.service';
 import { LoginDto, RegisterDto, GoogleLoginDto, OnboardingDto, CreateWorkspaceDto } from './dto/auth.dto';
 import { TenantType, PlanType, Role, Prisma, AuthProvider, SubscriptionStatus } from '@prisma/client';
