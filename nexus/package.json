@@ -7,6 +7,9 @@
     "mobile",
     "packages/*"
   ],
+  "scripts": {
+    "build:shared": "npm run build -w @nexus/shared"
+  },
   "devDependencies": {
     "@types/react": "19.2.4"
   },
