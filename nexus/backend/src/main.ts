@@ -121,20 +121,19 @@ async function bootstrap() {
   // Compression for performance
   app.use(compression());
 
-  // Build allowed cross-origin list dynamically based on environment
+  // PRD-002: Production-Grade CORS Strategy (Gateway-First)
+  // In our Proxy model, the browser on klypso.in calls /portal/api (Same-Origin).
+  // This bypasses CORS entirely for browser users. We only keep these for
+  // specific Cross-Origin scenarios (like landing pages on separate subdomains).
   const allowedOrigins: (string | RegExp)[] = [
     'https://klypso.in',
     'https://www.klypso.in',
     'https://nexus.klypso.in',
-    'https://klypso-frontend.onrender.com', // Added explicit frontend host
+    /\.klypso\.in$/, // Trust all klypso.in subdomains
     'http://localhost:3000'
   ];
 
   if (process.env.KLYPSO_FRONTEND_URL) allowedOrigins.push(process.env.KLYPSO_FRONTEND_URL);
-  if (process.env.NEXUS_FRONTEND_URL) allowedOrigins.push(process.env.NEXUS_FRONTEND_URL);
-
-  // Fail-safe for Render's dynamic subdomains
-  allowedOrigins.push(/\.onrender\.com$/);
 
   app.enableCors({
     origin: allowedOrigins,
