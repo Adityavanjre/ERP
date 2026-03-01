@@ -17,13 +17,25 @@ import cookieParser from 'cookie-parser';
 // The application refuses to start if any critical secret is absent.
 // This prevents accidental deployment with missing credentials.
 // ─────────────────────────────────────────────────────────────────────────────
-const CRITICAL_VARS = ['JWT_SECRET', 'DATABASE_URL'];
+const CRITICAL_VARS = ['JWT_SECRET', 'DATABASE_URL', 'MFA_ENCRYPTION_KEY'];
 const OPTIONAL_VARS = ['AUDIT_HMAC_SECRET', 'CLOUDINARY_API_KEY', 'RESEND_API_KEY'];
 
 function validateEnvironment(): void {
+  const isProd = process.env.NODE_ENV === 'production';
+  console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
+
   const missingCritical = CRITICAL_VARS.filter((key) => !process.env[key]);
+
+  // PROD-002: Always treat Audit HMAC as critical in production to ensure forensic integrity.
+  if (isProd && !process.env.AUDIT_HMAC_SECRET) {
+    missingCritical.push('AUDIT_HMAC_SECRET');
+  }
+
   if (missingCritical.length > 0) {
     console.error(`[FATAL] Missing Critical Environment Variables: ${missingCritical.join(', ')}`);
+    if (isProd && missingCritical.includes('AUDIT_HMAC_SECRET')) {
+      console.error('PROD-SEC-ERR: AUDIT_HMAC_SECRET must be set in production to enable foreclosure-compliant hash chains.');
+    }
     console.error('The application cannot start without these. Exiting.');
     process.exit(1);
   }
@@ -31,7 +43,7 @@ function validateEnvironment(): void {
   const missingOptional = OPTIONAL_VARS.filter((key) => !process.env[key]);
   if (missingOptional.length > 0) {
     console.warn(`[WARN] Missing Optional Environment Variables: ${missingOptional.join(', ')}`);
-    console.warn('Some features (MFA, Email, File Storage, Audit Hashing) may run in simulation or degraded mode.');
+    console.warn('Some features (Email, File Storage) may run in simulation or degraded mode.');
   }
 }
 
@@ -81,8 +93,22 @@ async function bootstrap() {
   // Compression for performance
   app.use(require('compression')());
 
+  // Build allowed cross-origin list dynamically based on environment
+  const allowedOrigins: (string | RegExp)[] = [
+    'https://klypso.in',
+    'https://www.klypso.in',
+    'https://nexus.klypso.in',
+    'http://localhost:3000'
+  ];
+
+  if (process.env.KLYPSO_FRONTEND_URL) allowedOrigins.push(process.env.KLYPSO_FRONTEND_URL);
+  if (process.env.NEXUS_FRONTEND_URL) allowedOrigins.push(process.env.NEXUS_FRONTEND_URL);
+
+  // Fail-safe for Render's dynamic subdomains
+  allowedOrigins.push(/\.onrender\.com$/);
+
   app.enableCors({
-    origin: ['https://klypso.in', 'https://www.klypso.in', 'https://nexus.klypso.in', 'https://klypso-gateway.onrender.com', 'http://localhost:3000'],
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
@@ -127,12 +153,20 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port, '0.0.0.0');
-  console.log(`Server running on port ${port}`);
+  console.log(`[BOOT] Scaling Strategy: Single Process (Vertical) — Node.js runtime active on instance.`);
+  console.log(`[BOOT] Nexus Backend successfully listening on port ${port}`);
 }
 
-// ClusterService.clusterize(bootstrap);
-bootstrap().catch(err => {
-  console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend failed to initialize');
-  console.error(err);
-  process.exit(1);
-});
+// PROD-003: Opt-in Multi-Core scaling (Vertical)
+// If running on a multi-core machine and ENABLE_CLUSTERING is true, 
+// the app will spawn workers for each CPU core.
+if (process.env.ENABLE_CLUSTERING === 'true' && process.env.NODE_ENV === 'production') {
+  console.log('[BOOT] Cluster Mode Requested: Probing CPU capacity...');
+  ClusterService.clusterize(bootstrap);
+} else {
+  bootstrap().catch(err => {
+    console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend failed to initialize');
+    console.error(err);
+    process.exit(1);
+  });
+}

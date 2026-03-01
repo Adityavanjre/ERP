@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { RegistryService } from './services/registry.service';
+import { AutomationWorkerService } from './services/automation-worker.service';
 import { AiService } from './services/ai.service';
 import { AuditService } from './services/audit.service';
 import { AuditVerificationService } from './services/audit-verification.service';
@@ -59,6 +60,7 @@ import { ConfigModule } from '@nestjs/config';
     CloudinaryService,
     SystemAuditService,
     AnomalyAlertService,
+    AutomationWorkerService,
   ],
   exports: [
     RegistryService,

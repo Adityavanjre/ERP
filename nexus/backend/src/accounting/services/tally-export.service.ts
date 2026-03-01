@@ -202,13 +202,13 @@ export class TallyService {
     };
   }
 
-  async exportTallyXml(tenantId: string, month?: number, year?: number) {
+  async *generateTallyXmlStream(tenantId: string, month?: number, year?: number) {
     const targetMonth = month || new Date().getMonth() + 1;
     const targetYear = year || new Date().getFullYear();
     const startDate = new Date(targetYear, targetMonth - 1, 1);
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59);
 
-    let xml = `<?xml version="1.0"?>\n<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <IMPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>Vouchers</REPORTNAME>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
+    yield `<?xml version="1.0"?>\n<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <IMPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>Vouchers</REPORTNAME>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
 
     const BATCH_SIZE = 100;
 
@@ -226,60 +226,61 @@ export class TallyService {
       if (invoices.length === 0) break;
 
       for (const inv of invoices) {
+        let chunk = '';
         const dateStr = inv.issueDate.toISOString().split('T')[0].replace(/-/g, '');
         const guid = `INV-${inv.id}`;
         const partyName = this.escapeXml(inv.customer?.company || inv.customer?.firstName || 'Cash Sales');
 
-        xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-        xml += `          <VOUCHER VCHTYPE="Sales" ACTION="Create" OBJVIEW="AccountingVchView">\n`;
-        xml += `            <DATE>${dateStr}</DATE>\n`;
-        xml += `            <VOUCHERNUMBER>${this.escapeXml(inv.invoiceNumber)}</VOUCHERNUMBER>\n`;
-        xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
-        xml += `            <PERSISTEDVIEW>AccountingVchView</PERSISTEDVIEW>\n`;
-        xml += `            <GUID>${guid}</GUID>\n`;
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <VOUCHER VCHTYPE="Sales" ACTION="Create" OBJVIEW="AccountingVchView">\n`;
+        chunk += `            <DATE>${dateStr}</DATE>\n`;
+        chunk += `            <VOUCHERNUMBER>${this.escapeXml(inv.invoiceNumber)}</VOUCHERNUMBER>\n`;
+        chunk += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
+        chunk += `            <PERSISTEDVIEW>AccountingVchView</PERSISTEDVIEW>\n`;
+        chunk += `            <GUID>${guid}</GUID>\n`;
 
         // Dr Customer
-        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-        xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <AMOUNT>-${inv.totalAmount}</AMOUNT>\n`;
-        xml += `              <BILLALLOCATIONS.LIST>\n`;
-        xml += `                <NAME>${this.escapeXml(inv.invoiceNumber)}</NAME>\n`;
-        xml += `                <BILLTYPE>New Ref</BILLTYPE>\n`;
-        xml += `                <AMOUNT>-${inv.totalAmount}</AMOUNT>\n`;
-        xml += `              </BILLALLOCATIONS.LIST>\n`;
-        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <AMOUNT>-${inv.totalAmount}</AMOUNT>\n`;
+        chunk += `              <BILLALLOCATIONS.LIST>\n`;
+        chunk += `                <NAME>${this.escapeXml(inv.invoiceNumber)}</NAME>\n`;
+        chunk += `                <BILLTYPE>New Ref</BILLTYPE>\n`;
+        chunk += `                <AMOUNT>-${inv.totalAmount}</AMOUNT>\n`;
+        chunk += `              </BILLALLOCATIONS.LIST>\n`;
+        chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
 
         // Cr Inventory per item
         for (const item of inv.items) {
-          xml += `            <INVENTORYENTRIES.LIST>\n`;
-          xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-          xml += `              <RATE>${item.unitPrice}</RATE>\n`;
-          xml += `              <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
-          xml += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
-          xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES)}</LEDGERNAME>\n`;
-          xml += `                <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-          xml += `                <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `            </INVENTORYENTRIES.LIST>\n`;
+          chunk += `            <INVENTORYENTRIES.LIST>\n`;
+          chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
+          chunk += `              <RATE>${item.unitPrice}</RATE>\n`;
+          chunk += `              <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
+          chunk += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
+          chunk += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES)}</LEDGERNAME>\n`;
+          chunk += `                <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `                <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `            </INVENTORYENTRIES.LIST>\n`;
         }
 
         // Tax Ledgers
         let taxSum = new Decimal(0);
         if (inv.totalIGST.greaterThan(0)) {
-          xml += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, inv.totalIGST, true);
+          chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, inv.totalIGST, true);
           taxSum = taxSum.add(inv.totalIGST);
         } else {
           if (inv.totalCGST.greaterThan(0)) {
-            xml += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, inv.totalCGST, true);
+            chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, inv.totalCGST, true);
             taxSum = taxSum.add(inv.totalCGST);
           }
           if (inv.totalSGST.greaterThan(0)) {
-            xml += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, inv.totalSGST, true);
+            chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, inv.totalSGST, true);
             taxSum = taxSum.add(inv.totalSGST);
           }
         }
@@ -288,15 +289,16 @@ export class TallyService {
         const totalItemsAndTax = inv.items.reduce((sum, item) => sum.add(item.taxableAmount), new Decimal(0)).add(taxSum);
         const diff = inv.totalAmount.minus(totalItemsAndTax);
         if (diff.abs().greaterThan(0)) {
-          xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-          xml += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.ROUNDING_OFF)}</LEDGERNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>${diff.isPositive() ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <AMOUNT>${diff.isPositive() ? diff.abs() : diff.abs().negated()}</AMOUNT>\n`;
-          xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+          chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+          chunk += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.ROUNDING_OFF)}</LEDGERNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>${diff.isPositive() ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <AMOUNT>${diff.isPositive() ? diff.abs() : diff.abs().negated()}</AMOUNT>\n`;
+          chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
         }
 
-        xml += `          </VOUCHER>\n`;
-        xml += `        </TALLYMESSAGE>\n`;
+        chunk += `          </VOUCHER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
       }
       invSkip += BATCH_SIZE;
     }
@@ -315,70 +317,72 @@ export class TallyService {
       if (purchases.length === 0) break;
 
       for (const po of purchases) {
+        let chunk = '';
         const dateStr = po.orderDate.toISOString().split('T')[0].replace(/-/g, '');
         const guid = `PUR-${po.id}`;
         const partyName = this.escapeXml(po.supplier?.name || 'Supplier');
 
-        xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-        xml += `          <VOUCHER VCHTYPE="Purchases" ACTION="Create" OBJVIEW="AccountingVchView">\n`;
-        xml += `            <DATE>${dateStr}</DATE>\n`;
-        xml += `            <VOUCHERNUMBER>${this.escapeXml(po.orderNumber)}</VOUCHERNUMBER>\n`;
-        xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
-        xml += `            <PERSISTEDVIEW>AccountingVchView</PERSISTEDVIEW>\n`;
-        xml += `            <GUID>${guid}</GUID>\n`;
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <VOUCHER VCHTYPE="Purchases" ACTION="Create" OBJVIEW="AccountingVchView">\n`;
+        chunk += `            <DATE>${dateStr}</DATE>\n`;
+        chunk += `            <VOUCHERNUMBER>${this.escapeXml(po.orderNumber)}</VOUCHERNUMBER>\n`;
+        chunk += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
+        chunk += `            <PERSISTEDVIEW>AccountingVchView</PERSISTEDVIEW>\n`;
+        chunk += `            <GUID>${guid}</GUID>\n`;
 
         // Cr Supplier (Net)
         const netAmount = (po as any).netAmount || po.totalAmount;
         const tdsAmount = (po as any).tdsAmount || 0;
 
-        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-        xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <AMOUNT>${netAmount}</AMOUNT>\n`;
-        xml += `              <BILLALLOCATIONS.LIST>\n`;
-        xml += `                <NAME>${this.escapeXml(po.orderNumber)}</NAME>\n`;
-        xml += `                <BILLTYPE>New Ref</BILLTYPE>\n`;
-        xml += `                <AMOUNT>${netAmount}</AMOUNT>\n`;
-        xml += `              </BILLALLOCATIONS.LIST>\n`;
-        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <AMOUNT>${netAmount}</AMOUNT>\n`;
+        chunk += `              <BILLALLOCATIONS.LIST>\n`;
+        chunk += `                <NAME>${this.escapeXml(po.orderNumber)}</NAME>\n`;
+        chunk += `                <BILLTYPE>New Ref</BILLTYPE>\n`;
+        chunk += `                <AMOUNT>${netAmount}</AMOUNT>\n`;
+        chunk += `              </BILLALLOCATIONS.LIST>\n`;
+        chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
 
         // TDS Entry
         if (new Decimal(tdsAmount).gt(0)) {
-          xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-          xml += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.TDS_PAYABLE)}</LEDGERNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <AMOUNT>${tdsAmount}</AMOUNT>\n`;
-          xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+          chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+          chunk += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.TDS_PAYABLE)}</LEDGERNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <AMOUNT>${tdsAmount}</AMOUNT>\n`;
+          chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
         }
 
         // Dr Inventory per item
         for (const item of po.items) {
-          xml += `            <INVENTORYENTRIES.LIST>\n`;
-          xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-          xml += `              <RATE>${item.unitPrice}</RATE>\n`;
-          xml += `              <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
-          xml += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
-          xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.INVENTORY_ASSET)}</LEDGERNAME>\n`;
-          xml += `                <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-          xml += `                <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `            </INVENTORYENTRIES.LIST>\n`;
+          chunk += `            <INVENTORYENTRIES.LIST>\n`;
+          chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
+          chunk += `              <RATE>${item.unitPrice}</RATE>\n`;
+          chunk += `              <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
+          chunk += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
+          chunk += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.INVENTORY_ASSET)}</LEDGERNAME>\n`;
+          chunk += `                <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+          chunk += `                <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `            </INVENTORYENTRIES.LIST>\n`;
         }
 
         // Tax Ledgers (Input GST)
         if (po.totalIGST.greaterThan(0)) {
-          xml += this.generateTaxLedger(StandardAccounts.INPUT_IGST, po.totalIGST, false);
+          chunk += this.generateTaxLedger(StandardAccounts.INPUT_IGST, po.totalIGST, false);
         } else {
-          if (po.totalCGST.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_CGST, po.totalCGST, false);
-          if (po.totalSGST.greaterThan(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_SGST, po.totalSGST, false);
+          if (po.totalCGST.greaterThan(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_CGST, po.totalCGST, false);
+          if (po.totalSGST.greaterThan(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_SGST, po.totalSGST, false);
         }
 
-        xml += `          </VOUCHER>\n`;
-        xml += `        </TALLYMESSAGE>\n`;
+        chunk += `          </VOUCHER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
       }
       purSkip += BATCH_SIZE;
     }
@@ -397,6 +401,7 @@ export class TallyService {
       if (payments.length === 0) break;
 
       for (const pay of payments) {
+        let chunk = '';
         const isReceipt = !!pay.customerId;
         const dateStr = pay.date.toISOString().split('T')[0].replace(/-/g, '');
         const partyName = isReceipt
@@ -409,43 +414,44 @@ export class TallyService {
         const tdsAmount = new Decimal((pay as any).tdsAmount || 0);
         const netAmount = payAmount.minus(tdsAmount);
 
-        xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-        xml += `          <VOUCHER VCHTYPE="${vchType}" ACTION="Create">\n`;
-        xml += `            <DATE>${dateStr}</DATE>\n`;
-        xml += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
-        xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <VOUCHER VCHTYPE="${vchType}" ACTION="Create">\n`;
+        chunk += `            <DATE>${dateStr}</DATE>\n`;
+        chunk += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
+        chunk += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
 
         // Bank/Cash entry (Net)
-        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-        xml += `              <LEDGERNAME>${this.escapeXml(pay.mode === 'Cash' ? StandardAccounts.CASH : StandardAccounts.BANK)}</LEDGERNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'YES' : 'NO'}</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <AMOUNT>${isReceipt ? '-' : ''}${netAmount}</AMOUNT>\n`;
-        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `              <LEDGERNAME>${this.escapeXml(pay.mode === 'Cash' ? StandardAccounts.CASH : StandardAccounts.BANK)}</LEDGERNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'YES' : 'NO'}</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <AMOUNT>${isReceipt ? '-' : ''}${netAmount}</AMOUNT>\n`;
+        chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
 
         // TDS Entry
         if (tdsAmount.gt(0)) {
-          xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-          xml += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.TDS_PAYABLE)}</LEDGERNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <AMOUNT>${tdsAmount}</AMOUNT>\n`;
-          xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+          chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+          chunk += `              <LEDGERNAME>${this.escapeXml(StandardAccounts.TDS_PAYABLE)}</LEDGERNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <AMOUNT>${tdsAmount}</AMOUNT>\n`;
+          chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
         }
 
         // Party entry (Gross)
-        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-        xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <AMOUNT>${isReceipt ? '' : '-'}${payAmount}</AMOUNT>\n`;
+        chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>${isReceipt ? 'NO' : 'YES'}</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <AMOUNT>${isReceipt ? '' : '-'}${payAmount}</AMOUNT>\n`;
         if (pay.invoice) {
-          xml += `              <BILLALLOCATIONS.LIST>\n`;
-          xml += `                <NAME>${this.escapeXml(pay.invoice.invoiceNumber)}</NAME>\n`;
-          xml += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
-          xml += `                <AMOUNT>${payAmount}</AMOUNT>\n`;
-          xml += `              </BILLALLOCATIONS.LIST>\n`;
+          chunk += `              <BILLALLOCATIONS.LIST>\n`;
+          chunk += `                <NAME>${this.escapeXml(pay.invoice.invoiceNumber)}</NAME>\n`;
+          chunk += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
+          chunk += `                <AMOUNT>${payAmount}</AMOUNT>\n`;
+          chunk += `              </BILLALLOCATIONS.LIST>\n`;
         }
-        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
-        xml += `          </VOUCHER>\n`;
-        xml += `        </TALLYMESSAGE>\n`;
+        chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `          </VOUCHER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
       }
       paySkip += BATCH_SIZE;
     }
@@ -463,58 +469,60 @@ export class TallyService {
       if (creditNotes.length === 0) break;
 
       for (const cn of creditNotes) {
+        let chunk = '';
         const dateStr = cn.date.toISOString().split('T')[0].replace(/-/g, '');
         const partyName = this.escapeXml(cn.customer?.company || cn.customer?.firstName || 'Customer');
         const refNo = this.escapeXml(cn.noteNumber);
 
-        xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-        xml += `          <VOUCHER VCHTYPE="Credit Note" ACTION="Create">\n`;
-        xml += `            <DATE>${dateStr}</DATE>\n`;
-        xml += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
-        xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <VOUCHER VCHTYPE="Credit Note" ACTION="Create">\n`;
+        chunk += `            <DATE>${dateStr}</DATE>\n`;
+        chunk += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
+        chunk += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
 
         // Cr Customer
-        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-        xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <AMOUNT>${cn.totalAmount}</AMOUNT>\n`;
+        chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <AMOUNT>${cn.totalAmount}</AMOUNT>\n`;
         if (cn.invoice) {
-          xml += `              <BILLALLOCATIONS.LIST>\n`;
-          xml += `                <NAME>${this.escapeXml(cn.invoice.invoiceNumber)}</NAME>\n`;
-          xml += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
-          xml += `                <AMOUNT>${cn.totalAmount}</AMOUNT>\n`;
-          xml += `              </BILLALLOCATIONS.LIST>\n`;
+          chunk += `              <BILLALLOCATIONS.LIST>\n`;
+          chunk += `                <NAME>${this.escapeXml(cn.invoice.invoiceNumber)}</NAME>\n`;
+          chunk += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
+          chunk += `                <AMOUNT>${cn.totalAmount}</AMOUNT>\n`;
+          chunk += `              </BILLALLOCATIONS.LIST>\n`;
         }
-        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
 
         // Dr Sales Returns / Inventory
         for (const item of cn.items) {
-          xml += `            <INVENTORYENTRIES.LIST>\n`;
-          xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-          xml += `              <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
-          xml += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
-          xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES_RETURNS)}</LEDGERNAME>\n`;
-          xml += `                <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-          xml += `                <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `            </INVENTORYENTRIES.LIST>\n`;
+          chunk += `            <INVENTORYENTRIES.LIST>\n`;
+          chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
+          chunk += `              <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n`;
+          chunk += `              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
+          chunk += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.SALES_RETURNS)}</LEDGERNAME>\n`;
+          chunk += `                <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+          chunk += `                <AMOUNT>-${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `            </INVENTORYENTRIES.LIST>\n`;
         }
 
         // Dr Tax (Reversal)
         const cnAny = cn as any;
         if (cnAny.totalIGST && new Decimal(cnAny.totalIGST).gt(0)) {
-          xml += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, cnAny.totalIGST, false);
+          chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, cnAny.totalIGST, false);
         } else {
-          if (cnAny.totalCGST && new Decimal(cnAny.totalCGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, cnAny.totalCGST, false);
-          if (cnAny.totalSGST && new Decimal(cnAny.totalSGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, cnAny.totalSGST, false);
+          if (cnAny.totalCGST && new Decimal(cnAny.totalCGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, cnAny.totalCGST, false);
+          if (cnAny.totalSGST && new Decimal(cnAny.totalSGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, cnAny.totalSGST, false);
         }
 
-        xml += `          </VOUCHER>\n`;
-        xml += `        </TALLYMESSAGE>\n`;
+        chunk += `          </VOUCHER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
       }
       cnSkip += BATCH_SIZE;
     }
@@ -532,107 +540,130 @@ export class TallyService {
       if (debitNotes.length === 0) break;
 
       for (const dn of debitNotes) {
+        let chunk = '';
         const dateStr = dn.date.toISOString().split('T')[0].replace(/-/g, '');
         const partyName = this.escapeXml(dn.supplier?.name || 'Supplier');
         const refNo = this.escapeXml(dn.noteNumber);
 
-        xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-        xml += `          <VOUCHER VCHTYPE="Debit Note" ACTION="Create">\n`;
-        xml += `            <DATE>${dateStr}</DATE>\n`;
-        xml += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
-        xml += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <VOUCHER VCHTYPE="Debit Note" ACTION="Create">\n`;
+        chunk += `            <DATE>${dateStr}</DATE>\n`;
+        chunk += `            <VOUCHERNUMBER>${refNo}</VOUCHERNUMBER>\n`;
+        chunk += `            <PARTYLEDGERNAME>${partyName}</PARTYLEDGERNAME>\n`;
         // Dr Supplier
-        xml += `            <ALLLEDGERENTRIES.LIST>\n`;
-        xml += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <AMOUNT>-${dn.totalAmount}</AMOUNT>\n`;
+        chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `              <LEDGERNAME>${partyName}</LEDGERNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <AMOUNT>-${dn.totalAmount}</AMOUNT>\n`;
         if (dn.purchaseOrder) {
-          xml += `              <BILLALLOCATIONS.LIST>\n`;
-          xml += `                <NAME>${this.escapeXml(dn.purchaseOrder.orderNumber)}</NAME>\n`;
-          xml += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
-          xml += `                <AMOUNT>-${dn.totalAmount}</AMOUNT>\n`;
-          xml += `              </BILLALLOCATIONS.LIST>\n`;
+          chunk += `              <BILLALLOCATIONS.LIST>\n`;
+          chunk += `                <NAME>${this.escapeXml(dn.purchaseOrder.orderNumber)}</NAME>\n`;
+          chunk += `                <BILLTYPE>Agst Ref</BILLTYPE>\n`;
+          chunk += `                <AMOUNT>-${dn.totalAmount}</AMOUNT>\n`;
+          chunk += `              </BILLALLOCATIONS.LIST>\n`;
         }
-        xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+        chunk += `            </ALLLEDGERENTRIES.LIST>\n`;
 
         // Cr Purchase Returns / Inventory
         for (const item of dn.items) {
-          xml += `            <INVENTORYENTRIES.LIST>\n`;
-          xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
-          xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-          xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-          xml += `              <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
-          xml += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.PURCHASE_RETURNS)}</LEDGERNAME>\n`;
-          xml += `                <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-          xml += `                <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
-          xml += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
-          xml += `            </INVENTORYENTRIES.LIST>\n`;
+          chunk += `            <INVENTORYENTRIES.LIST>\n`;
+          chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
+          chunk += `              <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              <ACTUALQTY>${item.quantity} Nos</ACTUALQTY>\n              <BILLEDQTY>${item.quantity} Nos</BILLEDQTY>\n`;
+          chunk += `              <ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `                <LEDGERNAME>${this.escapeXml(StandardAccounts.PURCHASE_RETURNS)}</LEDGERNAME>\n`;
+          chunk += `                <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `                <AMOUNT>${item.taxableAmount}</AMOUNT>\n`;
+          chunk += `              </ACCOUNTINGLEDGERENTRIES.LIST>\n`;
+          chunk += `            </INVENTORYENTRIES.LIST>\n`;
         }
 
         // Cr Tax (Reversal)
         const dnAny = dn as any;
         if (dnAny.totalIGST && new Decimal(dnAny.totalIGST).gt(0)) {
-          xml += this.generateTaxLedger(StandardAccounts.INPUT_IGST, dnAny.totalIGST, true);
+          chunk += this.generateTaxLedger(StandardAccounts.INPUT_IGST, dnAny.totalIGST, true);
         } else {
-          if (dnAny.totalCGST && new Decimal(dnAny.totalCGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_CGST, dnAny.totalCGST, true);
-          if (dnAny.totalSGST && new Decimal(dnAny.totalSGST).gt(0)) xml += this.generateTaxLedger(StandardAccounts.INPUT_SGST, dnAny.totalSGST, true);
+          if (dnAny.totalCGST && new Decimal(dnAny.totalCGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_CGST, dnAny.totalCGST, true);
+          if (dnAny.totalSGST && new Decimal(dnAny.totalSGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_SGST, dnAny.totalSGST, true);
         }
 
-        xml += `          </VOUCHER>\n`;
-        xml += `        </TALLYMESSAGE>\n`;
+        chunk += `          </VOUCHER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
       }
       dnSkip += BATCH_SIZE;
     }
 
     // 6. Export Manufacturing Stock Journals (Work Orders)
-    const workOrders = await this.prisma.workOrder.findMany({
-      where: { tenantId, endDate: { gte: startDate, lte: endDate }, status: 'Completed' },
-      include: { bom: { include: { product: true, items: { include: { product: true } } } } },
-    });
+    let woSkip = 0;
+    while (true) {
+      const workOrders = await this.prisma.workOrder.findMany({
+        where: { tenantId, endDate: { gte: startDate, lte: endDate }, status: 'Completed' },
+        include: { bom: { include: { product: true, items: { include: { product: true } } } } },
+        take: BATCH_SIZE,
+        skip: woSkip,
+      });
 
-    for (const wo of workOrders) {
-      const dateStr = wo.endDate!.toISOString().split('T')[0].replace(/-/g, '');
-      const guid = `WO-${wo.id}`;
-      const vchNo = wo.orderNumber;
+      if (workOrders.length === 0) break;
 
-      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-      xml += `          <VOUCHER VCHTYPE="Stock Journal" ACTION="Create" OBJVIEW="InventoryVchView">\n`;
-      xml += `            <DATE>${dateStr}</DATE>\n`;
-      xml += `            <VOUCHERNUMBER>${this.escapeXml(vchNo)}</VOUCHERNUMBER>\n`;
-      xml += `            <PERSISTEDVIEW>InventoryVchView</PERSISTEDVIEW>\n`;
-      xml += `            <GUID>${guid}</GUID>\n`;
+      for (const wo of workOrders) {
+        let chunk = '';
+        const dateStr = wo.endDate!.toISOString().split('T')[0].replace(/-/g, '');
+        const guid = `WO-${wo.id}`;
+        const vchNo = wo.orderNumber;
 
-      // PRODUCTION (Finished Goods)
-      xml += `            <INVENTORYENTRIES.LIST>\n`;
-      xml += `              <STOCKITEMNAME>${this.escapeXml(wo.bom.product.name)}</STOCKITEMNAME>\n`;
-      xml += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
-      xml += `              <HSNCODE>${this.escapeXml(wo.bom.product.hsnCode || '')}</HSNCODE>\n`;
-      xml += `              <RATE>${wo.bom.product.costPrice}</RATE>\n`;
-      xml += `              <AMOUNT>-${Number(wo.producedQuantity) * Number(wo.bom.product.costPrice)}</AMOUNT>\n`;
-      xml += `              <ACTUALQTY>${wo.producedQuantity} Nos</ACTUALQTY>\n`;
-      xml += `              <BILLEDQTY>${wo.producedQuantity} Nos</BILLEDQTY>\n`;
-      xml += `            </INVENTORYENTRIES.LIST>\n`;
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <VOUCHER VCHTYPE="Stock Journal" ACTION="Create" OBJVIEW="InventoryVchView">\n`;
+        chunk += `            <DATE>${dateStr}</DATE>\n`;
+        chunk += `            <VOUCHERNUMBER>${this.escapeXml(vchNo)}</VOUCHERNUMBER>\n`;
+        chunk += `            <PERSISTEDVIEW>InventoryVchView</PERSISTEDVIEW>\n`;
+        chunk += `            <GUID>${guid}</GUID>\n`;
 
-      // CONSUMPTION (Raw Materials)
-      for (const item of wo.bom.items) {
-        const consumedQty = Number(item.quantity) * (Number(wo.producedQuantity) + Number(wo.scrapQuantity));
-        xml += `            <INVENTORYENTRIES.LIST>\n`;
-        xml += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
-        xml += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
-        xml += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-        xml += `              <AMOUNT>${consumedQty * Number(item.product.costPrice)}</AMOUNT>\n`;
-        xml += `              <ACTUALQTY>${consumedQty} Nos</ACTUALQTY>\n              <BILLEDQTY>${consumedQty} Nos</BILLEDQTY>\n`;
-        xml += `            </INVENTORYENTRIES.LIST>\n`;
+        // PRODUCTION (Finished Goods)
+        chunk += `            <INVENTORYENTRIES.LIST>\n`;
+        chunk += `              <STOCKITEMNAME>${this.escapeXml(wo.bom.product.name)}</STOCKITEMNAME>\n`;
+        chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
+        chunk += `              <HSNCODE>${this.escapeXml(wo.bom.product.hsnCode || '')}</HSNCODE>\n`;
+        chunk += `              <RATE>${wo.bom.product.costPrice}</RATE>\n`;
+        chunk += `              <AMOUNT>-${Number(wo.producedQuantity) * Number(wo.bom.product.costPrice)}</AMOUNT>\n`;
+        chunk += `              <ACTUALQTY>${wo.producedQuantity} Nos</ACTUALQTY>\n`;
+        chunk += `              <BILLEDQTY>${wo.producedQuantity} Nos</BILLEDQTY>\n`;
+        chunk += `            </INVENTORYENTRIES.LIST>\n`;
+
+        // CONSUMPTION (Raw Materials)
+        for (const item of wo.bom.items) {
+          const consumedQty = Number(item.quantity) * (Number(wo.producedQuantity) + Number(wo.scrapQuantity));
+          chunk += `            <INVENTORYENTRIES.LIST>\n`;
+          chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
+          chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
+          chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
+          chunk += `              <AMOUNT>${consumedQty * Number(item.product.costPrice)}</AMOUNT>\n`;
+          chunk += `              <ACTUALQTY>${consumedQty} Nos</ACTUALQTY>\n              <BILLEDQTY>${consumedQty} Nos</BILLEDQTY>\n`;
+          chunk += `            </INVENTORYENTRIES.LIST>\n`;
+        }
+
+        chunk += `          </VOUCHER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
       }
-
-      xml += `          </VOUCHER>\n`;
-      xml += `        </TALLYMESSAGE>\n`;
+      woSkip += BATCH_SIZE;
     }
 
-    xml += `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;
-    return xml;
+    yield `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;
+  }
+
+  async exportTallyXml(tenantId: string, month?: number, year?: number) {
+    const stream = this.generateTallyXmlStream(tenantId, month, year);
+    // To support backward compatibility with tests waiting for a string 
+    // while letting controller utilize streams (via readable handling or converting back)
+    // Actually, we can return the StreamableFile but let's just collect it if we need string.
+    let result = '';
+    for await (const chunk of stream) {
+      result += chunk;
+    }
+    return result;
   }
 
   private generateTaxLedger(name: string, amount: any, isSales: boolean) {
@@ -672,95 +703,143 @@ export class TallyService {
   }
 
   async togglePeriodLock(tenantId: string, month: number, year: number, userId: string, action: 'LOCK' | 'UNLOCK', reason?: string) {
+    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
+
     if (action === 'LOCK') {
       const validation = await this.validateTallyData(tenantId, month, year);
       if (!validation.isValid) throw new BadRequestException('Cannot lock period with critical validation errors.');
 
-      return (this.prisma as any).periodLock.upsert({
+      const lock = await this.prisma.periodLock.upsert({
         where: { tenantId_month_year: { tenantId, month, year } },
         update: { isLocked: true, lockedAt: new Date(), lockedBy: userId },
         create: { tenantId, month, year, isLocked: true, lockedAt: new Date(), lockedBy: userId },
       });
+
+      // PERIOD-CACHE-001: Invalidate LedgerService cache
+      await (this.ledger as any).cacheManager.delete(cacheKey);
+      return lock;
     } else {
-      return (this.prisma as any).periodLock.update({
+      const lock = await this.prisma.periodLock.update({
         where: { tenantId_month_year: { tenantId, month, year } },
         data: { isLocked: false, reopenedAt: new Date(), reopenReason: reason },
       });
+
+      // PERIOD-CACHE-001: Invalidate LedgerService cache
+      await (this.ledger as any).cacheManager.delete(cacheKey);
+      return lock;
     }
+  }
+  async *generateLedgerMastersStream(tenantId: string) {
+    yield `<?xml version="1.0"?>\n<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <IMPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
+
+    const BATCH_SIZE = 100;
+
+    // Accounts
+    let skip = 0;
+    while (true) {
+      const accounts = await this.prisma.account.findMany({ where: { tenantId }, skip, take: BATCH_SIZE, orderBy: { name: 'asc' } });
+      if (accounts.length === 0) break;
+      for (const acc of accounts) {
+        let chunk = '';
+        let tallyGroup = acc.type.toString();
+        const escapedName = this.escapeXml(acc.name);
+        if (acc.name === StandardAccounts.ACCOUNTS_RECEIVABLE) tallyGroup = 'Sundry Debtors';
+        if (acc.name === StandardAccounts.ACCOUNTS_PAYABLE) tallyGroup = 'Sundry Creditors';
+        if (acc.type === AccountType.Revenue) tallyGroup = 'Sales Accounts';
+        if (acc.type === AccountType.Expense) tallyGroup = 'Direct Expenses';
+        if (acc.name === StandardAccounts.BANK || acc.name === StandardAccounts.CASH) tallyGroup = 'Cash-in-Hand';
+
+        if (acc.name.includes('GST') || acc.name.includes('TDS')) tallyGroup = 'Duties & Taxes';
+        if (acc.name.includes('Fixed Asset') || acc.name === StandardAccounts.FIXED_ASSETS) tallyGroup = 'Fixed Assets';
+        if (acc.name.includes('Inventory') || acc.name.includes('Stock') || acc.name === StandardAccounts.INVENTORY_ASSET) tallyGroup = 'Stock-in-Hand';
+
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
+        chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
+        chunk += `            <PARENT>${this.escapeXml(tallyGroup)}</PARENT>\n`;
+        chunk += `            <OPENINGBALANCE>${acc.balance}</OPENINGBALANCE>\n`;
+        chunk += `          </LEDGER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
+      }
+      skip += BATCH_SIZE;
+    }
+
+    // Customers
+    skip = 0;
+    while (true) {
+      const customers = await this.prisma.customer.findMany({ where: { tenantId, isDeleted: false }, include: { openingBalances: true }, skip, take: BATCH_SIZE });
+      if (customers.length === 0) break;
+      for (const cust of customers) {
+        let chunk = '';
+        const escapedName = this.escapeXml(cust.company || `${cust.firstName} ${cust.lastName}`);
+        const ob = cust.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
+        chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
+        chunk += `            <PARENT>Sundry Debtors</PARENT>\n`;
+        chunk += `            <OPENINGBALANCE>-${ob}</OPENINGBALANCE>\n`;
+        chunk += `            <GSTREGISTRATIONTYPE>${cust.gstin ? 'Regular' : 'Unregistered'}</GSTREGISTRATIONTYPE>\n`;
+        if (cust.gstin) chunk += `            <PARTYGSTIN>${this.escapeXml(cust.gstin)}</PARTYGSTIN>\n`;
+        chunk += `          </LEDGER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
+      }
+      skip += BATCH_SIZE;
+    }
+
+    // Suppliers
+    skip = 0;
+    while (true) {
+      const suppliers = await this.prisma.supplier.findMany({ where: { tenantId, isDeleted: false }, include: { openingBalances: true }, skip, take: BATCH_SIZE });
+      if (suppliers.length === 0) break;
+      for (const supp of suppliers) {
+        let chunk = '';
+        const escapedName = this.escapeXml(supp.name);
+        const ob = supp.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
+        chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
+        chunk += `            <PARENT>Sundry Creditors</PARENT>\n`;
+        chunk += `            <OPENINGBALANCE>${ob}</OPENINGBALANCE>\n`;
+        if (supp.gstin) chunk += `            <PARTYGSTIN>${this.escapeXml(supp.gstin)}</PARTYGSTIN>\n`;
+        chunk += `          </LEDGER>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
+      }
+      skip += BATCH_SIZE;
+    }
+
+    // Products
+    skip = 0;
+    while (true) {
+      const products = await this.prisma.product.findMany({ where: { tenantId, isDeleted: false }, skip, take: BATCH_SIZE });
+      if (products.length === 0) break;
+      for (const prod of products) {
+        let chunk = '';
+        chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+        chunk += `          <STOCKITEM NAME="${this.escapeXml(prod.name)}" ACTION="Create">\n`;
+        chunk += `            <NAME.LIST>\n<NAME>${this.escapeXml(prod.name)}</NAME>\n</NAME.LIST>\n`;
+        chunk += `            <BASEUNITS>Nos</BASEUNITS>\n`;
+        chunk += `            <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>\n`;
+        chunk += `            <HSNCODE>${this.escapeXml(prod.hsnCode || '')}</HSNCODE>\n`;
+        chunk += `            <OPENINGBALANCE>${prod.stock}</OPENINGBALANCE>\n`;
+        chunk += `          </STOCKITEM>\n`;
+        chunk += `        </TALLYMESSAGE>\n`;
+        yield chunk;
+      }
+      skip += BATCH_SIZE;
+    }
+
+    yield `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;
   }
 
   async exportLedgerMasters(tenantId: string) {
-    const [accounts, customers, suppliers, products] = await Promise.all([
-      this.prisma.account.findMany({ where: { tenantId }, orderBy: { name: 'asc' } }),
-      this.prisma.customer.findMany({ where: { tenantId, isDeleted: false }, include: { openingBalances: true } }),
-      this.prisma.supplier.findMany({ where: { tenantId, isDeleted: false }, include: { openingBalances: true } }),
-      this.prisma.product.findMany({ where: { tenantId, isDeleted: false } }),
-    ]);
-
-    let xml = `<?xml version="1.0"?>\n<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <IMPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
-
-    for (const acc of accounts) {
-      let tallyGroup = acc.type.toString();
-      const escapedName = this.escapeXml(acc.name);
-      if (acc.name === StandardAccounts.ACCOUNTS_RECEIVABLE) tallyGroup = 'Sundry Debtors';
-      if (acc.name === StandardAccounts.ACCOUNTS_PAYABLE) tallyGroup = 'Sundry Creditors';
-      if (acc.type === AccountType.Revenue) tallyGroup = 'Sales Accounts';
-      if (acc.type === AccountType.Expense) tallyGroup = 'Direct Expenses';
-      if (acc.name === StandardAccounts.BANK || acc.name === StandardAccounts.CASH) tallyGroup = 'Cash-in-Hand';
-
-      if (acc.name.includes('GST') || acc.name.includes('TDS')) tallyGroup = 'Duties & Taxes';
-      if (acc.name.includes('Fixed Asset') || acc.name === StandardAccounts.FIXED_ASSETS) tallyGroup = 'Fixed Assets';
-      if (acc.name.includes('Inventory') || acc.name.includes('Stock') || acc.name === StandardAccounts.INVENTORY_ASSET) tallyGroup = 'Stock-in-Hand';
-
-      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-      xml += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
-      xml += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
-      xml += `            <PARENT>${this.escapeXml(tallyGroup)}</PARENT>\n`;
-      xml += `            <OPENINGBALANCE>${acc.balance}</OPENINGBALANCE>\n`;
-      xml += `          </LEDGER>\n`;
-      xml += `        </TALLYMESSAGE>\n`;
+    const stream = this.generateLedgerMastersStream(tenantId);
+    let result = '';
+    for await (const chunk of stream) {
+      result += chunk;
     }
-
-    for (const cust of customers) {
-      const escapedName = this.escapeXml(cust.company || `${cust.firstName} ${cust.lastName}`);
-      const ob = cust.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
-      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-      xml += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
-      xml += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
-      xml += `            <PARENT>Sundry Debtors</PARENT>\n`;
-      xml += `            <OPENINGBALANCE>-${ob}</OPENINGBALANCE>\n`;
-      xml += `            <GSTREGISTRATIONTYPE>${cust.gstin ? 'Regular' : 'Unregistered'}</GSTREGISTRATIONTYPE>\n`;
-      if (cust.gstin) xml += `            <PARTYGSTIN>${this.escapeXml(cust.gstin)}</PARTYGSTIN>\n`;
-      xml += `          </LEDGER>\n`;
-      xml += `        </TALLYMESSAGE>\n`;
-    }
-
-    for (const supp of suppliers) {
-      const escapedName = this.escapeXml(supp.name);
-      const ob = supp.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
-      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-      xml += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
-      xml += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
-      xml += `            <PARENT>Sundry Creditors</PARENT>\n`;
-      xml += `            <OPENINGBALANCE>${ob}</OPENINGBALANCE>\n`;
-      if (supp.gstin) xml += `            <PARTYGSTIN>${this.escapeXml(supp.gstin)}</PARTYGSTIN>\n`;
-      xml += `          </LEDGER>\n`;
-      xml += `        </TALLYMESSAGE>\n`;
-    }
-
-    for (const prod of products) {
-      xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
-      xml += `          <STOCKITEM NAME="${this.escapeXml(prod.name)}" ACTION="Create">\n`;
-      xml += `            <NAME.LIST>\n<NAME>${this.escapeXml(prod.name)}</NAME>\n</NAME.LIST>\n`;
-      xml += `            <BASEUNITS>Nos</BASEUNITS>\n`;
-      xml += `            <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>\n`;
-      xml += `            <HSNCODE>${this.escapeXml(prod.hsnCode || '')}</HSNCODE>\n`;
-      xml += `            <OPENINGBALANCE>${prod.stock}</OPENINGBALANCE>\n`;
-      xml += `          </STOCKITEM>\n`;
-      xml += `        </TALLYMESSAGE>\n`;
-    }
-
-    xml += `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;
-    return xml;
+    return result;
   }
 }

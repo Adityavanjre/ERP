@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { InvoiceService } from '../../accounting/services/invoice.service';
 import { InventoryService } from '../../inventory/inventory.service';
@@ -29,7 +29,7 @@ export class PosService {
             where: { tenantId_barcode: { tenantId, barcode: data.barcode } }
         });
 
-        if (!product) throw new Error('Product not found for the given barcode.');
+        if (!product) throw new NotFoundException('Product not found for the given barcode.');
 
         const price = await this.inventoryService.getLocationPrice(tenantId, product.id, data.warehouseId);
 

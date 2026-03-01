@@ -200,11 +200,16 @@ export class AccountingController {
     @Query('month') month?: number,
     @Query('year') year?: number,
   ) {
-    return this.accountingService.exportTallyXml(
+    const stream = this.accountingService.exportTallyXmlStream(
       req.user.tenantId,
       month ? Number(month) : undefined,
       year ? Number(year) : undefined,
     );
+    // Requires import { StreamableFile } from '@nestjs/common';
+    // Requires import { Readable } from 'stream';
+    const { Readable } = require('stream');
+    const { StreamableFile } = require('@nestjs/common');
+    return new StreamableFile(Readable.from(stream));
   }
 
   @Get('export/validate')
@@ -228,7 +233,10 @@ export class AccountingController {
   @Header('Content-Type', 'application/xml')
   @Header('Content-Disposition', 'attachment; filename=tally_masters.xml')
   getLedgerMasters(@Req() req: any) {
-    return this.accountingService.exportLedgerMasters(req.user.tenantId);
+    const stream = this.accountingService.exportLedgerMastersStream(req.user.tenantId);
+    const { Readable } = require('stream');
+    const { StreamableFile } = require('@nestjs/common');
+    return new StreamableFile(Readable.from(stream));
   }
 
   @Get('auditor/dashboard')

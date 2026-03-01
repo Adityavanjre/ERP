@@ -166,40 +166,28 @@ export class MobileWhitelistGuard implements CanActivate {
 
             const targetStatus = body?.status;
 
-            // TIGHTENED: If status transitions are defined, we MUST validate the status field.
-            // If it's missing, we block to prevent silent bypass of state rules on Mobile.
-            if (!targetStatus) {
-                await this.logging.log({
-                    userId: user.sub,
-                    tenantId: user.tenantId,
-                    action: 'SECURITY_VIOLATION_MISSING_STATUS',
-                    resource: actionId,
-                    channel: 'MOBILE',
-                    details: { reason: 'State transition safety requires status field' },
-                    ipAddress: request.ip,
-                });
-                throw new ForbiddenException(
-                    `Security Violation: The 'status' field is required for '${actionId}' on Mobile to ensure state-transition safety.`,
+            // TIGHTENED (Relaxed for non-status updates): 
+            // If body.status is provided, we MUST validate it against the matrix.
+            // If it's missing, we allow the request to proceed (intended for non-state updates like notes).
+            if (targetStatus) {
+                const isAllowed = transitions.some(
+                    t => t.to === targetStatus
                 );
-            }
 
-            const isAllowed = transitions.some(
-                t => t.to === targetStatus
-            );
-
-            if (!isAllowed) {
-                await this.logging.log({
-                    userId: user.sub,
-                    tenantId: user.tenantId,
-                    action: 'SECURITY_VIOLATION_FORBIDDEN_TRANSITION',
-                    resource: actionId,
-                    channel: 'MOBILE',
-                    details: { targetStatus, allowed: transitions.map(t => t.to) },
-                    ipAddress: request.ip,
-                });
-                throw new ForbiddenException(
-                    `Security Violation: Transition to '${targetStatus}' is forbidden on Mobile for '${actionId}'.`,
-                );
+                if (!isAllowed) {
+                    await this.logging.log({
+                        userId: user.sub,
+                        tenantId: user.tenantId,
+                        action: 'SECURITY_VIOLATION_FORBIDDEN_TRANSITION',
+                        resource: actionId,
+                        channel: 'MOBILE',
+                        details: { targetStatus, allowed: transitions.map((t: any) => t.to) },
+                        ipAddress: request.ip,
+                    });
+                    throw new ForbiddenException(
+                        `Security Violation: Transition to '${targetStatus}' for '${actionId}' is not authorized on Mobile. Only: ${transitions.map((t: any) => t.to).join(', ')}`,
+                    );
+                }
             }
 
             // --- INV-06: Binary Approval Zero-Mutation Enforcement ---

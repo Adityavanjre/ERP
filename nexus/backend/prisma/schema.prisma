@@ -8,110 +8,110 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  passwordHash String?
-  fullName     String?
-  avatarUrl    String?
-  authProvider AuthProvider @default(Email)
-  providerId   String?      // e.g., Google ID
-  isSuperAdmin Boolean      @default(false)
+  id                   String       @id @default(uuid())
+  email                String       @unique
+  passwordHash         String?
+  fullName             String?
+  avatarUrl            String?
+  authProvider         AuthProvider @default(Email)
+  providerId           String? // e.g., Google ID
+  isSuperAdmin         Boolean      @default(false)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
-  
+
   // MFA & Security Hardening
-  mfaEnabled         Boolean      @default(false)
-  mfaSecret          String?      // Encrypted TOTP secret
-  mfaRecoveryCodes   String[]     // Hashed recovery codes
-  failedLoginAttempts Int          @default(0)
+  mfaEnabled          Boolean   @default(false)
+  mfaSecret           String? // Encrypted TOTP secret
+  mfaRecoveryCodes    String[] // Hashed recovery codes
+  failedLoginAttempts Int       @default(0)
   lockoutUntil        DateTime?
-  tokenVersion        Int          @default(1)
-  
-  auditLogs            AuditLog[]
-  memberships          TenantUser[]
-  productsCreated      Product[]         @relation("ProductCreator")
-  productsUpdated      Product[]         @relation("ProductUpdater")
-  journalEntriesCreated JournalEntry[]  @relation("JournalCreator")
+  tokenVersion        Int       @default(1)
+
+  auditLogs             AuditLog[]
+  memberships           TenantUser[]
+  productsCreated       Product[]      @relation("ProductCreator")
+  productsUpdated       Product[]      @relation("ProductUpdater")
+  journalEntriesCreated JournalEntry[] @relation("JournalCreator")
 }
 
 model Tenant {
-  id              String                   @id @default(uuid())
-  name            String
-  slug            String                   @unique
-  type            TenantType               @default(Retail)
-  industry        String?
-  businessType    String?
-  isOnboarded     Boolean                  @default(false)
-  plan            PlanType                 @default(Free)
-  logoUrl         String?
-  address         String?
-  state           String?
-  gstin           String?
-  fyStartMonth    Int                      @default(4)
-  fyStartDay      Int                      @default(1)
-  currency        String                   @default("INR")
+  id           String     @id @default(uuid())
+  name         String
+  slug         String     @unique
+  type         TenantType @default(Retail)
+  industry     String?
+  businessType String?
+  isOnboarded  Boolean    @default(false)
+  plan         PlanType   @default(Free)
+  logoUrl      String?
+  address      String?
+  state        String?
+  gstin        String?
+  fyStartMonth Int        @default(4)
+  fyStartDay   Int        @default(1)
+  currency     String     @default("INR")
 
   // Subscription lifecycle
-  subscriptionStatus  SubscriptionStatus   @default(Active)
-  planExpiresAt       DateTime?            // When current paid period ends
-  gracePeriodEndsAt   DateTime?            // 14-day payment overdue window
-  suspendedAt         DateTime?            // Timestamp of suspension
-  suspendReason       String?              // non-payment | abuse | admin
+  subscriptionStatus SubscriptionStatus @default(Active)
+  planExpiresAt      DateTime? // When current paid period ends
+  gracePeriodEndsAt  DateTime? // 14-day payment overdue window
+  suspendedAt        DateTime? // Timestamp of suspension
+  suspendReason      String? // non-payment | abuse | admin
 
   // Razorpay Integration (SUB-002)
-  razorpayCustomerId      String?
-  razorpaySubscriptionId  String?
+  razorpayCustomerId     String?
+  razorpaySubscriptionId String?
 
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  accounts        Account[]
-  auditLogs       AuditLog[]
-  boms            BillOfMaterial[]
-  customers       Customer[]
-  openingBalances CustomerOpeningBalance[]
-  departments     Department[]
-  employees       Employee[]
-  invoices        Invoice[]
-  journalEntries  JournalEntry[]
-  machines        Machine[]
-  opportunities   Opportunity[]
-  orders          Order[]
-  payments        Payment[]
-  periodLocks     PeriodLock[]
-  products        Product[]
-  projects        Project[]
-  purchaseOrders  PurchaseOrder[]
-  suppliers       Supplier[]
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  accounts                Account[]
+  auditLogs               AuditLog[]
+  boms                    BillOfMaterial[]
+  customers               Customer[]
+  openingBalances         CustomerOpeningBalance[]
+  departments             Department[]
+  employees               Employee[]
+  invoices                Invoice[]
+  journalEntries          JournalEntry[]
+  machines                Machine[]
+  opportunities           Opportunity[]
+  orders                  Order[]
+  payments                Payment[]
+  periodLocks             PeriodLock[]
+  products                Product[]
+  projects                Project[]
+  purchaseOrders          PurchaseOrder[]
+  suppliers               Supplier[]
   supplierOpeningBalances SupplierOpeningBalance[]
-  tasks           Task[]
-  users           TenantUser[]
-  transactions    Transaction[]
-  workOrders      WorkOrder[]
-  records         Record[]
-  warehouses      Warehouse[]
-  stockMovements  StockMovement[]
-  fixedAssets     FixedAsset[]
-  comments        Comment[]
-  apiKeys         ApiKey[]
-  creditNotes     CreditNote[]
-  debitNotes      DebitNote[]
-  payrolls        Payroll[]
-  leaves          Leave[]
-  invoiceItems    InvoiceItem[]
-  poItems         PurchaseOrderItem[]
-  bomItems        BOMItem[]
-  stockLocations  StockLocation[]
-  cnItems         CreditNoteItem[]
-  dnItems         DebitNoteItem[]
-  warehousePrices WarehousePrice[]
-  tdsRules        TdsRule[]
-  tdsLedgerMappings TdsLedgerMapping[]
-  tdsTransactions   TdsTransaction[]
-  retentionSchedules RetentionSchedule[]
-  routeBenchmarks   RouteBenchmark[]
-  loanInterestSlabs LoanInterestSlab[]
+  tasks                   Task[]
+  users                   TenantUser[]
+  transactions            Transaction[]
+  workOrders              WorkOrder[]
+  records                 Record[]
+  warehouses              Warehouse[]
+  stockMovements          StockMovement[]
+  fixedAssets             FixedAsset[]
+  comments                Comment[]
+  apiKeys                 ApiKey[]
+  creditNotes             CreditNote[]
+  debitNotes              DebitNote[]
+  payrolls                Payroll[]
+  leaves                  Leave[]
+  invoiceItems            InvoiceItem[]
+  poItems                 PurchaseOrderItem[]
+  bomItems                BOMItem[]
+  stockLocations          StockLocation[]
+  cnItems                 CreditNoteItem[]
+  dnItems                 DebitNoteItem[]
+  warehousePrices         WarehousePrice[]
+  tdsRules                TdsRule[]
+  tdsLedgerMappings       TdsLedgerMapping[]
+  tdsTransactions         TdsTransaction[]
+  retentionSchedules      RetentionSchedule[]
+  routeBenchmarks         RouteBenchmark[]
+  loanInterestSlabs       LoanInterestSlab[]
 
   // Healthcare
   patients        Patient[]
@@ -125,20 +125,20 @@ model Tenant {
   siteInventories SiteInventory[]
 
   // Logistics
-  vehicles        Vehicle[]
-  fuelLogs        FuelLog[]
-  routeLogs       RouteLog[]
+  vehicles             Vehicle[]
+  fuelLogs             FuelLog[]
+  routeLogs            RouteLog[]
   maintenanceSchedules MaintenanceSchedule[]
 
   // NBFC
-  loans           Loan[]
-  emiSchedules    EMISchedule[]
-  interestAccruals InterestAccrual[]
-  kycRecords      KYCRecord[]
-  bankStatements  BankStatement[]
-  bankStatementLines BankStatementLine[]
+  loans               Loan[]
+  emiSchedules        EMISchedule[]
+  interestAccruals    InterestAccrual[]
+  kycRecords          KYCRecord[]
+  bankStatements      BankStatement[]
+  bankStatementLines  BankStatementLine[]
   bankReconciliations BankReconciliation[]
-  hsnMasters      HsnMaster[]
+  hsnMasters          HsnMaster[]
 }
 
 model PeriodLock {
@@ -197,7 +197,7 @@ model Product {
   isDeleted          Boolean             @default(false)
   barcode            String?
   skuAlias           String?
-  shelfLifeDays      Int?                // Retail Depth: Aging/Markdown
+  shelfLifeDays      Int? // Retail Depth: Aging/Markdown
   bomAsMaterial      BOMItem[]
   bomAsFinished      BillOfMaterial[]
   invoiceItems       InvoiceItem[]
@@ -222,7 +222,6 @@ model Product {
   @@index([tenantId, brand])
   @@index([tenantId, skuAlias])
   @@index([tenantId, hsnCode])
-
 }
 
 model Customer {
@@ -287,11 +286,11 @@ model Order {
   items          OrderItem[]
   idempotencyKey String?
 
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
   @@index([customerId])
   @@index([tenantId, customerId, createdAt])
-  @@unique([tenantId, idempotencyKey])
 }
 
 model OrderItem {
@@ -307,28 +306,28 @@ model OrderItem {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  tenantId  String?
-  userId    String?
-  action    String
-  resource  String
-  details   Json?
-  channel   String?
-  ipAddress       String?
-  correlationId   String?  @default(uuid())
-  responseTimeMs  Int?
-  createdAt       DateTime @default(now())
+  id             String   @id @default(uuid())
+  tenantId       String?
+  userId         String?
+  action         String
+  resource       String
+  details        Json?
+  channel        String?
+  ipAddress      String?
+  correlationId  String?  @default(uuid())
+  responseTimeMs Int?
+  createdAt      DateTime @default(now())
 
   // Hash chain for tamper-evidence (Phase 2 — Audit Forensics)
   // prevHash: entryHash of the immediately preceding AuditLog entry for this tenant.
   //           NULL only for a tenant's very first entry.
   // entryHash: HMAC-SHA256(prevHash + action + resource + createdAt + details, AUDIT_HMAC_SECRET)
   //            A divergence here proves the chain was tampered with.
-  prevHash        String?  // Hash of the previous entry in the tenant's chain
-  entryHash       String?  // HMAC-SHA256 of this entry's canonical fields
+  prevHash  String? // Hash of the previous entry in the tenant's chain
+  entryHash String? // HMAC-SHA256 of this entry's canonical fields
 
-  user            User?    @relation(fields: [userId], references: [id])
-  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  user   User?   @relation(fields: [userId], references: [id])
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, createdAt])
   @@index([correlationId])
@@ -396,6 +395,7 @@ model WorkOrder {
 
   @@unique([tenantId, idempotencyKey])
   @@index([tenantId, orderNumber])
+  @@index([tenantId, status, startDate])
   @@index([correlationId])
 }
 
@@ -414,18 +414,18 @@ model Machine {
 }
 
 model Account {
-  id           String        @id @default(uuid())
-  tenantId     String
-  name         String
-  code         String
-  type         AccountType
-  balance      Decimal       @default(0.00)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  tenant       Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  transactions Transaction[]
+  id                String             @id @default(uuid())
+  tenantId          String
+  name              String
+  code              String
+  type              AccountType
+  balance           Decimal            @default(0.00)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  transactions      Transaction[]
   tdsLedgerMappings TdsLedgerMapping[]
-  bankStatements BankStatement[]
+  bankStatements    BankStatement[]
 
   @@unique([tenantId, code])
   @@unique([tenantId, name])
@@ -434,25 +434,25 @@ model Account {
 }
 
 model JournalEntry {
-  id             String        @id @default(uuid())
-  tenantId       String
-  date           DateTime      @default(now())
-  description    String
-  reference      String?
-  correlationId  String?
-  posted         Boolean       @default(false)
-  createdById    String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  tenant         Tenant        @relation(fields: [tenantId], references: [id])
-  createdBy      User?         @relation("JournalCreator", fields: [createdById], references: [id])
-  transactions   Transaction[]
-  invoice        Invoice?      @relation("InvoiceJournal")
-  creditNote     CreditNote?   @relation("CreditNoteJournal")
-  debitNote      DebitNote?    @relation("DebitNoteJournal")
-  tdsTransaction TdsTransaction?
-  fuelLog        FuelLog?
-  loan           Loan?
+  id              String           @id @default(uuid())
+  tenantId        String
+  date            DateTime         @default(now())
+  description     String
+  reference       String?
+  correlationId   String?
+  posted          Boolean          @default(false)
+  createdById     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  createdBy       User?            @relation("JournalCreator", fields: [createdById], references: [id])
+  transactions    Transaction[]
+  invoice         Invoice?         @relation("InvoiceJournal")
+  creditNote      CreditNote?      @relation("CreditNoteJournal")
+  debitNote       DebitNote?       @relation("DebitNoteJournal")
+  tdsTransaction  TdsTransaction?
+  fuelLog         FuelLog?
+  loan            Loan?
   interestAccrual InterestAccrual?
 
   @@index([tenantId, date])
@@ -461,18 +461,18 @@ model JournalEntry {
 }
 
 model Transaction {
-  id             String          @id @default(uuid())
-  tenantId       String
-  date           DateTime        @default(now())
-  description    String
-  amount         Decimal
-  type           TransactionType
-  accountId      String
-  journalEntryId String?
-  correlationId  String?
-  journalEntry   JournalEntry?   @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
-  account        Account         @relation(fields: [accountId], references: [id], onDelete: Restrict)
-  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  id              String               @id @default(uuid())
+  tenantId        String
+  date            DateTime             @default(now())
+  description     String
+  amount          Decimal
+  type            TransactionType
+  accountId       String
+  journalEntryId  String?
+  correlationId   String?
+  journalEntry    JournalEntry?        @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+  account         Account              @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  tenant          Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   reconciliations BankReconciliation[]
 
   @@index([tenantId, date])
@@ -483,38 +483,38 @@ model Transaction {
 }
 
 model Invoice {
-  id                  String        @id @default(uuid())
-  tenantId            String
-  customerId          String?
-  invoiceNumber       String
-  issueDate           DateTime      @default(now())
-  dueDate             DateTime
-  totalAmount         Decimal
-  amountPaid          Decimal       @default(0.00)
-  totalTaxable        Decimal       @default(0.00)
-  totalGST            Decimal       @default(0.00)
-  totalCGST           Decimal       @default(0.00)
-  totalSGST           Decimal       @default(0.00)
-  totalIGST           Decimal       @default(0.00)
-  status              InvoiceStatus @default(Unpaid)
-  billingTimeSeconds  Int?
-  isLocked            Boolean       @default(false)
-  idempotencyKey      String?
-  correlationId       String?
-  tallyExported       Boolean       @default(false)
-  cancellationReason  String?
-  isInterState        Boolean?      @default(false)
-  journalEntryId      String?       @unique
-  journalEntry        JournalEntry? @relation("InvoiceJournal", fields: [journalEntryId], references: [id], onDelete: Restrict)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  projectId           String?
-  project             Project?      @relation(fields: [projectId], references: [id], onDelete: Restrict)
-  customer            Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  tenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  creditNotes         CreditNote[]
-  items               InvoiceItem[]
-  payments            Payment[]
+  id                 String        @id @default(uuid())
+  tenantId           String
+  customerId         String?
+  invoiceNumber      String
+  issueDate          DateTime      @default(now())
+  dueDate            DateTime
+  totalAmount        Decimal
+  amountPaid         Decimal       @default(0.00)
+  totalTaxable       Decimal       @default(0.00)
+  totalGST           Decimal       @default(0.00)
+  totalCGST          Decimal       @default(0.00)
+  totalSGST          Decimal       @default(0.00)
+  totalIGST          Decimal       @default(0.00)
+  status             InvoiceStatus @default(Unpaid)
+  billingTimeSeconds Int?
+  isLocked           Boolean       @default(false)
+  idempotencyKey     String?
+  correlationId      String?
+  tallyExported      Boolean       @default(false)
+  cancellationReason String?
+  isInterState       Boolean?      @default(false)
+  journalEntryId     String?       @unique
+  journalEntry       JournalEntry? @relation("InvoiceJournal", fields: [journalEntryId], references: [id], onDelete: Restrict)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  projectId          String?
+  project            Project?      @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  customer           Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  tenant             Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  creditNotes        CreditNote[]
+  items              InvoiceItem[]
+  payments           Payment[]
 
   @@unique([tenantId, invoiceNumber])
   @@unique([tenantId, idempotencyKey])
@@ -553,48 +553,48 @@ model InvoiceItem {
 }
 
 model Payment {
-  id             String      @id @default(uuid())
+  id             String          @id @default(uuid())
   tenantId       String
   customerId     String?
   supplierId     String?
   invoiceId      String?
   amount         Decimal
-  tdsAmount      Decimal?    @default(0.00)
-  netAmount      Decimal?    @default(0.00)
+  tdsAmount      Decimal?        @default(0.00)
+  netAmount      Decimal?        @default(0.00)
   tdsSection     String?
-  date           DateTime    @default(now())
-  mode           PaymentMode @default(Cash)
+  date           DateTime        @default(now())
+  mode           PaymentMode     @default(Cash)
   reference      String?
   notes          String?
   correlationId  String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  isLocked       Boolean     @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  isLocked       Boolean         @default(false)
   idempotencyKey String?
-  tallyExported  Boolean     @default(false)
-  invoice        Invoice?    @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  supplier       Supplier?   @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  customer       Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  tenant         Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  tallyExported  Boolean         @default(false)
+  invoice        Invoice?        @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  supplier       Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  customer       Customer?       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   tdsTransaction TdsTransaction?
   emiSchedule    EMISchedule?
 
+  @@unique([tenantId, idempotencyKey])
   @@index([tenantId, date])
   @@index([tenantId, customerId, date])
   @@index([correlationId])
-  @@unique([tenantId, idempotencyKey])
 }
 
 model CustomerOpeningBalance {
-  id          String   @id @default(uuid())
-  tenantId    String
-  customerId  String
-  amount      Decimal
-  date        DateTime @default(now())
-  description String?
-  createdAt   DateTime @default(now())
-  customer    Customer @relation(fields: [customerId], references: [id])
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  id            String   @id @default(uuid())
+  tenantId      String
+  customerId    String
+  amount        Decimal
+  date          DateTime @default(now())
+  description   String?
+  createdAt     DateTime @default(now())
+  customer      Customer @relation(fields: [customerId], references: [id])
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
   correlationId String?
 
   @@index([tenantId, customerId])
@@ -621,7 +621,7 @@ model Employee {
   tenant       Tenant         @relation(fields: [tenantId], references: [id])
   leaves       Leave[]
   payrolls     Payroll[]
-  appointments    Appointment[]
+  appointments Appointment[]
 
   @@unique([tenantId, employeeId])
 }
@@ -651,10 +651,10 @@ model Payroll {
   employee    Employee      @relation(fields: [employeeId], references: [id])
   tenant      Tenant        @relation(fields: [tenantId], references: [id])
 
-  @@index([tenantId, createdAt])
   // DB-level idempotency: prevents duplicate salary disbursement for the same employee and period.
   // This is the hard guarantee behind the application-layer check in hr.service.ts.
   @@unique([employeeId, periodStart, periodEnd])
+  @@index([tenantId, createdAt])
 }
 
 model Leave {
@@ -674,29 +674,29 @@ model Leave {
 }
 
 model Supplier {
-  id             String                   @id @default(uuid())
-  tenantId       String
-  name           String
-  contactName    String?
-  email          String
-  phone          String?
-  address        String?
-  state          String?
-  gstin          String?
-  category       String?
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
-  isDeleted      Boolean                  @default(false)
-  userId         String?                  @unique
-  pan            String?
-  vendorType     VendorType               @default(Individual)
+  id                String                   @id @default(uuid())
+  tenantId          String
+  name              String
+  contactName       String?
+  email             String
+  phone             String?
+  address           String?
+  state             String?
+  gstin             String?
+  category          String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  isDeleted         Boolean                  @default(false)
+  userId            String?                  @unique
+  pan               String?
+  vendorType        VendorType               @default(Individual)
   defaultTdsSection String?
-  payments       Payment[]
-  purchaseOrders PurchaseOrder[]
-  tenant         Tenant                   @relation(fields: [tenantId], references: [id])
-  openingBalances SupplierOpeningBalance[]
-  debitNotes     DebitNote[]
-  tdsTransactions TdsTransaction[]
+  payments          Payment[]
+  purchaseOrders    PurchaseOrder[]
+  tenant            Tenant                   @relation(fields: [tenantId], references: [id])
+  openingBalances   SupplierOpeningBalance[]
+  debitNotes        DebitNote[]
+  tdsTransactions   TdsTransaction[]
 }
 
 enum VendorType {
@@ -705,15 +705,15 @@ enum VendorType {
 }
 
 model SupplierOpeningBalance {
-  id          String   @id @default(uuid())
-  tenantId    String
-  supplierId  String
-  amount      Decimal
-  date        DateTime @default(now())
-  description String?
-  createdAt   DateTime @default(now())
-  supplier    Supplier @relation(fields: [supplierId], references: [id])
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  id            String   @id @default(uuid())
+  tenantId      String
+  supplierId    String
+  amount        Decimal
+  date          DateTime @default(now())
+  description   String?
+  createdAt     DateTime @default(now())
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
   correlationId String?
 
   @@index([tenantId, supplierId])
@@ -748,6 +748,8 @@ model PurchaseOrder {
 
   @@unique([tenantId, idempotencyKey])
   @@unique([tenantId, orderNumber])
+  @@index([tenantId, status, expectedDate])
+  @@index([tenantId, supplierId, orderDate])
 }
 
 model PurchaseOrderItem {
@@ -773,27 +775,27 @@ model PurchaseOrderItem {
 }
 
 model CreditNote {
-  id             String         @id @default(uuid())
+  id             String           @id @default(uuid())
   tenantId       String
   customerId     String
   invoiceId      String?
   noteNumber     String
-  date           DateTime       @default(now())
+  date           DateTime         @default(now())
   totalAmount    Decimal
-  totalTaxable   Decimal        @default(0.00)
-  totalGST       Decimal        @default(0.00)
-  totalCGST      Decimal        @default(0.00)
-  totalSGST      Decimal        @default(0.00)
-  totalIGST      Decimal        @default(0.00)
+  totalTaxable   Decimal          @default(0.00)
+  totalGST       Decimal          @default(0.00)
+  totalCGST      Decimal          @default(0.00)
+  totalSGST      Decimal          @default(0.00)
+  totalIGST      Decimal          @default(0.00)
   reason         String?
-  journalEntryId String?        @unique
+  journalEntryId String?          @unique
   correlationId  String?
-  journalEntry   JournalEntry?  @relation("CreditNoteJournal", fields: [journalEntryId], references: [id])
-  invoice        Invoice?       @relation(fields: [invoiceId], references: [id])
-  customer       Customer       @relation(fields: [customerId], references: [id])
-  tenant         Tenant         @relation(fields: [tenantId], references: [id])
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  journalEntry   JournalEntry?    @relation("CreditNoteJournal", fields: [journalEntryId], references: [id])
+  invoice        Invoice?         @relation(fields: [invoiceId], references: [id])
+  customer       Customer         @relation(fields: [customerId], references: [id])
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   idempotencyKey String?
   items          CreditNoteItem[]
 
@@ -812,10 +814,10 @@ model CreditNoteItem {
   unitPrice     Decimal
   taxableAmount Decimal
   gstRate       Decimal
-  gstAmount     Decimal @default(0.00)
-  cgstAmount    Decimal @default(0.00)
-  sgstAmount    Decimal @default(0.00)
-  igstAmount    Decimal @default(0.00)
+  gstAmount     Decimal    @default(0.00)
+  cgstAmount    Decimal    @default(0.00)
+  sgstAmount    Decimal    @default(0.00)
+  igstAmount    Decimal    @default(0.00)
   totalAmount   Decimal
   product       Product    @relation(fields: [productId], references: [id])
   creditNote    CreditNote @relation(fields: [creditNoteId], references: [id])
@@ -825,27 +827,27 @@ model CreditNoteItem {
 }
 
 model DebitNote {
-  id              String         @id @default(uuid())
+  id              String          @id @default(uuid())
   tenantId        String
   supplierId      String
   purchaseOrderId String?
   noteNumber      String
-  date            DateTime       @default(now())
+  date            DateTime        @default(now())
   totalAmount     Decimal
-  totalTaxable    Decimal        @default(0.00)
-  totalGST        Decimal        @default(0.00)
-  totalCGST       Decimal        @default(0.00)
-  totalSGST       Decimal        @default(0.00)
-  totalIGST       Decimal        @default(0.00)
+  totalTaxable    Decimal         @default(0.00)
+  totalGST        Decimal         @default(0.00)
+  totalCGST       Decimal         @default(0.00)
+  totalSGST       Decimal         @default(0.00)
+  totalIGST       Decimal         @default(0.00)
   reason          String?
-  journalEntryId  String?        @unique
+  journalEntryId  String?         @unique
   correlationId   String?
-  journalEntry    JournalEntry?  @relation("DebitNoteJournal", fields: [journalEntryId], references: [id])
-  purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
-  supplier        Supplier       @relation(fields: [supplierId], references: [id])
-  tenant          Tenant         @relation(fields: [tenantId], references: [id])
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  journalEntry    JournalEntry?   @relation("DebitNoteJournal", fields: [journalEntryId], references: [id])
+  purchaseOrder   PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
+  supplier        Supplier        @relation(fields: [supplierId], references: [id])
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   idempotencyKey  String?
   items           DebitNoteItem[]
 
@@ -864,10 +866,10 @@ model DebitNoteItem {
   unitPrice     Decimal
   taxableAmount Decimal
   gstRate       Decimal
-  gstAmount     Decimal @default(0.00)
-  cgstAmount    Decimal @default(0.00)
-  sgstAmount    Decimal @default(0.00)
-  igstAmount    Decimal @default(0.00)
+  gstAmount     Decimal   @default(0.00)
+  cgstAmount    Decimal   @default(0.00)
+  sgstAmount    Decimal   @default(0.00)
+  igstAmount    Decimal   @default(0.00)
   totalAmount   Decimal
   product       Product   @relation(fields: [productId], references: [id])
   debitNote     DebitNote @relation(fields: [debitNoteId], references: [id])
@@ -877,24 +879,24 @@ model DebitNoteItem {
 }
 
 model Project {
-  id          String        @id @default(uuid())
-  tenantId    String
-  name        String
-  description String?
-  startDate   DateTime?
-  endDate     DateTime?
-  status      ProjectStatus @default(Planned)
-  priority    Priority      @default(Medium)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  customerId  String?
-  customer    Customer?     @relation(fields: [customerId], references: [id])
-  tenant      Tenant        @relation(fields: [tenantId], references: [id])
-  tasks           Task[]
-  boq             BOQ?
-  siteInventory   SiteInventory[]
+  id                 String              @id @default(uuid())
+  tenantId           String
+  name               String
+  description        String?
+  startDate          DateTime?
+  endDate            DateTime?
+  status             ProjectStatus       @default(Planned)
+  priority           Priority            @default(Medium)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  customerId         String?
+  customer           Customer?           @relation(fields: [customerId], references: [id])
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  tasks              Task[]
+  boq                BOQ?
+  siteInventory      SiteInventory[]
   retentionSchedules RetentionSchedule[]
-  invoices        Invoice[]
+  invoices           Invoice[]
 }
 
 model Task {
@@ -914,15 +916,15 @@ model Task {
 }
 
 model Warehouse {
-  id        String          @id @default(uuid())
-  tenantId  String
-  name      String
-  location  String?
-  manager   String?
-  tenant    Tenant          @relation(fields: [tenantId], references: [id])
-  stocks    StockLocation[]
-  movements StockMovement[]
-  siteInventory SiteInventory[]
+  id              String           @id @default(uuid())
+  tenantId        String
+  name            String
+  location        String?
+  manager         String?
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  stocks          StockLocation[]
+  movements       StockMovement[]
+  siteInventory   SiteInventory[]
   warehousePrices WarehousePrice[]
 
   @@unique([tenantId, name])
@@ -967,22 +969,21 @@ enum MovementType {
 }
 
 model StockMovement {
-  id          String       @id @default(uuid())
-  tenantId    String
-  productId   String
-  warehouseId String
-  quantity    Decimal
-  type        MovementType
-  reference   String?
+  id            String       @id @default(uuid())
+  tenantId      String
+  productId     String
+  warehouseId   String
+  quantity      Decimal
+  type          MovementType
+  reference     String?
   notes         String?
   correlationId String?
   createdAt     DateTime     @default(now())
-  product     Product      @relation(fields: [productId], references: [id])
-  warehouse   Warehouse    @relation(fields: [warehouseId], references: [id])
-  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  product       Product      @relation(fields: [productId], references: [id])
+  warehouse     Warehouse    @relation(fields: [warehouseId], references: [id])
+  tenant        Tenant       @relation(fields: [tenantId], references: [id])
 
   @@index([correlationId])
-
   @@index([tenantId, productId])
   @@index([warehouseId])
 }
@@ -1029,23 +1030,23 @@ enum PlanType {
 
 enum SubscriptionStatus {
   Active
-  GracePeriod  // Payment overdue — writes still allowed for 14 days
-  ReadOnly     // Grace expired — reads only, no writes
-  Suspended    // Admin-suspended — all access blocked (410)
+  GracePeriod // Payment overdue — writes still allowed for 14 days
+  ReadOnly // Grace expired — reads only, no writes
+  Suspended // Admin-suspended — all access blocked (410)
 }
 
 model BillingEvent {
-  id           String   @id @default(uuid())
-  tenantId     String
-  event        String   // PLAN_UPGRADED | SUSPENDED | REACTIVATED | GRACE_PERIOD_ENTERED | READ_ONLY_DOWNGRADE
-  fromStatus   String?
-  toStatus     String?
-  fromPlan     String?
-  toPlan       String?
-  reason       String?
-  performedBy  String?  // userId or 'system'
-  metadata     Json?
-  createdAt    DateTime @default(now())
+  id          String   @id @default(uuid())
+  tenantId    String
+  event       String // PLAN_UPGRADED | SUSPENDED | REACTIVATED | GRACE_PERIOD_ENTERED | READ_ONLY_DOWNGRADE
+  fromStatus  String?
+  toStatus    String?
+  fromPlan    String?
+  toPlan      String?
+  reason      String?
+  performedBy String? // userId or 'system'
+  metadata    Json?
+  createdAt   DateTime @default(now())
 
   @@index([tenantId, createdAt])
   @@index([event])
@@ -1201,20 +1202,20 @@ enum TaskStatus {
 }
 
 model FixedAsset {
-  id                      String      @id @default(uuid())
+  id                      String            @id @default(uuid())
   tenantId                String
   name                    String
   assetCode               String
   purchaseDate            DateTime
   purchaseValue           Decimal
-  salvageValue            Decimal     @default(0.00)
-  usefulLife              Int         // in months
-  accumulatedDepreciation Decimal     @default(0.00)
-  status                  AssetStatus @default(Active)
+  salvageValue            Decimal           @default(0.00)
+  usefulLife              Int // in months
+  accumulatedDepreciation Decimal           @default(0.00)
+  status                  AssetStatus       @default(Active)
   idempotencyKey          String?
-  createdAt               DateTime    @default(now())
-  updatedAt               DateTime    @updatedAt
-  tenant                  Tenant      @relation(fields: [tenantId], references: [id])
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  tenant                  Tenant            @relation(fields: [tenantId], references: [id])
   depreciationLogs        DepreciationLog[]
   correlationId           String?
 
@@ -1238,7 +1239,6 @@ model DepreciationLog {
   @@index([tenantId, assetId])
 }
 
-
 enum AssetStatus {
   Active
   Disposed
@@ -1246,39 +1246,39 @@ enum AssetStatus {
 }
 
 model Comment {
-  id           String    @id @default(uuid())
+  id           String   @id @default(uuid())
   tenantId     String
   userId       String
   content      String
-  parentId     String?   // For threaded replies
-  resourceType String    // e.g., 'Invoice', 'Project', 'Task', 'BillOfMaterials'
-  resourceId   String    // The ID of the specific resource
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  parentId     String? // For threaded replies
+  resourceType String // e.g., 'Invoice', 'Project', 'Task', 'BillOfMaterials'
+  resourceId   String // The ID of the specific resource
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  tenant       Tenant    @relation(fields: [tenantId], references: [id])
-  parent       Comment?  @relation("ThreadedComments", fields: [parentId], references: [id])
-  replies      Comment[] @relation("ThreadedComments")
+  tenant  Tenant    @relation(fields: [tenantId], references: [id])
+  parent  Comment?  @relation("ThreadedComments", fields: [parentId], references: [id])
+  replies Comment[] @relation("ThreadedComments")
 
   @@index([tenantId])
   @@index([resourceType, resourceId])
 }
 
 model ApiKey {
-  id           String    @id @default(uuid())
-  tenantId     String
-  name         String
-  key          String    @unique // Hashed key
-  prefix       String    // First segment for identification
-  scopes       Json      @default("[]") // Scoped permissions (e.g., ["read:invoices", "write:orders"])
-  usageCount   Int       @default(0)
-  quotaLimit   Int?      // Null means unlimited
-  lastUsedAt   DateTime?
-  expiresAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id         String    @id @default(uuid())
+  tenantId   String
+  name       String
+  key        String    @unique // Hashed key
+  prefix     String // First segment for identification
+  scopes     Json      @default("[]") // Scoped permissions (e.g., ["read:invoices", "write:orders"])
+  usageCount Int       @default(0)
+  quotaLimit Int? // Null means unlimited
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  tenant       Tenant    @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
   @@index([prefix])
@@ -1311,14 +1311,14 @@ model Plugin {
 }
 
 model ModelDefinition {
-  id           String             @id @default(uuid())
+  id           String            @id @default(uuid())
   moduleId     String?
-  name         String             @unique
+  name         String            @unique
   label        String
   description  String?
-  isSystem     Boolean            @default(false)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  isSystem     Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   fields       FieldDefinition[]
   accessRights AccessRight[]
 }
@@ -1394,15 +1394,16 @@ model WorkflowTransition {
 
   @@index([workflowId])
 }
+
 model TdsRule {
-  id                   String              @id @default(uuid())
+  id                   String             @id @default(uuid())
   tenantId             String
   section              String
   rate                 Decimal
   threshold            Decimal
   cumulativeThreshold  Decimal?
   applicableVendorType VendorType
-  tenant               Tenant              @relation(fields: [tenantId], references: [id])
+  tenant               Tenant             @relation(fields: [tenantId], references: [id])
   ledgerMappings       TdsLedgerMapping[]
   tdsTransactions      TdsTransaction[]
 
@@ -1445,66 +1446,66 @@ model TdsTransaction {
 // --- Healthcare Vertical ---
 
 model Patient {
-  id              String           @id @default(uuid())
-  tenantId        String
-  customerId      String?          @unique // Link to central CRM customer
-  bloodGroup      String?
-  allergies       String?
-  medicalHistory  String?
+  id               String  @id @default(uuid())
+  tenantId         String
+  customerId       String? @unique // Link to central CRM customer
+  bloodGroup       String?
+  allergies        String?
+  medicalHistory   String?
   emergencyContact String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  customer        Customer?        @relation(fields: [customerId], references: [id])
-  appointments    Appointment[]
-  medicalRecords  MedicalRecord[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
+  customer       Customer?       @relation(fields: [customerId], references: [id])
+  appointments   Appointment[]
+  medicalRecords MedicalRecord[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([tenantId])
 }
 
 model Appointment {
-  id              String           @id @default(uuid())
-  tenantId        String
-  patientId       String
-  employeeId      String?          // Doctor/Consultant
-  date            DateTime
-  startTime       String
-  endTime         String?
-  status          String           @default("Scheduled") // Scheduled, Arrived, In-Progress, Completed, Cancelled
-  notes           String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  patient         Patient          @relation(fields: [patientId], references: [id])
-  employee        Employee?        @relation(fields: [employeeId], references: [id])
+  id         String   @id @default(uuid())
+  tenantId   String
+  patientId  String
+  employeeId String? // Doctor/Consultant
+  date       DateTime
+  startTime  String
+  endTime    String?
+  status     String   @default("Scheduled") // Scheduled, Arrived, In-Progress, Completed, Cancelled
+  notes      String?
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  patient  Patient   @relation(fields: [patientId], references: [id])
+  employee Employee? @relation(fields: [employeeId], references: [id])
 }
 
 model MedicalRecord {
-  id              String           @id @default(uuid())
-  tenantId        String
-  patientId       String
-  date            DateTime         @default(now())
-  diagnosis       String
-  prescription    Json?            // List of medicines, dosages
-  labResults      Json?
-  notes           String?
-  triageStatus    String           @default("Normal") // Normal, Warning, Critical
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  patient         Patient          @relation(fields: [patientId], references: [id])
+  id           String   @id @default(uuid())
+  tenantId     String
+  patientId    String
+  date         DateTime @default(now())
+  diagnosis    String
+  prescription Json? // List of medicines, dosages
+  labResults   Json?
+  notes        String?
+  triageStatus String   @default("Normal") // Normal, Warning, Critical
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
 }
 
 model PharmacyBatch {
-  id              String           @id @default(uuid())
-  tenantId        String
-  productId       String           // Reference to Product (Medicine)
-  batchNumber     String
-  expiryDate      DateTime
-  quantity        Decimal
-  costPrice       Decimal?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  product         Product          @relation(fields: [productId], references: [id])
+  id          String   @id @default(uuid())
+  tenantId    String
+  productId   String // Reference to Product (Medicine)
+  batchNumber String
+  expiryDate  DateTime
+  quantity    Decimal
+  costPrice   Decimal?
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@unique([tenantId, productId, batchNumber])
   @@index([expiryDate])
@@ -1513,70 +1514,70 @@ model PharmacyBatch {
 // --- Construction / Real Estate Vertical ---
 
 model BOQ {
-  id              String           @id @default(uuid())
-  tenantId        String
-  projectId       String           @unique
-  name            String
-  totalEstimated  Decimal          @default(0.00)
-  totalActual     Decimal          @default(0.00)
-  status          String           @default("Draft")
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  project         Project          @relation(fields: [projectId], references: [id])
-  items           BOQItem[]
-  createdAt       DateTime         @default(now())
-  correlationId   String?
+  id             String  @id @default(uuid())
+  tenantId       String
+  projectId      String  @unique
+  name           String
+  totalEstimated Decimal @default(0.00)
+  totalActual    Decimal @default(0.00)
+  status         String  @default("Draft")
+
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  project       Project   @relation(fields: [projectId], references: [id])
+  items         BOQItem[]
+  createdAt     DateTime  @default(now())
+  correlationId String?
 
   @@index([correlationId])
 }
 
 model BOQItem {
-  id              String           @id @default(uuid())
-  tenantId        String
-  boqId           String
-  description     String
-  uom             String           // Unit of Measure
-  estimatedQty    Decimal
-  estimatedRate   Decimal
-  actualQty       Decimal          @default(0.00)
-  actualRate      Decimal          @default(0.00)
-  correlationId   String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  boq             BOQ              @relation(fields: [boqId], references: [id])
+  id            String  @id @default(uuid())
+  tenantId      String
+  boqId         String
+  description   String
+  uom           String // Unit of Measure
+  estimatedQty  Decimal
+  estimatedRate Decimal
+  actualQty     Decimal @default(0.00)
+  actualRate    Decimal @default(0.00)
+  correlationId String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  boq    BOQ    @relation(fields: [boqId], references: [id])
 
   @@index([correlationId])
 }
 
 model SiteInventory {
-  id              String           @id @default(uuid())
-  tenantId        String
-  projectId       String
-  warehouseId     String?          // Link to site warehouse
-  productId       String
-  quantity        Decimal          @default(0.00)
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  project         Project          @relation(fields: [projectId], references: [id])
-  product         Product          @relation(fields: [productId], references: [id])
-  warehouse       Warehouse?       @relation(fields: [warehouseId], references: [id])
-  correlationId   String?
+  id          String  @id @default(uuid())
+  tenantId    String
+  projectId   String
+  warehouseId String? // Link to site warehouse
+  productId   String
+  quantity    Decimal @default(0.00)
+
+  tenant        Tenant     @relation(fields: [tenantId], references: [id])
+  project       Project    @relation(fields: [projectId], references: [id])
+  product       Product    @relation(fields: [productId], references: [id])
+  warehouse     Warehouse? @relation(fields: [warehouseId], references: [id])
+  correlationId String?
 
   @@unique([tenantId, projectId, productId])
   @@index([correlationId])
 }
 
 model RetentionSchedule {
-  id              String           @id @default(uuid())
-  tenantId        String
-  projectId       String
-  amount          Decimal
-  releaseDate     DateTime
-  status          String           @default("Pending") // Pending, Released
-  correlationId   String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  project         Project          @relation(fields: [projectId], references: [id])
+  id            String   @id @default(uuid())
+  tenantId      String
+  projectId     String
+  amount        Decimal
+  releaseDate   DateTime
+  status        String   @default("Pending") // Pending, Released
+  correlationId String?
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
 
   @@index([projectId])
 }
@@ -1584,75 +1585,75 @@ model RetentionSchedule {
 // --- Logistics Vertical ---
 
 model Vehicle {
-  id              String           @id @default(uuid())
-  tenantId        String
-  registrationNo  String           @unique
-  model           String?
-  type            String?          // Truck, Van, etc.
-  capacity        String?
-  status          String           @default("Active")
-  lastCurrentKM   Int              @default(0)
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  fuelLogs        FuelLog[]
-  routeLogs       RouteLog[]
-  maintenance     MaintenanceSchedule[]
+  id             String  @id @default(uuid())
+  tenantId       String
+  registrationNo String  @unique
+  model          String?
+  type           String? // Truck, Van, etc.
+  capacity       String?
+  status         String  @default("Active")
+  lastCurrentKM  Int     @default(0)
+
+  tenant      Tenant                @relation(fields: [tenantId], references: [id])
+  fuelLogs    FuelLog[]
+  routeLogs   RouteLog[]
+  maintenance MaintenanceSchedule[]
 }
 
 model FuelLog {
-  id              String           @id @default(uuid())
+  id              String   @id @default(uuid())
   tenantId        String
   vehicleId       String
-  date            DateTime         @default(now())
+  date            DateTime @default(now())
   liters          Decimal
   rate            Decimal
   totalCost       Decimal
   odometerReading Int
-  journalEntryId  String?          @unique // Sync to GL
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  vehicle         Vehicle          @relation(fields: [vehicleId], references: [id])
-  journalEntry    JournalEntry?    @relation(fields: [journalEntryId], references: [id])
+  journalEntryId  String?  @unique // Sync to GL
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  vehicle      Vehicle       @relation(fields: [vehicleId], references: [id])
+  journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id])
 }
 
 model RouteLog {
-  id              String           @id @default(uuid())
-  tenantId        String
-  vehicleId       String
-  lrNumber        String           @unique // Lorry Receipt
-  origin          String
-  destination     String
-  dispatchDate    DateTime
-  arrivalDate     DateTime?
-  status          String           @default("Dispatched")
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  vehicle         Vehicle          @relation(fields: [vehicleId], references: [id])
+  id           String    @id @default(uuid())
+  tenantId     String
+  vehicleId    String
+  lrNumber     String    @unique // Lorry Receipt
+  origin       String
+  destination  String
+  dispatchDate DateTime
+  arrivalDate  DateTime?
+  status       String    @default("Dispatched")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
 }
 
 model MaintenanceSchedule {
-  id              String           @id @default(uuid())
+  id              String    @id @default(uuid())
   tenantId        String
   vehicleId       String
   serviceType     String
   scheduledDate   DateTime
   lastServiceDate DateTime?
   notes           String?
-  status          String           @default("Pending")
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  vehicle         Vehicle          @relation(fields: [vehicleId], references: [id])
+  status          String    @default("Pending")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
 }
 
 model RouteBenchmark {
-  id              String           @id @default(uuid())
-  tenantId        String
-  origin          String
-  destination     String
-  avgFuelLiters   Decimal
-  avgTimeHours    Decimal
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  id            String  @id @default(uuid())
+  tenantId      String
+  origin        String
+  destination   String
+  avgFuelLiters Decimal
+  avgTimeHours  Decimal
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, origin, destination])
 }
@@ -1660,124 +1661,124 @@ model RouteBenchmark {
 // --- NBFC / Finance Vertical ---
 
 model Loan {
-  id              String           @id @default(uuid())
-  tenantId        String
-  borrowerId      String           // Link to Customer (Borrower)
-  loanAmount      Decimal
-  interestRate    Decimal          // Annual %
-  tenureMonths    Int
-  startDate       DateTime
-  status          String           @default("Applied") // Applied, Approved, Disbursed, Active, Closed, NPA
-  disbursedDate   DateTime?
-  journalEntryId  String?          @unique // Sync to GL for disbursement
-  correlationId   String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  customer        Customer         @relation(fields: [borrowerId], references: [id])
-  emiSchedule     EMISchedule[]
-  accruals        InterestAccrual[]
-  kyc             KYCRecord?
-  interestSlabs   LoanInterestSlab[]
-  journalEntry    JournalEntry?    @relation(fields: [journalEntryId], references: [id])
+  id             String    @id @default(uuid())
+  tenantId       String
+  borrowerId     String // Link to Customer (Borrower)
+  loanAmount     Decimal
+  interestRate   Decimal // Annual %
+  tenureMonths   Int
+  startDate      DateTime
+  status         String    @default("Applied") // Applied, Approved, Disbursed, Active, Closed, NPA
+  disbursedDate  DateTime?
+  journalEntryId String?   @unique // Sync to GL for disbursement
+  correlationId  String?
+
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  customer      Customer           @relation(fields: [borrowerId], references: [id])
+  emiSchedule   EMISchedule[]
+  accruals      InterestAccrual[]
+  kyc           KYCRecord?
+  interestSlabs LoanInterestSlab[]
+  journalEntry  JournalEntry?      @relation(fields: [journalEntryId], references: [id])
 
   @@index([correlationId])
 }
 
 model LoanInterestSlab {
-  id              String           @id @default(uuid())
+  id              String  @id @default(uuid())
   tenantId        String
   loanId          String
   thresholdAmount Decimal
-  interestRate    Decimal          // Rate for this slab
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  loan            Loan             @relation(fields: [loanId], references: [id])
+  interestRate    Decimal // Rate for this slab
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  loan   Loan   @relation(fields: [loanId], references: [id])
 
   @@index([loanId])
 }
 
 model EMISchedule {
-  id              String           @id @default(uuid())
-  tenantId        String
-  loanId          String
-  dueDate         DateTime
-  principalPart   Decimal
-  interestPart    Decimal
-  totalEMI        Decimal
-  status          String           @default("Pending") // Pending, Paid, Overdue
-  paymentId       String?          @unique // Link to central Payment model
-  correlationId   String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  loan            Loan             @relation(fields: [loanId], references: [id])
-  payment         Payment?         @relation(fields: [paymentId], references: [id])
+  id            String   @id @default(uuid())
+  tenantId      String
+  loanId        String
+  dueDate       DateTime
+  principalPart Decimal
+  interestPart  Decimal
+  totalEMI      Decimal
+  status        String   @default("Pending") // Pending, Paid, Overdue
+  paymentId     String?  @unique // Link to central Payment model
+  correlationId String?
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  loan    Loan     @relation(fields: [loanId], references: [id])
+  payment Payment? @relation(fields: [paymentId], references: [id])
 
   @@index([correlationId])
 }
 
 model InterestAccrual {
-  id              String           @id @default(uuid())
-  tenantId        String
-  loanId          String
-  date            DateTime         @default(now())
-  amount          Decimal
-  journalEntryId  String?          @unique // Sync to GL
-  correlationId   String?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  loan            Loan             @relation(fields: [loanId], references: [id])
-  journalEntry    JournalEntry?    @relation(fields: [journalEntryId], references: [id])
+  id             String   @id @default(uuid())
+  tenantId       String
+  loanId         String
+  date           DateTime @default(now())
+  amount         Decimal
+  journalEntryId String?  @unique // Sync to GL
+  correlationId  String?
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  loan         Loan          @relation(fields: [loanId], references: [id])
+  journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id])
 
   @@index([correlationId])
 }
 
 model KYCRecord {
-  id              String           @id @default(uuid())
-  tenantId        String
-  loanId          String           @unique
-  documentType    String           // Aadhar, PAN, VoterID
-  documentNumber  String
-  verificationStatus String        @default("Pending")
-  verifiedAt      DateTime?
-  
-  tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  loan            Loan             @relation(fields: [loanId], references: [id])
+  id                 String    @id @default(uuid())
+  tenantId           String
+  loanId             String    @unique
+  documentType       String // Aadhar, PAN, VoterID
+  documentNumber     String
+  verificationStatus String    @default("Pending")
+  verifiedAt         DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  loan   Loan   @relation(fields: [loanId], references: [id])
 }
 
 // --- Bank Reconciliation Statement (BRS) ---
 
 model BankStatement {
-  id              String             @id @default(uuid())
-  tenantId        String
-  accountId       String             // Reference to Account (Bank Account)
-  uploadDate      DateTime           @default(now())
-  startDate       DateTime
-  endDate         DateTime
-  openingBalance  Decimal            @default(0.00)
-  closingBalance  Decimal            @default(0.00)
-  
-  tenant          Tenant             @relation(fields: [tenantId], references: [id])
-  account         Account            @relation(fields: [accountId], references: [id])
-  lines           BankStatementLine[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id             String   @id @default(uuid())
+  tenantId       String
+  accountId      String // Reference to Account (Bank Account)
+  uploadDate     DateTime @default(now())
+  startDate      DateTime
+  endDate        DateTime
+  openingBalance Decimal  @default(0.00)
+  closingBalance Decimal  @default(0.00)
+
+  tenant    Tenant              @relation(fields: [tenantId], references: [id])
+  account   Account             @relation(fields: [accountId], references: [id])
+  lines     BankStatementLine[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 
   @@index([tenantId, accountId])
 }
 
 model BankStatementLine {
-  id              String             @id @default(uuid())
-  tenantId        String
-  statementId     String
-  date            DateTime
-  description     String
-  amount          Decimal
-  reference       String?            // Cheque No / Reference No
-  type            TransactionType    // Debit / Credit (Bank's perspective)
-  reconciled      Boolean            @default(false)
-  
-  tenant          Tenant             @relation(fields: [tenantId], references: [id])
-  statement       BankStatement      @relation(fields: [statementId], references: [id])
+  id          String          @id @default(uuid())
+  tenantId    String
+  statementId String
+  date        DateTime
+  description String
+  amount      Decimal
+  reference   String? // Cheque No / Reference No
+  type        TransactionType // Debit / Credit (Bank's perspective)
+  reconciled  Boolean         @default(false)
+
+  tenant          Tenant               @relation(fields: [tenantId], references: [id])
+  statement       BankStatement        @relation(fields: [statementId], references: [id])
   reconciliations BankReconciliation[]
 
   @@index([tenantId, statementId])
@@ -1785,15 +1786,15 @@ model BankStatementLine {
 }
 
 model BankReconciliation {
-  id              String             @id @default(uuid())
+  id              String   @id @default(uuid())
   tenantId        String
-  transactionId   String             // Reference to Transaction in GL
-  statementLineId String             // Reference to Bank Statement Line
-  reconciledAt    DateTime           @default(now())
-  
-  tenant          Tenant             @relation(fields: [tenantId], references: [id])
-  transaction     Transaction        @relation(fields: [transactionId], references: [id])
-  statementLine   BankStatementLine  @relation(fields: [statementLineId], references: [id])
+  transactionId   String // Reference to Transaction in GL
+  statementLineId String // Reference to Bank Statement Line
+  reconciledAt    DateTime @default(now())
+
+  tenant        Tenant            @relation(fields: [tenantId], references: [id])
+  transaction   Transaction       @relation(fields: [transactionId], references: [id])
+  statementLine BankStatementLine @relation(fields: [statementLineId], references: [id])
 
   @@unique([tenantId, transactionId, statementLineId])
   @@index([tenantId, transactionId])
@@ -1810,7 +1811,7 @@ model HsnMaster {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([tenantId, hsnCode])
   @@index([tenantId])

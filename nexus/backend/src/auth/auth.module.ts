@@ -10,6 +10,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { PassportModule } from '@nestjs/passport';
 import { AccountingModule } from '../accounting/accounting.module';
 import { LoggingService } from '../common/services/logging.service';
+import { MfaCryptoService } from './mfa-crypto.service';
 
 @Module({
   imports: [
@@ -31,7 +32,7 @@ import { LoggingService } from '../common/services/logging.service';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, GoogleAuthService],
+  providers: [AuthService, JwtStrategy, GoogleAuthService, LoggingService, MfaCryptoService],
   controllers: [AuthController],
   exports: [AuthService],
 })

@@ -8,6 +8,7 @@ import {
   Get,
   Request,
   ForbiddenException,
+  UnauthorizedException,
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -38,7 +39,7 @@ export class AuthController {
   async loginWeb(@Request() req: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result: any = await this.authService.login(loginDto, 'WEB', req.ip || req.get('X-Forwarded-For'));
     if (result && result.accessToken) {
-      this.setAuthCookie(res, result.accessToken);
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -58,7 +59,7 @@ export class AuthController {
   async loginAdmin(@Request() req: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result: any = await this.authService.adminLogin(loginDto, req.ip || req.get('X-Forwarded-For'));
     if (result && result.accessToken) {
-      this.setAuthCookie(res, result.accessToken);
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -70,7 +71,7 @@ export class AuthController {
   async googleLoginWeb(@Body() googleLoginDto: GoogleLoginDto, @Res({ passthrough: true }) res: Response) {
     const result: any = await this.authService.googleLogin(googleLoginDto, 'WEB');
     if (result && result.accessToken) {
-      this.setAuthCookie(res, result.accessToken);
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -85,6 +86,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 60000 } }) // OPS-003: Prevent tenant ID enumeration via repeated select-tenant calls
   @AllowIdentity()
   @AllowUnboarded()
   @MobileAction('SELECT_TENANT')
@@ -94,7 +96,7 @@ export class AuthController {
     const channel = (req.user as any).channel || 'MOBILE'; // Default to Mobile if missing (Safety First)
     const result: any = await this.authService.selectTenant(req.user.sub, tenantId, req.user.isMfaVerified, channel);
     if (result && result.accessToken && channel === 'WEB') {
-      this.setAuthCookie(res, result.accessToken);
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -186,7 +188,7 @@ export class AuthController {
     const result: any = await this.authService.verifyMfaSetup(req.user.sub, dto.totpCode);
     const channel = (req.user as any).channel || 'WEB';
     if (result && result.accessToken && channel === 'WEB') {
-      this.setAuthCookie(res, result.accessToken);
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -197,11 +199,11 @@ export class AuthController {
   @Post('mfa/verify-login')
   async verifyMfaLogin(@Body() dto: MfaVerifyDto, @Res({ passthrough: true }) res: Response) {
     const result: any = await this.authService.verifyMfaLogin(dto.token, dto.totpCode);
-    // Note: We don't have request context here for channel, but verifyMfaLogin 
-    // result should ideally tell us if it's a web session.
-    // For now, if we have an accessToken and isMfaVerified is true, we set the cookie.
-    if (result && result.accessToken) {
-      this.setAuthCookie(res, result.accessToken);
+    // SEC-006: Only set cookies if the original session was a web session.
+    // The channel is embedded in the MFA challenge token and propagated through
+    // generateAuthResponse back to the result — use it to decide cookie behaviour.
+    if (result && result.accessToken && result.channel === 'WEB') {
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -222,10 +224,30 @@ export class AuthController {
       await this.security.blacklistToken(jti, exp);
     }
     res.clearCookie('nexus_token');
+    res.clearCookie('nexus_refresh');
     return { success: true, message: 'Session terminated. Token revoked.' };
   }
 
-  private setAuthCookie(res: Response, token: string) {
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('refresh')
+  async refresh(@Request() req: any, @Body('refreshToken') bodyToken: string, @Res({ passthrough: true }) res: Response) {
+    let token = bodyToken;
+    if (!token && req.cookies && req.cookies['nexus_refresh']) {
+      token = req.cookies['nexus_refresh'];
+    }
+    if (!token) throw new UnauthorizedException('No refresh token provided');
+
+    const result: any = await this.authService.refreshSession(token);
+
+    // Auto-update web cookies if it was a web session
+    if (result && result.accessToken) {
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    }
+    return result;
+  }
+
+  private setAuthCookies(res: Response, token: string, refreshToken?: string) {
     res.cookie('nexus_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -233,6 +255,16 @@ export class AuthController {
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       path: '/',
     });
+
+    if (refreshToken) {
+      res.cookie('nexus_refresh', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+      });
+    }
 
     // CSRF Secret Cookie (Double-Submit Pattern)
     // Non-httpOnly so frontend can read it to send X-CSRF-Token header.

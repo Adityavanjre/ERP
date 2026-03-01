@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { POStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -102,7 +102,7 @@ export class PurchasesService {
         await this.prisma.$transaction(async (tx) => {
           const name = data.name;
           const email = data.email;
-          if (!name) throw new Error("Supplier Name is required");
+          if (!name) throw new BadRequestException('Supplier Name is required for import.');
 
           const existing = await tx.supplier.findFirst({
             where: { tenantId, name, isDeleted: false }
@@ -305,7 +305,7 @@ export class PurchasesService {
         include: { items: true },
       });
 
-      if (!po) throw new Error('Purchase Order not found');
+      if (!po) throw new NotFoundException(`Purchase Order '${id}' not found.`);
 
       // 1. Handle Receipt Logic (Stock + GL)
       if (status === POStatus.Received && po.status !== POStatus.Received) {
@@ -451,7 +451,7 @@ export class PurchasesService {
             const tdsPayableAccount = await tx.account.findFirst({
               where: { tenantId, name: StandardAccounts.TDS_PAYABLE },
             });
-            if (!tdsPayableAccount) throw new Error(`Missing '${StandardAccounts.TDS_PAYABLE}' account.`);
+            if (!tdsPayableAccount) throw new BadRequestException(`Missing '${StandardAccounts.TDS_PAYABLE}' account. Please create TDS Payable in your Chart of Accounts before receiving this PO.`);
             transactions.push({ accountId: tdsPayableAccount.id, type: 'Credit' as any, amount: tdsAmount.toNumber(), description: `TDS Deducted (${poAny.tdsSection})` });
 
             // Record TDS Transaction
@@ -482,8 +482,8 @@ export class PurchasesService {
             data: { tdsAmount, netAmount, status } as any
           });
         } else {
-          throw new Error(
-            "Missing Financial Accounts: Ensure 'Inventory Asset' and 'Accounts Payable' exist.",
+          throw new BadRequestException(
+            "Missing Financial Accounts: Ensure 'Inventory Asset' and 'Accounts Payable' exist in your Chart of Accounts before receiving this PO.",
           );
         }
       }
@@ -499,7 +499,7 @@ export class PurchasesService {
             data: { stock: { decrement: item.quantity } }
           });
           if (stockResult.count === 0) {
-            throw new Error(`Stock integrity check failed for Product ${item.productId}: stock may have already been adjusted by a concurrent operation.`);
+            throw new BadRequestException(`Stock integrity check failed for Product ${item.productId}: insufficient stock available to reverse this receipt. Stock may have been adjusted by a concurrent operation.`);
           }
 
           // B. Find where it was received (Auditor search)

@@ -174,10 +174,12 @@ export class SalesService {
 
     const newStatus = OrderStatus.Pending;
 
-    const updated = await this.prisma.order.update({
-      where: { id },
+    const updated = await this.prisma.order.updateMany({
+      where: { id, tenantId },
       data: { status: newStatus },
     });
+
+    if (updated.count === 0) throw new BadRequestException(`Order '${id}' not found or update failed.`);
 
     await (this.audit as any).log({
       tenantId,
@@ -210,10 +212,12 @@ export class SalesService {
 
     if (!order) throw new BadRequestException('Order not found');
 
-    const updated = await this.prisma.order.update({
-      where: { id },
+    const updated = await this.prisma.order.updateMany({
+      where: { id, tenantId },
       data: { status: OrderStatus.Cancelled },
     });
+
+    if (updated.count === 0) throw new BadRequestException(`Order '${id}' not found or rejection failed.`);
 
     await (this.audit as any).log({
       tenantId,

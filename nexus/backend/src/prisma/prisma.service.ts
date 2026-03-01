@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { TenantContextService } from './tenant-context.service';
 
 @Injectable()
@@ -16,10 +16,71 @@ export class PrismaService
     // Intercepts model calls and redirects them to the extension client.
     return new Proxy(this, {
       get: (target: any, prop: string | symbol) => {
-        // Properties starting with $ are internal Prisma methods ($connect, $transaction, etc.)
         if (typeof prop === 'string' && prop.startsWith('$')) {
-          // Allow $executeRawUnsafe ONLY if it's being called internally by the isolation extension.
-          // This is a delicate bridge for RLS setup.
+          if (prop === '$transaction') {
+            return async (...args: any[]) => {
+              if (typeof args[0] === 'function') {
+                const tenantId = this.tenantContext.getTenantId();
+                return target.$transaction(async (tx: any) => {
+                  if (tenantId) {
+                    // SEC-001: Use parameterized $executeRaw to prevent SQL injection via tenantId
+                    await tx.$executeRaw(Prisma.sql`SET LOCAL app.tenant_id = ${tenantId}`);
+                  }
+
+                  // SEC-001 FIX: Proxy the interactive transaction client to inject tenantId
+                  const secureTx = new Proxy(tx, {
+                    get: (txTarget: any, txProp: string | symbol) => {
+                      if (typeof txProp === 'string' && !txProp.startsWith('$') && txTarget[txProp]) {
+                        return new Proxy(txTarget[txProp], {
+                          get: (modelTarget: any, op: string | symbol) => {
+                            if (typeof op === 'string' && typeof modelTarget[op] === 'function') {
+                              return async (queryArgs: any = {}) => {
+                                const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
+                                if (!tenantId || globalModels.includes(txProp as string)) {
+                                  return modelTarget[op](queryArgs);
+                                }
+
+                                const enforceIsolation = (obj: any) => {
+                                  if (!obj) return;
+                                  obj.tenantId = tenantId;
+                                };
+
+                                if (['create', 'createMany'].includes(op as string)) {
+                                  if (Array.isArray(queryArgs.data)) {
+                                    queryArgs.data.forEach((d: any) => enforceIsolation(d));
+                                  } else {
+                                    enforceIsolation(queryArgs.data);
+                                  }
+                                } else if (op === 'upsert') {
+                                  enforceIsolation(queryArgs.create);
+                                  enforceIsolation(queryArgs.update);
+                                  enforceIsolation(queryArgs.where);
+                                } else if (['update', 'updateMany'].includes(op as string)) {
+                                  enforceIsolation(queryArgs.where);
+                                  enforceIsolation(queryArgs.data);
+                                } else {
+                                  queryArgs.where = queryArgs.where || {};
+                                  enforceIsolation(queryArgs.where);
+                                  if (op === 'findUnique') op = 'findFirst';
+                                }
+
+                                return modelTarget[op](queryArgs);
+                              };
+                            }
+                            return modelTarget[op];
+                          }
+                        });
+                      }
+                      return txTarget[txProp];
+                    }
+                  });
+
+                  return args[0](secureTx);
+                }, ...args.slice(1));
+              }
+              return target.$transaction(...args);
+            };
+          }
           return target[prop];
         }
 
@@ -97,7 +158,8 @@ export class PrismaService
             // This physically enforces multi-tenancy at the PostgreSQL level.
             return (root as any).$transaction(async (tx: any) => {
               // Set the session variable used by Postgres RLS policies
-              await tx.$executeRawUnsafe(`SET LOCAL app.tenant_id = '${tenantId}'`);
+              // SEC-001: Use parameterized $executeRaw to prevent SQL injection via tenantId
+              await tx.$executeRaw(Prisma.sql`SET LOCAL app.tenant_id = ${tenantId}`);
 
               const enforceIsolation = (obj: any) => {
                 if (!obj) return;

@@ -49,17 +49,9 @@ export class SystemAuditService {
         });
 
         // 4. Immutability Audit (No Destructive Edits)
-        // Check for JournalEntries or Transactions where updatedAt > createdAt + buffer
-        // Note: LedgerService is append-only, but we verify here for bypass detection.
-        const mutatedJournals = await this.prisma.journalEntry.findMany({
-            where: {
-                tenantId,
-                updatedAt: { gt: this.prisma.journalEntry.fields.createdAt } // Conceptual check
-            }
-        });
-
-        // Refined Immutability Check: Count records where updatedAt is significantly different from createdAt
-        // (Assuming 5 second buffer for creation transaction lag)
+        // Uses raw SQL cross-column comparison: updatedAt > createdAt + 5 seconds.
+        // The 5-second buffer accounts for DB write latency during the creation transaction.
+        // LedgerService is append-only by convention; this raw SQL check detects any bypass.
         const journalMutations = await this.prisma.$queryRaw`
             SELECT COUNT(*) FROM "JournalEntry" 
             WHERE "tenantId" = ${tenantId} 
@@ -127,6 +119,8 @@ export class SystemAuditService {
             this.prisma.payment.count({ where: { tenantId, correlationId: null } as any }),
             this.prisma.workOrder.count({ where: { tenantId, correlationId: null } as any }),
             this.prisma.purchaseOrder.count({ where: { tenantId, correlationId: null } as any }),
+            this.prisma.transaction.count({ where: { tenantId, correlationId: null } as any }),
+            this.prisma.journalEntry.count({ where: { tenantId, correlationId: null } as any }),
             (this.prisma as any).loan?.count({ where: { tenantId, correlationId: null } as any }) || Promise.resolve(0),
         ]);
 
@@ -135,7 +129,9 @@ export class SystemAuditService {
             payments: counts[1],
             workOrders: counts[2],
             purchaseOrders: counts[3],
-            loans: counts[4]
+            transactions: counts[4],
+            journalEntries: counts[5],
+            loans: counts[6]
         };
 
         return {

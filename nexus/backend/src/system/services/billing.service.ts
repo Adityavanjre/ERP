@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PlanType, SubscriptionStatus } from '@prisma/client';
+import { PlanType, SubscriptionStatus, Prisma } from '@prisma/client';
 import { LoggingService } from '../../common/services/logging.service';
 
 // ---------------------------------------------------------------------------
@@ -225,7 +225,8 @@ export class BillingService {
     try {
       // If in transaction, perform row-level lock on Tenant to prevent concurrent quota bypass
       if (tx) {
-        await tx.$queryRawUnsafe(`SELECT id FROM "Tenant" WHERE id = '${tenantId}' FOR UPDATE`);
+        // SEC-002: Use parameterized $queryRaw to prevent SQL injection via tenantId
+        await tx.$queryRaw(Prisma.sql`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`);
       }
 
       tenant = await db.tenant.findUnique({
@@ -249,6 +250,7 @@ export class BillingService {
           `SKU limit reached (${quotas.maxProducts.toLocaleString('en-IN')} on ${planName} plan). Upgrade to add more products.`,
         );
       }
+      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxProducts, planName);
     }
 
     if (resource === 'maxUsers') {
@@ -258,6 +260,7 @@ export class BillingService {
           `User seat limit reached (${quotas.maxUsers} on ${planName} plan). Upgrade to add more staff.`,
         );
       }
+      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxUsers, planName);
     }
 
     if (resource === 'maxLedgerEntries') {
@@ -267,13 +270,12 @@ export class BillingService {
           `Ledger entry limit reached (${quotas.maxLedgerEntries.toLocaleString('en-IN')} on ${planName} plan). Upgrade for higher limits.`,
         );
       }
+      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxLedgerEntries, planName);
     }
 
     if (resource === 'maxInvoicesPerMonth') {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      // PERFORMANCE: Using count is acceptable for small tenants, but for Enterprise 
-      // we already have a row-level lock above on the Tenant record.
       const count = await db.invoice.count({
         where: { tenantId, createdAt: { gte: startOfMonth } },
       });
@@ -282,6 +284,7 @@ export class BillingService {
           `Monthly invoice limit reached (${quotas.maxInvoicesPerMonth.toLocaleString('en-IN')} on ${planName} plan). Upgrade or wait for next month.`,
         );
       }
+      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxInvoicesPerMonth, planName);
     }
 
     if (resource === 'maxExportsPerDay') {
@@ -299,11 +302,12 @@ export class BillingService {
           `Daily export limit reached (${quotas.maxExportsPerDay} on ${planName} plan). Upgrade for more Tally/GST exports.`,
         );
       }
+      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxExportsPerDay, planName);
     }
 
     if (resource === 'payroll' && !quotas.payroll) {
       throw new ForbiddenException(
-        `Payroll module is not available on ${planName}. Upgrade to Growth (₹2,499/mo) or higher.`,
+        `Payroll module is not available on ${planName}. Upgrade to Growth (\u20b92,499/mo) or higher.`,
       );
     }
 
@@ -319,6 +323,33 @@ export class BillingService {
     if (resource === 'advancedVerticals' && !quotas.advancedVerticals) {
       throw new ForbiddenException(
         `NBFC and Healthcare verticals are available on Enterprise plan only. Contact sales@nexuserp.in.`,
+      );
+    }
+  }
+
+  /**
+   * BIL-002: Emit a structured WARN log when a tenant's usage reaches 80% of their plan limit.
+   * This gives the monitoring/alerting layer a consistent signal to trigger upgrade nudge emails
+   * or in-app notifications without blocking the request path.
+   *
+   * The 80% threshold is configurable here. The log format is structured so it can be parsed
+   * by external log aggregators (Datadog, CloudWatch, etc.) for automated alerting.
+   */
+  private emitQuotaWarningIfNearing(
+    tenantId: string,
+    resource: string,
+    currentCount: number,
+    limit: number,
+    planName: string,
+    thresholdPct: number = 80,
+  ): void {
+    if (!isFinite(limit) || limit <= 0) return; // Skip for Infinity limits (Enterprise)
+    const usagePct = Math.round((currentCount / limit) * 100);
+    if (usagePct >= thresholdPct) {
+      this.logger.warn(
+        `[QUOTA_WARNING] tenantId=${tenantId} resource=${resource} ` +
+        `usage=${currentCount}/${limit} (${usagePct}%) plan=${planName} ` +
+        `threshold=${thresholdPct}% action=UPGRADE_NUDGE_REQUIRED`,
       );
     }
   }
@@ -350,7 +381,7 @@ export class BillingService {
         },
       });
 
-      await (tx as any).billingEvent.create({
+      await tx.billingEvent.create({
         data: {
           tenantId,
           event: 'PLAN_UPGRADED',
@@ -393,7 +424,7 @@ export class BillingService {
           gracePeriodEndsAt,
         },
       });
-      await (tx as any).billingEvent.create({
+      await tx.billingEvent.create({
         data: {
           tenantId,
           event: 'GRACE_PERIOD_ENTERED',
@@ -422,7 +453,7 @@ export class BillingService {
         where: { id: tenantId },
         data: { subscriptionStatus: SubscriptionStatus.ReadOnly },
       });
-      await (tx as any).billingEvent.create({
+      await tx.billingEvent.create({
         data: {
           tenantId,
           event: 'READ_ONLY_DOWNGRADE',
@@ -458,7 +489,7 @@ export class BillingService {
           suspendReason: reason,
         },
       });
-      await (tx as any).billingEvent.create({
+      await tx.billingEvent.create({
         data: {
           tenantId,
           event: 'SUSPENDED',
@@ -503,7 +534,7 @@ export class BillingService {
           suspendReason: null,
         },
       });
-      await (tx as any).billingEvent.create({
+      await tx.billingEvent.create({
         data: {
           tenantId,
           event: 'REACTIVATED',
@@ -528,7 +559,7 @@ export class BillingService {
   }
 
   async recordExport(tenantId: string, exportType: string) {
-    await (this.prisma as any).billingEvent.create({
+    await this.prisma.billingEvent.create({
       data: {
         tenantId,
         event: 'EXPORT_GENERATED',
@@ -541,36 +572,85 @@ export class BillingService {
   // --- Webhook Integration (SUB-002) ---
 
   async handleSubscriptionFailure(razorpaySubscriptionId: string, reason: string) {
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { razorpaySubscriptionId },
-      select: { id: true, subscriptionStatus: true },
-    });
-    if (!tenant) {
-      this.logger.error(`[Billing] Tenant not found for sub: ${razorpaySubscriptionId}`);
-      return;
-    }
+    await this.prisma.$transaction(async (tx) => {
+      // Secure Row-level lock (SYS-001) ensuring Webhook atomicity
+      // SEC-WEBHOOK-002: Use tagged template for safe parameterization
+      const tenants = await tx.$queryRaw<any[]>`
+        SELECT id, "subscriptionStatus" FROM "Tenant" WHERE "razorpaySubscriptionId" = ${razorpaySubscriptionId} FOR UPDATE
+      `;
+      const tenant = tenants[0];
 
-    if (tenant.subscriptionStatus !== SubscriptionStatus.ReadOnly) {
-      this.logger.warn(`[Billing] Auto-downgrading tenant ${tenant.id} due to payment failure`);
-      await this.downgradeToReadOnly(tenant.id, `Webhook: ${reason}`);
-    }
+      if (!tenant) {
+        this.logger.error(`[Billing] Tenant not found for sub: ${razorpaySubscriptionId}`);
+        return;
+      }
+
+      if (tenant.subscriptionStatus !== SubscriptionStatus.ReadOnly) {
+        this.logger.warn(`[Billing] Auto-downgrading tenant ${tenant.id} due to payment failure`);
+
+        await tx.tenant.update({
+          where: { id: tenant.id },
+          data: { subscriptionStatus: SubscriptionStatus.ReadOnly },
+        });
+
+        await tx.billingEvent.create({
+          data: {
+            tenantId: tenant.id,
+            event: 'READ_ONLY_DOWNGRADE',
+            fromStatus: tenant.subscriptionStatus,
+            toStatus: SubscriptionStatus.ReadOnly,
+            reason: `Webhook: ${reason}`,
+            performedBy: 'system',
+          },
+        });
+      }
+    });
   }
 
   async handleSubscriptionSuccess(razorpaySubscriptionId: string) {
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { razorpaySubscriptionId },
-      select: { id: true, subscriptionStatus: true },
-    });
-    if (!tenant) return;
+    await this.prisma.$transaction(async (tx) => {
+      // SEC-WEBHOOK-002: Use tagged template for safe parameterization
+      const tenants = await tx.$queryRaw<any[]>`
+        SELECT id, "subscriptionStatus", plan FROM "Tenant" WHERE "razorpaySubscriptionId" = ${razorpaySubscriptionId} FOR UPDATE
+      `;
+      const tenant = tenants[0];
 
-    if (tenant.subscriptionStatus !== SubscriptionStatus.Active) {
-      this.logger.log(`[Billing] Auto-reactivating tenant ${tenant.id} due to payment success`);
-      await this.reactivateTenant(tenant.id, undefined, 'webhook');
-    }
+      if (!tenant) return;
+
+      if (tenant.subscriptionStatus !== SubscriptionStatus.Active) {
+        this.logger.log(`[Billing] Auto-reactivating tenant ${tenant.id} due to payment success`);
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        await tx.tenant.update({
+          where: { id: tenant.id },
+          data: {
+            subscriptionStatus: SubscriptionStatus.Active,
+            planExpiresAt: expiresAt,
+            gracePeriodEndsAt: null,
+            suspendedAt: null,
+            suspendReason: null,
+          },
+        });
+
+        await tx.billingEvent.create({
+          data: {
+            tenantId: tenant.id,
+            event: 'REACTIVATED',
+            fromStatus: tenant.subscriptionStatus,
+            toStatus: SubscriptionStatus.Active,
+            fromPlan: tenant.plan,
+            toPlan: tenant.plan,
+            performedBy: 'webhook',
+          },
+        });
+      }
+    });
   }
 
   async getBillingHistory(tenantId: string) {
-    return (this.prisma as any).billingEvent.findMany({
+    return this.prisma.billingEvent.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
       take: 50,

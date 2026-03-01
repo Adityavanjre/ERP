@@ -20,10 +20,11 @@ export class ManufacturingService {
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
    */
-  async explodeBOM(tenantId: string, bomId: string, multiplier: number = 1, depth: number = 0) {
-    if (depth > 10) {
-      throw new BadRequestException(`Production Audit Error: Circular dependency or excessive BOM depth detected at ID ${bomId}. Maximum depth is 10.`);
+  async explodeBOM(tenantId: string, bomId: string, multiplier: number = 1, visitedBoms = new Set<string>()) {
+    if (visitedBoms.has(bomId)) {
+      throw new BadRequestException(`Production Audit Error: Circular dependency detected in Bill of Materials. BOM ID ${bomId} points back to an active parent assembly.`);
     }
+    visitedBoms.add(bomId);
 
     const bom = await this.prisma.billOfMaterial.findFirst({
       where: { id: bomId, tenantId },
@@ -43,7 +44,9 @@ export class ManufacturingService {
       });
 
       if (subBOM) {
-        const subRequirements = await this.explodeBOM(tenantId, subBOM.id, totalQty.toNumber(), depth + 1);
+        // Clone the Set for sub-branches to allow sibling reuse without false cycle flags
+        const subVisited = new Set(visitedBoms);
+        const subRequirements = await this.explodeBOM(tenantId, subBOM.id, totalQty.toNumber(), subVisited);
         requirements = [...requirements, ...subRequirements];
       } else {
         requirements.push({
@@ -281,7 +284,11 @@ export class ManufacturingService {
     });
 
     if (!wo) throw new NotFoundException('Work Order not found');
-    if (wo.status !== 'Planned') throw new BadRequestException(`Cannot start Work Order in ${wo.status} status.`);
+    // MFG-001: Accept both 'Planned' and 'Confirmed' as valid start states.
+    // approveWorkOrder() sets status to 'Confirmed', so requiring only 'Planned'
+    // made it impossible to start an approved work order.
+    const startableStatuses = ['Planned', 'Confirmed'];
+    if (!startableStatuses.includes(wo.status)) throw new BadRequestException(`Cannot start Work Order in ${wo.status} status. Expected: Planned or Confirmed.`);
 
     const requirements = await this.explodeBOM(tenantId, wo.bomId, Number(wo.quantity));
 
@@ -659,17 +666,28 @@ export class ManufacturingService {
           }
 
           if (laborAccount && machineTimeHours) {
-            // Assume labor hours = machine hours for demo absorption
-            const laborRate = 50; // Dynamic labor absorption rate
-            const absorbedLabor = new Decimal(laborRate).mul(machineTimeHours);
-            transactions.push({
-              accountId: laborAccount.id,
-              type: 'Credit' as any,
-              amount: absorbedLabor.toNumber(),
-              description: `ABC Labor Cost Absorbed - ${wo.orderNumber}`
-            });
-            // Total FG value includes absorbed labor now
-            transactions[0].amount = new Decimal(transactions[0].amount).add(absorbedLabor).toNumber();
+            // ACC-005: Use the machine's own hourlyRate as the labor absorption rate.
+            // The hardcoded constant (50) was removed — rates vary by machine and site.
+            // If the machine has no hourlyRate configured, labor absorption is skipped
+            // rather than posting an inaccurate fixed value to the ledger.
+            const machineForLabor = machineId
+              ? await (tx as any).machine.findFirst({ where: { id: machineId, tenantId } })
+              : null;
+            const effectiveLaborRate = machineForLabor?.hourlyRate
+              ? new Decimal(machineForLabor.hourlyRate)
+              : null;
+
+            if (effectiveLaborRate && effectiveLaborRate.greaterThan(0)) {
+              const absorbedLabor = effectiveLaborRate.mul(machineTimeHours);
+              transactions.push({
+                accountId: laborAccount.id,
+                type: 'Credit' as any,
+                amount: absorbedLabor.toNumber(),
+                description: `ABC Labor Cost Absorbed (${effectiveLaborRate}/hr × ${machineTimeHours}h) - ${wo.orderNumber}`
+              });
+              // Total FG value includes absorbed labor
+              transactions[0].amount = new Decimal(transactions[0].amount).add(absorbedLabor).toNumber();
+            }
           }
 
           const scrapAccount = await tx.account.findFirst({

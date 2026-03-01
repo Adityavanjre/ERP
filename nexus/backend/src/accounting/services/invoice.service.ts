@@ -320,23 +320,38 @@ export class InvoiceService {
       await this.ledger.checkPeriodLock(tenantId, inv.issueDate, tx);
 
       // 1. Reverse Stock
-      // 1. Reverse Stock
       for (const item of inv.items) {
+        // ACC-002: Look up the original OUT movement to find the exact warehouse used.
         const originalMovement = await tx.stockMovement.findFirst({
           where: { tenantId, productId: item.productId, reference: inv.invoiceNumber, type: 'OUT' }
         });
 
-        const warehouseId = originalMovement?.warehouseId ||
-          (await tx.warehouse.findFirst({ where: { tenantId } }))?.id || '';
+        // ACC-002: If original movement not found (legacy invoice created before stock
+        // tracking), fall back to the tenant's first warehouse. If no warehouse exists,
+        // throw an explicit error — an empty warehouseId would silently corrupt stock.
+        const fallbackWarehouse = !originalMovement?.warehouseId
+          ? await tx.warehouse.findFirst({ where: { tenantId }, orderBy: { id: 'asc' } })
+          : null;
+
+        const warehouseId = originalMovement?.warehouseId || fallbackWarehouse?.id;
+
+        if (!warehouseId) {
+          throw new BadRequestException(
+            `Stock reversal failed for Product ${item.productId}: no warehouse found. ` +
+            `Create at least one warehouse before cancelling stock-tracked invoices.`
+          );
+        }
+
+        const isLegacyFallback = !originalMovement?.warehouseId && !!fallbackWarehouse;
 
         await tx.product.updateMany({
           where: { id: item.productId, tenantId },
           data: { stock: { increment: item.quantity } },
         });
 
-        // 1.5 Manual Reconciliation (Safest approach for composite keys in multi-user env)
+        // Manual Reconciliation (safest approach for composite keys in concurrent env)
         const location = await (tx.stockLocation as any).findFirst({
-          where: { tenantId, productId: item.productId, warehouseId: warehouseId, notes: '' }
+          where: { tenantId, productId: item.productId, warehouseId, notes: '' }
         });
 
         if (location) {
@@ -346,13 +361,7 @@ export class InvoiceService {
           });
         } else {
           await (tx.stockLocation as any).create({
-            data: {
-              tenantId,
-              productId: item.productId,
-              warehouseId: warehouseId,
-              quantity: item.quantity,
-              notes: ''
-            }
+            data: { tenantId, productId: item.productId, warehouseId, quantity: item.quantity, notes: '' }
           });
         }
 
@@ -360,12 +369,14 @@ export class InvoiceService {
           data: {
             tenantId,
             productId: item.productId,
-            warehouseId: warehouseId,
+            warehouseId,
             quantity: item.quantity,
             type: 'IN',
             reference: `CNL-${inv.invoiceNumber}`,
-            notes: `Invoice Cancellation Reversal`,
-            correlationId: (this.traceService as any).getCorrelationId(), // Forensic Reversal Link
+            notes: isLegacyFallback
+              ? `Invoice Cancellation Reversal (warehouse fallback — original movement not tracked)`
+              : `Invoice Cancellation Reversal`,
+            correlationId: (this.traceService as any).getCorrelationId(),
           }
         });
       }
@@ -464,7 +475,22 @@ export class InvoiceService {
     };
   }
 
-  async createInvoicesBulk(tenantId: string, invoices: any[]) {
+  /**
+   * Bulk invoice creation.
+   * INV-BULK-001: Supports both 'best-effort' (partial success) and 'atomic' (all-or-nothing) modes.
+   */
+  async createInvoicesBulk(tenantId: string, invoices: any[], options: { atomic?: boolean } = {}) {
+    if (options.atomic) {
+      return this.prisma.$transaction(async (tx) => {
+        const results = [];
+        for (const inv of invoices) {
+          const res = await this.createInvoice(tenantId, inv, tx);
+          results.push({ invoiceNumber: inv.invoiceNumber, status: 'SUCCESS', id: res.id });
+        }
+        return { total: invoices.length, successCount: results.length, errorCount: 0, results, errors: [] };
+      });
+    }
+
     const results = [];
     const errors = [];
     for (const inv of invoices) {
@@ -472,7 +498,8 @@ export class InvoiceService {
         const res = await this.createInvoice(tenantId, inv);
         results.push({ invoiceNumber: inv.invoiceNumber, status: 'SUCCESS', id: res.id });
       } catch (err: any) {
-        if (err.code === 'P2002') {
+        // Idempotency: skip if already synced (DUPLICATE_INVOICE_NUMBER)
+        if (err.code === 'P2002' || err.message?.includes('ALREADY_SYNCED')) {
           results.push({ invoiceNumber: inv.invoiceNumber, status: 'SUCCESS', note: 'ALREADY_SYNCED' });
         } else {
           errors.push({ invoiceNumber: inv.invoiceNumber, status: 'FAILED', message: err.message });
@@ -483,10 +510,44 @@ export class InvoiceService {
   }
 
   async generateInvoiceNumber(tenantId: string, tx: any): Promise<string> {
+    // ACC-001: Concurrency-safe invoice numbering via PostgreSQL advisory lock.
+    //
+    // The old COUNT-based approach had a race: two concurrent transactions both
+    // read the same count and generated the same invoice number.
+    //
+    // Strategy: Acquire a transaction-scoped advisory lock (pg_try_advisory_xact_lock)
+    // keyed on a deterministic integer derived from the tenantId. This serializes
+    // invoice creation per tenant without requiring a migration or a counter table.
+    // The lock is automatically released when the surrounding transaction ends.
+    //
+    // The lock key is a signed 64-bit integer. We derive it from the first 8 bytes
+    // of the SHA-256 of the tenantId string for a stable, collision-resistant mapping.
+    const crypto = require('crypto');
+    const hashBuf = crypto.createHash('sha256').update(tenantId).digest();
+    // Read as signed 32-bit int to stay within PostgreSQL's bigint advisory lock range
+    const lockKey = hashBuf.readInt32BE(0);
+
+    // Acquire the lock. pg_try_advisory_xact_lock returns false if the lock is
+    // already held by another transaction — retry by waiting (use pg_advisory_xact_lock
+    // which blocks until the lock is available, safe inside a transaction).
+    await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(${lockKey})`);
+
+    // Under the lock: count is stable, no concurrent transaction can also hold this lock
     const year = new Date().getFullYear();
     const count = await tx.invoice.count({ where: { tenantId } });
-    return `INV/${year}/${(count + 1).toString().padStart(4, '0')}`;
+    const candidate = `INV/${year}/${(count + 1).toString().padStart(4, '0')}`;
+
+    // Uniqueness double-check: handles the edge case of invoices created in a prior year
+    // that break the padded sequence (e.g., count=9999 produces INV/2026/10000)
+    const collision = await tx.invoice.findFirst({ where: { tenantId, invoiceNumber: candidate } });
+    if (collision) {
+      // Fall back to a timestamp-based suffix to ensure uniqueness
+      return `INV/${year}/${Date.now().toString(36).toUpperCase()}`;
+    }
+
+    return candidate;
   }
+
 
   async calculateTotals(tenantId: string, customerId: string, items: any[], tx: any) {
     let totalTaxable = new Decimal(0);

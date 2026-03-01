@@ -84,8 +84,12 @@ services:
     sync: false
   - key: JWT_SECRET
     sync: false
+  - key: MFA_ENCRYPTION_KEY  # SEC-004: 64-hex-char key for AES-256-GCM TOTP secret encryption. Generate: openssl rand -hex 32
+    sync: false
+  - key: AUDIT_HMAC_SECRET  # SYS-AUDIT: Secret for audit log hash chain integrity. Generate: openssl rand -hex 32
+    sync: false
   region: oregon
-  buildCommand: npm install && npx prisma generate && npm run build
+  buildCommand: cd .. && npm install && cd backend && npx prisma generate && npm run build
   startCommand: npm run start:prod
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"

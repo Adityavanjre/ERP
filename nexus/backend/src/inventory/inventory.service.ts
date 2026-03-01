@@ -17,6 +17,13 @@ import { BillingService } from '../system/services/billing.service';
 import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
 import { HsnService } from './services/hsn.service';
 
+// DI-002: Typed sentinel for dry-run transaction rollback.
+// Using a named class (not a generic Error) prevents accidentally swallowing
+// unrelated errors that happen to share the same message string.
+class DryRunRollbackSignal extends Error {
+  constructor() { super('DRY_RUN_ROLLBACK'); }
+}
+
 @Injectable()
 export class InventoryService {
   constructor(
@@ -339,7 +346,9 @@ export class InventoryService {
               sku,
               barcode: data.barcode || data.upc,
               description: data.description,
-              basePrice: Number(data.price || data.baseprice) || 0,
+              // SCH-004: Schema field is 'price', not 'basePrice'. The old mapping
+              // silently dropped the sell price on every bulk import row.
+              price: Number(data.price || data.baseprice) || 0,
               costPrice: Number(data.cost || data.costprice) || 0,
               gstRate: Number(data.gstrate || data.tax) || 18,
               hsnCode: data.hsncode || data.hsn,
@@ -444,14 +453,14 @@ export class InventoryService {
 
         if (isDryRun) {
           dryRunResults = results;
-          throw new Error('DRY_RUN_ROLLBACK');
+          throw new DryRunRollbackSignal();
         }
 
         return results;
       });
       return finalResults;
     } catch (err: any) {
-      if (err.message === 'DRY_RUN_ROLLBACK') {
+      if (err instanceof DryRunRollbackSignal) {
         return dryRunResults;
       } else {
         throw err;

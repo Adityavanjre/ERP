@@ -1,7 +1,8 @@
-import { Controller, Post, Req, Body, BadRequestException, RawBodyRequest, Logger } from '@nestjs/common';
+import { Controller, Post, Req, Body, BadRequestException, RawBodyRequest, Logger, UseInterceptors } from '@nestjs/common';
 import { BillingService } from '../services/billing.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
 
 @Controller('system/webhooks')
 export class WebhookController {
@@ -17,20 +18,36 @@ export class WebhookController {
    * SECURITY (SUB-002): Verifies HMAC signature to prevent spoofing.
    */
   @Post('razorpay')
+  @UseInterceptors(IdempotencyInterceptor)
   async handleRazorpay(@Req() req: RawBodyRequest<any>, @Body() body: any) {
     const signature = req.headers['x-razorpay-signature'] as string;
     const webhookSecret = this.config.get<string>('RAZORPAY_WEBHOOK_SECRET');
+    // BIL-WEBHOOK-001: Hardened Signature Verification
+    // Use rawBody for verification to avoid JSON serialization mismatches
+    const rawBody = (req as any).rawBody || Buffer.from(JSON.stringify(body));
 
-    // Signature Verification
-    if (webhookSecret && signature) {
-      const shasum = crypto.createHmac('sha256', webhookSecret);
-      shasum.update(JSON.stringify(body));
-      const digest = shasum.digest('hex');
+    if (!webhookSecret) {
+      this.logger.error('CRITICAL: RAZORPAY_WEBHOOK_SECRET is missing in environment. Denying all webhooks.');
+      throw new BadRequestException('Webhook configuration error');
+    }
 
-      if (digest !== signature) {
-        this.logger.error('Invalid Razorpay Webhook Signature');
-        throw new BadRequestException('Invalid signature');
-      }
+    if (!signature) {
+      this.logger.warn('Razorpay Webhook rejected: missing x-razorpay-signature header');
+      throw new BadRequestException('Missing signature');
+    }
+
+    const shasum = crypto.createHmac('sha256', webhookSecret);
+    shasum.update(rawBody);
+    const digest = shasum.digest('hex');
+
+    // Use a fixed-time comparison to prevent side-channel attacks.
+    // Length check ensures we don't throw; timingSafeEqual only works on same-length buffers.
+    const digestBuffer = Buffer.from(digest);
+    const signatureBuffer = Buffer.from(signature);
+
+    if (digestBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(digestBuffer, signatureBuffer)) {
+      this.logger.error('Invalid Razorpay Webhook Signature detected — possible spoofing attempt');
+      throw new BadRequestException('Invalid signature');
     }
 
     const event = body.event;

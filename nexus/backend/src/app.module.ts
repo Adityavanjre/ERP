@@ -39,10 +39,12 @@ import { CsrfGuard } from './common/guards/csrf.guard';
 import { PlanGuard } from './common/guards/plan.guard';
 
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     InfrastructureModule,
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

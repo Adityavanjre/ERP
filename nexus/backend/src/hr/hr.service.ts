@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../system/services/audit.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -64,7 +64,7 @@ export class HrService {
     const employee = await this.prisma.employee.findFirst({
       where: { id: data.employeeId, tenantId },
     });
-    if (!employee) throw new Error('Employee not found in this tenant context');
+    if (!employee) throw new NotFoundException(`Employee '${data.employeeId}' not found in this tenant.`);
 
     const leave = await this.prisma.leave.create({
       data: { ...data, tenantId },
@@ -94,7 +94,7 @@ export class HrService {
       where: { id, employee: { tenantId } },
       include: { employee: true },
     });
-    if (!leave) throw new Error('Leave record not found in this tenant');
+    if (!leave) throw new NotFoundException(`Leave record '${id}' not found in this tenant.`);
 
     await this.prisma.leave.updateMany({
       where: { id, employee: { tenantId } },
@@ -204,7 +204,7 @@ export class HrService {
         const email = data.email;
         const employeeId = data.employeeId || `EMP-${Date.now().toString().slice(-4)}-${i}`;
 
-        if (!firstName || !email) throw new Error("First Name and Email are required");
+        if (!firstName || !email) throw new BadRequestException("First Name and Email are required for employee import.");
 
         // Look up department by name if provided
         let departmentId = data.departmentId;

@@ -151,27 +151,34 @@ export class AccountingService {
         throw new BadRequestException('Depreciation accounts not found in Chart of Accounts.');
       }
 
-      for (const entry of entries) {
-        // 1. Update Asset
+      let totalCharge = new Decimal(0);
+      const updatePromises = entries.map(entry => {
+        totalCharge = totalCharge.plus(entry.charge);
         const newAccumulated = entry.asset.accumulatedDepreciation.plus(entry.charge);
         const isFullyDepreciated = newAccumulated.equals(entry.asset.purchaseValue.minus(entry.asset.salvageValue));
 
-        await (tx as any).fixedAsset.updateMany({
+        return (tx as any).fixedAsset.updateMany({
           where: { id: entry.asset.id, tenantId },
           data: {
             accumulatedDepreciation: newAccumulated,
             status: isFullyDepreciated ? 'FullyDepreciated' : 'Active',
           },
         });
+      });
 
-        // 2. Book Journal
+      // 1. Execute all asset updates concurrently
+      await Promise.all(updatePromises);
+
+      // 2. Book Single Consolidated Journal Entry
+      const totalChargeNumber = Number(totalCharge.toFixed(2));
+      if (totalChargeNumber > 0) {
         await this.ledger.createJournalEntry(tenantId, {
           date: new Date(year, month - 1, 28).toISOString(), // Standardized string date
-          description: `Monthly Depreciation: ${entry.asset.name} (${entry.asset.assetCode})`,
-          reference: `DEP-${entry.asset.assetCode}-${month}-${year}`,
+          description: `Consolidated Monthly Depreciation for ${month}/${year}`,
+          reference: `DEP-BULK-${month}-${year}`,
           transactions: [
-            { accountId: depExpAccount.id, type: 'Debit', amount: Number(entry.charge.toFixed(2)), description: 'Depreciation Charge' },
-            { accountId: accDepAccount.id, type: 'Credit', amount: Number(entry.charge.toFixed(2)), description: 'Accumulated Prov' },
+            { accountId: depExpAccount.id, type: 'Debit', amount: totalChargeNumber, description: `Depreciation Charge (${entries.length} assets)` },
+            { accountId: accDepAccount.id, type: 'Credit', amount: totalChargeNumber, description: `Accumulated Prov (${entries.length} assets)` },
           ],
         }, tx);
       }
@@ -193,6 +200,10 @@ export class AccountingService {
     return this.tally.exportTallyXml(tenantId, month, year);
   }
 
+  exportTallyXmlStream(tenantId: string, month?: number, year?: number) {
+    return this.tally.generateTallyXmlStream(tenantId, month, year);
+  }
+
   async getAuditorDashboard(tenantId: string, month: number, year: number) {
     return this.tally.getAuditorDashboard(tenantId, month, year);
   }
@@ -203,6 +214,10 @@ export class AccountingService {
 
   async exportLedgerMasters(tenantId: string) {
     return this.tally.exportLedgerMasters(tenantId);
+  }
+
+  exportLedgerMastersStream(tenantId: string) {
+    return this.tally.generateLedgerMastersStream(tenantId);
   }
 
   // Internal Helpers (needed for other services potentially)

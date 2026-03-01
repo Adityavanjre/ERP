@@ -3,6 +3,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -12,6 +13,8 @@ import { randomUUID } from 'crypto';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AuditInterceptor.name);
+
   constructor(
     private prisma: PrismaService,
     private readonly traceService: TraceService,
@@ -60,8 +63,9 @@ export class AuditInterceptor implements NestInterceptor {
             },
           });
         } catch (error) {
-          console.error('Audit Log failed:', error);
-          // Non-blocking failure
+          // AUDIT-INT-001: Use Logger instead of console.error so log drains receive this.
+          this.logger.error('Audit log write failed — mutation was NOT recorded in audit trail', error);
+          // Non-blocking: audit failure must never crash the main request.
         }
       }),
     );

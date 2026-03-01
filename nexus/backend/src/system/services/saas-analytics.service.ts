@@ -19,7 +19,7 @@ export class SaasAnalyticsService {
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private forecasting: ForecastingService,
-  ) {}
+  ) { }
 
   async getCashflowProjections(tenantId: string) {
     return this.forecasting.getCashflowForecast(tenantId);
@@ -122,14 +122,14 @@ export class SaasAnalyticsService {
 
     // Safety for Zero Data
     if (!invoiceStats || (invoiceStats._count.id === 0 && !lastAction)) {
-        return {
-            tenantId,
-            healthScore: 100,
-            status: 'GREEN',
-            signals: ['NEW_TENANT: Waiting for initial data pulse'],
-            metrics: { paymentRatio: 0, activityPulse: 0 },
-            interventions: []
-        };
+      return {
+        tenantId,
+        healthScore: 100,
+        status: 'GREEN',
+        signals: ['NEW_TENANT: Waiting for initial data pulse'],
+        metrics: { paymentRatio: 0, activityPulse: 0 },
+        interventions: []
+      };
     }
 
     const adjustments = await this.prisma.auditLog.count({
@@ -152,8 +152,8 @@ export class SaasAnalyticsService {
     const avgLag =
       lags.length > 0
         ? Math.floor(
-            lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
-          )
+          lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
+        )
         : 0;
 
     // Behavioral Risk Formula (Score 0-100)
@@ -367,7 +367,7 @@ export class SaasAnalyticsService {
       lastTransaction: Number(c.invoices[0]?.totalAmount || 0),
       daysSilent: Math.floor(
         (Date.now() - c.invoices[0]?.issueDate.getTime()) /
-          (1000 * 60 * 60 * 24),
+        (1000 * 60 * 60 * 24),
       ),
     }));
 
@@ -404,36 +404,43 @@ export class SaasAnalyticsService {
       select: { id: true, name: true, plan: true },
     });
 
-    // OPTIMIZATION: Process in chunks or parallel with concurrency limit if N > 10
-    const reports = await Promise.all(
-      tenants.map(async (t: any) => {
-        // Fetch from cache ONLY if possible to keep dashboard snappy
-        const cacheKey = `health_score_${t.id}`;
-        const cached = await this.cacheManager.get<HealthReport>(cacheKey);
-        
-        if (cached) {
-            return {
-                tenantName: t.name,
-                plan: t.plan,
-                mrr: this.getMRR(t.plan),
-                healthScore: cached.healthScore,
-                status: cached.status,
-                signals: cached.signals,
-            };
-        }
+    const BATCH_SIZE = 25;
+    const reports: any[] = [];
 
-        // If not cached, we return a "Pending" state instead of blocking the whole dashboard
-        // A background job should ideally populate these.
-        return {
-          tenantName: t.name,
-          plan: t.plan,
-          mrr: this.getMRR(t.plan),
-          healthScore: 0,
-          status: 'GRAY',
-          signals: ['CALCULATING: Check back in 5 mins'],
-        };
-      }),
-    );
+    // ANALYTICS-002: Process in concurrency-controlled batches to avoid saturating Infra (N > 10,000 tenants scale)
+    for (let i = 0; i < tenants.length; i += BATCH_SIZE) {
+      const batch = tenants.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (t: any) => {
+          // Fetch from cache ONLY if possible to keep dashboard snappy
+          const cacheKey = `health_score_${t.id}`;
+          const cached = await this.cacheManager.get<HealthReport>(cacheKey);
+
+          if (cached) {
+            return {
+              tenantName: t.name,
+              plan: t.plan,
+              mrr: this.getMRR(t.plan),
+              healthScore: cached.healthScore,
+              status: cached.status,
+              signals: cached.signals,
+            };
+          }
+
+          // If not cached, we return a "Pending" state instead of blocking the whole dashboard
+          // A background job should ideally populate these.
+          return {
+            tenantName: t.name,
+            plan: t.plan,
+            mrr: this.getMRR(t.plan),
+            healthScore: 0,
+            status: 'GRAY',
+            signals: ['CALCULATING: Check back in 5 mins'],
+          };
+        }),
+      );
+      reports.push(...batchResults);
+    }
 
     const mrrAtRisk = reports
       .filter((r: any) => r.status === 'RED')
@@ -450,9 +457,9 @@ export class SaasAnalyticsService {
       systemHealth:
         reports.length > 0
           ? Math.round(
-              reports.reduce((sum, r) => sum + r.healthScore, 0) /
-                reports.length,
-            )
+            reports.reduce((sum, r) => sum + r.healthScore, 0) /
+            reports.length,
+          )
           : 0,
       topAtRisk,
       allReports: reports,
@@ -460,7 +467,14 @@ export class SaasAnalyticsService {
   }
 
   private getMRR(plan: string): number {
-    const mrrMap: any = { Free: 0, Lite: 999, Pro: 2499, Enterprise: 9999 };
-    return mrrMap[plan] || 0;
+    // SAAS-MRR-001: Aligned with PLAN_QUOTAS in billing.service.ts
+    const mrrMap: Record<string, number> = {
+      Free: 0,
+      Starter: 999,
+      Growth: 2_499,
+      Business: 5_999,
+      Enterprise: 14_999,
+    };
+    return mrrMap[plan] ?? 0;
   }
 }

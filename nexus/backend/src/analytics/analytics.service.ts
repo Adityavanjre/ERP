@@ -8,7 +8,7 @@ export class AnalyticsService {
   constructor(
     private prisma: PrismaService,
     private saas: SaasAnalyticsService,
-  ) {}
+  ) { }
 
   async getExecutiveSummary(tenantId: string) {
     const stats = await Promise.all([
@@ -100,44 +100,55 @@ export class AnalyticsService {
         health.signals.length > 0
           ? health.signals
           : [
-              summary.expenses > summary.revenue
-                ? 'Negative Cashflow detected'
-                : 'Operating within margin',
-              summary.inventoryCount < 10
-                ? 'Supply chain bottleneck risk'
-                : 'Inventory stable',
-            ],
+            summary.expenses > summary.revenue
+              ? 'Negative Cashflow detected'
+              : 'Operating within margin',
+            summary.inventoryCount < 10
+              ? 'Supply chain bottleneck risk'
+              : 'Inventory stable',
+          ],
     };
   }
 
   async getBillingLeaderboard(tenantId: string) {
+    // ANALYTICS-001: Original grouped by tenantId — returned one row (useless).
+    // Correct approach: read AuditLog for INVOICE_CREATED actions today and aggregate by user.
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    // Group by user (simplified: using auditLog to see who created invoices or raw query)
-    // Actually using Invoice table which has billingTimeSeconds
-    const topBillers = await this.prisma.invoice.groupBy({
-      by: ['tenantId'],
+    const logs = await this.prisma.auditLog.findMany({
       where: {
         tenantId,
-        issueDate: { gte: startOfDay },
-        billingTimeSeconds: { not: null },
+        action: 'INVOICE_CREATED',
+        createdAt: { gte: startOfDay },
       },
-      _avg: { billingTimeSeconds: true },
-      _count: { _all: true },
-      orderBy: { _avg: { billingTimeSeconds: 'asc' } },
-      take: 5,
+      include: { user: { select: { fullName: true, email: true } } },
     });
 
-    return topBillers.map((b, i) => ({
-      rank: i + 1,
-      // In a real app we'd join with User table for name
-      name: `Biller ${i + 1}`,
-      avgSpeed: b._avg?.billingTimeSeconds
-        ? b._avg.billingTimeSeconds.toFixed(1) + 's'
-        : 'N/A',
-      billCount: b._count?._all || 0,
-    }));
+    // Aggregate per user
+    const userMap = new Map<string, { name: string; count: number; totalSpeed: number }>();
+
+    for (const log of logs) {
+      const key = log.userId ?? 'system';
+      const name = log.user?.fullName || log.user?.email || 'System';
+      const details = log.details as any;
+      const speed = details?.billingTimeSeconds ?? 0;
+
+      const existing = userMap.get(key) ?? { name, count: 0, totalSpeed: 0 };
+      existing.count += 1;
+      existing.totalSpeed += Number(speed);
+      userMap.set(key, existing);
+    }
+
+    return Array.from(userMap.values())
+      .map((u) => ({
+        name: u.name,
+        billCount: u.count,
+        avgSpeed: u.count > 0 ? (u.totalSpeed / u.count).toFixed(1) + 's' : 'N/A',
+      }))
+      .sort((a, b) => b.billCount - a.billCount)
+      .slice(0, 5)
+      .map((u, i) => ({ rank: i + 1, ...u }));
   }
 
   async getActivityFeed(tenantId: string) {

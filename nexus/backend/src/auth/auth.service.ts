@@ -22,6 +22,7 @@ import * as crypto from 'crypto';
 import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
+import { MfaCryptoService } from './mfa-crypto.service';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +36,7 @@ export class AuthService {
     private readonly googleAuth: GoogleAuthService,
     private readonly logging: LoggingService,
     private readonly anomalyAlert: AnomalyAlertService,
+    private readonly mfaCrypto: MfaCryptoService,
   ) { }
 
   async createWorkspace(userId: string, dto: CreateWorkspaceDto) {
@@ -56,11 +58,12 @@ export class AuthService {
       throw new BadRequestException('Workspace name must contain at least 3 alphanumeric characters');
     }
     let finalSlug = slug;
-    const slugCount = await this.prisma.tenant.count({
-      where: { slug: { startsWith: slug } },
-    });
-    if (slugCount > 0) {
-      finalSlug = `${slug}-${slugCount + 1}`;
+    // OPS-004: Use exact match check rather than startsWith count.
+    // startsWith('acme') matches both 'acme' and 'acme-corp', producing wrong counts
+    // and potentially duplicate slugs under concurrent creation.
+    const exactSlugExists = await this.prisma.tenant.findUnique({ where: { slug } });
+    if (exactSlugExists) {
+      finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
     }
 
     const tenant = await this.prisma.tenant.create({
@@ -135,13 +138,12 @@ export class AuthService {
           throw new BadRequestException('Company name must contain at least 3 alphanumeric characters');
         }
 
-        // Minimal collision handling for slug
+        // OPS-004: Exact slug lookup instead of startsWith count — prevents
+        // non-unique slugs when concurrent registrations share the same base slug.
         let finalSlug = slug;
-        const slugCount = await tx.tenant.count({
-          where: { slug: { startsWith: slug } },
-        });
-        if (slugCount > 0) {
-          finalSlug = `${slug}-${slugCount + 1}`;
+        const exactSlugExists = await tx.tenant.findFirst({ where: { slug } });
+        if (exactSlugExists) {
+          finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
         }
 
         const tenant = await tx.tenant.create({
@@ -229,9 +231,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
-
+    // SEC-007: Brute-force check runs BEFORE password evaluation.
+    // A locked account must return the lockout error regardless of whether
+    // the supplied password is correct — otherwise an attacker learns the
+    // password is valid by observing the distinct lockout vs. invalid-credentials response.
     await this.checkBruteForce(user);
+
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!isPasswordValid) {
       await this.recordLoginFailure(user);
@@ -416,8 +422,21 @@ export class AuthService {
 
 
 
+    const refreshToken = this.jwtService.sign(
+      {
+        sub: user.id,
+        type: 'refresh_token',
+        originalType: payload.type,
+        tokenVersion: payload.tokenVersion,
+        isMfaVerified: payload.isMfaVerified,
+        channel: payload.channel
+      },
+      { expiresIn: '7d' }
+    );
+
     return {
       accessToken: this.jwtService.sign(payload),
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -484,7 +503,18 @@ export class AuthService {
       channel: channel || 'MOBILE',
     };
 
-
+    const refreshToken = this.jwtService.sign(
+      {
+        sub: userId,
+        type: 'refresh_token',
+        originalType: payload.type,
+        tenantId: payload.tenantId,
+        tokenVersion: payload.tokenVersion,
+        isMfaVerified: payload.isMfaVerified,
+        channel: payload.channel
+      },
+      { expiresIn: '7d' }
+    );
 
     await this.logging.log({
       userId,
@@ -496,6 +526,7 @@ export class AuthService {
 
     return {
       accessToken: this.jwtService.sign(payload),
+      refreshToken,
       tenant: {
         id: membership.tenant.id,
         name: membership.tenant.name,
@@ -503,6 +534,36 @@ export class AuthService {
         isOnboarded: membership.tenant.isOnboarded,
       },
     };
+  }
+
+  async refreshSession(refreshTokenStr: string) {
+    if (!refreshTokenStr) throw new UnauthorizedException('Refresh token is required');
+
+    let decoded: any;
+    try {
+      decoded = this.jwtService.verify(refreshTokenStr);
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (decoded.type !== 'refresh_token') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: decoded.sub },
+      include: { memberships: { include: { tenant: true } } }
+    });
+
+    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+      throw new UnauthorizedException('Session invalidated due to password reset or remote logout.');
+    }
+
+    if (decoded.originalType === 'tenant_scoped') {
+      return this.selectTenant(decoded.sub, decoded.tenantId, decoded.isMfaVerified, decoded.channel);
+    } else {
+      return this.generateAuthResponse(user, decoded.isMfaVerified, decoded.channel, decoded.originalType === 'admin');
+    }
   }
 
   async onboarding(userId: string, dto: OnboardingDto) {
@@ -693,7 +754,8 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { mfaSecret: secret } as any,
+      // SEC-004: Encrypt TOTP secret before writing — never store plaintext
+      data: { mfaSecret: this.mfaCrypto.encrypt(secret) } as any,
     });
 
     return {
@@ -706,7 +768,9 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
     if (!user || !user.mfaSecret) throw new BadRequestException('MFA setup not initiated');
 
-    const isValid = authenticator.verify({ token, secret: user.mfaSecret });
+    // SEC-004: Decrypt the stored secret before passing to otplib
+    const decryptedSecret = this.mfaCrypto.decrypt(user.mfaSecret);
+    const isValid = authenticator.verify({ token, secret: decryptedSecret });
     if (!isValid) throw new UnauthorizedException('Invalid MFA token');
 
     const recoveryCodes = Array.from({ length: 10 }, () => crypto.randomBytes(4).toString('hex'));
@@ -742,7 +806,9 @@ export class AuthService {
 
       if (!user || !user.mfaSecret) throw new UnauthorizedException('MFA not configured');
 
-      const isValid = authenticator.verify({ token: totpCode, secret: user.mfaSecret });
+      // SEC-004: Decrypt the stored secret before passing to otplib
+      const decryptedSecret = this.mfaCrypto.decrypt(user.mfaSecret);
+      const isValid = authenticator.verify({ token: totpCode, secret: decryptedSecret });
 
       if (!isValid) {
         let isRecovery = false;
