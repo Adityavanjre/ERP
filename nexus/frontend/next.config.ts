@@ -65,6 +65,9 @@ const nextConfig: NextConfig = {
             },
         ];
     },
+    experimental: {
+        turbopack: {}, // Force-disable Turbopack to allow custom Webpack config for security headers
+    },
     webpack: (config, { isServer }) => {
         // Enforce performance budgets for the client bundle
         if (!isServer) {
