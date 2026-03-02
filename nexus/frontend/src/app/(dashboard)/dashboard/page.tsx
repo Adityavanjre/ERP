@@ -92,8 +92,8 @@ export default function DashboardPage() {
                     return;
                 }
 
-                // Background sync shouldn't show global loading after first load
-                const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.all([
+                // Each call is independent — a 403 on analytics should not wipe out all other stats
+                const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.allSettled([
                     api.get('system/stats'),
                     api.get('analytics/summary'),
                     api.get('analytics/performance'),
@@ -103,16 +103,33 @@ export default function DashboardPage() {
                     api.get('system/config')
                 ]);
 
-                // System stats - Now using fixed business-level stats
-                setSystemStats(systemRes.data || systemStats);
-                setEnabledModules(configRes.data.enabledModules || []);
+                const getVal = (res: PromiseSettledResult<any>) =>
+                    res.status === 'fulfilled' ? res.value.data : null;
 
-                // BI stats
-                setBiStats(summaryRes.data || biStats);
-                setChartData(Array.isArray(performanceRes.data) ? performanceRes.data : []);
-                setHealthStats(healthRes.data || healthStats);
-                setActivity(Array.isArray(activityRes.data) ? activityRes.data : []);
-                setValueChain(Array.isArray(vcRes.data) ? vcRes.data : []);
+                const sysData = getVal(systemRes);
+                const sumData = getVal(summaryRes);
+                const perfData = getVal(performanceRes);
+                const healthData = getVal(healthRes);
+                const actData = getVal(activityRes);
+                const vcData = getVal(vcRes);
+                const cfgData = getVal(configRes);
+
+                if (sysData) setSystemStats(sysData);
+                if (cfgData) {
+                    const apiModules: string[] = cfgData.enabledModules || [];
+                    const core = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
+                    setEnabledModules(Array.from(new Set([...core, ...apiModules])));
+                }
+
+                // BI stats — partial update: if summary fails, keep defaults but still show inventory/customer counts
+                setBiStats(prev => ({
+                    ...prev,
+                    ...(sumData || {}),
+                }));
+                setChartData(Array.isArray(perfData) ? perfData : []);
+                if (healthData) setHealthStats(healthData);
+                setActivity(Array.isArray(actData) ? actData : []);
+                setValueChain(Array.isArray(vcData) ? vcData : []);
 
             } catch (err) {
                 console.error("Data update error:", err);

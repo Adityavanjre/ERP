@@ -38,13 +38,16 @@ export class SaasAnalyticsService {
       const details = log.details as any;
 
       if (log.action === 'POST' && log.resource.includes('/sales')) {
-        message = `New Sale: Invoice #${details?.body?.invoiceNumber || 'Draft'} generated`;
+        message = `New Sale: Invoice #${details?.body?.invoiceNumber || details?.invoiceNumber || 'Draft'} generated`;
       } else if (log.action === 'POST' && log.resource.includes('/inventory')) {
-        message = `Stock Update: ${details?.body?.name || 'Item'} added to inventory`;
+        message = `Stock Update: ${details?.body?.name || details?.name || 'Item'} added to inventory`;
       } else if (log.action === 'POST' && log.resource.includes('/crm')) {
-        message = `New Lead: ${details?.body?.firstName} ${details?.body?.lastName || ''} registered`;
+        const fname = details?.body?.firstName || details?.firstName || '';
+        const lname = details?.body?.lastName || details?.lastName || '';
+        message = `New Lead: ${(fname + ' ' + lname).trim() || 'Customer'} registered`;
       } else if (log.action === 'POST' && log.resource.includes('/purchases')) {
-        message = `Procurement: Purchase Order #${details?.body?.orderNumber} issued`;
+        const orderNum = details?.body?.orderNumber || details?.orderNumber;
+        message = orderNum ? `Procurement: Purchase Order #${orderNum} issued` : 'Procurement: New purchase order issued';
       }
 
       return {

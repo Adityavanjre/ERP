@@ -79,6 +79,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
                 // 1. Identity Token handling (No tenant selected yet)
                 if (type === 'identity') {
+                    // Allow the onboarding page to render directly even with identity token
+                    if (pathname === '/onboarding') {
+                        setAuthorized(true);
+                        return;
+                    }
                     setNeedsTenantSelection(true);
                     setAuthorized(true);
                     return;

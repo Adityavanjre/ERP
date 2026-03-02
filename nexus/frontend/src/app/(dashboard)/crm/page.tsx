@@ -82,7 +82,7 @@ export default function CrmPage() {
                 setCustomers(custRes.data);
             }
 
-            setStats(statsRes.data);
+            setStats(statsRes.data || { totalCustomers: 0, leads: 0, pipelineValue: 0, openDeals: 0 });
             setOpportunities(oppRes.data || []);
         } catch (err) {
             console.error("Relations Sync Failure:", err);
@@ -411,11 +411,11 @@ export default function CrmPage() {
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
                             <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pipeline Value</CardTitle></CardHeader>
-                            <CardContent><div className="text-3xl font-black text-slate-900 tracking-tighter">₹{stats.pipelineValue?.toLocaleString('en-IN')}</div></CardContent>
+                            <CardContent><div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.pipelineValue || 0).toLocaleString('en-IN')}</div></CardContent>
                         </Card>
                         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-amber-500">
                             <CardHeader className="pb-2"><CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Open Deals</CardTitle></CardHeader>
-                            <CardContent><div className="text-3xl font-black text-amber-600 tracking-tighter">{stats.openDeals}</div></CardContent>
+                            <CardContent><div className="text-3xl font-black text-amber-600 tracking-tighter">{stats.openDeals ?? 0}</div></CardContent>
                         </Card>
                     </div>
 

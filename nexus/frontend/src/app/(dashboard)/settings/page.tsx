@@ -22,6 +22,7 @@ import { Role } from "@nexus/shared";
 
 export default function SettingsPage() {
     const [tenant, setTenant] = useState<any>(null);
+    const [orgName, setOrgName] = useState('');
     const [loading, setLoading] = useState(true);
     const [billingInfo, setBillingInfo] = useState<any>(null);
     const [members, setMembers] = useState<any[]>([]);
@@ -44,6 +45,7 @@ export default function SettingsPage() {
                 api.get("users")
             ]);
             setTenant(profRes.data?.tenant || null);
+            setOrgName(profRes.data?.tenant?.name || '');
             setBillingInfo(billRes.data || null);
             setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
         } catch (err: any) {
@@ -160,7 +162,8 @@ export default function SettingsPage() {
                                     <Label htmlFor="name" className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Organization Name</Label>
                                     <Input
                                         id="name"
-                                        defaultValue={tenant?.name}
+                                        value={orgName}
+                                        onChange={e => setOrgName(e.target.value)}
                                         className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10"
                                     />
                                 </div>

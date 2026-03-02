@@ -58,11 +58,14 @@ export default function PurchasesPage() {
                 api.get("purchases/orders"),
                 api.get("purchases/stats")
             ]);
-            setSuppliers(suppRes.data);
+            const rawSuppliers = suppRes.data?.data ?? suppRes.data;
+            setSuppliers(Array.isArray(rawSuppliers) ? rawSuppliers : []);
             // Products API returns paginated response { data: [], meta: {} }
-            setProducts(prodRes.data.data || []);
-            setPurchaseOrders(poRes.data.data || []);
-            setStats(statsRes.data);
+            const rawProducts = prodRes.data?.data ?? prodRes.data;
+            setProducts(Array.isArray(rawProducts) ? rawProducts : []);
+            const rawOrders = poRes.data?.data ?? poRes.data;
+            setPurchaseOrders(Array.isArray(rawOrders) ? rawOrders : []);
+            setStats(statsRes.data || { totalSpent: 0, pendingPOs: 0 });
         } catch (err) {
             console.error("Procurement Sync Failure:", err);
             setSuppliers([]);
