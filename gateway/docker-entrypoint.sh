@@ -10,14 +10,16 @@ server {
 
     resolver 8.8.8.8 valid=30s;
 
-    # Never let upstream 301/302 Location headers leak to the browser
     proxy_redirect off;
 
     # -- ERP API: /portal/api/ -> backend --
-    # Must be declared BEFORE /portal so nginx longest-prefix match picks this first
+    # rewrite strips /portal/api/ prefix and rewrites to /api/<rest>
+    # then proxy_pass to variable (variable form disables nginx URI processing
+    # so the rewritten URI is sent as-is)
     location ^~ /portal/api/ {
+        rewrite ^/portal/api/(.*)$ /api/\$1 break;
         set \$backend "https://${KLYPSO_BACKEND_HOST}";
-        proxy_pass \$backend/api/;
+        proxy_pass \$backend;
         proxy_ssl_server_name on;
         proxy_ssl_verify off;
         proxy_set_header Host "${KLYPSO_BACKEND_HOST}";
@@ -44,8 +46,9 @@ server {
 
     # -- Agency API: /agency-api/ --
     location ^~ /agency-api/ {
+        rewrite ^/agency-api/(.*)$ /\$1 break;
         set \$agencybe "https://${AGENCY_BACKEND_HOST}";
-        proxy_pass \$agencybe/;
+        proxy_pass \$agencybe;
         proxy_ssl_server_name on;
         proxy_ssl_verify off;
         proxy_set_header Host "${AGENCY_BACKEND_HOST}";
@@ -68,10 +71,7 @@ server {
 }
 NGINX_EOF
 
-echo "Nginx config generated:"
-cat /etc/nginx/conf.d/default.conf
-
-echo "Testing nginx config..."
+echo "Nginx config generated. Testing..."
 nginx -t
 
 echo "Starting nginx..."
