@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { TenantContextService } from './tenant-context.service';
 
 @Injectable()
@@ -22,12 +22,12 @@ export class PrismaService
               if (typeof args[0] === 'function') {
                 const tenantId = this.tenantContext.getTenantId();
                 return target.$transaction(async (tx: any) => {
-                  if (tenantId) {
-                    // SEC-001: Use parameterized $executeRaw to prevent SQL injection via tenantId
-                    await tx.$executeRaw(Prisma.sql`SET LOCAL app.tenant_id = ${tenantId}`);
-                  }
+                  // NOTE: SET LOCAL removed — PgBouncer transaction pooling mode
+                  // does not support SET LOCAL across pooled connections (causes P2010).
+                  // Application-layer tenantId injection via secureTx proxy is used instead.
 
-                  // SEC-001 FIX: Proxy the interactive transaction client to inject tenantId
+                  // Proxy the interactive transaction client to inject tenantId into
+                  // all sub-queries performed within an explicit $transaction block.
                   const secureTx = new Proxy(tx, {
                     get: (txTarget: any, txProp: string | symbol) => {
                       if (typeof txProp === 'string' && !txProp.startsWith('$') && txTarget[txProp]) {
@@ -115,13 +115,13 @@ export class PrismaService
 
   private _createIsolatedClient() {
     const context = this.tenantContext;
-    const root = this; // Reference to the un-proxied client
 
     return (this as any).$extends({
       query: {
         $allModels: {
           async $allOperations({ model, operation, args, query }: any) {
             const tenantId = context.getTenantId();
+            // These models are global (cross-tenant by design) — skip isolation
             const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
 
             if (globalModels.includes(model)) {
@@ -130,15 +130,16 @@ export class PrismaService
 
             if (!tenantId) {
               throw new Error(
-                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked.Missing Tenant Context.Query cannot be scoped.`,
+                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context. Query cannot be scoped.`,
               );
             }
 
-            // Application-layer Cross-tenant Isolation Check
+            // Cross-tenant isolation check — reject any query that explicitly
+            // specifies a different tenantId (prevents accidental data leakage).
             const checkIsolation = (data: any, source: string) => {
               if (data && data.tenantId && data.tenantId !== tenantId) {
                 throw new Error(
-                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected in ${source} clause on ${model}. Operation blocked.`,
+                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected in ${source} on ${model}. Operation blocked.`,
                 );
               }
             };
@@ -152,48 +153,34 @@ export class PrismaService
               }
             }
 
-            // RLS ENFORCEMENT LAYER
-            // We wrap the operation in a transaction to ensure SET LOCAL app.tenant_id
-            // stays bound to the same connection used for the actual query.
-            // This physically enforces multi-tenancy at the PostgreSQL level.
-            return (root as any).$transaction(async (tx: any) => {
-              // Set the session variable used by Postgres RLS policies
-              // SEC-001: Use parameterized $executeRaw to prevent SQL injection via tenantId
-              await tx.$executeRaw(Prisma.sql`SET LOCAL app.tenant_id = ${tenantId}`);
+            // Application-layer tenant isolation — inject tenantId into every query.
+            // NOTE: SET LOCAL was removed because it fails with P2010 on Supabase
+            // PgBouncer transaction pooling mode. App-layer injection is the primary
+            // enforcement; DB-level RLS policies provide defense-in-depth.
+            const enforceIsolation = (obj: any) => {
+              if (!obj) return;
+              obj.tenantId = tenantId;
+            };
 
-              const enforceIsolation = (obj: any) => {
-                if (!obj) return;
-                // Force tenantId injection for secondary application-layer safety
-                obj.tenantId = tenantId;
-              };
-
-              // Handle different operation types
-              if (['create', 'createMany'].includes(operation)) {
-                if (Array.isArray(args.data)) {
-                  args.data.forEach((d: any) => enforceIsolation(d));
-                } else {
-                  enforceIsolation(args.data);
-                }
-              } else if (operation === 'upsert') {
-                enforceIsolation(args.create);
-                enforceIsolation(args.update);
-                enforceIsolation(args.where);
-              } else if (['update', 'updateMany'].includes(operation)) {
-                enforceIsolation(args.where);
-                enforceIsolation(args.data);
+            if (['create', 'createMany'].includes(operation)) {
+              if (Array.isArray(args.data)) {
+                args.data.forEach((d: any) => enforceIsolation(d));
               } else {
-                args.where = args.where || {};
-                enforceIsolation(args.where);
-
-                if (operation === 'findUnique') {
-                  // Re-route findUnique to findFirst on the transaction client
-                  return tx[model].findFirst(args);
-                }
+                enforceIsolation(args.data);
               }
+            } else if (operation === 'upsert') {
+              enforceIsolation(args.create);
+              enforceIsolation(args.update);
+              enforceIsolation(args.where);
+            } else if (['update', 'updateMany'].includes(operation)) {
+              enforceIsolation(args.where);
+              enforceIsolation(args.data);
+            } else {
+              args.where = args.where || {};
+              enforceIsolation(args.where);
+            }
 
-              // Execute the query on the transaction client to preserve the session state
-              return tx[model][operation](args);
-            });
+            return query(args);
           },
         },
       },

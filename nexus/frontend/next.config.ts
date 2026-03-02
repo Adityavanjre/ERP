@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const KLYPSO_BACKEND_URL = process.env.KLYPSO_BACKEND_URL;
 
@@ -34,6 +35,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+    // Point Next.js file tracing to the monorepo root to silence
+    // the Render/workspace root detection warning about multiple lockfiles.
+    outputFileTracingRoot: path.join(__dirname, '../../'),
     basePath: '/portal',
     compress: true,
     poweredByHeader: false,
@@ -65,12 +69,16 @@ const nextConfig: NextConfig = {
             },
         ];
     },
+    // turbopack: {} — explicitly declare an empty turbopack config to silence the
+    // "webpack config detected with no turbopack config" error in Next.js 16 dev mode.
+    // Production builds still use webpack so we keep the webpack config below.
+    turbopack: {},
     webpack: (config, { isServer }) => {
-        // Enforce performance budgets for the client bundle
+        // Enforce performance budgets for the client bundle (production webpack builds only)
         if (!isServer) {
             config.performance = {
                 hints: 'warning',
-                maxAssetSize: 500000, // 500kb
+                maxAssetSize: 500000,    // 500kb
                 maxEntrypointSize: 1000000, // 1mb
             };
         }
