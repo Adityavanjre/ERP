@@ -108,7 +108,7 @@ services:
   - key: KLYPSO_BACKEND_URL
     sync: false
   - key: NEXT_PUBLIC_API_URL
-    value: https://nexus.klypso.in/portal/api
+    value: /portal/api
     sync: false
   region: oregon
   buildCommand: npm install && npm run build
