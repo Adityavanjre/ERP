@@ -2,41 +2,35 @@ server {
     listen 80;
     server_name localhost;
 
-    # Klypso Agency Website (Root)
-    location / {
-        proxy_pass https://${AGENCY_VIEWER_HOST};
-        proxy_ssl_server_name on;
-        proxy_set_header Host ${AGENCY_VIEWER_HOST};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+    # Gateway-wide: intercept ALL backend 301/302 redirects so they
+    # never leak the internal onrender.com hostname to the browser.
+    proxy_redirect off;
 
-    # Klypso Engine API (Nexus) — MUST come before /portal to match first
+    # Klypso Engine API (Nexus) — MUST come before /portal so ^~ longest match wins
     location ^~ /portal/api/ {
         proxy_pass https://${KLYPSO_BACKEND_HOST}/api/;
         proxy_ssl_server_name on;
         proxy_set_header Host ${KLYPSO_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # PRD-003: Intercept backend 301/302 redirects to internal hosts
-        # and rewrite them so the browser stays on the Gateway.
-        proxy_redirect https://${KLYPSO_BACKEND_HOST}/api/ /portal/api/;
-        proxy_redirect http://${KLYPSO_BACKEND_HOST}/api/ /portal/api/;
-        proxy_redirect https://${KLYPSO_BACKEND_HOST}/api /portal/api;
-        proxy_redirect http://${KLYPSO_BACKEND_HOST}/api /portal/api;
+        proxy_set_header X-Forwarded-Proto https;
+
+        # Absorb any backend-issued redirects — do NOT forward them to the browser
+        proxy_redirect https://${KLYPSO_BACKEND_HOST}/ https://klypso.in/portal/api/;
+        proxy_redirect http://${KLYPSO_BACKEND_HOST}/  https://klypso.in/portal/api/;
     }
 
-    # Klypso ERP Portal
+    # Klypso ERP Portal (Frontend)
     location ^~ /portal {
         proxy_pass https://${KLYPSO_FRONTEND_HOST};
         proxy_ssl_server_name on;
         proxy_set_header Host ${KLYPSO_FRONTEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_redirect https://${KLYPSO_FRONTEND_HOST}/ https://klypso.in/portal/;
+        proxy_redirect http://${KLYPSO_FRONTEND_HOST}/  https://klypso.in/portal/;
     }
 
     # Klypso Agency API
@@ -46,6 +40,20 @@ server {
         proxy_set_header Host ${AGENCY_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_redirect off;
+    }
+
+    # Klypso Agency Website (Root) — must be last
+    location / {
+        proxy_pass https://${AGENCY_VIEWER_HOST};
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${AGENCY_VIEWER_HOST};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+
+        proxy_redirect off;
     }
 }
