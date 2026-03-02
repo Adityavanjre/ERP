@@ -288,7 +288,7 @@ export default function InventoryPage() {
                         <AlertCircle className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-orange-600 tracking-tighter">{stats.lowStock} Alerts</div>
+                        <div className="text-3xl font-black text-orange-600 tracking-tighter">{stats.lowStock ?? 0} Items</div>
                         <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">Requiring immediate replenishment</p>
                     </CardContent>
                 </Card>
@@ -665,7 +665,7 @@ export default function InventoryPage() {
                                     <TableCell className="text-right pr-8">
                                         <div className="flex items-center justify-end gap-2">
                                             <div className="font-black text-slate-900 tracking-tighter">
-                                                ₹{(Number(p.price) * p.stock).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+                                                ₹{(Number(p.price) * Number(p.stock)).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </div>
                                             <Button
                                                 variant="ghost"

@@ -115,17 +115,21 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
                 // If the token is just the identity token, do not hit tenant-scoped APIs
                 if (token && identity && token === identity) {
-                    setEnabledModules(['sales', 'inventory', 'accounting']);
+                    setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
                     setConfigLoading(false);
                     return;
                 }
 
                 const res = await api.get('system/config');
-                setEnabledModules(res.data.enabledModules || []);
+                // Always ensure core modules are included even if API omits them
+                const apiModules: string[] = res.data.enabledModules || [];
+                const coreModules = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
+                const merged = Array.from(new Set([...coreModules, ...apiModules]));
+                setEnabledModules(merged);
             } catch (err) {
                 console.error("Config fetch error:", err);
-                // Fallback to sensible defaults if API fails
-                setEnabledModules(['sales', 'inventory', 'accounting']);
+                // Fallback to all core modules if API fails
+                setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
             } finally {
                 setConfigLoading(false);
             }

@@ -99,11 +99,16 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
                 api.get("inventory/products")
             ]);
 
-            // Handle potentially paginated responses
-            setCustomers(custRes.data.data || custRes.data || []);
-            setProducts(prodRes.data.data || prodRes.data || []);
+            // Normalize: API may return paginated { data: [] } or plain array
+            const rawCustomers = custRes.data?.data ?? custRes.data;
+            const rawProducts = prodRes.data?.data ?? prodRes.data;
+            setCustomers(Array.isArray(rawCustomers) ? rawCustomers : []);
+            setProducts(Array.isArray(rawProducts) ? rawProducts : []);
         } catch (err) {
             toast.error("Failed to load resources");
+            // Ensure state is always an array so .filter() never crashes
+            setCustomers([]);
+            setProducts([]);
         }
     };
 

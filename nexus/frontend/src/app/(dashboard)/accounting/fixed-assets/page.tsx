@@ -43,6 +43,7 @@ interface FixedAsset {
 export default function FixedAssetsPage() {
     const [assets, setAssets] = useState<FixedAsset[]>([]);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [form, setForm] = useState({
         name: "",
@@ -55,10 +56,13 @@ export default function FixedAssetsPage() {
 
     const fetchAssets = useCallback(async () => {
         try {
-            const res = await api.get("/accounting/fixed-assets");
-            setAssets(res.data || []);
-        } catch {
-            toast.error("Failed to load fixed assets");
+            setFetchError(null);
+            const res = await api.get("accounting/fixed-assets");
+            setAssets(Array.isArray(res.data) ? res.data : []);
+        } catch (err: any) {
+            const msg = err.response?.data?.message || "Failed to load fixed assets";
+            setFetchError(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -74,7 +78,7 @@ export default function FixedAssetsPage() {
             return;
         }
         try {
-            await api.post("/accounting/fixed-assets", {
+            await api.post("accounting/fixed-assets", {
                 ...form,
                 purchaseValue: parseFloat(form.purchaseValue),
                 salvageValue: parseFloat(form.salvageValue || "0"),
@@ -94,7 +98,7 @@ export default function FixedAssetsPage() {
 
     const handleDepreciate = async (assetId: string, assetName: string) => {
         try {
-            const res = await api.post(`/accounting/fixed-assets/${assetId}/depreciate`);
+            const res = await api.post(`accounting/fixed-assets/${assetId}/depreciate`);
             toast.success(`Depreciation of ₹${res.data.monthlyDepreciation} posted for ${assetName}`);
             fetchAssets();
         } catch (err: any) {
@@ -177,6 +181,17 @@ export default function FixedAssetsPage() {
 
             {loading ? (
                 <div className="text-center py-16 text-slate-400">Loading assets...</div>
+            ) : fetchError ? (
+                <div className="text-center py-20 flex flex-col items-center gap-4">
+                    <div className="p-5 bg-red-50 rounded-3xl">
+                        <Building2 className="h-10 w-10 text-red-400" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-slate-700">Could not load fixed assets</p>
+                        <p className="text-sm text-slate-400 mt-1">{fetchError}</p>
+                        <button onClick={() => { setLoading(true); fetchAssets(); }} className="mt-4 text-sm text-blue-600 font-bold hover:underline">Try again</button>
+                    </div>
+                </div>
             ) : assets.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center gap-4">
                     <div className="p-5 bg-slate-100 rounded-3xl">
