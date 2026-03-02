@@ -258,20 +258,16 @@ export class LedgerService {
 
     const defaultAccounts = [...baseAccounts, ...verticalAccounts];
 
-    for (const acc of defaultAccounts) {
-      const exists = await client.account.findFirst({
-        where: {
-          tenantId,
-          OR: [{ name: acc.name }, { code: acc.code }],
-        },
-      });
+    const accountData = defaultAccounts.map(acc => ({
+      ...acc,
+      tenantId,
+      balance: 0,
+    }));
 
-      if (!exists) {
-        await client.account.create({
-          data: { ...acc, tenantId, balance: 0 },
-        });
-      }
-    }
+    await client.account.createMany({
+      data: accountData,
+      skipDuplicates: true,
+    });
   }
 
   async getTransactions(tenantId: string, page: number = 1, limit: number = 50) {

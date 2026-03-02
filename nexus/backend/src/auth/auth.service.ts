@@ -190,6 +190,9 @@ export class AuthService {
         }
 
         return user;
+      }, {
+        maxWait: 5000, // default is 2000
+        timeout: 20000, // default is 5000
       });
 
       // Re-fetch user with memberships so generateAuthResponse can map tenants correctly.
