@@ -17,8 +17,8 @@ server {
     # then proxy_pass to variable (variable form disables nginx URI processing
     # so the rewritten URI is sent as-is)
     location ^~ /portal/api/ {
-        rewrite ^/portal/api/(.*)$ /api/\$1 break;
         set \$backend "https://${KLYPSO_BACKEND_HOST}";
+        rewrite ^/portal/api/(.*)$ /api/\$1 break;
         proxy_pass \$backend;
         proxy_ssl_server_name on;
         proxy_ssl_verify off;
@@ -46,8 +46,8 @@ server {
 
     # -- Agency API: /agency-api/ --
     location ^~ /agency-api/ {
-        rewrite ^/agency-api/(.*)$ /\$1 break;
         set \$agencybe "https://${AGENCY_BACKEND_HOST}";
+        rewrite ^/agency-api/(.*)$ /\$1 break;
         proxy_pass \$agencybe;
         proxy_ssl_server_name on;
         proxy_ssl_verify off;
