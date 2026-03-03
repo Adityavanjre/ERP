@@ -10,7 +10,7 @@ server {
 
     resolver 8.8.8.8 valid=30s;
 
-    proxy_redirect off;
+    # proxy_redirect is handled per-location below
 
     # -- ERP API: /portal/api/ -> backend --
     # rewrite strips /portal/api/ prefix and rewrites to /api/<rest>
@@ -28,6 +28,10 @@ server {
         proxy_set_header X-Forwarded-Proto https;
         proxy_read_timeout 120s;
         proxy_connect_timeout 60s;
+        # Rewrite any Location headers from the backend (e.g. 301 trailing-slash redirects)
+        # back through the gateway so the browser never follows a cross-origin redirect.
+        # Cross-origin redirects cause browsers to strip the Authorization header -> 401 loop.
+        proxy_redirect ~^https://${KLYPSO_BACKEND_HOST}/api/(.*)$ /portal/api/\$1;
     }
 
     # -- ERP Frontend: /portal -> frontend --
