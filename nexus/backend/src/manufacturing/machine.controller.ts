@@ -18,7 +18,13 @@ import { MachineStatus, Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateMachineDto } from './dto/manufacturing.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { Permissions } from '../common/decorators/permissions.decorator';
+import { Permission } from '../common/constants/permissions';
+import { Module } from '../common/decorators/module.decorator';
+
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('manufacturing')
 @UseInterceptors(AuditInterceptor)
 @Controller('manufacturing/machines')
 export class MachineController {
@@ -26,18 +32,21 @@ export class MachineController {
 
   @Post()
   @Roles(Role.Owner, Role.Manager)
+  @Permissions(Permission.ADJUST_STOCK)
   create(@Req() req: any, @Body() data: CreateMachineDto) {
     return this.machineService.createMachine(req.user.tenantId, data);
   }
 
   @Get()
   @Roles(Role.Owner)
+  @Permissions(Permission.VIEW_PRODUCTS)
   findAll(@Req() req: any) {
     return this.machineService.getMachines(req.user.tenantId);
   }
 
   @Patch(':id/status')
   @Roles(Role.Owner, Role.Manager)
+  @Permissions(Permission.ADJUST_STOCK)
   updateStatus(
     @Req() req: any,
     @Param('id') id: string,
@@ -48,6 +57,7 @@ export class MachineController {
 
   @Delete(':id')
   @Roles(Role.Owner)
+  @Permissions(Permission.ADJUST_STOCK)
   remove(@Req() req: any, @Param('id') id: string) {
     return this.machineService.deleteMachine(req.user.tenantId, id);
   }

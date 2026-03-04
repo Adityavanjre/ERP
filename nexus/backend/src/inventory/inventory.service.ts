@@ -248,7 +248,14 @@ export class InventoryService {
    * 100x Hardening: Atomic Stock Deduction
    * Uses a guarded update to ensure stock never goes negative even in concurrent race conditions.
    */
-  async deductStock(tx: any, productId: string, warehouseId: string, quantity: number | Decimal, notes: string = '') {
+  async deductStock(
+    tx: any,
+    productId: string,
+    warehouseId: string,
+    quantity: number | Decimal,
+    notes: string = '',
+    options: { tenantId?: string; reference?: string; correlationId?: string } = {},
+  ) {
     const amount = new Decimal(quantity);
 
     const result = await tx.stockLocation.updateMany({
@@ -280,6 +287,24 @@ export class InventoryService {
 
     if (productResult.count === 0) {
       throw new BadRequestException(`Global stock sync failed for Product: ${productId}. Possible concurrent state mismatch.`);
+    }
+
+    // AUDIT-011: Inject StockMovement creation atomically so every deduction is traceable
+    // regardless of which caller invokes deductStock. If tenantId is not provided we skip
+    // the movement (backward compat with callers that create the movement themselves).
+    if (options.tenantId) {
+      await tx.stockMovement.create({
+        data: {
+          tenantId: options.tenantId,
+          productId,
+          warehouseId,
+          quantity: amount,
+          type: 'OUT',
+          reference: options.reference ?? null,
+          notes: notes || null,
+          correlationId: options.correlationId ?? null,
+        },
+      });
     }
   }
 

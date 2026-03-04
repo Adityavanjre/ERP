@@ -57,10 +57,19 @@ export class TdsService {
         const singleThreshold = new Decimal(rule.threshold);
         const cumulativeThreshold = rule.cumulativeThreshold ? new Decimal(rule.cumulativeThreshold) : null;
 
-        // 1. Calculate cumulative amount for this financial year (starting April 1st)
+        // 1. Calculate cumulative amount for this financial year.
+        //    COMP-002: Use tenant-configured fyStartMonth/fyStartDay instead of hardcoding April 1.
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            select: { fyStartMonth: true, fyStartDay: true },
+        });
+        const fyStartMonth = (tenant?.fyStartMonth ?? 4) - 1; // Prisma stores 1-based; JS months are 0-based
+        const fyStartDay = tenant?.fyStartDay ?? 1;
         const now = new Date();
-        const currentYear = now.getMonth() < 3 ? now.getFullYear() - 1 : now.getFullYear();
-        const fyStart = new Date(currentYear, 3, 1);
+        // If current date is before the FY start in the current calendar year, the FY started last year
+        const fyStartThisYear = new Date(now.getFullYear(), fyStartMonth, fyStartDay);
+        const currentYear = now < fyStartThisYear ? now.getFullYear() - 1 : now.getFullYear();
+        const fyStart = new Date(currentYear, fyStartMonth, fyStartDay);
 
         const transactions = await (this.prisma as any).tdsTransaction.findMany({
             where: {

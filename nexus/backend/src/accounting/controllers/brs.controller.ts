@@ -2,16 +2,22 @@ import { Controller, Post, Get, Body, Param, Query, UseGuards, Req } from '@nest
 import { BrsService } from '../services/brs.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Permissions } from '../../common/decorators/permissions.decorator';
+import { Permission } from '../../common/constants/permissions';
+import { Module } from '../../common/decorators/module.decorator';
 import { UploadBrsStatementDto } from '../dto/brs.dto';
 
 @Controller('accounting/brs')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Module('accounting')
 export class BrsController {
     constructor(private brsService: BrsService) { }
 
     @Post('upload/:accountId')
     @Roles('Accountant', 'Owner', 'CA')
+    @Permissions(Permission.RECORD_PAYMENT)
     async uploadStatement(
         @Req() req: any,
         @Param('accountId') accountId: string,
@@ -22,12 +28,14 @@ export class BrsController {
 
     @Post('auto-match/:statementId')
     @Roles('Accountant', 'Owner', 'CA')
+    @Permissions(Permission.RECORD_PAYMENT)
     async autoMatch(@Req() req: any, @Param('statementId') statementId: string) {
         return this.brsService.autoMatch(req.user.tenantId, statementId);
     }
 
     @Post('manual-match')
     @Roles('Accountant', 'Owner', 'CA')
+    @Permissions(Permission.RECORD_PAYMENT)
     async manualMatch(
         @Req() req: any,
         @Body() body: { lineId: string; transactionId: string },
@@ -37,6 +45,7 @@ export class BrsController {
 
     @Get('report/:accountId')
     @Roles('Accountant', 'Owner', 'CA')
+    @Permissions(Permission.VIEW_REPORTS)
     async getReport(
         @Req() req: any,
         @Param('accountId') accountId: string,
@@ -47,6 +56,7 @@ export class BrsController {
 
     @Get('statement/:statementId')
     @Roles('Accountant', 'Owner', 'CA')
+    @Permissions(Permission.VIEW_REPORTS)
     async getStatementDetails(@Req() req: any, @Param('statementId') statementId: string) {
         return this.brsService.getStatementDetails(req.user.tenantId, statementId);
     }

@@ -64,13 +64,13 @@ export class NbfcService {
                     {
                         accountId: data.loanAssetAccountId,
                         type: 'Debit',
-                        amount: Number(loan.loanAmount),
+                        amount: loan.loanAmount.toNumber(),
                         description: 'Loan principal amount',
                     },
                     {
                         accountId: data.bankAccountId,
                         type: 'Credit',
-                        amount: Number(loan.loanAmount),
+                        amount: loan.loanAmount.toNumber(),
                         description: 'Disbursement from bank',
                     },
                 ],
@@ -155,9 +155,20 @@ export class NbfcService {
 
         if (activeLoans.length === 0) return { accrued: 0 };
 
-        // Compute all accruals in-memory — no DB calls per loan
         const today = new Date().toISOString();
         const accrualData: { tenantId: string; loanId: string; amount: Decimal; correlationId: string | null }[] = [];
+
+        // Dynamic Chart of Account Lookups
+        const interestReceivableAcc = await this.prisma.account.findFirst({
+            where: { tenantId, name: { contains: 'Receivable' } }
+        });
+        const interestRevenueAcc = await this.prisma.account.findFirst({
+            where: { tenantId, name: { contains: 'Interest Income - Loans' } }
+        });
+
+        if (!interestReceivableAcc || !interestRevenueAcc) {
+            throw new BadRequestException('Required NBFC chart of accounts not found. Please initialize accounts.');
+        }
 
         for (const loan of activeLoans) {
             const dailyInterest = new Decimal(loan.loanAmount).mul(loan.interestRate).div(100).div(365);
@@ -178,19 +189,19 @@ export class NbfcService {
                 reference: `BATCH_INT_ACCR_${Date.now()}`,
                 transactions: accrualData.flatMap(a => ([
                     {
-                        accountId: 'INT_RECEIVABLE_ACC',
+                        accountId: interestReceivableAcc.id,
                         type: 'Debit' as const,
-                        amount: Number(a.amount),
+                        amount: a.amount.toNumber(),
                         description: `Interest receivable: loan ${a.loanId}`,
                     },
                     {
-                        accountId: 'INT_REVENUE_ACC',
+                        accountId: interestRevenueAcc.id,
                         type: 'Credit' as const,
-                        amount: Number(a.amount),
+                        amount: a.amount.toNumber(),
                         description: `Interest revenue: loan ${a.loanId}`,
                     },
                 ])),
-            }, tx);
+            }, tx as any);
 
             // Bulk-create all accrual records in a single INSERT
             await tx.interestAccrual.createMany({
