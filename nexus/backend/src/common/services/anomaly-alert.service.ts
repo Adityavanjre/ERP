@@ -104,4 +104,46 @@ export class AnomalyAlertService {
         this.logger.error(`${this.getContext()}${msg}`);
         await this.dispatchAlert('AUDIT_LOG_TAMPERING_DETECTED', msg);
     }
+
+    /**
+     * MON-002: Process incoming client-side security telemetry events.
+     * Suspicious browser signals (DevTools open, rapid session changes) are evaluated
+     * and escalated to server-side alerting if they match known attack patterns.
+     */
+    async reportClientTelemetry(
+        userId: string,
+        tenantId: string,
+        eventType: string,
+        details: Record<string, unknown>,
+        ipAddress: string,
+    ): Promise<void> {
+        const SUSPICIOUS_EVENTS = new Set([
+            'DEV_TOOLS_OPENED',
+            'RAPID_SESSION_FLAP',
+            'CLIPBOARD_HIJACK_ATTEMPT',
+            'FOCUS_LOSS_BURST', // Many rapid tab-switches (possible credential harvesting)
+            'CONSOLE_HOOK_DETECTED',
+        ]);
+
+        const logEntry = {
+            tenantId,
+            userId,
+            action: `CLIENT_TELEMETRY_${eventType}`,
+            resource: 'browser',
+            ipAddress,
+            channel: 'WEB',
+            details: details as any,
+        };
+
+        // Always persist the telemetry event in AuditLog for forensic retrieval
+        await (this.prisma as any).auditLog.create({ data: logEntry }).catch((e: any) =>
+            this.logger.warn(`Failed to persist client telemetry: ${e.message}`)
+        );
+
+        if (SUSPICIOUS_EVENTS.has(eventType)) {
+            const msg = `SUSPICIOUS_CLIENT_BEHAVIOUR: User ${userId} (Tenant: ${tenantId}) reported event '${eventType}' from IP ${ipAddress}. Details: ${JSON.stringify(details)}`;
+            this.logger.error(`${this.getContext()}${msg}`);
+            await this.dispatchAlert('SUSPICIOUS_BROWSER_BEHAVIOUR', msg);
+        }
+    }
 }

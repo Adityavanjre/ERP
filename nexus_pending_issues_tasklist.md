@@ -206,13 +206,13 @@ Based on the `nexus_full_system_audit.md`, the following issues require attentio
 - [ ] **INV-007: BOM Unit Conversions.** Implement a Unit Conversion Service for Manufacturing Work Orders to handle "Buy-in-Bulk, Consume-in-Small" scenarios (e.g., Kg to gram) to prevent stock valuation drift.
 - [x] **SEC-020: Hardcoded Admin Scrub.** Remove or parameterize the hardcoded credentials (`admin@klypso.agency` / `password123`) in `agency/server/createAdmin.js` and `createAdmin2.js` to prevent credential harvesting.
 - [ ] **IND-001: Industry Invariant Decoupling.** Refactor the vertical restrictions in `LogisticsService` and triage thresholds in `HealthcareService` (e.g., Potassium > 6.0) into a tenant-configurable "Governance Profile" to support multi-regional compliance.
-- [ ] **FIN-002: Universal Decimal Guardrail.** Replace all instances of `toNumber()` and `Number()` used for arithmetic in `HealthcareService.generateInsuranceClaimInvoice` and `LogisticsService.logFuel` with direct `Decimal` arithmetic to prevent floating-point inaccuracies in multi-million dollar transactions.
+- [x] **FIN-002: Universal Decimal Guardrail.** Replace all instances of `toNumber()` and `Number()` used for arithmetic in `HealthcareService.generateInsuranceClaimInvoice` and `LogisticsService.logFuel` with direct `Decimal` arithmetic to prevent floating-point inaccuracies in multi-million dollar transactions.
 - [x] **SEC-021: Session Invalidation (Token Versioning).** Enabled `tokenVersion` check in `UsersService` to force immediate session termination on role changes.
 - [x] **AUDIT-011: Forensic Movement Logging.** Inject `StockMovement` creation into `InventoryService.deductStock`. Currently, atomic deductions update the balance but fail to create the movement trail, which will cause a "Traceability Gap" in the `SystemAuditService` health check.
 - [x] **MIG-004: Universal Traceability Chain.** Updated Healthcare and Logistics services to propagate `correlationId` from `TraceService` to all mutation records.
 
 ### �📐 Final Wiring & Business-Rule Audit
-- [ ] **REF-003: Verify Kernel Module Wiring.** Explicitly verify that `OrmService` and `WorkflowService` are correctly registered in `SystemModule` (identified as a wiring discrepancy in Project Map Section 40).
+- [x] **REF-003: Verify Kernel Module Wiring.** Explicitly verify that `OrmService` and `WorkflowService` are correctly registered in `SystemModule` (identified as a wiring discrepancy in Project Map Section 40).
 - [ ] **MON-002: Security Logic Integration.** Connect the `auth/security-logs` (client-side telemetry) to the `AnomalyAlertService` to trigger real-time, server-side alerts for suspicious browser behavior (e.g., dev-tools opened, rapid session flapping).
 - [ ] **GOV-003: 7-Year Archival Policy.** Verify that the "Suspension" vs "Deletion" logic for tenants satisfies the 7-year statutory audit requirement mentioned in API Inventory Section 16.3.
 - [ ] **SEC-016: Razorpay Webhook Hardening.** Decide if moving from manual `crypto` signature verification to the official `razorpay` SDK is necessary for long-term security maintenance (Inventory Section 14).

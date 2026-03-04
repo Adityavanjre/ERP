@@ -25,6 +25,7 @@ import { Throttle } from '@nestjs/throttler';
 import { SecurityStorageService } from '../common/services/security-storage.service';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
+import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 
 @Module('auth')
 @Controller('auth')
@@ -32,6 +33,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private security: SecurityStorageService,
+    private anomalyAlert: AnomalyAlertService,
   ) { }
 
   @HttpCode(HttpStatus.OK)
@@ -126,11 +128,34 @@ export class AuthController {
   @Post('security-logs')
   @Roles(Role.Owner)
   async getSecurityLogs(@Request() req: any) {
-    // Only allow for tenant-scoped tokens
     if (!req.user.tenantId) {
       throw new ForbiddenException('A company context is required to view security logs.');
     }
     return this.authService.getTenantSecurityLogs(req.user.sub, req.user.tenantId);
+  }
+
+  // MON-002: Client-side Browser Telemetry Ingestion
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @AllowUnboarded()
+  @AllowIdentity()
+  @Post('client-telemetry')
+  async reportClientTelemetry(
+    @Request() req: any,
+    @Body('eventType') eventType: string,
+    @Body('details') details: Record<string, unknown> = {},
+  ) {
+    if (!eventType) return { received: false, reason: 'eventType is required' };
+    this.anomalyAlert
+      .reportClientTelemetry(
+        req.user.sub,
+        req.user.tenantId || 'unknown',
+        eventType,
+        details,
+        req.ip || req.get('X-Forwarded-For') || 'unknown',
+      )
+      .catch(() => void 0);
+    return { received: true };
   }
 
   @HttpCode(HttpStatus.OK)
