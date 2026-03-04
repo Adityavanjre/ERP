@@ -3,24 +3,18 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { WifiOff } from 'lucide-react-native';
 import { Theme } from '../constants/theme';
 
+import NetInfo from '@react-native-community/netinfo';
+
 const ConnectivityBanner = () => {
     const [isOffline, setIsOffline] = useState(false);
 
     useEffect(() => {
-        // Simple heartbeat to check connectivity
-        const checkConnectivity = async () => {
-            try {
-                const response = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-                setIsOffline(!response.ok && response.type !== 'opaque');
-            } catch (e) {
-                setIsOffline(true);
-            }
-        };
+        // MOB-007: Replaced 5sec polling with passive NetInfo listener to save battery
+        const unsubscribe = NetInfo.addEventListener(state => {
+            setIsOffline(!(state.isConnected && state.isInternetReachable !== false));
+        });
 
-        const interval = setInterval(checkConnectivity, 5000);
-        checkConnectivity();
-
-        return () => clearInterval(interval);
+        return () => unsubscribe();
     }, []);
 
     if (!isOffline) return null;

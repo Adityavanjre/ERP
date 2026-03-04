@@ -34,7 +34,7 @@ export class HrController {
   // Departments
   @Post('departments')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   createDept(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.createDepartment(user.tenantId, dto);
   }
@@ -49,7 +49,7 @@ export class HrController {
   // Employees
   @Post('employees')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   createEmployee(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.createEmployee(user.tenantId, dto);
   }
@@ -63,7 +63,7 @@ export class HrController {
 
   @Post('import')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   importEmployees(@CurrentUser() user: any, @Body() body: any) {
     const csvContent = body.csv || body;
     return this.hrService.importEmployees(
@@ -90,7 +90,7 @@ export class HrController {
 
   @Patch('leaves/:id/status')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   @MobileAction('APPROVE_LEAVE')
   updateLeaveStatus(
     @CurrentUser() user: any,

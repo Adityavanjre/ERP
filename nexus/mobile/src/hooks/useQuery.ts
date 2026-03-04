@@ -15,8 +15,10 @@ export const useQuery = <T>(url: string) => {
             setLoading(false);
         } catch (err: any) {
             const isNetworkError = !err.response && err.message !== 'canceled';
-            if (isNetworkError && retryCount < 3) {
-                setTimeout(() => fetchData(retryCount + 1), 1000);
+            // QA-005: True Exponential Backoff + Jitter to protect API Gateway from retry storms
+            if (isNetworkError && retryCount < 4) {
+                const backoffDelay = Math.min(1000 * Math.pow(2, retryCount) + Math.random() * 500, 10000);
+                setTimeout(() => fetchData(retryCount + 1), backoffDelay);
             } else {
                 setError(err.response?.data?.message || err.message || 'Failed to fetch data');
                 setLoading(false);

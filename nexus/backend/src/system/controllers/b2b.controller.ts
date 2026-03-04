@@ -22,7 +22,7 @@ export class B2BController {
    * PERF-004: Universal Pagination.
    */
   @Get('invoices')
-  @Roles(Role.Owner)
+  @Roles(Role.Owner, Role.Customer)
   async getMyInvoices(
     @Req() req: any,
     @Query('page') page?: number,
@@ -51,7 +51,7 @@ export class B2BController {
    * PERF-004: Universal Pagination.
    */
   @Get('purchase-orders')
-  @Roles(Role.Owner)
+  @Roles(Role.Owner, Role.Supplier)
   async getMyPurchaseOrders(
     @Req() req: any,
     @Query('page') page?: number,
@@ -79,7 +79,7 @@ export class B2BController {
    * PORTAL DASHBOARD: Get Summary Statistics
    */
   @Get('dashboard')
-  @Roles(Role.Owner)
+  @Roles(Role.Owner, Role.Customer, Role.Supplier)
   async getPortalStats(@Req() req: any) {
     const { tenantId, customerId, supplierId, role } = req.user;
 

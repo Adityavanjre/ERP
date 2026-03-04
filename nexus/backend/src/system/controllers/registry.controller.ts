@@ -6,7 +6,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('system/apps')
+@Controller(['system/apps', 'kernel/apps'])
 export class RegistryController {
   constructor(private readonly registryService: RegistryService) { }
 

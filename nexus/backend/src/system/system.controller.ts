@@ -72,7 +72,7 @@ export class SystemController {
     return this.audit.getAuditLogs(
       req.user.tenantId,
       Number(page) || 1,
-      Number(limit) || 50,
+      Number(limit) || 200,
     );
   }
 

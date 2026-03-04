@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
   GoneException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -27,6 +28,8 @@ import { validateGSTIN } from '../common/utils/gst-validation.util';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -184,7 +187,7 @@ export class AuthService {
             details: { email: dto.email, tenant: dto.tenantName, industry: tenant.type },
           });
         } catch (logErr) {
-          console.error('[AUTH_REGISTER_WARN] Telemetry logging failed, continuing anyway:', logErr);
+          this.logger.warn('[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' + (logErr as any)?.message);
         }
 
         return user;
@@ -205,7 +208,7 @@ export class AuthService {
       // Without this the default is 'MOBILE' and the user would hit mobile-only restrictions.
       return this.generateAuthResponse(userWithMemberships!, false, 'WEB');
     } catch (err: any) {
-      console.error('[AUTH_REGISTER_ERROR]', err);
+      this.logger.error('[AUTH_REGISTER] Registration failed: ' + err?.message, err?.stack);
       throw err;
     }
   }
@@ -702,12 +705,22 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { memberships: true }
     });
 
     const SAFE_RESPONSE = { message: 'If an account exists with this email, a reset link has been sent.' };
 
-    if (!user || user.memberships.length === 0) {
+    // BUG-FIX: Previously silently returned SAFE_RESPONSE for users with no memberships.
+    // A user SHOULD be able to reset their password even if they haven't created a workspace yet.
+    // Only skip if the user does not exist at all, or if they are a Google/social-auth user
+    // (they have no password to reset).
+    if (!user) {
+      await conditionalWait();
+      return SAFE_RESPONSE;
+    }
+
+    if (user.authProvider !== 'Email' || !user.passwordHash) {
+      // Social auth users cannot reset a password they never set.
+      // We still return the safe response to avoid revealing which auth provider they used.
       await conditionalWait();
       return SAFE_RESPONSE;
     }
@@ -724,7 +737,17 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName ?? '');
+    try {
+      await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName ?? '');
+    } catch (mailErr: any) {
+      // Fatal mail error — log it loudly, but never reveal to the caller.
+      // The token is already written to the DB; the user can try again.
+      this.logging.log({
+        action: 'PASSWORD_RESET_EMAIL_FAILED',
+        resource: 'MailService',
+        details: { email: user.email, error: mailErr?.message },
+      });
+    }
 
     await conditionalWait();
     return SAFE_RESPONSE;
@@ -773,6 +796,36 @@ export class AuthService {
     });
 
     return { success: true, message: 'All active sessions have been invalidated.' };
+  }
+
+  // MOB-008 / GET /auth/me
+  // Returns a sanitized user profile from the database.
+  // Used by mobile AuthContext.loginWithToken() after TOTP verification to hydrate the session.
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { memberships: { include: { tenant: true } } },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl,
+      mfaEnabled: !!(user as any).mfaEnabled,
+      isSuperAdmin: !!user.isSuperAdmin,
+      tenants: user.memberships.map((m: any) => ({
+        id: m.tenant.id,
+        name: m.tenant.name,
+        slug: m.tenant.slug,
+        role: m.role,
+        isOnboarded: m.tenant.isOnboarded,
+      })),
+    };
   }
 
 
@@ -952,5 +1005,23 @@ export class AuthService {
         lockoutUntil: null,
       } as any,
     });
+  }
+
+  async updatePushToken(userId: string, token: string) {
+    if (!token) return { success: false, message: 'Token is required' };
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { pushToken: token },
+    });
+
+    await this.logging.log({
+      userId,
+      action: 'PUSH_TOKEN_REGISTERED',
+      resource: 'Identity',
+      details: { token: token.slice(0, 10) + '...' },
+    });
+
+    return { success: true };
   }
 }

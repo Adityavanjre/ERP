@@ -13,13 +13,16 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { LogIn, ShieldCheck } from 'lucide-react-native';
 import { Theme } from '../constants/theme';
+import MfaVerifyScreen from './MfaVerifyScreen';
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const [mfaRequired, setMfaRequired] = useState(false);
+    const [mfaSessionToken, setMfaSessionToken] = useState('');
+    const { login, loginWithToken } = useAuth();
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -30,13 +33,35 @@ const LoginScreen = () => {
         setLoading(true);
         setError('');
         try {
-            await login(email, password);
+            const result = await login(email, password);
+            // MOB-008: If server requires MFA, pivot to the TOTP screen
+            if (result?.mfaRequired && result?.mfaSessionToken) {
+                setMfaSessionToken(result.mfaSessionToken);
+                setMfaRequired(true);
+            }
         } catch (e: any) {
             setError(e.response?.data?.message || 'Login failed. Please try again.');
         } finally {
             setLoading(false);
         }
     };
+
+    // MOB-008: MFA challenge step — shown instead of regular login form
+    if (mfaRequired) {
+        return (
+            <MfaVerifyScreen
+                mfaSessionToken={mfaSessionToken}
+                onSuccess={(accessToken) => {
+                    // loginWithToken stores the final JWT and navigates to the app
+                    loginWithToken(accessToken);
+                }}
+                onCancel={() => {
+                    setMfaRequired(false);
+                    setMfaSessionToken('');
+                }}
+            />
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>

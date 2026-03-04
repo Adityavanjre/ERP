@@ -10,10 +10,11 @@ import {
     Alert,
     Modal,
 } from 'react-native';
-import { ShoppingCart, Plus, Trash2, ShieldAlert, CheckCircle2, User, ChevronRight, WifiOff } from 'lucide-react-native';
+import { ShoppingCart, Plus, Trash2, ShieldAlert, CheckCircle2, User, ChevronRight, WifiOff, History } from 'lucide-react-native';
 import { Theme } from '../constants/theme';
 import client from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { DraftService } from '../services/DraftService';
 
 interface Product {
     id: string;
@@ -45,6 +46,7 @@ export const CreateSalesOrderScreen = ({ onBack }: { onBack: () => void }) => {
 
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
     const [items, setItems] = useState<OrderItem[]>([]);
+    const [hasRestored, setHasRestored] = useState(false);
 
     // Local state for adding a new item
     const [newProductId, setNewProductId] = useState('');
@@ -68,7 +70,45 @@ export const CreateSalesOrderScreen = ({ onBack }: { onBack: () => void }) => {
 
     useEffect(() => {
         fetchInitialData();
+        checkForDraft();
     }, []);
+
+    // MOB-004: Auto-sync progress to SecureStore
+    useEffect(() => {
+        if (hasRestored && (items.length > 0 || selectedCustomerId)) {
+            DraftService.saveSalesOrderDraft({ selectedCustomerId, items });
+        }
+    }, [items, selectedCustomerId, hasRestored]);
+
+    const checkForDraft = async () => {
+        const draft = await DraftService.getSalesOrderDraft();
+        if (draft && (draft.items.length > 0 || draft.selectedCustomerId)) {
+            Alert.alert(
+                'Recover Unsaved Draft',
+                'We found a sales order draft you started earlier. Would you like to restore it?',
+                [
+                    {
+                        text: 'Discard',
+                        style: 'destructive',
+                        onPress: () => {
+                            DraftService.clearSalesOrderDraft();
+                            setHasRestored(true);
+                        }
+                    },
+                    {
+                        text: 'Restore Work',
+                        onPress: () => {
+                            setSelectedCustomerId(draft.selectedCustomerId);
+                            setItems(draft.items);
+                            setHasRestored(true);
+                        }
+                    }
+                ]
+            );
+        } else {
+            setHasRestored(true);
+        }
+    };
 
     const fetchInitialData = async () => {
         setLoading(true);
@@ -141,6 +181,9 @@ export const CreateSalesOrderScreen = ({ onBack }: { onBack: () => void }) => {
             setConfirmedOrderId(response.data.id || 'Draft');
             setShowConfirmation(true);
             setCanDismiss(false);
+
+            // MOB-004: Successful submission clears the persistent local draft
+            await DraftService.clearSalesOrderDraft();
 
             // Mandatory 2-second lock to eliminate "blind tapping"
             setTimeout(() => {

@@ -84,14 +84,25 @@ export class HealthcareService {
         const { patientId, diagnosis, prescription, labResults, notes } = data;
 
         // 100x Logic: Clinical Value Triage Engine
-        // Automatically flag records if lab results contain critical values
+        // IND-001: Dynamic Thresholds from Governance Profile
+        const gov = await this.prisma.governanceProfile.findUnique({ where: { tenantId } });
+
         let triageStatus = 'Normal';
         if (labResults && typeof labResults === 'object') {
             const results = labResults as any;
-            // Example thresholds: Potassium > 6.0 or Hb < 7.0 are critical
-            if (results.potassium > 6.0 || results.hemoglobin < 7.0 || results.glucose > 500) {
+            // Use configured values or system defaults
+            const thresholds = {
+                kCrit: gov?.criticalPotassium || 6.0,
+                hbCrit: gov?.criticalHemoglobin || 7.0,
+                glCrit: gov?.criticalGlucose || 500,
+                kWarn: gov?.warningPotassium || 5.2,
+                hbWarn: gov?.warningHemoglobin || 10.0,
+                glWarn: gov?.warningGlucose || 200
+            };
+
+            if (results.potassium > thresholds.kCrit || results.hemoglobin < thresholds.hbCrit || results.glucose > thresholds.glCrit) {
                 triageStatus = 'Critical';
-            } else if (results.potassium > 5.2 || results.hemoglobin < 10.0 || results.glucose > 200) {
+            } else if (results.potassium > thresholds.kWarn || results.hemoglobin < thresholds.hbWarn || results.glucose > thresholds.glWarn) {
                 triageStatus = 'Warning';
             }
         }

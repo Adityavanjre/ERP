@@ -69,7 +69,7 @@ export class AccountingController {
 
   @Post('accounts')
   @Roles(Role.Owner, Role.Manager, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_ACCOUNTS)
   createAccount(@Req() req: any, @Body() dto: any) {
     return this.accountingService.createAccount(req.user.tenantId, dto);
   }
@@ -308,14 +308,14 @@ export class AccountingController {
 
   @Post('setup/coa')
   @Roles(Role.Owner, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_ACCOUNTS)
   initializeAccounts(@Req() req: any) {
     return this.accountingService.initializeTenantAccounts(req.user.tenantId);
   }
 
   @Post('import/trial-balance')
   @Roles(Role.Owner, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_ACCOUNTS)
   importTrialBalance(@Req() req: any, @Body() body: any) {
     const csvContent = body.csv || body;
     return this.accountingService.importTrialBalance(
@@ -365,7 +365,7 @@ export class AccountingController {
 
   @Post('import/fixed-assets')
   @Roles(Role.Owner, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_ACCOUNTS)
   importFixedAssets(@Req() req: any, @Body() body: any) {
     const csvContent = body.csv || body;
     return this.accountingService.importFixedAssets(

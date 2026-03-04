@@ -185,7 +185,7 @@ export class SystemAuditService {
         return recs;
     }
 
-    async getAuditLogs(tenantId: string, page: number = 1, limit: number = 50) {
+    async getAuditLogs(tenantId: string, page: number = 1, limit: number = 200) {
         const skip = (page - 1) * limit;
         const [items, total] = await Promise.all([
             this.prisma.auditLog.findMany({

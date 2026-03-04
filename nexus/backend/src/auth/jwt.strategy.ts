@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { SecurityStorageService } from '../common/services/security-storage.service';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -17,10 +18,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.');
     }
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      // BUG-FIX: Previously only extracted from Bearer header.
+      // Web clients store the JWT in an httpOnly cookie (nexus_token) — not the Authorization header.
+      // This meant every authenticated web request after login returned 401.
+      // Now we check the cookie first, then fall back to the Bearer header (used by mobile/API clients).
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request: Request) => {
+          // 1. Cookie extraction for web browser clients
+          return request?.cookies?.['nexus_token'] ?? null;
+        },
+        // 2. Bearer token for mobile app and direct API clients
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
       algorithms: ['HS256'],
+      passReqToCallback: false,
       // @ts-ignore: passport-jwt passes unknown options to jsonwebtoken, which supports clockTolerance
       clockTolerance: 30, // 30-second tolerance for Render server clock skew
     } as any);
@@ -49,7 +62,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Session revoked due to password change. Please log in again.');
     }
 
-    // Pass the payload directly. 
+    // Pass the payload directly.
     // TenantMembershipGuard will verify membership if tenantId is present.
     return payload;
   }

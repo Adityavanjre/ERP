@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from './audit.service';
+import { CollaborationGateway } from '../gateways/collaboration.gateway';
 
 @Injectable()
 export class CollaborationService {
@@ -9,7 +10,8 @@ export class CollaborationService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) {}
+    private gateway: CollaborationGateway,
+  ) { }
 
   async getComments(tenantId: string, resourceType: string, resourceId: string) {
     return this.prisma.comment.findMany({
@@ -47,6 +49,9 @@ export class CollaborationService {
       resource: `${data.resourceType}:${data.resourceId}`,
       details: { commentId: comment.id, hasParent: !!data.parentId },
     });
+
+    // ARCH-002: Broadcast the new comment via WebSockets
+    this.gateway.broadcastComment(data.resourceType, data.resourceId, comment);
 
     return comment;
   }

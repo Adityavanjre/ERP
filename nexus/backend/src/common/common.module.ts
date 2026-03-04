@@ -1,6 +1,4 @@
 import { Module, Global } from '@nestjs/common';
-import { TerminusModule } from '@nestjs/terminus';
-import { HealthController } from './controllers/health.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuditInterceptor } from './interceptors/audit.interceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -11,8 +9,8 @@ import { SecurityStorageService } from './services/security-storage.service';
 
 @Global()
 @Module({
-  imports: [TerminusModule, PrismaModule],
-  controllers: [HealthController],
+  imports: [PrismaModule],
+  controllers: [],
   providers: [
     HttpCacheInterceptor,
     TraceService,

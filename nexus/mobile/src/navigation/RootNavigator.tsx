@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from '../auth/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import { Theme } from '../constants/theme';
 import { useGovernance, ERPModule } from '../hooks/useGovernance';
+import { NotificationService } from '../services/NotificationService';
 
 // Imported Screens
 import StockOverviewScreen from '@/screens/StockOverviewScreen';
@@ -20,6 +21,9 @@ const RootNavigator = () => {
     const { user, isLoading } = useAuth();
     const [currentScreen, setCurrentScreen] = useState('dashboard');
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+    // MOB-005: Initialize Deep Linking Listeners
+    NotificationService.setupDeepLinking(null);
 
     if (isLoading) {
         return (

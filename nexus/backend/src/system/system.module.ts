@@ -8,7 +8,6 @@ import { BillingService } from './services/billing.service';
 import { RegistryController } from './controllers/registry.controller';
 import { AiController } from './controllers/ai.controller';
 import { BillingController } from './controllers/billing.controller';
-import { HealthController } from './controllers/health.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SearchService } from './services/search.service';
@@ -32,15 +31,32 @@ import { StudioController } from './controllers/studio.controller';
 import { WorkflowService } from './services/workflow.service';
 import { WorkflowController } from './controllers/workflow.controller';
 import { ConfigModule } from '@nestjs/config';
+import { WebhookSecretRotationService } from './services/webhook-secret-rotation.service';
+
+import { JwtModule } from '@nestjs/jwt';
+import { CollaborationGateway } from './gateways/collaboration.gateway';
+import { BullModule } from '@nestjs/bullmq';
+import { QUEUE_WEBHOOK_DLQ, QUEUE_BULK_IMPORT, QUEUE_YEAR_CLOSE } from '../infrastructure/queue/queue.module';
 
 @Global()
 @Module({
-  imports: [PrismaModule, ConfigModule],
+  imports: [
+    PrismaModule,
+    ConfigModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1d' },
+    }),
+    BullModule.registerQueue(
+      { name: QUEUE_WEBHOOK_DLQ },
+      { name: QUEUE_BULK_IMPORT },
+      { name: QUEUE_YEAR_CLOSE },
+    ),
+  ],
   controllers: [
     RegistryController,
     AiController,
     BillingController,
-    HealthController,
     SystemController,
     SearchController,
     CollaborationController,
@@ -62,6 +78,7 @@ import { ConfigModule } from '@nestjs/config';
     ApiKeyService,
     ForecastingService,
     SaasAnalyticsService,
+    CollaborationGateway,
     PluginManager,
     MailService,
     CloudinaryService,
@@ -70,6 +87,7 @@ import { ConfigModule } from '@nestjs/config';
     AutomationWorkerService,
     OrmService,
     WorkflowService,
+    WebhookSecretRotationService,
   ],
   exports: [
     RegistryService,
@@ -86,6 +104,8 @@ import { ConfigModule } from '@nestjs/config';
     CloudinaryService,
     SystemAuditService,
     AnomalyAlertService,
+    CollaborationGateway,
+    WebhookSecretRotationService,
   ],
 })
 export class SystemModule { }

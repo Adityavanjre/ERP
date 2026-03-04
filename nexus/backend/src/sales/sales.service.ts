@@ -20,11 +20,11 @@ export class SalesService {
     const channel = user?.channel || 'WEB';
     const role = user?.role;
 
-    // Architecture Guide Enforcement:
-    // MOBILE: Create Sales Order -> Draft only for non-owners
-    // Backend enforces this regardless of client payload to prevent status spoofing.
+    // Architecture Guide Enforcement (GOV-004):
+    // MOBILE: Create Sales Order -> Draft only.
+    // Backend strictly enforces this for the MOBILE channel to ensure web-based finalization.
     let forceDraft = false;
-    if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
+    if (channel === 'MOBILE') {
       forceDraft = true;
     }
 

@@ -40,8 +40,33 @@ export class AnomalyAlertService {
         return cid ? `[CID: ${cid}] ` : '';
     }
 
-    private async dispatchAlert(subject: string, message: string) {
+    private async dispatchAlert(subject: string, message: string, severity: 'ERROR' | 'FATAL' = 'ERROR') {
         const adminEmail = this.config.get<string>('SYSTEM_ADMIN_EMAIL') || 'admin@klypso.in';
+
+        // 1. Permanent Audit Log Persistence (LOG-003)
+        await (this.prisma as any).auditLog.create({
+            data: {
+                action: 'ANOMALY_ALERT',
+                resource: 'System',
+                details: { subject, message, severity },
+                channel: 'SYSTEM_DAEMON',
+                correlationId: this.traceService.getCorrelationId()
+            }
+        }).catch((e: any) => this.logger.warn('Failed to persist anomaly to AuditLog:', e.message));
+
+        // 2. Sentry Drain (LOG-003)
+        if (process.env.SENTRY_DSN) {
+            import('@sentry/node').then(Sentry => {
+                const messageWithCid = `${this.getContext()}${subject}: ${message}`;
+                if (severity === 'FATAL') {
+                    Sentry.captureMessage(messageWithCid, 'fatal');
+                } else {
+                    Sentry.captureMessage(messageWithCid, 'error');
+                }
+            }).catch(() => void 0);
+        }
+
+        // 3. High-Priority Email Notification
         await this.mail.sendEmail(
             adminEmail,
             `Nexus Alert: ${subject}`,
@@ -102,7 +127,7 @@ export class AnomalyAlertService {
     async alertAuditChainTamper(tenantId: string, entryId: string) {
         const msg = `AUDIT_CHAIN_TAMPER DETECTED: Tenant ${tenantId}, AuditLog entry ${entryId} has a hash mismatch. Forensic corruption possible.`;
         this.logger.error(`${this.getContext()}${msg}`);
-        await this.dispatchAlert('AUDIT_LOG_TAMPERING_DETECTED', msg);
+        await this.dispatchAlert('AUDIT_LOG_TAMPERING_DETECTED', msg, 'FATAL');
     }
 
     /**

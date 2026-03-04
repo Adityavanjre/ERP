@@ -6,7 +6,7 @@ import { catchError, timeout } from 'rxjs/operators';
 export class TimeoutInterceptor implements NestInterceptor {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         return next.handle().pipe(
-            timeout(15000), // Strict 15-second cutoff
+            timeout(30000), // Reconciled timeout (REF-002) - 30-second cutoff for heavy exports
             catchError(err => {
                 if (err instanceof TimeoutError) {
                     return throwError(() => new RequestTimeoutException('Resiliency Error: The request took too long to process and was terminated.'));

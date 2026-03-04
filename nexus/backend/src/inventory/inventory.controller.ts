@@ -172,7 +172,7 @@ export class InventoryController {
 
   @Delete('products/:id')
   @Roles(Role.Owner)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_INVENTORY)
   remove(@Req() req: any, @Param('id') id: string) {
     return this.inventoryService.deleteProduct(req.user.tenantId, id);
   }

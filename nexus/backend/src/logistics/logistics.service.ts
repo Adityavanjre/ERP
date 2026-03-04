@@ -15,12 +15,16 @@ export class LogisticsService {
 
     // --- Fleet Management ---
     async registerVehicle(tenantId: string, data: any) {
-        // --- INDUSTRY INVARIANT: LOGISTICS SCOPE ---
-        const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+        // --- INDUSTRY INVARIANT: LOGISTICS SCOPE (IND-001) ---
+        const tenant = await this.prisma.tenant.findUnique({
+            where: { id: tenantId },
+            include: { governanceProfile: true }
+        });
         const industry = tenant?.industry || tenant?.type;
+        const allowedIndustries = tenant?.governanceProfile?.allowedVehicleIndustries || ['Logistics', 'Manufacturing', 'Construction'];
 
-        if (industry !== 'Logistics' && industry !== 'Manufacturing' && industry !== 'Construction') {
-            throw new BadRequestException('Vertical Compliance Violation: Vehicle registration is restricted to Logistics, Manufacturing, or Construction verticals.');
+        if (!allowedIndustries.includes(industry as any)) {
+            throw new BadRequestException(`Vertical Compliance Violation: Vehicle registration is restricted to ${allowedIndustries.join(', ')} verticals.`);
         }
 
         // --- SAFETY INVARIANT: REGISTRATION FORMAT ---
@@ -134,7 +138,7 @@ export class LogisticsService {
         const fuelCost = fuelLogs.reduce((acc: Decimal, f: any) => acc.add(f.totalCost), new Decimal(0));
         const actualLiters = fuelLogs.reduce((acc: Decimal, f: any) => acc.add(f.liters), new Decimal(0));
 
-        // 100x Logic: Fuel Benchmarking
+        // 100x Logic: Fuel Benchmarking (IND-001)
         const benchmark = await (this.prisma as any).routeBenchmark.findUnique({
             where: {
                 tenantId_origin_destination: {
@@ -145,8 +149,11 @@ export class LogisticsService {
             },
         });
 
-        const fuelEfficiencyAlert = benchmark && actualLiters.greaterThan(new Decimal(benchmark.avgFuelLiters).mul(1.15))
-            ? 'HIGH: Consumption exceeds benchmark by >15%. Potential fuel theft or engine inefficiency.'
+        const gov = await (this.prisma as any).governanceProfile.findUnique({ where: { tenantId } });
+        const threshold = gov?.fuelEfficiencyThreshold || 1.15;
+
+        const fuelEfficiencyAlert = benchmark && actualLiters.greaterThan(new Decimal(benchmark.avgFuelLiters).mul(threshold))
+            ? `HIGH: Consumption exceeds benchmark by >${Math.round((threshold - 1) * 100)}%. Potential fuel theft or engine inefficiency.`
             : 'Normal: Consumption within benchmark parameters.';
 
         // Allocated Maintenance Cost (Simplified: Total Maintenance / Total Trips)

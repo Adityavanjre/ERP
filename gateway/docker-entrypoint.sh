@@ -10,6 +10,9 @@ server {
 
     resolver 8.8.8.8 valid=30s;
 
+    # GATE-001: Enforce Strict-Transport-Security (HSTS)
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
     # proxy_redirect is handled per-location below
 
     # -- ERP API: /portal/api/ -> backend --
@@ -26,6 +29,12 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        
+        # ARCH-002: WebSocket Upgrade Headers for CollaborationGateway
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
         proxy_read_timeout 120s;
         proxy_connect_timeout 60s;
         # Rewrite any Location headers from the backend (e.g. 301 trailing-slash redirects)
@@ -61,7 +70,21 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
+    # -- Agency Admin: /agency/ --
+    location ^~ /agency/ {
+        set \$agencyadmin "https://${AGENCY_FRONTEND_HOST}";
+        rewrite ^/agency/(.*)$ /\$1 break;
+        proxy_pass \$agencyadmin;
+        proxy_ssl_server_name on;
+        proxy_ssl_verify off;
+        proxy_set_header Host "${AGENCY_FRONTEND_HOST}";
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
     # -- Agency Website: / (root) --
+
     location / {
         set \$agencyfe "https://${AGENCY_VIEWER_HOST}";
         proxy_pass \$agencyfe;

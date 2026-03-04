@@ -5,9 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  // DIRECT_URL bypasses PgBouncer for migrations and schema introspection.
-  // Without this, migrations run through the pooler and can hit connection
-  // limit issues or fail on SET/session-level commands.
   directUrl = env("DIRECT_URL")
 }
 
@@ -32,12 +29,14 @@ model User {
   failedLoginAttempts Int       @default(0)
   lockoutUntil        DateTime?
   tokenVersion        Int       @default(1)
+  pushToken           String? // MOB-005: Device token for push notifications
 
   auditLogs             AuditLog[]
   memberships           TenantUser[]
   productsCreated       Product[]      @relation("ProductCreator")
   productsUpdated       Product[]      @relation("ProductUpdater")
   journalEntriesCreated JournalEntry[] @relation("JournalCreator")
+  mobileDevices         MobileDevice[]
 }
 
 model Tenant {
@@ -63,6 +62,10 @@ model Tenant {
   gracePeriodEndsAt  DateTime? // 14-day payment overdue window
   suspendedAt        DateTime? // Timestamp of suspension
   suspendReason      String? // non-payment | abuse | admin
+
+  // RES-002: Background Worker Retries
+  downgradeRetryCount  Int       @default(0)
+  lastDowngradeRetryAt DateTime?
 
   // Razorpay Integration (SUB-002)
   razorpayCustomerId     String?
@@ -98,6 +101,8 @@ model Tenant {
   stockMovements          StockMovement[]
   fixedAssets             FixedAsset[]
   comments                Comment[]
+  governanceProfile       GovernanceProfile?
+  billingEvents           BillingEvent[]
   apiKeys                 ApiKey[]
   creditNotes             CreditNote[]
   debitNotes              DebitNote[]
@@ -110,6 +115,7 @@ model Tenant {
   cnItems                 CreditNoteItem[]
   dnItems                 DebitNoteItem[]
   warehousePrices         WarehousePrice[]
+  unitConversions         UnitConversion[]
   tdsRules                TdsRule[]
   tdsLedgerMappings       TdsLedgerMapping[]
   tdsTransactions         TdsTransaction[]
@@ -143,6 +149,7 @@ model Tenant {
   bankStatementLines  BankStatementLine[]
   bankReconciliations BankReconciliation[]
   hsnMasters          HsnMaster[]
+  mobileDevices       MobileDevice[]
 }
 
 model PeriodLock {
@@ -202,6 +209,7 @@ model Product {
   barcode            String?
   skuAlias           String?
   shelfLifeDays      Int? // Retail Depth: Aging/Markdown
+  baseUnit           String              @default("pcs") // INV-007
   bomAsMaterial      BOMItem[]
   bomAsFinished      BillOfMaterial[]
   invoiceItems       InvoiceItem[]
@@ -1051,6 +1059,7 @@ model BillingEvent {
   performedBy String? // userId or 'system'
   metadata    Json?
   createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId, createdAt])
   @@index([event])
@@ -1471,15 +1480,15 @@ model Patient {
 }
 
 model Appointment {
-  id         String   @id @default(uuid())
-  tenantId   String
-  patientId  String
-  employeeId String? // Doctor/Consultant
-  date       DateTime
-  startTime  String
-  endTime    String?
-  status     String   @default("Scheduled") // Scheduled, Arrived, In-Progress, Completed, Cancelled
-  notes      String?
+  id            String   @id @default(uuid())
+  tenantId      String
+  patientId     String
+  employeeId    String? // Doctor/Consultant
+  date          DateTime
+  startTime     String
+  endTime       String?
+  status        String   @default("Scheduled") // Scheduled, Arrived, In-Progress, Completed, Cancelled
+  notes         String?
   correlationId String?
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id])
@@ -1488,15 +1497,15 @@ model Appointment {
 }
 
 model MedicalRecord {
-  id           String   @id @default(uuid())
-  tenantId     String
-  patientId    String
-  date         DateTime @default(now())
-  diagnosis    String
-  prescription Json? // List of medicines, dosages
-  labResults   Json?
-  notes        String?
-  triageStatus String   @default("Normal") // Normal, Warning, Critical
+  id            String   @id @default(uuid())
+  tenantId      String
+  patientId     String
+  date          DateTime @default(now())
+  diagnosis     String
+  prescription  Json? // List of medicines, dosages
+  labResults    Json?
+  notes         String?
+  triageStatus  String   @default("Normal") // Normal, Warning, Critical
   correlationId String?
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
@@ -1517,11 +1526,11 @@ model PharmacyBatch {
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 
+  correlationId String?
+
   @@unique([tenantId, productId, batchNumber])
   @@index([expiryDate])
   @@index([correlationId])
-
-  correlationId String?
 }
 
 // --- Construction / Real Estate Vertical ---
@@ -1607,10 +1616,10 @@ model Vehicle {
   status         String  @default("Active")
   lastCurrentKM  Int     @default(0)
 
-  tenant      Tenant                @relation(fields: [tenantId], references: [id])
-  fuelLogs    FuelLog[]
-  routeLogs   RouteLog[]
-  maintenance MaintenanceSchedule[]
+  tenant        Tenant                @relation(fields: [tenantId], references: [id])
+  fuelLogs      FuelLog[]
+  routeLogs     RouteLog[]
+  maintenance   MaintenanceSchedule[]
   correlationId String?
 
   @@index([correlationId])
@@ -1627,24 +1636,24 @@ model FuelLog {
   odometerReading Int
   journalEntryId  String?  @unique // Sync to GL
 
-  tenant       Tenant        @relation(fields: [tenantId], references: [id])
-  vehicle      Vehicle       @relation(fields: [vehicleId], references: [id])
-  journalEntry JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  vehicle       Vehicle       @relation(fields: [vehicleId], references: [id])
+  journalEntry  JournalEntry? @relation(fields: [journalEntryId], references: [id])
   correlationId String?
 
   @@index([correlationId])
 }
 
 model RouteLog {
-  id           String    @id @default(uuid())
-  tenantId     String
-  vehicleId    String
-  lrNumber     String    @unique // Lorry Receipt
-  origin       String
-  destination  String
-  dispatchDate DateTime
-  arrivalDate  DateTime?
-  status       String    @default("Dispatched")
+  id            String    @id @default(uuid())
+  tenantId      String
+  vehicleId     String
+  lrNumber      String    @unique // Lorry Receipt
+  origin        String
+  destination   String
+  dispatchDate  DateTime
+  arrivalDate   DateTime?
+  status        String    @default("Dispatched")
   correlationId String?
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
@@ -1763,6 +1772,7 @@ model KYCRecord {
   loanId             String    @unique
   documentType       String // Aadhar, PAN, VoterID
   documentNumber     String
+  documentUrl        String? // COMP-001: Visual Evidence (Cloudinary/S3)
   verificationStatus String    @default("Pending")
   verifiedAt         DateTime?
 
@@ -1851,15 +1861,123 @@ model RevokedToken {
 }
 
 model IdempotencyKey {
-  id           String   @id @default(uuid())
-  tenantId     String
-  key          String
-  status       String   // "PROCESSING" | "COMPLETED"
-  response     Json?
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(uuid())
+  tenantId  String
+  key       String
+  status    String // "PROCESSING" | "COMPLETED"
+  response  Json?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, key])
   @@index([expiresAt])
+}
+
+// --- Governance Profile (IND-001) ---
+
+model GovernanceProfile {
+  id       String @id @default(uuid())
+  tenantId String @unique
+
+  // Healthcare Triage Thresholds
+  criticalPotassium  Float @default(6.0)
+  criticalHemoglobin Float @default(7.0)
+  criticalGlucose    Float @default(500.0)
+  warningPotassium   Float @default(5.2)
+  warningHemoglobin  Float @default(10.0)
+  warningGlucose     Float @default(200.0)
+
+  // Logistics Rules
+  allowedVehicleIndustries String[] @default(["Logistics", "Manufacturing", "Construction"])
+  fuelEfficiencyThreshold  Float    @default(1.15) // 15% above benchmark
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// --- Unit Conversions (INV-007) ---
+
+model UnitConversion {
+  id        String  @id @default(uuid())
+  tenantId  String
+  fromUnit  String
+  toUnit    String
+  factor    Float
+  productId String? // Optional product-specific override
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, fromUnit, toUnit, productId])
+}
+
+// GOV-002: MobileDevice registration for STRICT mode device tracking
+// Resolves the schema drift identified in Project Map Section 50
+model MobileDevice {
+  id           String   @id @default(uuid())
+  tenantId     String
+  userId       String
+  deviceId     String // Platform-specific hardware ID
+  deviceName   String? // e.g. "iPhone 15 Pro"
+  platform     String // 'ios' | 'android'
+  pushToken    String? // Expo/FCM push notification token
+  isActive     Boolean  @default(true)
+  lastSeenAt   DateTime @default(now())
+  registeredAt DateTime @default(now())
+  strictMode   Boolean  @default(false) // STRICT = require MFA on every session
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, deviceId])
+  @@index([userId])
+}
+
+// SEC-017: Webhook Secret Rotation with dual-secret grace window
+model WebhookSecretRotation {
+  id               String    @id @default(uuid())
+  provider         String // e.g. 'Razorpay', 'Resend'
+  secret           String // Encrypted at rest in production
+  status           String    @default("Active") // Active | Grace | Retired
+  rotatedBy        String
+  rotatedAt        DateTime  @default(now())
+  graceExpiresAt   DateTime?
+  retiredAt        DateTime?
+  previousSecretId String?
+
+  @@index([provider, status])
+}
+
+// OPS-004: Persistent Dead Letter store for exhausted webhook retries
+model WebhookDeadLetter {
+  id                String    @id @default(uuid())
+  provider          String
+  event             String
+  payload           Json
+  tenantId          String?
+  originalTimestamp DateTime
+  jobId             String
+  totalAttempts     Int
+  resolvedAt        DateTime? // Set when manually resolved by an operator
+  createdAt         DateTime  @default(now())
+
+  @@index([provider, resolvedAt])
+}
+
+// ARCH-001: Background job tracking for BullMQ processors
+model BackgroundJob {
+  id             String    @id @default(uuid())
+  idempotencyKey String    @unique
+  tenantId       String
+  userId         String
+  type           String // e.g. BULK_IMPORT_INVOICES, YEAR_CLOSE
+  status         String    @default("Pending") // Pending | Processing | Completed | Failed
+  startedAt      DateTime?
+  completedAt    DateTime?
+  failedAt       DateTime?
+  attempt        Int       @default(0)
+  error          String?
+  resultSummary  Json?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId, type, status])
 }

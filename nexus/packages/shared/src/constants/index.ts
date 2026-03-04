@@ -45,6 +45,11 @@ export enum Permission {
     // Advanced
     ACCESS_HEALTH_CORE = 'ACCESS_HEALTH_CORE',
     MANAGE_USERS = 'MANAGE_USERS',
+    MANAGE_ACCOUNTS = 'MANAGE_ACCOUNTS',
+    MANAGE_INVENTORY = 'MANAGE_INVENTORY',
+    MANAGE_CUSTOMERS = 'MANAGE_CUSTOMERS',
+    MANAGE_SUPPLIERS = 'MANAGE_SUPPLIERS',
+    MANAGE_EMPLOYEES = 'MANAGE_EMPLOYEES',
 }
 
 export type AccessChannel = 'WEB' | 'MOBILE' | 'API';
@@ -178,6 +183,11 @@ export const RolePermissions: Record<string, Permission[]> = {
         Permission.VIEW_PRODUCTS,
         Permission.VIEW_REPORTS,
         Permission.EXPORT_TALLY,
+        Permission.MANAGE_ACCOUNTS,
+        Permission.MANAGE_INVENTORY,
+        Permission.MANAGE_CUSTOMERS,
+        Permission.MANAGE_SUPPLIERS,
+        Permission.MANAGE_EMPLOYEES,
     ],
     [Role.Biller]: [
         Permission.CREATE_INVOICE,
@@ -190,8 +200,15 @@ export const RolePermissions: Record<string, Permission[]> = {
         Permission.LOCK_MONTH,
         Permission.EXPORT_TALLY,
         Permission.VIEW_PRODUCTS,
+        Permission.MANAGE_ACCOUNTS,
+        Permission.MANAGE_INVENTORY,
     ],
-    [Role.CA]: [Permission.VIEW_REPORTS, Permission.VIEW_PRODUCTS],
+    [Role.CA]: [
+        Permission.VIEW_REPORTS,
+        Permission.VIEW_PRODUCTS,
+        Permission.MANAGE_ACCOUNTS,
+        Permission.MANAGE_EMPLOYEES,
+    ],
     [Role.Customer]: [],
     [Role.Supplier]: [],
 };

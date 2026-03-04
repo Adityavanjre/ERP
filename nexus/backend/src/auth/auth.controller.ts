@@ -158,6 +158,15 @@ export class AuthController {
     return { received: true };
   }
 
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @AllowIdentity()
+  @AllowUnboarded()
+  @Post('push-token')
+  async updatePushToken(@Request() req: any, @Body('token') token: string) {
+    return this.authService.updatePushToken(req.user.sub, token);
+  }
+
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
@@ -182,6 +191,17 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() req: any) {
     return req.user;
+  }
+
+  // MOB-008: GET /auth/me — returns full DB-backed user profile.
+  // Called by mobile AuthContext.loginWithToken() after TOTP verification
+  // to hydrate the user object without doing a full re-login.
+  @UseGuards(JwtAuthGuard)
+  @AllowIdentity()
+  @AllowUnboarded()
+  @Get('me')
+  async getMe(@Request() req: any) {
+    return this.authService.getMe(req.user.sub);
   }
 
   @HttpCode(HttpStatus.OK)

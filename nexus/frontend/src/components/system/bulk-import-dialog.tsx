@@ -29,6 +29,12 @@ export function BulkImportDialog({
 }) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [importResults, setImportResults] = useState<{
+        total: number;
+        imported: number;
+        failed: number;
+        errors: string[];
+    } | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [csvContent, setCsvContent] = useState<string>("");
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +49,7 @@ export function BulkImportDialog({
         }
 
         setFile(selected);
+        setImportResults(null); // Clear previous results
         const reader = new FileReader();
         reader.onload = (event) => {
             const text = event.target?.result as string;
@@ -59,16 +66,29 @@ export function BulkImportDialog({
 
         try {
             setLoading(true);
-            // Backend expects the raw CSV string or { csv: "..." }
-            await api.post(endpoint, { csv: csvContent });
+            setImportResults(null);
 
-            toast.success("Import successful");
-            setOpen(false);
-            setFile(null);
-            setCsvContent("");
-            onSuccess();
+            const response = await api.post(endpoint, { csv: csvContent });
+            const results = response.data;
+
+            if (results.errors && results.errors.length > 0) {
+                setImportResults(results);
+                toast.warning(`Imported ${results.imported} rows, but ${results.failed} rows failed.`);
+            } else {
+                toast.success("Import successful");
+                setOpen(false);
+                setFile(null);
+                setCsvContent("");
+                onSuccess();
+            }
         } catch (err: any) {
-            toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to import data");
+            const errorData = err.response?.data;
+            if (errorData?.errors && Array.isArray(errorData.errors)) {
+                setImportResults(errorData);
+                toast.error(`Import failed with ${errorData.errors.length} errors.`);
+            } else {
+                toast.error(errorData?.message || errorData?.error || "Failed to import data");
+            }
             console.error(err);
         } finally {
             setLoading(false);
@@ -125,12 +145,44 @@ export function BulkImportDialog({
                         )}
                     </div>
 
-                    <div className="w-full mt-4 bg-amber-50 rounded-xl p-4 border border-amber-200 flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                        <div className="text-xs text-amber-900 font-medium">
-                            Make sure your CSV headers exactly match the template format. Invalid rows will be skipped.
+                    {importResults && (
+                        <div className="w-full mt-4 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                            <div className="p-3 border-b border-slate-200 bg-slate-100/50 flex justify-between items-center">
+                                <span className="text-xs font-bold text-slate-700">Import Summary</span>
+                                <div className="flex gap-2">
+                                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
+                                        {importResults.imported} OK
+                                    </span>
+                                    <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
+                                        {importResults.failed} Failed
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="max-h-[150px] overflow-y-auto p-3">
+                                {importResults.errors.length > 0 ? (
+                                    <div className="space-y-1.5">
+                                        {importResults.errors.map((error, idx) => (
+                                            <div key={idx} className="flex gap-2 text-[10px] items-start">
+                                                <AlertCircle className="h-3 w-3 text-red-500 shrink-0 mt-0.5" />
+                                                <span className="text-red-700 font-medium leading-tight">{error}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-[10px] text-slate-500 italic">No errors reported.</p>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {!importResults && (
+                        <div className="w-full mt-4 bg-amber-50 rounded-xl p-4 border border-amber-200 flex items-start gap-3">
+                            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                            <div className="text-xs text-amber-900 font-medium">
+                                Make sure your CSV headers exactly match the template format. Invalid rows will be skipped.
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <DialogFooter>

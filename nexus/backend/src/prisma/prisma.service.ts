@@ -151,6 +151,12 @@ export class PrismaService
       query: {
         $allModels: {
           async $allOperations({ model, operation, args, query }: any) {
+            // PERF-010: Structural Depth Protection (Max 3 levels)
+            if (args && (args.include || args.select)) {
+              if (calculateDepth(args) > 3) {
+                throw new Error(`SECURITY_LEVEL_CRITICAL: Deep-fetch depth limit (3) exceeded on ${model}. Prisma operation blocked to prevent memory leaks.`);
+              }
+            }
             const tenantId = context.getTenantId();
             // These models are global (cross-tenant by design) — skip isolation
             const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
@@ -244,4 +250,35 @@ export class PrismaService
       },
     });
   }
+}
+
+// PERF-010: Structural Depth Limiter helper
+// Recursively calculates the nesting depth of 'include' and 'select' arguments.
+// Benchmarked against Data Read Map (Section 4.3) requiring a 3-level max fetch.
+function calculateDepth(obj: any): number {
+  if (!obj || typeof obj !== 'object') return 0;
+  let maxSubDepth = 0;
+  const keys = Object.keys(obj);
+  const containsNesting = keys.includes('include') || keys.includes('select');
+  if (containsNesting) {
+    const nested = (obj as any).include || (obj as any).select;
+    if (typeof nested === 'object' && nested !== null) {
+      for (const k in nested) {
+        const v = (nested as any)[k];
+        if (v === true) maxSubDepth = Math.max(maxSubDepth, 1);
+        else if (typeof v === 'object' && v !== null) {
+          maxSubDepth = Math.max(maxSubDepth, 1 + calculateDepth(v));
+        }
+      }
+    }
+  } else {
+    for (const k of keys) {
+      if (k === 'where' || k === 'data' || k === 'cursor' || k === 'orderBy') continue;
+      const v = (obj as any)[k];
+      if (v && typeof v === 'object' && v !== null) {
+        maxSubDepth = Math.max(maxSubDepth, calculateDepth(v));
+      }
+    }
+  }
+  return maxSubDepth;
 }

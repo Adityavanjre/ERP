@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PassThrough } from 'stream';
 import { sanitizeCsvCell } from '../../common/utils/csv-sanitize.util';
 
 @Injectable()
 export class ReportingService {
+    private readonly logger = new Logger(ReportingService.name);
+
     constructor(private prisma: PrismaService) { }
 
     exportTransactionsCsvStream(tenantId: string) {
@@ -63,8 +65,8 @@ export class ReportingService {
 
                     skip += take;
                 }
-            } catch (err) {
-                console.error('Error streaming GL CSV:', err);
+            } catch (err: any) {
+                this.logger.error('Error streaming GL CSV: ' + err?.message, err?.stack);
             } finally {
                 stream.end();
             }

@@ -61,7 +61,7 @@ export class SaasAnalyticsService {
   }
 
   async getClientHealthScore(tenantId: string): Promise<HealthReport> {
-    const cacheKey = `health_score_${tenantId}`;
+    const cacheKey = `nexus:health_score:${tenantId}`;
     const cached = await this.cacheManager.get<HealthReport>(cacheKey);
     if (cached) return cached;
 
@@ -416,7 +416,7 @@ export class SaasAnalyticsService {
       const batchResults = await Promise.all(
         batch.map(async (t: any) => {
           // Fetch from cache ONLY if possible to keep dashboard snappy
-          const cacheKey = `health_score_${t.id}`;
+          const cacheKey = `nexus:health_score:${t.id}`;
           const cached = await this.cacheManager.get<HealthReport>(cacheKey);
 
           if (cached) {

@@ -49,17 +49,62 @@ export class ManufacturingService {
         const subRequirements = await this.explodeBOM(tenantId, subBOM.id, totalQty.toNumber(), subVisited);
         requirements = [...requirements, ...subRequirements];
       } else {
+        // INV-007: Support Unit Conversions
+        const baseUnit = (item.product as any).baseUnit || 'pcs';
+        const baseQty = await this.convertUnit(tenantId, item.productId, totalQty, item.unit ?? 'pcs', baseUnit);
         requirements.push({
           productId: item.productId,
           productName: item.product.name,
-          quantity: totalQty,
-          unit: item.unit,
+          quantity: baseQty,
+          unit: baseUnit,
           costPrice: new Decimal(item.product.costPrice || 0),
         });
       }
     }
 
     return this.aggregateRequirements(requirements);
+  }
+
+  // INV-007: Helper for Unit Conversions
+  private async convertUnit(tenantId: string, productId: string, quantity: Decimal, fromUnit: string, toUnit: string): Promise<Decimal> {
+    if (fromUnit === toUnit) return quantity;
+
+    // Check for product-specific conversion
+    let conversion = await (this.prisma as any).unitConversion.findFirst({
+      where: {
+        tenantId,
+        fromUnit,
+        toUnit,
+        productId,
+      },
+    });
+
+    if (!conversion) {
+      // Check for global conversion
+      conversion = await (this.prisma as any).unitConversion.findFirst({
+        where: {
+          tenantId,
+          fromUnit,
+          toUnit,
+          productId: null,
+        },
+      });
+    }
+
+    if (conversion) {
+      return quantity.mul(conversion.factor);
+    }
+
+    // Default hardcoded conversions if not in DB
+    const lowerFrom = fromUnit.toLowerCase();
+    const lowerTo = toUnit.toLowerCase();
+
+    if (lowerFrom === 'kg' && lowerTo === 'g') return quantity.mul(1000);
+    if (lowerFrom === 'g' && lowerTo === 'kg') return quantity.div(1000);
+    if (lowerFrom === 'l' && lowerTo === 'ml') return quantity.mul(1000);
+    if (lowerFrom === 'ml' && lowerTo === 'l') return quantity.div(1000);
+
+    return quantity; // Fallback to no conversion
   }
 
   // BOM Management

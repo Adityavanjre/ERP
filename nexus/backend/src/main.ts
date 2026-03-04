@@ -1,4 +1,4 @@
-import { otracing } from './tracing';
+﻿import { otracing } from './tracing';
 // Force resolution of critical validation packages before NestJS starts
 import 'class-validator';
 import 'class-transformer';
@@ -18,11 +18,11 @@ import hpp from 'hpp';
 import helmet from 'helmet';
 import compression from 'compression';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PHASE 0 — FAIL-FAST ENVIRONMENT VALIDATION
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// PHASE 0 â€” FAIL-FAST ENVIRONMENT VALIDATION
 // The application refuses to start if any critical secret is absent.
 // This prevents accidental deployment with missing credentials.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CRITICAL_VARS = ['JWT_SECRET', 'DATABASE_URL', 'MFA_ENCRYPTION_KEY'];
 const OPTIONAL_VARS = ['AUDIT_HMAC_SECRET', 'CLOUDINARY_API_KEY', 'RESEND_API_KEY'];
 
@@ -34,16 +34,30 @@ function validateEnvironment(): void {
   // Masked logging for debugging on Render
   CRITICAL_VARS.forEach(v => {
     const val = process.env[v];
-    console.log(`[BOOT] ${v}: ${val ? 'SET (********)' : 'MISSING ❌'}`);
+    console.log(`[BOOT] ${v}: ${val ? 'SET (********)' : 'MISSING âŒ'}`);
   });
 
   const missingCritical = CRITICAL_VARS.filter((key) => !process.env[key]);
 
   // PROD-002: Always treat Audit HMAC as critical in production to ensure forensic integrity.
   const auditSecret = process.env.AUDIT_HMAC_SECRET;
-  console.log(`[BOOT] AUDIT_HMAC_SECRET: ${auditSecret ? 'SET (********)' : 'MISSING ⚠️'}`);
+  console.log(`[BOOT] AUDIT_HMAC_SECRET: ${auditSecret ? 'SET (********)' : 'MISSING âš ï¸'}`);
   if (isProd && !auditSecret) {
     missingCritical.push('AUDIT_HMAC_SECRET');
+  }
+
+  // SEC-014: Fail-fast for Cloudinary in production. 
+  // Silent media failures lead to data corruption in Sales/Healthcare modules.
+  if (isProd && !process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_API_KEY) {
+    console.error('[FATAL_CONFIG] Production requires CLOUDINARY for media persistence.');
+    missingCritical.push('CLOUDINARY');
+  }
+
+  // OPS-005: Protect against Render-IPv6 routing failure with Supabase
+  const dbUrl = process.env.DATABASE_URL || '';
+  if (isProd && dbUrl.includes('db.') && dbUrl.includes('.supabase.co')) {
+    console.error('[FATAL_CONFIG] Production DATABASE_URL appears to be a Supabase IPv6 domain. Render does not support IPv6. Please update to an IPv4 direct connection or connection pool string.');
+    missingCritical.push('DATABASE_URL (Requires IPv4)');
   }
 
   if (missingCritical.length > 0) {
@@ -61,10 +75,24 @@ function validateEnvironment(): void {
 async function bootstrap() {
   console.log('--- [BOOTSTRAP ENGINE STARTING] ---');
 
-  // Safe Tracing Initialization
-  if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+  // Safe Tracing Initialization & MON-001 Readiness Check
+  const otelEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+  if (otelEndpoint) {
     try {
-      console.log('[BOOT] Initializing OpenTelemetry Tracing...');
+      console.log(`[BOOT] Initializing OpenTelemetry Tracing (Endpoint: ${otelEndpoint})...`);
+
+      // MON-001: Pinging the OTEL collector to ensure observability is actually draining.
+      // We do a non-blocking check to avoid delaying startup, but it logs a critical warning on failure.
+      import('axios').then(async (axios) => {
+        try {
+          // Collector base endpoint (e.g. Jaeger/OTel-Collector) usually responds to a health probe
+          await axios.default.head(otelEndpoint.replace('/v1/traces', ''), { timeout: 3000 });
+          console.log('[BOOT] â—‹ OTEL Collector is REACHABLE. Tracing pipeline active.');
+        } catch (e) {
+          console.warn(`[BOOT] â—‹ OTEL Collector UNREACHABLE at ${otelEndpoint}. Observability Gap detected!`);
+        }
+      }).catch(() => void 0);
+
       otracing.start();
     } catch (otelErr) {
       console.warn('[BOOT] Tracing failed to start. Continuing without tracing:', otelErr);
@@ -74,7 +102,7 @@ async function bootstrap() {
   // Must validate BEFORE creating the NestJS app
   validateEnvironment();
 
-  // DEV-004: Configure Sentry explicitly for unhandled crashes
+  // DEV-004 / SEC-014: Configure Sentry explicitly for unhandled crashes
   if (process.env.SENTRY_DSN) {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
@@ -86,6 +114,10 @@ async function bootstrap() {
       environment: process.env.NODE_ENV || 'development'
     });
     console.log('[BOOT] Sentry initialized successfully.');
+  } else if (process.env.NODE_ENV === 'production') {
+    // SEC-014: Sentry is mandatory in production for forensic triage
+    console.error('[FATAL_CONFIG] SENTRY_DSN is missing. Production cannot start without error tracking.');
+    process.exit(1);
   }
 
   console.log('[BOOT] Initializing NestJS App Instance...');
@@ -151,15 +183,29 @@ async function bootstrap() {
     'https://www.klypso.in',
     'https://nexus.klypso.in',
     /\.klypso\.in$/, // Trust all klypso.in subdomains
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'http://localhost:5173', // Vite dev server
   ];
 
-  if (process.env.KLYPSO_FRONTEND_URL) allowedOrigins.push(process.env.KLYPSO_FRONTEND_URL);
+  // BUG-FIX: Previously only KLYPSO_FRONTEND_URL was added.
+  // On Render, the frontend URL is set as NEXUS_FRONTEND_URL, so CORS was
+  // blocking all authenticated requests from the deployed frontend.
+  const extraOrigins = [
+    process.env.NEXUS_FRONTEND_URL,  // Primary -- set this in Render env vars
+    process.env.KLYPSO_FRONTEND_URL, // Legacy key (backwards compat)
+    process.env.CORS_ORIGIN,         // Escape hatch for additional origins
+  ];
+  for (const o of extraOrigins) {
+    if (o && !allowedOrigins.includes(o)) allowedOrigins.push(o);
+  }
+
+  console.log('[BOOT] CORS origins: ' + allowedOrigins.map(o => o instanceof RegExp ? o.source : o).join(' | '));
 
   app.enableCors({
     origin: allowedOrigins,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With'],
   });
 
   app.setGlobalPrefix('api', {
@@ -186,7 +232,7 @@ async function bootstrap() {
   // Global Timeouts (15s limit)
   app.useGlobalInterceptors(new TimeoutInterceptor());
 
-  // Swagger Documentation — DISABLED IN PRODUCTION
+  // Swagger Documentation â€” DISABLED IN PRODUCTION
   // Internal API blueprint must not be publicly accessible.
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
@@ -202,7 +248,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3001;
   await app.listen(port, '0.0.0.0');
-  console.log(`[BOOT] Scaling Strategy: Single Process (Vertical) — Node.js runtime active on instance.`);
+  console.log(`[BOOT] Scaling Strategy: Single Process (Vertical) â€” Node.js runtime active on instance.`);
   console.log(`[BOOT] Nexus Backend successfully listening on port ${port}`);
 }
 
@@ -224,9 +270,10 @@ if (SHOULD_CLUSTER) {
     });
   });
 } else {
-  console.log(`[BOOT] Scaling Strategy: Single Process (Vertical) — ${RAM_TIER}MB Tier Baseline.`);
+  console.log(`[BOOT] Scaling Strategy: Single Process (Vertical) â€” ${RAM_TIER}MB Tier Baseline.`);
   bootstrap().catch(err => {
     console.error('CRITICAL_BOOT_EXIT (Primary):', err.message);
     process.exit(1);
   });
 }
+

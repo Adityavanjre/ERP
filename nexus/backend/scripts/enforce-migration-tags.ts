@@ -26,13 +26,30 @@ function checkMigrations() {
             console.error(`[CRITICAL] Reversible migration "${migration}" is missing a "down.sql" script.`);
             hasUntagged = true;
         }
+
+        // DEV-006: Enforce CONCURRENTLY on index creations
+        const upSqlPath = path.join(MIGRATIONS_DIR, migration, 'migration.sql');
+        if (fs.existsSync(upSqlPath)) {
+            const sqlContent = fs.readFileSync(upSqlPath, 'utf8');
+            const lines = sqlContent.split('\n');
+            lines.forEach((line, index) => {
+                const upperLine = line.toUpperCase();
+                // Match simple CREATE INDEX and CREATE UNIQUE INDEX, missing CONCURRENTLY
+                if (upperLine.includes('CREATE INDEX') || upperLine.includes('CREATE UNIQUE INDEX')) {
+                    if (!upperLine.includes('CONCURRENTLY')) {
+                        console.error(`[CRITICAL] DEV-006: Migration "${migration}", line ${index + 1} creates an index WITHOUT the CONCURRENTLY keyword. This will lock tables in production.`);
+                        hasUntagged = true;
+                    }
+                }
+            });
+        }
     }
 
     if (hasUntagged) {
-        console.error('--- Rollback Readiness Check Failed ---');
+        console.error('--- Migration Compliance Check Failed ---');
         process.exit(1);
     } else {
-        console.log('--- Rollback Readiness Check Passed ---');
+        console.log('--- Migration Compliance Check Passed ---');
         process.exit(0);
     }
 }

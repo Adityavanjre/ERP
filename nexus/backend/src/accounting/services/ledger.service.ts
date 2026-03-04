@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AccountType, Prisma } from '@prisma/client';
 import { Industry } from '@nexus/shared';
 import { StandardAccounts } from '../constants/account-names';
+import { BillingService } from '../../system/services/billing.service';
 import { CreateJournalEntryDto } from '../dto/create-journal.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TraceService } from '../../common/services/trace.service';
@@ -14,6 +15,7 @@ export class LedgerService {
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: any,
     private readonly traceService: TraceService,
+    private billing: BillingService,
   ) { }
 
   round2(val: number | string | Decimal): Decimal {
@@ -41,7 +43,7 @@ export class LedgerService {
 
     const month = d.getMonth() + 1;
     const year = d.getFullYear();
-    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
+    const cacheKey = `nexus:period_lock:${tenantId}:${month}:${year}`;
 
     let isLocked: boolean | null = null;
     if (!tx) {
@@ -283,6 +285,8 @@ export class LedgerService {
 
     const execute = async (client: any) => {
       await this.checkPeriodLock(tenantId, data.date || new Date(), client);
+      // SECURITY (BILL-001): Atomic Quota Check with row-level lock
+      await this.billing.checkQuota(tenantId, 'maxLedgerEntries', client);
 
       const journal = await client.journalEntry.create({
         data: {

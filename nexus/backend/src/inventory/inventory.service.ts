@@ -35,9 +35,6 @@ export class InventoryService {
   ) { }
 
   async createProduct(tenantId: string, data: any & { correlationId?: string }, userId?: string) {
-    // 0. Subscription Governance: Quota Check
-    await this.billing.checkQuota(tenantId, 'maxProducts');
-
     // --- INDUSTRY INVARIANT: NBFC BLOCK ---
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     const industry = tenant?.industry || tenant?.type;
@@ -80,6 +77,9 @@ export class InventoryService {
     }
 
     return this.prisma.$transaction(async (tx: any) => {
+      // SECURITY (BILL-001): Atomic Quota Check with row-level lock
+      await this.billing.checkQuota(tenantId, 'maxProducts', tx);
+
       const product = await tx.product.create({
         data: {
           ...productData,
@@ -542,6 +542,15 @@ export class InventoryService {
   // PERF-007: AI Suggestion Pagination.
   async getMarkdownSuggestions(tenantId: string, page = 1, limit = 50) {
     const skip = (page - 1) * limit;
+
+    const total = await this.prisma.product.count({
+      where: {
+        tenantId,
+        isDeleted: false,
+        shelfLifeDays: { not: null }
+      }
+    });
+
     const products = await (this.prisma.product as any).findMany({
       where: {
         tenantId,
@@ -586,6 +595,14 @@ export class InventoryService {
       }
     }
 
-    return suggestions;
+    return {
+      data: suggestions,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
   }
 }

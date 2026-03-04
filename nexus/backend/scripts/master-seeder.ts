@@ -51,11 +51,11 @@ async function seedMasterData() {
     await prisma.supplier.upsert({
       where: { id: `supp-${name.replace(/\s/g, '-').toLowerCase()}` }, // Stable IDs for seeding
       update: { name },
-      create: { 
+      create: {
         id: `supp-${name.replace(/\s/g, '-').toLowerCase()}`,
-        name, 
-        email: `contact@${name.replace(/\s/g, '').toLowerCase()}.com`, 
-        tenantId 
+        name,
+        email: `contact@${name.replace(/\s/g, '').toLowerCase()}.com`,
+        tenantId
       }
     });
   }
@@ -66,12 +66,12 @@ async function seedMasterData() {
     await prisma.customer.upsert({
       where: { id: `cust-${name.replace(/\s/g, '-').toLowerCase()}` },
       update: { company: name },
-      create: { 
+      create: {
         id: `cust-${name.replace(/\s/g, '-').toLowerCase()}`,
-        company: name, 
-        firstName: name.split(' ')[0], 
-        tenantId, 
-        status: 'Customer' 
+        company: name,
+        firstName: name.split(' ')[0],
+        tenantId,
+        status: 'Customer'
       }
     });
   }
@@ -106,7 +106,16 @@ async function seedMasterData() {
     await prisma.product.upsert({
       where: { tenantId_sku: { tenantId, sku: rm.sku } },
       update: {},
-      create: { ...rm, tenantId, costPrice: rm.price, price: rm.price, stock: 0 }
+      create: { ...rm, tenantId, costPrice: rm.price, price: rm.price, stock: 500 }
+    });
+  }
+
+  // Generate 25 more random raw materials to hit the 30+ product requirement
+  for (let i = 1; i <= 25; i++) {
+    await prisma.product.upsert({
+      where: { tenantId_sku: { tenantId, sku: `RM-BULK-${i.toString().padStart(3, '0')}` } },
+      update: {},
+      create: { name: `Bulk Material ${i}`, sku: `RM-BULK-${i.toString().padStart(3, '0')}`, price: 50 + (i * 10), costPrice: 40 + (i * 8), tenantId, stock: 1000 }
     });
   }
 
@@ -122,7 +131,7 @@ async function seedMasterData() {
       update: {},
       create: { ...fg, tenantId, costPrice: fg.price * 0.6, stock: 0 }
     });
-    
+
     // Create BOM if not exists
     await prisma.billOfMaterial.upsert({
       where: { id: `bom-${fg.sku}` },
@@ -135,8 +144,9 @@ async function seedMasterData() {
         quantity: 1,
         items: {
           create: [
-            { productId: (await prisma.product.findUnique({ where: { tenantId_sku: { tenantId, sku: 'RM-TEAK-001' } } }))!.id, quantity: 4 },
-            { productId: (await prisma.product.findUnique({ where: { tenantId_sku: { tenantId, sku: 'RM-SCR-001' } } }))!.id, quantity: 20 }
+            { tenantId, productId: (await prisma.product.findUnique({ where: { tenantId_sku: { tenantId, sku: 'RM-TEAK-001' } } }))!.id, quantity: 4 },
+            { tenantId, productId: (await prisma.product.findUnique({ where: { tenantId_sku: { tenantId, sku: 'RM-SCR-001' } } }))!.id, quantity: 20 },
+            { tenantId, productId: (await prisma.product.findUnique({ where: { tenantId_sku: { tenantId, sku: 'RM-GLUE-001' } } }))!.id, quantity: 1 }
           ]
         }
       }
@@ -151,15 +161,20 @@ async function seedMasterData() {
   // Cleanup historical seed data to avoid unique constraint errors
   // 1. Delete dependent items first
   await prisma.invoiceItem.deleteMany({ where: { invoice: { invoiceNumber: { startsWith: 'INV-HIST-' } } } });
-  await prisma.orderItem.deleteMany({ where: { order: { tenantId } } }); 
-  
+  await prisma.orderItem.deleteMany({ where: { order: { tenantId } } });
+
   // 2. Delete parents
   await prisma.invoice.deleteMany({ where: { tenantId, invoiceNumber: { startsWith: 'INV-HIST-' } } });
-  await prisma.order.deleteMany({ where: { tenantId } }); 
+  await prisma.order.deleteMany({ where: { tenantId } });
   await prisma.journalEntry.deleteMany({ where: { tenantId, description: { startsWith: 'Sales Order #' } } });
+  await prisma.stockMovement.deleteMany({ where: { tenantId, notes: { startsWith: 'Historical Sale' } } });
 
-  console.log('Generating 35 Sales Orders and Journal Entries...');
-  for (let i = 0; i < 35; i++) {
+  // Get Primary Warehouse
+  const warehouse = await prisma.warehouse.findFirst({ where: { tenantId } }) ||
+    await prisma.warehouse.create({ data: { tenantId, name: 'Main Depot', location: 'HQ' } });
+
+  console.log('Generating 150 Sales Orders, Journal Entries, and Stock Movements...');
+  for (let i = 0; i < 150; i++) {
     const cust = allCustomers[i % allCustomers.length];
     const amount = new Decimal(10000 + Math.random() * 20000);
     const date = new Date();
@@ -217,6 +232,20 @@ async function seedMasterData() {
       await prisma.account.update({ where: { id: arAcc.id }, data: { balance: { increment: amount } } });
       await prisma.account.update({ where: { id: revAcc.id }, data: { balance: { increment: amount } } });
     }
+
+    // Generate Stock Movement for inventory history
+    await prisma.stockMovement.create({
+      data: {
+        tenantId,
+        productId: (await prisma.product.findFirst({ where: { sku: 'FG-DESK-001' } }))!.id,
+        warehouseId: warehouse.id,
+        quantity: new Decimal(-1),
+        type: 'OUT',
+        notes: `Historical Sale: ${order.id.slice(0, 8)}`,
+        reference: order.id,
+        createdAt: date
+      }
+    });
   }
 
   // 9. Manufacturing: Machines & Work Orders

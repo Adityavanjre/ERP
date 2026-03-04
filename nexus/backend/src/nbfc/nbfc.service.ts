@@ -227,6 +227,7 @@ export class NbfcService {
                 loanId,
                 documentType: data.documentType,
                 documentNumber: data.documentNumber,
+                documentUrl: data.documentUrl, // COMP-001: Persist visual evidence URL
                 verificationStatus: 'Pending',
             },
         });

@@ -60,13 +60,18 @@ export class MailService {
         await new Promise((resolve) => setTimeout(resolve, delay));
         return this.sendWithRetry(payload, attempt + 1);
       }
-      this.logger.error(`Resend permanently failed after ${MAX_RETRIES} attempts.`, error.stack);
+      this.logger.error(`Resend permanently failed after ${MAX_RETRIES} attempts: ${error.message}`, error.stack);
       return false;
     }
   }
 
   async sendPasswordResetEmail(to: string, token: string, userName: string) {
-    const resetUrl = `${this.config.get<string>('NEXUS_FRONTEND_URL')}/reset-password?token=${token}`;
+    // BUG-FIX: Reset URL now includes the `email` query param.
+    // POST /auth/reset-password requires BOTH `email` and `token` to look up the DB record.
+    // Without email in the URL, the frontend cannot call the endpoint correctly —
+    // the old URL only had the token, causing every reset attempt to fail with 401.
+    const baseUrl = this.config.get<string>('NEXUS_FRONTEND_URL');
+    const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
 
     const html = `
       <div style="font-family: sans-serif; background-color: #0f172a; color: #f8fafc; padding: 40px; border-radius: 8px;">
@@ -99,7 +104,13 @@ export class MailService {
     if (success) {
       this.logger.log(`Password reset email sent successfully to ${to}`);
     } else {
+      // BUG-FIX: Throw instead of silently returning false.
+      // Previously AuthService continued as if the email was sent, giving the user false hope.
       this.logger.error(`Failed to deliver password reset email to ${to} after ${MAX_RETRIES} attempts.`);
+      throw new Error(
+        `Email delivery failed after ${MAX_RETRIES} retries. ` +
+        `Verify RESEND_API_KEY is set and that noreply@klypso.in is a verified Resend sender domain.`
+      );
     }
 
     return success;

@@ -29,7 +29,7 @@ export class PurchasesController {
 
   @Post('suppliers')
   @Roles(Role.Owner, Role.Manager, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_SUPPLIERS)
   createSupplier(@Req() req: any, @Body() dto: any) {
     return this.purchasesService.createSupplier(req.user.tenantId, dto);
   }
@@ -43,14 +43,14 @@ export class PurchasesController {
 
   @Patch('suppliers/:id')
   @Roles(Role.Owner, Role.Manager, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_SUPPLIERS)
   updateSupplier(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
     return this.purchasesService.updateSupplier(req.user.tenantId, id, dto);
   }
 
   @Post('import')
   @Roles(Role.Owner, Role.Manager, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_SUPPLIERS)
   importSuppliers(@Req() req: any, @Body() body: any) {
     const csvContent = body.csv || body;
     return this.purchasesService.importSuppliers(
@@ -95,7 +95,7 @@ export class PurchasesController {
   // --- Opening Balances ---
   @Post('suppliers/opening-balance')
   @Roles(Role.Owner, Role.CA)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_SUPPLIERS)
   addOpeningBalance(@Req() req: any, @Body() dto: any) {
     return this.purchasesService.addSupplierOpeningBalance(req.user.tenantId, dto);
   }

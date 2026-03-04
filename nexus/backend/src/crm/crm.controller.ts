@@ -38,14 +38,14 @@ export class CrmController {
 
   @Post('customers')
   @Roles(Role.Owner, Role.Manager, Role.Biller)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   create(@Req() req: any, @Body() createCustomerDto: UpdateCustomerDto) {
     return this.crmService.createCustomer(req.user.tenantId, createCustomerDto);
   }
 
   @Post('import')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   uploadFile(@Req() req: any, @Body() body: any) {
     const csvContent = body.csv || body;
     return this.crmService.importCustomers(
@@ -95,7 +95,7 @@ export class CrmController {
 
   @Delete('customers/:id')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   deleteCustomer(@Req() req: any, @Param('id') id: string) {
     return this.crmService.deleteCustomer(req.user.tenantId, id);
   }
@@ -116,7 +116,7 @@ export class CrmController {
 
   @Patch('customers/:id')
   @Roles(Role.Owner, Role.Manager, Role.Biller)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   update(
     @Req() req: any,
     @Param('id') id: string,
@@ -131,7 +131,7 @@ export class CrmController {
 
   @Post('customers/:id/opening-balance')
   @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.MANAGE_USERS)
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   addOpeningBalance(
     @Req() req: any,
     @Param('id') id: string,

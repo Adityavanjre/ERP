@@ -7,6 +7,7 @@ import AuthGuard from "@/components/auth/auth-guard";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
+import { DraftRecovery } from "@/components/auth/draft-recovery";
 
 const DashboardLayout = ({
     children
@@ -55,6 +56,7 @@ const DashboardLayout = ({
                 </div>
                 <div className="md:pl-72 h-full flex flex-col overflow-hidden">
                     <Navbar />
+                    <DraftRecovery />
                     <main className="flex-1 overflow-y-auto scrollbar-hide">
                         <div className="max-w-[1700px] mx-auto min-h-full p-4 sm:p-6 md:p-8 lg:p-12">
                             {children}

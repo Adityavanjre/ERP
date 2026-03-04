@@ -14,18 +14,22 @@ export class CloudinaryService {
     });
   }
 
-  uploadFile(file: Express.Multer.File): Promise<any> {
+  /**
+   * RES-003: Media Provider Fail-Soft.
+   * Implements a 5s timeout and graceful fallback to prevent API hangs.
+   */
+  async uploadFile(file: Express.Multer.File): Promise<any> {
     if (!process.env.CLOUDINARY_API_KEY) {
       // Simulation mode
       const simUrl = `https://simulation-storage.local/${file.originalname}`;
-      return Promise.resolve({
+      return {
         url: simUrl,
         public_id: `sim_${Date.now()}`,
         secure_url: simUrl,
-      });
+      };
     }
 
-    return new Promise((resolve, reject) => {
+    const uploadPromise = new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         { folder: 'nexus_erp' },
         (error, result) => {
@@ -34,13 +38,31 @@ export class CloudinaryService {
             return reject(error);
           }
           this.logger.log(`File uploaded successfully: ${file.originalname}`);
-          // Return the result but we'll use getSignedUrl for access
           resolve(result);
         },
       );
 
       streamifier.createReadStream(file.buffer).pipe(uploadStream);
     });
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Cloudinary upload timed out (5s)')), 5000)
+    );
+
+    try {
+      return await Promise.race([uploadPromise, timeoutPromise]);
+    } catch (err: any) {
+      this.logger.error(`Media Provider Fail-Soft triggered for ${file.originalname}: ${err.message}`);
+      // Fallback: Return a unique fallback URL so the system continues
+      const fallbackUrl = `https://nexus-storage-fallback.local/placeholder_${Date.now()}_${file.originalname}`;
+      return {
+        url: fallbackUrl,
+        public_id: `fallback_${Date.now()}`,
+        secure_url: fallbackUrl,
+        status: 'fallback',
+        error: err.message,
+      };
+    }
   }
 
   /**

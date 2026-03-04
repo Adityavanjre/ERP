@@ -4,10 +4,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@nexus/shared';
+import { BillingService } from '../system/services/billing.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private billing: BillingService,
+  ) { }
 
   async findById(id: string) {
     return this.prisma.user.findUnique({
@@ -47,6 +51,9 @@ export class UsersService {
 
     // 2. Transact: Create user (if new) and membership
     return this.prisma.$transaction(async (tx) => {
+      // SECURITY (BILL-001): Atomic Quota Check with row-level lock
+      await this.billing.checkQuota(tenantId, 'maxUsers', tx);
+
       if (!user) {
         const salt = await bcrypt.genSalt(10);
         const defaultPassword = await bcrypt.hash('password123', salt);
