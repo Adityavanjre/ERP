@@ -46,19 +46,33 @@ export class AuditVerificationService implements OnModuleInit {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
 
-        const logs = await this.prisma.auditLog.findMany({
-            where: { createdAt: { gte: yesterday } },
-            orderBy: { createdAt: 'asc' },
-        });
-
-        if (logs.length === 0) return;
-
-        // Group by tenant to verify individual chains
+        // Get all tenants to verify chains individually
+        const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
         const tenantLogs: Record<string, any[]> = {};
-        for (const log of logs) {
-            const tid = log.tenantId || 'GLOBAL';
-            if (!tenantLogs[tid]) tenantLogs[tid] = [];
-            tenantLogs[tid].push(log);
+
+        // Fetch logs scoped by tenant explicitly to enforce multidimensional tenant isolation
+        for (const tenant of tenants) {
+            const logs = await this.prisma.auditLog.findMany({
+                where: {
+                    tenantId: tenant.id,
+                    createdAt: { gte: yesterday }
+                },
+                orderBy: { createdAt: 'asc' },
+                take: 1000 // Safely paginate cross-sweeps
+            });
+            if (logs.length > 0) {
+                tenantLogs[tenant.id] = logs;
+            }
+        }
+
+        // Also handle GLOBAL logs if any
+        const globalLogs = await this.prisma.auditLog.findMany({
+            where: { tenantId: null, createdAt: { gte: yesterday } },
+            orderBy: { createdAt: 'asc' },
+            take: 1000
+        });
+        if (globalLogs.length > 0) {
+            tenantLogs['GLOBAL'] = globalLogs;
         }
 
         for (const tid in tenantLogs) {
@@ -130,14 +144,22 @@ export class AuditVerificationService implements OnModuleInit {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
 
-        const mutations = await this.prisma.auditLog.findMany({
-            where: {
-                createdAt: { gte: yesterday },
-                action: { in: ['POST', 'PUT', 'PATCH', 'DELETE'] },
-                correlationId: { not: null }
-            },
-            select: { id: true, correlationId: true, resource: true, tenantId: true }
-        });
+        const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
+        const mutations = [];
+
+        for (const tenant of tenants) {
+            const tenantLogs = await this.prisma.auditLog.findMany({
+                where: {
+                    tenantId: tenant.id,
+                    createdAt: { gte: yesterday },
+                    action: { in: ['POST', 'PUT', 'PATCH', 'DELETE'] },
+                    correlationId: { not: null }
+                },
+                select: { id: true, correlationId: true, resource: true, tenantId: true },
+                take: 1000
+            });
+            mutations.push(...tenantLogs);
+        }
 
         for (const log of mutations) {
             if (log.resource.includes('/accounting/invoice') || log.resource.includes('/accounting/payment')) {

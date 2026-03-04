@@ -84,5 +84,16 @@ export async function safeFetch(url: string, options?: RequestInit): Promise<Res
         throw new Error(`SSRF_BLOCK: Destination URL "${url}" resolved to a restricted address and was blocked.`);
     }
 
-    return fetch(url, options);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: options?.signal || controller.signal,
+        });
+        return response;
+    } finally {
+        clearTimeout(timeoutId);
+    }
 }

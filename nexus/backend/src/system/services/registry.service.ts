@@ -91,7 +91,7 @@ export class RegistryService implements OnModuleInit {
   }
 
   async getAllApps() {
-    return this.prisma.app.findMany();
+    return this.prisma.app.findMany({ take: 1000 });
   }
 
   async installApp(name: string) {
