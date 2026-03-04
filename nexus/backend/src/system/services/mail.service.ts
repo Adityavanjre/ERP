@@ -85,8 +85,8 @@ export class MailService {
     const resendApiKey = this.config.get<string>('RESEND_API_KEY');
 
     if (!resendApiKey) {
-      this.logger.warn(`No RESEND_API_KEY found. SIMULATING email to ${to}`);
-      return true;
+      this.logger.error(`CRITICAL: RESEND_API_KEY is missing. Cannot send email to ${to}`);
+      throw new Error('Email delivery failed due to missing configuration (RESEND_API_KEY).');
     }
 
     const success = await this.sendWithRetry({
@@ -103,5 +103,26 @@ export class MailService {
     }
 
     return success;
+  }
+
+  /**
+   * Generic internal email sender for system alerts and notifications.
+   */
+  async sendEmail(to: string, subject: string, html: string) {
+    const resendApiKey = this.config.get<string>('RESEND_API_KEY');
+    if (!resendApiKey) {
+      this.logger.error(`CRITICAL: RESEND_API_KEY is missing. Cannot send alert to ${to}`);
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Email delivery failed: RESEND_API_KEY is missing in production.');
+      }
+      return false;
+    }
+
+    return this.sendWithRetry({
+      from: 'Nexus System Alert <alerts@klypso.in>',
+      to,
+      subject,
+      html,
+    });
   }
 }

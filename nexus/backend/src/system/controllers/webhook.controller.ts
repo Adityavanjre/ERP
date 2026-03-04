@@ -3,6 +3,7 @@ import { BillingService } from '../services/billing.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('system/webhooks')
 export class WebhookController {
@@ -17,6 +18,10 @@ export class WebhookController {
    * Razorpay Webhook Handler
    * SECURITY (SUB-002): Verifies HMAC signature to prevent spoofing.
    */
+  // SEC-WEBHOOK-01: @Public() is intentional — Razorpay is an external system with no
+  // tenant session token. Authentication is done via HMAC signature verification below.
+  // Without @Public(), RolesGuard (global) would reject this with 403 before the handler runs.
+  @Public()
   @Post('razorpay')
   @UseInterceptors(IdempotencyInterceptor)
   async handleRazorpay(@Req() req: RawBodyRequest<any>, @Body() body: any) {

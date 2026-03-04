@@ -72,18 +72,18 @@ export class FixedAssetService {
         const headers = lines[0].split(',').map(h => h.trim());
         const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
 
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-            const cols = lines[i].split(',').map(c => c.trim());
-            const data: any = {};
-            headers.forEach((h, idx) => { data[h] = cols[idx]; });
+        return this.prisma.$transaction(async (tx) => {
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = lines[i].split(',').map(c => c.trim());
+                const data: any = {};
+                headers.forEach((h, idx) => { data[h] = cols[idx]; });
 
-            try {
                 const name = data.name;
                 const code = data.assetCode || data.code;
-                if (!name || !code) throw new Error("Name and Asset Code are required");
+                if (!name || !code) throw new BadRequestException(`Line ${i}: Name and Asset Code are required`);
 
-                const existing = await (this.prisma.fixedAsset as any).findFirst({
+                const existing = await (tx.fixedAsset as any).findFirst({
                     where: { tenantId, assetCode: code }
                 });
 
@@ -100,23 +100,21 @@ export class FixedAssetService {
                 };
 
                 if (existing) {
-                    await (this.prisma.fixedAsset as any).update({
+                    await (tx.fixedAsset as any).update({
                         where: { id: existing.id },
                         data: payload
                     });
                 } else {
-                    await (this.prisma.fixedAsset as any).create({
+                    await (tx.fixedAsset as any).create({
                         data: payload
                     });
                 }
                 results.imported++;
-            } catch (e: any) {
-                results.failed++;
-                results.errors.push(`Line ${i}: ${e.message}`);
             }
-        }
-        return results;
+            return results;
+        });
     }
+
 
     async findAll(tenantId: string) {
         return this.prisma.fixedAsset.findMany({
@@ -129,6 +127,9 @@ export class FixedAssetService {
 
     async runMonthlyDepreciation(tenantId: string, assetId: string) {
         return this.prisma.$transaction(async (tx) => {
+            // ACC-PERIOD-03: Prevent posting depreciation into locked periods.
+            await this.ledger.checkPeriodLock(tenantId, new Date(), tx);
+
             const asset = await tx.fixedAsset.findUnique({
                 where: { id: assetId }
             });

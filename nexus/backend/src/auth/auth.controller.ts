@@ -23,6 +23,8 @@ import { Module } from '../common/decorators/module.decorator';
 import { AccessChannel } from '@nexus/shared';
 import { Throttle } from '@nestjs/throttler';
 import { SecurityStorageService } from '../common/services/security-storage.service';
+import { Role } from '@prisma/client';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @Module('auth')
 @Controller('auth')
@@ -122,6 +124,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('security-logs')
+  @Roles(Role.Owner)
   async getSecurityLogs(@Request() req: any) {
     // Only allow for tenant-scoped tokens
     if (!req.user.tenantId) {
@@ -169,7 +172,7 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto.token, dto.newPassword);
+    return this.authService.resetPassword(dto.email, dto.token, dto.newPassword);
   }
 
   // --- MFA Endpoints ---
@@ -229,6 +232,19 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @AllowIdentity()
+  @AllowUnboarded()
+  @Post('logout-all')
+  async logoutAll(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    await this.authService.logoutAll(req.user.sub);
+    res.clearCookie('nexus_token');
+    res.clearCookie('nexus_refresh');
+    return { success: true, message: 'All active sessions have been invalidated.' };
+  }
+
+
+  @HttpCode(HttpStatus.OK)
   @Public()
   @Post('refresh')
   async refresh(@Request() req: any, @Body('refreshToken') bodyToken: string, @Res({ passthrough: true }) res: Response) {
@@ -266,13 +282,16 @@ export class AuthController {
       });
     }
 
-    // CSRF Secret Cookie (Double-Submit Pattern)
+    // FIX-AUTH-08: sameSite changed from 'strict' to 'lax'.
+    // 'strict' blocked the CSRF cookie on top-level navigations from external origins
+    // (e.g., clicking a link from an email). 'lax' allows it on top-level GET navigations
+    // while still blocking cross-site POST/PUT/PATCH/DELETE — which is the correct threat model.
     // Non-httpOnly so frontend can read it to send X-CSRF-Token header.
     const csrfToken = require('crypto').randomBytes(32).toString('hex');
     res.cookie('nexus-csrf', csrfToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
       path: '/',
     });

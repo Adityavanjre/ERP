@@ -3,11 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../accounting/services/ledger.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
+import { TraceService } from '../common/services/trace.service';
+
 @Injectable()
 export class LogisticsService {
     constructor(
         private prisma: PrismaService,
         private ledger: LedgerService,
+        private trace: TraceService,
     ) { }
 
     // --- Fleet Management ---
@@ -32,6 +35,7 @@ export class LogisticsService {
                 model: data.model,
                 type: data.type,
                 capacity: data.capacity,
+                correlationId: this.trace.getCorrelationId(),
             },
         });
     }
@@ -80,6 +84,7 @@ export class LogisticsService {
                     totalCost,
                     odometerReading,
                     journalEntryId: journal.id,
+                    correlationId: this.trace.getCorrelationId(),
                 },
             });
 
@@ -105,6 +110,7 @@ export class LogisticsService {
                 dispatchDate: new Date(data.dispatchDate),
                 status: 'Dispatched',
                 revenue: new Decimal(data.revenue || 0), // Forensic Revenue Tracking
+                correlationId: this.trace.getCorrelationId(),
             },
         });
     }
@@ -172,6 +178,7 @@ export class LogisticsService {
                 serviceType: data.serviceType,
                 scheduledDate: new Date(data.scheduledDate),
                 status: 'Pending',
+                correlationId: this.trace.getCorrelationId(),
             },
         });
     }

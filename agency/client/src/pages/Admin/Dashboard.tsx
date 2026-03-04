@@ -2,8 +2,7 @@ import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 import { Link } from 'react-router-dom';
 import {
     Users,
@@ -43,18 +42,18 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const config = { headers: { Authorization: `Bearer ${user?.token}` } };
+                // SEC-008: Centralized API instance handles Authorization
                 const [projects, blogs, jobs] = await Promise.all([
-                    axios.get(`${API_URL}/api/projects`),
-                    axios.get(`${API_URL}/api/blogs`),
-                    axios.get(`${API_URL}/api/jobs`)
+                    api.get('/api/projects'),
+                    api.get('/api/blogs'),
+                    api.get('/api/jobs')
                 ]);
 
                 let enquiriesCount = 0;
                 let enquiriesList: Enquiry[] = [];
 
                 try {
-                    const enquiriesRes = await axios.get<Enquiry[]>(`${API_URL}/api/enquiries`, config);
+                    const enquiriesRes = await api.get<Enquiry[]>('/api/enquiries');
                     enquiriesCount = enquiriesRes.data.length;
                     enquiriesList = enquiriesRes.data.slice(0, 5);
                 } catch (e) { }

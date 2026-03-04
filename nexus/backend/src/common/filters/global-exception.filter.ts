@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Request, Response } from 'express';
+import * as Sentry from '@sentry/node';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -44,7 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           break;
         case 'P2003':
           status = HttpStatus.BAD_REQUEST;
-          message = 'Invalid reference: the related record does not exist.';
+          message = 'Invalid reference: the related record does not exist or is constrained by another entity.';
           break;
         case 'P2014':
           status = HttpStatus.BAD_REQUEST;
@@ -63,7 +64,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     } else if (exception && (exception as any).constructor?.name === 'PrismaClientValidationError') {
       status = HttpStatus.BAD_REQUEST;
-      message = 'Invalid data provided. Please check your input and try again.';
+      const rawMessage = (exception as any).message || '';
+      // Extract the human-readable part of the Prisma validation error
+      // Usually starts after "Invocation:\n" or contains "Unknown arg", "missing arg"
+      const lines = rawMessage.split('\n');
+      const cleanLine = lines.find((l: string) => l.includes('Argument') || l.includes('Unknown') || l.includes('input'));
+      message = cleanLine ? cleanLine.trim() : 'Data validation failed. Please check the provided fields.';
     } else if (exception instanceof Error) {
       this.logger.error(`Unhandled error: ${exception.message}`, exception.stack);
       // Expose message for known business logic errors, hide for anything else
@@ -72,14 +78,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         : 'An internal system error occurred. Please contact support.';
     }
 
-    const responseBody = {
-      statusCode: status,
-      message,
-      path: request.url,
-      timestamp: new Date().toISOString(),
-    };
-
     const sanitizedBody = this.scrubSensitiveData(request.body);
+    let eventId: string | undefined;
+    const reqRequestUrlOrHeaderArray = request.headers['x-request-id'];
+    const trackingId = (Array.isArray(reqRequestUrlOrHeaderArray) ? reqRequestUrlOrHeaderArray[0] : reqRequestUrlOrHeaderArray) || `TRK-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     // Only log actual crashes (500s) as errors. 
     // 4xx errors (Bad Request, Unauthorized, Not Found) are normal client behavior.
@@ -94,9 +96,27 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       if (exception instanceof (Prisma as any).PrismaClientKnownRequestError) {
         this.logger.error(`[CRASH_REPORT] Prisma Code: ${(exception as any).code}`);
       }
+
+      // DEV-004: Explict Sentry tracing for generic 500 combinations without leaking PII
+      Sentry.withScope((scope) => {
+        scope.setTag("status_code", status);
+        scope.setTag("path", request.url);
+        scope.setUser({ id: (request as any).user?.id || 'anonymous' });
+        scope.setExtra("body", sanitizedBody);
+        scope.setTag("tracking_id", trackingId);
+        eventId = Sentry.captureException(exception);
+      });
     } else {
       this.logger.warn(`[CLIENT_ERR] ${status} ${request.method} ${request.url} - ${JSON.stringify(message)}`);
     }
+
+    const responseBody = {
+      statusCode: status,
+      message,
+      path: request.url,
+      timestamp: new Date().toISOString(),
+      traceId: eventId || trackingId,
+    };
 
     response.status(status).json(responseBody);
   }
@@ -119,3 +139,4 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return scrubbed;
   }
 }
+

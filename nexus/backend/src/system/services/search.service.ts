@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class SearchService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async globalSearch(tenantId: string, query: string) {
     if (!query || query.length < 2) return [];
@@ -15,7 +15,7 @@ export class SearchService {
           isDeleted: false,
           OR: [{ name: { contains: query } }, { sku: { contains: query } }],
         },
-        take: 5,
+        take: 10,
         select: { id: true, name: true, sku: true },
       }),
       this.prisma.customer.findMany({
@@ -28,7 +28,7 @@ export class SearchService {
             { company: { contains: query } },
           ],
         },
-        take: 5,
+        take: 10,
         select: { id: true, firstName: true, lastName: true, company: true },
       }),
       this.prisma.invoice.findMany({
@@ -36,7 +36,7 @@ export class SearchService {
           tenantId,
           invoiceNumber: { contains: query },
         },
-        take: 5,
+        take: 10,
         select: { id: true, invoiceNumber: true, totalAmount: true },
       }),
       this.prisma.employee.findMany({
@@ -48,7 +48,7 @@ export class SearchService {
             { employeeId: { contains: query } },
           ],
         },
-        take: 5,
+        take: 10,
         select: { id: true, firstName: true, lastName: true, employeeId: true },
       }),
       this.prisma.machine.findMany({
@@ -56,7 +56,7 @@ export class SearchService {
           tenantId,
           OR: [{ name: { contains: query } }, { code: { contains: query } }],
         },
-        take: 5,
+        take: 10,
         select: { id: true, name: true, code: true },
       }),
     ]);

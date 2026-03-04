@@ -4,25 +4,20 @@ import {
     ExecutionContext,
     CallHandler,
     ConflictException,
-    Inject,
 } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 /**
  * IdempotencyInterceptor — Prevents duplicate processing of the same request.
  * 
- * Flow:
- * 1. Checks for 'x-idempotency-key' header.
- * 2. Scopes key by tenantId to prevent collisions.
- * 3. Returns cached response if key was already processed within the TTL (24h).
- * 4. Blocks concurrent duplicate requests while the first one is processing.
+ * SEC-009: Uses DB-backed atomic locks (unique constraints) to prevent 
+ * parallel racing during the initial processing window.
  */
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
-    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) { }
+    constructor(private prisma: PrismaService) { }
 
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
         const request = context.switchToHttp().getRequest();
@@ -34,26 +29,77 @@ export class IdempotencyInterceptor implements NestInterceptor {
         }
 
         const tenantId = request.user?.tenantId || 'global';
-        const cacheKey = `idempotency:${tenantId}:${idempotencyKey}`;
+        const now = new Date();
 
-        const cachedResponse = await this.cacheManager.get(cacheKey);
+        try {
+            // 1. Check for existing record
+            const entry = await (this.prisma as any).idempotencyKey.findUnique({
+                where: { tenantId_key: { tenantId, key: idempotencyKey } },
+            });
 
-        if (cachedResponse) {
-            if (cachedResponse === 'PROCESSING') {
-                throw new ConflictException('Another request with the same idempotency key is currently being processed.');
+            if (entry) {
+                // If still processing, block.
+                if (entry.status === 'PROCESSING' && entry.expiresAt > now) {
+                    throw new ConflictException('Another request with the same idempotency key is currently being processed.');
+                }
+
+                // If completed and not expired (24h), return cached response
+                if (entry.status === 'COMPLETED' && entry.expiresAt > now) {
+                    return of(entry.response);
+                }
+
+                // If expired, or was stuck in PROCESSING beyond its expiry, we reset it.
             }
-            // Return the previously cached response
-            return of(cachedResponse);
+
+            // 2. Atomic Lock: Attempt to transition to PROCESSING
+            // Only if doesn't exist OR is truly expired.
+            // P2002 (Unique constraint) will handle the absolute race.
+            if (entry && entry.status === 'COMPLETED' && entry.expiresAt > now) {
+                return of(entry.response);
+            }
+
+            await (this.prisma as any).idempotencyKey.upsert({
+                where: { tenantId_key: { tenantId, key: idempotencyKey } },
+                update: {
+                    status: 'PROCESSING',
+                    expiresAt: new Date(Date.now() + 30000), // 30s lock for the active request
+                },
+                create: {
+                    tenantId,
+                    key: idempotencyKey,
+                    status: 'PROCESSING',
+                    expiresAt: new Date(Date.now() + 30000)
+                }
+            });
+
+        } catch (error: any) {
+            // P2002: Unique constraint failed (race condition)
+            if (error.code === 'P2002') {
+                throw new ConflictException('Conflict: Request is already being processed or completed.');
+            }
+            throw error;
         }
 
-        // Set lock to prevent race conditions during processing
-        await this.cacheManager.set(cacheKey, 'PROCESSING', 30000); // 30s lock
-
         return next.handle().pipe(
-            tap(async (response) => {
-                // Cache the successful response for 24 hours
-                await this.cacheManager.set(cacheKey, response, 86400000);
-            }),
+            tap({
+                next: async (response) => {
+                    // 3. Save result and mark as COMPLETED
+                    await (this.prisma as any).idempotencyKey.update({
+                        where: { tenantId_key: { tenantId, key: idempotencyKey } },
+                        data: {
+                            status: 'COMPLETED',
+                            response: response || {},
+                            expiresAt: new Date(Date.now() + 86400000) // 24h
+                        }
+                    });
+                },
+                error: async () => {
+                    // 4. Release lock on error to allow retries
+                    await (this.prisma as any).idempotencyKey.delete({
+                        where: { tenantId_key: { tenantId, key: idempotencyKey } }
+                    }).catch(() => { });
+                }
+            })
         );
     }
 }

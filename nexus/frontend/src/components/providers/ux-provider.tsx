@@ -87,6 +87,17 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener("session-expired", handleSessionExpiry);
     }, [pathname]);
 
+    // UI-002: Improve Red-Text mandatory visual highlights directly upon broken Form saves
+    useEffect(() => {
+        const handleInvalidSubmits = (e: SubmitEvent) => {
+            if (e.target instanceof HTMLFormElement) {
+                e.target.classList.add('form-submitted');
+            }
+        };
+        document.addEventListener('submit', handleInvalidSubmits, { capture: true });
+        return () => document.removeEventListener('submit', handleInvalidSubmits, { capture: true });
+    }, []);
+
     return (
         <UXContext.Provider value={{ showConfirm, triggerSessionExpiry, setUILocked }}>
             {children}

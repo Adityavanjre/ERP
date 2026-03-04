@@ -23,6 +23,7 @@ import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { MfaCryptoService } from './mfa-crypto.service';
+import { validateGSTIN } from '../common/utils/gst-validation.util';
 
 @Injectable()
 export class AuthService {
@@ -70,7 +71,7 @@ export class AuthService {
       data: {
         name: dto.name,
         slug: finalSlug,
-        type: (dto.type as TenantType) || TenantType.Retail,
+        type: (dto.type as TenantType) ?? TenantType.Retail,
         plan: PlanType.Free,
         isOnboarded: false,
       },
@@ -116,7 +117,7 @@ export class AuthService {
 
     try {
       // 3. Create User, Tenant, Membership and Init accounts in one atomic Transaction
-      const newUser = await this.prisma.$transaction(async (tx) => {
+      const newUser = await this.prisma.$transaction(async (tx: any) => {
         // Create User
         const user = await tx.user.create({
           data: {
@@ -124,6 +125,7 @@ export class AuthService {
             passwordHash,
             fullName: dto.fullName,
             authProvider: AuthProvider.Email,
+            tokenVersion: 1, // FIX-AUTH-01: Always initialize to 1 to prevent null vs 1 mismatch on refresh
           },
         });
 
@@ -150,7 +152,7 @@ export class AuthService {
           data: {
             name: dto.tenantName,
             slug: finalSlug,
-            type: (dto.companyType as TenantType) || TenantType.Retail,
+            type: (dto.companyType as TenantType) ?? TenantType.Retail,
             plan: PlanType.Free,
             subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
             isOnboarded: false,
@@ -167,15 +169,11 @@ export class AuthService {
         });
 
         // 4. Initialize Industry-Specific Accounts (Rule: Real money from day 1)
-        try {
-          await this.accountingService.initializeTenantAccounts(
-            tenant.id,
-            tx,
-            tenant.type as string,
-          );
-        } catch (accErr) {
-          console.error('[AUTH_REGISTER_WARN] Accounting init failed, continuing anyway:', accErr);
-        }
+        await this.accountingService.initializeTenantAccounts(
+          tenant.id,
+          tx,
+          tenant.type as string,
+        );
 
         // Telemetry (Phase 4)
         try {
@@ -254,7 +252,11 @@ export class AuthService {
       // Anomaly detection: check for brute-force burst from same IP
       if (ipAddress) {
         // Non-blocking: anomaly check must not defer the error response
-        this.anomalyAlert.checkAuthFailureBurst(ipAddress).catch(() => { /* never block login flow */ });
+        this.anomalyAlert.checkAuthFailureBurst(ipAddress).catch((anomalyErr) => {
+          // Non-blocking: anomaly check must not defer the error response.
+          // Logged so anomaly service failures are visible in ops.
+          console.error('[AUTH_ANOMALY_WARN] Anomaly burst check failed silently:', anomalyErr);
+        });
       }
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -294,7 +296,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash || '');
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash ?? '');
     if (!isPasswordValid) {
       await this.recordLoginFailure(user);
       await this.logging.log({
@@ -415,12 +417,12 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       jti: crypto.randomBytes(16).toString('hex'),
-      tokenVersion: userAny.tokenVersion || 1,
-      isMfaVerified: isMfaVerifiedOverride !== undefined ? isMfaVerifiedOverride : !!userAny.isMfaVerified,
+      tokenVersion: userAny.tokenVersion ?? 1,
+      isMfaVerified: isMfaVerifiedOverride ?? !!userAny.isMfaVerified,
       mfaEnabled: !!userAny.mfaEnabled,
       isSuperAdmin: !!user.isSuperAdmin,
-      type: user.isSuperAdmin && isAdminFlow && (isMfaVerifiedOverride || !!userAny.isMfaVerified) ? 'admin' : 'identity',
-      channel: channel || 'MOBILE',
+      type: user.isSuperAdmin && isAdminFlow && (isMfaVerifiedOverride ?? !!userAny.isMfaVerified) ? 'admin' : 'identity',
+      channel: channel ?? 'MOBILE',
     };
 
 
@@ -477,7 +479,7 @@ export class AuthService {
     }
 
     // 2. B2B Context (Keep existing logic)
-    const [customer, supplier] = await this.tenantContext.run(tenantId, async () => {
+    const [customer, supplier] = await this.tenantContext.run(tenantId, userId, membership.role, async () => {
       return Promise.all([
         this.prisma.customer.findFirst({ where: { userId, isDeleted: false, tenantId } }),
         this.prisma.supplier.findFirst({ where: { userId, isDeleted: false, tenantId } }),
@@ -493,17 +495,17 @@ export class AuthService {
       tenantId: membership.tenantId,
       role: membership.role,
       jti: crypto.randomBytes(16).toString('hex'),
-      tokenVersion: userRecord?.tokenVersion || 1,
-      mfaEnabled: (userRecord as any)?.mfaEnabled || false,
-      customerId: customer?.id || null,
-      supplierId: supplier?.id || null,
+      tokenVersion: userRecord?.tokenVersion ?? 1,
+      mfaEnabled: (userRecord as any)?.mfaEnabled ?? false,
+      customerId: customer?.id ?? null,
+      supplierId: supplier?.id ?? null,
       type: 'tenant_scoped',
       isOnboarded: membership.tenant.isOnboarded,
       industry: membership.tenant.industry,
       tenantType: membership.tenant.type,
-      isMfaVerified: isMfaVerified || false,
+      isMfaVerified: isMfaVerified ?? false,
       isSuperAdmin: !!userRecord?.isSuperAdmin,
-      channel: channel || 'MOBILE',
+      channel: channel ?? 'MOBILE',
     };
 
     const refreshToken = this.jwtService.sign(
@@ -558,7 +560,11 @@ export class AuthService {
       include: { memberships: { include: { tenant: true } } }
     });
 
-    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+    // FIX-AUTH-01: Use same null-coalesce fallback (|| 1) as generateAuthResponse so newly
+    // created users whose tokenVersion was null in DB never get a spurious session invalidation
+    // on their very first token refresh. This is the root cause of the "Session expired" redirect
+    // loop that appears immediately after the 24h access token expires.
+    if (!user || (user.tokenVersion ?? 1) !== (decoded.tokenVersion ?? 1)) {
       throw new UnauthorizedException('Session invalidated due to password reset or remote logout.');
     }
 
@@ -587,29 +593,59 @@ export class AuthService {
       throw new ForbiddenException('Compliance Violation: Industry vertical is locked after onboarding. Mid-flight mutation is forbidden to prevent accounting drift.');
     }
 
-    // 2. Update Tenant Info (Rule C)
-    const tenant = await this.prisma.tenant.update({
-      where: { id: dto.tenantId },
-      data: {
-        industry: dto.industry,
-        type: (dto.industry as any) || TenantType.Retail,
-        businessType: dto.businessType,
-        gstin: dto.gstin,
-        isOnboarded: true,
-      },
-    });
-
-    // 3. Initialize Infrastructure (Default Warehouse)
-    await this.prisma.warehouse.create({
-      data: {
-        tenantId: tenant.id,
-        name: 'Main Warehouse',
-        location: 'Default Location'
+    // 2. Platform-Level GSTIN Uniqueness Guard (TEN-002)
+    // Prevents duplicate business registrations or conflicting entity setups.
+    if (dto.gstin) {
+      if (!validateGSTIN(dto.gstin)) {
+        throw new BadRequestException({
+          message: `Compliance Error: The provided GSTIN '${dto.gstin}' is mathematically invalid (Checksum Mismatch). Please verify your registration certificate.`,
+          code: 'INVALID_GSTIN_CHECKSUM'
+        });
       }
+
+      const gstinCollision = await this.prisma.tenant.findFirst({
+        where: {
+          gstin: dto.gstin,
+          id: { not: dto.tenantId }, // Exclude current tenant
+        },
+      });
+
+      if (gstinCollision) {
+        throw new ForbiddenException({
+          message: `Integrity Error: GSTIN '${dto.gstin}' is already registered with another business workspace (${gstinCollision.name}). Duplicate registrations are forbidden.`,
+          code: 'GSTIN_ALREADY_EXISTS',
+        });
+      }
+    }
+
+    const transactionResult = await this.prisma.$transaction(async (tx: any) => {
+      const updatedTenant = await tx.tenant.update({
+        where: { id: dto.tenantId },
+        data: {
+          industry: dto.industry,
+          type: (dto.industry as any) ?? TenantType.Retail,
+          businessType: dto.businessType,
+          gstin: dto.gstin,
+          isOnboarded: true,
+        },
+      });
+
+      // 3. Initialize Infrastructure (Default Warehouse)
+      await tx.warehouse.create({
+        data: {
+          tenantId: updatedTenant.id,
+          name: 'Main Warehouse',
+          location: 'Default Location'
+        }
+      });
+
+      // 4. Initialize Industry-Based COA
+      await this.accountingService.initializeTenantAccounts(updatedTenant.id, tx, dto.industry);
+
+      return updatedTenant;
     });
 
-    // 4. Initialize Industry-Based COA
-    await this.accountingService.initializeTenantAccounts(tenant.id, null, dto.industry);
+    const tenant = transactionResult;
 
     await this.logging.log({
       userId,
@@ -688,22 +724,23 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName || '');
+    await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName ?? '');
 
     await conditionalWait();
     return SAFE_RESPONSE;
   }
 
-  async resetPassword(token: string, newPassword: string) {
+  async resetPassword(email: string, token: string, newPassword: string) {
     const user = await this.prisma.user.findFirst({
       where: {
+        email: email.toLowerCase(),
         resetPasswordToken: token,
         resetPasswordExpires: { gte: new Date() },
       },
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid or expired reset token');
+      throw new UnauthorizedException('Invalid or expired reset token for this email');
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -721,6 +758,23 @@ export class AuthService {
 
     return { success: true, message: 'Password reset successful' };
   }
+
+  async logoutAll(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { tokenVersion: { increment: 1 } },
+    });
+
+    await this.logging.log({
+      userId,
+      action: 'LOGOUT_ALL_SESSIONS',
+      resource: 'User',
+      details: { timestamp: new Date() },
+    });
+
+    return { success: true, message: 'All active sessions have been invalidated.' };
+  }
+
 
   async getTenants(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -850,14 +904,13 @@ export class AuthService {
 
       return this.generateAuthResponse(user, true, payload.channel, !!payload.isAdminFlow);
     } catch (e) {
-      if (e instanceof UnauthorizedException && e.message === 'Invalid MFA token') {
-        // Already logged above
+      if (e instanceof UnauthorizedException) {
+        // Already a typed NestJS exception (e.g. 'Invalid MFA token') — rethrow as-is
+        // to preserve the original message without losing stack trace info.
         throw e;
       }
-
-      // For other errors (like invalid temp token), we might not have a userId yet
-      // but if we do, log it
-      throw new UnauthorizedException(e.message || 'MFA Verification Failed');
+      // Unexpected error (e.g. crypto failure, DB error) — wrap with context.
+      throw new UnauthorizedException((e as any)?.message || 'MFA Verification Failed');
     }
   }
 

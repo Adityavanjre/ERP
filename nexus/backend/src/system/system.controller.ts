@@ -9,6 +9,8 @@ import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { Module } from '../common/decorators/module.decorator';
+import { Role } from '@prisma/client';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('system')
@@ -21,6 +23,7 @@ export class SystemController {
   ) { }
 
   @Get('stats')
+  @Roles(Role.Owner)
   async getSystemStats(@Req() req: any) {
     const tenantId = req.user.tenantId;
     const [products, customers, invoices, transactions] = await Promise.all([
@@ -40,6 +43,7 @@ export class SystemController {
   }
 
   @Get('config')
+  @Roles(Role.Owner)
   async getModuleConfig(@Req() req: any) {
     const industry = req.user.industry || req.user.tenantType || 'General';
     const config = getIndustryConfig(industry);
@@ -51,12 +55,14 @@ export class SystemController {
   }
 
   @Get('audit')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   async getIntegrityAudit(@Req() req: any) {
     return this.audit.verifyFinancialIntegrity(req.user.tenantId);
   }
 
   @Get('audit/logs')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   async getAuditLogs(
     @Req() req: any,
@@ -71,6 +77,7 @@ export class SystemController {
   }
 
   @Get('founder-dashboard')
+  @Roles(Role.Owner)
   async getFounderDashboard(@Req() req: any) {
     if (!req.user.isSuperAdmin) {
       throw new ForbiddenException('Management Oversight Restricted: This view is reserved for system administrators.');

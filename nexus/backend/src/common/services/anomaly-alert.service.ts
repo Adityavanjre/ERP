@@ -21,6 +21,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TraceService } from './trace.service';
+import { MailService } from '../../system/services/mail.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AnomalyAlertService {
@@ -29,6 +31,8 @@ export class AnomalyAlertService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly traceService: TraceService,
+        private readonly mail: MailService,
+        private readonly config: ConfigService,
     ) { }
 
     private getContext(): string {
@@ -36,9 +40,23 @@ export class AnomalyAlertService {
         return cid ? `[CID: ${cid}] ` : '';
     }
 
+    private async dispatchAlert(subject: string, message: string) {
+        const adminEmail = this.config.get<string>('SYSTEM_ADMIN_EMAIL') || 'admin@klypso.in';
+        await this.mail.sendEmail(
+            adminEmail,
+            `Nexus Alert: ${subject}`,
+            `<div style="font-family: monospace; background: #fee2e2; padding: 20px; border: 2px solid #ef4444; border-radius: 8px;">
+                <h2 style="color: #991b1b; margin-top: 0;">Nexus Security/Operational Alert</h2>
+                <p><strong>CID:</strong> ${this.traceService.getCorrelationId() || 'N/A'}</p>
+                <p><strong>Incident:</strong> ${subject}</p>
+                <p><strong>Details:</strong> ${message}</p>
+                <p style="font-size: 0.8em; color: #7f1d1d;">TIMESTAMP: ${new Date().toISOString()}</p>
+             </div>`
+        ).catch(e => this.logger.error('Failed to dispatch alert email:', e));
+    }
+
     /**
      * Check for authentication failure burst from the same IP address.
-     * Triggers alert if >= 5 USER_LOGIN_FAILURE events from the same IP in the last 5 minutes.
      */
     async checkAuthFailureBurst(ipAddress: string): Promise<void> {
         if (!ipAddress) return;
@@ -55,48 +73,35 @@ export class AnomalyAlertService {
         });
 
         if (failureCount >= BURST_THRESHOLD) {
-            this.logger.error(
-                `${this.getContext()}AUTH_FAILURE_BURST detected from IP ${ipAddress}: ` +
-                `${failureCount} failed login attempts in the last 5 minutes. ` +
-                `Possible credential stuffing or brute force attack. ` +
-                `ACTION REQUIRED: Verify IP ${ipAddress} is not malicious. Consider rate limiting or blocking.`,
-            );
+            const msg = `AUTH_FAILURE_BURST detected from IP ${ipAddress}: ${failureCount} failed login attempts in the last 5 minutes. Possible brute force attack.`;
+            this.logger.error(`${this.getContext()}${msg}`);
+            await this.dispatchAlert('AUTH_BRUTE_FORCE_FAILURE', msg);
         }
     }
 
     /**
-     * Log and alert when a stock decrement is rejected because it would cause negative stock.
-     * This indicates either a data entry error or a race condition that was correctly caught.
+     * Log and alert when a stock decrement is rejected.
      */
-    alertNegativeStockAttempt(tenantId: string, productId: string, requestedQty: number): void {
-        this.logger.error(
-            `${this.getContext()}STOCK_NEGATIVE_ATTEMPTED: Tenant ${tenantId} tried to decrement ` +
-            `product ${productId} by ${requestedQty} but stock is insufficient. ` +
-            `The operation was blocked. Investigate for data entry error or race condition.`,
-        );
+    async alertNegativeStockAttempt(tenantId: string, productId: string, requestedQty: number) {
+        const msg = `STOCK_NEGATIVE_ATTEMPTED: Tenant ${tenantId} tried to decrement product ${productId} by ${requestedQty} but stock is insufficient.`;
+        this.logger.error(`${this.getContext()}${msg}`);
+        // Not dispatching email for retail stock errors unless they happen at scale.
     }
 
     /**
-     * Log and alert when a duplicate payroll entry is blocked by the application-layer check.
-     * Should only be triggered by a bug (double-submit) or a B2B attack.
+     * Log and alert on duplicate payroll.
      */
-    alertDuplicatePayrollBlocked(tenantId: string, employeeId: string, period: string): void {
-        this.logger.error(
-            `${this.getContext()}DUPLICATE_PAYROLL_BLOCKED: Tenant ${tenantId} attempted to create a duplicate ` +
-            `payroll for employee ${employeeId} for period ${period}. ` +
-            `Application-layer idempotency check blocked this. Database @@unique constraint is the final guard.`,
-        );
+    async alertDuplicatePayrollBlocked(tenantId: string, employeeId: string, period: string) {
+        const msg = `DUPLICATE_PAYROLL_BLOCKED: Tenant ${tenantId}, Employee ${employeeId}, Period ${period}. Application-layer idempotency check triggered.`;
+        this.logger.error(`${this.getContext()}${msg}`);
     }
 
     /**
      * Log and alert when the audit log hash chain verification fails.
-     * This is the most critical alert — it indicates potential audit log tampering.
      */
-    alertAuditChainTamper(tenantId: string, entryId: string): void {
-        this.logger.error(
-            `${this.getContext()}AUDIT_CHAIN_TAMPER DETECTED: Tenant ${tenantId}, AuditLog entry ${entryId} ` +
-            `has a hash mismatch. This indicates the audit log was modified after the fact. ` +
-            `CRITICAL: Treat this as a security incident. Run verify-audit-chain immediately.`,
-        );
+    async alertAuditChainTamper(tenantId: string, entryId: string) {
+        const msg = `AUDIT_CHAIN_TAMPER DETECTED: Tenant ${tenantId}, AuditLog entry ${entryId} has a hash mismatch. Forensic corruption possible.`;
+        this.logger.error(`${this.getContext()}${msg}`);
+        await this.dispatchAlert('AUDIT_LOG_TAMPERING_DETECTED', msg);
     }
 }

@@ -8,16 +8,15 @@ server {
 
     # Klypso Engine API (Nexus) — MUST come before /portal so ^~ longest match wins
     location ^~ /portal/api/ {
-        proxy_pass https://${KLYPSO_BACKEND_HOST}/api/;
+        # AUTH-API-002: Rewrite explicitly to prevent implicit Nginx trailing-slash redirects
+        rewrite ^/portal/api/(.*)$ /api/$1 break;
+        proxy_pass https://${KLYPSO_BACKEND_HOST};
         proxy_ssl_server_name on;
         proxy_set_header Host ${KLYPSO_BACKEND_HOST};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
-
-        # Absorb any backend-issued redirects — do NOT forward them to the browser
-        proxy_redirect https://${KLYPSO_BACKEND_HOST}/ https://klypso.in/portal/api/;
-        proxy_redirect http://${KLYPSO_BACKEND_HOST}/  https://klypso.in/portal/api/;
+        proxy_redirect off;
     }
 
     # Klypso ERP Portal (Frontend)

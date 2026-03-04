@@ -3,7 +3,7 @@ import { AccountingService } from './accounting.service';
 import { AccountingController } from './accounting.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { SystemModule } from '../system/system.module';
-import { LedgerService } from './services/ledger.service';
+import { LedgerModule } from './ledger.module';
 import { InvoiceService } from './services/invoice.service';
 import { PaymentService } from './services/payment.service';
 import { TallyService } from './services/tally-export.service';
@@ -16,14 +16,16 @@ import { BrsService } from './services/brs.service';
 import { BrsController } from './controllers/brs.controller';
 import { InventoryModule } from '../inventory/inventory.module';
 import { EWayBillService } from './services/eway-bill.service';
+import { Gstr1ExportService } from './services/gstr1-export.service';
+import { OnboardingService } from './services/onboarding.service';
+import { ReportingService } from './services/reporting.service';
 
 
 @Module({
-  imports: [PrismaModule, SystemModule, forwardRef(() => InventoryModule)],
+  imports: [PrismaModule, SystemModule, LedgerModule, forwardRef(() => InventoryModule)],
   controllers: [AccountingController, TdsController, BrsController],
   providers: [
     AccountingService,
-    LedgerService,
     InvoiceService,
     PaymentService,
     TallyService,
@@ -33,11 +35,13 @@ import { EWayBillService } from './services/eway-bill.service';
     TdsService,
     BrsService,
     EWayBillService,
+    Gstr1ExportService,
+    OnboardingService,
+    ReportingService,
   ],
 
   exports: [
     AccountingService,
-    LedgerService,
     InvoiceService,
     PaymentService,
     TallyService,
@@ -47,6 +51,9 @@ import { EWayBillService } from './services/eway-bill.service';
     TdsService,
     BrsService,
     EWayBillService,
+    Gstr1ExportService,
+    OnboardingService,
+    ReportingService,
   ],
 
 })

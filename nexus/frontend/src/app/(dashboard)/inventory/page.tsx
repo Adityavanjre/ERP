@@ -698,8 +698,21 @@ export default function InventoryPage() {
                             ))}
                             {filteredProducts.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-48 text-center text-slate-400 font-black uppercase tracking-widest bg-slate-50/10">
-                                        No assets found matching the current search.
+                                    <TableCell colSpan={7} className="h-64 border-none bg-slate-50/30">
+                                        <div className="flex flex-col items-center justify-center space-y-4">
+                                            <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center border border-slate-100">
+                                                <Search className="h-8 w-8 text-slate-300" />
+                                            </div>
+                                            <div className="text-center space-y-1">
+                                                <p className="text-slate-900 font-black tracking-tight text-lg">No Items Found</p>
+                                                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Adjust your search or filters to see results</p>
+                                            </div>
+                                            {searchQuery && (
+                                                <Button variant="outline" className="mt-2 h-8 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100" onClick={() => setSearchQuery("")}>
+                                                    Clear Search Rules
+                                                </Button>
+                                            )}
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             )}

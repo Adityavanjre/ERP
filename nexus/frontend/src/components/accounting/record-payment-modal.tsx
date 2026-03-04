@@ -29,6 +29,10 @@ export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: Reco
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // UI-001: Prevent double-execution during state-transition lag
+        if (loading) return;
+
         if (!amount || Number(amount) <= 0) {
             toast.error("Please enter a valid amount");
             return;

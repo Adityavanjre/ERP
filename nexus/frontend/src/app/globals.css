@@ -138,6 +138,21 @@
   animation: float 6s ease-in-out infinite;
 }
 
+/* UI-002: Form Validation Red-Highlights */
+.form-submitted input:invalid,
+.form-submitted select:invalid,
+.form-submitted textarea:invalid {
+  border-color: #f43f5e !important;
+  color: #f43f5e !important;
+  --tw-ring-color: #f43f5e !important;
+  background-color: rgba(244, 63, 94, 0.05) !important;
+}
+
+.form-submitted input:invalid::placeholder,
+.form-submitted textarea:invalid::placeholder {
+  color: rgba(244, 63, 94, 0.5) !important;
+}
+
 /* Print Optimization */
 @media print {
   nav, 

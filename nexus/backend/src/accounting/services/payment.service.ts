@@ -58,6 +58,8 @@ export class PaymentService {
         let invoice: any = null;
         let appliedToInvoice = new Decimal(0);
         let excessToAdvance = new Decimal(0);
+        let roundOffDebit = new Decimal(0);
+        let roundOffCredit = new Decimal(0);
 
         if (data.invoiceId) {
           invoice = await tx.invoice.findFirst({ where: { id: data.invoiceId, tenantId } });
@@ -67,6 +69,20 @@ export class PaymentService {
           const outstanding = this.ledger.round2(new Decimal(invoice.totalAmount).sub(new Decimal(invoice.amountPaid)));
           appliedToInvoice = Decimal.min(new Decimal(data.amount), outstanding);
           excessToAdvance = new Decimal(data.amount).sub(appliedToInvoice);
+
+          // ACC-007: Automatic Round-Off logic for +/- 1.00 discrepancy
+          const diff = new Decimal(data.amount).sub(outstanding);
+          if (!diff.isZero() && diff.abs().lessThanOrEqualTo(1)) {
+            if (diff.isNegative()) {
+              roundOffDebit = diff.abs();
+              appliedToInvoice = outstanding;
+              excessToAdvance = new Decimal(0);
+            } else {
+              roundOffCredit = diff.abs();
+              appliedToInvoice = outstanding;
+              excessToAdvance = new Decimal(0);
+            }
+          }
 
           const newAmountPaid = this.ledger.round2(new Decimal(invoice.amountPaid).add(appliedToInvoice));
           const totalAmt = new Decimal(invoice.totalAmount);
@@ -110,8 +126,20 @@ export class PaymentService {
           { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(data.amount).toNumber(), description: 'Customer Payment' },
         ];
 
+        if (roundOffDebit.gt(0)) {
+          const roundOffAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ROUNDING_OFF } });
+          if (!roundOffAccount) throw new BadRequestException(`Missing '${StandardAccounts.ROUNDING_OFF}' account.`);
+          transactions.push({ accountId: roundOffAccount.id, type: 'Debit', amount: roundOffDebit.toNumber(), description: 'Round Off' });
+        }
+
         if (appliedToInvoice.gt(0)) {
           transactions.push({ accountId: arAccount.id, type: 'Credit', amount: appliedToInvoice.toNumber(), description: `Invoice Payment: ${invoice?.invoiceNumber || ''}` });
+        }
+
+        if (roundOffCredit.gt(0)) {
+          const roundOffAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ROUNDING_OFF } });
+          if (!roundOffAccount) throw new BadRequestException(`Missing '${StandardAccounts.ROUNDING_OFF}' account.`);
+          transactions.push({ accountId: roundOffAccount.id, type: 'Credit', amount: roundOffCredit.toNumber(), description: 'Round Off' });
         }
 
         if (excessToAdvance.gt(0)) {
@@ -246,19 +274,37 @@ export class PaymentService {
           correlationId: this.traceService.getCorrelationId(),
         }, tx);
       } else {
-        // Fallback if no journal found (direct balance reversal)
+        // ACC-INTEGRITY-01: If no original journal is found (e.g. legacy payment created before
+        // journal tracking was added), we MUST still use createJournalEntry to reverse balances.
+        // Direct balance mutations via updateMany bypass double-entry enforcement and leave no
+        // audit trail — they are forbidden in any code path, including fallbacks.
+        // We reconstruct the correcting journal from the payment data itself.
         const bankAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: { contains: 'Bank' } } });
         if (pay.customerId) {
           const arAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Asset, name: 'Accounts Receivable' } });
           if (bankAccount && arAccount) {
-            await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { decrement: pay.amount } } });
-            await tx.account.updateMany({ where: { id: arAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+            await this.ledger.createJournalEntry(tenantId, {
+              date: new Date().toISOString(),
+              description: `Reversal: Payment ${pay.id.slice(0, 8)} (no original journal — legacy path) Reason: ${reason}`,
+              reference: `CAN-LEGACY-${pay.id.slice(0, 8)}`,
+              transactions: [
+                { accountId: arAccount.id, type: 'Debit', amount: new Decimal(pay.amount).toNumber(), description: 'Payment Reversal' },
+                { accountId: bankAccount.id, type: 'Credit', amount: new Decimal(pay.amount).toNumber(), description: 'Payment Reversal' },
+              ],
+            }, tx);
           }
         } else if (pay.supplierId) {
           const apAccount = await tx.account.findFirst({ where: { tenantId, type: AccountType.Liability, name: 'Accounts Payable' } });
           if (apAccount && bankAccount) {
-            await tx.account.updateMany({ where: { id: apAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
-            await tx.account.updateMany({ where: { id: bankAccount.id, tenantId }, data: { balance: { increment: pay.amount } } });
+            await this.ledger.createJournalEntry(tenantId, {
+              date: new Date().toISOString(),
+              description: `Reversal: Vendor Payment ${pay.id.slice(0, 8)} (no original journal — legacy path) Reason: ${reason}`,
+              reference: `CAN-LEGACY-VEND-${pay.id.slice(0, 8)}`,
+              transactions: [
+                { accountId: bankAccount.id, type: 'Debit', amount: new Decimal(pay.amount).toNumber(), description: 'Vendor Payment Reversal' },
+                { accountId: apAccount.id, type: 'Credit', amount: new Decimal(pay.amount).toNumber(), description: 'Vendor Payment Reversal' },
+              ],
+            }, tx);
           }
         }
       }

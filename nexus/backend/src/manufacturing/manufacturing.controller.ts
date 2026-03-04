@@ -21,6 +21,8 @@ import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
 import { AiService } from '../system/services/ai.service';
 import { CreateBOMDto, CreateWorkOrderDto, CreateMachineDto, CompleteWorkOrderDto } from './dto/manufacturing.dto';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('manufacturing')
@@ -33,6 +35,7 @@ export class ManufacturingController {
   ) { }
 
   @Get('boms/:id/yield-analysis')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getYieldAnalysis(@CurrentUser() user: any, @Param('id') id: string) {
     return this.aiService.getYieldAnalysis(user.tenantId, id);
@@ -40,18 +43,21 @@ export class ManufacturingController {
 
   // BOMs
   @Post('boms')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   createBOM(@CurrentUser() user: any, @Body() dto: CreateBOMDto) {
     return this.mfgService.createBOM(user.tenantId, dto);
   }
 
   @Get('boms')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getBOMs(@CurrentUser() user: any) {
     return this.mfgService.getBOMs(user.tenantId);
   }
 
   @Post('import/boms')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   importBoms(@CurrentUser() user: any, @Body() body: any) {
     const csvContent = body.csv || body;
@@ -62,12 +68,14 @@ export class ManufacturingController {
   }
 
   @Get('boms/:id')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getBOMDetails(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.getBOMDetails(user.tenantId, id);
   }
 
   @Get('boms/:id/explode')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   async explodeBOM(
     @CurrentUser() user: any,
@@ -78,6 +86,7 @@ export class ManufacturingController {
   }
 
   @Get('boms/:id/cost')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   async getBOMCost(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.getBOMCost(user.tenantId, id);
@@ -85,18 +94,21 @@ export class ManufacturingController {
 
   // Work Orders
   @Post('work-orders')
+  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   createWO(@CurrentUser() user: any, @Body() dto: CreateWorkOrderDto) {
     return this.mfgService.createWorkOrder(user.tenantId, dto);
   }
 
   @Get('work-orders')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getWOs(@CurrentUser() user: any) {
     return this.mfgService.getWorkOrders(user.tenantId);
   }
 
   @Patch('work-orders/:id/status')
+  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   updateWOStatus(
     @CurrentUser() user: any,
@@ -107,6 +119,7 @@ export class ManufacturingController {
   }
 
   @Post('work-orders/:id/approve')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   @MobileAction('APPROVE_WO')
   approveWO(@CurrentUser() user: any, @Param('id') id: string) {
@@ -114,6 +127,7 @@ export class ManufacturingController {
   }
 
   @Post('work-orders/:id/reject')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   @MobileAction('REJECT_WO')
   rejectWO(@CurrentUser() user: any, @Param('id') id: string) {
@@ -121,12 +135,14 @@ export class ManufacturingController {
   }
 
   @Get('work-orders/:id/shortages')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   checkShortages(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.checkShortagesFromWO(user.tenantId, id);
   }
 
   @Post('work-orders/:id/complete')
+  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   completeWO(
     @CurrentUser() user: any,
@@ -148,12 +164,14 @@ export class ManufacturingController {
 
   // Machines
   @Post('machines')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   createMachine(@CurrentUser() user: any, @Body() data: CreateMachineDto) {
     return this.mfgService.createMachine(user.tenantId, data);
   }
 
   @Get('machines')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getMachines(@CurrentUser() user: any) {
     return this.mfgService.getMachines(user.tenantId);

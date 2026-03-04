@@ -4,10 +4,13 @@ import { memoryStorage } from 'multer';
 import { CollaborationService } from '../services/collaboration.service';
 import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 import { validateFileMagicBytes, validateFileSize, ALLOWED_MIME_TYPES } from '../../common/utils/file-magic.util';
 
 @Controller('collaboration')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CollaborationController {
   constructor(
     private readonly collaborationService: CollaborationService,
@@ -15,6 +18,7 @@ export class CollaborationController {
   ) { }
 
   @Post('upload')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.Biller, Role.Storekeeper, Role.CA)
   @UseInterceptors(FileInterceptor('file', {
     storage: memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB hard limit at transport layer
@@ -40,16 +44,19 @@ export class CollaborationController {
   }
 
   @Get('comments/:type/:id')
+  @Roles(Role.Owner)
   async getComments(@Request() req: any, @Param('type') type: string, @Param('id') id: string) {
     return this.collaborationService.getComments(req.user.tenantId, type, id);
   }
 
   @Post('comments')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.Biller, Role.Storekeeper, Role.CA)
   async addComment(@Request() req: any, @Body() body: any) {
     return this.collaborationService.addComment(req.user.tenantId, req.user.userId, body);
   }
 
   @Delete('comments/:id')
+  @Roles(Role.Owner, Role.Manager)
   async deleteComment(@Request() req: any, @Param('id') id: string) {
     return this.collaborationService.deleteComment(id, req.user.tenantId);
   }

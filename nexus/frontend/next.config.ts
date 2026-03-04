@@ -6,7 +6,10 @@ const KLYPSO_BACKEND_URL = process.env.KLYPSO_BACKEND_URL;
 const securityHeaders = [
     {
         key: 'Content-Security-Policy',
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' https://nexus-backend-3ukg.onrender.com https://klypso-backend.onrender.com https://klypso-gateway.onrender.com https://klypso-frontend.onrender.com http://localhost:3001 http://localhost:3000 http://localhost:5000;",
+        // FIX-AUTH-07: Removed direct Render backend URLs from connect-src.
+        // All API traffic flows through the Next.js proxy (/portal/api) which is same-origin.
+        // Exposing backend URLs in CSP headers leaks infrastructure topology and circumvents the gateway model.
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://localhost:3000 http://localhost:5000;",
     },
     {
         key: 'X-DNS-Prefetch-Control',

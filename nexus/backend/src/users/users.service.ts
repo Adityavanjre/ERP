@@ -9,6 +9,12 @@ import { Role } from '@nexus/shared';
 export class UsersService {
   constructor(private prisma: PrismaService) { }
 
+  async findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id }
+    });
+  }
+
   async findAll(tenantId: string) {
     const memberships = await this.prisma.tenantUser.findMany({
       where: { tenantId },
@@ -102,7 +108,14 @@ export class UsersService {
       where: {
         userId_tenantId: { userId, tenantId },
       },
-      data: { role: dto.role },
+      data: {
+        role: dto.role,
+        user: {
+          update: {
+            tokenVersion: { increment: 1 }
+          }
+        }
+      },
     });
   }
 

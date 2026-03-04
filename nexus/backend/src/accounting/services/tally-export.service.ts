@@ -4,6 +4,7 @@ import { AccountType, InvoiceStatus, POStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LedgerService } from './ledger.service';
 import { StandardAccounts } from '../constants/account-names';
+import { mapTallyState } from '../../common/utils/tally-state-mapper.util';
 
 @Injectable()
 export class TallyService {
@@ -627,19 +628,19 @@ export class TallyService {
         chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
         chunk += `              <HSNCODE>${this.escapeXml(wo.bom.product.hsnCode || '')}</HSNCODE>\n`;
         chunk += `              <RATE>${wo.bom.product.costPrice}</RATE>\n`;
-        chunk += `              <AMOUNT>-${Number(wo.producedQuantity) * Number(wo.bom.product.costPrice)}</AMOUNT>\n`;
+        chunk += `              <AMOUNT>-${new Decimal(wo.producedQuantity as any).mul(new Decimal(wo.bom.product.costPrice as any)).toFixed(2)}</AMOUNT>\n`;
         chunk += `              <ACTUALQTY>${wo.producedQuantity} Nos</ACTUALQTY>\n`;
         chunk += `              <BILLEDQTY>${wo.producedQuantity} Nos</BILLEDQTY>\n`;
         chunk += `            </INVENTORYENTRIES.LIST>\n`;
 
         // CONSUMPTION (Raw Materials)
         for (const item of wo.bom.items) {
-          const consumedQty = Number(item.quantity) * (Number(wo.producedQuantity) + Number(wo.scrapQuantity));
+          const consumedQty = new Decimal(item.quantity as any).mul(new Decimal(wo.producedQuantity as any).add(new Decimal(wo.scrapQuantity as any)));
           chunk += `            <INVENTORYENTRIES.LIST>\n`;
           chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
           chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
           chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-          chunk += `              <AMOUNT>${consumedQty * Number(item.product.costPrice)}</AMOUNT>\n`;
+          chunk += `              <AMOUNT>${consumedQty.mul(new Decimal(item.product.costPrice as any)).toFixed(2)}</AMOUNT>\n`;
           chunk += `              <ACTUALQTY>${consumedQty} Nos</ACTUALQTY>\n              <BILLEDQTY>${consumedQty} Nos</BILLEDQTY>\n`;
           chunk += `            </INVENTORYENTRIES.LIST>\n`;
         }
@@ -773,13 +774,15 @@ export class TallyService {
       for (const cust of customers) {
         let chunk = '';
         const escapedName = this.escapeXml(cust.company || `${cust.firstName} ${cust.lastName}`);
-        const ob = cust.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
+        const ob = cust.openingBalances.reduce((sum, b) => sum.add(new Decimal(b.amount as any)), new Decimal(0)).toFixed(2);
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
         chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
         chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
         chunk += `            <PARENT>Sundry Debtors</PARENT>\n`;
         chunk += `            <OPENINGBALANCE>-${ob}</OPENINGBALANCE>\n`;
         chunk += `            <GSTREGISTRATIONTYPE>${cust.gstin ? 'Regular' : 'Unregistered'}</GSTREGISTRATIONTYPE>\n`;
+        chunk += `            <LEDGERSTATENAME>${this.escapeXml(mapTallyState(cust.state))}</LEDGERSTATENAME>\n`;
+        chunk += `            <STATENAME>${this.escapeXml(mapTallyState(cust.state))}</STATENAME>\n`;
         if (cust.gstin) chunk += `            <PARTYGSTIN>${this.escapeXml(cust.gstin)}</PARTYGSTIN>\n`;
         chunk += `          </LEDGER>\n`;
         chunk += `        </TALLYMESSAGE>\n`;
@@ -796,12 +799,14 @@ export class TallyService {
       for (const supp of suppliers) {
         let chunk = '';
         const escapedName = this.escapeXml(supp.name);
-        const ob = supp.openingBalances.reduce((sum, b) => sum + Number(b.amount), 0);
+        const ob = supp.openingBalances.reduce((sum, b) => sum.add(new Decimal(b.amount as any)), new Decimal(0)).toFixed(2);
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
         chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
         chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
         chunk += `            <PARENT>Sundry Creditors</PARENT>\n`;
         chunk += `            <OPENINGBALANCE>${ob}</OPENINGBALANCE>\n`;
+        chunk += `            <LEDGERSTATENAME>${this.escapeXml(mapTallyState(supp.state))}</LEDGERSTATENAME>\n`;
+        chunk += `            <STATENAME>${this.escapeXml(mapTallyState(supp.state))}</STATENAME>\n`;
         if (supp.gstin) chunk += `            <PARTYGSTIN>${this.escapeXml(supp.gstin)}</PARTYGSTIN>\n`;
         chunk += `          </LEDGER>\n`;
         chunk += `        </TALLYMESSAGE>\n`;

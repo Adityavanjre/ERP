@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Shield, Mail, Calendar, Search, Users, ShieldCheck, User, ChevronRight, Lock, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,10 +29,8 @@ const ManageUsers = () => {
 
     const fetchUsers = async () => {
         try {
-            const config = {
-                headers: { Authorization: `Bearer ${user?.token}` },
-            };
-            const { data } = await axios.get(`${API_URL}/api/users`, config);
+            // SEC-008: Centralized API handles headers
+            const { data } = await api.get('/api/users');
             setUsers(data);
             if (data.length > 0) setSelectedId(data[0]._id);
         } catch (error) {
@@ -48,8 +45,7 @@ const ManageUsers = () => {
     const handleToggleRole = async (id: string, currentIsAdmin: boolean) => {
         if (!window.confirm(`Are you sure you want to ${currentIsAdmin ? 'demote' : 'promote'} this user?`)) return;
         try {
-            const config = { headers: { Authorization: `Bearer ${user?.token}` } };
-            await axios.put(`${API_URL}/api/users/${id}/role`, { isAdmin: !currentIsAdmin }, config);
+            await api.put(`/api/users/${id}/role`, { isAdmin: !currentIsAdmin });
             setUsers(prev => prev.map(u => u._id === id ? { ...u, isAdmin: !currentIsAdmin } : u));
         } catch (error: any) {
             alert(error.response?.data?.message || 'Error updating user role');
@@ -59,8 +55,7 @@ const ManageUsers = () => {
     const handleDeleteUser = async (id: string) => {
         if (!window.confirm('Erase this user from the system? This action cannot be undone.')) return;
         try {
-            const config = { headers: { Authorization: `Bearer ${user?.token}` } };
-            await axios.delete(`${API_URL}/api/users/${id}`, config);
+            await api.delete(`/api/users/${id}`);
             setUsers(prev => prev.filter(u => u._id !== id));
             if (selectedId === id) {
                 setSelectedId(null);
@@ -82,8 +77,7 @@ const ManageUsers = () => {
 
         try {
             setIsResetting(true);
-            const config = { headers: { Authorization: `Bearer ${user?.token}` } };
-            await axios.put(`${API_URL}/api/users/${selectedUser._id}/password`, { password: newPassword }, config);
+            await api.put(`/api/users/${selectedUser._id}/password`, { password: newPassword });
             alert('Password successfully updated.');
             setNewPassword('');
         } catch (error: any) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -43,6 +43,20 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // PERF-002: Trap browser history payload states natively protecting the multi-step form data
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const handlePopState = (e: PopStateEvent) => {
+            if (step === 2) {
+                // Intercept back button allowing user to return to Step 1 
+                // natively without crashing out to login/index
+                setStep(1);
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [step]);
+
     // Forms
     const {
         register: registerUser,
@@ -68,6 +82,10 @@ export default function RegisterPage() {
     const onUserStepSubmit = (data: UserFormData) => {
         setUserData(data);
         setStep(2);
+        // Push fake state so hitting back browser-button triggers popstate trap
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ wizardStep: 2 }, '', window.location.href);
+        }
     };
 
     // Step 2: Company Details & Final Submission
@@ -288,7 +306,7 @@ export default function RegisterPage() {
                     <CardFooter className="p-8 pt-0 flex flex-col gap-4">
                         <div className="flex w-full gap-3">
                             {step === 2 && (
-                                <Button variant="ghost" onClick={() => setStep(1)} disabled={isLoading} className="text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 rounded-xl h-12">
+                                <Button variant="ghost" type="button" onClick={() => { setStep(1); if (typeof window !== 'undefined') window.history.back(); }} disabled={isLoading} className="text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 rounded-xl h-12">
                                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                                 </Button>
                             )}

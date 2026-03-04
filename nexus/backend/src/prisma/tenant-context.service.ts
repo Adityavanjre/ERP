@@ -5,10 +5,12 @@ import { AsyncLocalStorage } from 'async_hooks';
 export class TenantContextService {
   private static readonly storage = new AsyncLocalStorage<{
     tenantId: string;
+    userId?: string;
+    role?: string;
   }>();
 
-  run(tenantId: string, next: () => any) {
-    return TenantContextService.storage.run({ tenantId }, next);
+  run(tenantId: string, userId: string | undefined, role: string | undefined, next: () => any) {
+    return TenantContextService.storage.run({ tenantId, userId, role }, next);
   }
 
   getTenantId(): string | undefined {
@@ -24,5 +26,13 @@ export class TenantContextService {
       );
     }
     return context.tenantId;
+  }
+
+  getUserId(): string | undefined {
+    return TenantContextService.storage.getStore()?.userId;
+  }
+
+  getRole(): string | undefined {
+    return TenantContextService.storage.getStore()?.role;
   }
 }

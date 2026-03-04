@@ -11,7 +11,7 @@ export class BrsService {
         const uniqueLines = new Map<string, any>();
         for (const line of data.lines || []) {
             if (!line.date || !line.amount) continue; // Skip blank/invalid lines
-            
+
             // Generate a deterministic hash for deduplication
             const lineHash = `${new Date(line.date).toISOString().split('T')[0]}_${line.amount}_${line.reference || line.description}`;
             uniqueLines.set(lineHash, line);
@@ -48,46 +48,70 @@ export class BrsService {
     async autoMatch(tenantId: string, statementId: string) {
         const statementLines = await this.prisma.bankStatementLine.findMany({
             where: { statementId, tenantId, reconciled: false },
+            orderBy: { date: 'asc' }
         });
 
+        if (statementLines.length === 0) return [];
+
         const results = [];
+        const createOps = [];
+        const updateLineIds = [];
 
+        // BNK-002: Batch fetch to resolve N+1 performance bottleneck on 1000+ CSV imports
+        const minDate = new Date(statementLines[0].date);
+        minDate.setDate(minDate.getDate() - 3);
+
+        const maxDate = new Date(statementLines[statementLines.length - 1].date);
+        maxDate.setDate(maxDate.getDate() + 3);
+
+        const allTransactions = await this.prisma.transaction.findMany({
+            where: {
+                tenantId,
+                date: { gte: minDate, lte: maxDate },
+                reconciliations: { none: {} },
+            },
+        });
+
+        const usedTransactionIds = new Set<string>();
+
+        // In-memory matching Engine
         for (const line of statementLines) {
-            // Match by Amount and Date within +/- 3 days
-            const startDate = new Date(line.date);
-            startDate.setDate(startDate.getDate() - 3);
-            const endDate = new Date(line.date);
-            endDate.setDate(endDate.getDate() + 3);
+            const lineTime = new Date(line.date).getTime();
+            const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
 
-            const possibleMatches = await this.prisma.transaction.findMany({
-                where: {
-                    tenantId,
-                    amount: line.amount,
-                    date: {
-                        gte: startDate,
-                        lte: endDate,
-                    },
-                    reconciliations: { none: {} },
-                },
+            const possibleMatches = allTransactions.filter(t => {
+                if (usedTransactionIds.has(t.id)) return false;
+                // strict match on precise amount
+                if (!new Decimal(t.amount as any).equals(new Decimal(line.amount as any))) return false;
+                const txTime = new Date(t.date).getTime();
+                return Math.abs(txTime - lineTime) <= threeDaysMs;
             });
 
+            // Only auto-match if exactly ONE match is found (no ambiguity)
             if (possibleMatches.length === 1) {
-                await this.prisma.$transaction([
-                    this.prisma.bankReconciliation.create({
-                        data: {
-                            tenantId,
-                            transactionId: possibleMatches[0].id,
-                            statementLineId: line.id,
-                        },
-                    }),
-                    this.prisma.bankStatementLine.update({
-                        where: { id: line.id },
-                        data: { reconciled: true },
-                    }),
-                ]);
+                const matchedTx = possibleMatches[0];
+                usedTransactionIds.add(matchedTx.id);
 
-                results.push({ lineId: line.id, transactionId: possibleMatches[0].id, status: 'Matched' });
+                createOps.push({
+                    tenantId,
+                    transactionId: matchedTx.id,
+                    statementLineId: line.id
+                });
+                updateLineIds.push(line.id);
+
+                results.push({ lineId: line.id, transactionId: matchedTx.id, status: 'Matched' });
             }
+        }
+
+        // Commit all resolved states safely in one atomic swipe
+        if (createOps.length > 0) {
+            await this.prisma.$transaction([
+                this.prisma.bankReconciliation.createMany({ data: createOps }),
+                this.prisma.bankStatementLine.updateMany({
+                    where: { id: { in: updateLineIds } },
+                    data: { reconciled: true }
+                })
+            ]);
         }
 
         return results;

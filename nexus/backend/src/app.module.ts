@@ -37,6 +37,8 @@ import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
 import { CsrfGuard } from './common/guards/csrf.guard';
 import { PlanGuard } from './common/guards/plan.guard';
+import { RolesGuard } from './common/guards/roles.guard';
+import { TenantMembershipGuard } from './common/guards/tenant-membership.guard';
 
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -82,35 +84,43 @@ import { ScheduleModule } from '@nestjs/schedule';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard, // First: Authenticate user (req.user populated)
+      useClass: JwtAuthGuard, // 1st: Authenticate — populates req.user. Nothing else can run without this.
     },
     {
       provide: APP_GUARD,
-      useClass: OnboardingGuard, // Second: Check if onboarding is needed
+      useClass: TenantMembershipGuard, // 2nd: Membership/Subscription verification — Rule B & S. Refetches role from DB.
     },
     {
       provide: APP_GUARD,
-      useClass: ModuleGuard,
+      useClass: OnboardingGuard, // 3rd: Tenant state check — requires req.user.
     },
     {
       provide: APP_GUARD,
-      useClass: PermissionsGuard, // Hardens Governance: Mobile Safety Contract enforced globally
+      useClass: ModuleGuard, // 4th: Module enable/disable — requires req.user.tenantId.
     },
     {
       provide: APP_GUARD,
-      useClass: MobileWhitelistGuard, // Enforces functional whitelist for Mobile
+      useClass: RolesGuard, // 5th: Role enforcement — fail-closed on mutations. All endpoints must declare @Roles(), @Public(), or @AllowIdentity().
     },
     {
       provide: APP_GUARD,
-      useClass: RoleThrottlerGuard,
+      useClass: PermissionsGuard, // 6th: Mobile Safety Contract — fine-grained permission checks within a role.
     },
     {
       provide: APP_GUARD,
-      useClass: CsrfGuard,
+      useClass: MobileWhitelistGuard, // 7th: Channel whitelist — prevents unauthorized mobile access.
     },
     {
       provide: APP_GUARD,
-      useClass: PlanGuard, // Subscription enforcement — runs after auth, fail-open on billing errors
+      useClass: PlanGuard, // 8th: Subscription enforcement — requires tenantId.
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard, // 9th: CSRF validation — runs after auth session is verified.
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleThrottlerGuard, // 10th: Rate limiting — always last.
     },
     {
       provide: APP_INTERCEPTOR,

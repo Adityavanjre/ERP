@@ -1,6 +1,5 @@
 import { createContext, useState, useContext, type ReactNode } from 'react';
-import axios from 'axios';
-import API_URL from '../api/config';
+import api from '../api';
 
 interface User {
     _id: string;
@@ -38,20 +37,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            const { data } = await axios.post(`${API_URL}/api/users/login`, {
+            // SEC-008: Use centralized api instance
+            const { data } = await api.post('/api/users/login', {
                 email,
                 password,
             });
             setUser(data);
             localStorage.setItem('userInfo', JSON.stringify(data));
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error) && error.response) {
-                throw new Error(error.response.data.message || 'Login failed');
-            } else if (error instanceof Error) {
-                throw new Error(error.message);
-            } else {
-                throw new Error('Login failed');
-            }
+        } catch (error: any) {
+            throw new Error(error.response?.data?.message || 'Login failed');
         } finally {
             setIsLoading(false);
         }

@@ -8,6 +8,8 @@ import {
 } from '@nestjs/terminus';
 import { PrismaService } from '../prisma/prisma.service';
 import { SkipThrottle } from '@nestjs/throttler';
+import { Role } from '@prisma/client';
+import { Roles } from '../common/decorators/roles.decorator';
 
 @SkipThrottle()
 @Public()
@@ -21,6 +23,7 @@ export class HealthController {
   ) { }
 
   @Get('readiness')
+  @Roles(Role.Owner)
   @HealthCheck()
   checkReadiness() {
     return this.health.check([
@@ -30,6 +33,7 @@ export class HealthController {
   }
 
   @Get('liveness')
+  @Roles(Role.Owner)
   checkLiveness() {
     return {
       status: 'up',

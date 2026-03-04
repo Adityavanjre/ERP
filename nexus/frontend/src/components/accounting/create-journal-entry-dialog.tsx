@@ -55,6 +55,9 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // UI-001: Prevent double-execution during state-transition lag
+        if (loading) return;
+
         if (!description) {
             toast.error("Please add a description");
             return;

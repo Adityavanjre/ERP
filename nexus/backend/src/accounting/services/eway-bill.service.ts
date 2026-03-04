@@ -82,7 +82,7 @@ export class EWayBillService {
                 cessRate: 0,
             })),
             transMode: transportDetails.transMode,
-            distance: transportDetails.distance,
+            distance: isNaN(Number(transportDetails.distance)) ? 0 : Math.round(Number(transportDetails.distance)),
             transporterId: transportDetails.transporterId || '',
             transporterName: transportDetails.transporterName || '',
             transDocNo: transportDetails.transDocNo || '',

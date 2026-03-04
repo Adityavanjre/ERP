@@ -15,22 +15,24 @@ export class TenantMembershipGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    // 1. Authentication Check
-    if (!user || !user.sub) {
-      throw new UnauthorizedException('Authentication required');
+    // 1. Skip for Unauthenticated/Public Routes
+    // If JwtAuthGuard (which runs before this) determined the route is public,
+    // req.user might be null. We let those pass through.
+    if (!user) {
+      return true;
     }
 
-    // 2. Global Identity Check (e.g., for select-tenant or profile)
-    // If no tenantId is provided in JWT, it's an identity token.
-    // Scoped endpoints MUST have a tenantId.
+    // 2. Bypass for Identity Scoped Tokens
+    // If no tenantId is in the token, it's an identity token (e.g. for /auth/tenants).
+    // We allow it to pass this guard. RolesGuard will enforce that identity tokens
+    // cannot hit tenant-scoped controllers unless tagged with @AllowIdentity().
     if (!user.tenantId) {
-      // If the endpoint is scoped, this guard should fail.
-      // We will assume scoped endpoints are the ones using this guard.
-      throw new ForbiddenException('Tenant context required. Please select a company.');
+      return true;
     }
 
-    // 3. Database-Level Membership Verification (Rule B)
-    // This prevents stale/tampered JWTs from accessing Tenants.
+    // 3. Database-Level Membership & Subscription Verification (Rule B & Rule S)
+    // Refetch the role and tenant status from DB to ensure unexpired JWTs don't
+    // bypass immediate revocations/suspensions.
     const membership = await this.prisma.tenantUser.findUnique({
       where: {
         userId_tenantId: {
@@ -42,24 +44,36 @@ export class TenantMembershipGuard implements CanActivate {
     });
 
     if (!membership) {
-      throw new ForbiddenException('Access Denied: You are not a member of this tenant.');
+      throw new ForbiddenException({
+        message: 'Access Denied: You are not a member of this workspace.',
+        code: 'TENANT_MEMBERSHIP_REVOKED',
+      });
     }
 
-    // 4. Subscription & Suspension Check (Rule S - STABLE-001)
     const tenant = membership.tenant;
-    const method = request.method;
 
+    // RULE-SUSPENSION (TEN-003): Block all actions if workspace is suspended.
     if (tenant.subscriptionStatus === 'Suspended') {
-      throw new ForbiddenException(
-        `Tenant Suspended: This account has been deactivated. Reason: ${tenant.suspendReason || 'Administrative'}`,
-      );
+      throw new ForbiddenException({
+        message: `Account Suspended: ${tenant.suspendReason || 'Administrative Review'}.`,
+        code: 'TENANT_SUSPENDED',
+      });
     }
 
-    if (tenant.subscriptionStatus === 'ReadOnly' && method !== 'GET') {
-      throw new ForbiddenException(
-        'Subscription Restricted: This account is in Read-Only mode. Please settle pending dues to resume operations.',
-      );
+    // RULE-READ-ONLY: Block mutations if account is in read-only mode.
+    if (tenant.subscriptionStatus === 'ReadOnly' && request.method !== 'GET') {
+      throw new ForbiddenException({
+        message: 'Account Restricted: This workspace is in Read-Only mode due to expiry.',
+        code: 'TENANT_READ_ONLY',
+      });
     }
+
+    // 4. Stale Role Protection
+    // Sync the role from DB into the request context.
+    // If a user's role was changed in DB, the new role takes effect immediately.
+    user.role = membership.role;
+    user.tenantName = tenant.name;
+    user.subscriptionStatus = tenant.subscriptionStatus;
 
     // 5. Attach Verified Metadata
     // Override the user object with DB-verified role to prevent JWT spoofing

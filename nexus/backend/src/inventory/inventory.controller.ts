@@ -42,6 +42,7 @@ export class InventoryController {
   ) { }
 
   @Get('warehouses')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getWarehouses(@TenantId() tenantId: string) {
     return this.warehouseService.getWarehouses(tenantId);
@@ -122,6 +123,7 @@ export class InventoryController {
   }
 
   @Get('products')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_PRODUCTS')
   findAll(
@@ -139,12 +141,14 @@ export class InventoryController {
   }
 
   @Get('products/find-by-code')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   findByCode(@Req() req: any, @Query('code') code: string) {
     return this.inventoryService.findProductByCode(req.user.tenantId, code);
   }
 
   @Get('products/:id')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   findOne(@Req() req: any, @Param('id') id: string) {
     return this.inventoryService.getProduct(req.user.tenantId, id);
@@ -174,8 +178,24 @@ export class InventoryController {
   }
 
   @Get('stats')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: any) {
     return this.inventoryService.getStats(req.user.tenantId);
+  }
+
+  @Get('markdown-suggestions')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
+  @Permissions(Permission.VIEW_REPORTS)
+  getMarkdownSuggestions(
+    @Req() req: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.inventoryService.getMarkdownSuggestions(
+      req.user.tenantId,
+      Number(page) || 1,
+      Number(limit) || 50,
+    );
   }
 }

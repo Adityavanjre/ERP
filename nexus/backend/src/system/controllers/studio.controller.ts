@@ -28,11 +28,22 @@ export class StudioController {
   }
 
   @Get('records/:modelName')
-  getRecords(@Req() req: any, @Param('modelName') modelName: string) {
-    return this.ormService.findRecords(req.user.tenantId, modelName);
+  getRecords(
+    @Req() req: any,
+    @Param('modelName') modelName: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.ormService.findRecords(
+      req.user.tenantId,
+      modelName,
+      Number(page) || 1,
+      Number(limit) || 50,
+    );
   }
 
   @Post('records/:modelName')
+  @Roles(Role.Owner, Role.Manager)
   createRecord(
     @Req() req: any,
     @Param('modelName') modelName: string,
@@ -51,6 +62,7 @@ export class StudioController {
   }
 
   @Post('records/:modelName/:id')
+  @Roles(Role.Owner, Role.Manager)
   updateRecord(
     @Req() req: any,
     @Param('modelName') modelName: string,

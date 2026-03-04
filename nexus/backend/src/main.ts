@@ -4,6 +4,8 @@ import 'class-validator';
 import 'class-transformer';
 
 import { NestFactory } from '@nestjs/core';
+import * as Sentry from '@sentry/node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
@@ -72,6 +74,20 @@ async function bootstrap() {
   // Must validate BEFORE creating the NestJS app
   validateEnvironment();
 
+  // DEV-004: Configure Sentry explicitly for unhandled crashes
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      integrations: [
+        nodeProfilingIntegration(),
+      ],
+      tracesSampleRate: 1.0,
+      profilesSampleRate: 1.0,
+      environment: process.env.NODE_ENV || 'development'
+    });
+    console.log('[BOOT] Sentry initialized successfully.');
+  }
+
   console.log('[BOOT] Initializing NestJS App Instance...');
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: loggerConfig,
@@ -90,6 +106,11 @@ async function bootstrap() {
     version: '1.0.0',
     timestamp: new Date().toISOString()
   }));
+
+  app.use((req: any, res: any, next: any) => {
+    res.setHeader('X-App-Version', process.env.APP_VERSION || '2.0.0');
+    next();
+  });
 
   app.use(cookieParser());
   app.use(hpp());
@@ -185,13 +206,27 @@ async function bootstrap() {
   console.log(`[BOOT] Nexus Backend successfully listening on port ${port}`);
 }
 
-// PROD-004: Hard-locked to Single Process Mode to prevent OOM on Cloud Free Tiers (512MB RAM).
-// Previously, enabling clustering would spawn process per CPU core (e.g. 8 cores = 8x RAM usage), instantly crashing.
-bootstrap().catch(err => {
-  console.error('\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-  console.error('CRITICAL_STARTUP_FAILURE: Nexus Backend crashed during boot.');
-  console.error('Reason:', err.message || 'Unknown Error');
-  if (err.stack) console.error('Stack Trace:', err.stack);
-  console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n');
-  process.exit(1);
-});
+import { ClusterService } from './system/services/cluster.service';
+
+/**
+ * PROD-004: Scaling Strategy Selection.
+ * Avoid clustering on standard 512MB free tiers to prevent OOM.
+ * Allow multi-process expansion only on high-scale infra (RAM_TIER > 512MB).
+ */
+const RAM_TIER = parseInt(process.env.RAM_TIER || '512', 10);
+const SHOULD_CLUSTER = (process.env.NODE_ENV === 'production' && RAM_TIER > 512);
+
+if (SHOULD_CLUSTER) {
+  ClusterService.clusterize(() => {
+    bootstrap().catch(err => {
+      console.error('CRITICAL_BOOT_EXIT (Worker):', err.message);
+      process.exit(1);
+    });
+  });
+} else {
+  console.log(`[BOOT] Scaling Strategy: Single Process (Vertical) — ${RAM_TIER}MB Tier Baseline.`);
+  bootstrap().catch(err => {
+    console.error('CRITICAL_BOOT_EXIT (Primary):', err.message);
+    process.exit(1);
+  });
+}

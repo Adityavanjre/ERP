@@ -31,6 +31,7 @@ export class MachineController {
   }
 
   @Get()
+  @Roles(Role.Owner)
   findAll(@Req() req: any) {
     return this.machineService.getMachines(req.user.tenantId);
   }

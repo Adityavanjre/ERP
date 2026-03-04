@@ -119,56 +119,60 @@ export class HrService {
     });
     if (!employee) throw new BadRequestException('Employee not found in this tenant context');
 
-    // Verify necessary accounts exist BEFORE creating payroll record to ensure audit trail
-    const salaryAccount = await this.prisma.account.findFirst({
-      where: { tenantId, name: { in: AccountSelectors.SALARY } },
-    });
-    const cashAccount = await this.prisma.account.findFirst({
-      where: { tenantId, name: { in: AccountSelectors.CASH_BANK } },
-    });
+    // 1. Transactional Guard: ensure payroll record and journal entry are atomic.
+    return this.prisma.$transaction(async (tx) => {
+      // 2. Period Lock Check (via LedgerService via AccountingService)
+      await this.accounting.checkPeriodLock(tenantId, new Date(), tx);
 
-    if (!salaryAccount || !cashAccount) {
-      throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
-    }
+      // Verify necessary accounts exist
+      const salaryAccount = await tx.account.findFirst({
+        where: { tenantId, name: { in: AccountSelectors.SALARY } },
+      });
+      const cashAccount = await tx.account.findFirst({
+        where: { tenantId, name: { in: AccountSelectors.CASH_BANK } },
+      });
 
-    // IDEMPOTENCY GUARD: prevent double salary disbursement for the same period.
-    // A unique DB constraint (employeeId + periodStart + periodEnd) is the ultimate guard,
-    // but this application-layer check provides a meaningful error message.
-    const existingPayroll = await this.prisma.payroll.findFirst({
-      where: {
-        employee: { tenantId },
-        employeeId: data.employeeId,
-        periodStart: data.periodStart,
-        periodEnd: data.periodEnd,
-      },
-    });
-    if (existingPayroll) {
-      throw new BadRequestException(
-        `Payroll Integrity Block: A payroll record already exists for Employee ${employeeId} ` +
-        `for the period ${data.periodStart} – ${data.periodEnd}. ` +
-        `Use a reversal entry to correct errors. Reference ID: ${existingPayroll.id}`,
-      );
-    }
+      if (!salaryAccount || !cashAccount) {
+        throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
+      }
 
-    const netPay = Number(basicSalary) + Number(bonuses) - Number(deductions);
+      // IDEMPOTENCY GUARD
+      const existingPayroll = await tx.payroll.findFirst({
+        where: {
+          employee: { tenantId },
+          employeeId: data.employeeId,
+          periodStart: data.periodStart,
+          periodEnd: data.periodEnd,
+        },
+      });
 
-    const payroll = await this.prisma.payroll.create({
-      data: {
-        ...data,
+      if (existingPayroll) {
+        throw new BadRequestException(
+          `Payroll Integrity Block: A payroll record already exists for Employee ${employeeId} ` +
+          `for the period ${data.periodStart} – ${data.periodEnd}. ` +
+          `Use a reversal entry to correct errors. Reference ID: ${existingPayroll.id}`,
+        );
+      }
+
+      const netPay = Number(basicSalary) + Number(bonuses) - Number(deductions);
+
+      const payroll = await tx.payroll.create({
+        data: {
+          ...data,
+          tenantId,
+          netPay,
+        },
+        include: { employee: true },
+      });
+
+      await this.audit.log({
         tenantId,
-        netPay,
-      },
-      include: { employee: true },
-    });
+        action: 'GENERATE',
+        resource: 'Payroll',
+        details: { id: payroll.id, employeeId, netPay },
+      });
 
-    await this.audit.log({
-      tenantId,
-      action: 'GENERATE',
-      resource: 'Payroll',
-      details: { id: payroll.id, employeeId, netPay },
-    });
-
-    try {
+      // 3. Post Journal Entry
       await this.accounting.createJournalEntry(tenantId, {
         date: new Date().toISOString(),
         description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
@@ -177,14 +181,10 @@ export class HrService {
           { accountId: salaryAccount.id, type: 'Debit', amount: netPay, description: 'Salary Disbursement' },
           { accountId: cashAccount.id, type: 'Credit', amount: netPay, description: 'Salary Disbursement' },
         ],
-      });
-    } catch (journalErr) {
-      this.logger.error(`Failed to post payroll journal for payroll ${payroll.id}`, journalErr);
-      // Re-throw as BadRequest to alert the user even if record was made (or wrap in transaction)
-      throw new BadRequestException(`Payroll journal posting failed: ${journalErr.message}. The record was created but financial posting failed.`);
-    }
+      }, tx);
 
-    return payroll;
+      return payroll;
+    });
   }
 
   async importEmployees(tenantId: string, csvContent: string) {

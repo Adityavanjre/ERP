@@ -1,22 +1,38 @@
 import { Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
-import { Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class SecurityStorageService {
-    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) { }
+    constructor(private prisma: PrismaService) { }
 
     async blacklistToken(jti: string, exp: number) {
-        const ttl = Math.max(0, exp - Math.floor(Date.now() / 1000));
-        if (ttl > 0) {
-            await this.cacheManager.set(`blacklist:${jti}`, true, ttl * 1000);
-        }
+        const expiresAt = new Date(exp * 1000);
+
+        // SEC-006: Use DB-backed revocation for persistence across restarts.
+        await this.prisma.revokedToken.upsert({
+            where: { jti },
+            update: { expiresAt },
+            create: { jti, expiresAt },
+        });
     }
 
     async isTokenBlacklisted(jti: string): Promise<boolean> {
         if (!jti) return false;
-        const isBlacklisted = await this.cacheManager.get(`blacklist:${jti}`);
-        return !!isBlacklisted;
+
+        const revoked = await this.prisma.revokedToken.findUnique({
+            where: { jti },
+        });
+
+        return !!revoked;
+    }
+
+    /**
+     * Optional: Cleanup hook to purge expired tokens from the DB.
+     * Can be called from a Cron job.
+     */
+    async purgeExpiredTokens() {
+        await this.prisma.revokedToken.deleteMany({
+            where: { expiresAt: { lt: new Date() } },
+        });
     }
 }

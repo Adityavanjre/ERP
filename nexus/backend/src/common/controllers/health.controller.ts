@@ -7,6 +7,8 @@ import {
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Role } from '@prisma/client';
+import { Roles } from '../decorators/roles.decorator';
 
 @Controller('health')
 export class HealthController {
@@ -18,6 +20,7 @@ export class HealthController {
   ) {}
 
   @Get()
+  @Roles(Role.Owner)
   @HealthCheck()
   check() {
     return this.health.check([

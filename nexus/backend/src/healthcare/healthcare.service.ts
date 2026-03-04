@@ -4,11 +4,14 @@ import { LedgerService } from '../accounting/services/ledger.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TransactionType } from '@prisma/client';
 
+import { TraceService } from '../common/services/trace.service';
+
 @Injectable()
 export class HealthcareService {
     constructor(
         private prisma: PrismaService,
         private ledger: LedgerService,
+        private trace: TraceService,
     ) { }
 
     // --- Patient Registry (EMR/EHR) ---
@@ -34,7 +37,7 @@ export class HealthcareService {
             }
 
             // Create Patient profile
-            return (tx as any).patient.create({
+            return tx.patient.create({
                 data: {
                     tenantId,
                     customerId: customer.id,
@@ -42,13 +45,14 @@ export class HealthcareService {
                     allergies,
                     medicalHistory,
                     emergencyContact,
+                    correlationId: this.trace.getCorrelationId(),
                 },
             });
         });
     }
 
     async getPatients(tenantId: string) {
-        return (this.prisma as any).patient.findMany({
+        return this.prisma.patient.findMany({
             where: { tenantId },
             include: {
                 customer: true,
@@ -65,7 +69,7 @@ export class HealthcareService {
     }
 
     async getPatientHistory(tenantId: string, patientId: string) {
-        return (this.prisma as any).patient.findUnique({
+        return this.prisma.patient.findUnique({
             where: { id: patientId, tenantId },
             include: {
                 customer: true,
@@ -92,7 +96,7 @@ export class HealthcareService {
             }
         }
 
-        return (this.prisma as any).medicalRecord.create({
+        return this.prisma.medicalRecord.create({
             data: {
                 tenantId,
                 patientId,
@@ -101,6 +105,7 @@ export class HealthcareService {
                 labResults,
                 notes,
                 triageStatus,
+                correlationId: this.trace.getCorrelationId(),
             },
         });
     }
@@ -109,7 +114,7 @@ export class HealthcareService {
     async scheduleAppointment(tenantId: string, data: any) {
         const { patientId, employeeId, date, startTime, note } = data;
 
-        return (this.prisma as any).appointment.create({
+        return this.prisma.appointment.create({
             data: {
                 tenantId,
                 patientId,
@@ -118,12 +123,13 @@ export class HealthcareService {
                 startTime,
                 status: 'Scheduled',
                 notes: note,
+                correlationId: this.trace.getCorrelationId(),
             },
         });
     }
 
     async updateAppointmentStatus(tenantId: string, id: string, status: string) {
-        return (this.prisma as any).appointment.update({
+        return this.prisma.appointment.update({
             where: { id, tenantId },
             data: { status },
         });
@@ -134,7 +140,7 @@ export class HealthcareService {
         const thresholdDate = new Date();
         thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
 
-        return (this.prisma as any).pharmacyBatch.findMany({
+        return this.prisma.pharmacyBatch.findMany({
             where: {
                 tenantId,
                 expiryDate: {
@@ -148,7 +154,7 @@ export class HealthcareService {
     }
 
     async addPharmacyBatch(tenantId: string, data: any) {
-        return (this.prisma as any).pharmacyBatch.create({
+        return this.prisma.pharmacyBatch.create({
             data: {
                 tenantId,
                 productId: data.productId,
@@ -156,6 +162,7 @@ export class HealthcareService {
                 expiryDate: new Date(data.expiryDate),
                 quantity: data.quantity,
                 costPrice: data.costPrice,
+                correlationId: this.trace.getCorrelationId(),
             },
         });
     }
@@ -170,7 +177,7 @@ export class HealthcareService {
         insuranceReceivableAccountId: string,
         revenueAccountId: string,
     }) {
-        const patient = await (this.prisma as any).patient.findUnique({
+        const patient = await this.prisma.patient.findUnique({
             where: { id: data.patientId, tenantId },
             include: { customer: true }
         });

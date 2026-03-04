@@ -22,7 +22,11 @@ export class CreditNoteService {
         });
         if (existing) return existing;
       }
-      // 1. Calculate totals with precision
+
+      // ACC-PERIOD-01: Prevent posting into locked accounting periods.
+      // Credit notes carry financial impact (sales return + GST reversal) and must
+      // obey the same temporal boundary as invoices and payments.
+      await this.ledger.checkPeriodLock(tenantId, date || new Date(), tx);
       let totalTaxable = new Decimal(0);
       let totalGST = new Decimal(0);
       let totalCGST = new Decimal(0);

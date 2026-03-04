@@ -17,9 +17,10 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
 import { Permission } from '../common/constants/permissions';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { TaskStatus } from '@prisma/client';
+import { TaskStatus, Role } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
 import { CreateProjectDto, UpdateProjectDto, CreateTaskDto } from './dto/projects.dto';
 
@@ -34,48 +35,56 @@ export class ProjectController {
   ) { }
 
   @Post()
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   create(@Req() req: any, @Body() data: CreateProjectDto) {
     return this.projectService.createProject(req.user.tenantId, data);
   }
 
   @Get()
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   findAll(@Req() req: any) {
     return this.projectService.getProjects(req.user.tenantId);
   }
 
   @Get('stats')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: any) {
     return this.projectService.getProjectStats(req.user.tenantId);
   }
 
   @Get(':id')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   findOne(@Req() req: any, @Param('id') id: string) {
     return this.projectService.getProjectById(req.user.tenantId, id);
   }
 
   @Patch(':id')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   update(@Req() req: any, @Param('id') id: string, @Body() data: UpdateProjectDto) {
     return this.projectService.updateProject(req.user.tenantId, id, data);
   }
 
   @Post(':id/tasks')
+  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   createTask(@Req() req: any, @Param('id') projectId: string, @Body() dto: CreateTaskDto) {
     return this.projectService.createTask(req.user.tenantId, { ...dto, projectId });
   }
 
   @Get('tasks/all')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getTasks(@Req() req: any, @Query('projectId') projectId?: string) {
     return this.projectService.getTasks(req.user.tenantId, projectId);
   }
 
   @Patch('tasks/:taskId/status')
+  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   updateTaskStatus(
     @Req() req: any,
@@ -86,6 +95,7 @@ export class ProjectController {
   }
 
   @Delete(':id')
+  @Roles(Role.Owner, Role.Manager)
   async deleteProject(@Req() req: any, @Param('id') id: string) {
     await this.collaboration.deleteCommentsByResource(req.user.tenantId, 'Project', id);
     return this.projectService.deleteProject(req.user.tenantId, id);

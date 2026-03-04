@@ -155,6 +155,9 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
     const { showConfirm } = useUX();
 
     const handleSubmit = async () => {
+        // UI-001: Prevent double-execution during state-transition lag
+        if (loading) return;
+
         if (!customerId || !customerId.trim()) {
             toast.error("Please select a valid customer");
             return;

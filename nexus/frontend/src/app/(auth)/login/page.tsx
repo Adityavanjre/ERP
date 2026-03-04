@@ -27,58 +27,98 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
+    const [step, setStep] = useState<"identity" | "mfa">("identity")
+    const [tempToken, setTempToken] = useState("")
+    const [mfaCode, setMfaCode] = useState("")
+
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setLoading(true)
         setError("")
 
-        let finalEmail = email;
-        let finalPassword = password;
-
         try {
-            // Force read from DOM to bypass Autofill React state desync
-            const formData = new FormData(e.currentTarget);
-            const domEmail = formData.get("email")?.toString() || "";
-            const domPassword = formData.get("password")?.toString() || "";
+            if (step === "identity") {
+                let finalEmail = email;
+                let finalPassword = password;
 
-            if (domEmail) finalEmail = domEmail;
-            if (domPassword) finalPassword = domPassword;
+                // Force read from DOM to bypass Autofill React state desync
+                const formData = new FormData(e.currentTarget);
+                const domEmail = formData.get("email")?.toString() || "";
+                const domPassword = formData.get("password")?.toString() || "";
 
-            // Sync back to state just in case
-            setEmail(finalEmail);
-            setPassword(finalPassword);
+                if (domEmail) finalEmail = domEmail;
+                if (domPassword) finalPassword = domPassword;
 
-            if (!finalEmail || !finalPassword) {
-                setError("Email and Password are required.");
-                setLoading(false);
-                return;
-            }
+                setEmail(finalEmail);
+                setPassword(finalPassword);
 
-            console.log("Submitting login payload:", { email: finalEmail, passwordLength: finalPassword.length });
+                if (!finalEmail || !finalPassword) {
+                    setError("Email and Password are required.");
+                    setLoading(false);
+                    return;
+                }
 
-            const res = await api.post("auth/login/web", { email: finalEmail, password: finalPassword })
-            localStorage.setItem("k_token", res.data.accessToken)
-            localStorage.setItem("k_identity", res.data.accessToken)
-            localStorage.setItem("k_user", JSON.stringify(res.data.user))
+                const res = await api.post("auth/login/web", { email: finalEmail, password: finalPassword })
 
-            // Restore session flow
-            const returnTo = localStorage.getItem("return_to")
-            if (returnTo) {
-                localStorage.removeItem("return_to")
-                router.push(returnTo)
+                if (res.data.requiresMfa) {
+                    setTempToken(res.data.tempToken);
+                    setStep("mfa");
+                    setLoading(false);
+                    return;
+                }
+
+                completeLogin(res.data);
             } else {
-                router.push("/dashboard")
+                // MFA Step
+                const res = await api.post("auth/mfa/verify-login", {
+                    tempToken,
+                    totpCode: mfaCode
+                });
+                completeLogin(res.data);
             }
         } catch (err: any) {
             console.error(err);
             if (!err.response) {
-                setError("Network Error: Unable to reach the server. Please check your connection or try again later.");
+                setError("Network Error: Unable to reach the server.");
             } else {
-                setError(err.response?.data?.message || "Invalid credentials");
+                setError(err.response?.data?.message || "Authentication Failed");
+                // If MFA failed, don't reset step, just show error.
             }
         } finally {
             setLoading(false)
         }
+    }
+
+    const completeLogin = (data: any) => {
+        localStorage.setItem("k_token", data.accessToken)
+        localStorage.setItem("k_identity", data.accessToken)
+        localStorage.setItem("k_user", JSON.stringify(data.user))
+
+        const SAFE_FALLBACK = "/portal/dashboard"
+        const returnTo = localStorage.getItem("return_to")
+        localStorage.removeItem("return_to")
+
+        const safeRedirect = (raw: string | null): string => {
+            if (!raw) return SAFE_FALLBACK
+            if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return SAFE_FALLBACK
+            if (raw.startsWith("//")) return SAFE_FALLBACK
+            if (!raw.startsWith("/portal")) return SAFE_FALLBACK
+            try {
+                const parsed = new URL(raw, window.location.origin)
+                if (parsed.origin !== window.location.origin) return SAFE_FALLBACK
+                return parsed.pathname + parsed.search + parsed.hash
+            } catch {
+                return SAFE_FALLBACK
+            }
+        }
+
+        window.location.href = safeRedirect(returnTo)
+    }
+
+    const goBack = () => {
+        setStep("identity");
+        setMfaCode("");
+        setError("");
     }
 
     return (
@@ -106,54 +146,86 @@ export default function LoginPage() {
                                 {error}
                             </div>
                         )}
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                name="email"
-                                autoComplete="username"
-                                placeholder="name@company.com"
-                                className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4 autocomplete-disable"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between ml-1">
-                                <Label htmlFor="password" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Password</Label>
-                                <Link
-                                    href="/forgot-password"
-                                    className="text-[10px] font-black text-blue-600 hover:text-blue-700 cursor-pointer uppercase tracking-tighter transition-colors"
-                                >
-                                    Recovery?
-                                </Link>
-                            </div>
-                            <div className="relative">
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    autoComplete="current-password"
-                                    type={showPassword ? "text" : "password"}
-                                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10 autocomplete-disable"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
+
+                        {step === "identity" ? (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Email</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        autoComplete="username"
+                                        placeholder="name@company.com"
+                                        className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4 autocomplete-disable"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <Label htmlFor="password" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Password</Label>
+                                        <Link
+                                            href="/forgot-password"
+                                            className="text-[10px] font-black text-blue-600 hover:text-blue-700 cursor-pointer uppercase tracking-tighter transition-colors"
+                                        >
+                                            Recovery?
+                                        </Link>
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            autoComplete="current-password"
+                                            type={showPassword ? "text" : "password"}
+                                            className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10 autocomplete-disable"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="mfaCode" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Authenticator Code</Label>
+                                    <Input
+                                        id="mfaCode"
+                                        placeholder="000000"
+                                        className="bg-slate-50 border-slate-200 text-slate-900 text-center text-2xl tracking-[0.5em] focus:ring-blue-500/20 focus:border-blue-500 h-16 rounded-xl font-black"
+                                        value={mfaCode}
+                                        onChange={(e) => setMfaCode(e.target.value)}
+                                        autoFocus
+                                        required
+                                    />
+                                </div>
+                                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+                                    <p className="text-[10px] text-blue-600 font-bold leading-relaxed">
+                                        RESCUE MODE: If you lost your device, enter one of your 8-digit recovery codes above to regain access.
+                                    </p>
+                                </div>
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                    onClick={goBack}
+                                    className="text-[10px] font-black text-slate-400 hover:text-slate-600 uppercase tracking-widest block w-full text-center transition-colors"
                                 >
-                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    &larr; Back to Login
                                 </button>
                             </div>
-                        </div>
+                        )}
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4 pb-8">
                         <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs" disabled={loading}>
-                            {loading ? "Logging in..." : "Sign In"}
+                            {loading ? "Verifying..." : (step === "identity" ? "Sign In" : "Unlock Identity")}
                         </Button>
                         <div className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">
                             New here?{" "}

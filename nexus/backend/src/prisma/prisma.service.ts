@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { TenantContextService } from './tenant-context.service';
 
 @Injectable()
@@ -9,7 +9,10 @@ export class PrismaService
   private _isolatedClient: any;
 
   constructor(private tenantContext: TenantContextService) {
-    super();
+    // PERF-003: Measure concurrency caps logic preventing pool exhaustion gateway crashes
+    super({
+      log: ['query', 'info', 'warn', 'error'],
+    });
     this._isolatedClient = this._createIsolatedClient();
 
     // The Structural Isolation Proxy
@@ -36,6 +39,12 @@ export class PrismaService
                             if (typeof op === 'string' && typeof modelTarget[op] === 'function') {
                               return async (queryArgs: any = {}) => {
                                 const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
+
+                                // SEC-004: Audit Log Immutability Enforcement (Transaction Layer)
+                                if (txProp === 'AuditLog' && ['update', 'updateMany', 'delete', 'deleteMany', 'upsert'].includes(op as string)) {
+                                  throw new Error(`SECURITY_LEVEL_CRITICAL: ${op as string} on AuditLog is strictly prohibited. Audit logs are immutable.`);
+                                }
+
                                 if (!tenantId || globalModels.includes(txProp as string)) {
                                   return modelTarget[op](queryArgs);
                                 }
@@ -55,9 +64,31 @@ export class PrismaService
                                   enforceIsolation(queryArgs.create);
                                   enforceIsolation(queryArgs.update);
                                   enforceIsolation(queryArgs.where);
-                                } else if (['update', 'updateMany'].includes(op as string)) {
+
+                                  const userId = this.tenantContext.getUserId();
+                                  const userRole = this.tenantContext.getRole();
+                                  if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                                    const dmmfModel = Prisma.dmmf.datamodel.models.find((m: any) => m.name === txProp);
+                                    if (dmmfModel?.fields.some((f: any) => f.name === 'createdById')) {
+                                      queryArgs.where.createdById = userId;
+                                    }
+                                  }
+                                } else if (['update', 'updateMany', 'delete', 'deleteMany'].includes(op as string)) {
+                                  queryArgs.where = queryArgs.where || {};
                                   enforceIsolation(queryArgs.where);
-                                  enforceIsolation(queryArgs.data);
+                                  if (['update', 'updateMany'].includes(op as string)) {
+                                    enforceIsolation(queryArgs.data);
+                                  }
+
+                                  // AUTH-001: Sub-Resource Authorization (Row-Level Security via createdById) restrict mutations
+                                  const userId = this.tenantContext.getUserId();
+                                  const userRole = this.tenantContext.getRole();
+                                  if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                                    const dmmfModel = Prisma.dmmf.datamodel.models.find((m: any) => m.name === txProp);
+                                    if (dmmfModel?.fields.some((f: any) => f.name === 'createdById')) {
+                                      queryArgs.where.createdById = userId;
+                                    }
+                                  }
                                 } else {
                                   queryArgs.where = queryArgs.where || {};
                                   enforceIsolation(queryArgs.where);
@@ -124,6 +155,11 @@ export class PrismaService
             // These models are global (cross-tenant by design) — skip isolation
             const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
 
+            // SEC-004: Audit Log Immutability Enforcement (Middleware Layer)
+            if (model === 'AuditLog' && ['update', 'updateMany', 'delete', 'deleteMany', 'upsert'].includes(operation)) {
+              throw new Error(`SECURITY_LEVEL_CRITICAL: ${operation} on AuditLog is strictly prohibited. Audit logs are immutable.`);
+            }
+
             if (globalModels.includes(model)) {
               return query(args);
             }
@@ -172,9 +208,31 @@ export class PrismaService
               enforceIsolation(args.create);
               enforceIsolation(args.update);
               enforceIsolation(args.where);
-            } else if (['update', 'updateMany'].includes(operation)) {
+
+              const userId = context.getUserId();
+              const userRole = context.getRole();
+              if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                const dmmfModel = Prisma.dmmf.datamodel.models.find((m: any) => m.name === model);
+                if (dmmfModel?.fields.some((f: any) => f.name === 'createdById')) {
+                  args.where.createdById = userId;
+                }
+              }
+            } else if (['update', 'updateMany', 'delete', 'deleteMany'].includes(operation)) {
+              args.where = args.where || {};
               enforceIsolation(args.where);
-              enforceIsolation(args.data);
+              if (['update', 'updateMany'].includes(operation)) {
+                enforceIsolation(args.data);
+              }
+
+              // AUTH-001: Sub-Resource Authorization (Row-Level Security via createdById) restrict mutations
+              const userId = context.getUserId();
+              const userRole = context.getRole();
+              if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                const dmmfModel = Prisma.dmmf.datamodel.models.find((m: any) => m.name === model);
+                if (dmmfModel?.fields.some((f: any) => f.name === 'createdById')) {
+                  args.where.createdById = userId;
+                }
+              }
             } else {
               args.where = args.where || {};
               enforceIsolation(args.where);

@@ -8,7 +8,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AccountingService } from '../accounting/accounting.service';
+import { LedgerService } from '../accounting/services/ledger.service';
 import { TraceService } from '../common/services/trace.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Industry } from '@nexus/shared';
@@ -28,8 +28,7 @@ class DryRunRollbackSignal extends Error {
 export class InventoryService {
   constructor(
     private prisma: PrismaService,
-    @Inject(forwardRef(() => AccountingService))
-    private accounting: AccountingService,
+    private ledger: LedgerService,
     private billing: BillingService,
     private hsn: HsnService,
     private readonly traceService: TraceService,
@@ -148,7 +147,7 @@ export class InventoryService {
 
         if (invAccount && equityAccount) {
           const movementValue = new Decimal(product.costPrice as any || 0).mul(new Decimal(stock));
-          await this.accounting.ledger.createJournalEntry(tenantId, {
+          await this.ledger.createJournalEntry(tenantId, {
             date: new Date().toISOString(),
             description: `Initial Stock: ${product.name}`,
             reference: `OB-${product.sku}`,
@@ -334,103 +333,95 @@ export class InventoryService {
             if (cols[idx]) data[h.toLowerCase()] = cols[idx];
           });
 
-          try {
-            const sku = data.sku || data.code;
-            if (!sku) throw new Error('Missing SKU or Code');
+          const sku = data.sku || data.code;
+          if (!sku) throw new BadRequestException(`Line ${i + 1}: Missing SKU or Code`);
 
-            let product = await tx.product.findFirst({ where: { tenantId, sku } });
-            const existing = !!product;
+          let product = await tx.product.findFirst({ where: { tenantId, sku } });
+          const existing = !!product;
 
-            const productPayload = {
-              name: data.name || sku,
-              sku,
-              barcode: data.barcode || data.upc,
-              description: data.description,
-              // SCH-004: Schema field is 'price', not 'basePrice'. The old mapping
-              // silently dropped the sell price on every bulk import row.
-              price: Number(data.price || data.baseprice) || 0,
-              costPrice: Number(data.cost || data.costprice) || 0,
-              gstRate: Number(data.gstrate || data.tax) || 18,
-              hsnCode: data.hsncode || data.hsn,
-              uom: data.uom || 'Unit',
-              correlationId: options.correlationId || this.traceService.getCorrelationId(),
-            };
+          const productPayload = {
+            name: data.name || sku,
+            sku,
+            barcode: data.barcode || data.upc,
+            description: data.description,
+            // SCH-004: Schema field is 'price', not 'basePrice'. The old mapping
+            // silently dropped the sell price on every bulk import row.
+            price: Number(data.price || data.baseprice) || 0,
+            costPrice: Number(data.cost || data.costprice) || 0,
+            gstRate: Number(data.gstrate || data.tax) || 18,
+            hsnCode: data.hsncode || data.hsn,
+            uom: data.uom || 'Unit',
+            correlationId: options.correlationId || this.traceService.getCorrelationId(),
+          };
 
-            if (existing) {
-              product = await tx.product.update({
-                where: { id: product.id },
-                data: productPayload
-              });
-              results.updated++;
-            } else {
-              product = await tx.product.create({
-                data: { ...productPayload, tenantId }
-              });
-              results.created++;
-            }
-
-            // Handle initial stock in import
-            const importStock = Number(data.stock || data.openingstock) || 0;
-            if (importStock > 0) {
-              await (tx as any).stockMovement.create({
-                data: {
-                  tenantId,
-                  productId: product.id,
-                  warehouseId: wh.id,
-                  quantity: importStock,
-                  type: 'IN',
-                  reference: 'IMPORT-OB',
-                  notes: 'Bulk import opening balance',
-                  correlationId: options.correlationId || this.traceService.getCorrelationId(),
-                }
-              });
-
-              await (tx as any).stockLocation.upsert({
-                where: {
-                  tenantId_productId_warehouseId_notes: {
-                    tenantId,
-                    productId: product.id,
-                    warehouseId: wh.id,
-                    notes: ''
-                  }
-                },
-                create: {
-                  tenantId,
-                  productId: product.id,
-                  warehouseId: wh.id,
-                  quantity: importStock,
-                  notes: ''
-                },
-                update: {
-                  quantity: { increment: importStock }
-                }
-              });
-
-              await tx.product.update({
-                where: { id: product.id },
-                data: { stock: { increment: importStock } }
-              });
-
-              const cost = Number(product.costPrice) || 0;
-              totalOpeningValue = totalOpeningValue.add(new Decimal(cost).mul(importStock));
-            }
-
-            results.imported++;
-            results.preview.push({
-              action: existing ? 'UPDATE' : 'CREATE',
-              name: product.name,
-              sku: product.sku,
-              gstRate: product.gstRate,
-              stock: importStock
+          if (existing) {
+            product = await tx.product.update({
+              where: { id: product.id },
+              data: productPayload
             });
-          } catch (err: any) {
-            results.failed++;
-            results.errors.push({
-              row: i + 1,
-              item: data.name || data.sku || data.barcode,
-              message: err.message
+            results.updated++;
+          } else {
+            product = await tx.product.create({
+              data: { ...productPayload, tenantId }
             });
+            results.created++;
           }
+
+          // Handle initial stock in import
+          const importStock = Number(data.stock || data.openingstock) || 0;
+          if (importStock > 0) {
+            await (tx as any).stockMovement.create({
+              data: {
+                tenantId,
+                productId: product.id,
+                warehouseId: wh.id,
+                quantity: importStock,
+                type: 'IN',
+                reference: 'IMPORT-OB',
+                notes: 'Bulk import opening balance',
+                correlationId: options.correlationId || this.traceService.getCorrelationId(),
+              }
+            });
+
+            await (tx as any).stockLocation.upsert({
+              where: {
+                tenantId_productId_warehouseId_notes: {
+                  tenantId,
+                  productId: product.id,
+                  warehouseId: wh.id,
+                  notes: ''
+                }
+              },
+              create: {
+                tenantId,
+                productId: product.id,
+                warehouseId: wh.id,
+                quantity: importStock,
+                notes: ''
+              },
+              update: {
+                quantity: { increment: importStock }
+              }
+            });
+
+            await tx.product.update({
+              where: { id: product.id },
+              data: { stock: { increment: importStock } }
+            });
+
+            const cost = Number(product.costPrice) || 0;
+            totalOpeningValue = totalOpeningValue.add(new Decimal(cost).mul(importStock));
+          }
+
+          results.imported++;
+          results.preview.push({
+            action: existing ? 'UPDATE' : 'CREATE',
+            name: product.name,
+            sku: product.sku,
+            gstRate: product.gstRate,
+            stock: importStock
+          });
+
         }
 
         if (totalOpeningValue.gt(0)) {
@@ -438,7 +429,7 @@ export class InventoryService {
           const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
 
           if (invAccount && equityAccount) {
-            await this.accounting.ledger.createJournalEntry(tenantId, {
+            await this.ledger.createJournalEntry(tenantId, {
               date: new Date().toISOString(),
               description: `Bulk Opening Stock Sync (${results.created + results.updated} items)`,
               reference: `IMPORT-OB-${Date.now()}`,
@@ -523,7 +514,9 @@ export class InventoryService {
   }
 
   // --- Retail Depth: Dynamic Markdown AI ---
-  async getMarkdownSuggestions(tenantId: string) {
+  // PERF-007: AI Suggestion Pagination.
+  async getMarkdownSuggestions(tenantId: string, page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
     const products = await (this.prisma.product as any).findMany({
       where: {
         tenantId,
@@ -535,7 +528,9 @@ export class InventoryService {
           where: { quantity: { gt: 0 } }
         }
       },
-      take: 100,
+      skip,
+      take: limit,
+      orderBy: { shelfLifeDays: 'asc' }
     });
 
     const suggestions = [];

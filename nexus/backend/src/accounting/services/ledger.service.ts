@@ -23,71 +23,6 @@ export class LedgerService {
     return new Decimal(val).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
   }
 
-  /**
-   * Trial Balance Importer (The CA Onboarding Special)
-   * Allows importing current balances of all ledgers during migration.
-   */
-  async importTrialBalance(tenantId: string, csvContent: string) {
-    const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
-
-    return this.prisma.$transaction(async (tx) => {
-      const obAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
-      if (!obAcc) throw new BadRequestException("Onboarding Blocked: Opening Balance Equity account missing.");
-
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        const cols = lines[i].split(',').map(c => c.trim());
-        const data: any = {};
-        headers.forEach((h, idx) => { data[h] = cols[idx]; });
-
-        try {
-          const name = data.accountName || data.name;
-          const type = (data.type as AccountType) || AccountType.Asset;
-          const ob = parseFloat(data.openingBalance || data.balance || "0");
-
-          if (!name) throw new Error("Account Name is required");
-          if (ob === 0) continue; // Skip zero balances
-
-          let account = await tx.account.findFirst({ where: { tenantId, name } });
-          if (!account) {
-            account = await tx.account.create({
-              data: { tenantId, name, type, code: data.code || `OB-${Date.now().toString().slice(-6)}`, balance: 0 }
-            });
-          }
-
-          // Check if an OB journal already exists for this account to prevent double-entry on re-import
-          const existingJournal = await tx.journalEntry.findFirst({
-            where: { tenantId, reference: `OB-${account.code}`, description: { contains: 'Opening Balance' } }
-          });
-
-          if (!existingJournal) {
-            const amount = new Decimal(ob);
-            const isDebitNormal = [AccountType.Asset, AccountType.Expense].includes(account.type as any);
-            const entryType = isDebitNormal
-              ? (amount.isPositive() ? 'Debit' : 'Credit')
-              : (amount.isPositive() ? 'Credit' : 'Debit');
-
-            await this.createJournalEntry(tenantId, {
-              date: new Date().toISOString(),
-              description: `Opening Balance: ${account.name}`,
-              reference: `OB-${account.code}`,
-              transactions: [
-                { accountId: account.id, type: entryType as any, amount: amount.abs().toNumber(), description: 'Trial Balance Migration' },
-                { accountId: obAcc.id, type: (entryType === 'Debit' ? 'Credit' : 'Debit') as any, amount: amount.abs().toNumber(), description: 'Offsetting Equity' }
-              ]
-            }, tx);
-            results.imported++;
-          }
-        } catch (e: any) {
-          results.failed++;
-          results.errors.push(`Line ${i}: ${e.message}`);
-        }
-      }
-      return results;
-    });
-  }
 
   async checkPeriodLock(tenantId: string, date: Date | string, tx?: any) {
     const d = new Date(date);
@@ -169,11 +104,30 @@ export class LedgerService {
     });
   }
 
-  async getAccounts(tenantId: string) {
-    return this.prisma.account.findMany({
-      where: { tenantId },
-      orderBy: { code: 'asc' },
-    });
+  async getAccounts(tenantId: string, page: number = 1, limit: number = 100, isActive: boolean = false) {
+    const skip = (page - 1) * limit;
+    const where: any = { tenantId };
+    if (isActive) where.isActive = true;
+
+    const [accounts, total] = await Promise.all([
+      this.prisma.account.findMany({
+        where,
+        orderBy: { code: 'asc' },
+        take: limit,
+        skip,
+      }),
+      this.prisma.account.count({ where }),
+    ]);
+
+    return {
+      data: accounts,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async initializeTenantAccounts(tenantId: string, tx?: any, industry?: string) {
@@ -296,6 +250,7 @@ export class LedgerService {
       },
     };
   }
+
 
   async createJournalEntry(tenantId: string, data: CreateJournalEntryDto & { userId?: string }, tx?: any) {
     const totalDebit = data.transactions

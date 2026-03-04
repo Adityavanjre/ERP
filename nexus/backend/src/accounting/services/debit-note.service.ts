@@ -22,7 +22,11 @@ export class DebitNoteService {
         });
         if (existing) return existing;
       }
-      // 1. Calculate totals with precision
+
+      // ACC-PERIOD-02: Prevent posting into locked accounting periods.
+      // Debit notes carry financial impact (purchase return + ITC/GST reversal + AP debit)
+      // and must obey the same temporal boundary as invoices, payments, and credit notes.
+      await this.ledger.checkPeriodLock(tenantId, date || new Date(), tx);
       let totalTaxable = new Decimal(0);
       let totalGST = new Decimal(0);
       let totalCGST = new Decimal(0);

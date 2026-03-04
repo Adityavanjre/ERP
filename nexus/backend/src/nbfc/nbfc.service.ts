@@ -14,13 +14,13 @@ export class NbfcService {
 
     // --- Loan Management System ---
     async addInterestSlabs(tenantId: string, loanId: string, slabs: { thresholdAmount: number, interestRate: number }[]) {
-        return (this.prisma as any).loanInterestSlab.createMany({
+        return this.prisma.loanInterestSlab.createMany({
             data: slabs.map(s => ({ ...s, tenantId, loanId }))
         });
     }
 
     async applyForLoan(tenantId: string, data: any) {
-        return (this.prisma as any).loan.create({
+        return this.prisma.loan.create({
             data: {
                 tenantId,
                 borrowerId: data.borrowerId,
@@ -35,19 +35,19 @@ export class NbfcService {
     }
 
     async approveLoan(tenantId: string, id: string) {
-        return (this.prisma as any).loan.update({
+        return this.prisma.loan.update({
             where: { id, tenantId },
             data: { status: 'Approved' },
         });
     }
 
     async disburseLoan(tenantId: string, id: string, data: { bankAccountId: string, loanAssetAccountId: string }) {
-        const loan = await (this.prisma as any).loan.findUnique({ where: { id, tenantId } });
+        const loan = await this.prisma.loan.findUnique({ where: { id, tenantId } });
         if (!loan) throw new BadRequestException('Loan not found');
         if (loan.status !== 'Approved') throw new BadRequestException('Loan must be approved before disbursement');
 
         // Check KYC status
-        const kyc = await (this.prisma as any).kYCRecord.findUnique({ where: { loanId: id, tenantId } });
+        const kyc = await this.prisma.kYCRecord.findUnique({ where: { loanId: id, tenantId } });
         if (!kyc || kyc.verificationStatus !== 'Verified') {
             throw new BadRequestException('KYC must be verified before loan disbursement');
         }
@@ -78,7 +78,7 @@ export class NbfcService {
             }, tx);
 
             // 2. Generate EMI Schedule (Graduated Slabs Support)
-            const slabs = await (tx as any).loanInterestSlab.findMany({
+            const slabs = await tx.loanInterestSlab.findMany({
                 where: { loanId: id, tenantId },
                 orderBy: { thresholdAmount: 'asc' }
             });
@@ -120,7 +120,7 @@ export class NbfcService {
 
                 const totalEMI = monthlyPrincipal.add(monthlyInterestPart);
 
-                emiPromises.push((tx as any).eMISchedule.create({
+                emiPromises.push(tx.eMISchedule.create({
                     data: {
                         tenantId,
                         loanId: id,
@@ -136,7 +136,7 @@ export class NbfcService {
             await Promise.all(emiPromises);
 
             // 3. Update Loan Status
-            return (tx as any).loan.update({
+            return tx.loan.update({
                 where: { id },
                 data: {
                     status: 'Active',
@@ -149,7 +149,7 @@ export class NbfcService {
 
     // --- Interest Accrual Engine (Batch Process) ---
     async runDailyInterestAccrual(tenantId: string) {
-        const activeLoans = await (this.prisma as any).loan.findMany({
+        const activeLoans = await this.prisma.loan.findMany({
             where: { tenantId, status: 'Active' },
         });
 
@@ -193,7 +193,7 @@ export class NbfcService {
             }, tx);
 
             // Bulk-create all accrual records in a single INSERT
-            await (tx as any).interestAccrual.createMany({
+            await tx.interestAccrual.createMany({
                 data: accrualData.map(a => ({
                     tenantId: a.tenantId,
                     loanId: a.loanId,
@@ -210,7 +210,7 @@ export class NbfcService {
 
     // --- KYC Workflow ---
     async submitKYC(tenantId: string, loanId: string, data: any) {
-        return (this.prisma as any).kYCRecord.create({
+        return this.prisma.kYCRecord.create({
             data: {
                 tenantId,
                 loanId,
@@ -222,7 +222,7 @@ export class NbfcService {
     }
 
     async updateKYCStatus(tenantId: string, loanId: string, status: string) {
-        return (this.prisma as any).kYCRecord.update({
+        return this.prisma.kYCRecord.update({
             where: { loanId, tenantId },
             data: {
                 verificationStatus: status,
@@ -236,7 +236,7 @@ export class NbfcService {
      * Handles specialized financial math that Excel fails to track at scale during mid-term adjustments.
      */
     async recalculateLoanSchedule(tenantId: string, loanId: string, newRate: number) {
-        const loan = await (this.prisma as any).loan.findUnique({
+        const loan = await this.prisma.loan.findUnique({
             where: { id: loanId, tenantId },
             include: { emiSchedule: { where: { status: 'Pending' } } }
         });
@@ -253,7 +253,7 @@ export class NbfcService {
 
         return this.prisma.$transaction(async (tx) => {
             // 2. Update loan with new interest rate
-            await (tx as any).loan.update({
+            await tx.loan.update({
                 where: { id: loanId },
                 data: { interestRate: newRate }
             });
@@ -268,7 +268,7 @@ export class NbfcService {
                 const interestPart = remainingPrincipal.sub(principalPart.mul(i)).mul(monthlyInterestRate);
                 const totalEMI = principalPart.add(interestPart);
 
-                updatedEmis.push((tx as any).eMISchedule.update({
+                updatedEmis.push(tx.eMISchedule.update({
                     where: { id: emi.id },
                     data: {
                         interestPart,

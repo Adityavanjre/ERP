@@ -41,6 +41,18 @@ export default function InvoicePrintPage() {
         return new Date(dateStr).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
+    // GST-005: Consolidate mixed tax rates (5%, 12%, 18%) subtotal roll-ups reliably
+    const taxSummary = (invoice.items || []).reduce((acc: any, item: any) => {
+        const rate = Number(item.gstRate || item.product?.gstRate || 0);
+        if (rate === 0) return acc;
+        if (!acc[rate]) acc[rate] = { taxableAmount: 0, cgstAmount: 0, sgstAmount: 0, igstAmount: 0 };
+        acc[rate].taxableAmount += Number(item.taxableAmount || (Number(item.price || item.unitPrice) * Number(item.quantity)));
+        acc[rate].cgstAmount += Number(item.cgstAmount || 0);
+        acc[rate].sgstAmount += Number(item.sgstAmount || 0);
+        acc[rate].igstAmount += Number(item.igstAmount || 0);
+        return acc;
+    }, {});
+
     return (
         <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
             <style jsx global>{`
@@ -139,8 +151,36 @@ export default function InvoicePrintPage() {
                     </table>
                 </div>
 
+                {/* Tax Summary Roll-Up (GST-005) */}
+                {Object.keys(taxSummary).length > 0 && totalTax > 0 && (
+                    <div className="mt-8 border border-zinc-200 rounded-xl overflow-hidden print:border-zinc-300">
+                        <table className="w-full text-xs">
+                            <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
+                                <tr>
+                                    <th className="text-left py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">GST Rate Roll-up</th>
+                                    <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">Taxable Base</th>
+                                    {totalCGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">CGST</th>}
+                                    {totalSGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">SGST</th>}
+                                    {totalIGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">IGST</th>}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-100 print:divide-zinc-200">
+                                {Object.entries(taxSummary).sort(([a], [b]) => Number(a) - Number(b)).map(([rate, data]: any) => (
+                                    <tr key={rate}>
+                                        <td className="py-2 px-4 text-zinc-700 font-bold">{rate}% Tax Subtotal</td>
+                                        <td className="py-2 px-4 text-right text-zinc-700">₹{data.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                        {totalCGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">₹{data.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
+                                        {totalSGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">₹{data.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
+                                        {totalIGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">₹{data.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
                 {/* Totals */}
-                <div className="flex justify-end border-t border-zinc-100 pt-8">
+                <div className="flex justify-end pt-8">
                     <div className="w-64 space-y-3">
                         <div className="flex justify-between text-sm text-zinc-600">
                             <span>Subtotal</span>

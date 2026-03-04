@@ -148,15 +148,19 @@ export class OrmService {
   }
 
   /**
-   * Search for records with basic filtering.
+   * Search for records with basic filtering and pagination.
+   * PERF-004: Universal Pagination.
    */
-  async findRecords(tenantId: string, modelName: string, domain: any = {}) {
+  async findRecords(tenantId: string, modelName: string, page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
     const records = await this.prisma.record.findMany({
       where: {
         tenantId,
         modelName,
-        // In a production ORM, we would implement complex domain -> prisma where mapping
       },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
     });
 
     return records.map((r) => ({

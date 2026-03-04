@@ -8,6 +8,8 @@ import { TallyService } from './services/tally-export.service';
 import { CreditNoteService } from './services/credit-note.service';
 import { DebitNoteService } from './services/debit-note.service';
 import { FixedAssetService } from './services/fixed-asset.service';
+import { OnboardingService } from './services/onboarding.service';
+import { ReportingService } from './services/reporting.service';
 import { CreateJournalEntryDto } from './dto/create-journal.dto';
 
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -25,6 +27,8 @@ export class AccountingService {
     private readonly creditNote: CreditNoteService,
     private readonly debitNote: DebitNoteService,
     private readonly fixedAsset: FixedAssetService,
+    private readonly onboarding: OnboardingService,
+    private readonly reporting: ReportingService,
   ) { }
 
 
@@ -33,8 +37,8 @@ export class AccountingService {
     return this.ledger.createAccount(tenantId, data);
   }
 
-  async getAccounts(tenantId: string) {
-    return this.ledger.getAccounts(tenantId);
+  async getAccounts(tenantId: string, page: number = 1, limit: number = 100, isActive: boolean = false) {
+    return this.ledger.getAccounts(tenantId, page, limit, isActive);
   }
 
   async initializeTenantAccounts(tenantId: string, tx?: any, industry?: string) {
@@ -50,8 +54,16 @@ export class AccountingService {
     return this.ledger.getTransactions(tenantId, page, limit);
   }
 
-  async createJournalEntry(tenantId: string, data: CreateJournalEntryDto) {
-    return this.ledger.createJournalEntry(tenantId, data);
+  exportTransactionsCsvStream(tenantId: string) {
+    return this.reporting.exportTransactionsCsvStream(tenantId);
+  }
+
+  async createJournalEntry(tenantId: string, data: any, tx?: any) {
+    return this.ledger.createJournalEntry(tenantId, data, tx);
+  }
+
+  async checkPeriodLock(tenantId: string, date: Date | string, tx?: any) {
+    return this.ledger.checkPeriodLock(tenantId, date, tx);
   }
 
   // --- Invoices ---
@@ -220,19 +232,20 @@ export class AccountingService {
     return this.tally.generateLedgerMastersStream(tenantId);
   }
 
-  // Internal Helpers (needed for other services potentially)
-  async checkPeriodLock(tenantId: string, date: Date | string, tx?: any) {
-    // Ensure date is treated as Date | string to match LedgerService
-    return this.ledger.checkPeriodLock(tenantId, date, tx);
-  }
-
   round2(val: any) {
     return this.ledger.round2(val);
   }
 
-  async getTrialBalance(tenantId: string) {
+  async getTrialBalance(tenantId: string, isActiveOnly: boolean = false) {
+    const where: any = { tenantId };
+    if (isActiveOnly) {
+      where.isActive = true;
+      // Also only show accounts with non-zero balances if specifically requested
+      where.balance = { not: 0 };
+    }
+
     const accounts = await this.prisma.account.findMany({
-      where: { tenantId },
+      where,
       orderBy: [{ type: 'asc' }, { name: 'asc' }],
     });
 
@@ -269,6 +282,9 @@ export class AccountingService {
     });
 
     return {
+      // ACC-008: System is INR-only. No foreign currency balances exist.
+      // All account balances are stored natively as decimal INR in the schema.
+      currency: 'INR',
       accounts: rows,
       totalDebit: totalDebit.toFixed(2),
       totalCredit: totalCredit.toFixed(2),
@@ -312,6 +328,10 @@ export class AccountingService {
   // --- Fixed Assets ---
   async getFixedAssets(tenantId: string) {
     return this.fixedAsset.findAll(tenantId);
+  }
+
+  async importTrialBalance(tenantId: string, csvContent: string) {
+    return this.onboarding.importTrialBalance(tenantId, csvContent);
   }
 
   async importFixedAssets(tenantId: string, csvContent: string) {

@@ -59,7 +59,7 @@ export class AuditInterceptor implements NestInterceptor {
                 correlationId: req['correlationId'],
                 ...(channel === 'MOBILE' ? { mobileIntent: 'MOBILE_INTENT_ONLY' } : {}),
               },
-              ipAddress: req.ip,
+              ipAddress: req.header('x-forwarded-for')?.split(',')[0].trim() || req.header('x-real-ip') || req.ip || '0.0.0.0',
             },
           });
         } catch (error) {

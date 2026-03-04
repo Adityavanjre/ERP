@@ -83,8 +83,8 @@ export default function ReportsPage() {
                                 )}
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0 overflow-x-auto">
-                            <Table>
+                        <CardContent className="p-0 overflow-x-auto max-w-[100vw]">
+                            <Table className="min-w-[600px]">
                                 <TableHeader className="bg-slate-50/50">
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-500">Account Name</TableHead>
@@ -96,7 +96,7 @@ export default function ReportsPage() {
                                 <TableBody>
                                     {(trialBalance?.accounts || []).map((acct: any) => (
                                         <TableRow key={acct.id} className="border-slate-100 hover:bg-slate-50/50">
-                                            <TableCell className="pl-8 font-bold text-slate-900">{acct.name}</TableCell>
+                                            <TableCell className="pl-8 font-bold text-slate-900 truncate max-w-[200px]" title={acct.name}>{acct.name}</TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary" className="bg-slate-100 text-slate-500 text-[9px] font-black uppercase rounded-md border-none tracking-tighter">
                                                     {acct.type}

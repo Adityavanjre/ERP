@@ -207,6 +207,8 @@ export class CrmService {
   async exportCustomers(tenantId: string) {
     const customers = await this.prisma.customer.findMany({
       where: { tenantId, isDeleted: false },
+      take: 50000,
+      orderBy: { createdAt: 'desc' },
     });
 
     const headers = ['firstName', 'lastName', 'email', 'phone', 'company', 'status'];

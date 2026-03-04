@@ -123,8 +123,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         checkAuth();
 
+        const handleStorageEvent = (e: StorageEvent) => {
+            if (e.key === 'k_token' || e.key === 'k_user') {
+                console.log("[AuthGuard] Cross-tab identity change detected (k_token/k_user changed). Re-evaluating access...");
+                checkAuth();
+            }
+        };
+        window.addEventListener('storage', handleStorageEvent);
+
         return () => {
             window.removeEventListener('session-expired', handleSessionExpired);
+            window.removeEventListener('storage', handleStorageEvent);
         };
     }, [router, pathname]);
 

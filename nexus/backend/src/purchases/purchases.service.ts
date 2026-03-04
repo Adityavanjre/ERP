@@ -422,17 +422,29 @@ export class PurchasesService {
           const taxAmount = new Decimal(po.totalGST || 0);
           const totalAmount = new Decimal(po.totalAmount);
 
-          // TDS Logic
+          const supplier = await tx.supplier.findFirst({ where: { id: po.supplierId, tenantId } });
+          const isURD = !supplier?.gstin || supplier.gstin.trim() === '';
+
+          // GST-004: URD RCM (Reverse Charge Mechanism)
+          let vendorPayable = totalAmount;
+          let rcmLiabilityAmount = new Decimal(0);
+
+          if (isURD && taxAmount.greaterThan(0)) {
+            // Under RCM, tax is not paid to the vendor. The business pays the government directly.
+            vendorPayable = taxableValue;
+            rcmLiabilityAmount = taxAmount;
+          }
+
+          // TDS Logic (Computed on whatever base the section requires, generally taxable)
           let tdsAmount = new Decimal(0);
-          let netAmount = totalAmount;
+          let netAmount = vendorPayable;
           let ruleId: string | undefined;
 
-          const supplier = await tx.supplier.findFirst({ where: { id: po.supplierId, tenantId } });
           const poAny = po as any;
           const activeTdsSection = poAny.tdsSection || (supplier as any)?.defaultTdsSection;
 
           if (activeTdsSection) {
-            const res = await this.tds.calculateTds(tenantId, po.supplierId, activeTdsSection, totalAmount.toNumber());
+            const res = await this.tds.calculateTds(tenantId, po.supplierId, activeTdsSection, vendorPayable.toNumber());
             tdsAmount = res.tdsAmount;
             netAmount = res.netAmount;
             ruleId = res.ruleId;
@@ -440,11 +452,17 @@ export class PurchasesService {
 
           const transactions = [
             { accountId: inventoryAccount.id, type: 'Debit' as any, amount: taxableValue.toNumber(), description: `Stock Value - ${po.orderNumber}` },
-            { accountId: apAccount.id, type: 'Credit' as any, amount: netAmount.toNumber(), description: `Vendor Liability (Net of TDS) - ${po.orderNumber}` },
+            { accountId: apAccount.id, type: 'Credit' as any, amount: netAmount.toNumber(), description: `Vendor Liability ${isURD ? '(RCM Base)' : ''} - ${po.orderNumber}` },
           ];
 
           if (itcAccount && taxAmount.greaterThan(0)) {
             transactions.push({ accountId: itcAccount.id, type: 'Debit' as any, amount: taxAmount.toNumber(), description: `ITC Claim - ${po.orderNumber}` });
+          }
+
+          if (rcmLiabilityAmount.greaterThan(0)) {
+            const rcmAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.GST_PAYABLE } });
+            if (!rcmAccount) throw new BadRequestException(`Missing '${StandardAccounts.GST_PAYABLE}' account. Required for URD Reverse Charge.`);
+            transactions.push({ accountId: rcmAccount.id, type: 'Credit' as any, amount: rcmLiabilityAmount.toNumber(), description: `RCM Liability (URD) - ${po.orderNumber}` });
           }
 
           if (tdsAmount.greaterThan(0)) {

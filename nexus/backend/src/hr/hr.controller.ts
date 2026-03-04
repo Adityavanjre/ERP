@@ -21,6 +21,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
@@ -31,12 +33,14 @@ export class HrController {
 
   // Departments
   @Post('departments')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   createDept(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.createDepartment(user.tenantId, dto);
   }
 
   @Get('departments')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS) // General operational view
   getDepts(@CurrentUser() user: any) {
     return this.hrService.getDepartments(user.tenantId);
@@ -44,18 +48,21 @@ export class HrController {
 
   // Employees
   @Post('employees')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   createEmployee(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.createEmployee(user.tenantId, dto);
   }
 
   @Get('employees')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   getEmployees(@CurrentUser() user: any) {
     return this.hrService.getEmployees(user.tenantId);
   }
 
   @Post('import')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   importEmployees(@CurrentUser() user: any, @Body() body: any) {
     const csvContent = body.csv || body;
@@ -67,12 +74,14 @@ export class HrController {
 
   // Leaves
   @Post('leaves')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   requestLeave(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.requestLeave(user.tenantId, dto);
   }
 
   @Get('leaves')
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_LEAVES')
   getLeaves(@CurrentUser() user: any) {
@@ -80,6 +89,7 @@ export class HrController {
   }
 
   @Patch('leaves/:id/status')
+  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   @MobileAction('APPROVE_LEAVE')
   updateLeaveStatus(
@@ -92,18 +102,21 @@ export class HrController {
 
   // Payroll
   @Post('payroll')
+  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   generatePayroll(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.generatePayroll(user.tenantId, dto);
   }
 
   @Get('payroll')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getPayrolls(@CurrentUser() user: any) {
     return this.hrService.getPayrolls(user.tenantId);
   }
 
   @Get('stats')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@CurrentUser() user: any) {
     return this.hrService.getHrStats(user.tenantId);

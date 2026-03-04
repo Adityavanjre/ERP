@@ -241,7 +241,7 @@ export default function SalesPage() {
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="font-black text-slate-900 tracking-tight leading-none mb-1 text-base">
+                                            <span className="font-black text-slate-900 tracking-tight leading-none mb-1 text-base truncate max-w-[200px]" title={order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : "Direct Transaction"}>
                                                 {order.customer ? `${order.customer.firstName} ${order.customer.lastName}` : "Direct Transaction"}
                                             </span>
                                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Customer</span>

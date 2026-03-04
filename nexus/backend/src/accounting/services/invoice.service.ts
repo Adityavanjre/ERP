@@ -67,7 +67,7 @@ export class InvoiceService {
       const calculation = await this.calculateTotals(tenantId, customerId, items, tx);
       let {
         totalTaxable, totalGST, totalCGST, totalSGST, totalIGST,
-        grandTotal, totalCOGS, invoiceItemsData
+        grandTotal, totalCOGS, invoiceItemsData, isInterState
       } = calculation;
 
       if (deductStock) {
@@ -86,6 +86,11 @@ export class InvoiceService {
 
       if (totalTaxable.isZero() && totalGST.greaterThan(0)) {
         throw new BadRequestException('Compliance Violation: Tax-only invoices are not allowed. Please include a taxable base.');
+      }
+
+      // GST-007: Composition Scheme Guard
+      if (tenant?.businessType && tenant.businessType.toLowerCase().includes('composition') && totalGST.greaterThan(0)) {
+        throw new BadRequestException('Compliance Error: Composition Scheme taxpayers are legally prohibited from collecting GST. Tax payload must be zero.');
       }
 
       const invoiceNumber = data.invoiceNumber || await this.generateInvoiceNumber(tenantId, tx);
@@ -115,6 +120,7 @@ export class InvoiceService {
           totalCGST,
           totalSGST,
           totalIGST,
+          isInterState,
           amountPaid: amountPaidAtStart,
           idempotencyKey: data.idempotencyKey,
           correlationId: this.traceService.getCorrelationId(), // Forensic Trace
@@ -659,6 +665,7 @@ export class InvoiceService {
       grandTotal: totalTaxable.add(totalGST),
       totalCOGS,
       invoiceItemsData,
+      isInterState,
     };
   }
 

@@ -28,18 +28,18 @@ rm "$TEMP_FILE"
 
 echo "Backup complete and uploaded to S3."
 
-# Optional: Prune old backups (older than 30 days)
-# aws s3 ls "$S3_BUCKET_NAME/daily/" | while read -r line;
-# do
-#   createDate=`echo $line|awk {'print $1" "$2'}`
-#   createDate=`date -d"$createDate" +%s`
-#   olderThan=`date -d"-30 days" +%s`
-#   if [ $createDate -lt $olderThan ];
-#   then
-#     fileName=`echo $line|awk {'print $4'}`
-#     if [ $fileName != "" ]
-#     then
-#       aws s3 rm "$S3_BUCKET_NAME/daily/$fileName"
-#     fi
-#   fi
-# done
+# Prune old backups (older than 30 days)
+aws s3 ls "$S3_BUCKET_NAME/daily/" | while read -r line;
+do
+  createDate=`echo $line|awk {'print $1" "$2'}`
+  createDate=`date -d"$createDate" +%s`
+  olderThan=`date -d"-30 days" +%s`
+  if [ $createDate -lt $olderThan ];
+  then
+    fileName=`echo $line|awk {'print $4'}`
+    if [ $fileName != "" ]
+    then
+      aws s3 rm "$S3_BUCKET_NAME/daily/$fileName"
+    fi
+  fi
+done
