@@ -27,6 +27,10 @@ import { SystemAuditService } from './services/system-audit.service';
 import { SystemController } from './system.controller';
 import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 import { WebhookController } from './controllers/webhook.controller';
+import { OrmService } from './services/orm.service';
+import { StudioController } from './controllers/studio.controller';
+import { WorkflowService } from './services/workflow.service';
+import { WorkflowController } from './controllers/workflow.controller';
 import { ConfigModule } from '@nestjs/config';
 
 @Global()
@@ -44,11 +48,14 @@ import { ConfigModule } from '@nestjs/config';
     B2BController,
     PluginController,
     WebhookController,
+    StudioController,
+    WorkflowController,
   ],
   providers: [
     RegistryService,
     AiService,
     AuditService,
+    AuditVerificationService,
     BillingService,
     SearchService,
     CollaborationService,
@@ -61,6 +68,8 @@ import { ConfigModule } from '@nestjs/config';
     SystemAuditService,
     AnomalyAlertService,
     AutomationWorkerService,
+    OrmService,
+    WorkflowService,
   ],
   exports: [
     RegistryService,

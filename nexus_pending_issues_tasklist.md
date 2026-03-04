@@ -202,13 +202,13 @@ Based on the `nexus_full_system_audit.md`, the following issues require attentio
 ### 💰 High-Risk Compliance & Industry Logic (NBFC/TDS)
 - [x] **FIN-001: NBFC Precision & Account Mapping.** Refactor `NbfcService.disburseLoan` and `runDailyInterestAccrual` to remove unsafe `Number()` casting for Decimal values and replace hardcoded account IDs (`INT_REVENUE_ACC`) with dynamic Chart of Account lookups.
 - [ ] **COMP-001: KYC Document Evidence.** Extend the KYC workflow to support secure blob storage for identity documents (Aadhar/PAN scans), as the current implementation only tracks document numbers without visual evidence.
-- [ ] **COMP-002: Dynamic TDS Financial Year.** Fix `TdsService.calculateTds` to use the `fyStartMonth` and `fyStartDay` from the `Tenant` model instead of hardcoding April 1st, ensuring multi-region or custom FY compliance.
+- [x] **COMP-002: Dynamic TDS Financial Year.** Fix `TdsService.calculateTds` to use the `fyStartMonth` and `fyStartDay` from the `Tenant` model instead of hardcoding April 1st, ensuring multi-region or custom FY compliance.
 - [ ] **INV-007: BOM Unit Conversions.** Implement a Unit Conversion Service for Manufacturing Work Orders to handle "Buy-in-Bulk, Consume-in-Small" scenarios (e.g., Kg to gram) to prevent stock valuation drift.
 - [x] **SEC-020: Hardcoded Admin Scrub.** Remove or parameterize the hardcoded credentials (`admin@klypso.agency` / `password123`) in `agency/server/createAdmin.js` and `createAdmin2.js` to prevent credential harvesting.
 - [ ] **IND-001: Industry Invariant Decoupling.** Refactor the vertical restrictions in `LogisticsService` and triage thresholds in `HealthcareService` (e.g., Potassium > 6.0) into a tenant-configurable "Governance Profile" to support multi-regional compliance.
 - [ ] **FIN-002: Universal Decimal Guardrail.** Replace all instances of `toNumber()` and `Number()` used for arithmetic in `HealthcareService.generateInsuranceClaimInvoice` and `LogisticsService.logFuel` with direct `Decimal` arithmetic to prevent floating-point inaccuracies in multi-million dollar transactions.
 - [x] **SEC-021: Session Invalidation (Token Versioning).** Enabled `tokenVersion` check in `UsersService` to force immediate session termination on role changes.
-- [ ] **AUDIT-011: Forensic Movement Logging.** Inject `StockMovement` creation into `InventoryService.deductStock`. Currently, atomic deductions update the balance but fail to create the movement trail, which will cause a "Traceability Gap" in the `SystemAuditService` health check.
+- [x] **AUDIT-011: Forensic Movement Logging.** Inject `StockMovement` creation into `InventoryService.deductStock`. Currently, atomic deductions update the balance but fail to create the movement trail, which will cause a "Traceability Gap" in the `SystemAuditService` health check.
 - [x] **MIG-004: Universal Traceability Chain.** Updated Healthcare and Logistics services to propagate `correlationId` from `TraceService` to all mutation records.
 
 ### �📐 Final Wiring & Business-Rule Audit

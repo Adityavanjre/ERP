@@ -50,7 +50,8 @@ export class LogisticsService {
     // --- Fuel vs Mileage Accounting ---
     async logFuel(tenantId: string, data: any) {
         const { vehicleId, liters, rate, odometerReading, fuelAccountId, bankAccountId } = data;
-        const totalCost = Number(liters) * Number(rate);
+        // FIN-002: Use explicit Decimal arithmetic to prevent floating-point inaccuracies
+        const totalCost = new Decimal(liters).mul(new Decimal(rate)).toDecimalPlaces(2);
 
         return this.prisma.$transaction(async (tx) => {
             // 1. Create Journal Entry for Fuel Expense
@@ -62,13 +63,13 @@ export class LogisticsService {
                     {
                         accountId: fuelAccountId, // Fuel Expense Account
                         type: 'Debit',
-                        amount: totalCost,
+                        amount: totalCost.toNumber(),
                         description: `Fuel: ${liters}L @ ${rate}`,
                     },
                     {
                         accountId: bankAccountId, // Bank/Cash Account
                         type: 'Credit',
-                        amount: totalCost,
+                        amount: totalCost.toNumber(),
                         description: `Payment for fuel`,
                     },
                 ],
@@ -81,7 +82,7 @@ export class LogisticsService {
                     vehicleId,
                     liters,
                     rate,
-                    totalCost,
+                    totalCost: totalCost.toNumber(),
                     odometerReading,
                     journalEntryId: journal.id,
                     correlationId: this.trace.getCorrelationId(),
