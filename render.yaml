@@ -90,7 +90,7 @@ services:
     sync: false
   region: oregon
   buildCommand: npm install && npm run build:shared && cd backend && npx prisma generate && npm run build
-  startCommand: node backend/dist/backend/src/main.js
+  startCommand: node backend/dist/backend/src/main.js || node dist/backend/src/main.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
   rootDir: nexus
