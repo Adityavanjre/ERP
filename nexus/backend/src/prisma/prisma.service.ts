@@ -38,7 +38,7 @@ export class PrismaService
                           get: (modelTarget: any, op: string | symbol) => {
                             if (typeof op === 'string' && typeof modelTarget[op] === 'function') {
                               return async (queryArgs: any = {}) => {
-                                const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
+                                const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog', 'RevokedToken', 'WebhookSecretRotation'];
 
                                 // SEC-004: Audit Log Immutability Enforcement (Transaction Layer)
                                 if (txProp === 'AuditLog' && ['update', 'updateMany', 'delete', 'deleteMany', 'upsert'].includes(op as string)) {
@@ -159,7 +159,7 @@ export class PrismaService
             }
             const tenantId = context.getTenantId();
             // These models are global (cross-tenant by design) — skip isolation
-            const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog'];
+            const globalModels = ['Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog', 'RevokedToken', 'WebhookSecretRotation'];
 
             // SEC-004: Audit Log Immutability Enforcement (Middleware Layer)
             if (model === 'AuditLog' && ['update', 'updateMany', 'delete', 'deleteMany', 'upsert'].includes(operation)) {
