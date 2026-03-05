@@ -293,6 +293,11 @@ export class AuthService {
   async adminLogin(dto: LoginDto, ipAddress?: string) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      include: {
+        memberships: {
+          include: { tenant: true },
+        },
+      },
     });
 
     if (!user || !user.isSuperAdmin) {
@@ -330,7 +335,7 @@ export class AuthService {
       ipAddress,
     });
 
-    return this.generateAuthResponse(user, false, 'WEB', true);
+    return this.generateAuthResponse(user, true, 'WEB', true);
   }
 
   async googleLogin(dto: GoogleLoginDto, channel: AccessChannel) {

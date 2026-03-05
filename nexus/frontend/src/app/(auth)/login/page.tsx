@@ -28,6 +28,7 @@ export default function LoginPage() {
     const [error, setError] = useState("")
 
     const [step, setStep] = useState<"identity" | "mfa">("identity")
+    const [isAdmin, setIsAdmin] = useState(false)
     const [tempToken, setTempToken] = useState("")
     const [mfaCode, setMfaCode] = useState("")
 
@@ -58,7 +59,8 @@ export default function LoginPage() {
                     return;
                 }
 
-                const res = await api.post("auth/login/web", { email: finalEmail, password: finalPassword })
+                const endpoint = isAdmin ? "auth/login/admin" : "auth/login/web";
+                const res = await api.post(endpoint, { email: finalEmail, password: finalPassword })
 
                 if (res.data.requiresMfa) {
                     setTempToken(res.data.tempToken);
@@ -135,9 +137,11 @@ export default function LoginPage() {
                                 </div>
                             </div>
                         </div>
-                        <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">Sign In</CardTitle>
+                        <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">
+                            {isAdmin ? "Admin Login" : "Sign In"}
+                        </CardTitle>
                         <CardDescription className="text-center text-slate-500 font-medium">
-                            Welcome back. Enter your details to continue.
+                            {isAdmin ? "Global Infrastructure Access" : "Welcome back. Enter your details to continue."}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -232,6 +236,15 @@ export default function LoginPage() {
                             <Link href="/register" className="text-blue-600 hover:text-blue-700">
                                 Create an account
                             </Link>
+                        </div>
+                        <div className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">
+                            <button
+                                type="button"
+                                onClick={() => setIsAdmin(!isAdmin)}
+                                className="text-blue-600 hover:text-blue-700 underline underline-offset-4"
+                            >
+                                {isAdmin ? "Standard Login" : "Super Admin Mode"}
+                            </button>
                         </div>
                     </CardFooter>
                 </form>

@@ -70,7 +70,7 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    if (!user || !user.role) {
+    if (!user || (!user.role && user.type !== 'admin')) {
       throw new ForbiddenException('User context missing');
     }
 

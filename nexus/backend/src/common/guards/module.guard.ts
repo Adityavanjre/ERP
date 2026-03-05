@@ -44,7 +44,7 @@ export class ModuleGuard implements CanActivate {
         const isCoreModule = CORE_MODULES.includes(moduleName || '');
 
         if (isCoreModule) {
-            if (user && user.type !== 'identity' && !user.tenantId) {
+            if (user && user.type !== 'identity' && user.type !== 'admin' && !user.tenantId) {
                 throw new ForbiddenException('Tenant context missing');
             }
             return true;

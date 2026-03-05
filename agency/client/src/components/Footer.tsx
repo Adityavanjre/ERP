@@ -85,9 +85,10 @@ const Footer = () => {
         <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 text-[9px] uppercase tracking-[0.5em] font-black text-zinc-700">
           <p>© {new Date().getFullYear()} KLYPSO. Crafting Digital Legacies.</p>
           <div className="flex gap-6 sm:gap-12">
-            <NavLink to="/login" className="hover:text-[#C5A059] transition-colors">Admin Access</NavLink>
+            <a href="/portal/login" className="hover:text-[#C5A059] transition-colors">System Admin</a>
+            <a href="/portal" className="hover:text-[#C5A059] transition-colors">ERP Portal</a>
+            <NavLink to="/login" className="hover:text-[#C5A059] transition-colors">Agency Admin</NavLink>
             <NavLink to="/legal" className="hover:text-white transition-colors">Legal</NavLink>
-            <NavLink to="/legal" className="hover:text-white transition-colors">Privacy</NavLink>
           </div>
         </div>
       </div>

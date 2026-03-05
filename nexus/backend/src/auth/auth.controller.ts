@@ -57,7 +57,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 900000 } }) // 3 attempts per 15 minutes
+  @Throttle({ default: { limit: 10, ttl: 900000 } }) // 10 attempts per 15 minutes
   @Public()
   @Post('login/admin')
   async loginAdmin(@Request() req: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {

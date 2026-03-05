@@ -11,6 +11,7 @@ import { Permission } from '../common/constants/permissions';
 import { Module } from '../common/decorators/module.decorator';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
+import { AllowIdentity } from '../common/decorators/allow-identity.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('system')
@@ -77,6 +78,7 @@ export class SystemController {
   }
 
   @Get('founder-dashboard')
+  @AllowIdentity() // Allow global admin access without tenant context
   @Roles(Role.Owner)
   async getFounderDashboard(@Req() req: any) {
     if (!req.user.isSuperAdmin) {

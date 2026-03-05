@@ -39,10 +39,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User context missing');
     }
 
-    // 🔴 DEEP FIX: Global Identity Token Rejection
-    // Identity tokens (no tenantId/role) MUST NOT access generic endpoints
+    // 🔴 DEEP FIX: Global Token Rejection
+    // Identity or Admin tokens (no tenantId/role) MUST NOT access generic endpoints
     // unless explicitly tagged with @AllowIdentity()
-    if (user.type === 'identity') {
+    if (user.type === 'identity' || user.type === 'admin') {
       const allowIdentity = this.reflector.getAllAndOverride<boolean>(ALLOW_IDENTITY_KEY, [
         context.getHandler(),
         context.getClass(),
@@ -51,13 +51,24 @@ export class RolesGuard implements CanActivate {
       if (!allowIdentity) {
         this.logging.log({
           userId: user.sub,
-          action: 'SECURITY_VIOLATION_IDENTITY_TOKEN_USE',
+          action: 'SECURITY_VIOLATION_GLOBAL_TOKEN_USE',
           resource: context.getClass().name,
-          details: { handler: context.getHandler().name, reason: 'Identity token attempted to access tenant-scoped or protected route' },
+          details: {
+            handler: context.getHandler().name,
+            type: user.type,
+            reason: 'Global token attempted to access tenant-scoped or protected route'
+          },
           ipAddress: request.ip,
         }).catch(err => console.error('Failed to log security violation', err));
 
         throw new ForbiddenException('A tenant-scoped token is required for this operation. Please select a company.');
+      }
+
+      // 🟢 Admin Override: If it's an 'admin' token and user is SuperAdmin,
+      // they effectively have the highest role (Owner) for global routes.
+      if (user.type === 'admin' && user.isSuperAdmin) {
+        user.role = Role.Owner; // Set virtual role for downstream guards/controllers
+        return true;
       }
 
       // If identity is allowed and no specific roles are required, let it pass
