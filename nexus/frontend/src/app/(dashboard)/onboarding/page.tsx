@@ -81,7 +81,7 @@ export default function OnboardingPage() {
             });
 
             // Hard reload to flush all React state with the new isOnboarded token
-            window.location.href = "/dashboard";
+            window.location.href = "/portal/dashboard";
         } catch (error: any) {
             toast.error("Onboarding failed", {
                 description: error.response?.data?.message || "Something went wrong.",

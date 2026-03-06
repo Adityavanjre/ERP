@@ -86,7 +86,8 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        if (user.email === 'admin@klypso.agency') {
+        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        if (user.email === adminEmail) {
             res.status(400);
             throw new Error('Cannot delete system administrator');
         }
@@ -105,7 +106,8 @@ const updateUserRole = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        if (user.email === 'admin@klypso.agency') {
+        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        if (user.email === adminEmail) {
             res.status(400);
             throw new Error('Cannot modify system administrator role');
         }
@@ -130,7 +132,8 @@ const updateUserPassword = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        if (user.email === 'admin@klypso.agency') {
+        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        if (user.email === adminEmail) {
             res.status(400);
             throw new Error('Cannot arbitrarily change root administrator password from dashboard');
         }

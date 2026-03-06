@@ -115,7 +115,7 @@ export default function RegisterPage() {
             });
 
             // Redirect
-            router.push('/dashboard');
+            window.location.href = '/portal/dashboard';
         } catch (error: any) {
             console.error(error);
             if (error.response?.status === 409) {

@@ -164,7 +164,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     return (
         <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
             <div className="px-6 py-10 pb-4 shrink-0">
-                <Link href="/dashboard" onClick={onItemClick} className="flex items-center transition-all hover:opacity-80">
+                <Link href="/portal/dashboard" onClick={onItemClick} className="flex items-center transition-all hover:opacity-80">
                     <KlypsoLogo />
                 </Link>
             </div>
@@ -172,15 +172,15 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 space-y-8 min-h-0">
                 <div className="space-y-1 mb-6">
                     <Link
-                        href="/dashboard"
+                        href="/portal/dashboard"
                         onClick={onItemClick}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
-                            pathname === '/dashboard' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
+                            pathname === '/portal/dashboard' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
                         )}
                     >
                         <div className="flex items-center flex-1">
-                            <LayoutDashboard className={cn("h-4 w-4 mr-3 transition-colors", pathname === '/dashboard' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
+                            <LayoutDashboard className={cn("h-4 w-4 mr-3 transition-colors", pathname === '/portal/dashboard' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
                             Dashboard
                         </div>
                     </Link>
@@ -192,7 +192,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                             {stream.label}
                         </div>
                         {stream.items.map((item) => {
-                            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                            const isActive = pathname === item.href || (item.href !== '/portal/dashboard' && pathname.startsWith(item.href));
                             return (
                                 <Link
                                     key={item.href}
@@ -236,7 +236,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         const identityToken = localStorage.getItem("k_identity");
                         if (identityToken) {
                             localStorage.setItem("k_token", identityToken);
-                            window.location.href = "/dashboard";
+                            window.location.href = "/portal/dashboard";
                         } else {
                             toast.error("Identity session lost. Please log in again.");
                         }

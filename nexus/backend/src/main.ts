@@ -134,8 +134,13 @@ async function bootstrap() {
   expressApp.all('/', (_req: any, res: any) => res.status(200).json({
     status: 'online',
     service: 'Nexus Enterprise API',
-    version: '1.0.0',
-    timestamp: new Date().toISOString()
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    links: {
+      portal: 'https://klypso.in/portal',
+      erp_login: 'https://klypso.in/portal/login',
+      agency_admin: 'https://klypso.in/login'
+    }
   }));
 
   app.use((req: any, res: any, next: any) => {

@@ -98,7 +98,7 @@ export function TenantSelector() {
             });
             localStorage.setItem("k_token", data.accessToken);
             // Hard reload to reset all React state with the new scoped token
-            window.location.href = "/dashboard";
+            window.location.href = "/portal/dashboard";
         } catch (err) {
             toast.error("Failed to select workspace");
             setSelecting(null);

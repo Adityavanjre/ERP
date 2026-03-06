@@ -6,6 +6,7 @@ import { TraceService } from './services/trace.service';
 
 import { HttpCacheInterceptor } from './interceptors/cache.interceptor';
 import { SecurityStorageService } from './services/security-storage.service';
+import { SystemInitService } from './services/system-init.service';
 
 @Global()
 @Module({
@@ -15,6 +16,7 @@ import { SecurityStorageService } from './services/security-storage.service';
     HttpCacheInterceptor,
     TraceService,
     SecurityStorageService,
+    SystemInitService,
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditInterceptor,

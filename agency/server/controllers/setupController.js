@@ -4,7 +4,7 @@ const User = require('../models/User');
 // @route   GET /api/users/setup/restore-admin
 // @access  Public (Temporal)
 const restoreAdmin = async (req, res) => {
-    const email = 'admin@klypso.agency';
+    const email = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
     const adminPassword = (process.env.ADMIN_PASSWORD || 'password123').trim();
 
     // Using upsert logic
@@ -36,7 +36,7 @@ const restoreAdmin = async (req, res) => {
 // @desc    Diagnostic check
 // @route   GET /api/users/setup/diagnostic
 const diagnostic = async (req, res) => {
-    const adminEmail = 'admin@klypso.agency';
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
     const user = await User.findOne({ email: adminEmail });
 
     let envMatchesHash = false;

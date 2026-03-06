@@ -88,6 +88,10 @@ services:
     sync: false
   - key: AUDIT_HMAC_SECRET  # SYS-AUDIT: Secret for audit log hash chain integrity. Generate: openssl rand -hex 32
     sync: false
+  - key: ADMIN_EMAIL
+    sync: false
+  - key: ADMIN_PASSWORD
+    sync: false
   - key: REDIS_HOST
     value: red-d6k747bh46gs73ec5ah0
   - key: REDIS_PORT
@@ -128,6 +132,8 @@ services:
   - key: JWT_SECRET
     sync: false
   - key: ADMIN_PASSWORD
+    sync: false
+  - key: ADMIN_EMAIL
     sync: false
   region: oregon
   buildCommand: npm install
