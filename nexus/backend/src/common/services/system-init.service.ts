@@ -14,15 +14,16 @@ export class SystemInitService implements OnApplicationBootstrap {
     }
 
     private async syncSuperAdmin() {
-        const rawEmail = process.env.ADMIN_EMAIL;
-        const adminPassword = process.env.ADMIN_PASSWORD;
+        const rawEmail = process.env.ADMIN_EMAIL?.trim();
+        const rawPassword = process.env.ADMIN_PASSWORD?.trim();
 
-        if (!rawEmail || !adminPassword) {
+        if (!rawEmail || !rawPassword) {
             this.logger.log('ADMIN_EMAIL or ADMIN_PASSWORD not set. Skipping root admin sync.');
             return;
         }
 
-        const adminEmail = rawEmail.trim().toLowerCase();
+        const adminEmail = rawEmail.toLowerCase();
+        const adminPassword = rawPassword;
         this.logger.log(`Syncing Super Admin: ${adminEmail}`);
 
         try {

@@ -291,8 +291,11 @@ export class AuthService {
   }
 
   async adminLogin(dto: LoginDto, ipAddress?: string) {
+    const email = dto.email.trim().toLowerCase();
+    const password = dto.password.trim();
+
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
       include: {
         memberships: {
           include: { tenant: true },
@@ -304,7 +307,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash ?? '');
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash ?? '');
     if (!isPasswordValid) {
       await this.recordLoginFailure(user);
       await this.logging.log({

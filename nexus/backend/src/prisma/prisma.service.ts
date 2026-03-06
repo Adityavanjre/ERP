@@ -45,7 +45,7 @@ export class PrismaService
                                   throw new Error(`SECURITY_LEVEL_CRITICAL: ${op as string} on AuditLog is strictly prohibited. Audit logs are immutable.`);
                                 }
 
-                                if (!tenantId || globalModels.includes(txProp as string)) {
+                                if (!tenantId || globalModels.map(m => m.toLowerCase()).includes((txProp as string).toLowerCase())) {
                                   return modelTarget[op](queryArgs);
                                 }
 
