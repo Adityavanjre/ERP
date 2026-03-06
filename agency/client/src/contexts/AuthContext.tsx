@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(true);
         try {
             // SEC-008: Use centralized api instance
-            const { data } = await api.post('/api/users/login', {
+            const { data } = await api.post('users/login', {
                 email,
                 password,
             });
