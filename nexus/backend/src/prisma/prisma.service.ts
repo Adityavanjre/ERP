@@ -166,7 +166,7 @@ export class PrismaService
               throw new Error(`SECURITY_LEVEL_CRITICAL: ${operation} on AuditLog is strictly prohibited. Audit logs are immutable.`);
             }
 
-            if (globalModels.includes(model)) {
+            if (globalModels.map(m => m.toLowerCase()).includes(model.toLowerCase())) {
               return query(args);
             }
 

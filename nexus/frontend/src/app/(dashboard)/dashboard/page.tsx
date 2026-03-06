@@ -80,19 +80,18 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
 
     const [enabledModules, setEnabledModules] = useState<string[]>([]);
+    const [industryConfig, setIndustryConfig] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('k_token');
                 const identity = localStorage.getItem('k_identity');
-                // If the token is just the identity token, do not hit tenant-scoped APIs
                 if (token && identity && token === identity) {
                     setLoading(false);
                     return;
                 }
 
-                // Each call is independent — a 403 on analytics should not wipe out all other stats
                 const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.allSettled([
                     api.get('system/stats'),
                     api.get('analytics/summary'),
@@ -116,16 +115,13 @@ export default function DashboardPage() {
 
                 if (sysData) setSystemStats(sysData);
                 if (cfgData) {
+                    setIndustryConfig(cfgData);
                     const apiModules: string[] = cfgData.enabledModules || [];
                     const core = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
                     setEnabledModules(Array.from(new Set([...core, ...apiModules])));
                 }
 
-                // BI stats — partial update: if summary fails, keep defaults but still show inventory/customer counts
-                setBiStats(prev => ({
-                    ...prev,
-                    ...(sumData || {}),
-                }));
+                setBiStats(prev => ({ ...prev, ...(sumData || {}) }));
                 setChartData(Array.isArray(perfData) ? perfData : []);
                 if (healthData) setHealthStats(healthData);
                 setActivity(Array.isArray(actData) ? actData : []);
@@ -139,11 +135,11 @@ export default function DashboardPage() {
         };
 
         fetchData();
-
-        // AUTOMATIC SYNC: Every 30 seconds
         const syncInterval = setInterval(fetchData, 30000);
         return () => clearInterval(syncInterval);
     }, []);
+
+    const term = industryConfig?.terminology || {};
 
     const kpiCards = [
         {
@@ -163,20 +159,20 @@ export default function DashboardPage() {
             desc: "Total purchase cost"
         },
         {
-            title: "Customers",
+            title: term.customer || "Customers",
             value: biStats.customerCount,
             icon: Users,
             color: "text-sky-400",
             bg: "bg-sky-500/10",
-            desc: "Total customers"
+            desc: `Total ${term.customer?.toLowerCase() || 'customers'}`
         },
         {
-            title: "Products in Stock",
+            title: term.product || "Products",
             value: biStats.inventoryCount,
             icon: Package,
             color: "text-amber-500",
             bg: "bg-amber-500/10",
-            desc: "Active SKUs & Inventory"
+            desc: `Active ${term.product?.toLowerCase() || 'products'}`
         }
     ];
 
@@ -186,9 +182,9 @@ export default function DashboardPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-950 flex items-center">
                         <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        Klypso Dashboard
+                        {industryConfig?.industry ? `${industryConfig.industry} Console` : 'Klypso Dashboard'}
                     </h2>
-                    <p className="text-slate-600 mt-2 font-medium">A live overview of your business performance and key metrics.</p>
+                    <p className="text-slate-600 mt-2 font-medium">Live {industryConfig?.industry?.toLowerCase() || 'business'} intelligence and operational metrics.</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
@@ -229,8 +225,8 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
                 {[
                     { label: "Quick Invoice", icon: CreditCard, color: "bg-emerald-100 text-emerald-600", href: "/sales/rapid", roles: SALES_ROLES },
-                    { label: "Add Product", icon: Plus, color: "bg-blue-100 text-blue-600", href: "/inventory", roles: STOCK_ROLES },
-                    { label: "Customers", icon: Users, color: "bg-indigo-100 text-indigo-600", href: "/crm", roles: SALES_ROLES },
+                    { label: `Add ${term.product || "Product"}`, icon: Plus, color: "bg-blue-100 text-blue-600", href: "/inventory", roles: STOCK_ROLES },
+                    { label: term.customer || "Customers", icon: Users, color: "bg-indigo-100 text-indigo-600", href: "/crm", roles: SALES_ROLES },
                     { label: "Purchases", icon: Truck, color: "bg-amber-100 text-amber-600", href: "/purchases", roles: STOCK_ROLES },
                     { label: "Accounting", icon: FileText, color: "bg-rose-100 text-rose-600", href: "/accounting", roles: FINANCE_ROLES },
                     { label: "Apps & Modules", icon: LayoutGrid, color: "bg-fuchsia-100 text-fuchsia-600", href: "/apps", roles: ['Owner', 'Manager'] as RoleName[] },

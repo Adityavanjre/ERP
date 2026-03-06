@@ -156,17 +156,79 @@ export class AnalyticsService {
   }
 
   async getValueChain(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { type: true },
+    });
+
+    const type = tenant?.type || 'General';
+
+    // Define industry-specific data fetching
+    if (type === 'Manufacturing') {
+      const [purchases, wos, inventory, receivables] = await Promise.all([
+        this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }),
+        this.prisma.workOrder.count({ where: { tenantId, status: { in: ['Planned', 'InProgress'] } } }),
+        this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Procurement', count: purchases, color: 'sky' },
+        { label: 'Work Orders', count: wos, color: 'amber' },
+        { label: 'Stock Level', count: inventory, color: 'indigo' },
+        { label: 'Receivables', count: receivables, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'Healthcare') {
+      const [appointments, patients, records, billing] = await Promise.all([
+        this.prisma.appointment.count({ where: { tenantId } }),
+        this.prisma.patient.count({ where: { tenantId } }),
+        this.prisma.medicalRecord.count({ where: { tenantId } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Appointments', count: appointments, color: 'sky' },
+        { label: 'Total Patients', count: patients, color: 'amber' },
+        { label: 'Med Records', count: records, color: 'indigo' },
+        { label: 'Billing Due', count: billing, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'Logistics') {
+      const [vehicles, routes, fuel, delivery] = await Promise.all([
+        this.prisma.vehicle.count({ where: { tenantId } }),
+        this.prisma.routeLog.count({ where: { tenantId } }),
+        this.prisma.fuelLog.count({ where: { tenantId } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Fleet Size', count: vehicles, color: 'sky' },
+        { label: 'Active Routes', count: routes, color: 'amber' },
+        { label: 'Fuel Entries', count: fuel, color: 'indigo' },
+        { label: 'Open Invoices', count: delivery, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'NBFC') {
+      const [loans, emis, kyc, reconciliations] = await Promise.all([
+        this.prisma.loan.count({ where: { tenantId } }),
+        this.prisma.eMISchedule.count({ where: { tenantId } }),
+        this.prisma.kYCRecord.count({ where: { tenantId } }),
+        this.prisma.bankReconciliation.count({ where: { tenantId } }),
+      ]);
+      return [
+        { label: 'Active Loans', count: loans, color: 'sky' },
+        { label: 'Pending EMIs', count: emis, color: 'amber' },
+        { label: 'KYC Files', count: kyc, color: 'indigo' },
+        { label: 'Bank Recs', count: reconciliations, color: 'emerald' },
+      ];
+    }
+
+    // Default: Retail / General
     const [purchases, inventory, pipeline, receivables] = await Promise.all([
-      this.prisma.purchaseOrder.count({
-        where: { tenantId, status: POStatus.Ordered },
-      }),
-      this.prisma.product.aggregate({
-        where: { tenantId, stock: { gt: 0 } },
-        _sum: { stock: true },
-      }),
-      this.prisma.opportunity.count({
-        where: { tenantId },
-      }),
+      this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }),
+      this.prisma.product.aggregate({ where: { tenantId, stock: { gt: 0 } }, _sum: { stock: true } }),
+      this.prisma.opportunity.count({ where: { tenantId } }),
       this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
     ]);
 
