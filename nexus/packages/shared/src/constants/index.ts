@@ -75,19 +75,19 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
     [Industry.Retail]: {
         enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
         terminology: {
-            customer: 'Customer',
-            product: 'Product/SKU',
-            inventory: 'Inventory',
+            customer: 'Shopper/Consumer',
+            product: 'Stock Item',
+            inventory: 'Shelf Stock',
             department: 'Store Section'
         }
     },
     [Industry.Construction]: {
         enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction'],
         terminology: {
-            customer: 'Client',
-            product: 'Material',
-            inventory: 'Site Stock',
-            department: 'Site Team'
+            customer: 'Principal/Owner',
+            product: 'Building Material',
+            inventory: 'Site Inventory',
+            department: 'Project Site'
         }
     },
     [Industry.Healthcare]: {
@@ -129,10 +129,10 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
     [Industry.Wholesale]: {
         enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
         terminology: {
-            customer: 'Retailer/Buyer',
-            product: 'Bulk Item',
-            inventory: 'Warehouse Stock',
-            department: 'Distribution Unit'
+            customer: 'Distributor/Vendor',
+            product: 'Bulk Commodity',
+            inventory: 'Warehouse Inventory',
+            department: 'Logistics Bay'
         }
     },
     [Industry.Education]: {

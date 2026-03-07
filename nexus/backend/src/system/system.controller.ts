@@ -46,7 +46,7 @@ export class SystemController {
   @Get('config')
   @Roles(Role.Owner)
   async getModuleConfig(@Req() req: any) {
-    const industry = req.user.industry || req.user.tenantType || 'General';
+    const industry = req.user.tenant?.industry || req.user.industry || req.user.tenant?.type || req.user.tenantType || 'General';
     const config = getIndustryConfig(industry);
 
     return {
