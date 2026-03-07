@@ -4,6 +4,7 @@ import { CollaborationService } from './collaboration.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import { NotFoundException } from '@nestjs/common';
+import { CollaborationGateway } from '../gateways/collaboration.gateway';
 
 describe('CollaborationService: TEN-001 Audit', () => {
   let service: CollaborationService;
@@ -26,6 +27,7 @@ describe('CollaborationService: TEN-001 Audit', () => {
         CollaborationService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditService, useValue: mockAudit },
+        { provide: CollaborationGateway, useValue: { broadcastComment: jest.fn() } },
       ],
     }).compile();
 
@@ -48,7 +50,7 @@ describe('CollaborationService: TEN-001 Audit', () => {
         console.log('ACTUAL_ERROR_MESSAGE:', e.message);
         expect(e.message).toContain('not found or access denied');
       }
-      
+
       expect(mockPrisma.comment.findFirst).toHaveBeenCalledWith({
         where: { id: commentId, tenantId: myTenantId },
         select: expect.any(Object),
@@ -59,9 +61,9 @@ describe('CollaborationService: TEN-001 Audit', () => {
     it('should allow deletion if comment belongs to the same tenant', async () => {
       const tenantId = 'T-SAME';
       const commentId = 'C-ID';
-      
-      mockPrisma.comment.findFirst.mockResolvedValue({ 
-        id: commentId, 
+
+      mockPrisma.comment.findFirst.mockResolvedValue({
+        id: commentId,
         tenantId,
         resourceType: 'Order',
         resourceId: 'O-1'

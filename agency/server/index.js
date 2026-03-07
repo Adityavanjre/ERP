@@ -9,6 +9,10 @@ const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
+if (!process.env.ADMIN_PASSWORD) {
+    console.error('FATAL ERROR: ADMIN_PASSWORD environment variable is missing.');
+    process.exit(1);
+}
 const app = express();
 
 app.set('trust proxy', 1);
@@ -56,10 +60,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('--- CRITICAL UNHANDLED REJECTION ---');
-    console.error('Promise:', promise, 'Reason:', reason);
-});
+// Unhandled Rejections are handled at the bottom of the file
 
 // Routes
 const enquiryRoutes = require('./routes/enquiryRoutes');

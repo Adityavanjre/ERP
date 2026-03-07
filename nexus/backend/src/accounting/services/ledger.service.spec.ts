@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TraceService } from '../../common/services/trace.service';
+import { BillingService } from '../../system/services/billing.service';
 
 describe('LedgerService (Financial Integrity)', () => {
   let service: LedgerService;
@@ -40,6 +41,7 @@ describe('LedgerService (Financial Integrity)', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TraceService, useValue: mockTrace },
         { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
+        { provide: BillingService, useValue: { createInvoice: jest.fn(), checkQuota: jest.fn() } },
       ],
     }).compile();
 

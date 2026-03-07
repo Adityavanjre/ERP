@@ -4,9 +4,11 @@ const { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUser
 const { restoreAdmin, diagnostic } = require('../controllers/setupController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-// Recovery route
-router.get('/setup/restore-admin', restoreAdmin);
-router.get('/setup/diagnostic', diagnostic);
+// Recovery route (Development only)
+if (process.env.NODE_ENV !== 'production') {
+    router.get('/setup/restore-admin', restoreAdmin);
+    router.get('/setup/diagnostic', diagnostic);
+}
 
 // User management routes
 router.route('/')

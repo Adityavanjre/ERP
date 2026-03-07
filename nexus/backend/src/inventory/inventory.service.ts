@@ -258,12 +258,18 @@ export class InventoryService {
   ) {
     const amount = new Decimal(quantity);
 
+    const product = await tx.product.findUnique({
+      where: options.tenantId ? { id: productId, tenantId: options.tenantId } : { id: productId }
+    });
+    const productName = product?.name || productId;
+
     const result = await tx.stockLocation.updateMany({
       where: {
         productId,
         warehouseId,
         notes,
-        quantity: { gte: amount } // THE GUARD
+        quantity: { gte: amount }, // THE GUARD
+        ...(options.tenantId ? { tenantId: options.tenantId } : {})
       },
       data: {
         quantity: { decrement: amount }
@@ -271,14 +277,21 @@ export class InventoryService {
     });
 
     if (result.count === 0) {
-      throw new BadRequestException(`Insufficient stock or concurrent deduction lock for Product: ${productId} at Warehouse: ${warehouseId}`);
+      const currentLoc = await tx.stockLocation.findFirst({
+        where: { productId, warehouseId, notes, ...(options.tenantId ? { tenantId: options.tenantId } : {}) }
+      });
+      throw new BadRequestException(
+        `Insufficient stock for "${productName}" at specified location. ` +
+        `Requested: ${amount}, Available: ${currentLoc?.quantity || 0}`
+      );
     }
 
     // Sync global product stock (also guarded)
     const productResult = await tx.product.updateMany({
       where: {
         id: productId,
-        stock: { gte: amount }
+        stock: { gte: amount },
+        ...(options.tenantId ? { tenantId: options.tenantId } : {})
       },
       data: {
         stock: { decrement: amount }
@@ -286,7 +299,7 @@ export class InventoryService {
     });
 
     if (productResult.count === 0) {
-      throw new BadRequestException(`Global stock sync failed for Product: ${productId}. Possible concurrent state mismatch.`);
+      throw new BadRequestException(`Global stock sync failed for "${productName}". Possible concurrent state mismatch.`);
     }
 
     // AUDIT-011: Inject StockMovement creation atomically so every deduction is traceable

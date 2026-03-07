@@ -5,7 +5,7 @@ const User = require('../models/User');
 // @access  Public (Temporal)
 const restoreAdmin = async (req, res) => {
     const email = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
-    const adminPassword = (process.env.ADMIN_PASSWORD || 'password123').trim();
+    const adminPassword = process.env.ADMIN_PASSWORD.trim();
 
     // Using upsert logic
     let user = await User.findOne({ email });
@@ -50,18 +50,9 @@ const diagnostic = async (req, res) => {
         time: new Date().toISOString(),
         database: require('mongoose').connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED',
         admin_exists: !!user,
-        admin_data: user ? {
-            email: user.email,
-            isAdmin: user.isAdmin,
-            has_password_hash: !!user.password,
-            db_hash_start: user.password ? user.password.substring(0, 7) + '...' : null,
-            env_matches_db_hash: envMatchesHash
-        } : null,
         env: {
             has_mongo_uri: !!process.env.MONGO_URI,
             admin_pwd_provided: !!process.env.ADMIN_PASSWORD,
-            admin_pwd_raw_length: process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.length : 0,
-            admin_pwd_trimmed_length: envPass ? envPass.length : 0,
         }
     });
 };

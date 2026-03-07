@@ -11,22 +11,22 @@ const authUser = async (req, res) => {
     if (email) email = email.trim().toLowerCase();
     if (password) password = password.trim();
 
-    console.log(`[LOGIN ATTEMPT] Email: ${email}`);
-    console.log(`[LOGIN ATTEMPT] Password Length: ${password ? password.length : 0}`);
+    const eventId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+    console.log(`[AUDIT] [${eventId}] EVENT: LOGIN_ATTEMPT`);
 
     const user = await User.findOne({ email });
 
     if (!user) {
-        console.log(`[LOGIN FAILED] User not found for email: ${email}`);
+        console.log(`[AUDIT] [${eventId}] EVENT: LOGIN_FAILED | REASON: USER_NOT_FOUND`);
         res.status(401);
         throw new Error('Invalid email or password');
     }
 
     const isMatch = await user.matchPassword(password);
-    console.log(`[LOGIN ATTEMPT] Password Match Result: ${isMatch}`);
+    // Credential validation internal result not logged
 
     if (isMatch) {
-        console.log(`[LOGIN SUCCESS] User authenticated: ${user.email}`);
+        console.log(`[AUDIT] [${eventId}] EVENT: LOGIN_SUCCESS | USER_ID: ${user._id}`);
         res.json({
             _id: user._id,
             name: user.name,
@@ -35,7 +35,7 @@ const authUser = async (req, res) => {
             token: generateToken(user._id),
         });
     } else {
-        console.log(`[LOGIN FAILED] Password mismatch for: ${email}`);
+        console.log(`[AUDIT] [${eventId}] EVENT: LOGIN_FAILED | REASON: CREDENTIALS_MISMATCH`);
         res.status(401);
         throw new Error('Invalid email or password');
     }

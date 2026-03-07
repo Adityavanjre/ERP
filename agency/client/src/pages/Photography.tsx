@@ -62,12 +62,21 @@ const Photography = () => {
 
     const openLightbox = (index: number) => {
         setLightboxIndex(index);
-        document.body.style.overflow = 'hidden';
     };
     const closeLightbox = () => {
         setLightboxIndex(null);
-        document.body.style.overflow = 'auto';
     };
+
+    useEffect(() => {
+        if (lightboxIndex !== null) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [lightboxIndex]);
 
     return (
         <div className="min-h-screen bg-[#0A0A0B] text-white pt-48 pb-32">

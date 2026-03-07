@@ -56,7 +56,9 @@ const Dashboard = () => {
                     const enquiriesRes = await api.get<Enquiry[]>('/api/enquiries');
                     enquiriesCount = enquiriesRes.data.length;
                     enquiriesList = enquiriesRes.data.slice(0, 5);
-                } catch (e) { }
+                } catch (e) {
+                    console.error("Dashboard failed to fetch recent enquiries", e);
+                }
 
                 setStats({
                     projects: projects.data.length,
@@ -262,7 +264,15 @@ const Dashboard = () => {
     );
 };
 
-const MetricCard = ({ title, value, icon, trend, accent }: any) => (
+interface MetricCardProps {
+    title: string;
+    value: number | string;
+    icon: React.ReactNode;
+    trend: string;
+    accent: string;
+}
+
+const MetricCard = ({ title, value, icon, trend, accent }: MetricCardProps) => (
     <div className="bg-[#121214] border border-white/5 p-8 rounded-[2.5rem] hover:border-white/10 transition-all group relative overflow-hidden shadow-xl hover:shadow-2xl">
         <div className="relative z-10">
             <div className="flex justify-between items-start mb-10">
@@ -282,14 +292,27 @@ const MetricCard = ({ title, value, icon, trend, accent }: any) => (
     </div>
 );
 
-const RapidStat = ({ label, value, color }: any) => (
+interface RapidStatProps {
+    label: string;
+    value: string;
+    color: string;
+}
+
+const RapidStat = ({ label, value, color }: RapidStatProps) => (
     <div className="flex flex-col">
         <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-1">{label}</span>
         <span className={`text-lg font-bold tracking-tight ${color}`}>{value}</span>
     </div>
 );
 
-const DiagRow = ({ label, status, percent, color }: any) => (
+interface DiagRowProps {
+    label: string;
+    status: string;
+    percent: number;
+    color: string;
+}
+
+const DiagRow = ({ label, status, percent, color }: DiagRowProps) => (
     <div className="space-y-4">
         <div className="flex justify-between items-center">
             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{label}</span>
@@ -306,7 +329,14 @@ const DiagRow = ({ label, status, percent, color }: any) => (
     </div>
 );
 
-const ActionLink = ({ icon, label, to, color }: any) => (
+interface ActionLinkProps {
+    icon: React.ReactNode;
+    label: string;
+    to: string;
+    color: string;
+}
+
+const ActionLink = ({ icon, label, to, color }: ActionLinkProps) => (
     <Link to={to} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/[0.04] transition-all group border border-transparent hover:border-white/5">
         <div className="flex items-center gap-4">
             <span className={`${color} group-hover:scale-110 transition-transform`}>{icon}</span>

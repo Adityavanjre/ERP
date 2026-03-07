@@ -17,7 +17,7 @@ import {
     ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 
 const AdminLayout = () => {
     const { user, logout } = useAuth();
@@ -225,7 +225,9 @@ const AdminLayout = () => {
                             exit={{ opacity: 0, scale: 0.99, y: -10 }}
                             transition={{ duration: 0.4, ease: [0.2, 1, 0.3, 1] }}
                         >
-                            <Outlet />
+                            <Suspense fallback={<div className="h-full flex items-center justify-center min-h-[50vh]"><div className="w-8 h-8 rounded-full border-2 border-[#C5A059] border-t-transparent animate-spin" /></div>}>
+                                <Outlet />
+                            </Suspense>
                         </motion.div>
                     </AnimatePresence>
                 </div>

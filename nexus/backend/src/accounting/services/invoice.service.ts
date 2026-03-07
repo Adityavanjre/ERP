@@ -672,17 +672,6 @@ export class InvoiceService {
   async handleInventoryDeduction(tenantId: string, invoiceItems: any[], tx: any) {
     for (const item of invoiceItems) {
       const qty = new Decimal(item.quantity);
-      const stockGuard = qty.isPositive() ? { gte: qty } : {};
-
-      const updateResult = await tx.product.updateMany({
-        where: { id: item.productId, tenantId, stock: stockGuard },
-        data: { stock: { decrement: qty } },
-      });
-
-      if (updateResult.count === 0) {
-        const p = await tx.product.findFirst({ where: { id: item.productId, tenantId } });
-        throw new BadRequestException(`Insufficient stock for ${item.productName}. Requested: ${qty}, Available: ${p?.stock}`);
-      }
 
       const warehouse = await tx.warehouse.findFirst({
         where: { tenantId },
@@ -690,20 +679,23 @@ export class InvoiceService {
       });
 
       if (warehouse) {
-        await this.inventoryService.deductStock(tx, item.productId, warehouse.id, qty, '');
-
-        await (tx as any).stockMovement.create({
-          data: {
-            tenantId,
-            productId: item.productId,
-            warehouseId: warehouse.id,
-            quantity: qty,
-            type: 'OUT',
-            reference: 'SALE',
-            notes: `Invoice Sale`,
-            correlationId: this.traceService.getCorrelationId(), // Trace Link
-          }
+        // centralized, atomic deduction that handles both product.stock and stockLocation.quantity
+        // and includes the safety guard to prevent negative stock.
+        await this.inventoryService.deductStock(tx, item.productId, warehouse.id, qty, '', {
+          tenantId,
+          reference: 'SALE',
+          correlationId: this.traceService.getCorrelationId(),
         });
+      } else {
+        // Fallback for tenants without warehouses (though unlikely given onboarding)
+        // We still need to decrement global stock at a minimum.
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, tenantId, stock: { gte: qty } },
+          data: { stock: { decrement: qty } },
+        });
+        if (result.count === 0) {
+          throw new BadRequestException(`Insufficient stock for ${item.productName}. Requested: ${qty}`);
+        }
       }
     }
   }

@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Nexus ERP Engine v2.0 is Online 🟢');
+    it('should return "Nexus ERP API Gateway is Operational"', () => {
+      expect(appController.getHello()).toBe('Nexus ERP API Gateway is Operational');
     });
   });
 });

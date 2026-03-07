@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import API_URL from '../../api/config';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,11 +28,8 @@ const ManageEnquiries = () => {
 
     const selectedEnquiry = enquiries.find(e => e._id === selectedId);
 
-    useEffect(() => {
-        if (user) fetchEnquiries();
-    }, [user]);
 
-    const fetchEnquiries = async () => {
+    const fetchEnquiries = useCallback(async () => {
         try {
             const config = {
                 headers: { Authorization: `Bearer ${user?.token}` },
@@ -45,7 +42,11 @@ const ManageEnquiries = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (user) fetchEnquiries();
+    }, [user, fetchEnquiries]);
 
     const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -228,7 +229,15 @@ const ManageEnquiries = () => {
     );
 };
 
-const InfoBlock = ({ icon, label, value, isLink, link }: any) => (
+interface InfoBlockProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    isLink?: boolean;
+    link?: string;
+}
+
+const InfoBlock = ({ icon, label, value, isLink, link }: InfoBlockProps) => (
     <div className="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all">
         <div className="flex items-center gap-3 mb-2">
             <span className="text-zinc-600">{icon}</span>
