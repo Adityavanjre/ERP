@@ -36,7 +36,7 @@ const createAdminSafely = async () => {
         const Blog = require('../models/Blog');
         const Job = require('../models/Job');
 
-        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        const adminEmail = (process.env.ADMIN_EMAIL || 'adityavanjre111@gmail.com').trim().toLowerCase();
         const adminPassword = (process.env.ADMIN_PASSWORD || 'password123').trim();
         const userExists = await User.findOne({ email: adminEmail });
 

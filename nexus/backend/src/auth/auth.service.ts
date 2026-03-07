@@ -303,8 +303,24 @@ export class AuthService {
       },
     });
 
-    if (!user || !user.isSuperAdmin) {
+    const configAdminEmail = (this.config.get<string>('ADMIN_EMAIL') || 'adityavanjre111@gmail.com').toLowerCase();
+    const isConfigAdmin = email === configAdminEmail;
+
+    if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isSuperAdmin && !isConfigAdmin) {
+      throw new UnauthorizedException('Access restricted to infrastructure administrators.');
+    }
+
+    // Fail-safe: If they are the config admin but not flagged in DB (drift), fix it now.
+    if (isConfigAdmin && !user.isSuperAdmin) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isSuperAdmin: true }
+      });
+      user.isSuperAdmin = true;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash ?? '');

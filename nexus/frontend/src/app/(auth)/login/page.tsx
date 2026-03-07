@@ -39,22 +39,19 @@ export default function LoginPage() {
 
         try {
             if (step === "identity") {
-                let finalEmail = email;
-                let finalPassword = password;
+                let finalEmail = email.trim();
+                let finalPassword = password.trim();
 
-                // Force read from DOM to bypass Autofill React state desync
-                const formData = new FormData(e.currentTarget);
-                const domEmail = formData.get("email")?.toString() || "";
-                const domPassword = formData.get("password")?.toString() || "";
-
-                if (domEmail) finalEmail = domEmail;
-                if (domPassword) finalPassword = domPassword;
-
-                setEmail(finalEmail);
-                setPassword(finalPassword);
+                // Double-check via DOM as second factor for autofill reliability
+                if (typeof document !== 'undefined') {
+                    const emailInput = document.getElementById('email') as HTMLInputElement;
+                    const passInput = document.getElementById('password') as HTMLInputElement;
+                    if (emailInput?.value) finalEmail = emailInput.value.trim();
+                    if (passInput?.value) finalPassword = passInput.value.trim();
+                }
 
                 if (!finalEmail || !finalPassword) {
-                    setError("Email and Password are required.");
+                    setError("Credentials required.");
                     setLoading(false);
                     return;
                 }
@@ -161,7 +158,7 @@ export default function LoginPage() {
                                         name="email"
                                         autoComplete="username"
                                         placeholder="name@company.com"
-                                        className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4 autocomplete-disable"
+                                        className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400 h-12 rounded-xl font-medium px-4"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
@@ -183,7 +180,7 @@ export default function LoginPage() {
                                             name="password"
                                             autoComplete="current-password"
                                             type={showPassword ? "text" : "password"}
-                                            className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10 autocomplete-disable"
+                                            className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500/20 focus:border-blue-500 h-12 rounded-xl px-4 pr-10"
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required

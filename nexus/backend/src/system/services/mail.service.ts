@@ -38,7 +38,8 @@ export class MailService {
 
       // Do not retry client errors (4xx) — they indicate a configuration issue
       if (response.status >= 400 && response.status < 500) {
-        this.logger.error(`Resend API client error (${response.status}): ${JSON.stringify(errorData)}`);
+        const errorBody = await response.text().catch(() => 'No body');
+        this.logger.error(`Resend API client error (${response.status}): ${errorBody}`);
         return false;
       }
 
