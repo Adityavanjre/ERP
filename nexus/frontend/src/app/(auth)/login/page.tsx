@@ -97,6 +97,11 @@ export default function LoginPage() {
         const returnTo = localStorage.getItem("return_to")
         localStorage.removeItem("return_to")
 
+        if (res.data.user.isSuperAdmin && (!res.data.tenants || res.data.tenants.length === 0)) {
+            window.location.href = "/portal/admin/monitoring"
+            return
+        }
+
         const safeRedirect = (raw: string | null): string => {
             if (!raw) return SAFE_FALLBACK
             if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return SAFE_FALLBACK

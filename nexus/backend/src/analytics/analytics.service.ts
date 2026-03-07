@@ -179,6 +179,36 @@ export class AnalyticsService {
       ];
     }
 
+    if (type === 'Construction') {
+      const [projects, materialPO, siteInventory, receivables] = await Promise.all([
+        this.prisma.project.count({ where: { tenantId, status: { in: ['Active', 'Planned'] } } }),
+        this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }),
+        this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Active Projects', count: projects, color: 'sky' },
+        { label: 'Site Orders', count: materialPO, color: 'amber' },
+        { label: 'Site Stock', count: siteInventory, color: 'indigo' },
+        { label: 'Receivables', count: receivables, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'Wholesale' || type === 'Retail') {
+      const [po, stock, customers, receivables] = await Promise.all([
+        this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }),
+        this.prisma.product.aggregate({ where: { tenantId }, _sum: { stock: true } }),
+        this.prisma.customer.count({ where: { tenantId } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Inbound POs', count: po, color: 'sky' },
+        { label: 'Total Stock', count: Number(stock._sum.stock || 0), color: 'amber' },
+        { label: 'Active Leads', count: customers, color: 'indigo' },
+        { label: 'Receivables', count: receivables, color: 'emerald' },
+      ];
+    }
+
     if (type === 'Healthcare') {
       const [appointments, patients, records, billing] = await Promise.all([
         this.prisma.appointment.count({ where: { tenantId } }),
@@ -224,17 +254,17 @@ export class AnalyticsService {
       ];
     }
 
-    // Default: Retail / General
+    // Default: General
     const [purchases, inventory, pipeline, receivables] = await Promise.all([
       this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }),
-      this.prisma.product.aggregate({ where: { tenantId, stock: { gt: 0 } }, _sum: { stock: true } }),
+      this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
       this.prisma.opportunity.count({ where: { tenantId } }),
       this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
     ]);
 
     return [
       { label: 'Procurement', count: purchases, color: 'sky' },
-      { label: 'Inventory', count: Number(inventory._sum.stock || 0), color: 'amber' },
+      { label: 'Inventory Items', count: inventory, color: 'amber' },
       { label: 'Sales Pipeline', count: pipeline, color: 'indigo' },
       { label: 'Receivables', count: receivables, color: 'emerald' },
     ];

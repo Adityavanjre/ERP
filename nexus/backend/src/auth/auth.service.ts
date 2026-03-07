@@ -224,14 +224,17 @@ export class AuthService {
     });
 
     if (!user) {
+      this.logger.warn(`[LOGIN_FAILED] User not found: ${dto.email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (user.authProvider !== AuthProvider.Email) {
+      this.logger.warn(`[LOGIN_FAILED] Identity mismatch for ${dto.email}: Provider is ${user.authProvider}`);
       throw new UnauthorizedException(`This account uses ${user.authProvider} login. Please sign in using your social provider.`);
     }
 
     if (!user.passwordHash) {
+      this.logger.warn(`[LOGIN_FAILED] Password hash missing for user: ${dto.email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -307,10 +310,12 @@ export class AuthService {
     const isConfigAdmin = email === configAdminEmail;
 
     if (!user) {
+      this.logger.warn(`[ADMIN_LOGIN_FAILED] User not found: ${email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (!user.isSuperAdmin && !isConfigAdmin) {
+      this.logger.warn(`[ADMIN_LOGIN_FAILED] Access denied for ${email}: Not a Super Admin`);
       throw new UnauthorizedException('Access restricted to infrastructure administrators.');
     }
 
@@ -325,6 +330,7 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash ?? '');
     if (!isPasswordValid) {
+      this.logger.warn(`[ADMIN_LOGIN_FAILED] Password mismatch for: ${email}`);
       await this.recordLoginFailure(user);
       await this.logging.log({
         userId: user.id,
@@ -766,6 +772,7 @@ export class AuthService {
     } catch (mailErr: any) {
       // Fatal mail error — log it loudly, but never reveal to the caller.
       // The token is already written to the DB; the user can try again.
+      console.error(`[MAIL_DELIVERY_FAILURE] Error sending reset link to ${user.email}:`, mailErr.message);
       this.logging.log({
         action: 'PASSWORD_RESET_EMAIL_FAILED',
         resource: 'MailService',

@@ -37,7 +37,8 @@ const createAdminSafely = async () => {
         const Job = require('../models/Job');
 
         const adminEmail = (process.env.ADMIN_EMAIL || 'adityavanjre111@gmail.com').trim().toLowerCase();
-        const adminPassword = (process.env.ADMIN_PASSWORD || 'password123').trim();
+        const rawPassword = process.env.ADMIN_PASSWORD;
+        const adminPassword = (rawPassword || 'password123').trim();
         const userExists = await User.findOne({ email: adminEmail });
 
         if (!userExists) {
@@ -50,11 +51,26 @@ const createAdminSafely = async () => {
             });
             console.log('✅ Admin user created successfully.');
         } else {
-            console.log(`System Check: Admin user (${adminEmail}) detected. Syncing password...`);
-            userExists.password = adminPassword;
-            userExists.isAdmin = true;
-            await userExists.save();
-            console.log('✅ Admin password synced with environment.');
+            console.log(`System Check: Admin user (${adminEmail}) detected. Monitoring context...`);
+            let modified = false;
+
+            if (rawPassword) {
+                userExists.password = rawPassword.trim();
+                modified = true;
+                console.log('Admin password sync triggered by environment.');
+            }
+
+            if (!userExists.isAdmin) {
+                userExists.isAdmin = true;
+                modified = true;
+            }
+
+            if (modified) {
+                await userExists.save();
+                console.log('✅ Admin credentials synchronized.');
+            } else {
+                console.log('Admin user verified. No changes required.');
+            }
         }
 
         // Check if projects exist, if not seed them
