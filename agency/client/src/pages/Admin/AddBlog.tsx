@@ -74,8 +74,9 @@ const AddBlog = () => {
             });
 
             navigate('/admin/blogs');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to publish post');
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { message?: string } } };
+            setError(errorObj.response?.data?.message || 'Failed to publish post');
         } finally {
             setLoading(false);
         }

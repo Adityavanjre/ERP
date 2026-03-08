@@ -42,7 +42,7 @@ const EditBlog = () => {
                 setAuthor(data.author);
                 setReadTime(data.readTime || '3 min read');
                 setTags(data.tags ? data.tags.join(', ') : '');
-            } catch (err) {
+            } catch {
                 setError('Failed to fetch article details');
             } finally {
                 setFetching(false);
@@ -89,8 +89,9 @@ const EditBlog = () => {
             });
 
             navigate('/admin/blogs');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update article');
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { message?: string } } };
+            setError(errorObj.response?.data?.message || 'Failed to update article');
         } finally {
             setSaving(false);
         }

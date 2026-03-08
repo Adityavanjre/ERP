@@ -337,7 +337,7 @@ const Home = () => {
     );
 };
 
-const FeatureCard = ({ icon, title, desc, delay }: any) => (
+const FeatureCard = ({ icon, title, desc, delay }: { icon: React.ReactNode, title: string, desc: string, delay: number }) => (
     <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -358,10 +358,11 @@ const FeatureCard = ({ icon, title, desc, delay }: any) => (
     </motion.div>
 );
 
-const EliteStat = ({ value, label, unit }: any) => (
+const EliteStat = ({ value, label, delay = 0, unit }: { value: string, label: string, delay?: number, unit: string }) => (
     <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
+        transition={{ delay, duration: 0.8 }}
         className="text-center md:text-left"
     >
         <h4 className="text-5xl md:text-7xl font-bold text-white mb-2 tracking-tighter font-heading">

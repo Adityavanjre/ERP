@@ -1,0 +1,49 @@
+﻿
+> client@0.0.0 lint
+> eslint .
+
+
+D:\code\ERP\agency\client\src\components\Admin\ImageUploader.tsx
+  52:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\About.tsx
+  147:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Admin\AddBlog.tsx
+  77:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Admin\AddJob.tsx
+  46:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Admin\EditBlog.tsx
+  45:22  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+  92:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Admin\EditProject.tsx
+  52:22  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+  84:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Admin\ManageBlogs.tsx
+  9:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Admin\ManageUsers.tsx
+  51:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  67:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Home.tsx
+  340:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  361:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\ProjectDetails.tsx
+   17:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   27:22  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+   28:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\code\ERP\agency\client\src\pages\Services.tsx
+  142:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  165:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Ô£û 20 problems (0 errors, 20 warnings)
+

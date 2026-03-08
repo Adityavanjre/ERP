@@ -144,7 +144,7 @@ const About = () => {
     );
 };
 
-const ProcessStep = ({ number, title, desc }: any) => (
+const ProcessStep = ({ number, title, desc }: { number: string, title: string, desc: string }) => (
     <div className="text-center relative group">
         <div className="text-9xl font-bold text-white/[0.02] mb-6 absolute -top-16 left-1/2 -translate-x-1/2 group-hover:text-[#C5A059]/5 transition-colors font-heading select-none">
             {number}

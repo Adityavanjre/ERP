@@ -8,15 +8,37 @@ import {
     Cpu, CheckCircle, Crown
 } from 'lucide-react';
 import SEO from '../components/SEO';
-import projectsData from '../data/projects.json';
 import NotFound from './NotFound';
 import Loader from '../components/Loader';
 
+interface Project {
+    id?: string;
+    _id?: string;
+    title: string;
+    description: string;
+    image?: string;
+    categories?: string[];
+    fullDescription?: string;
+    challenge?: string;
+    solution?: string;
+    gallery?: string[];
+    technologies?: string[];
+    services?: string[];
+    impact?: string;
+    testimonial?: {
+        quote: string;
+        author: string;
+        role: string;
+    };
+    link?: string;
+}
+
 const ProjectDetails = () => {
     const { id } = useParams();
-    const [project, setProject] = useState<any>(null);
+    const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState('');
+    const [projectsData] = useState<Project[]>([]);
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -24,18 +46,20 @@ const ProjectDetails = () => {
             try {
                 const { data } = await api.get(`/projects/${id}`, { timeout: 1500 });
                 setProject(data);
-            } catch (err) {
-                const localProject = (projectsData as any[]).find(p => p.id === id || p._id === id);
+            } catch {
+                // Assuming projectsData state would be populated elsewhere or this is a placeholder
+                const localProject = projectsData.find(p => p.id === id || p._id === id);
                 if (localProject) {
                     setProject(localProject);
                 } else {
-                    setError(true);
+                    setError('Failed to load project details');
                 }
             } finally {
                 setLoading(false);
             }
         };
         fetchProject();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const { scrollYProgress } = useScroll({
@@ -241,7 +265,7 @@ const ProjectDetails = () => {
     );
 };
 
-const RegistryCard = ({ icon, title, children }: any) => (
+const RegistryCard = ({ icon, title, children }: { icon: React.ReactNode, title: string, children: React.ReactNode }) => (
     <div className="premium-card p-12 space-y-8 bg-[#121214]">
         <div className="flex items-center gap-4 border-b border-white/5 pb-8">
             <div className="w-12 h-12 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center">

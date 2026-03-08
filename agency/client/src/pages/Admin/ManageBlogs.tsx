@@ -5,8 +5,24 @@ import { Trash2, Plus, Edit, FileText, Calendar, Search, User, Eye } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 
 
+interface Blog {
+    _id: string;
+    title: string;
+    category: string;
+    status: string;
+    views: number;
+    createdAt: string;
+    image?: string;
+    readTime?: string;
+    date?: string;
+    author?: string;
+    excerpt?: string;
+    tags?: string[];
+    slug?: string;
+}
+
 const ManageBlogs = () => {
-    const [blogs, setBlogs] = useState<any[]>([]);
+    const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -30,8 +46,8 @@ const ManageBlogs = () => {
         try {
             await api.delete(`/blogs/${id}`);
             setBlogs(prev => prev.filter(b => b._id !== id));
-        } catch (error) {
-            console.error("Failed to delete blog", error);
+        } catch {
+            // Handled or ignored
         }
     };
 

@@ -139,7 +139,7 @@ const Services = () => {
     );
 };
 
-const ServiceDetailCard = ({ icon, title, description, features }: any) => (
+const ServiceDetailCard = ({ icon, title, description, features }: { icon: React.ReactNode, title: string, description: string, features: string[] }) => (
     <motion.div
         whileHover={{ y: -10 }}
         className="group relative flex flex-col h-full"
@@ -162,7 +162,7 @@ const ServiceDetailCard = ({ icon, title, description, features }: any) => (
     </motion.div>
 );
 
-const ProcessRow = ({ number, title, desc, icon }: any) => (
+const ProcessRow = ({ number, title, desc, icon }: { number: string, title: string, desc: string, icon: React.ReactNode }) => (
     <motion.div
         initial={{ opacity: 0, x: -20 }}
         whileInView={{ opacity: 1, x: 0 }}

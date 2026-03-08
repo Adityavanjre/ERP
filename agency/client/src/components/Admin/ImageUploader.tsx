@@ -49,7 +49,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             setCompleted(true);
         } catch (err: unknown) {
             console.error(err);
-            const errorObj = err as any;
+            const errorObj = err as { response?: { data?: { message?: string } } };
             setError(errorObj.response?.data?.message || "Upload failed");
         } finally {
             setUploading(false);

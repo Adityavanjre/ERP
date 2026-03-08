@@ -49,7 +49,7 @@ const EditProject = () => {
                 setAuthor(data.testimonial?.author || '');
                 setRole(data.testimonial?.role || '');
                 setGallery(data.gallery?.join(', ') || '');
-            } catch (err) {
+            } catch {
                 setError('Failed to fetch project details');
             } finally {
                 setLoading(false);
@@ -81,8 +81,9 @@ const EditProject = () => {
             });
 
             navigate('/admin/projects');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update project');
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { message?: string } } };
+            setError(errorObj.response?.data?.message || 'Failed to update project');
         } finally {
             setSaving(false);
         }

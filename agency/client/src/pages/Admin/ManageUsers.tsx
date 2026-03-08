@@ -33,7 +33,7 @@ const ManageUsers = () => {
             const { data } = await api.get('/api/users');
             setUsers(data);
             if (data.length > 0) setSelectedId(data[0]._id);
-        } catch (error) {
+        } catch (error: unknown) { // Reverted to original error handling to maintain syntactic correctness as setError is not defined.
             console.error('Error fetching users', error);
         } finally {
             setLoading(false);
@@ -48,7 +48,7 @@ const ManageUsers = () => {
             await api.put(`/api/users/${id}/role`, { isAdmin: !currentIsAdmin });
             setUsers(prev => prev.map(u => u._id === id ? { ...u, isAdmin: !currentIsAdmin } : u));
         } catch (error: unknown) {
-            const err = error as any;
+            const err = error as { response?: { data?: { message?: string } } };
             alert(err.response?.data?.message || 'Error updating user role');
         }
     };
@@ -64,7 +64,7 @@ const ManageUsers = () => {
                 setIsResetting(false);
             }
         } catch (error: unknown) {
-            const err = error as any;
+            const err = error as { response?: { data?: { message?: string } } };
             alert(err.response?.data?.message || 'Error deleting user');
         }
     };
@@ -83,7 +83,7 @@ const ManageUsers = () => {
             alert('Password successfully updated.');
             setNewPassword('');
         } catch (error: unknown) {
-            const err = error as any;
+            const err = error as { response?: { data?: { message?: string } } };
             alert(err.response?.data?.message || 'Error resetting password');
         } finally {
             setIsResetting(false);

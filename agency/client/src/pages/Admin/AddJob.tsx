@@ -43,8 +43,9 @@ const AddJob = () => {
             });
 
             navigate('/admin/careers');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to post job');
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { message?: string } } };
+            setError(errorObj.response?.data?.message || 'Failed to post job');
         } finally {
             setLoading(false);
         }
