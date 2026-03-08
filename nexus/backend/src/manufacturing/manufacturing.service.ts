@@ -28,23 +28,22 @@ export class ManufacturingService {
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
    */
-  async explodeBOM(
-    tenantId: string,
-    bomId: string,
-    multiplier: number = 1,
-  ) {
+  async explodeBOM(tenantId: string, bomId: string, multiplier: number = 1) {
     // MFG-002: Performance Scaling via Recursive CTE
     // This replaces a potentially deep recursive JS chain with a single database round-trip.
     const results: any[] = await this.prisma.$queryRaw`
       WITH RECURSIVE exploded_bom AS (
         -- Anchor member: get the initial items for the starting BOM
         SELECT 
+          ${bomId}::text as "currentBomId",
           bi."productId" as "productId",
           bi.quantity::numeric * ${multiplier}::numeric as quantity,
           bi.unit as unit,
           p.name as "productName",
           p."costPrice" as "costPrice",
-          p."baseUnit" as "baseUnit"
+          p."baseUnit" as "baseUnit",
+          ARRAY[${bomId}::text] as path,
+          false as is_cycle
         FROM "BOMItem" bi
         JOIN "Product" p ON bi."productId" = p.id
         WHERE bi."bomId" = ${bomId} AND bi."tenantId" = ${tenantId}
@@ -53,18 +52,22 @@ export class ManufacturingService {
 
         -- Recursive member: if any of the items has its own active BOM, explode it
         SELECT 
+          bom.id::text as "currentBomId",
           sub_bi."productId" as "productId",
           sub_bi.quantity::numeric * eb.quantity::numeric as quantity,
           sub_bi.unit as unit,
           sub_p.name as "productName",
           sub_p."costPrice" as "costPrice",
-          sub_p."baseUnit" as "baseUnit"
+          sub_p."baseUnit" as "baseUnit",
+          eb.path || bom.id::text as path,
+          bom.id::text = ANY(eb.path) as is_cycle
         FROM exploded_bom eb
         JOIN "BillOfMaterial" bom ON eb."productId" = bom."productId" 
           AND bom."tenantId" = ${tenantId} 
           AND bom.status = 'Active'
-        JOIN "BOMItem" sub_bi ON bom.id = sub_bi."bomId"
+        JOIN "BOMItem" sub_bi ON bom.id = sub_bi."bomId" AND sub_bi."tenantId" = ${tenantId}
         JOIN "Product" sub_p ON sub_bi."productId" = sub_p.id
+        WHERE eb.is_cycle = false
       )
       SELECT 
         "productId",
@@ -72,7 +75,8 @@ export class ManufacturingService {
         quantity,
         unit,
         "costPrice",
-        "baseUnit"
+        "baseUnit",
+        is_cycle
       FROM exploded_bom eb
       WHERE NOT EXISTS (
         SELECT 1 FROM "BillOfMaterial" sub_bom 
@@ -81,6 +85,12 @@ export class ManufacturingService {
         AND sub_bom.status = 'Active'
       )
     `;
+
+    if (results.some((res) => res.is_cycle)) {
+      throw new BadRequestException(
+        `Production Audit Error: Circular dependency detected in Bill of Materials. BOM ID ${bomId} points back to an active parent assembly.`,
+      );
+    }
 
     if (!results || results.length === 0) {
       // Check if BOM exists at all to match previous behavior

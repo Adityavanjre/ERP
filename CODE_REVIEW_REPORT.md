@@ -69,3 +69,12 @@ All 7 findings from the initial audit have been resolved. The system security po
 - Securing environment configuration.
 - Refining logging to prevent data leakage.
 - Modernizing multi-step logout reliability.
+
+## Post-Push Validation Update (commit 6466df9f)
+
+### 8) BOM explosion lost circular dependency protection after CTE refactor [CLOSED]
+**Severity:** High  
+**Where:** `nexus/backend/src/manufacturing/manufacturing.service.ts`  
+**Issue:** The recursive CTE implementation removed the previous `visitedBoms` guard but did not add a SQL-level cycle detector. A cyclic BOM graph could recurse indefinitely and fail production planning requests.
+
+**Fix Applied:** Added path-based cycle detection in the recursive CTE (`path` + `is_cycle`) and short-circuit recursion when a cycle is detected. The service now raises the same `BadRequestException` semantics used before the refactor. Also constrained recursive `BOMItem` joins by `tenantId` to preserve tenant isolation.
