@@ -29,7 +29,7 @@ import { Role } from '@prisma/client';
 @Module('hr')
 @Controller('hr')
 export class HrController {
-  constructor(private readonly hrService: HrService) {}
+  constructor(private readonly hrService: HrService) { }
 
   // Departments
   @Post('departments')
@@ -40,6 +40,7 @@ export class HrController {
   }
 
   @Get('departments')
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -48,7 +49,6 @@ export class HrController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS) // General operational view
   getDepts(@CurrentUser() user: any) {
     return this.hrService.getDepartments(user.tenantId);
   }
@@ -62,6 +62,7 @@ export class HrController {
   }
 
   @Get('employees')
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -70,7 +71,6 @@ export class HrController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getEmployees(@CurrentUser() user: any) {
     return this.hrService.getEmployees(user.tenantId);
   }
@@ -95,6 +95,7 @@ export class HrController {
   }
 
   @Get('leaves')
+  @Permissions(Permission.MANAGE_EMPLOYEES)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -103,7 +104,6 @@ export class HrController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_LEAVES')
   getLeaves(@CurrentUser() user: any) {
     return this.hrService.getLeaves(user.tenantId);

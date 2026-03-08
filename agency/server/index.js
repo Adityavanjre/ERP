@@ -21,9 +21,12 @@ app.use(cookieParser());
 
 app.set('trust proxy', 1);
 
-// Immediate Request Logger
+// Immediate Request Logger (Development Only)
 app.use((req, res, next) => {
-    console.log(`>>> [CORE LOG] ${req.method} ${req.url}`);
+    if (process.env.NODE_ENV === 'development') {
+        const cleanUrl = req.url.split('?')[0];
+        console.log(`>>> [CORE LOG] ${req.method} ${cleanUrl}${req.url.includes('?') ? '?REDACTED' : ''}`);
+    }
     next();
 });
 

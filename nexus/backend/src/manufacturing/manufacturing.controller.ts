@@ -37,7 +37,7 @@ export class ManufacturingController {
   constructor(
     private readonly mfgService: ManufacturingService,
     private readonly aiService: AiService,
-  ) {}
+  ) { }
 
   @Get('boms/:id/yield-analysis')
   @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
@@ -55,6 +55,7 @@ export class ManufacturingController {
   }
 
   @Get('boms')
+  @Permissions(Permission.VIEW_PRODUCTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -63,7 +64,6 @@ export class ManufacturingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getBOMs(@CurrentUser() user: any) {
     return this.mfgService.getBOMs(user.tenantId);
   }
@@ -80,6 +80,7 @@ export class ManufacturingController {
   }
 
   @Get('boms/:id')
+  @Permissions(Permission.VIEW_PRODUCTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -88,12 +89,12 @@ export class ManufacturingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getBOMDetails(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.getBOMDetails(user.tenantId, id);
   }
 
   @Get('boms/:id/explode')
+  @Permissions(Permission.VIEW_PRODUCTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -102,7 +103,6 @@ export class ManufacturingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   async explodeBOM(
     @CurrentUser() user: any,
     @Param('id') id: string,
@@ -127,6 +127,7 @@ export class ManufacturingController {
   }
 
   @Get('work-orders')
+  @Permissions(Permission.ADJUST_STOCK)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -135,7 +136,6 @@ export class ManufacturingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getWOs(@CurrentUser() user: any) {
     return this.mfgService.getWorkOrders(user.tenantId);
   }
@@ -168,6 +168,7 @@ export class ManufacturingController {
   }
 
   @Get('work-orders/:id/shortages')
+  @Permissions(Permission.VIEW_PRODUCTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -176,7 +177,6 @@ export class ManufacturingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   checkShortages(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.checkShortagesFromWO(user.tenantId, id);
   }
@@ -211,6 +211,7 @@ export class ManufacturingController {
   }
 
   @Get('machines')
+  @Permissions(Permission.VIEW_PRODUCTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -219,7 +220,6 @@ export class ManufacturingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getMachines(@CurrentUser() user: any) {
     return this.mfgService.getMachines(user.tenantId);
   }

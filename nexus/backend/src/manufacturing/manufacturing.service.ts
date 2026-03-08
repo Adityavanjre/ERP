@@ -23,7 +23,7 @@ export class ManufacturingService {
     private accounting: AccountingService,
     private traceService: TraceService,
     private inventoryService: InventoryService,
-  ) {}
+  ) { }
 
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
@@ -32,60 +32,84 @@ export class ManufacturingService {
     tenantId: string,
     bomId: string,
     multiplier: number = 1,
-    visitedBoms = new Set<string>(),
   ) {
-    if (visitedBoms.has(bomId)) {
-      throw new BadRequestException(
-        `Production Audit Error: Circular dependency detected in Bill of Materials. BOM ID ${bomId} points back to an active parent assembly.`,
-      );
+    // MFG-002: Performance Scaling via Recursive CTE
+    // This replaces a potentially deep recursive JS chain with a single database round-trip.
+    const results: any[] = await this.prisma.$queryRaw`
+      WITH RECURSIVE exploded_bom AS (
+        -- Anchor member: get the initial items for the starting BOM
+        SELECT 
+          bi."productId" as "productId",
+          bi.quantity::numeric * ${multiplier}::numeric as quantity,
+          bi.unit as unit,
+          p.name as "productName",
+          p."costPrice" as "costPrice",
+          p."baseUnit" as "baseUnit"
+        FROM "BOMItem" bi
+        JOIN "Product" p ON bi."productId" = p.id
+        WHERE bi."bomId" = ${bomId} AND bi."tenantId" = ${tenantId}
+
+        UNION ALL
+
+        -- Recursive member: if any of the items has its own active BOM, explode it
+        SELECT 
+          sub_bi."productId" as "productId",
+          sub_bi.quantity::numeric * eb.quantity::numeric as quantity,
+          sub_bi.unit as unit,
+          sub_p.name as "productName",
+          sub_p."costPrice" as "costPrice",
+          sub_p."baseUnit" as "baseUnit"
+        FROM exploded_bom eb
+        JOIN "BillOfMaterial" bom ON eb."productId" = bom."productId" 
+          AND bom."tenantId" = ${tenantId} 
+          AND bom.status = 'Active'
+        JOIN "BOMItem" sub_bi ON bom.id = sub_bi."bomId"
+        JOIN "Product" sub_p ON sub_bi."productId" = sub_p.id
+      )
+      SELECT 
+        "productId",
+        "productName",
+        quantity,
+        unit,
+        "costPrice",
+        "baseUnit"
+      FROM exploded_bom eb
+      WHERE NOT EXISTS (
+        SELECT 1 FROM "BillOfMaterial" sub_bom 
+        WHERE sub_bom."productId" = eb."productId" 
+        AND sub_bom."tenantId" = ${tenantId} 
+        AND sub_bom.status = 'Active'
+      )
+    `;
+
+    if (!results || results.length === 0) {
+      // Check if BOM exists at all to match previous behavior
+      const bom = await this.prisma.billOfMaterial.findFirst({
+        where: { id: bomId, tenantId },
+      });
+      if (!bom) throw new NotFoundException('BOM not found');
+      return [];
     }
-    visitedBoms.add(bomId);
-
-    const bom = await this.prisma.billOfMaterial.findFirst({
-      where: { id: bomId, tenantId },
-      include: { items: { include: { product: true } } },
-    });
-
-    if (!bom) throw new NotFoundException('BOM not found');
 
     let requirements: any[] = [];
+    for (const res of results) {
+      // INV-007: Support Unit Conversions (Post-flattening)
+      const baseUnit = res.baseUnit || 'pcs';
+      const baseQty = await this.convertUnit(
+        tenantId,
+        res.productId,
+        new Decimal(res.quantity),
+        res.unit ?? 'pcs',
+        baseUnit,
+      );
 
-    for (const item of bom.items) {
-      const totalQty = new Decimal(item.quantity).mul(multiplier);
-
-      // Check if this component has its own BOM (Recursive)
-      const subBOM = await this.prisma.billOfMaterial.findFirst({
-        where: { productId: item.productId, tenantId, status: 'Active' },
+      requirements.push({
+        productId: res.productId,
+        productName: res.productName,
+        quantity: baseQty,
+        unit: baseUnit,
+        costPrice: new Decimal(res.costPrice || 0),
       });
-
-      if (subBOM) {
-        // Clone the Set for sub-branches to allow sibling reuse without false cycle flags
-        const subVisited = new Set(visitedBoms);
-        const subRequirements = await this.explodeBOM(
-          tenantId,
-          subBOM.id,
-          totalQty.toNumber(),
-          subVisited,
-        );
-        requirements = [...requirements, ...subRequirements];
-      } else {
-        // INV-007: Support Unit Conversions
-        const baseUnit = (item.product as any).baseUnit || 'pcs';
-        const baseQty = await this.convertUnit(
-          tenantId,
-          item.productId,
-          totalQty,
-          item.unit ?? 'pcs',
-          baseUnit,
-        );
-        requirements.push({
-          productId: item.productId,
-          productName: item.product.name,
-          quantity: baseQty,
-          unit: baseUnit,
-          costPrice: new Decimal(item.product.costPrice || 0),
-        });
-      }
     }
 
     return this.aggregateRequirements(requirements);
@@ -885,8 +909,8 @@ export class ManufacturingService {
             // rather than posting an inaccurate fixed value to the ledger.
             const machineForLabor = machineId
               ? await (tx as any).machine.findFirst({
-                  where: { id: machineId, tenantId },
-                })
+                where: { id: machineId, tenantId },
+              })
               : null;
             const effectiveLaborRate = machineForLabor?.hourlyRate
               ? new Decimal(machineForLabor.hourlyRate)

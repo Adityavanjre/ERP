@@ -110,7 +110,7 @@ const BlogDetails = () => {
                         </span>
                         <div className="h-[1px] w-12 bg-white/10 hidden sm:block" />
                         <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Calendar size={14} /> {post.date}
+                            <Calendar size={14} /> {post.date || 'PUBLISHED'}
                         </span>
                         <div className="h-[1px] w-6 bg-white/10 hidden sm:block" />
                         <span className="text-[#C5A059]/60 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
@@ -128,7 +128,7 @@ const BlogDetails = () => {
                                 {post.author.charAt(0)}
                             </div>
                             <div>
-                                <p className="font-bold text-white text-lg font-heading">{post.author}</p>
+                                <p className="font-bold text-white text-lg font-heading">{post.author || 'Klypso Analyst'}</p>
                                 <p className="text-[#C5A059] text-[9px] font-black uppercase tracking-[0.4em]">Managing Partner</p>
                             </div>
                         </div>
@@ -138,7 +138,7 @@ const BlogDetails = () => {
                     </div>
 
                     <div className="aspect-video rounded-[3rem] overflow-hidden mb-20 border border-white/5 shadow-3xl bg-[#121214]">
-                        <img src={post.image} alt={post.title} className="w-full h-full object-cover grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-1000" />
+                        <img src={post.image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800'} alt={post.title} className="w-full h-full object-cover grayscale brightness-75 hover:grayscale-0 hover:brightness-100 transition-all duration-1000" />
                     </div>
 
                     <div className="prose prose-invert prose-gold max-w-none">
@@ -160,7 +160,7 @@ const BlogDetails = () => {
                         </div>
                         <div className="flex-1 text-center md:text-left">
                             <h4 className="text-[10px] font-black uppercase tracking-[0.5em] text-[#C5A059] mb-4">About the Author</h4>
-                            <h3 className="text-2xl font-bold mb-4 font-heading">{post.author}</h3>
+                            <h3 className="text-2xl font-bold mb-4 font-heading">{post.author || 'Klypso Team'}</h3>
                             <p className="text-zinc-500 leading-relaxed max-w-xl font-medium">
                                 Architecting the future of digital experiences at Klypso. Focused on the intersection of technical excellence, aesthetic psychology, and high-performance engineering.
                             </p>
@@ -194,7 +194,7 @@ const BlogDetails = () => {
                                         className="group block bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 hover:border-[#C5A059]/30 transition-all duration-500"
                                     >
                                         <div className="aspect-video rounded-2xl overflow-hidden mb-6">
-                                            <img src={rPost.image} alt="" className="w-full h-full object-cover grayscale brightness-75 group-hover:scale-110 group-hover:grayscale-0 transition-all duration-700" />
+                                            <img src={rPost.image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800'} alt="" className="w-full h-full object-cover grayscale brightness-75 group-hover:scale-110 group-hover:grayscale-0 transition-all duration-700" />
                                         </div>
                                         <h4 className="text-[9px] font-black text-[#C5A059] uppercase tracking-widest mb-4">{rPost.category}</h4>
                                         <h3 className="font-bold text-lg mb-4 leading-snug font-heading group-hover:text-[#C5A059] transition-colors">{rPost.title}</h3>

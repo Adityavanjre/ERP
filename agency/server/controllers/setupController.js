@@ -7,7 +7,10 @@ const restoreAdmin = async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({ message: 'Diagnostic and recovery tools are disabled in production to protect system integrity.' });
     }
-    const email = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+    if (!process.env.ADMIN_EMAIL) {
+        throw new Error('SEC-020: ADMIN_EMAIL must be set in environment variables.');
+    }
+    const email = process.env.ADMIN_EMAIL.trim().toLowerCase();
     const adminPassword = process.env.ADMIN_PASSWORD.trim();
 
     // Using upsert logic
@@ -42,7 +45,10 @@ const diagnostic = async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         return res.status(403).json({ message: 'Diagnostic tools are disabled in production.' });
     }
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+    if (!process.env.ADMIN_EMAIL) {
+        throw new Error('SEC-020: ADMIN_EMAIL must be set in environment variables.');
+    }
+    const adminEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
     const user = await User.findOne({ email: adminEmail });
 
     let envMatchesHash = false;

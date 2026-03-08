@@ -101,7 +101,7 @@ const Blog = () => {
                                 <Link to={`/insights/${post.slug || post._id}`} className="flex flex-col h-full">
                                     <div className="aspect-[16/10] overflow-hidden relative">
                                         <img
-                                            src={post.image}
+                                            src={post.image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800'}
                                             alt={post.title}
                                             className="w-full h-full object-cover grayscale brightness-75 transition-all duration-[1.5s] ease-[0.16, 1, 0.3, 1] group-hover:scale-110 group-hover:grayscale-0 group-hover:brightness-100"
                                         />
@@ -114,7 +114,7 @@ const Blog = () => {
 
                                     <div className="p-12 flex flex-col flex-1">
                                         <div className="flex items-center text-[9px] font-black uppercase tracking-widest text-zinc-600 mb-8 gap-8">
-                                            <span className="flex items-center gap-3"><Calendar size={12} /> {post.date}</span>
+                                            <span className="flex items-center gap-3"><Calendar size={12} /> {post.date || 'LATEST'}</span>
                                             <span className="flex items-center gap-3"><BookOpen size={12} /> {post.readTime || '5 min'}</span>
                                         </div>
 
@@ -137,7 +137,7 @@ const Blog = () => {
 
                                         <div className="mt-auto pt-10 border-t border-white/5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 group-hover:text-white transition-all duration-700">
                                             <span className="flex items-center gap-4">
-                                                By {post.author}
+                                                By {post.author || 'Klypso Team'}
                                             </span>
                                             <ArrowRight size={16} className="text-[#C5A059] group-hover:translate-x-2 transition-transform" />
                                         </div>

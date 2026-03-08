@@ -8,7 +8,7 @@ const { protect, admin } = require('../middleware/authMiddleware');
 // User management routes
 router.route('/')
     .get(protect, admin, getUsers)
-    .post(registerUser);
+    .post(protect, admin, registerUser);
 
 router.route('/:id')
     .delete(protect, admin, deleteUser);

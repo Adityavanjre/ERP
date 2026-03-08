@@ -42,8 +42,9 @@ const EditBlog = () => {
                 setAuthor(data.author);
                 setReadTime(data.readTime || '3 min read');
                 setTags(data.tags ? data.tags.join(', ') : '');
-            } catch {
-                setError('Failed to fetch article details');
+            } catch (err: unknown) {
+                const errorObj = err as { response?: { data?: { message?: string } } };
+                setError(errorObj.response?.data?.message || 'Failed to fetch article details');
             } finally {
                 setFetching(false);
             }
@@ -69,16 +70,18 @@ const EditBlog = () => {
         'link', 'image', 'code-block'
     ];
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent, forcedStatus?: 'draft' | 'published') => {
         e.preventDefault();
         setSaving(true);
         setError(null);
+
+        const targetStatus = forcedStatus || status;
 
         try {
             await api.put(`/blogs/${id}`, {
                 title,
                 slug,
-                status,
+                status: targetStatus,
                 category,
                 image,
                 excerpt,
@@ -129,7 +132,11 @@ const EditBlog = () => {
 
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={(e) => { setStatus(status === 'published' ? 'draft' : 'published'); handleSubmit(e); }}
+                            onClick={(e) => {
+                                const nextStatus = status === 'published' ? 'draft' : 'published';
+                                setStatus(nextStatus);
+                                handleSubmit(e, nextStatus);
+                            }}
                             className="bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border border-white/5 transition-all"
                         >
                             <Save size={16} className="text-[#C5A059]" /> Save changes as {status === 'published' ? 'Draft' : 'Published'}
@@ -237,6 +244,7 @@ const EditBlog = () => {
                                         label="Cover Visualization"
                                         onUploadSuccess={(url) => setImage(url)}
                                         existingImage={image}
+                                        folder="blogs"
                                     />
                                 </div>
                             </div>

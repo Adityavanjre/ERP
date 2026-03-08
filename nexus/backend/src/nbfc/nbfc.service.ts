@@ -10,7 +10,7 @@ export class NbfcService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     private traceService: TraceService,
-  ) {}
+  ) { }
 
   // --- Loan Management System ---
   async addInterestSlabs(
@@ -102,9 +102,10 @@ export class NbfcService {
         orderBy: { thresholdAmount: 'asc' },
       });
 
-      const monthlyPrincipal = new Decimal(loan.loanAmount).div(
-        loan.tenureMonths,
-      );
+      const loanAmount = new Decimal(loan.loanAmount as any);
+      const tenureMonths = new Decimal(loan.tenureMonths);
+
+      const monthlyPrincipal = loanAmount.div(tenureMonths);
       const baseMonthlyRate = new Decimal(loan.interestRate).div(100).div(12);
 
       const emiPromises = [];

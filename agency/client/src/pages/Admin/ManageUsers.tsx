@@ -20,6 +20,7 @@ const ManageUsers = () => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [newPassword, setNewPassword] = useState('');
     const [isResetting, setIsResetting] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     const selectedUser = users.find(u => u._id === selectedId);
 
@@ -29,12 +30,13 @@ const ManageUsers = () => {
 
     const fetchUsers = async () => {
         try {
-            // SEC-008: Centralized API handles headers
+            setFetchError(null);
             const { data } = await api.get('/api/users');
             setUsers(data);
             if (data.length > 0) setSelectedId(data[0]._id);
-        } catch (error: unknown) { // Reverted to original error handling to maintain syntactic correctness as setError is not defined.
-            console.error('Error fetching users', error);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            setFetchError(err.response?.data?.message || 'Error scanning identities');
         } finally {
             setLoading(false);
             setNewPassword('');
@@ -127,6 +129,13 @@ const ManageUsers = () => {
                                 className="w-full bg-black/40 border border-white/5 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-[#C5A059]/50 transition-all font-medium"
                             />
                         </div>
+
+                        {fetchError && (
+                            <div className="mx-5 mb-4 bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                                {fetchError}
+                            </div>
+                        )}
                     </div>
 
                     {/* The List */}
@@ -237,7 +246,8 @@ const ManageUsers = () => {
                                             </div>
                                             <form onSubmit={handlePasswordReset} className="flex gap-4 items-center">
                                                 <input
-                                                    type="text"
+                                                    type="password"
+                                                    autoComplete="new-password"
                                                     placeholder="Enter new password (min 6 chars)"
                                                     value={newPassword}
                                                     onChange={(e) => setNewPassword(e.target.value)}

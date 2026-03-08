@@ -33,7 +33,10 @@ const getProjectById = async (req, res) => {
 // @access  Private/Admin
 const createProject = async (req, res) => {
     try {
-        const project = new Project(req.body);
+        const { title, description, fullDescription, image, categories, challenge, solution, technologies, impact, testimonial, gallery, services, link } = req.body;
+        const project = new Project({
+            title, description, fullDescription, image, categories, challenge, solution, technologies, impact, testimonial, gallery, services, link
+        });
         const createdProject = await project.save();
         res.status(201).json(createdProject);
     } catch (error) {
@@ -49,7 +52,16 @@ const updateProject = async (req, res) => {
         const project = await Project.findById(req.params.id);
 
         if (project) {
-            Object.assign(project, req.body);
+            const { title, description, fullDescription, image, categories, challenge, solution, technologies, impact, testimonial, gallery, services, link } = req.body;
+
+            // Only update fields provided in request
+            const updateFields = { title, description, fullDescription, image, categories, challenge, solution, technologies, impact, testimonial, gallery, services, link };
+            Object.keys(updateFields).forEach(key => {
+                if (updateFields[key] !== undefined) {
+                    project[key] = updateFields[key];
+                }
+            });
+
             const updatedProject = await project.save();
             res.json(updatedProject);
         } else {

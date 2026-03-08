@@ -105,7 +105,10 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        if (!process.env.ADMIN_EMAIL) {
+            throw new Error('SEC-020: ADMIN_EMAIL must be set in environment variables.');
+        }
+        const adminEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
         if (user.email === adminEmail) {
             res.status(400);
             throw new Error('Cannot delete system administrator');
@@ -125,7 +128,10 @@ const updateUserRole = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        if (!process.env.ADMIN_EMAIL) {
+            throw new Error('SEC-020: ADMIN_EMAIL must be set in environment variables.');
+        }
+        const adminEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
         if (user.email === adminEmail) {
             res.status(400);
             throw new Error('Cannot modify system administrator role');
@@ -151,7 +157,10 @@ const updateUserPassword = async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
+        if (!process.env.ADMIN_EMAIL) {
+            throw new Error('SEC-020: ADMIN_EMAIL must be set in environment variables.');
+        }
+        const adminEmail = process.env.ADMIN_EMAIL.trim().toLowerCase();
         if (user.email === adminEmail) {
             res.status(400);
             throw new Error('Cannot arbitrarily change root administrator password from dashboard');
@@ -175,7 +184,10 @@ const updateUserPassword = async (req, res) => {
 const logoutUser = async (req, res) => {
     res.cookie('auth_token', '', {
         httpOnly: true,
-        expires: new Date(0)
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        expires: new Date(0),
+        path: '/'
     });
     res.status(200).json({ message: 'Logged out successfully' });
 };

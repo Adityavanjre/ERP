@@ -11,7 +11,7 @@ services:
       - "3001:3001"
     environment:
       - DATABASE_URL=file:./dev.db
-      - JWT_SECRET=supersecreterpkey_production_use_complex_string
+      - JWT_SECRET=${JWT_SECRET}
       - PORT=3001
       - REDIS_HOST=redis
       - REDIS_PORT=6379

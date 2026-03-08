@@ -25,6 +25,7 @@ const ManageBlogs = () => {
     const [blogs, setBlogs] = useState<Blog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchBlogs = async () => {
@@ -44,10 +45,13 @@ const ManageBlogs = () => {
         e.preventDefault();
         if (!window.confirm('Wipe this article from the database?')) return;
         try {
+            setDeleteError(null);
             await api.delete(`/blogs/${id}`);
             setBlogs(prev => prev.filter(b => b._id !== id));
-        } catch {
-            // Handled or ignored
+        } catch (err: unknown) {
+            const errorObj = err as { response?: { data?: { message?: string } } };
+            setDeleteError(errorObj.response?.data?.message || 'Failed to delete article');
+            console.error('Delete failed:', err);
         }
     };
 
@@ -88,6 +92,13 @@ const ManageBlogs = () => {
                 </div>
             </div>
 
+            {deleteError && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-2xl flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                    {deleteError}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 gap-4">
                 <AnimatePresence>
                     {filteredBlogs.length > 0 ? (
@@ -100,7 +111,11 @@ const ManageBlogs = () => {
                                 className="group bg-[#141417] border border-white/5 rounded-2xl p-4 flex flex-col md:flex-row items-center gap-6 hover:border-[#C5A059]/30 transition-all shadow-sm"
                             >
                                 <div className="w-full md:w-72 h-44 rounded-xl overflow-hidden shrink-0 border border-white/5 relative">
-                                    <img src={blog.image} alt="" className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" />
+                                    <img
+                                        src={blog.image || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800'}
+                                        alt={blog.title}
+                                        className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
+                                    />
                                     <div className="absolute top-4 left-4">
                                         <span className="text-[8px] font-black uppercase tracking-widest px-3 py-1.5 bg-[#C5A059] text-black rounded shadow-lg font-heading">
                                             {blog.category}
@@ -115,8 +130,8 @@ const ManageBlogs = () => {
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-4 mb-3 text-[9px] font-black text-zinc-500 uppercase tracking-widest">
-                                        <div className="flex items-center gap-1.5"><Calendar size={12} className="text-[#C5A059]" /> {blog.date}</div>
-                                        <div className="flex items-center gap-1.5"><User size={12} className="text-zinc-600" /> BY {blog.author}</div>
+                                        <div className="flex items-center gap-1.5"><Calendar size={12} className="text-[#C5A059]" /> {blog.date || new Date(blog.createdAt).toLocaleDateString()}</div>
+                                        <div className="flex items-center gap-1.5"><User size={12} className="text-zinc-600" /> BY {blog.author || 'TEAM KLYPSO'}</div>
                                         <div className={`px-2 py-0.5 rounded border ${blog.status === 'published' ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5' : 'border-amber-500/20 text-amber-500 bg-amber-500/5'}`}>
                                             {blog.status || 'draft'}
                                         </div>

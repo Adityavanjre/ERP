@@ -46,7 +46,7 @@ export class AccountingController {
     private readonly saas: SaasAnalyticsService,
     private readonly collaboration: CollaborationService,
     private readonly gstr1: Gstr1ExportService,
-  ) {}
+  ) { }
 
   @Get('health-score')
   @Roles(Role.Owner)
@@ -83,6 +83,7 @@ export class AccountingController {
   }
 
   @Get('accounts')
+  @Permissions(Permission.VIEW_REPORTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -91,7 +92,6 @@ export class AccountingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getAccounts(
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
@@ -149,6 +149,7 @@ export class AccountingController {
   }
 
   @Get('invoices')
+  @Permissions(Permission.VIEW_REPORTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -157,7 +158,6 @@ export class AccountingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getInvoices(
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
@@ -171,6 +171,7 @@ export class AccountingController {
   }
 
   @Get('invoices/:id')
+  @Permissions(Permission.VIEW_REPORTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -179,7 +180,6 @@ export class AccountingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getInvoice(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.accountingService.getInvoiceById(
       req.user.tenantId as string,
@@ -228,6 +228,7 @@ export class AccountingController {
   }
 
   @Get('credit-notes')
+  @Permissions(Permission.VIEW_REPORTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -236,7 +237,6 @@ export class AccountingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getCreditNotes(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getCreditNotes(req.user.tenantId as string);
   }
@@ -256,6 +256,7 @@ export class AccountingController {
   }
 
   @Get('debit-notes')
+  @Permissions(Permission.VIEW_REPORTS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -264,7 +265,6 @@ export class AccountingController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getDebitNotes(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getDebitNotes(req.user.tenantId as string);
   }

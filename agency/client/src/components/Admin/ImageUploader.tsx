@@ -13,6 +13,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     onUploadSuccess,
     label = "Upload Image",
     existingImage,
+    folder,
 }) => {
     const [preview, setPreview] = useState<string | null>(existingImage || null);
     const [uploading, setUploading] = useState(false);
@@ -36,6 +37,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
         const formData = new FormData();
         formData.append('image', file);
+        if (folder) formData.append('folder', folder);
 
         try {
             const { data } = await api.post('/upload', formData, {

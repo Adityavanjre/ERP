@@ -100,6 +100,7 @@ const AddProject = () => {
                                 label="Hero Image (Hero Preview)"
                                 onUploadSuccess={(url) => setImage(url)}
                                 existingImage={image}
+                                folder="projects"
                             />
                         </div>
 

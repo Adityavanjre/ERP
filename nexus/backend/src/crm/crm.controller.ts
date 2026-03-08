@@ -34,7 +34,7 @@ import {
 @Module('crm')
 @Controller('crm')
 export class CrmController {
-  constructor(private readonly crmService: CrmService) {}
+  constructor(private readonly crmService: CrmService) { }
 
   @Post('customers')
   @Roles(Role.Owner, Role.Manager, Role.Biller)
@@ -55,6 +55,7 @@ export class CrmController {
   }
 
   @Get('customers')
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -63,7 +64,6 @@ export class CrmController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_LEADS')
   findAll(
     @Req() req: any,
@@ -152,6 +152,7 @@ export class CrmController {
   }
 
   @Get('customers/:id/opening-balances')
+  @Permissions(Permission.MANAGE_CUSTOMERS)
   @Roles(
     Role.Owner,
     Role.Manager,
@@ -160,7 +161,6 @@ export class CrmController {
     Role.Accountant,
     Role.CA,
   )
-  @Permissions(Permission.VIEW_PRODUCTS)
   getOpeningBalances(@Req() req: any, @Param('id') id: string) {
     return this.crmService.getOpeningBalances(req.user.tenantId, id);
   }

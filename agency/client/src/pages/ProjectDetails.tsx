@@ -10,6 +10,7 @@ import {
 import SEO from '../components/SEO';
 import NotFound from './NotFound';
 import Loader from '../components/Loader';
+import projectsDataRaw from '../data/projects.json';
 
 interface Project {
     id?: string;
@@ -38,7 +39,7 @@ const ProjectDetails = () => {
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [projectsData] = useState<Project[]>([]);
+    const projectsData = projectsDataRaw as Project[];
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -46,9 +47,9 @@ const ProjectDetails = () => {
             try {
                 const { data } = await api.get(`/projects/${id}`, { timeout: 1500 });
                 setProject(data);
-            } catch {
-                // Assuming projectsData state would be populated elsewhere or this is a placeholder
-                const localProject = projectsData.find(p => p.id === id || p._id === id);
+            } catch (err) {
+                console.error('API fetch failed, attempting fallback:', err);
+                const localProject = projectsData.find((p: Project) => p.id === id || p._id === id);
                 if (localProject) {
                     setProject(localProject);
                 } else {
@@ -59,8 +60,16 @@ const ProjectDetails = () => {
             }
         };
         fetchProject();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+    }, [id, projectsData]);
+
+    const handleRetry = () => {
+        setLoading(true);
+        setError('');
+        // Trigger effect again by satisfying dependencies if needed, 
+        // but here just calling the function within the effect again is fine if we wrap it or use a toggle.
+        // Easiest is to just reload the page or use a refresh counter.
+        window.location.reload();
+    };
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
@@ -71,7 +80,21 @@ const ProjectDetails = () => {
     const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-[#0A0A0B]"><Loader /></div>;
-    if (error || !project) return <NotFound />;
+
+    if (error) return (
+        <div className="h-screen flex flex-col items-center justify-center bg-[#0A0A0B] text-white px-6">
+            <h2 className="text-2xl font-bold mb-6 font-heading tracking-tight text-center">{error}</h2>
+            <button
+                onClick={handleRetry}
+                className="btn-lux px-10 h-16 text-[10px]"
+            >
+                Try Reconnecting
+            </button>
+            <Link to="/portfolio" className="mt-8 text-zinc-600 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors">Return to Portfolio</Link>
+        </div>
+    );
+
+    if (!project) return <NotFound />;
 
     return (
         <div ref={containerRef} className="min-h-screen bg-[#0A0A0B] text-white selection:bg-[#C5A059]/30 overflow-x-hidden">

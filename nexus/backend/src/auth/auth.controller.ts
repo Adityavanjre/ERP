@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { Response, Request as ExpressRequest } from 'express';
 import { AuthenticatedRequest } from '../common/interfaces/request.interface';
+import { AuthResponse } from './interfaces/auth-response.interface';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -24,6 +25,7 @@ import {
   OnboardingDto,
   MfaVerifyDto,
   MfaSetupDto,
+  CreateWorkspaceDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AllowUnboarded } from '../common/decorators/allow-unboarded.decorator';
@@ -45,7 +47,7 @@ export class AuthController {
     private authService: AuthService,
     private security: SecurityStorageService,
     private anomalyAlert: AnomalyAlertService,
-  ) {}
+  ) { }
 
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 15, ttl: 60000 } })
@@ -55,16 +57,17 @@ export class AuthController {
     @Req() req: ExpressRequest,
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const result: any = await this.authService.login(
+  ): Promise<AuthResponse> {
+    const result = await this.authService.login(
       loginDto,
       'WEB',
       req.ip || (req.get('X-Forwarded-For') as string),
     );
-    if (result && result.accessToken) {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    const authResult = result as AuthResponse;
+    if (authResult && authResult.accessToken && authResult.refreshToken) {
+      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
-    return result;
+    return authResult;
   }
 
   @HttpCode(HttpStatus.OK)
@@ -87,15 +90,16 @@ export class AuthController {
     @Req() req: ExpressRequest,
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const result: any = await this.authService.adminLogin(
+  ): Promise<AuthResponse> {
+    const result = await this.authService.adminLogin(
       loginDto,
       req.ip || (req.get('X-Forwarded-For') as string),
     );
-    if (result && result.accessToken) {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    const authResult = result as AuthResponse;
+    if (authResult && authResult.accessToken && authResult.refreshToken) {
+      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
-    return result;
+    return authResult;
   }
 
   @HttpCode(HttpStatus.OK)
@@ -105,15 +109,13 @@ export class AuthController {
   async googleLoginWeb(
     @Body() googleLoginDto: GoogleLoginDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const result: any = await this.authService.googleLogin(
-      googleLoginDto,
-      'WEB',
-    );
-    if (result && result.accessToken) {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+  ): Promise<AuthResponse> {
+    const result = await this.authService.googleLogin(googleLoginDto, 'WEB');
+    const authResult = result as AuthResponse;
+    if (authResult && authResult.accessToken && authResult.refreshToken) {
+      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
-    return result;
+    return authResult;
   }
 
   @HttpCode(HttpStatus.OK)
@@ -135,19 +137,25 @@ export class AuthController {
     @Req() req: AuthenticatedRequest,
     @Body('tenantId') tenantId: string,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<AuthResponse> {
     // SECURITY: The 'channel' is inherited from the existing Identity token, which was anchored at login.
     const channel = req.user.channel || 'MOBILE'; // Default to Mobile if missing (Safety First)
-    const result: any = await this.authService.selectTenant(
+    const result = await this.authService.selectTenant(
       req.user.sub,
       tenantId,
       req.user.isMfaVerified,
       channel,
     );
-    if (result && result.accessToken && channel === 'WEB') {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    const authResult = result as AuthResponse;
+    if (
+      authResult &&
+      authResult.accessToken &&
+      authResult.refreshToken &&
+      channel === 'WEB'
+    ) {
+      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
-    return result;
+    return authResult;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -236,7 +244,10 @@ export class AuthController {
   @AllowIdentity()
   @MobileAction('CREATE_WORKSPACE')
   @Post('create-workspace')
-  async createWorkspace(@Req() req: AuthenticatedRequest, @Body() dto: any) {
+  async createWorkspace(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateWorkspaceDto,
+  ) {
     return this.authService.createWorkspace(req.user.sub, dto);
   }
 
@@ -256,7 +267,7 @@ export class AuthController {
   @AllowIdentity()
   @AllowUnboarded()
   @Get('me')
-  async getMe(@Request() req: any) {
+  async getMe(@Request() req: AuthenticatedRequest) {
     return this.authService.getMe(req.user.sub);
   }
 
@@ -285,7 +296,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @AllowIdentity()
   @Post('mfa/setup')
-  async setupMfa(@Request() req: any) {
+  async setupMfa(@Request() req: AuthenticatedRequest) {
     return this.authService.setupMfa(req.user.sub);
   }
 
@@ -293,16 +304,21 @@ export class AuthController {
   @AllowIdentity()
   @Post('mfa/verify-setup')
   async verifyMfaSetup(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() dto: MfaSetupDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const result: any = await this.authService.verifyMfaSetup(
+  ): Promise<AuthResponse> {
+    const result = (await this.authService.verifyMfaSetup(
       req.user.sub,
       dto.totpCode,
-    );
+    )) as AuthResponse;
     const channel = req.user.channel || 'WEB';
-    if (result && result.accessToken && channel === 'WEB') {
+    if (
+      result &&
+      result.accessToken &&
+      result.refreshToken &&
+      channel === 'WEB'
+    ) {
       this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
@@ -315,11 +331,11 @@ export class AuthController {
   async verifyMfaLogin(
     @Body() dto: MfaVerifyDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const result: any = await this.authService.verifyMfaLogin(
+  ): Promise<AuthResponse> {
+    const result = (await this.authService.verifyMfaLogin(
       dto.token,
       dto.totpCode,
-    );
+    )) as AuthResponse;
     // SEC-006: Only set cookies if the original session was a web session.
     // The channel is embedded in the MFA challenge token and propagated through
     // generateAuthResponse back to the result — use it to decide cookie behaviour.
@@ -339,7 +355,10 @@ export class AuthController {
   @AllowIdentity()
   @AllowUnboarded()
   @Post('logout')
-  async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const { jti, exp } = req.user;
     if (jti && exp) {
       await this.security.blacklistToken(jti, exp);
@@ -355,7 +374,7 @@ export class AuthController {
   @AllowUnboarded()
   @Post('logout-all')
   async logoutAll(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.logoutAll(req.user.sub);
@@ -371,23 +390,25 @@ export class AuthController {
   @Public()
   @Post('refresh')
   async refresh(
-    @Request() req: any,
+    @Request() req: ExpressRequest,
     @Body('refreshToken') bodyToken: string,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<AuthResponse> {
     let token = bodyToken;
     if (!token && req.cookies && req.cookies['nexus_refresh']) {
       token = req.cookies['nexus_refresh'];
     }
     if (!token) throw new UnauthorizedException('No refresh token provided');
 
-    const result: any = await this.authService.refreshSession(token);
+    const authResult = (await this.authService.refreshSession(
+      token,
+    )) as AuthResponse;
 
     // Auto-update web cookies if it was a web session
-    if (result && result.accessToken) {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    if (authResult && authResult.accessToken && authResult.refreshToken) {
+      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
-    return result;
+    return authResult;
   }
 
   private setAuthCookies(res: Response, token: string, refreshToken?: string) {

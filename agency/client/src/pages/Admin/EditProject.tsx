@@ -49,8 +49,9 @@ const EditProject = () => {
                 setAuthor(data.testimonial?.author || '');
                 setRole(data.testimonial?.role || '');
                 setGallery(data.gallery?.join(', ') || '');
-            } catch {
-                setError('Failed to fetch project details');
+            } catch (err: unknown) {
+                const errorObj = err as { response?: { data?: { message?: string } } };
+                setError(errorObj.response?.data?.message || 'Failed to fetch project details');
             } finally {
                 setLoading(false);
             }
@@ -140,6 +141,7 @@ const EditProject = () => {
                                 label="Hero Image (Hero Preview)"
                                 onUploadSuccess={(url) => setImage(url)}
                                 existingImage={image}
+                                folder="projects"
                             />
                         </div>
 

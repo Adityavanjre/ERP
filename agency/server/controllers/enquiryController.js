@@ -67,13 +67,8 @@ View in Dashboard: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin
             `,
         };
 
-        transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                console.log('Error sending email:', error);
-            } else {
-                console.log('Email sent: ' + info.response);
-            }
-        });
+        const mailResult = await transporter.sendMail(mailOptions);
+        console.log(`[MAIL_SERVICE] Email successfully delivered: ${mailResult.messageId}`);
 
         res.status(201).json(createdEnquiry);
     } catch (error) {

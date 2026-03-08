@@ -15,6 +15,7 @@ export interface AuthenticatedUser {
   channel: AccessChannel;
   jti: string;
   tokenVersion: number;
+  exp?: number;
 }
 
 export interface AuthenticatedRequest extends Request {
