@@ -4,6 +4,7 @@ import { CollaborationService } from './collaboration.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from './audit.service';
 import { NotFoundException } from '@nestjs/common';
+import { CollaborationGateway } from '../gateways/collaboration.gateway';
 
 describe('CollaborationService: TEN-001 Audit', () => {
   let service: CollaborationService;
@@ -20,12 +21,18 @@ describe('CollaborationService: TEN-001 Audit', () => {
     log: jest.fn(),
   };
 
+  const mockGateway = {
+    broadcastCommentAdded: jest.fn(),
+    broadcastCommentDeleted: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CollaborationService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditService, useValue: mockAudit },
+        { provide: CollaborationGateway, useValue: mockGateway },
       ],
     }).compile();
 
