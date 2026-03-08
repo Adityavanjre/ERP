@@ -1329,436 +1329,436 @@ CREATE TABLE "HsnMaster" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX CONCURRENTLY "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Tenant_slug_key" ON "Tenant"("slug");
+CREATE UNIQUE INDEX CONCURRENTLY "Tenant_slug_key" ON "Tenant"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PeriodLock_tenantId_month_year_key" ON "PeriodLock"("tenantId", "month", "year");
+CREATE UNIQUE INDEX CONCURRENTLY "PeriodLock_tenantId_month_year_key" ON "PeriodLock"("tenantId", "month", "year");
 
 -- CreateIndex
-CREATE INDEX "TenantUser_tenantId_idx" ON "TenantUser"("tenantId");
+CREATE INDEX CONCURRENTLY "TenantUser_tenantId_idx" ON "TenantUser"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TenantUser_userId_tenantId_key" ON "TenantUser"("userId", "tenantId");
+CREATE UNIQUE INDEX CONCURRENTLY "TenantUser_userId_tenantId_key" ON "TenantUser"("userId", "tenantId");
 
 -- CreateIndex
-CREATE INDEX "Product_tenantId_name_idx" ON "Product"("tenantId", "name");
+CREATE INDEX CONCURRENTLY "Product_tenantId_name_idx" ON "Product"("tenantId", "name");
 
 -- CreateIndex
-CREATE INDEX "Product_tenantId_category_idx" ON "Product"("tenantId", "category");
+CREATE INDEX CONCURRENTLY "Product_tenantId_category_idx" ON "Product"("tenantId", "category");
 
 -- CreateIndex
-CREATE INDEX "Product_tenantId_tags_idx" ON "Product"("tenantId", "tags");
+CREATE INDEX CONCURRENTLY "Product_tenantId_tags_idx" ON "Product"("tenantId", "tags");
 
 -- CreateIndex
-CREATE INDEX "Product_tenantId_brand_idx" ON "Product"("tenantId", "brand");
+CREATE INDEX CONCURRENTLY "Product_tenantId_brand_idx" ON "Product"("tenantId", "brand");
 
 -- CreateIndex
-CREATE INDEX "Product_tenantId_skuAlias_idx" ON "Product"("tenantId", "skuAlias");
+CREATE INDEX CONCURRENTLY "Product_tenantId_skuAlias_idx" ON "Product"("tenantId", "skuAlias");
 
 -- CreateIndex
-CREATE INDEX "Product_tenantId_hsnCode_idx" ON "Product"("tenantId", "hsnCode");
+CREATE INDEX CONCURRENTLY "Product_tenantId_hsnCode_idx" ON "Product"("tenantId", "hsnCode");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_tenantId_sku_key" ON "Product"("tenantId", "sku");
+CREATE UNIQUE INDEX CONCURRENTLY "Product_tenantId_sku_key" ON "Product"("tenantId", "sku");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_tenantId_barcode_key" ON "Product"("tenantId", "barcode");
+CREATE UNIQUE INDEX CONCURRENTLY "Product_tenantId_barcode_key" ON "Product"("tenantId", "barcode");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Customer_userId_key" ON "Customer"("userId");
+CREATE UNIQUE INDEX CONCURRENTLY "Customer_userId_key" ON "Customer"("userId");
 
 -- CreateIndex
-CREATE INDEX "Customer_tenantId_email_idx" ON "Customer"("tenantId", "email");
+CREATE INDEX CONCURRENTLY "Customer_tenantId_email_idx" ON "Customer"("tenantId", "email");
 
 -- CreateIndex
-CREATE INDEX "Customer_tenantId_company_idx" ON "Customer"("tenantId", "company");
+CREATE INDEX CONCURRENTLY "Customer_tenantId_company_idx" ON "Customer"("tenantId", "company");
 
 -- CreateIndex
-CREATE INDEX "Customer_tenantId_status_idx" ON "Customer"("tenantId", "status");
+CREATE INDEX CONCURRENTLY "Customer_tenantId_status_idx" ON "Customer"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "Customer_tenantId_phone_idx" ON "Customer"("tenantId", "phone");
+CREATE INDEX CONCURRENTLY "Customer_tenantId_phone_idx" ON "Customer"("tenantId", "phone");
 
 -- CreateIndex
-CREATE INDEX "Customer_tenantId_firstName_lastName_idx" ON "Customer"("tenantId", "firstName", "lastName");
+CREATE INDEX CONCURRENTLY "Customer_tenantId_firstName_lastName_idx" ON "Customer"("tenantId", "firstName", "lastName");
 
 -- CreateIndex
-CREATE INDEX "Order_tenantId_createdAt_idx" ON "Order"("tenantId", "createdAt");
+CREATE INDEX CONCURRENTLY "Order_tenantId_createdAt_idx" ON "Order"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "Order_tenantId_status_idx" ON "Order"("tenantId", "status");
+CREATE INDEX CONCURRENTLY "Order_tenantId_status_idx" ON "Order"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "Order_customerId_idx" ON "Order"("customerId");
+CREATE INDEX CONCURRENTLY "Order_customerId_idx" ON "Order"("customerId");
 
 -- CreateIndex
-CREATE INDEX "Order_tenantId_customerId_createdAt_idx" ON "Order"("tenantId", "customerId", "createdAt");
+CREATE INDEX CONCURRENTLY "Order_tenantId_customerId_createdAt_idx" ON "Order"("tenantId", "customerId", "createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Order_tenantId_idempotencyKey_key" ON "Order"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "Order_tenantId_idempotencyKey_key" ON "Order"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE INDEX "OrderItem_orderId_productId_idx" ON "OrderItem"("orderId", "productId");
+CREATE INDEX CONCURRENTLY "OrderItem_orderId_productId_idx" ON "OrderItem"("orderId", "productId");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_tenantId_createdAt_idx" ON "AuditLog"("tenantId", "createdAt");
+CREATE INDEX CONCURRENTLY "AuditLog_tenantId_createdAt_idx" ON "AuditLog"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_correlationId_idx" ON "AuditLog"("correlationId");
+CREATE INDEX CONCURRENTLY "AuditLog_correlationId_idx" ON "AuditLog"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_action_idx" ON "AuditLog"("action");
+CREATE INDEX CONCURRENTLY "AuditLog_action_idx" ON "AuditLog"("action");
 
 -- CreateIndex
-CREATE INDEX "BillOfMaterial_correlationId_idx" ON "BillOfMaterial"("correlationId");
+CREATE INDEX CONCURRENTLY "BillOfMaterial_correlationId_idx" ON "BillOfMaterial"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "BOMItem_tenantId_idx" ON "BOMItem"("tenantId");
+CREATE INDEX CONCURRENTLY "BOMItem_tenantId_idx" ON "BOMItem"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "WorkOrder_tenantId_orderNumber_idx" ON "WorkOrder"("tenantId", "orderNumber");
+CREATE INDEX CONCURRENTLY "WorkOrder_tenantId_orderNumber_idx" ON "WorkOrder"("tenantId", "orderNumber");
 
 -- CreateIndex
-CREATE INDEX "WorkOrder_correlationId_idx" ON "WorkOrder"("correlationId");
+CREATE INDEX CONCURRENTLY "WorkOrder_correlationId_idx" ON "WorkOrder"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "WorkOrder_tenantId_idempotencyKey_key" ON "WorkOrder"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "WorkOrder_tenantId_idempotencyKey_key" ON "WorkOrder"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Account_tenantId_code_key" ON "Account"("tenantId", "code");
+CREATE UNIQUE INDEX CONCURRENTLY "Account_tenantId_code_key" ON "Account"("tenantId", "code");
 
 -- CreateIndex
-CREATE INDEX "JournalEntry_tenantId_date_idx" ON "JournalEntry"("tenantId", "date");
+CREATE INDEX CONCURRENTLY "JournalEntry_tenantId_date_idx" ON "JournalEntry"("tenantId", "date");
 
 -- CreateIndex
-CREATE INDEX "JournalEntry_correlationId_idx" ON "JournalEntry"("correlationId");
+CREATE INDEX CONCURRENTLY "JournalEntry_correlationId_idx" ON "JournalEntry"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "JournalEntry_reference_idx" ON "JournalEntry"("reference");
+CREATE INDEX CONCURRENTLY "JournalEntry_reference_idx" ON "JournalEntry"("reference");
 
 -- CreateIndex
-CREATE INDEX "Transaction_tenantId_date_idx" ON "Transaction"("tenantId", "date");
+CREATE INDEX CONCURRENTLY "Transaction_tenantId_date_idx" ON "Transaction"("tenantId", "date");
 
 -- CreateIndex
-CREATE INDEX "Transaction_accountId_idx" ON "Transaction"("accountId");
+CREATE INDEX CONCURRENTLY "Transaction_accountId_idx" ON "Transaction"("accountId");
 
 -- CreateIndex
-CREATE INDEX "Transaction_journalEntryId_idx" ON "Transaction"("journalEntryId");
+CREATE INDEX CONCURRENTLY "Transaction_journalEntryId_idx" ON "Transaction"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "Transaction_correlationId_idx" ON "Transaction"("correlationId");
+CREATE INDEX CONCURRENTLY "Transaction_correlationId_idx" ON "Transaction"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "Transaction_tenantId_accountId_date_idx" ON "Transaction"("tenantId", "accountId", "date");
+CREATE INDEX CONCURRENTLY "Transaction_tenantId_accountId_date_idx" ON "Transaction"("tenantId", "accountId", "date");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Invoice_journalEntryId_key" ON "Invoice"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "Invoice_journalEntryId_key" ON "Invoice"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "Invoice_tenantId_issueDate_idx" ON "Invoice"("tenantId", "issueDate");
+CREATE INDEX CONCURRENTLY "Invoice_tenantId_issueDate_idx" ON "Invoice"("tenantId", "issueDate");
 
 -- CreateIndex
-CREATE INDEX "Invoice_tenantId_status_idx" ON "Invoice"("tenantId", "status");
+CREATE INDEX CONCURRENTLY "Invoice_tenantId_status_idx" ON "Invoice"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "Invoice_correlationId_idx" ON "Invoice"("correlationId");
+CREATE INDEX CONCURRENTLY "Invoice_correlationId_idx" ON "Invoice"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "Invoice_invoiceNumber_idx" ON "Invoice"("invoiceNumber");
+CREATE INDEX CONCURRENTLY "Invoice_invoiceNumber_idx" ON "Invoice"("invoiceNumber");
 
 -- CreateIndex
-CREATE INDEX "Invoice_projectId_idx" ON "Invoice"("projectId");
+CREATE INDEX CONCURRENTLY "Invoice_projectId_idx" ON "Invoice"("projectId");
 
 -- CreateIndex
-CREATE INDEX "Invoice_tenantId_status_issueDate_idx" ON "Invoice"("tenantId", "status", "issueDate");
+CREATE INDEX CONCURRENTLY "Invoice_tenantId_status_issueDate_idx" ON "Invoice"("tenantId", "status", "issueDate");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Invoice_tenantId_invoiceNumber_key" ON "Invoice"("tenantId", "invoiceNumber");
+CREATE UNIQUE INDEX CONCURRENTLY "Invoice_tenantId_invoiceNumber_key" ON "Invoice"("tenantId", "invoiceNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Invoice_tenantId_idempotencyKey_key" ON "Invoice"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "Invoice_tenantId_idempotencyKey_key" ON "Invoice"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE INDEX "InvoiceItem_invoiceId_productId_idx" ON "InvoiceItem"("invoiceId", "productId");
+CREATE INDEX CONCURRENTLY "InvoiceItem_invoiceId_productId_idx" ON "InvoiceItem"("invoiceId", "productId");
 
 -- CreateIndex
-CREATE INDEX "InvoiceItem_tenantId_idx" ON "InvoiceItem"("tenantId");
+CREATE INDEX CONCURRENTLY "InvoiceItem_tenantId_idx" ON "InvoiceItem"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "Payment_tenantId_date_idx" ON "Payment"("tenantId", "date");
+CREATE INDEX CONCURRENTLY "Payment_tenantId_date_idx" ON "Payment"("tenantId", "date");
 
 -- CreateIndex
-CREATE INDEX "Payment_tenantId_customerId_date_idx" ON "Payment"("tenantId", "customerId", "date");
+CREATE INDEX CONCURRENTLY "Payment_tenantId_customerId_date_idx" ON "Payment"("tenantId", "customerId", "date");
 
 -- CreateIndex
-CREATE INDEX "Payment_correlationId_idx" ON "Payment"("correlationId");
+CREATE INDEX CONCURRENTLY "Payment_correlationId_idx" ON "Payment"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Payment_tenantId_idempotencyKey_key" ON "Payment"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "Payment_tenantId_idempotencyKey_key" ON "Payment"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE INDEX "CustomerOpeningBalance_tenantId_customerId_idx" ON "CustomerOpeningBalance"("tenantId", "customerId");
+CREATE INDEX CONCURRENTLY "CustomerOpeningBalance_tenantId_customerId_idx" ON "CustomerOpeningBalance"("tenantId", "customerId");
 
 -- CreateIndex
-CREATE INDEX "CustomerOpeningBalance_correlationId_idx" ON "CustomerOpeningBalance"("correlationId");
+CREATE INDEX CONCURRENTLY "CustomerOpeningBalance_correlationId_idx" ON "CustomerOpeningBalance"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Employee_userId_key" ON "Employee"("userId");
+CREATE UNIQUE INDEX CONCURRENTLY "Employee_userId_key" ON "Employee"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Employee_tenantId_employeeId_key" ON "Employee"("tenantId", "employeeId");
+CREATE UNIQUE INDEX CONCURRENTLY "Employee_tenantId_employeeId_key" ON "Employee"("tenantId", "employeeId");
 
 -- CreateIndex
-CREATE INDEX "Payroll_tenantId_createdAt_idx" ON "Payroll"("tenantId", "createdAt");
+CREATE INDEX CONCURRENTLY "Payroll_tenantId_createdAt_idx" ON "Payroll"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "Leave_tenantId_status_idx" ON "Leave"("tenantId", "status");
+CREATE INDEX CONCURRENTLY "Leave_tenantId_status_idx" ON "Leave"("tenantId", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Supplier_userId_key" ON "Supplier"("userId");
+CREATE UNIQUE INDEX CONCURRENTLY "Supplier_userId_key" ON "Supplier"("userId");
 
 -- CreateIndex
-CREATE INDEX "SupplierOpeningBalance_tenantId_supplierId_idx" ON "SupplierOpeningBalance"("tenantId", "supplierId");
+CREATE INDEX CONCURRENTLY "SupplierOpeningBalance_tenantId_supplierId_idx" ON "SupplierOpeningBalance"("tenantId", "supplierId");
 
 -- CreateIndex
-CREATE INDEX "SupplierOpeningBalance_correlationId_idx" ON "SupplierOpeningBalance"("correlationId");
+CREATE INDEX CONCURRENTLY "SupplierOpeningBalance_correlationId_idx" ON "SupplierOpeningBalance"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PurchaseOrder_tenantId_idempotencyKey_key" ON "PurchaseOrder"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "PurchaseOrder_tenantId_idempotencyKey_key" ON "PurchaseOrder"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PurchaseOrder_tenantId_orderNumber_key" ON "PurchaseOrder"("tenantId", "orderNumber");
+CREATE UNIQUE INDEX CONCURRENTLY "PurchaseOrder_tenantId_orderNumber_key" ON "PurchaseOrder"("tenantId", "orderNumber");
 
 -- CreateIndex
-CREATE INDEX "PurchaseOrderItem_purchaseOrderId_productId_idx" ON "PurchaseOrderItem"("purchaseOrderId", "productId");
+CREATE INDEX CONCURRENTLY "PurchaseOrderItem_purchaseOrderId_productId_idx" ON "PurchaseOrderItem"("purchaseOrderId", "productId");
 
 -- CreateIndex
-CREATE INDEX "PurchaseOrderItem_tenantId_idx" ON "PurchaseOrderItem"("tenantId");
+CREATE INDEX CONCURRENTLY "PurchaseOrderItem_tenantId_idx" ON "PurchaseOrderItem"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CreditNote_journalEntryId_key" ON "CreditNote"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "CreditNote_journalEntryId_key" ON "CreditNote"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "CreditNote_tenantId_customerId_idx" ON "CreditNote"("tenantId", "customerId");
+CREATE INDEX CONCURRENTLY "CreditNote_tenantId_customerId_idx" ON "CreditNote"("tenantId", "customerId");
 
 -- CreateIndex
-CREATE INDEX "CreditNote_correlationId_idx" ON "CreditNote"("correlationId");
+CREATE INDEX CONCURRENTLY "CreditNote_correlationId_idx" ON "CreditNote"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CreditNote_tenantId_idempotencyKey_key" ON "CreditNote"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "CreditNote_tenantId_idempotencyKey_key" ON "CreditNote"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CreditNote_tenantId_noteNumber_key" ON "CreditNote"("tenantId", "noteNumber");
+CREATE UNIQUE INDEX CONCURRENTLY "CreditNote_tenantId_noteNumber_key" ON "CreditNote"("tenantId", "noteNumber");
 
 -- CreateIndex
-CREATE INDEX "CreditNoteItem_tenantId_idx" ON "CreditNoteItem"("tenantId");
+CREATE INDEX CONCURRENTLY "CreditNoteItem_tenantId_idx" ON "CreditNoteItem"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DebitNote_journalEntryId_key" ON "DebitNote"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "DebitNote_journalEntryId_key" ON "DebitNote"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "DebitNote_tenantId_supplierId_idx" ON "DebitNote"("tenantId", "supplierId");
+CREATE INDEX CONCURRENTLY "DebitNote_tenantId_supplierId_idx" ON "DebitNote"("tenantId", "supplierId");
 
 -- CreateIndex
-CREATE INDEX "DebitNote_correlationId_idx" ON "DebitNote"("correlationId");
+CREATE INDEX CONCURRENTLY "DebitNote_correlationId_idx" ON "DebitNote"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DebitNote_tenantId_idempotencyKey_key" ON "DebitNote"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "DebitNote_tenantId_idempotencyKey_key" ON "DebitNote"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DebitNote_tenantId_noteNumber_key" ON "DebitNote"("tenantId", "noteNumber");
+CREATE UNIQUE INDEX CONCURRENTLY "DebitNote_tenantId_noteNumber_key" ON "DebitNote"("tenantId", "noteNumber");
 
 -- CreateIndex
-CREATE INDEX "DebitNoteItem_tenantId_idx" ON "DebitNoteItem"("tenantId");
+CREATE INDEX CONCURRENTLY "DebitNoteItem_tenantId_idx" ON "DebitNoteItem"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Warehouse_tenantId_name_key" ON "Warehouse"("tenantId", "name");
+CREATE UNIQUE INDEX CONCURRENTLY "Warehouse_tenantId_name_key" ON "Warehouse"("tenantId", "name");
 
 -- CreateIndex
-CREATE INDEX "StockLocation_tenantId_idx" ON "StockLocation"("tenantId");
+CREATE INDEX CONCURRENTLY "StockLocation_tenantId_idx" ON "StockLocation"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StockLocation_tenantId_productId_warehouseId_notes_key" ON "StockLocation"("tenantId", "productId", "warehouseId", "notes");
+CREATE UNIQUE INDEX CONCURRENTLY "StockLocation_tenantId_productId_warehouseId_notes_key" ON "StockLocation"("tenantId", "productId", "warehouseId", "notes");
 
 -- CreateIndex
-CREATE INDEX "WarehousePrice_tenantId_idx" ON "WarehousePrice"("tenantId");
+CREATE INDEX CONCURRENTLY "WarehousePrice_tenantId_idx" ON "WarehousePrice"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "WarehousePrice_tenantId_productId_warehouseId_key" ON "WarehousePrice"("tenantId", "productId", "warehouseId");
+CREATE UNIQUE INDEX CONCURRENTLY "WarehousePrice_tenantId_productId_warehouseId_key" ON "WarehousePrice"("tenantId", "productId", "warehouseId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_correlationId_idx" ON "StockMovement"("correlationId");
+CREATE INDEX CONCURRENTLY "StockMovement_correlationId_idx" ON "StockMovement"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_tenantId_productId_idx" ON "StockMovement"("tenantId", "productId");
+CREATE INDEX CONCURRENTLY "StockMovement_tenantId_productId_idx" ON "StockMovement"("tenantId", "productId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_warehouseId_idx" ON "StockMovement"("warehouseId");
+CREATE INDEX CONCURRENTLY "StockMovement_warehouseId_idx" ON "StockMovement"("warehouseId");
 
 -- CreateIndex
-CREATE INDEX "FixedAsset_tenantId_idx" ON "FixedAsset"("tenantId");
+CREATE INDEX CONCURRENTLY "FixedAsset_tenantId_idx" ON "FixedAsset"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "FixedAsset_correlationId_idx" ON "FixedAsset"("correlationId");
+CREATE INDEX CONCURRENTLY "FixedAsset_correlationId_idx" ON "FixedAsset"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "FixedAsset_tenantId_assetCode_key" ON "FixedAsset"("tenantId", "assetCode");
+CREATE UNIQUE INDEX CONCURRENTLY "FixedAsset_tenantId_assetCode_key" ON "FixedAsset"("tenantId", "assetCode");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "FixedAsset_tenantId_idempotencyKey_key" ON "FixedAsset"("tenantId", "idempotencyKey");
+CREATE UNIQUE INDEX CONCURRENTLY "FixedAsset_tenantId_idempotencyKey_key" ON "FixedAsset"("tenantId", "idempotencyKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DepreciationLog_journalEntryId_key" ON "DepreciationLog"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "DepreciationLog_journalEntryId_key" ON "DepreciationLog"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "DepreciationLog_tenantId_assetId_idx" ON "DepreciationLog"("tenantId", "assetId");
+CREATE INDEX CONCURRENTLY "DepreciationLog_tenantId_assetId_idx" ON "DepreciationLog"("tenantId", "assetId");
 
 -- CreateIndex
-CREATE INDEX "Comment_tenantId_idx" ON "Comment"("tenantId");
+CREATE INDEX CONCURRENTLY "Comment_tenantId_idx" ON "Comment"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "Comment_resourceType_resourceId_idx" ON "Comment"("resourceType", "resourceId");
+CREATE INDEX CONCURRENTLY "Comment_resourceType_resourceId_idx" ON "Comment"("resourceType", "resourceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ApiKey_key_key" ON "ApiKey"("key");
+CREATE UNIQUE INDEX CONCURRENTLY "ApiKey_key_key" ON "ApiKey"("key");
 
 -- CreateIndex
-CREATE INDEX "ApiKey_tenantId_idx" ON "ApiKey"("tenantId");
+CREATE INDEX CONCURRENTLY "ApiKey_tenantId_idx" ON "ApiKey"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "ApiKey_prefix_idx" ON "ApiKey"("prefix");
+CREATE INDEX CONCURRENTLY "ApiKey_prefix_idx" ON "ApiKey"("prefix");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "App_name_key" ON "App"("name");
+CREATE UNIQUE INDEX CONCURRENTLY "App_name_key" ON "App"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Plugin_name_key" ON "Plugin"("name");
+CREATE UNIQUE INDEX CONCURRENTLY "Plugin_name_key" ON "Plugin"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ModelDefinition_name_key" ON "ModelDefinition"("name");
+CREATE UNIQUE INDEX CONCURRENTLY "ModelDefinition_name_key" ON "ModelDefinition"("name");
 
 -- CreateIndex
-CREATE INDEX "Record_tenantId_modelName_idx" ON "Record"("tenantId", "modelName");
+CREATE INDEX CONCURRENTLY "Record_tenantId_modelName_idx" ON "Record"("tenantId", "modelName");
 
 -- CreateIndex
-CREATE INDEX "WorkflowDefinition_modelName_idx" ON "WorkflowDefinition"("modelName");
+CREATE INDEX CONCURRENTLY "WorkflowDefinition_modelName_idx" ON "WorkflowDefinition"("modelName");
 
 -- CreateIndex
-CREATE INDEX "WorkflowNode_workflowId_idx" ON "WorkflowNode"("workflowId");
+CREATE INDEX CONCURRENTLY "WorkflowNode_workflowId_idx" ON "WorkflowNode"("workflowId");
 
 -- CreateIndex
-CREATE INDEX "WorkflowTransition_workflowId_idx" ON "WorkflowTransition"("workflowId");
+CREATE INDEX CONCURRENTLY "WorkflowTransition_workflowId_idx" ON "WorkflowTransition"("workflowId");
 
 -- CreateIndex
-CREATE INDEX "TdsRule_tenantId_idx" ON "TdsRule"("tenantId");
+CREATE INDEX CONCURRENTLY "TdsRule_tenantId_idx" ON "TdsRule"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TdsLedgerMapping_tenantId_ruleId_key" ON "TdsLedgerMapping"("tenantId", "ruleId");
+CREATE UNIQUE INDEX CONCURRENTLY "TdsLedgerMapping_tenantId_ruleId_key" ON "TdsLedgerMapping"("tenantId", "ruleId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TdsTransaction_paymentId_key" ON "TdsTransaction"("paymentId");
+CREATE UNIQUE INDEX CONCURRENTLY "TdsTransaction_paymentId_key" ON "TdsTransaction"("paymentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TdsTransaction_purchaseOrderId_key" ON "TdsTransaction"("purchaseOrderId");
+CREATE UNIQUE INDEX CONCURRENTLY "TdsTransaction_purchaseOrderId_key" ON "TdsTransaction"("purchaseOrderId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "TdsTransaction_journalEntryId_key" ON "TdsTransaction"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "TdsTransaction_journalEntryId_key" ON "TdsTransaction"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "TdsTransaction_tenantId_supplierId_idx" ON "TdsTransaction"("tenantId", "supplierId");
+CREATE INDEX CONCURRENTLY "TdsTransaction_tenantId_supplierId_idx" ON "TdsTransaction"("tenantId", "supplierId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Patient_customerId_key" ON "Patient"("customerId");
+CREATE UNIQUE INDEX CONCURRENTLY "Patient_customerId_key" ON "Patient"("customerId");
 
 -- CreateIndex
-CREATE INDEX "Patient_tenantId_idx" ON "Patient"("tenantId");
+CREATE INDEX CONCURRENTLY "Patient_tenantId_idx" ON "Patient"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "PharmacyBatch_expiryDate_idx" ON "PharmacyBatch"("expiryDate");
+CREATE INDEX CONCURRENTLY "PharmacyBatch_expiryDate_idx" ON "PharmacyBatch"("expiryDate");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PharmacyBatch_tenantId_productId_batchNumber_key" ON "PharmacyBatch"("tenantId", "productId", "batchNumber");
+CREATE UNIQUE INDEX CONCURRENTLY "PharmacyBatch_tenantId_productId_batchNumber_key" ON "PharmacyBatch"("tenantId", "productId", "batchNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BOQ_projectId_key" ON "BOQ"("projectId");
+CREATE UNIQUE INDEX CONCURRENTLY "BOQ_projectId_key" ON "BOQ"("projectId");
 
 -- CreateIndex
-CREATE INDEX "BOQ_correlationId_idx" ON "BOQ"("correlationId");
+CREATE INDEX CONCURRENTLY "BOQ_correlationId_idx" ON "BOQ"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "BOQItem_correlationId_idx" ON "BOQItem"("correlationId");
+CREATE INDEX CONCURRENTLY "BOQItem_correlationId_idx" ON "BOQItem"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "SiteInventory_correlationId_idx" ON "SiteInventory"("correlationId");
+CREATE INDEX CONCURRENTLY "SiteInventory_correlationId_idx" ON "SiteInventory"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SiteInventory_tenantId_projectId_productId_key" ON "SiteInventory"("tenantId", "projectId", "productId");
+CREATE UNIQUE INDEX CONCURRENTLY "SiteInventory_tenantId_projectId_productId_key" ON "SiteInventory"("tenantId", "projectId", "productId");
 
 -- CreateIndex
-CREATE INDEX "RetentionSchedule_projectId_idx" ON "RetentionSchedule"("projectId");
+CREATE INDEX CONCURRENTLY "RetentionSchedule_projectId_idx" ON "RetentionSchedule"("projectId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Vehicle_registrationNo_key" ON "Vehicle"("registrationNo");
+CREATE UNIQUE INDEX CONCURRENTLY "Vehicle_registrationNo_key" ON "Vehicle"("registrationNo");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "FuelLog_journalEntryId_key" ON "FuelLog"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "FuelLog_journalEntryId_key" ON "FuelLog"("journalEntryId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "RouteLog_lrNumber_key" ON "RouteLog"("lrNumber");
+CREATE UNIQUE INDEX CONCURRENTLY "RouteLog_lrNumber_key" ON "RouteLog"("lrNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "RouteBenchmark_tenantId_origin_destination_key" ON "RouteBenchmark"("tenantId", "origin", "destination");
+CREATE UNIQUE INDEX CONCURRENTLY "RouteBenchmark_tenantId_origin_destination_key" ON "RouteBenchmark"("tenantId", "origin", "destination");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Loan_journalEntryId_key" ON "Loan"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "Loan_journalEntryId_key" ON "Loan"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "Loan_correlationId_idx" ON "Loan"("correlationId");
+CREATE INDEX CONCURRENTLY "Loan_correlationId_idx" ON "Loan"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "LoanInterestSlab_loanId_idx" ON "LoanInterestSlab"("loanId");
+CREATE INDEX CONCURRENTLY "LoanInterestSlab_loanId_idx" ON "LoanInterestSlab"("loanId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "EMISchedule_paymentId_key" ON "EMISchedule"("paymentId");
+CREATE UNIQUE INDEX CONCURRENTLY "EMISchedule_paymentId_key" ON "EMISchedule"("paymentId");
 
 -- CreateIndex
-CREATE INDEX "EMISchedule_correlationId_idx" ON "EMISchedule"("correlationId");
+CREATE INDEX CONCURRENTLY "EMISchedule_correlationId_idx" ON "EMISchedule"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InterestAccrual_journalEntryId_key" ON "InterestAccrual"("journalEntryId");
+CREATE UNIQUE INDEX CONCURRENTLY "InterestAccrual_journalEntryId_key" ON "InterestAccrual"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "InterestAccrual_correlationId_idx" ON "InterestAccrual"("correlationId");
+CREATE INDEX CONCURRENTLY "InterestAccrual_correlationId_idx" ON "InterestAccrual"("correlationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "KYCRecord_loanId_key" ON "KYCRecord"("loanId");
+CREATE UNIQUE INDEX CONCURRENTLY "KYCRecord_loanId_key" ON "KYCRecord"("loanId");
 
 -- CreateIndex
-CREATE INDEX "BankStatement_tenantId_accountId_idx" ON "BankStatement"("tenantId", "accountId");
+CREATE INDEX CONCURRENTLY "BankStatement_tenantId_accountId_idx" ON "BankStatement"("tenantId", "accountId");
 
 -- CreateIndex
-CREATE INDEX "BankStatementLine_tenantId_statementId_idx" ON "BankStatementLine"("tenantId", "statementId");
+CREATE INDEX CONCURRENTLY "BankStatementLine_tenantId_statementId_idx" ON "BankStatementLine"("tenantId", "statementId");
 
 -- CreateIndex
-CREATE INDEX "BankStatementLine_date_amount_idx" ON "BankStatementLine"("date", "amount");
+CREATE INDEX CONCURRENTLY "BankStatementLine_date_amount_idx" ON "BankStatementLine"("date", "amount");
 
 -- CreateIndex
-CREATE INDEX "BankReconciliation_tenantId_transactionId_idx" ON "BankReconciliation"("tenantId", "transactionId");
+CREATE INDEX CONCURRENTLY "BankReconciliation_tenantId_transactionId_idx" ON "BankReconciliation"("tenantId", "transactionId");
 
 -- CreateIndex
-CREATE INDEX "BankReconciliation_tenantId_statementLineId_idx" ON "BankReconciliation"("tenantId", "statementLineId");
+CREATE INDEX CONCURRENTLY "BankReconciliation_tenantId_statementLineId_idx" ON "BankReconciliation"("tenantId", "statementLineId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BankReconciliation_tenantId_transactionId_statementLineId_key" ON "BankReconciliation"("tenantId", "transactionId", "statementLineId");
+CREATE UNIQUE INDEX CONCURRENTLY "BankReconciliation_tenantId_transactionId_statementLineId_key" ON "BankReconciliation"("tenantId", "transactionId", "statementLineId");
 
 -- CreateIndex
-CREATE INDEX "HsnMaster_tenantId_idx" ON "HsnMaster"("tenantId");
+CREATE INDEX CONCURRENTLY "HsnMaster_tenantId_idx" ON "HsnMaster"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "HsnMaster_tenantId_hsnCode_key" ON "HsnMaster"("tenantId", "hsnCode");
+CREATE UNIQUE INDEX CONCURRENTLY "HsnMaster_tenantId_hsnCode_key" ON "HsnMaster"("tenantId", "hsnCode");
 
 -- AddForeignKey
 ALTER TABLE "PeriodLock" ADD CONSTRAINT "PeriodLock_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "Tenant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS "BillingEvent" (
   CONSTRAINT "BillingEvent_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "BillingEvent_tenantId_createdAt_idx" ON "BillingEvent"("tenantId", "createdAt");
-CREATE INDEX IF NOT EXISTS "BillingEvent_event_idx" ON "BillingEvent"("event");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "BillingEvent_tenantId_createdAt_idx" ON "BillingEvent"("tenantId", "createdAt");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "BillingEvent_event_idx" ON "BillingEvent"("event");
 
 ALTER TABLE "BillingEvent"
   DROP CONSTRAINT IF EXISTS "BillingEvent_tenantId_fkey",
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS "RevokedToken" (
   CONSTRAINT "RevokedToken_pkey" PRIMARY KEY ("jti")
 );
 
-CREATE INDEX IF NOT EXISTS "RevokedToken_expiresAt_idx" ON "RevokedToken"("expiresAt");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "RevokedToken_expiresAt_idx" ON "RevokedToken"("expiresAt");
 
 -- IdempotencyKey: DB-backed atomic idempotency store (SEC-009)
 CREATE TABLE IF NOT EXISTS "IdempotencyKey" (
@@ -122,8 +122,8 @@ CREATE TABLE IF NOT EXISTS "IdempotencyKey" (
   CONSTRAINT "IdempotencyKey_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "IdempotencyKey_tenantId_key_key" ON "IdempotencyKey"("tenantId", "key");
-CREATE INDEX IF NOT EXISTS "IdempotencyKey_expiresAt_idx" ON "IdempotencyKey"("expiresAt");
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "IdempotencyKey_tenantId_key_key" ON "IdempotencyKey"("tenantId", "key");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "IdempotencyKey_expiresAt_idx" ON "IdempotencyKey"("expiresAt");
 
 -- GovernanceProfile: IND-001 tenant-configurable compliance rules
 CREATE TABLE IF NOT EXISTS "GovernanceProfile" (
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS "GovernanceProfile" (
   CONSTRAINT "GovernanceProfile_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "GovernanceProfile_tenantId_key" ON "GovernanceProfile"("tenantId");
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "GovernanceProfile_tenantId_key" ON "GovernanceProfile"("tenantId");
 
 ALTER TABLE "GovernanceProfile"
   DROP CONSTRAINT IF EXISTS "GovernanceProfile_tenantId_fkey",
@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS "UnitConversion" (
   CONSTRAINT "UnitConversion_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "UnitConversion_tenantId_fromUnit_toUnit_productId_key" ON "UnitConversion"("tenantId", "fromUnit", "toUnit", "productId");
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "UnitConversion_tenantId_fromUnit_toUnit_productId_key" ON "UnitConversion"("tenantId", "fromUnit", "toUnit", "productId");
 
 ALTER TABLE "UnitConversion"
   DROP CONSTRAINT IF EXISTS "UnitConversion_tenantId_fkey",
@@ -179,8 +179,8 @@ CREATE TABLE IF NOT EXISTS "MobileDevice" (
   CONSTRAINT "MobileDevice_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "MobileDevice_tenantId_deviceId_key" ON "MobileDevice"("tenantId", "deviceId");
-CREATE INDEX IF NOT EXISTS "MobileDevice_userId_idx" ON "MobileDevice"("userId");
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "MobileDevice_tenantId_deviceId_key" ON "MobileDevice"("tenantId", "deviceId");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "MobileDevice_userId_idx" ON "MobileDevice"("userId");
 
 ALTER TABLE "MobileDevice"
   DROP CONSTRAINT IF EXISTS "MobileDevice_tenantId_fkey",
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS "WebhookSecretRotation" (
   CONSTRAINT "WebhookSecretRotation_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "WebhookSecretRotation_provider_status_idx" ON "WebhookSecretRotation"("provider", "status");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "WebhookSecretRotation_provider_status_idx" ON "WebhookSecretRotation"("provider", "status");
 
 -- WebhookDeadLetter: OPS-004 exhausted webhook retry store
 CREATE TABLE IF NOT EXISTS "WebhookDeadLetter" (
@@ -219,7 +219,7 @@ CREATE TABLE IF NOT EXISTS "WebhookDeadLetter" (
   CONSTRAINT "WebhookDeadLetter_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX IF NOT EXISTS "WebhookDeadLetter_provider_resolvedAt_idx" ON "WebhookDeadLetter"("provider", "resolvedAt");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "WebhookDeadLetter_provider_resolvedAt_idx" ON "WebhookDeadLetter"("provider", "resolvedAt");
 
 -- BackgroundJob: ARCH-001 BullMQ job tracking
 CREATE TABLE IF NOT EXISTS "BackgroundJob" (
@@ -239,8 +239,8 @@ CREATE TABLE IF NOT EXISTS "BackgroundJob" (
   CONSTRAINT "BackgroundJob_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "BackgroundJob_idempotencyKey_key" ON "BackgroundJob"("idempotencyKey");
-CREATE INDEX IF NOT EXISTS "BackgroundJob_tenantId_type_status_idx" ON "BackgroundJob"("tenantId", "type", "status");
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "BackgroundJob_idempotencyKey_key" ON "BackgroundJob"("idempotencyKey");
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "BackgroundJob_tenantId_type_status_idx" ON "BackgroundJob"("tenantId", "type", "status");
 
 -- =============================================================================
 -- END OF CATCH-UP MIGRATION
