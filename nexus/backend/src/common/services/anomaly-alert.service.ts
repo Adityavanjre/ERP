@@ -120,7 +120,7 @@ export class AnomalyAlertService {
   /**
    * Log and alert when a stock decrement is rejected.
    */
-  async alertNegativeStockAttempt(
+  alertNegativeStockAttempt(
     tenantId: string,
     productId: string,
     requestedQty: number,
@@ -133,7 +133,7 @@ export class AnomalyAlertService {
   /**
    * Log and alert on duplicate payroll.
    */
-  async alertDuplicatePayrollBlocked(
+  alertDuplicatePayrollBlocked(
     tenantId: string,
     employeeId: string,
     period: string,

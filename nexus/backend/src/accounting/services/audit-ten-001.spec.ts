@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoiceService } from './invoice.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -40,8 +39,11 @@ describe('TEN-001: IDOR Isolation Audit (Unit Tests)', () => {
     it('should include tenantId in the query for findOne', async () => {
       const tenantId = 'tenant-123';
       const invoiceId = 'inv-456';
-      
-      mockPrisma.invoice.findFirst.mockResolvedValue({ id: invoiceId, tenantId });
+
+      mockPrisma.invoice.findFirst.mockResolvedValue({
+        id: invoiceId,
+        tenantId,
+      });
 
       await service.findOne(tenantId, invoiceId);
 
@@ -58,12 +60,15 @@ describe('TEN-001: IDOR Isolation Audit (Unit Tests)', () => {
       // Simulate Prisma returning null because of the tenantId filter
       mockPrisma.invoice.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne(myTenantId, otherInvoiceId))
-        .rejects.toThrow(NotFoundException);
-      
-      expect(mockPrisma.invoice.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: otherInvoiceId, tenantId: myTenantId }
-      }));
+      await expect(service.findOne(myTenantId, otherInvoiceId)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(mockPrisma.invoice.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: otherInvoiceId, tenantId: myTenantId },
+        }),
+      );
     });
   });
 });

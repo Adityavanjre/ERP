@@ -55,7 +55,7 @@ export class AuthService {
     private readonly logging: LoggingService,
     private readonly anomalyAlert: AnomalyAlertService,
     private readonly mfaCrypto: MfaCryptoService,
-  ) { }
+  ) {}
 
   async createWorkspace(userId: string, dto: CreateWorkspaceDto) {
     const user = await this.prisma.user.findUnique({
@@ -212,7 +212,7 @@ export class AuthService {
           } catch (logErr) {
             this.logger.warn(
               '[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' +
-              logErr?.message,
+                logErr?.message,
             );
           }
 

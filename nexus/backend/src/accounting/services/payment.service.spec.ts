@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -49,22 +48,25 @@ describe('PaymentService (Integrity)', () => {
       id: 'p1',
       amount: new Decimal(100),
       date: new Date('2024-01-01'),
-      tenantId: 't1'
+      tenantId: 't1',
     };
     mockPrisma.payment.findFirst.mockResolvedValue(existingPayment);
 
-    await expect(service.updatePayment('t1', 'p1', { amount: 200 }))
-      .rejects.toThrow(BadRequestException);
-    await expect(service.updatePayment('t1', 'p1', { amount: 200 }))
-      .rejects.toThrow(/Financial Integrity Violation/);
+    await expect(
+      service.updatePayment('t1', 'p1', { amount: 200 }),
+    ).rejects.toThrow(BadRequestException);
+    await expect(
+      service.updatePayment('t1', 'p1', { amount: 200 }),
+    ).rejects.toThrow(/Financial Integrity Violation/);
   });
 
   it('should block direct updates to date', async () => {
     const existingPayment = { id: 'p1', date: new Date('2024-01-01') };
     mockPrisma.payment.findFirst.mockResolvedValue(existingPayment);
 
-    await expect(service.updatePayment('t1', 'p1', { date: new Date('2024-02-01') }))
-      .rejects.toThrow(BadRequestException);
+    await expect(
+      service.updatePayment('t1', 'p1', { date: new Date('2024-02-01') }),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('should allow updates to non-financial fields like notes', async () => {
@@ -72,7 +74,9 @@ describe('PaymentService (Integrity)', () => {
     mockPrisma.payment.findFirst.mockResolvedValue(existingPayment);
     mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
 
-    const result = await service.updatePayment('t1', 'p1', { notes: 'New note' });
+    const result = await service.updatePayment('t1', 'p1', {
+      notes: 'New note',
+    });
     expect(result).toBeDefined();
     expect(mockPrisma.payment.updateMany).toHaveBeenCalled();
   });

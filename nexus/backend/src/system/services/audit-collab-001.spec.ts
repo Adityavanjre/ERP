@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { CollaborationService } from './collaboration.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -27,7 +26,10 @@ describe('CollaborationService: TEN-001 Audit', () => {
         CollaborationService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: AuditService, useValue: mockAudit },
-        { provide: CollaborationGateway, useValue: { broadcastComment: jest.fn() } },
+        {
+          provide: CollaborationGateway,
+          useValue: { broadcastComment: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -66,7 +68,7 @@ describe('CollaborationService: TEN-001 Audit', () => {
         id: commentId,
         tenantId,
         resourceType: 'Order',
-        resourceId: 'O-1'
+        resourceId: 'O-1',
       });
       mockPrisma.comment.delete.mockResolvedValue({ id: commentId });
 

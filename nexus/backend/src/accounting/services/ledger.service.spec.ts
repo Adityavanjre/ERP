@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { LedgerService } from './ledger.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -40,8 +39,14 @@ describe('LedgerService (Financial Integrity)', () => {
         LedgerService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: TraceService, useValue: mockTrace },
-        { provide: 'CACHE_MANAGER', useValue: { get: jest.fn(), set: jest.fn() } },
-        { provide: BillingService, useValue: { createInvoice: jest.fn(), checkQuota: jest.fn() } },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: { get: jest.fn(), set: jest.fn() },
+        },
+        {
+          provide: BillingService,
+          useValue: { createInvoice: jest.fn(), checkQuota: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -60,10 +65,12 @@ describe('LedgerService (Financial Integrity)', () => {
         ],
       };
 
-      await expect(service.createJournalEntry('t1', imbalancedEntry as any))
-        .rejects.toThrow(BadRequestException);
-      await expect(service.createJournalEntry('t1', imbalancedEntry as any))
-        .rejects.toThrow(/Journal entry must balance exactly/);
+      await expect(
+        service.createJournalEntry('t1', imbalancedEntry as any),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.createJournalEntry('t1', imbalancedEntry as any),
+      ).rejects.toThrow(/Journal entry must balance exactly/);
     });
 
     it('should allow entries where Dr == Cr', async () => {
@@ -78,15 +85,21 @@ describe('LedgerService (Financial Integrity)', () => {
 
       mockPrisma.journalEntry.create.mockResolvedValue({ id: 'j1' });
       mockPrisma.transaction.create.mockResolvedValue({ id: 't-tx-1' });
-      mockPrisma.account.findFirst.mockResolvedValue({ id: 'a-1', name: 'Test Account' });
+      mockPrisma.account.findFirst.mockResolvedValue({
+        id: 'a-1',
+        name: 'Test Account',
+      });
       mockPrisma.account.findMany.mockResolvedValue([
         { id: 'a1', type: 'Asset' },
-        { id: 'a2', type: 'Liability' }
+        { id: 'a2', type: 'Liability' },
       ]);
       mockPrisma.account.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.periodLock.findUnique.mockResolvedValue(null); // Not locked
 
-      const result = await service.createJournalEntry('t1', balancedEntry as any);
+      const result = await service.createJournalEntry(
+        't1',
+        balancedEntry as any,
+      );
       expect(result).toBeDefined();
     });
   });
@@ -96,18 +109,21 @@ describe('LedgerService (Financial Integrity)', () => {
       const lockDate = new Date('2024-01-15');
       mockPrisma.periodLock.findUnique.mockResolvedValue({ isLocked: true });
 
-      await expect(service.checkPeriodLock('t1', lockDate))
-        .rejects.toThrow(BadRequestException);
-      await expect(service.checkPeriodLock('t1', lockDate))
-        .rejects.toThrow(/locked for Audit/);
+      await expect(service.checkPeriodLock('t1', lockDate)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.checkPeriodLock('t1', lockDate)).rejects.toThrow(
+        /locked for Audit/,
+      );
     });
 
     it('should allow writes to an unlocked period', async () => {
       const lockDate = new Date('2024-01-15');
       mockPrisma.periodLock.findUnique.mockResolvedValue({ isLocked: false });
 
-      await expect(service.checkPeriodLock('t1', lockDate))
-        .resolves.not.toThrow();
+      await expect(
+        service.checkPeriodLock('t1', lockDate),
+      ).resolves.not.toThrow();
     });
   });
 

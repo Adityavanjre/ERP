@@ -14,9 +14,20 @@ describe('TallyService (XML & Data Bridge)', () => {
 
   beforeEach(async () => {
     mockPrisma = {
-      tenant: { findUnique: jest.fn().mockResolvedValue({ id: 't1', state: 'MH' }) },
-      invoice: { findMany: jest.fn(), create: jest.fn(), findFirst: jest.fn(), aggregate: jest.fn() },
-      purchaseOrder: { findMany: jest.fn(), aggregate: jest.fn(), count: jest.fn() },
+      tenant: {
+        findUnique: jest.fn().mockResolvedValue({ id: 't1', state: 'MH' }),
+      },
+      invoice: {
+        findMany: jest.fn(),
+        create: jest.fn(),
+        findFirst: jest.fn(),
+        aggregate: jest.fn(),
+      },
+      purchaseOrder: {
+        findMany: jest.fn(),
+        aggregate: jest.fn(),
+        count: jest.fn(),
+      },
       payment: { findMany: jest.fn() },
       account: { findMany: jest.fn() },
       customer: { findMany: jest.fn() },
@@ -56,25 +67,29 @@ describe('TallyService (XML & Data Bridge)', () => {
 
   describe('Voucher Export Logic', () => {
     it('should generate Receipt XML for customer payments', async () => {
-      const mockPayments = [{
-        id: 'pay1',
-        date: new Date('2024-01-01'),
-        amount: new Decimal(5000),
-        mode: 'Bank',
-        reference: 'RX-123',
-        customerId: 'cust1',
-        customer: { company: 'ACME Corp' },
-        totalTaxable: new Decimal(5000),
-        totalGST: new Decimal(0),
-        totalAmount: new Decimal(5000),
-        totalCGST: new Decimal(0),
-        totalSGST: new Decimal(0),
-        totalIGST: new Decimal(0),
-      }];
+      const mockPayments = [
+        {
+          id: 'pay1',
+          date: new Date('2024-01-01'),
+          amount: new Decimal(5000),
+          mode: 'Bank',
+          reference: 'RX-123',
+          customerId: 'cust1',
+          customer: { company: 'ACME Corp' },
+          totalTaxable: new Decimal(5000),
+          totalGST: new Decimal(0),
+          totalAmount: new Decimal(5000),
+          totalCGST: new Decimal(0),
+          totalSGST: new Decimal(0),
+          totalIGST: new Decimal(0),
+        },
+      ];
 
       mockPrisma.invoice.findMany.mockResolvedValue([]);
       mockPrisma.purchaseOrder.findMany.mockResolvedValue([]);
-      mockPrisma.payment.findMany.mockResolvedValueOnce(mockPayments).mockResolvedValue([]);
+      mockPrisma.payment.findMany
+        .mockResolvedValueOnce(mockPayments)
+        .mockResolvedValue([]);
 
       const xml = await service.exportTallyXml('t1', 1, 2024);
 
@@ -84,25 +99,29 @@ describe('TallyService (XML & Data Bridge)', () => {
     });
 
     it('should generate Payment XML for supplier payments', async () => {
-      const mockPayments = [{
-        id: 'pay2',
-        date: new Date('2024-01-02'),
-        amount: new Decimal(3000),
-        mode: 'Cash',
-        reference: 'VND-456',
-        supplierId: 'supp1',
-        supplier: { name: 'Raw Co' },
-        totalTaxable: new Decimal(3000),
-        totalGST: new Decimal(0),
-        totalAmount: new Decimal(3000),
-        totalCGST: new Decimal(0),
-        totalSGST: new Decimal(0),
-        totalIGST: new Decimal(0),
-      }];
+      const mockPayments = [
+        {
+          id: 'pay2',
+          date: new Date('2024-01-02'),
+          amount: new Decimal(3000),
+          mode: 'Cash',
+          reference: 'VND-456',
+          supplierId: 'supp1',
+          supplier: { name: 'Raw Co' },
+          totalTaxable: new Decimal(3000),
+          totalGST: new Decimal(0),
+          totalAmount: new Decimal(3000),
+          totalCGST: new Decimal(0),
+          totalSGST: new Decimal(0),
+          totalIGST: new Decimal(0),
+        },
+      ];
 
       mockPrisma.invoice.findMany.mockResolvedValue([]);
       mockPrisma.purchaseOrder.findMany.mockResolvedValue([]);
-      mockPrisma.payment.findMany.mockResolvedValueOnce(mockPayments).mockResolvedValue([]);
+      mockPrisma.payment.findMany
+        .mockResolvedValueOnce(mockPayments)
+        .mockResolvedValue([]);
 
       const xml = await service.exportTallyXml('t1', 1, 2024);
 
@@ -114,27 +133,33 @@ describe('TallyService (XML & Data Bridge)', () => {
 
   describe('Validation & Confidence Scoring', () => {
     it('should flags backdated invoices', async () => {
-      const mockInvoices = [{
-        id: 'inv1',
-        invoiceNumber: 'INV-001',
-        issueDate: new Date('2024-01-01'),
-        createdAt: new Date('2024-01-05'), // 4 days later
-        items: [],
-        totalTaxable: new Decimal(0),
-        totalGST: new Decimal(0),
-        totalAmount: new Decimal(0),
-        totalCGST: new Decimal(0),
-        totalSGST: new Decimal(0),
-        totalIGST: new Decimal(0),
-      }];
+      const mockInvoices = [
+        {
+          id: 'inv1',
+          invoiceNumber: 'INV-001',
+          issueDate: new Date('2024-01-01'),
+          createdAt: new Date('2024-01-05'), // 4 days later
+          items: [],
+          totalTaxable: new Decimal(0),
+          totalGST: new Decimal(0),
+          totalAmount: new Decimal(0),
+          totalCGST: new Decimal(0),
+          totalSGST: new Decimal(0),
+          totalIGST: new Decimal(0),
+        },
+      ];
 
-      mockPrisma.invoice.findMany.mockResolvedValueOnce(mockInvoices).mockResolvedValue([]);
+      mockPrisma.invoice.findMany
+        .mockResolvedValueOnce(mockInvoices)
+        .mockResolvedValue([]);
       mockPrisma.purchaseOrder.findMany.mockResolvedValue([]);
       mockPrisma.payment.findMany.mockResolvedValue([]);
       mockPrisma.product.count.mockResolvedValue(0);
 
       const result = await service.validateTallyData('t1', 1, 2024);
-      const backdatedRisk = result.riskFlags.find(f => f.type === 'BACKDATED');
+      const backdatedRisk = result.riskFlags.find(
+        (f) => f.type === 'BACKDATED',
+      );
       expect(backdatedRisk).toBeDefined();
     });
 
@@ -146,7 +171,9 @@ describe('TallyService (XML & Data Bridge)', () => {
 
       const result = await service.validateTallyData('t1', 1, 2024);
       expect(result.confidenceScore).toBeLessThan(100);
-      expect(result.riskFlags.some(f => f.type === 'NEGATIVE_STOCK')).toBe(true);
+      expect(result.riskFlags.some((f) => f.type === 'NEGATIVE_STOCK')).toBe(
+        true,
+      );
     });
   });
 });

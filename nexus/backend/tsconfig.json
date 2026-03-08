@@ -37,10 +37,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    "test",
     "scripts",
     "prisma",
-    "debug-mfg.ts",
-    "**/*.spec.ts"
+    "debug-mfg.ts"
   ]
 }
