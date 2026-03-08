@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -15,7 +14,6 @@ import {
     Landmark,
     Briefcase,
     ShoppingBag,
-    ClipboardList,
     LayoutGrid,
     Zap,
     RefreshCw,
@@ -25,6 +23,12 @@ import {
     BarChart2,
     Receipt,
     Truck,
+    Activity,
+    Stethoscope,
+    HeartPulse,
+    Microscope,
+    Calendar,
+    ClipboardList,
     LucideIcon
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
@@ -94,6 +98,16 @@ const businessStreams: BusinessStream[] = [
             { label: 'Auditor', href: '/accounting/auditor', icon: ShieldCheck, allowedRoles: FINANCE_ROLES },
             { label: 'Reports', href: '/accounting/reports', icon: BarChart2, allowedRoles: FINANCE_ROLES },
             { label: 'Fixed Assets', href: '/accounting/fixed-assets', icon: Briefcase, allowedRoles: FINANCE_ROLES },
+        ]
+    },
+    {
+        label: 'Healthcare',
+        icon: Activity,
+        items: [
+            { label: 'Patients', href: '/healthcare/patients', icon: Users, allowedRoles: SALES_ROLES },
+            { label: 'Appointments', href: '/healthcare/appointments', icon: Calendar, allowedRoles: SALES_ROLES },
+            { label: 'Medical Records', href: '/healthcare/medical-records', icon: ClipboardList, allowedRoles: FINANCE_ROLES },
+            { label: 'Pharmacy', href: '/healthcare/pharmacy', icon: Package, allowedRoles: STOCK_ROLES },
         ]
     }
 ];

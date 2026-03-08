@@ -26,6 +26,8 @@ interface AuthUser {
 
 interface AuthResponse {
     user: AuthUser;
+    accessToken: string;
+    refreshToken: string;
     requiresMfa?: boolean;
     tempToken?: string;
     tenants?: Array<{ id: string; name: string }>;
@@ -48,6 +50,8 @@ export default function LoginPage() {
         // SEC-006: Sensitive tokens are now in HttpOnly cookies (nexus_token / nexus_refresh).
         // We only store the user profile for UI hydration.
         localStorage.setItem("k_user", JSON.stringify(data.user))
+        localStorage.setItem("k_token", data.accessToken)
+        localStorage.setItem("k_identity", data.accessToken)
 
         const SAFE_FALLBACK = "/portal/dashboard"
         const returnTo = localStorage.getItem("return_to")

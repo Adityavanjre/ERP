@@ -1,9 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 
 // Load environment variables for standalone execution
-dotenv.config();
+const envResult = dotenv.config();
+if (envResult.error) {
+    console.warn('Note: .env file not found or could not be loaded. Relying on environment variables.');
+}
 
 /**
  * Audit Log Hash Chain Verification Utility
