@@ -4,12 +4,59 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, Mail } from "lucide-react";
+import { Printer, Mail } from "lucide-react";
 import { toast } from "sonner";
+
+interface InvoiceItem {
+    productName?: string;
+    product?: {
+        name: string;
+        sku: string;
+        gstRate?: number;
+        hsnCode?: string;
+    };
+    gstRate?: number;
+    hsnCode?: string;
+    quantity: number;
+    price: number;
+    unitPrice?: number;
+    taxableAmount?: number;
+    cgstAmount?: number;
+    sgstAmount?: number;
+    igstAmount?: number;
+}
+
+interface InvoiceDetail {
+    invoiceNumber: string;
+    subtotal?: number;
+    totalAmount: number;
+    taxAmount?: number;
+    totalGST?: number;
+    totalCGST?: number;
+    totalSGST?: number;
+    totalIGST?: number;
+    issueDate: string;
+    dueDate: string;
+    customer: {
+        firstName: string;
+        lastName: string;
+        company: string;
+        address?: string;
+        gstin?: string;
+    };
+    items: InvoiceItem[];
+}
+
+interface TaxSummaryData {
+    taxableAmount: number;
+    cgstAmount: number;
+    sgstAmount: number;
+    igstAmount: number;
+}
 
 export default function InvoicePrintPage() {
     const params = useParams();
-    const [invoice, setInvoice] = useState<any>(null);
+    const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,7 +64,7 @@ export default function InvoicePrintPage() {
             try {
                 const res = await api.get(`/accounting/invoices/${params.id}`);
                 setInvoice(res.data);
-            } catch (err) {
+            } catch {
                 toast.error("Failed to load invoice");
             } finally {
                 setLoading(false);
@@ -29,7 +76,6 @@ export default function InvoicePrintPage() {
     if (loading) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest italic">Loading invoice...</div>;
     if (!invoice) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest">Invoice not found</div>;
 
-    const subtotal = Number(invoice.subtotal || invoice.totalAmount); // Fallback
     const totalTax = Number(invoice.totalGST || invoice.taxAmount || 0);
     const totalCGST = Number(invoice.totalCGST || 0);
     const totalSGST = Number(invoice.totalSGST || 0);
@@ -42,7 +88,7 @@ export default function InvoicePrintPage() {
     };
 
     // GST-005: Consolidate mixed tax rates (5%, 12%, 18%) subtotal roll-ups reliably
-    const taxSummary = (invoice.items || []).reduce((acc: any, item: any) => {
+    const taxSummary = (invoice.items || []).reduce<Record<number, TaxSummaryData>>((acc, item) => {
         const rate = Number(item.gstRate || item.product?.gstRate || 0);
         if (rate === 0) return acc;
         if (!acc[rate]) acc[rate] = { taxableAmount: 0, cgstAmount: 0, sgstAmount: 0, igstAmount: 0 };
@@ -135,7 +181,7 @@ export default function InvoicePrintPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-100">
-                            {invoice.items && invoice.items.map((item: any, i: number) => (
+                            {invoice.items && invoice.items.map((item: InvoiceItem, i: number) => (
                                 <tr key={i}>
                                     <td className="py-4 text-zinc-700 font-medium">
                                         {item.productName || item.product?.name || "Product Item"}
@@ -165,7 +211,7 @@ export default function InvoicePrintPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-zinc-100 print:divide-zinc-200">
-                                {Object.entries(taxSummary).sort(([a], [b]) => Number(a) - Number(b)).map(([rate, data]: any) => (
+                                {Object.entries(taxSummary).sort(([a], [b]) => Number(a) - Number(b)).map(([rate, data]: [string, TaxSummaryData]) => (
                                     <tr key={rate}>
                                         <td className="py-2 px-4 text-zinc-700 font-bold">{rate}% Tax Subtotal</td>
                                         <td className="py-2 px-4 text-right text-zinc-700">₹{data.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -217,7 +263,7 @@ export default function InvoicePrintPage() {
                         <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
                         <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>
                         <p>2. Please quote the invoice number in all correspondence.</p>
-                        <p>3. Make payment to "Klypso Ecosystems".</p>
+                        <p>3. Make payment to &quot;Klypso Ecosystems&quot;.</p>
                     </div>
                     <div className="text-left md:text-right w-full md:w-auto">
                         <div className="h-16 mb-2 flex justify-start md:justify-end">

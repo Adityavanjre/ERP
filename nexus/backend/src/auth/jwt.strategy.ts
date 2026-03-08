@@ -15,7 +15,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     const jwtSecret = config.get<string>('JWT_SECRET');
     if (!jwtSecret) {
-      throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.');
+      throw new Error(
+        'FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.',
+      );
     }
     super({
       // BUG-FIX: Previously only extracted from Bearer header.
@@ -41,7 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     // 1. JTI Blacklist Check (Revocation Logic)
-    if (payload.jti && await this.security.isTokenBlacklisted(payload.jti)) {
+    if (payload.jti && (await this.security.isTokenBlacklisted(payload.jti))) {
       throw new UnauthorizedException('This session has been revoked.');
     }
 
@@ -59,7 +61,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // A tokenVersion of 0 is falsy and would bypass the check entirely.
     // Use null-coalesce on both sides to match the || 1 fallback used at sign time.
     if ((user.tokenVersion ?? 1) !== (payload.tokenVersion ?? 1)) {
-      throw new UnauthorizedException('Session revoked due to password change. Please log in again.');
+      throw new UnauthorizedException(
+        'Session revoked due to password change. Please log in again.',
+      );
     }
 
     // Pass the payload directly.

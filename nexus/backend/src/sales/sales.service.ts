@@ -13,7 +13,7 @@ export class SalesService {
     private prisma: PrismaService,
     private accountingService: AccountingService,
     private audit: AuditService,
-  ) { }
+  ) {}
 
   async createOrder(tenantId: string, data: any, user?: any) {
     const { items, customerId, idempotencyKey, ...orderData } = data;
@@ -34,8 +34,8 @@ export class SalesService {
         where: {
           tenantId_idempotencyKey: {
             tenantId,
-            idempotencyKey
-          }
+            idempotencyKey,
+          },
         },
       });
       if (existingOrder) return existingOrder;
@@ -49,7 +49,9 @@ export class SalesService {
           where: { id: customerId, tenantId, isDeleted: false },
         });
         if (!customer)
-          throw new BadRequestException(`Compliance Error: Customer ${customerId} not found or inactive. Cannot link sale to non-customer party.`);
+          throw new BadRequestException(
+            `Compliance Error: Customer ${customerId} not found or inactive. Cannot link sale to non-customer party.`,
+          );
       }
 
       // Create Order
@@ -105,7 +107,7 @@ export class SalesService {
             role,
             originalStatus: data.status,
             forcedStatus: 'Draft',
-            reason: 'Mobile write governance enforced'
+            reason: 'Mobile write governance enforced',
           },
         });
       }
@@ -157,7 +159,9 @@ export class SalesService {
     // MOBILE: Approve/Reject only. No edits. No amount changes.
     // Only Owners or Managers can approve on mobile.
     if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
-      throw new BadRequestException('Governance Error: Only Owners or Managers can approve orders from mobile.');
+      throw new BadRequestException(
+        'Governance Error: Only Owners or Managers can approve orders from mobile.',
+      );
     }
 
     const order = await this.prisma.order.findFirst({
@@ -169,7 +173,7 @@ export class SalesService {
     // Binary Approval: Pending -> Pending (wait for Web) or Rejected
     // Actually, Prompt 3 says "Approve / Reject only".
     // If we "Approve", we mark it Pending? No, Draft -> Pending.
-    // If it's already Pending, Approved? 
+    // If it's already Pending, Approved?
     // Let's assume Draft -> Pending (Ready for Web finalization) is the "Approval" from mobile.
 
     const newStatus = OrderStatus.Pending;
@@ -179,7 +183,10 @@ export class SalesService {
       data: { status: newStatus },
     });
 
-    if (updated.count === 0) throw new BadRequestException(`Order '${id}' not found or update failed.`);
+    if (updated.count === 0)
+      throw new BadRequestException(
+        `Order '${id}' not found or update failed.`,
+      );
 
     await (this.audit as any).log({
       tenantId,
@@ -203,7 +210,9 @@ export class SalesService {
     const role = user.role;
 
     if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
-      throw new BadRequestException('Governance Error: Only Owners or Managers can reject orders from mobile.');
+      throw new BadRequestException(
+        'Governance Error: Only Owners or Managers can reject orders from mobile.',
+      );
     }
 
     const order = await this.prisma.order.findFirst({
@@ -217,7 +226,10 @@ export class SalesService {
       data: { status: OrderStatus.Cancelled },
     });
 
-    if (updated.count === 0) throw new BadRequestException(`Order '${id}' not found or rejection failed.`);
+    if (updated.count === 0)
+      throw new BadRequestException(
+        `Order '${id}' not found or rejection failed.`,
+      );
 
     await (this.audit as any).log({
       tenantId,

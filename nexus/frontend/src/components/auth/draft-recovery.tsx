@@ -6,22 +6,29 @@ import { AlertCircle, RotateCcw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+interface Draft {
+    url: string;
+    method: string;
+    data: unknown;
+    timestamp: number;
+}
+
 export const DraftRecovery = () => {
-    const [draft, setDraft] = useState<any>(null);
+    const [draft, setDraft] = useState<Draft | null>(null);
     const [isReplaying, setIsReplaying] = useState(false);
 
     useEffect(() => {
         const stored = localStorage.getItem("k_draft_recovery");
         if (stored) {
             try {
-                const parsed = JSON.parse(stored);
+                const parsed = JSON.parse(stored) as Draft;
                 // Only show if the draft is less than 24 hours old
                 if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
                     setDraft(parsed);
                 } else {
                     localStorage.removeItem("k_draft_recovery");
                 }
-            } catch (e) {
+            } catch {
                 localStorage.removeItem("k_draft_recovery");
             }
         }
@@ -39,8 +46,9 @@ export const DraftRecovery = () => {
             toast.success("Work recovered and synchronized successfully!");
             localStorage.removeItem("k_draft_recovery");
             setDraft(null);
-        } catch (error: any) {
-            toast.error(`Sync failed: ${error.response?.data?.message || error.message}`);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } }, message: string };
+            toast.error(`Sync failed: ${err.response?.data?.message || err.message}`);
         } finally {
             setIsReplaying(false);
         }

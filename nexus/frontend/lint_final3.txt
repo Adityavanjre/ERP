@@ -1,0 +1,4 @@
+﻿
+> frontend@0.1.0 lint
+> node -e "process.env.NODE_PATH=require('path').resolve('node_modules'); require('module').Module._initPaths(); require('child_process').execSync('npx eslint src', {stdio:'inherit', env: {...process.env, NODE_PATH: require('path').resolve('node_modules')}})"
+

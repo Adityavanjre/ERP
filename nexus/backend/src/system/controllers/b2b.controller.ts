@@ -11,11 +11,12 @@ import { B2BGuard } from '../../common/guards/b2b.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
 @Controller('b2b')
 @UseGuards(JwtAuthGuard, B2BGuard)
 export class B2BController {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * CUSTOMER VIEW: My Invoices
@@ -24,7 +25,7 @@ export class B2BController {
   @Get('invoices')
   @Roles(Role.Owner, Role.Customer)
   async getMyInvoices(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
@@ -37,8 +38,8 @@ export class B2BController {
 
     return this.prisma.invoice.findMany({
       where: {
-        tenantId: req.user.tenantId,
-        customerId: req.user.customerId,
+        tenantId: req.user.tenantId as string,
+        customerId: req.user.customerId as string,
       },
       orderBy: { issueDate: 'desc' },
       skip,
@@ -53,7 +54,7 @@ export class B2BController {
   @Get('purchase-orders')
   @Roles(Role.Owner, Role.Supplier)
   async getMyPurchaseOrders(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
@@ -66,8 +67,8 @@ export class B2BController {
 
     return this.prisma.purchaseOrder.findMany({
       where: {
-        tenantId: req.user.tenantId,
-        supplierId: req.user.supplierId,
+        tenantId: req.user.tenantId as string,
+        supplierId: req.user.supplierId as string,
       },
       orderBy: { createdAt: 'desc' },
       skip,
@@ -80,12 +81,15 @@ export class B2BController {
    */
   @Get('dashboard')
   @Roles(Role.Owner, Role.Customer, Role.Supplier)
-  async getPortalStats(@Req() req: any) {
+  async getPortalStats(@Req() req: AuthenticatedRequest) {
     const { tenantId, customerId, supplierId, role } = req.user;
 
     if (role === Role.Customer) {
       const invoices = await this.prisma.invoice.aggregate({
-        where: { tenantId, customerId },
+        where: {
+          tenantId: tenantId as string,
+          customerId: customerId as string,
+        },
         _sum: { totalAmount: true, amountPaid: true },
         _count: { id: true },
       });
@@ -93,11 +97,16 @@ export class B2BController {
       return {
         role: 'Customer',
         totalInvoices: invoices._count.id,
-        outstandingAmount: Number(invoices._sum.totalAmount || 0) - Number(invoices._sum.amountPaid || 0),
+        outstandingAmount:
+          Number(invoices._sum.totalAmount || 0) -
+          Number(invoices._sum.amountPaid || 0),
       };
     } else {
       const pos = await this.prisma.purchaseOrder.aggregate({
-        where: { tenantId, supplierId },
+        where: {
+          tenantId: tenantId as string,
+          supplierId: supplierId as string,
+        },
         _sum: { totalAmount: true },
         _count: { id: true },
       });

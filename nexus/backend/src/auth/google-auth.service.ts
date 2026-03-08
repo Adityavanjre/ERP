@@ -26,7 +26,9 @@ export class GoogleAuthService {
 
     try {
       if (!this.clientId) {
-        throw new Error('GOOGLE_CLIENT_ID is not configured in environment variables.');
+        throw new Error(
+          'GOOGLE_CLIENT_ID is not configured in environment variables.',
+        );
       }
 
       const ticket = await this.client.verifyIdToken({
@@ -47,7 +49,9 @@ export class GoogleAuthService {
         emailVerified: payload.email_verified,
       };
     } catch (error) {
-      throw new UnauthorizedException(`Google authentication failed: ${error.message}`);
+      throw new UnauthorizedException(
+        `Google authentication failed: ${error.message}`,
+      );
     }
   }
 }

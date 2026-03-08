@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Key, Plus, Trash2, Eye, EyeOff, Copy, Check, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Key, Plus, Trash2, Copy, Check, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +34,7 @@ export function ApiKeyManager() {
         try {
             const resp = await api.get('system/api/keys');
             setKeys(resp.data);
-        } catch (err) {
+        } catch {
             toast.error('Failed to load API keys');
         } finally {
             setLoading(false);
@@ -52,7 +52,7 @@ export function ApiKeyManager() {
             setNewName('');
             fetchKeys();
             toast.success('API Key generated successfully');
-        } catch (err) {
+        } catch {
             toast.error('Failed to generate key');
         }
     };
@@ -63,7 +63,7 @@ export function ApiKeyManager() {
             await api.delete(`/system/api/keys/${id}`);
             fetchKeys();
             toast.success('Key revoked');
-        } catch (err) {
+        } catch {
             toast.error('Failed to revoke key');
         }
     };

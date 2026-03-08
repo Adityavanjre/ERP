@@ -10,11 +10,21 @@ export function LoadingBar() {
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
+    const [prevPath, setPrevPath] = useState(pathname);
+    const [prevParams, setPrevParams] = useState(searchParams.toString());
+
+    if (pathname !== prevPath || searchParams.toString() !== prevParams) {
+        setPrevPath(pathname);
+        setPrevParams(searchParams.toString());
         setLoading(true);
-        const timeout = setTimeout(() => setLoading(false), 500);
-        return () => clearTimeout(timeout);
-    }, [pathname, searchParams]);
+    }
+
+    useEffect(() => {
+        if (loading) {
+            const timeout = setTimeout(() => setLoading(false), 500);
+            return () => clearTimeout(timeout);
+        }
+    }, [loading]);
 
     if (!loading) return null;
 

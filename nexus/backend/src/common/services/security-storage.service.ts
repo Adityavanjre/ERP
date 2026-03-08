@@ -3,36 +3,36 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class SecurityStorageService {
-    constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-    async blacklistToken(jti: string, exp: number) {
-        const expiresAt = new Date(exp * 1000);
+  async blacklistToken(jti: string, exp: number) {
+    const expiresAt = new Date(exp * 1000);
 
-        // SEC-006: Use DB-backed revocation for persistence across restarts.
-        await this.prisma.revokedToken.upsert({
-            where: { jti },
-            update: { expiresAt },
-            create: { jti, expiresAt },
-        });
-    }
+    // SEC-006: Use DB-backed revocation for persistence across restarts.
+    await this.prisma.revokedToken.upsert({
+      where: { jti },
+      update: { expiresAt },
+      create: { jti, expiresAt },
+    });
+  }
 
-    async isTokenBlacklisted(jti: string): Promise<boolean> {
-        if (!jti) return false;
+  async isTokenBlacklisted(jti: string): Promise<boolean> {
+    if (!jti) return false;
 
-        const revoked = await this.prisma.revokedToken.findUnique({
-            where: { jti },
-        });
+    const revoked = await this.prisma.revokedToken.findUnique({
+      where: { jti },
+    });
 
-        return !!revoked;
-    }
+    return !!revoked;
+  }
 
-    /**
-     * Optional: Cleanup hook to purge expired tokens from the DB.
-     * Can be called from a Cron job.
-     */
-    async purgeExpiredTokens() {
-        await this.prisma.revokedToken.deleteMany({
-            where: { expiresAt: { lt: new Date() } },
-        });
-    }
+  /**
+   * Optional: Cleanup hook to purge expired tokens from the DB.
+   * Can be called from a Cron job.
+   */
+  async purgeExpiredTokens() {
+    await this.prisma.revokedToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+  }
 }

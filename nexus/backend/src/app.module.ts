@@ -134,8 +134,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(TraceMiddleware)
-      .forRoutes('*');
+    consumer.apply(TraceMiddleware).forRoutes('*');
   }
 }

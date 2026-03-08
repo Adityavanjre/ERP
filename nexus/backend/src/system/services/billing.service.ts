@@ -13,21 +13,21 @@ import { LoggingService } from '../../common/services/logging.service';
 // Plan quota definitions — Indian market aligned
 // ---------------------------------------------------------------------------
 export interface PlanQuotas {
-  maxUsers: number;              // Staff seats (Owner + staff)
-  maxCaSeats: number;            // Read-only CA/accountant seats (no billing cost)
-  maxProducts: number;           // SKUs / inventory items
-  maxInvoicesPerMonth: number;   // Sales invoices per calendar month (Infinity)
-  maxLedgerEntries: number;      // Total Transaction rows (Infinity)
-  maxExportsPerDay: number;      // Tally XML / GST exports per UTC day (Infinity)
-  maxWarehouses: number;         // Multi-branch / godown count
-  maxGstins: number;             // Maximum allowed GSTINs
-  tallyExport: boolean;          // Tally XML export allowed
-  gstReturns: boolean;           // GST summary report access
-  payroll: boolean;              // HR + Payroll module access
-  hasAutoBrs: boolean;           // Auto Bank Reconciliation enabled
-  advancedVerticals: boolean;    // NBFC, Healthcare (high-compliance verticals)
-  apiRateLimit: number;          // req/60s/IP
-  apiAccess: boolean;            // Direct API token access
+  maxUsers: number; // Staff seats (Owner + staff)
+  maxCaSeats: number; // Read-only CA/accountant seats (no billing cost)
+  maxProducts: number; // SKUs / inventory items
+  maxInvoicesPerMonth: number; // Sales invoices per calendar month (Infinity)
+  maxLedgerEntries: number; // Total Transaction rows (Infinity)
+  maxExportsPerDay: number; // Tally XML / GST exports per UTC day (Infinity)
+  maxWarehouses: number; // Multi-branch / godown count
+  maxGstins: number; // Maximum allowed GSTINs
+  tallyExport: boolean; // Tally XML export allowed
+  gstReturns: boolean; // GST summary report access
+  payroll: boolean; // HR + Payroll module access
+  hasAutoBrs: boolean; // Auto Bank Reconciliation enabled
+  advancedVerticals: boolean; // NBFC, Healthcare (high-compliance verticals)
+  apiRateLimit: number; // req/60s/IP
+  apiAccess: boolean; // Direct API token access
   priceMonthlyInr: number | null; // INR/month (null = Free)
 }
 
@@ -47,8 +47,8 @@ export const PLAN_QUOTAS: Record<PlanType, PlanQuotas> = {
     maxCaSeats: 99_999,
     maxProducts: 99_999_999,
     maxInvoicesPerMonth: 99_999_999, // UNLIMITED
-    maxLedgerEntries: 99_999_999,    // UNLIMITED
-    maxExportsPerDay: 99_999_999,    // UNLIMITED
+    maxLedgerEntries: 99_999_999, // UNLIMITED
+    maxExportsPerDay: 99_999_999, // UNLIMITED
     maxWarehouses: 99_999,
     maxGstins: 99_999,
     tallyExport: true,
@@ -67,8 +67,8 @@ export const PLAN_QUOTAS: Record<PlanType, PlanQuotas> = {
     maxCaSeats: 1,
     maxProducts: 99_999_999,
     maxInvoicesPerMonth: 99_999_999, // UNLIMITED
-    maxLedgerEntries: 99_999_999,    // UNLIMITED
-    maxExportsPerDay: 99_999_999,    // UNLIMITED
+    maxLedgerEntries: 99_999_999, // UNLIMITED
+    maxExportsPerDay: 99_999_999, // UNLIMITED
     maxWarehouses: 1,
     maxGstins: 1,
     tallyExport: true,
@@ -87,8 +87,8 @@ export const PLAN_QUOTAS: Record<PlanType, PlanQuotas> = {
     maxCaSeats: 2,
     maxProducts: 99_999_999,
     maxInvoicesPerMonth: 99_999_999, // UNLIMITED
-    maxLedgerEntries: 99_999_999,    // UNLIMITED
-    maxExportsPerDay: 99_999_999,    // UNLIMITED
+    maxLedgerEntries: 99_999_999, // UNLIMITED
+    maxExportsPerDay: 99_999_999, // UNLIMITED
     maxWarehouses: 3,
     maxGstins: 2,
     tallyExport: true,
@@ -107,8 +107,8 @@ export const PLAN_QUOTAS: Record<PlanType, PlanQuotas> = {
     maxCaSeats: 3,
     maxProducts: 99_999_999,
     maxInvoicesPerMonth: 99_999_999, // UNLIMITED
-    maxLedgerEntries: 99_999_999,    // UNLIMITED
-    maxExportsPerDay: 99_999_999,    // UNLIMITED
+    maxLedgerEntries: 99_999_999, // UNLIMITED
+    maxExportsPerDay: 99_999_999, // UNLIMITED
     maxWarehouses: 10,
     maxGstins: 5,
     tallyExport: true,
@@ -151,7 +151,7 @@ export class BillingService {
   constructor(
     private prisma: PrismaService,
     private logging: LoggingService,
-  ) { }
+  ) {}
 
   // -------------------------------------------------------------------------
   // Quota & status checks
@@ -177,7 +177,9 @@ export class BillingService {
     let daysRemaining: number | null = null;
 
     if (tenant.planExpiresAt) {
-      daysRemaining = Math.ceil((tenant.planExpiresAt.getTime() - now.getTime()) / 86_400_000);
+      daysRemaining = Math.ceil(
+        (tenant.planExpiresAt.getTime() - now.getTime()) / 86_400_000,
+      );
     }
 
     return { ...tenant, quotas, daysRemaining };
@@ -188,7 +190,10 @@ export class BillingService {
    * Fail-open: if the DB throws, we log and allow the request.
    * Billing infrastructure failure must never block legitimate business ops.
    */
-  async enforceAccess(tenantId: string, isWriteOperation: boolean): Promise<void> {
+  async enforceAccess(
+    tenantId: string,
+    isWriteOperation: boolean,
+  ): Promise<void> {
     let tenant: any;
     try {
       tenant = await this.prisma.tenant.findUnique({
@@ -196,7 +201,10 @@ export class BillingService {
         select: { subscriptionStatus: true, suspendReason: true },
       });
     } catch (err) {
-      this.logger.error(`[BillingService] DB error during access check — fail-open`, err);
+      this.logger.error(
+        `[BillingService] DB error during access check — fail-open`,
+        err,
+      );
       return;
     }
 
@@ -208,7 +216,10 @@ export class BillingService {
       );
     }
 
-    if (tenant.subscriptionStatus === SubscriptionStatus.ReadOnly && isWriteOperation) {
+    if (
+      tenant.subscriptionStatus === SubscriptionStatus.ReadOnly &&
+      isWriteOperation
+    ) {
       throw new ForbiddenException(
         'Subscription expired. Your data is safe and readable. Renew your plan at nexuserp.in to resume operations.',
       );
@@ -219,14 +230,20 @@ export class BillingService {
    * Check a specific resource quota.
    * SECURITY (SUB-001): Supports optional Transaction Client for atomic locking.
    */
-  async checkQuota(tenantId: string, resource: PlanResource, tx?: any): Promise<void> {
+  async checkQuota(
+    tenantId: string,
+    resource: PlanResource,
+    tx?: any,
+  ): Promise<void> {
     const db = tx || this.prisma;
     let tenant: any;
     try {
       // If in transaction, perform row-level lock on Tenant to prevent concurrent quota bypass
       if (tx) {
         // SEC-002: Use parameterized $queryRaw to prevent SQL injection via tenantId
-        await tx.$queryRaw(Prisma.sql`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`);
+        await tx.$queryRaw(
+          Prisma.sql`SELECT id FROM "Tenant" WHERE id = ${tenantId} FOR UPDATE`,
+        );
       }
 
       tenant = await db.tenant.findUnique({
@@ -250,7 +267,13 @@ export class BillingService {
           `SKU limit reached (${quotas.maxProducts.toLocaleString('en-IN')} on ${planName} plan). Upgrade to add more products.`,
         );
       }
-      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxProducts, planName);
+      this.emitQuotaWarningIfNearing(
+        tenantId,
+        resource,
+        count,
+        quotas.maxProducts,
+        planName,
+      );
     }
 
     if (resource === 'maxUsers') {
@@ -260,7 +283,13 @@ export class BillingService {
           `User seat limit reached (${quotas.maxUsers} on ${planName} plan). Upgrade to add more staff.`,
         );
       }
-      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxUsers, planName);
+      this.emitQuotaWarningIfNearing(
+        tenantId,
+        resource,
+        count,
+        quotas.maxUsers,
+        planName,
+      );
     }
 
     if (resource === 'maxLedgerEntries') {
@@ -270,7 +299,13 @@ export class BillingService {
           `Ledger entry limit reached (${quotas.maxLedgerEntries.toLocaleString('en-IN')} on ${planName} plan). Upgrade for higher limits.`,
         );
       }
-      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxLedgerEntries, planName);
+      this.emitQuotaWarningIfNearing(
+        tenantId,
+        resource,
+        count,
+        quotas.maxLedgerEntries,
+        planName,
+      );
     }
 
     if (resource === 'maxInvoicesPerMonth') {
@@ -284,13 +319,19 @@ export class BillingService {
           `Monthly invoice limit reached (${quotas.maxInvoicesPerMonth.toLocaleString('en-IN')} on ${planName} plan). Upgrade or wait for next month.`,
         );
       }
-      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxInvoicesPerMonth, planName);
+      this.emitQuotaWarningIfNearing(
+        tenantId,
+        resource,
+        count,
+        quotas.maxInvoicesPerMonth,
+        planName,
+      );
     }
 
     if (resource === 'maxExportsPerDay') {
       const startOfDay = new Date();
       startOfDay.setUTCHours(0, 0, 0, 0);
-      const count = await (db as any).billingEvent.count({
+      const count = await db.billingEvent.count({
         where: {
           tenantId,
           event: 'EXPORT_GENERATED',
@@ -302,7 +343,13 @@ export class BillingService {
           `Daily export limit reached (${quotas.maxExportsPerDay} on ${planName} plan). Upgrade for more Tally/GST exports.`,
         );
       }
-      this.emitQuotaWarningIfNearing(tenantId, resource, count, quotas.maxExportsPerDay, planName);
+      this.emitQuotaWarningIfNearing(
+        tenantId,
+        resource,
+        count,
+        quotas.maxExportsPerDay,
+        planName,
+      );
     }
 
     if (resource === 'payroll' && !quotas.payroll) {
@@ -311,7 +358,10 @@ export class BillingService {
       );
     }
 
-    if ((resource as any) === 'multiGstin' || (resource as any) === 'maxGstins') {
+    if (
+      (resource as any) === 'multiGstin' ||
+      (resource as any) === 'maxGstins'
+    ) {
       const count = 1; // Backend does not support multiple GSTIN models yet.
       if (count > quotas.maxGstins) {
         throw new ForbiddenException(
@@ -348,8 +398,8 @@ export class BillingService {
     if (usagePct >= thresholdPct) {
       this.logger.warn(
         `[QUOTA_WARNING] tenantId=${tenantId} resource=${resource} ` +
-        `usage=${currentCount}/${limit} (${usagePct}%) plan=${planName} ` +
-        `threshold=${thresholdPct}% action=UPGRADE_NUDGE_REQUIRED`,
+          `usage=${currentCount}/${limit} (${usagePct}%) plan=${planName} ` +
+          `threshold=${thresholdPct}% action=UPGRADE_NUDGE_REQUIRED`,
       );
     }
   }
@@ -406,7 +456,11 @@ export class BillingService {
     };
   }
 
-  async enterGracePeriod(tenantId: string, reason: string, performedBy?: string) {
+  async enterGracePeriod(
+    tenantId: string,
+    reason: string,
+    performedBy?: string,
+  ) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { plan: true, subscriptionStatus: true },
@@ -437,11 +491,21 @@ export class BillingService {
       });
     });
 
-    this.logger.warn(`[Billing] Tenant ${tenantId} entered grace period — expires ${gracePeriodEndsAt}`);
-    return { success: true, gracePeriodEndsAt, message: `Your account has a ${GRACE_PERIOD_DAYS}-day grace period. All features remain active. Please renew before ${gracePeriodEndsAt.toLocaleDateString('en-IN')}.` };
+    this.logger.warn(
+      `[Billing] Tenant ${tenantId} entered grace period — expires ${gracePeriodEndsAt}`,
+    );
+    return {
+      success: true,
+      gracePeriodEndsAt,
+      message: `Your account has a ${GRACE_PERIOD_DAYS}-day grace period. All features remain active. Please renew before ${gracePeriodEndsAt.toLocaleDateString('en-IN')}.`,
+    };
   }
 
-  async downgradeToReadOnly(tenantId: string, reason: string, performedBy?: string) {
+  async downgradeToReadOnly(
+    tenantId: string,
+    reason: string,
+    performedBy?: string,
+  ) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { plan: true, subscriptionStatus: true },
@@ -508,11 +572,17 @@ export class BillingService {
       details: { reason, performedBy },
     });
 
-    this.logger.warn(`[Billing] Tenant ${tenantId} SUSPENDED — reason: ${reason}`);
+    this.logger.warn(
+      `[Billing] Tenant ${tenantId} SUSPENDED — reason: ${reason}`,
+    );
     return { success: true, suspended: true };
   }
 
-  async reactivateTenant(tenantId: string, newPlan?: PlanType, performedBy?: string) {
+  async reactivateTenant(
+    tenantId: string,
+    newPlan?: PlanType,
+    performedBy?: string,
+  ) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { plan: true, subscriptionStatus: true },
@@ -571,7 +641,10 @@ export class BillingService {
 
   // --- Webhook Integration (SUB-002) ---
 
-  async handleSubscriptionFailure(razorpaySubscriptionId: string, reason: string) {
+  async handleSubscriptionFailure(
+    razorpaySubscriptionId: string,
+    reason: string,
+  ) {
     await this.prisma.$transaction(async (tx) => {
       // Secure Row-level lock (SYS-001) ensuring Webhook atomicity
       // SEC-WEBHOOK-002: Use tagged template for safe parameterization
@@ -581,12 +654,16 @@ export class BillingService {
       const tenant = tenants[0];
 
       if (!tenant) {
-        this.logger.error(`[Billing] Tenant not found for sub: ${razorpaySubscriptionId}`);
+        this.logger.error(
+          `[Billing] Tenant not found for sub: ${razorpaySubscriptionId}`,
+        );
         return;
       }
 
       if (tenant.subscriptionStatus !== SubscriptionStatus.ReadOnly) {
-        this.logger.warn(`[Billing] Auto-downgrading tenant ${tenant.id} due to payment failure`);
+        this.logger.warn(
+          `[Billing] Auto-downgrading tenant ${tenant.id} due to payment failure`,
+        );
 
         await tx.tenant.update({
           where: { id: tenant.id },
@@ -618,7 +695,9 @@ export class BillingService {
       if (!tenant) return;
 
       if (tenant.subscriptionStatus !== SubscriptionStatus.Active) {
-        this.logger.log(`[Billing] Auto-reactivating tenant ${tenant.id} due to payment success`);
+        this.logger.log(
+          `[Billing] Auto-reactivating tenant ${tenant.id} due to payment success`,
+        );
 
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);

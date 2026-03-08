@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import api from '../../api';
 import { Link } from 'react-router-dom';
+import type { Project, BlogPost, JobOpening, Enquiry } from '../../types';
 import {
     Users,
     Briefcase,
@@ -19,13 +20,6 @@ import {
     Lock
 } from 'lucide-react';
 
-interface Enquiry {
-    _id: string;
-    name: string;
-    service: string;
-    email: string;
-    createdAt: string;
-}
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -44,16 +38,16 @@ const Dashboard = () => {
             try {
                 // SEC-008: Centralized API instance handles Authorization
                 const [projects, blogs, jobs] = await Promise.all([
-                    api.get('/api/projects'),
-                    api.get('/api/blogs'),
-                    api.get('/api/jobs')
+                    api.get<Project[]>('/projects'),
+                    api.get<BlogPost[]>('/blogs'),
+                    api.get<JobOpening[]>('/jobs')
                 ]);
 
                 let enquiriesCount = 0;
                 let enquiriesList: Enquiry[] = [];
 
                 try {
-                    const enquiriesRes = await api.get<Enquiry[]>('/api/enquiries');
+                    const enquiriesRes = await api.get<Enquiry[]>('/enquiries');
                     enquiriesCount = enquiriesRes.data.length;
                     enquiriesList = enquiriesRes.data.slice(0, 5);
                 } catch (e) {
@@ -208,8 +202,8 @@ const Dashboard = () => {
                                             </td>
                                             <td className="px-4 sm:px-8 py-6">
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs text-zinc-400 font-bold">{new Date(enq.createdAt).toLocaleDateString()}</span>
-                                                    <span className="text-[9px] text-zinc-700 font-medium uppercase tracking-widest">{new Date(enq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    <span className="text-xs text-zinc-400 font-bold">{new Date(enq.createdAt || '').toLocaleDateString()}</span>
+                                                    <span className="text-[9px] text-zinc-700 font-medium uppercase tracking-widest">{new Date(enq.createdAt || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 sm:px-8 py-6 text-right">

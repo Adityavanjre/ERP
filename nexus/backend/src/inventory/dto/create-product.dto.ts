@@ -43,4 +43,3 @@ export class CreateProductDto {
   @MaxLength(100)
   category?: string;
 }
-

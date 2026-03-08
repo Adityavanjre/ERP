@@ -44,12 +44,21 @@ export const StandardAccounts = {
   ROUNDING_OFF: 'Rounding Off',
 };
 
-
 export const AccountSelectors = {
   INVENTORY: [StandardAccounts.INVENTORY_ASSET, 'Inventory'],
-  SALARY: [StandardAccounts.SALARY_EXPENSE, StandardAccounts.WAGES_EXPENSE, 'Payroll Expense'],
+  SALARY: [
+    StandardAccounts.SALARY_EXPENSE,
+    StandardAccounts.WAGES_EXPENSE,
+    'Payroll Expense',
+  ],
   CASH_BANK: [StandardAccounts.CASH, StandardAccounts.BANK],
-  FINISHED_GOODS: [StandardAccounts.FINISHED_GOODS_INVENTORY, StandardAccounts.INVENTORY_ASSET],
-  RAW_MATERIALS: [StandardAccounts.RAW_MATERIAL_INVENTORY, StandardAccounts.INVENTORY_ASSET],
+  FINISHED_GOODS: [
+    StandardAccounts.FINISHED_GOODS_INVENTORY,
+    StandardAccounts.INVENTORY_ASSET,
+  ],
+  RAW_MATERIALS: [
+    StandardAccounts.RAW_MATERIAL_INVENTORY,
+    StandardAccounts.INVENTORY_ASSET,
+  ],
   WIP: [StandardAccounts.WIP_INVENTORY],
 };

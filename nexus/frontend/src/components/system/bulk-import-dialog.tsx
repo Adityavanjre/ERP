@@ -1,4 +1,7 @@
-import React, { useState, useRef } from "react";
+
+"use client";
+
+import React, { useState, useRef, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -14,32 +17,46 @@ import { api } from "@/lib/api";
 import { UploadCloud, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
+interface ImportResults {
+    total: number;
+    imported: number;
+    failed: number;
+    errors: string[];
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            errors?: string[];
+            message?: string;
+            error?: string;
+        };
+    };
+}
+
+interface BulkImportDialogProps {
+    endpoint: string;
+    title: string;
+    description: string;
+    onSuccess: () => void;
+    children: React.ReactNode;
+}
+
 export function BulkImportDialog({
     endpoint,
     title,
     description,
     onSuccess,
     children,
-}: {
-    endpoint: string;
-    title: string;
-    description: string;
-    onSuccess: () => void;
-    children: React.ReactNode;
-}) {
+}: BulkImportDialogProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [importResults, setImportResults] = useState<{
-        total: number;
-        imported: number;
-        failed: number;
-        errors: string[];
-    } | null>(null);
+    const [importResults, setImportResults] = useState<ImportResults | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [csvContent, setCsvContent] = useState<string>("");
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const selected = e.target.files?.[0];
         if (!selected) return;
 
@@ -56,9 +73,9 @@ export function BulkImportDialog({
             setCsvContent(text);
         };
         reader.readAsText(selected);
-    };
+    }, []);
 
-    const handleImport = async () => {
+    const handleImport = useCallback(async () => {
         if (!csvContent) {
             toast.error("Please select a file to import");
             return;
@@ -69,7 +86,7 @@ export function BulkImportDialog({
             setImportResults(null);
 
             const response = await api.post(endpoint, { csv: csvContent });
-            const results = response.data;
+            const results = response.data as ImportResults;
 
             if (results.errors && results.errors.length > 0) {
                 setImportResults(results);
@@ -81,10 +98,11 @@ export function BulkImportDialog({
                 setCsvContent("");
                 onSuccess();
             }
-        } catch (err: any) {
-            const errorData = err.response?.data;
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            const errorData = error.response?.data;
             if (errorData?.errors && Array.isArray(errorData.errors)) {
-                setImportResults(errorData);
+                setImportResults(errorData as ImportResults);
                 toast.error(`Import failed with ${errorData.errors.length} errors.`);
             } else {
                 toast.error(errorData?.message || errorData?.error || "Failed to import data");
@@ -93,16 +111,18 @@ export function BulkImportDialog({
         } finally {
             setLoading(false);
         }
-    };
+    }, [csvContent, endpoint, onSuccess]);
+
+    const handleOpenChange = useCallback((val: boolean) => {
+        setOpen(val);
+        if (!val) {
+            setFile(null);
+            setCsvContent("");
+        }
+    }, []);
 
     return (
-        <Dialog open={open} onOpenChange={(val) => {
-            setOpen(val);
-            if (!val) {
-                setFile(null);
-                setCsvContent("");
-            }
-        }}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>

@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Zap, Wifi, WifiOff } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -21,11 +22,25 @@ interface Item {
     gstRate: number;
 }
 
+interface POSProduct {
+    id: string;
+    name: string;
+    sku: string;
+    price: string | number;
+    gstRate: number;
+}
+
+interface SyncBatchResult {
+    status: 'SUCCESS' | 'FAILED' | 'ERROR';
+    invoiceNumber: string;
+    error?: string;
+}
+
 export default function RapidBillingPage() {
     const [items, setItems] = useState<Item[]>([]);
     const [search, setSearch] = useState('');
-    const [customerId, setCustomerId] = useState<string | null>(null);
-    const [customerName, setCustomerName] = useState('Walk-in Customer');
+    const [customerId] = useState<string | null>(null);
+    const [customerName] = useState('Walk-in Customer');
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsed, setElapsed] = useState(0);
     const [isOffline, setIsOffline] = useState(false);
@@ -38,13 +53,31 @@ export default function RapidBillingPage() {
     const [isSearching, setIsSearching] = useState(false);
 
     // Manual Search State
-    const [manualSearch, setManualSearch] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [isManualSearching, setIsManualSearching] = useState(false);
+    const [manualSearch] = useState('');
+    const [, setSearchResults] = useState<POSProduct[]>([]);
+    const [, setIsManualSearching] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
     const searchRef = useRef<HTMLInputElement>(null!);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const addItem = useCallback((product: POSProduct, quantity: number = 1) => {
+        setItems(prev => {
+            const existing = prev.find(i => i.productId === product.id);
+            if (existing) {
+                return prev.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i);
+            }
+            return [...prev, {
+                productId: product.id,
+                name: product.name,
+                sku: product.sku,
+                price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+                quantity: quantity,
+                gstRate: product.gstRate || 0
+            }];
+        });
+        searchRef.current?.focus();
+    }, []);
 
     useEffect(() => {
         searchRef.current?.focus();
@@ -62,7 +95,9 @@ export default function RapidBillingPage() {
                 try {
                     const u = JSON.parse(userData);
                     setUserRole(u.role);
-                } catch (e) { }
+                } catch {
+                    // Ignore empty catch
+                }
             }
         };
         loadMetadata();
@@ -79,7 +114,7 @@ export default function RapidBillingPage() {
                 setElapsed(prev => prev + 1);
             }, 1000);
         }
-    }, [items, startTime]);
+    }, [items.length, startTime]);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,7 +145,7 @@ export default function RapidBillingPage() {
                 setTimeout(() => setLastScanFailed(false), 1000);
                 toast.error("Product not found");
             }
-        } catch (err) {
+        } catch {
             toast.error("Connection issue");
         } finally {
             setIsSearching(false);
@@ -153,24 +188,6 @@ export default function RapidBillingPage() {
         return () => clearTimeout(timer);
     }, [manualSearch]);
 
-    const addItem = (product: any, quantity: number = 1) => {
-        setItems(prev => {
-            const existing = prev.find(i => i.productId === product.id);
-            if (existing) {
-                return prev.map(i => i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i);
-            }
-            return [...prev, {
-                productId: product.id,
-                name: product.name,
-                sku: product.sku,
-                price: parseFloat(product.price),
-                quantity: quantity,
-                gstRate: product.gstRate || 0
-            }];
-        });
-        searchRef.current?.focus();
-    };
-
     const updateQty = (id: string, delta: number) => {
         setItems(prev => prev.map(i =>
             i.productId === id ? { ...i, quantity: i.quantity + delta } : i
@@ -191,15 +208,13 @@ export default function RapidBillingPage() {
     }, 0);
     const total = round2(subtotal + taxTotal);
 
-    const handleCompletePress = () => {
-        if (items.length === 0 || isSubmitting) return;
-
-        // Show confirmation for large amounts
-        if (total > 100000) {
-            setShowConfirm(true);
-        } else {
-            completeInvoice();
-        }
+    const reset = () => {
+        setItems([]);
+        setStartTime(null);
+        setElapsed(0);
+        setSearch('');
+        setCustomAmountPaid(0);
+        if (timerRef.current) clearInterval(timerRef.current);
     };
 
     const completeInvoice = async () => {
@@ -238,7 +253,7 @@ export default function RapidBillingPage() {
             await api.post('accounting/invoices', invoiceData);
             toast.success(`Success!`);
             reset();
-        } catch (err) {
+        } catch {
             toast.error("Sync Error: Saved Locally");
             const queue = JSON.parse(localStorage.getItem('billing_queue') || '[]');
             queue.push(invoiceData);
@@ -250,7 +265,18 @@ export default function RapidBillingPage() {
         }
     };
 
-    const syncQueue = async () => {
+    const handleCompletePress = () => {
+        if (items.length === 0 || isSubmitting) return;
+
+        // Show confirmation for large amounts
+        if (total > 100000) {
+            setShowConfirm(true);
+        } else {
+            completeInvoice();
+        }
+    };
+
+    const syncQueue = useCallback(async () => {
         if (isOffline || isSubmitting) return;
         const queue = JSON.parse(localStorage.getItem('billing_queue') || '[]');
         if (queue.length === 0) return;
@@ -258,39 +284,31 @@ export default function RapidBillingPage() {
         setIsSubmitting(true);
         try {
             const res = await api.post('accounting/invoices/bulk', queue);
-            const successful = new Set(res.data.results.filter((r: any) => r.status === 'SUCCESS').map((r: any) => r.invoiceNumber));
-            const alreadyDone = new Set(res.data.results.filter((r: any) => r.error === 'ALREADY_SYNCED').map((r: any) => r.invoiceNumber));
+            const results: SyncBatchResult[] = res.data.results;
+            const successful = new Set(results.filter(r => r.status === 'SUCCESS').map(r => r.invoiceNumber));
+            const alreadyDone = new Set(results.filter(r => r.error === 'ALREADY_SYNCED').map(r => r.invoiceNumber));
 
-            const remaining = queue.filter((inv: any) => !successful.has(inv.invoiceNumber) && !alreadyDone.has(inv.invoiceNumber));
+            const remaining = queue.filter((inv: { invoiceNumber: string }) => !successful.has(inv.invoiceNumber) && !alreadyDone.has(inv.invoiceNumber));
             localStorage.setItem('billing_queue', JSON.stringify(remaining));
             setPendingSync(remaining.length);
             if (successful.size > 0 || alreadyDone.size > 0) toast.success("Sync complete");
-        } catch (err) {
+        } catch {
             toast.error("Sync failed");
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [isOffline, isSubmitting]);
 
     useEffect(() => {
         if (!isOffline && pendingSync > 0) syncQueue();
-    }, [isOffline, pendingSync]);
-
-    const reset = () => {
-        setItems([]);
-        setStartTime(null);
-        setElapsed(0);
-        setSearch('');
-        setCustomAmountPaid(0);
-        if (timerRef.current) clearInterval(timerRef.current);
-    };
+    }, [isOffline, pendingSync, syncQueue]);
 
     useEffect(() => {
         const handleKeys = (e: KeyboardEvent) => {
             if (e.key === 'F1') { e.preventDefault(); handleCompletePress(); }
             if (e.key === 'F2') {
                 e.preventDefault();
-                const modes: any[] = ['CASH', 'UPI', 'CREDIT'];
+                const modes = ['CASH', 'UPI', 'CREDIT'] as const;
                 const next = modes[(modes.indexOf(paymentMode) + 1) % modes.length];
                 setPaymentMode(next);
                 toast(`Payment: ${next}`);
@@ -299,7 +317,8 @@ export default function RapidBillingPage() {
         };
         window.addEventListener('keydown', handleKeys);
         return () => window.removeEventListener('keydown', handleKeys);
-    }, [items, isOffline, elapsed, paymentMode]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [items, isOffline, elapsed, paymentMode, isSubmitting, total]);
 
     return (
         <div className="h-[calc(100vh-64px)] bg-slate-50 flex flex-col overflow-hidden font-sans antialiased text-slate-900">
@@ -320,14 +339,12 @@ export default function RapidBillingPage() {
             <main className="flex-1 flex flex-col lg:flex-row overflow-hidden overflow-y-auto lg:overflow-hidden">
                 <section className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 bg-white relative">
                     <ProductGrid onProductClick={(product) => {
-                        addItem(product);
+                        addItem(product as unknown as POSProduct);
                         toast.success(`Sent ${product.name} to cart`);
                     }} />
                 </section>
 
-                {/* Main POS Interface (Cart + Scanner) */}
                 <section className="flex-1 flex flex-col h-full bg-slate-50 relative min-w-0 pb-20 lg:pb-0 border-r border-slate-200">
-
                     <BarcodeSearch
                         search={search}
                         setSearch={setSearch}

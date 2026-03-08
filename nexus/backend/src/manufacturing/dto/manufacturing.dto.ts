@@ -1,96 +1,103 @@
-
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  Min,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 
 export class CreateMachineDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-    @IsString()
-    @IsNotEmpty()
-    type: string;
+  @IsString()
+  @IsNotEmpty()
+  type: string;
 
-    @IsString()
-    @IsOptional()
-    serialNumber?: string;
+  @IsString()
+  @IsOptional()
+  serialNumber?: string;
 
-    @IsNumber()
-    @IsOptional()
-    @Min(0)
-    capacity?: number;
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  capacity?: number;
 
-    @IsString()
-    @IsOptional()
-    location?: string;
+  @IsString()
+  @IsOptional()
+  location?: string;
 }
 
 export class CreateWorkOrderDto {
-    @IsString()
-    @IsNotEmpty()
-    bomId: string;
+  @IsString()
+  @IsNotEmpty()
+  bomId: string;
 
-    @IsNumber()
-    @Min(1)
-    quantity: number;
+  @IsNumber()
+  @Min(1)
+  quantity: number;
 
-    @IsString()
-    @IsOptional()
-    notes?: string;
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class CompleteWorkOrderDto {
-    @IsNumber()
-    @Min(0)
-    @IsOptional()
-    producedQuantity?: number;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  producedQuantity?: number;
 
-    @IsNumber()
-    @Min(0)
-    @IsOptional()
-    scrapQuantity?: number;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  scrapQuantity?: number;
 
-    @IsString()
-    @IsOptional()
-    machineId?: string;
+  @IsString()
+  @IsOptional()
+  machineId?: string;
 
-    @IsNumber()
-    @Min(0)
-    @IsOptional()
-    machineTimeHours?: number;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  machineTimeHours?: number;
 
-    @IsString()
-    @IsOptional()
-    operatorName?: string;
+  @IsString()
+  @IsOptional()
+  operatorName?: string;
 
-    @IsString()
-    @IsOptional()
-    warehouseId?: string;
+  @IsString()
+  @IsOptional()
+  warehouseId?: string;
 
-    @IsString()
-    @IsOptional()
-    idempotencyKey?: string;
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
 }
 
 export class CreateBOMItemDto {
-    @IsString()
-    @IsNotEmpty()
-    productId: string;
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
 
-    @IsNumber()
-    @Min(0.0001)
-    quantity: number;
+  @IsNumber()
+  @Min(0.0001)
+  quantity: number;
 }
 
 export class CreateBOMDto {
-    @IsString()
-    @IsNotEmpty()
-    productId: string;
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
 
-    @IsString()
-    @IsOptional()
-    description?: string;
+  @IsString()
+  @IsOptional()
+  description?: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    items: CreateBOMItemDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  items: CreateBOMItemDto[];
 }

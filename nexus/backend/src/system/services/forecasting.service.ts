@@ -18,7 +18,10 @@ export class ForecastingService {
       include: {
         invoices: {
           where: { status: 'Paid' },
-          select: { issueDate: true, payments: { select: { date: true, amount: true } } },
+          select: {
+            issueDate: true,
+            payments: { select: { date: true, amount: true } },
+          },
         },
       },
     });
@@ -27,11 +30,16 @@ export class ForecastingService {
     const DEFAULT_LAG = 15 * 24 * 60 * 60 * 1000;
 
     for (const customer of customers) {
-      const paidInvoices = customer.invoices.filter(inv => inv.payments.length > 0);
+      const paidInvoices = customer.invoices.filter(
+        (inv) => inv.payments.length > 0,
+      );
       if (paidInvoices.length > 0) {
         const totalLag = paidInvoices.reduce((sum, inv) => {
           const firstPaymentDate = inv.payments[0].date;
-          return sum + Math.max(0, firstPaymentDate.getTime() - inv.issueDate.getTime());
+          return (
+            sum +
+            Math.max(0, firstPaymentDate.getTime() - inv.issueDate.getTime())
+          );
         }, 0);
         settlementMapping.set(customer.id, totalLag / paidInvoices.length);
       } else {
@@ -44,7 +52,7 @@ export class ForecastingService {
       where: {
         tenantId,
         status: { in: ['Unpaid', 'Partial'] },
-        issueDate: { lte: horizon }
+        issueDate: { lte: horizon },
       },
       include: { customer: true },
     });
@@ -54,21 +62,26 @@ export class ForecastingService {
         projections: [],
         dailyData: [],
         totalExpected: 0,
-        insight: 'No outstanding invoices within forecast horizon.'
+        insight: 'No outstanding invoices within forecast horizon.',
       };
     }
 
-    const projections = outstandingInvoices.map(inv => {
+    const projections = outstandingInvoices.map((inv) => {
       const customerId = inv.customerId || 'UNKNOWN';
       const avgLag = settlementMapping.get(customerId) || DEFAULT_LAG;
       const expectedDate = new Date(inv.issueDate.getTime() + avgLag);
-      
+
       return {
         invoiceNumber: inv.invoiceNumber,
-        customerName: inv.customer?.company || inv.customer?.firstName || 'Walk-in',
+        customerName:
+          inv.customer?.company || inv.customer?.firstName || 'Walk-in',
         amount: Math.max(0, Number(inv.totalAmount) - Number(inv.amountPaid)),
         expectedDate,
-        probability: this.calculateProbability(inv.issueDate, expectedDate, today),
+        probability: this.calculateProbability(
+          inv.issueDate,
+          expectedDate,
+          today,
+        ),
       };
     });
 
@@ -77,12 +90,17 @@ export class ForecastingService {
     for (const proj of projections) {
       if (proj.expectedDate <= horizon) {
         const dateKey = proj.expectedDate.toISOString().split('T')[0];
-        dailyForecast.set(dateKey, (dailyForecast.get(dateKey) || 0) + proj.amount);
+        dailyForecast.set(
+          dateKey,
+          (dailyForecast.get(dateKey) || 0) + proj.amount,
+        );
       }
     }
 
     return {
-      projections: projections.sort((a, b) => a.expectedDate.getTime() - b.expectedDate.getTime()),
+      projections: projections.sort(
+        (a, b) => a.expectedDate.getTime() - b.expectedDate.getTime(),
+      ),
       dailyData: Array.from(dailyForecast.entries())
         .map(([date, amount]) => ({ date, amount }))
         .sort((a, b) => a.date.localeCompare(b.date)),
@@ -90,12 +108,16 @@ export class ForecastingService {
     };
   }
 
-  private calculateProbability(issueDate: Date, expectedDate: Date, today: Date): number {
+  private calculateProbability(
+    issueDate: Date,
+    expectedDate: Date,
+    today: Date,
+  ): number {
     const totalDuration = expectedDate.getTime() - issueDate.getTime();
     const elapsed = today.getTime() - issueDate.getTime();
-    
+
     if (elapsed > totalDuration) return 30; // Overdue items have lower immediate probability
     const ratio = elapsed / totalDuration;
-    return Math.min(95, 50 + (ratio * 40)); // Probability increases as we approach expected date
+    return Math.min(95, 50 + ratio * 40); // Probability increases as we approach expected date
   }
 }

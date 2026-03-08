@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import {
     Dialog,
@@ -23,11 +23,35 @@ import {
 import { toast } from "react-hot-toast";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 
+interface Product {
+    id: string;
+    name: string;
+}
+
+interface Stock {
+    product: Product;
+    quantity: number;
+}
+
+interface Warehouse {
+    id: string;
+    name: string;
+    stocks?: Stock[];
+}
+
 interface TransferStockDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    sourceWarehouse: any;
+    sourceWarehouse: Warehouse;
     onSuccess: () => void;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
 }
 
 export function TransferStockDialog({
@@ -37,27 +61,27 @@ export function TransferStockDialog({
     onSuccess,
 }: TransferStockDialogProps) {
     const [loading, setLoading] = useState(false);
-    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [selectedProduct, setSelectedProduct] = useState("");
     const [destinationWarehouseId, setDestinationWarehouseId] = useState("");
     const [quantity, setQuantity] = useState("");
+
+    const fetchWarehouses = useCallback(async () => {
+        try {
+            const res = await api.get<Warehouse[]>("inventory/warehouses");
+            setWarehouses(res.data.filter((w: Warehouse) => w.id !== sourceWarehouse?.id));
+        } catch (err) {
+            console.error("Failed to fetch warehouses", err);
+        }
+    }, [sourceWarehouse?.id]);
 
     useEffect(() => {
         if (open) {
             fetchWarehouses();
         }
-    }, [open]);
+    }, [open, fetchWarehouses]);
 
-    const fetchWarehouses = async () => {
-        try {
-            const res = await api.get("inventory/warehouses");
-            setWarehouses(res.data.filter((w: any) => w.id !== sourceWarehouse?.id));
-        } catch (err) {
-            console.error("Failed to fetch warehouses", err);
-        }
-    };
-
-    const handleTransfer = async () => {
+    const handleTransfer = useCallback(async () => {
         if (!selectedProduct || !destinationWarehouseId || !quantity) {
             toast.error("Please fill all fields");
             return;
@@ -78,12 +102,13 @@ export function TransferStockDialog({
             setSelectedProduct("");
             setDestinationWarehouseId("");
             setQuantity("");
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Transfer failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Transfer failed");
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedProduct, destinationWarehouseId, quantity, sourceWarehouse.id, onSuccess, onOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,7 +131,7 @@ export function TransferStockDialog({
                                 <SelectValue placeholder="Which item?" />
                             </SelectTrigger>
                             <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                                {sourceWarehouse?.stocks?.map((stock: any) => (
+                                {sourceWarehouse?.stocks?.map((stock) => (
                                     <SelectItem key={stock.product.id} value={stock.product.id} className="rounded-lg font-bold py-3">
                                         <div className="flex flex-col">
                                             <span>{stock.product.name}</span>
@@ -128,7 +153,7 @@ export function TransferStockDialog({
                                 <SelectValue placeholder="Where to?" />
                             </SelectTrigger>
                             <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                                {warehouses.map((w: any) => (
+                                {warehouses.map((w) => (
                                     <SelectItem key={w.id} value={w.id} className="rounded-lg font-bold">
                                         {w.name}
                                     </SelectItem>

@@ -1,4 +1,11 @@
-import { Controller, Get, UseGuards, Req, Query, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Query,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SystemAuditService } from './services/system-audit.service';
@@ -21,7 +28,7 @@ export class SystemController {
     private readonly saas: SaasAnalyticsService,
     private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   @Get('stats')
   @Roles(Role.Owner)
@@ -46,7 +53,12 @@ export class SystemController {
   @Get('config')
   @Roles(Role.Owner)
   async getModuleConfig(@Req() req: any) {
-    const industry = req.user.tenant?.industry || req.user.industry || req.user.tenant?.type || req.user.tenantType || 'General';
+    const industry =
+      req.user.tenant?.industry ||
+      req.user.industry ||
+      req.user.tenant?.type ||
+      req.user.tenantType ||
+      'General';
     const config = getIndustryConfig(industry);
 
     return {
@@ -82,7 +94,9 @@ export class SystemController {
   @Roles(Role.Owner)
   async getFounderDashboard(@Req() req: any) {
     if (!req.user.isSuperAdmin) {
-      throw new ForbiddenException('Management Oversight Restricted: This view is reserved for system administrators.');
+      throw new ForbiddenException(
+        'Management Oversight Restricted: This view is reserved for system administrators.',
+      );
     }
     return this.saas.getFounderDashboard();
   }

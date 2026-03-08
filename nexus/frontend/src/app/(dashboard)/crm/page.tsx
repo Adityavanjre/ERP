@@ -1,10 +1,11 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, UserPlus, Search, Filter, Mail, Building, Phone, Sparkles, X, Save, Trash2, Upload, Edit2, Scale } from "lucide-react";
+import { Users, UserPlus, Search, Mail, Building, Phone, Sparkles, Save, Trash2, Upload, Edit2, Scale } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,24 +36,66 @@ import { NumericInput } from "@/components/ui/numeric-input";
 import { useRouter } from "next/navigation";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
+interface Customer {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    company: string;
+    address: string;
+    state: string;
+    gstin: string;
+    status: string;
+    receivable: number;
+    createdAt: string;
+}
+
+interface Opportunity {
+    id: string;
+    title: string;
+    value: number;
+    stage: string;
+    customerId: string;
+    customer?: {
+        firstName: string;
+        lastName: string;
+    };
+}
+
+interface CrmStats {
+    totalCustomers: number;
+    leads: number;
+    pipelineValue: number;
+    openDeals: number;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export default function CrmPage() {
     const router = useRouter();
     const { showConfirm, setUILocked } = useUX();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [customers, setCustomers] = useState<any[]>([]);
-    const [opportunities, setOpportunities] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ totalCustomers: 0, leads: 0, pipelineValue: 0, openDeals: 0 });
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+    const [stats, setStats] = useState<CrmStats>({ totalCustomers: 0, leads: 0, pipelineValue: 0, openDeals: 0 });
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [showDealForm, setShowDealForm] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [customerToEdit, setCustomerToEdit] = useState<any>(null);
-    const [openingBalanceTarget, setOpeningBalanceTarget] = useState<any>(null);
+    const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
+    const [openingBalanceTarget, setOpeningBalanceTarget] = useState<{ id: string; name: string } | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState<"customers" | "leads">("customers");
 
     // Edit Mode
-    const [editingDeal, setEditingDeal] = useState<any>(null);
+    const [editingDeal, setEditingDeal] = useState<Opportunity | null>(null);
 
     const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "", company: "", address: "", state: "", gstin: "" });
     const [dealData, setDealData] = useState({ title: "", value: "", customerId: "", stage: "New" });
@@ -66,7 +109,7 @@ export default function CrmPage() {
     const [custPage, setCustPage] = useState(1);
     const [custTotalPages, setCustTotalPages] = useState(1);
 
-    const syncRelations = async (showLoading = false) => {
+    const syncRelations = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [custRes, statsRes, oppRes] = await Promise.all([
@@ -89,14 +132,14 @@ export default function CrmPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [custPage]);
 
     useEffect(() => {
         syncRelations(true);
         // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncRelations(false), 30000);
         return () => clearInterval(interval);
-    }, [custPage]);
+    }, [syncRelations]);
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -118,7 +161,7 @@ export default function CrmPage() {
                     console.warn(res.data.errors);
                 }
                 syncRelations(true);
-            } catch (err) {
+            } catch {
                 toast.dismiss();
                 toast.error("Import failed");
             }
@@ -136,7 +179,7 @@ export default function CrmPage() {
             setFormData({ firstName: "", lastName: "", email: "", phone: "", company: "", address: "", state: "", gstin: "" });
             toast.success(`${activeTab === 'leads' ? 'Lead' : 'Customer'} created successfully`);
             syncRelations(true);
-        } catch (err) {
+        } catch {
             toast.error("Failed to create customer");
         } finally {
             setIsSubmitting(false);
@@ -157,8 +200,9 @@ export default function CrmPage() {
                     await api.delete(`/crm/customers/${id}`);
                     toast.success("Customer deleted successfully");
                     syncRelations(true);
-                } catch (err: any) {
-                    toast.error(err.response?.data?.message || "Delete failed");
+                } catch (err: unknown) {
+                    const error = err as ApiError;
+                    toast.error(error.response?.data?.message || "Delete failed");
                 } finally {
                     setUILocked(false);
                 }
@@ -178,7 +222,7 @@ export default function CrmPage() {
             setDealData({ title: "", value: "", customerId: "", stage: "New" });
             toast.success("Deal created successfully");
             syncRelations(true);
-        } catch (err) {
+        } catch {
             toast.error("Failed to create deal");
         } finally {
             setUILocked(false);
@@ -201,7 +245,7 @@ export default function CrmPage() {
             setEditingDeal(null);
             toast.success("Deal updated");
             syncRelations(true);
-        } catch (err) {
+        } catch {
             toast.error("Failed to update deal");
             syncRelations(true);
         } finally {
@@ -215,7 +259,7 @@ export default function CrmPage() {
             await api.post(`/crm/opportunities/${id}`, { stage: newStage });
             toast.success(`Deal moved to ${newStage}`);
             syncRelations(true);
-        } catch (err) {
+        } catch {
             toast.error("Failed to move deal");
             syncRelations(true);
         }
@@ -375,7 +419,7 @@ export default function CrmPage() {
                                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest pl-1">Value (₹)</Label>
                                 <NumericInput
                                     value={Number(editingDeal.value)}
-                                    onChange={val => setEditingDeal({ ...editingDeal, value: val.toString() })}
+                                    onChange={val => setEditingDeal({ ...editingDeal, value: val })}
                                     decimal
                                     className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-12"
                                 />
@@ -526,7 +570,7 @@ export default function CrmPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredCustomers.map((c) => (
+                                    {filteredCustomers.map((c: Customer) => (
                                         <TableRow
                                             key={c.id}
                                             className="border-slate-100 hover:bg-slate-50/50 transition-all cursor-pointer group"

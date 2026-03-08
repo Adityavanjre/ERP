@@ -1,16 +1,18 @@
-import React from 'react';
-import { CheckCircle2, ShieldCheck, BarChart3, Settings2, LucideIcon } from "lucide-react";
+export interface IndustryFAQ {
+    q: string;
+    a: string;
+}
 
 export interface IndustryTheme {
-    slug: string;
     name: string;
     title: string;
     desc: string;
     features: string[];
-    iconName: string; // Storing as string to avoid React elements in constants if needed, but we can store components too.
+    icon: string;
+    faqs: IndustryFAQ[];
 }
 
-export const industryThemes: Record<string, any> = {
+export const industryThemes: Record<string, IndustryTheme> = {
     manufacturing: {
         name: "Manufacturing",
         title: "Best ERP for Manufacturing India | Production & Inventory Software",

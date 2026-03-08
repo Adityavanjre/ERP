@@ -11,25 +11,25 @@ import {
     Package,
     ArrowRightLeft,
     ChevronRight,
-    Search,
-    Loader2
+    Loader2,
+    Edit2
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from 'react-hot-toast';
 import { CreateWarehouseDialog } from '@/components/inventory/create-warehouse-dialog';
 import { EditWarehouseDialog } from '@/components/inventory/edit-warehouse-dialog';
 import { TransferStockDialog } from '@/components/inventory/transfer-stock-dialog';
 import { WarehouseDetailsDialog } from '@/components/inventory/warehouse-details-dialog';
-import { Edit2 } from 'lucide-react';
-
 export default function WarehousesPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [warehouses, setWarehouses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [editingWarehouse, setEditingWarehouse] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [transferringWarehouse, setTransferringWarehouse] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [detailsWarehouse, setDetailsWarehouse] = useState<any>(null);
 
     const syncWarehouses = async (showLoading = false) => {

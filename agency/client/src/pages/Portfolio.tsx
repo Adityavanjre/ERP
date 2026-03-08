@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../api/config';
+import api from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import type { Project } from '../types';
@@ -10,13 +9,13 @@ import { Link } from 'react-router-dom';
 import projectsData from '../data/projects.json';
 
 const Portfolio = () => {
-    const [projects, setProjects] = useState<Project[]>(projectsData as any);
+    const [projects, setProjects] = useState<Project[]>(projectsData as Project[]);
     const [filter, setFilter] = useState('All');
 
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/projects`);
+                const { data } = await api.get('/projects');
                 if (data && data.length > 0) {
                     setProjects(data);
                 }

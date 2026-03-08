@@ -5,7 +5,10 @@ import { ProjectStatus, TaskStatus, Priority } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
-  constructor(private prisma: PrismaService, private audit: AuditService) { }
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   // --- Projects ---
   async createProject(tenantId: string, data: any) {

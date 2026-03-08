@@ -11,19 +11,25 @@ export class TallyService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
-  ) { }
+  ) {}
 
   private escapeXml(unsafe: string): string {
     if (!unsafe) return '';
     return unsafe
       .replace(/[<>&"']/g, (c) => {
         switch (c) {
-          case '<': return '&lt;';
-          case '>': return '&gt;';
-          case '&': return '&amp;';
-          case '"': return '&quot;';
-          case "'": return '&apos;';
-          default: return c;
+          case '<':
+            return '&lt;';
+          case '>':
+            return '&gt;';
+          case '&':
+            return '&amp;';
+          case '"':
+            return '&quot;';
+          case "'":
+            return '&apos;';
+          default:
+            return c;
         }
       })
       .trim();
@@ -36,11 +42,19 @@ export class TallyService {
     const [tenant, invoices, purchases, payments] = await Promise.all([
       this.prisma.tenant.findUnique({ where: { id: tenantId } }),
       this.prisma.invoice.findMany({
-        where: { tenantId, issueDate: { gte: startDate, lte: endDate }, status: { not: 'Cancelled' } },
+        where: {
+          tenantId,
+          issueDate: { gte: startDate, lte: endDate },
+          status: { not: 'Cancelled' },
+        },
         include: { customer: true, items: { include: { product: true } } },
       }),
       this.prisma.purchaseOrder.findMany({
-        where: { tenantId, orderDate: { gte: startDate, lte: endDate }, status: POStatus.Received },
+        where: {
+          tenantId,
+          orderDate: { gte: startDate, lte: endDate },
+          status: POStatus.Received,
+        },
         include: { supplier: true, items: { include: { product: true } } },
       }),
       this.prisma.payment.findMany({
@@ -70,7 +84,8 @@ export class TallyService {
 
     for (const inv of invoices) {
       const invNo = inv.invoiceNumber.trim();
-      if (vchNumbers.has(invNo)) errors.push(`BLOCKER: Duplicate Invoice Number: ${invNo}`);
+      if (vchNumbers.has(invNo))
+        errors.push(`BLOCKER: Duplicate Invoice Number: ${invNo}`);
       vchNumbers.add(invNo);
 
       summary.totalSales += Number(inv.totalTaxable);
@@ -80,26 +95,38 @@ export class TallyService {
       for (const item of inv.items) {
         totalItems++;
         if (item.product.hsnCode) hsnCoverage++;
-        else warnings.push(`Invoice #${inv.invoiceNumber}: Product ${item.product.name} missing HSN Code.`);
+        else
+          warnings.push(
+            `Invoice #${inv.invoiceNumber}: Product ${item.product.name} missing HSN Code.`,
+          );
       }
 
       // Balance Check
-      const itemsSum = inv.items.reduce((s, i) => s.add(i.taxableAmount), new Decimal(0));
+      const itemsSum = inv.items.reduce(
+        (s, i) => s.add(i.taxableAmount),
+        new Decimal(0),
+      );
       const taxSum = inv.totalCGST.add(inv.totalSGST).add(inv.totalIGST);
       const diff = inv.totalAmount.minus(itemsSum.add(taxSum)).abs();
       if (diff.gt(0.011)) {
-        errors.push(`BLOCKER: Imbalanced Voucher ${invNo}. Drift: ${diff.toFixed(2)}`);
+        errors.push(
+          `BLOCKER: Imbalanced Voucher ${invNo}. Drift: ${diff.toFixed(2)}`,
+        );
       }
 
       // Backdating Check (Generic Risk)
-      const dayDiff = Math.abs(inv.issueDate.getTime() - inv.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+      const dayDiff =
+        Math.abs(inv.issueDate.getTime() - inv.createdAt.getTime()) /
+        (1000 * 60 * 60 * 24);
       if (dayDiff > 2) {
         summary.backdatedCount++;
       }
     }
 
     if (summary.backdatedCount > 0) {
-      warnings.push(`Risk: ${summary.backdatedCount} backdated invoices detected (Issue date vs entry date > 2 days).`);
+      warnings.push(
+        `Risk: ${summary.backdatedCount} backdated invoices detected (Issue date vs entry date > 2 days).`,
+      );
     }
 
     for (const po of purchases) {
@@ -118,14 +145,26 @@ export class TallyService {
     }
 
     summary.status = errors.length > 0 ? 'FAIL' : 'PASS';
-    const coverageScore = totalItems > 0 ? (hsnCoverage / totalItems) * 100 : 100;
+    const coverageScore =
+      totalItems > 0 ? (hsnCoverage / totalItems) * 100 : 100;
 
     const riskFlags = [];
-    const negStock = await this.prisma.product.count({ where: { tenantId, stock: { lt: 0 }, isDeleted: false } });
-    if (negStock > 0) riskFlags.push({ type: 'NEGATIVE_STOCK', count: negStock, severity: 'BLOCKER' });
+    const negStock = await this.prisma.product.count({
+      where: { tenantId, stock: { lt: 0 }, isDeleted: false },
+    });
+    if (negStock > 0)
+      riskFlags.push({
+        type: 'NEGATIVE_STOCK',
+        count: negStock,
+        severity: 'BLOCKER',
+      });
 
     if (summary.backdatedCount > 0) {
-      riskFlags.push({ type: 'BACKDATED', count: summary.backdatedCount, severity: 'MEDIUM' });
+      riskFlags.push({
+        type: 'BACKDATED',
+        count: summary.backdatedCount,
+        severity: 'MEDIUM',
+      });
     }
 
     return {
@@ -135,7 +174,12 @@ export class TallyService {
       summary,
       riskFlags,
       hsnCoverage: coverageScore,
-      confidenceScore: Math.max(0, 100 - (errors.length * 15) - (riskFlags.filter(f => f.severity === 'BLOCKER').length * 25)),
+      confidenceScore: Math.max(
+        0,
+        100 -
+          errors.length * 15 -
+          riskFlags.filter((f) => f.severity === 'BLOCKER').length * 25,
+      ),
     };
   }
 
@@ -149,7 +193,8 @@ export class TallyService {
       where: { tenantId, status: InvoiceStatus.Partial },
     });
     const partialAmount = partiallyPaid.reduce(
-      (sum, inv) => sum.add(new Decimal(inv.totalAmount).sub(new Decimal(inv.amountPaid))),
+      (sum, inv) =>
+        sum.add(new Decimal(inv.totalAmount).sub(new Decimal(inv.amountPaid))),
       new Decimal(0),
     );
 
@@ -177,7 +222,8 @@ export class TallyService {
     });
 
     const overdueAmount = overdue.reduce(
-      (sum, inv) => sum.add(new Decimal(inv.totalAmount).sub(new Decimal(inv.amountPaid))),
+      (sum, inv) =>
+        sum.add(new Decimal(inv.totalAmount).sub(new Decimal(inv.amountPaid))),
       new Decimal(0),
     );
 
@@ -203,7 +249,11 @@ export class TallyService {
     };
   }
 
-  async *generateTallyXmlStream(tenantId: string, month?: number, year?: number) {
+  async *generateTallyXmlStream(
+    tenantId: string,
+    month?: number,
+    year?: number,
+  ) {
     const targetMonth = month || new Date().getMonth() + 1;
     const targetYear = year || new Date().getFullYear();
     const startDate = new Date(targetYear, targetMonth - 1, 1);
@@ -217,7 +267,11 @@ export class TallyService {
     let invSkip = 0;
     while (true) {
       const invoices = await this.prisma.invoice.findMany({
-        where: { tenantId, issueDate: { gte: startDate, lte: endDate }, status: { not: 'Cancelled' } },
+        where: {
+          tenantId,
+          issueDate: { gte: startDate, lte: endDate },
+          status: { not: 'Cancelled' },
+        },
         include: { customer: true, items: { include: { product: true } } },
         take: BATCH_SIZE,
         skip: invSkip,
@@ -228,9 +282,14 @@ export class TallyService {
 
       for (const inv of invoices) {
         let chunk = '';
-        const dateStr = inv.issueDate.toISOString().split('T')[0].replace(/-/g, '');
+        const dateStr = inv.issueDate
+          .toISOString()
+          .split('T')[0]
+          .replace(/-/g, '');
         const guid = `INV-${inv.id}`;
-        const partyName = this.escapeXml(inv.customer?.company || inv.customer?.firstName || 'Cash Sales');
+        const partyName = this.escapeXml(
+          inv.customer?.company || inv.customer?.firstName || 'Cash Sales',
+        );
 
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
         chunk += `          <VOUCHER VCHTYPE="Sales" ACTION="Create" OBJVIEW="AccountingVchView">\n`;
@@ -273,21 +332,35 @@ export class TallyService {
         // Tax Ledgers
         let taxSum = new Decimal(0);
         if (inv.totalIGST.greaterThan(0)) {
-          chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, inv.totalIGST, true);
+          chunk += this.generateTaxLedger(
+            StandardAccounts.OUTPUT_IGST,
+            inv.totalIGST,
+            true,
+          );
           taxSum = taxSum.add(inv.totalIGST);
         } else {
           if (inv.totalCGST.greaterThan(0)) {
-            chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, inv.totalCGST, true);
+            chunk += this.generateTaxLedger(
+              StandardAccounts.OUTPUT_CGST,
+              inv.totalCGST,
+              true,
+            );
             taxSum = taxSum.add(inv.totalCGST);
           }
           if (inv.totalSGST.greaterThan(0)) {
-            chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, inv.totalSGST, true);
+            chunk += this.generateTaxLedger(
+              StandardAccounts.OUTPUT_SGST,
+              inv.totalSGST,
+              true,
+            );
             taxSum = taxSum.add(inv.totalSGST);
           }
         }
 
         // Rounding Ledger
-        const totalItemsAndTax = inv.items.reduce((sum, item) => sum.add(item.taxableAmount), new Decimal(0)).add(taxSum);
+        const totalItemsAndTax = inv.items
+          .reduce((sum, item) => sum.add(item.taxableAmount), new Decimal(0))
+          .add(taxSum);
         const diff = inv.totalAmount.minus(totalItemsAndTax);
         if (diff.abs().greaterThan(0)) {
           chunk += `            <ALLLEDGERENTRIES.LIST>\n`;
@@ -308,7 +381,11 @@ export class TallyService {
     let purSkip = 0;
     while (true) {
       const purchases = await this.prisma.purchaseOrder.findMany({
-        where: { tenantId, orderDate: { gte: startDate, lte: endDate }, status: POStatus.Received },
+        where: {
+          tenantId,
+          orderDate: { gte: startDate, lte: endDate },
+          status: POStatus.Received,
+        },
         include: { supplier: true, items: { include: { product: true } } },
         take: BATCH_SIZE,
         skip: purSkip,
@@ -319,7 +396,10 @@ export class TallyService {
 
       for (const po of purchases) {
         let chunk = '';
-        const dateStr = po.orderDate.toISOString().split('T')[0].replace(/-/g, '');
+        const dateStr = po.orderDate
+          .toISOString()
+          .split('T')[0]
+          .replace(/-/g, '');
         const guid = `PUR-${po.id}`;
         const partyName = this.escapeXml(po.supplier?.name || 'Supplier');
 
@@ -375,10 +455,24 @@ export class TallyService {
 
         // Tax Ledgers (Input GST)
         if (po.totalIGST.greaterThan(0)) {
-          chunk += this.generateTaxLedger(StandardAccounts.INPUT_IGST, po.totalIGST, false);
+          chunk += this.generateTaxLedger(
+            StandardAccounts.INPUT_IGST,
+            po.totalIGST,
+            false,
+          );
         } else {
-          if (po.totalCGST.greaterThan(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_CGST, po.totalCGST, false);
-          if (po.totalSGST.greaterThan(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_SGST, po.totalSGST, false);
+          if (po.totalCGST.greaterThan(0))
+            chunk += this.generateTaxLedger(
+              StandardAccounts.INPUT_CGST,
+              po.totalCGST,
+              false,
+            );
+          if (po.totalSGST.greaterThan(0))
+            chunk += this.generateTaxLedger(
+              StandardAccounts.INPUT_SGST,
+              po.totalSGST,
+              false,
+            );
         }
 
         chunk += `          </VOUCHER>\n`;
@@ -406,9 +500,14 @@ export class TallyService {
         const isReceipt = !!pay.customerId;
         const dateStr = pay.date.toISOString().split('T')[0].replace(/-/g, '');
         const partyName = isReceipt
-          ? this.escapeXml(pay.customer?.company || pay.customer?.firstName || 'Customer')
+          ? this.escapeXml(
+              pay.customer?.company || pay.customer?.firstName || 'Customer',
+            )
           : this.escapeXml(pay.supplier?.name || 'Supplier');
-        const refNo = this.escapeXml(pay.reference || (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8));
+        const refNo = this.escapeXml(
+          pay.reference ||
+            (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8),
+        );
         const vchType = isReceipt ? 'Receipt' : 'Payment';
 
         const payAmount = new Decimal(pay.amount);
@@ -462,7 +561,11 @@ export class TallyService {
     while (true) {
       const creditNotes = await this.prisma.creditNote.findMany({
         where: { tenantId, date: { gte: startDate, lte: endDate } },
-        include: { customer: true, invoice: true, items: { include: { product: true } } },
+        include: {
+          customer: true,
+          invoice: true,
+          items: { include: { product: true } },
+        },
         take: BATCH_SIZE,
         skip: cnSkip,
       });
@@ -472,7 +575,9 @@ export class TallyService {
       for (const cn of creditNotes) {
         let chunk = '';
         const dateStr = cn.date.toISOString().split('T')[0].replace(/-/g, '');
-        const partyName = this.escapeXml(cn.customer?.company || cn.customer?.firstName || 'Customer');
+        const partyName = this.escapeXml(
+          cn.customer?.company || cn.customer?.firstName || 'Customer',
+        );
         const refNo = this.escapeXml(cn.noteNumber);
 
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
@@ -515,10 +620,24 @@ export class TallyService {
         // Dr Tax (Reversal)
         const cnAny = cn as any;
         if (cnAny.totalIGST && new Decimal(cnAny.totalIGST).gt(0)) {
-          chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_IGST, cnAny.totalIGST, false);
+          chunk += this.generateTaxLedger(
+            StandardAccounts.OUTPUT_IGST,
+            cnAny.totalIGST,
+            false,
+          );
         } else {
-          if (cnAny.totalCGST && new Decimal(cnAny.totalCGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_CGST, cnAny.totalCGST, false);
-          if (cnAny.totalSGST && new Decimal(cnAny.totalSGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.OUTPUT_SGST, cnAny.totalSGST, false);
+          if (cnAny.totalCGST && new Decimal(cnAny.totalCGST).gt(0))
+            chunk += this.generateTaxLedger(
+              StandardAccounts.OUTPUT_CGST,
+              cnAny.totalCGST,
+              false,
+            );
+          if (cnAny.totalSGST && new Decimal(cnAny.totalSGST).gt(0))
+            chunk += this.generateTaxLedger(
+              StandardAccounts.OUTPUT_SGST,
+              cnAny.totalSGST,
+              false,
+            );
         }
 
         chunk += `          </VOUCHER>\n`;
@@ -533,7 +652,11 @@ export class TallyService {
     while (true) {
       const debitNotes = await this.prisma.debitNote.findMany({
         where: { tenantId, date: { gte: startDate, lte: endDate } },
-        include: { supplier: true, purchaseOrder: true, items: { include: { product: true } } },
+        include: {
+          supplier: true,
+          purchaseOrder: true,
+          items: { include: { product: true } },
+        },
         take: BATCH_SIZE,
         skip: dnSkip,
       });
@@ -584,10 +707,24 @@ export class TallyService {
         // Cr Tax (Reversal)
         const dnAny = dn as any;
         if (dnAny.totalIGST && new Decimal(dnAny.totalIGST).gt(0)) {
-          chunk += this.generateTaxLedger(StandardAccounts.INPUT_IGST, dnAny.totalIGST, true);
+          chunk += this.generateTaxLedger(
+            StandardAccounts.INPUT_IGST,
+            dnAny.totalIGST,
+            true,
+          );
         } else {
-          if (dnAny.totalCGST && new Decimal(dnAny.totalCGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_CGST, dnAny.totalCGST, true);
-          if (dnAny.totalSGST && new Decimal(dnAny.totalSGST).gt(0)) chunk += this.generateTaxLedger(StandardAccounts.INPUT_SGST, dnAny.totalSGST, true);
+          if (dnAny.totalCGST && new Decimal(dnAny.totalCGST).gt(0))
+            chunk += this.generateTaxLedger(
+              StandardAccounts.INPUT_CGST,
+              dnAny.totalCGST,
+              true,
+            );
+          if (dnAny.totalSGST && new Decimal(dnAny.totalSGST).gt(0))
+            chunk += this.generateTaxLedger(
+              StandardAccounts.INPUT_SGST,
+              dnAny.totalSGST,
+              true,
+            );
         }
 
         chunk += `          </VOUCHER>\n`;
@@ -601,8 +738,16 @@ export class TallyService {
     let woSkip = 0;
     while (true) {
       const workOrders = await this.prisma.workOrder.findMany({
-        where: { tenantId, endDate: { gte: startDate, lte: endDate }, status: 'Completed' },
-        include: { bom: { include: { product: true, items: { include: { product: true } } } } },
+        where: {
+          tenantId,
+          endDate: { gte: startDate, lte: endDate },
+          status: 'Completed',
+        },
+        include: {
+          bom: {
+            include: { product: true, items: { include: { product: true } } },
+          },
+        },
         take: BATCH_SIZE,
         skip: woSkip,
       });
@@ -611,7 +756,10 @@ export class TallyService {
 
       for (const wo of workOrders) {
         let chunk = '';
-        const dateStr = wo.endDate!.toISOString().split('T')[0].replace(/-/g, '');
+        const dateStr = wo
+          .endDate!.toISOString()
+          .split('T')[0]
+          .replace(/-/g, '');
         const guid = `WO-${wo.id}`;
         const vchNo = wo.orderNumber;
 
@@ -635,7 +783,11 @@ export class TallyService {
 
         // CONSUMPTION (Raw Materials)
         for (const item of wo.bom.items) {
-          const consumedQty = new Decimal(item.quantity as any).mul(new Decimal(wo.producedQuantity as any).add(new Decimal(wo.scrapQuantity as any)));
+          const consumedQty = new Decimal(item.quantity as any).mul(
+            new Decimal(wo.producedQuantity as any).add(
+              new Decimal(wo.scrapQuantity as any),
+            ),
+          );
           chunk += `            <INVENTORYENTRIES.LIST>\n`;
           chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
           chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
@@ -657,7 +809,7 @@ export class TallyService {
 
   async exportTallyXml(tenantId: string, month?: number, year?: number) {
     const stream = this.generateTallyXmlStream(tenantId, month, year);
-    // To support backward compatibility with tests waiting for a string 
+    // To support backward compatibility with tests waiting for a string
     // while letting controller utilize streams (via readable handling or converting back)
     // Actually, we can return the StreamableFile but let's just collect it if we need string.
     let result = '';
@@ -671,11 +823,13 @@ export class TallyService {
     const sign = isSales ? '' : '-';
     const deemed = isSales ? 'NO' : 'YES';
 
-    return `            <ALLLEDGERENTRIES.LIST>\n` +
+    return (
+      `            <ALLLEDGERENTRIES.LIST>\n` +
       `              <LEDGERNAME>${this.escapeXml(name)}</LEDGERNAME>\n` +
       `              <ISDEEMEDPOSITIVE>${deemed}</ISDEEMEDPOSITIVE>\n` +
       `              <AMOUNT>${sign}${amount}</AMOUNT>\n` +
-      `            </ALLLEDGERENTRIES.LIST>\n`;
+      `            </ALLLEDGERENTRIES.LIST>\n`
+    );
   }
 
   async getAuditorDashboard(tenantId: string, month: number, year: number) {
@@ -687,7 +841,9 @@ export class TallyService {
         where: { tenantId_month_year: { tenantId, month, year } },
       }),
       this.validateTallyData(tenantId, month, year),
-      this.prisma.product.findMany({ where: { tenantId, stock: { lt: 0 }, isDeleted: false } }),
+      this.prisma.product.findMany({
+        where: { tenantId, stock: { lt: 0 }, isDeleted: false },
+      }),
     ]);
 
     return {
@@ -703,17 +859,34 @@ export class TallyService {
     };
   }
 
-  async togglePeriodLock(tenantId: string, month: number, year: number, userId: string, action: 'LOCK' | 'UNLOCK', reason?: string) {
+  async togglePeriodLock(
+    tenantId: string,
+    month: number,
+    year: number,
+    userId: string,
+    action: 'LOCK' | 'UNLOCK',
+    reason?: string,
+  ) {
     const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
 
     if (action === 'LOCK') {
       const validation = await this.validateTallyData(tenantId, month, year);
-      if (!validation.isValid) throw new BadRequestException('Cannot lock period with critical validation errors.');
+      if (!validation.isValid)
+        throw new BadRequestException(
+          'Cannot lock period with critical validation errors.',
+        );
 
       const lock = await this.prisma.periodLock.upsert({
         where: { tenantId_month_year: { tenantId, month, year } },
         update: { isLocked: true, lockedAt: new Date(), lockedBy: userId },
-        create: { tenantId, month, year, isLocked: true, lockedAt: new Date(), lockedBy: userId },
+        create: {
+          tenantId,
+          month,
+          year,
+          isLocked: true,
+          lockedAt: new Date(),
+          lockedBy: userId,
+        },
       });
 
       // PERIOD-CACHE-001: Invalidate LedgerService cache
@@ -738,21 +911,42 @@ export class TallyService {
     // Accounts
     let skip = 0;
     while (true) {
-      const accounts = await this.prisma.account.findMany({ where: { tenantId }, skip, take: BATCH_SIZE, orderBy: { name: 'asc' } });
+      const accounts = await this.prisma.account.findMany({
+        where: { tenantId },
+        skip,
+        take: BATCH_SIZE,
+        orderBy: { name: 'asc' },
+      });
       if (accounts.length === 0) break;
       for (const acc of accounts) {
         let chunk = '';
         let tallyGroup = acc.type.toString();
         const escapedName = this.escapeXml(acc.name);
-        if (acc.name === StandardAccounts.ACCOUNTS_RECEIVABLE) tallyGroup = 'Sundry Debtors';
-        if (acc.name === StandardAccounts.ACCOUNTS_PAYABLE) tallyGroup = 'Sundry Creditors';
+        if (acc.name === StandardAccounts.ACCOUNTS_RECEIVABLE)
+          tallyGroup = 'Sundry Debtors';
+        if (acc.name === StandardAccounts.ACCOUNTS_PAYABLE)
+          tallyGroup = 'Sundry Creditors';
         if (acc.type === AccountType.Revenue) tallyGroup = 'Sales Accounts';
         if (acc.type === AccountType.Expense) tallyGroup = 'Direct Expenses';
-        if (acc.name === StandardAccounts.BANK || acc.name === StandardAccounts.CASH) tallyGroup = 'Cash-in-Hand';
+        if (
+          acc.name === StandardAccounts.BANK ||
+          acc.name === StandardAccounts.CASH
+        )
+          tallyGroup = 'Cash-in-Hand';
 
-        if (acc.name.includes('GST') || acc.name.includes('TDS')) tallyGroup = 'Duties & Taxes';
-        if (acc.name.includes('Fixed Asset') || acc.name === StandardAccounts.FIXED_ASSETS) tallyGroup = 'Fixed Assets';
-        if (acc.name.includes('Inventory') || acc.name.includes('Stock') || acc.name === StandardAccounts.INVENTORY_ASSET) tallyGroup = 'Stock-in-Hand';
+        if (acc.name.includes('GST') || acc.name.includes('TDS'))
+          tallyGroup = 'Duties & Taxes';
+        if (
+          acc.name.includes('Fixed Asset') ||
+          acc.name === StandardAccounts.FIXED_ASSETS
+        )
+          tallyGroup = 'Fixed Assets';
+        if (
+          acc.name.includes('Inventory') ||
+          acc.name.includes('Stock') ||
+          acc.name === StandardAccounts.INVENTORY_ASSET
+        )
+          tallyGroup = 'Stock-in-Hand';
 
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
         chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
@@ -769,12 +963,24 @@ export class TallyService {
     // Customers
     skip = 0;
     while (true) {
-      const customers = await this.prisma.customer.findMany({ where: { tenantId, isDeleted: false }, include: { openingBalances: true }, skip, take: BATCH_SIZE });
+      const customers = await this.prisma.customer.findMany({
+        where: { tenantId, isDeleted: false },
+        include: { openingBalances: true },
+        skip,
+        take: BATCH_SIZE,
+      });
       if (customers.length === 0) break;
       for (const cust of customers) {
         let chunk = '';
-        const escapedName = this.escapeXml(cust.company || `${cust.firstName} ${cust.lastName}`);
-        const ob = cust.openingBalances.reduce((sum, b) => sum.add(new Decimal(b.amount as any)), new Decimal(0)).toFixed(2);
+        const escapedName = this.escapeXml(
+          cust.company || `${cust.firstName} ${cust.lastName}`,
+        );
+        const ob = cust.openingBalances
+          .reduce(
+            (sum, b) => sum.add(new Decimal(b.amount as any)),
+            new Decimal(0),
+          )
+          .toFixed(2);
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
         chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
         chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
@@ -783,7 +989,8 @@ export class TallyService {
         chunk += `            <GSTREGISTRATIONTYPE>${cust.gstin ? 'Regular' : 'Unregistered'}</GSTREGISTRATIONTYPE>\n`;
         chunk += `            <LEDGERSTATENAME>${this.escapeXml(mapTallyState(cust.state))}</LEDGERSTATENAME>\n`;
         chunk += `            <STATENAME>${this.escapeXml(mapTallyState(cust.state))}</STATENAME>\n`;
-        if (cust.gstin) chunk += `            <PARTYGSTIN>${this.escapeXml(cust.gstin)}</PARTYGSTIN>\n`;
+        if (cust.gstin)
+          chunk += `            <PARTYGSTIN>${this.escapeXml(cust.gstin)}</PARTYGSTIN>\n`;
         chunk += `          </LEDGER>\n`;
         chunk += `        </TALLYMESSAGE>\n`;
         yield chunk;
@@ -794,12 +1001,22 @@ export class TallyService {
     // Suppliers
     skip = 0;
     while (true) {
-      const suppliers = await this.prisma.supplier.findMany({ where: { tenantId, isDeleted: false }, include: { openingBalances: true }, skip, take: BATCH_SIZE });
+      const suppliers = await this.prisma.supplier.findMany({
+        where: { tenantId, isDeleted: false },
+        include: { openingBalances: true },
+        skip,
+        take: BATCH_SIZE,
+      });
       if (suppliers.length === 0) break;
       for (const supp of suppliers) {
         let chunk = '';
         const escapedName = this.escapeXml(supp.name);
-        const ob = supp.openingBalances.reduce((sum, b) => sum.add(new Decimal(b.amount as any)), new Decimal(0)).toFixed(2);
+        const ob = supp.openingBalances
+          .reduce(
+            (sum, b) => sum.add(new Decimal(b.amount as any)),
+            new Decimal(0),
+          )
+          .toFixed(2);
         chunk += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
         chunk += `          <LEDGER NAME="${escapedName}" ACTION="Create">\n`;
         chunk += `            <NAME.LIST>\n<NAME>${escapedName}</NAME>\n</NAME.LIST>\n`;
@@ -807,7 +1024,8 @@ export class TallyService {
         chunk += `            <OPENINGBALANCE>${ob}</OPENINGBALANCE>\n`;
         chunk += `            <LEDGERSTATENAME>${this.escapeXml(mapTallyState(supp.state))}</LEDGERSTATENAME>\n`;
         chunk += `            <STATENAME>${this.escapeXml(mapTallyState(supp.state))}</STATENAME>\n`;
-        if (supp.gstin) chunk += `            <PARTYGSTIN>${this.escapeXml(supp.gstin)}</PARTYGSTIN>\n`;
+        if (supp.gstin)
+          chunk += `            <PARTYGSTIN>${this.escapeXml(supp.gstin)}</PARTYGSTIN>\n`;
         chunk += `          </LEDGER>\n`;
         chunk += `        </TALLYMESSAGE>\n`;
         yield chunk;
@@ -818,7 +1036,11 @@ export class TallyService {
     // Products
     skip = 0;
     while (true) {
-      const products = await this.prisma.product.findMany({ where: { tenantId, isDeleted: false }, skip, take: BATCH_SIZE });
+      const products = await this.prisma.product.findMany({
+        where: { tenantId, isDeleted: false },
+        skip,
+        take: BATCH_SIZE,
+      });
       if (products.length === 0) break;
       for (const prod of products) {
         let chunk = '';

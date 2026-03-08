@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,35 +47,35 @@ export function CreateWorkOrderDialog({ refreshData, children }: CreateWorkOrder
         }
     }, [open]);
 
+    const fetchBOMs = async () => {
+        try {
+            const { data } = await api.get('/manufacturing/boms');
+            setBoms(data);
+        } catch {
+            toast.error("Failed to load BOMs");
+        }
+    };
+
+    const checkShortages = useCallback(async () => {
+        if (!selectedBomId) return;
+        setChecking(true);
+        try {
+            const { data } = await api.get(`/manufacturing/boms/${selectedBomId}/shortages?quantity=${quantity}`);
+            setShortages(data);
+        } catch {
+            console.error("Failed to check shortages");
+        } finally {
+            setChecking(false);
+        }
+    }, [selectedBomId, quantity]);
+
     useEffect(() => {
         if (selectedBomId && quantity > 0) {
             checkShortages();
         } else {
             setShortages([]);
         }
-    }, [selectedBomId, quantity]);
-
-    const fetchBOMs = async () => {
-        try {
-            const { data } = await api.get('/manufacturing/boms');
-            setBoms(data);
-        } catch (err) {
-            toast.error("Failed to load BOMs");
-        }
-    };
-
-    const checkShortages = async () => {
-        if (!selectedBomId) return;
-        setChecking(true);
-        try {
-            const { data } = await api.get(`/manufacturing/boms/${selectedBomId}/shortages?quantity=${quantity}`);
-            setShortages(data);
-        } catch (err) {
-            console.error("Failed to check shortages");
-        } finally {
-            setChecking(false);
-        }
-    };
+    }, [selectedBomId, quantity, checkShortages]);
 
     const handleSubmit = async () => {
         if (!selectedBomId) {

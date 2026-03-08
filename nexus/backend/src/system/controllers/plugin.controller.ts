@@ -26,7 +26,7 @@ export class PluginController {
   @Get()
   async listPlugins() {
     return this.prisma.plugin.findMany({
-        orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
   }
 

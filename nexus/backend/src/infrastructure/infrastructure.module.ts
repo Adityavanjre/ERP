@@ -14,13 +14,13 @@ import { WebhookDlqProcessor } from './queue/webhook-dlq.processor';
  */
 @Global()
 @Module({
-    imports: [QueueModule],
-    providers: [
-        LoggingService,
-        BulkImportProcessor,
-        YearCloseProcessor,
-        WebhookDlqProcessor,
-    ],
-    exports: [LoggingService, QueueModule],
+  imports: [QueueModule],
+  providers: [
+    LoggingService,
+    BulkImportProcessor,
+    YearCloseProcessor,
+    WebhookDlqProcessor,
+  ],
+  exports: [LoggingService, QueueModule],
 })
-export class InfrastructureModule { }
+export class InfrastructureModule {}

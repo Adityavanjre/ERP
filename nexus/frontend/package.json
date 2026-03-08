@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
-    "lint": "eslint"
+    "lint": "node -e \"process.env.NODE_PATH=require('path').resolve('node_modules'); require('module').Module._initPaths(); require('child_process').execSync('npx eslint src', {stdio:'inherit', env: {...process.env, NODE_PATH: require('path').resolve('node_modules')}})\"",
+    "lint:strict": "npm run lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -35,6 +36,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "use-sync-external-store": "^1.6.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

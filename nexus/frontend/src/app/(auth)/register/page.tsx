@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -36,7 +35,6 @@ type UserFormData = z.infer<typeof userSchema>;
 type CompanyFormData = z.infer<typeof companySchema>;
 
 export default function RegisterPage() {
-    const router = useRouter();
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [userData, setUserData] = useState<UserFormData | null>(null);
@@ -46,7 +44,7 @@ export default function RegisterPage() {
     // PERF-002: Trap browser history payload states natively protecting the multi-step form data
     useEffect(() => {
         if (typeof window === 'undefined') return;
-        const handlePopState = (e: PopStateEvent) => {
+        const handlePopState = (_e: PopStateEvent) => {
             if (step === 2) {
                 // Intercept back button allowing user to return to Step 1 
                 // natively without crashing out to login/index
@@ -95,7 +93,7 @@ export default function RegisterPage() {
         setIsLoading(true);
         try {
             // Exclude confirmPassword from the API payload
-            const { confirmPassword, ...validUserData } = userData;
+            const { confirmPassword: _confirmPassword, ...validUserData } = userData;
 
             const payload = {
                 ...validUserData,
@@ -116,9 +114,10 @@ export default function RegisterPage() {
 
             // Redirect
             window.location.href = '/portal/dashboard';
-        } catch (error: any) {
-            console.error(error);
-            if (error.response?.status === 409) {
+        } catch (error: unknown) {
+            const err = error as { response?: { status?: number; data?: { message?: string } }; message?: string };
+            console.error(err);
+            if (err.response?.status === 409) {
                 // Set specific error on the email field
                 setError('email', {
                     type: 'manual',
@@ -129,7 +128,7 @@ export default function RegisterPage() {
             }
 
             toast.error('Registration failed', {
-                description: error.response?.data?.message || error.message || 'Something went wrong. Please try again.',
+                description: err.response?.data?.message || err.message || 'Something went wrong. Please try again.',
             });
         } finally {
             setIsLoading(false);
@@ -219,7 +218,7 @@ export default function RegisterPage() {
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Password Requirements</p>
                                         <div className="grid grid-cols-1 gap-2">
                                             {[
-                                                { label: "At least 8 characters", valid: (registerUser("password").onChange as any)?.target?.value?.length >= 8 || watch("password")?.length >= 8 },
+                                                { label: "At least 8 characters", valid: (watch("password")?.length || 0) >= 8 },
                                                 { label: "One uppercase letter", valid: /[A-Z]/.test(watch("password") || "") },
                                                 { label: "One number", valid: /[0-9]/.test(watch("password") || "") },
                                                 { label: "One special character", valid: /[^a-zA-Z0-9]/.test(watch("password") || "") },

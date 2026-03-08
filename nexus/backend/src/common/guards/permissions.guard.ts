@@ -21,7 +21,7 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private logging: LoggingService,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -46,12 +46,14 @@ export class PermissionsGuard implements CanActivate {
     if (!requiredPermissions) {
       // Fail-Secure: If no permissions defined and on mobile, block to prevent silent bypass
       if (channel === 'MOBILE') {
-        const moduleName = this.reflector.getAllAndOverride<string>(MODULE_KEY, [
-          context.getHandler(),
-          context.getClass(),
-        ]);
+        const moduleName = this.reflector.getAllAndOverride<string>(
+          MODULE_KEY,
+          [context.getHandler(), context.getClass()],
+        );
 
-        const isCoreModule = ['auth', 'system', 'health'].includes(moduleName || '');
+        const isCoreModule = ['auth', 'system', 'health'].includes(
+          moduleName || '',
+        );
         if (!isCoreModule) {
           await this.logging.log({
             userId: user?.sub,
@@ -59,11 +61,15 @@ export class PermissionsGuard implements CanActivate {
             action: 'SECURITY_VIOLATION_NO_PERMISSIONS_ENROLLED',
             resource: context.getClass().name,
             channel: 'MOBILE',
-            details: { handler: context.getHandler().name, reason: 'Endpoint lacks explicit permission enrollment for Mobile' },
+            details: {
+              handler: context.getHandler().name,
+              reason:
+                'Endpoint lacks explicit permission enrollment for Mobile',
+            },
             ipAddress: request.ip,
           });
           throw new ForbiddenException(
-            'Security Violation: This endpoint is not explicitly enrolled with permissions for Mobile access. Please use the Web interface.'
+            'Security Violation: This endpoint is not explicitly enrolled with permissions for Mobile access. Please use the Web interface.',
           );
         }
       }
@@ -82,9 +88,16 @@ export class PermissionsGuard implements CanActivate {
     );
 
     // Special Case: Staff on Mobile cannot DELETE or LOCK_MONTH even if role has it usually
-    if (channel === 'MOBILE' && user.role !== Role.Owner && user.role !== Role.Manager) {
-      const restrictedOnMobile = [Permission.DELETE_INVOICE, Permission.LOCK_MONTH];
-      if (requiredPermissions.some(p => restrictedOnMobile.includes(p))) {
+    if (
+      channel === 'MOBILE' &&
+      user.role !== Role.Owner &&
+      user.role !== Role.Manager
+    ) {
+      const restrictedOnMobile = [
+        Permission.DELETE_INVOICE,
+        Permission.LOCK_MONTH,
+      ];
+      if (requiredPermissions.some((p) => restrictedOnMobile.includes(p))) {
         hasPermission = false;
       }
     }
@@ -101,7 +114,7 @@ export class PermissionsGuard implements CanActivate {
           required: requiredPermissions,
           userRole: user.role,
           handler: context.getHandler().name,
-          reason: 'Insufficient permissions for role/channel'
+          reason: 'Insufficient permissions for role/channel',
         },
         ipAddress: request.ip,
       });
@@ -109,9 +122,10 @@ export class PermissionsGuard implements CanActivate {
       // 2. Logic to check for multiple violations (simplified) -> Founder Notification
       // In a real system, you'd trigger a WhatsApp/Email service here if count > 3
 
-      const message = channel === 'MOBILE'
-        ? `This action (${requiredPermissions.join(', ')}) is intentionally restricted on Mobile for safety and audit integrity. Please switch to the Web interface.`
-        : `Insufficient permissions. Required: ${requiredPermissions.join(', ')}`;
+      const message =
+        channel === 'MOBILE'
+          ? `This action (${requiredPermissions.join(', ')}) is intentionally restricted on Mobile for safety and audit integrity. Please switch to the Web interface.`
+          : `Insufficient permissions. Required: ${requiredPermissions.join(', ')}`;
 
       throw new ForbiddenException(message);
     }

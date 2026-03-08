@@ -6,12 +6,9 @@ import {
     Plus,
     Settings,
     Activity,
-    AlertTriangle,
-    CheckCircle2,
     Clock,
     Wrench,
-    Search,
-    Filter
+    Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -27,13 +24,6 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
@@ -74,7 +64,7 @@ export default function MachinesPage() {
                 health: Math.floor(Math.random() * 20) + 80 // 80-100%
             }));
             setMachines(enriched);
-        } catch (error) {
+        } catch {
             toast.error("Failed to load machines");
         } finally {
             setLoading(false);
@@ -92,7 +82,7 @@ export default function MachinesPage() {
             setIsAddOpen(false);
             fetchMachines();
             setNewMachine({ name: "", code: "", type: "", hourlyRate: 0, status: "Idle" });
-        } catch (error) {
+        } catch {
             toast.error("Registration failed");
         }
     };

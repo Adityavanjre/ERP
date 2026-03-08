@@ -9,20 +9,26 @@ const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-let isRefreshing = false;
-let failedQueue: any[] = [];
+interface FailedRequest {
+  resolve: (value?: unknown) => void;
+  reject: (reason: unknown) => void;
+}
 
-const processQueue = (error: any, token: string | null = null) => {
+let isRefreshing = false;
+let failedQueue: FailedRequest[] = [];
+
+const processQueue = (error: unknown) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve();
     }
   });
   failedQueue = [];
@@ -41,19 +47,11 @@ function getCookie(name: string): string | null {
 
 const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 
-// Add a request interceptor to add the JWT token to headers.
-// IMPORTANT: Only set Authorization if not already explicitly set by the caller.
-// This prevents the interceptor from overwriting per-request headers (e.g. in TenantSelector).
 api.interceptors.request.use(
   (config) => {
-    if (!config.headers.Authorization) {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
-      // Guard against stored strings like "undefined" or "null" from previous broken sessions
-      const isValidToken = token && token !== 'undefined' && token !== 'null' && token.startsWith('ey');
-      if (isValidToken) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // SEC-006: Authorization header injection from localStorage removed.
+    // The backend now relies on HttpOnly cookies (nexus_token) sent via withCredentials: true.
+    // This dramatically reduces XSS risk by keeping tokens out of reach of client-side JS.
 
     // FE-004: Attach the CSRF token on mutating requests so the backend CsrfGuard
     // double-submit cookie check can pass for web-channel cookie-based sessions.
@@ -144,9 +142,9 @@ api.interceptors.response.use(
             return new Promise((resolve, reject) => {
               failedQueue.push({ resolve, reject });
             })
-              .then(token => {
+              .then(() => {
                 originalRequest._retry = true;
-                originalRequest.headers.Authorization = `Bearer ${token}`;
+                // Cookie will be sent automatically
                 return api(originalRequest);
               })
               .catch(err => Promise.reject(err));
@@ -157,40 +155,24 @@ api.interceptors.response.use(
 
           return new Promise((resolve, reject) => {
             // Attempt to refresh token
-            // Note: withCredentials is vital here if we rely on HttpOnly nexus_refresh cookie.
+            // Note: withCredentials is vital here because we rely on the HttpOnly nexus_refresh cookie.
             axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true })
               .then(({ data }) => {
-                const newToken = data.accessToken;
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('k_token', newToken);
-                  if (data.user) localStorage.setItem('k_user', JSON.stringify(data.user));
+                // SEC-006: Backend auto-updates cookies upon successful refresh.
+                // We no longer manually update localStorage with tokens.
+                if (typeof window !== 'undefined' && data.user) {
+                  localStorage.setItem('k_user', JSON.stringify(data.user));
                 }
 
-                // SEC-INTERCEPT-03: Do NOT mutate api.defaults.headers.common.
-                // Setting a persistent default on the axios instance caches the token
-                // at module level. If a user logs out and a new user logs in within
-                // the same JS context, the stale token from the previous session would
-                // still be attached to all requests. Token must always be read fresh
-                // from localStorage via the request interceptor above.
-                originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
                 // SEC-INTERCEPT-04: Reset isRefreshing BEFORE draining the queue.
-                // If reset in .finally() (after queue drains), queued retries that
-                // receive another 401 would find isRefreshing=false and incorrectly
-                // re-enter the refresh flow, causing a second concurrent refresh.
                 isRefreshing = false;
-                processQueue(null, newToken);
+                processQueue(null);
                 resolve(api(originalRequest));
               })
               .catch((err) => {
                 isRefreshing = false;
-                processQueue(err, null);
+                processQueue(err);
 
-                // SEC-INTERCEPT-05: Dispatch session-expired exactly once.
-                // processQueue already rejects all queued promises synchronously.
-                // Those callers will receive a rejection, but because _retry is now
-                // set on them (added above in the queue branch), they cannot
-                // re-enter this 401 branch and fire the event again.
                 if (typeof window !== 'undefined') {
                   // AUTH-003: Buffer mutating payloads before evicting
                   if (MUTATING_METHODS.has(originalRequest.method?.toLowerCase()) && originalRequest.data) {
@@ -201,9 +183,8 @@ api.interceptors.response.use(
                         data: typeof originalRequest.data === 'string' ? JSON.parse(originalRequest.data) : originalRequest.data,
                         timestamp: Date.now()
                       }));
-                    } catch (e) { console.error("Draft buffer overflow", e); }
+                    } catch { console.error("Draft buffer overflow"); }
                   }
-                  localStorage.removeItem('k_token');
                   localStorage.removeItem('k_user');
                   window.dispatchEvent(new CustomEvent('session-expired'));
                 }
@@ -220,7 +201,9 @@ api.interceptors.response.use(
             data: typeof originalRequest.data === 'string' ? JSON.parse(originalRequest.data) : originalRequest.data,
             timestamp: Date.now()
           }));
-        } catch (e) { }
+        } catch {
+          console.error("Draft buffer overflow: localStorage is full");
+        }
       }
     }
     return Promise.reject(error);

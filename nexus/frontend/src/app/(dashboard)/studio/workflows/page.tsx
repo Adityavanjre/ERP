@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,29 +11,36 @@ import {
     GitBranch,
     Plus,
     Save,
-    ArrowRight,
     Zap,
-    Play,
-    CheckCircle2,
-    Circle,
     Activity,
-    Settings2,
-    Trash2
+    Settings2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
+interface WorkflowNode {
+    id: string;
+    name: string;
+    type: string;
+    config?: Record<string, unknown>;
+}
+
+interface Workflow {
+    id: string;
+    name: string;
+    modelName: string;
+    isActive: boolean;
+    nodes?: WorkflowNode[];
+}
+
 export default function WorkflowBuilder() {
-    const [workflows, setWorkflows] = useState<any[]>([]);
+    const [workflows, setWorkflows] = useState<Workflow[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedWorkflow, setSelectedWorkflow] = useState<any>(null);
+    const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
     const [modelName, setModelName] = useState("sale.order");
     const [workflowName, setWorkflowName] = useState("");
 
-    const [nodes, setNodes] = useState<any[]>([]);
-    const [transitions, setTransitions] = useState<any[]>([]);
-
-    const syncWorkflows = async (showLoading = false) => {
+    const syncWorkflows = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get(`/system/workflows/${modelName}`);
@@ -43,13 +50,13 @@ export default function WorkflowBuilder() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [modelName]);
 
     useEffect(() => {
         syncWorkflows(true);
         const interval = setInterval(() => syncWorkflows(false), 30000);
         return () => clearInterval(interval);
-    }, [modelName]);
+    }, [syncWorkflows]);
 
     const handleCreateWorkflow = async () => {
         try {
@@ -59,7 +66,7 @@ export default function WorkflowBuilder() {
             setWorkflowName("");
             syncWorkflows(true);
             setSelectedWorkflow(res.data);
-        } catch (err) {
+        } catch {
             toast.error("Initialization failed");
         }
     };
@@ -77,10 +84,12 @@ export default function WorkflowBuilder() {
                 nodes: [...(selectedWorkflow.nodes || []), res.data]
             });
             toast.success("State node added to graph");
-        } catch (err) {
+        } catch {
             toast.error("Node creation failed");
         }
     };
+
+    if (loading && workflows.length === 0) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing lifecycle engines...</div>;
 
     return (
         <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 pt-2 md:pt-6">
@@ -168,7 +177,7 @@ export default function WorkflowBuilder() {
                             </div>
                         ) : (
                             <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {selectedWorkflow.nodes?.map((node: any) => (
+                                {selectedWorkflow.nodes?.map((node: WorkflowNode) => (
                                     <Card key={node.id} className="bg-indigo-950 border-none shadow-2xl relative group overflow-hidden rounded-[32px]">
                                         <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 shadow-[2px_0_10px_rgba(16,185,129,0.3)] transition-all group-hover:w-2" />
                                         <CardHeader className="pb-4 pt-6 px-6">

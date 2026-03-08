@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,11 +9,28 @@ import { api } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
+interface MinimalSupplier {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    category?: string;
+    address?: string;
+}
+
 interface EditSupplierDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    supplier: any;
+    supplier: MinimalSupplier | null;
     onSuccess?: () => void;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
 }
 
 export function EditSupplierDialog({ open, onOpenChange, supplier, onSuccess }: EditSupplierDialogProps) {
@@ -38,10 +55,10 @@ export function EditSupplierDialog({ open, onOpenChange, supplier, onSuccess }: 
         }
     }, [supplier, open]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.name) {
+        if (!formData.name || !supplier) {
             toast.error("Supplier name is required");
             return;
         }
@@ -52,12 +69,13 @@ export function EditSupplierDialog({ open, onOpenChange, supplier, onSuccess }: 
             toast.success("Supplier updated successfully");
             onOpenChange(false);
             onSuccess?.();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to update supplier");
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            toast.error(err.response?.data?.message || "Failed to update supplier");
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData, supplier, onOpenChange, onSuccess]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

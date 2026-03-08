@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,31 +13,63 @@ import {
 } from "@/components/ui/table";
 import { BarChart2, CheckCircle2, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
 
+interface TrialBalanceAccount {
+    id: string;
+    name: string;
+    type: string;
+    debit: number;
+    credit: number;
+}
+
+interface TrialBalanceData {
+    balanced: boolean;
+    accounts: TrialBalanceAccount[];
+    totalDebit: number;
+    totalCredit: number;
+}
+
+interface ProfitLossAccount {
+    id: string;
+    name: string;
+    balance: number;
+}
+
+interface ProfitLossData {
+    isProfitable: boolean;
+    netProfit: number;
+    revenue: ProfitLossAccount[];
+    expenses: ProfitLossAccount[];
+    totalRevenue: number;
+    totalExpense: number;
+}
+
 export default function ReportsPage() {
-    const [trialBalance, setTrialBalance] = useState<any>(null);
-    const [profitLoss, setProfitLoss] = useState<any>(null);
+    const [trialBalance, setTrialBalance] = useState<TrialBalanceData | null>(null);
+    const [profitLoss, setProfitLoss] = useState<ProfitLossData | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                setLoading(true);
-                const [tbRes, plRes] = await Promise.all([
-                    api.get("/accounting/reports/trial-balance"),
-                    api.get("/accounting/reports/profit-loss"),
-                ]);
-                setTrialBalance(tbRes.data);
-                setProfitLoss(plRes.data);
-            } catch (err) {
-                toast.error("Failed to load financial reports");
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
+    const loadReports = useCallback(async () => {
+        try {
+            setLoading(true);
+            const [tbRes, plRes] = await Promise.all([
+                api.get("/accounting/reports/trial-balance"),
+                api.get("/accounting/reports/profit-loss"),
+            ]);
+            setTrialBalance(tbRes.data);
+            setProfitLoss(plRes.data);
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(error.response?.data?.message || "Failed to load financial reports");
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const fmtINR = (val: any) =>
+    useEffect(() => {
+        loadReports();
+    }, [loadReports]);
+
+    const fmtINR = (val: number | string) =>
         Number(val).toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
 
     if (loading) return <LoadingSpinner className="h-full" text="Loading financial reports..." />;
@@ -94,7 +127,7 @@ export default function ReportsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {(trialBalance?.accounts || []).map((acct: any) => (
+                                    {(trialBalance?.accounts || []).map((acct: TrialBalanceAccount) => (
                                         <TableRow key={acct.id} className="border-slate-100 hover:bg-slate-50/50">
                                             <TableCell className="pl-8 font-bold text-slate-900 truncate max-w-[200px]" title={acct.name}>{acct.name}</TableCell>
                                             <TableCell>
@@ -150,7 +183,7 @@ export default function ReportsPage() {
                                 {/* Revenue Section */}
                                 <div className="p-6 border-b border-slate-100">
                                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Income / Revenue</div>
-                                    {(profitLoss?.revenue || []).map((a: any) => (
+                                    {(profitLoss?.revenue || []).map((a: ProfitLossAccount) => (
                                         <div key={a.id} className="flex justify-between items-center py-2">
                                             <span className="font-medium text-slate-700">{a.name}</span>
                                             <span className="font-mono font-bold text-emerald-700">{fmtINR(a.balance)}</span>
@@ -165,7 +198,7 @@ export default function ReportsPage() {
                                 {/* Expense Section */}
                                 <div className="p-6">
                                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Expenses</div>
-                                    {(profitLoss?.expenses || []).map((a: any) => (
+                                    {(profitLoss?.expenses || []).map((a: ProfitLossAccount) => (
                                         <div key={a.id} className="flex justify-between items-center py-2">
                                             <span className="font-medium text-slate-700">{a.name}</span>
                                             <span className="font-mono font-bold text-red-700">{fmtINR(a.balance)}</span>

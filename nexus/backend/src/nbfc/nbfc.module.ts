@@ -6,9 +6,9 @@ import { AccountingModule } from '../accounting/accounting.module';
 import { SystemModule } from '../system/system.module';
 
 @Module({
-    imports: [SystemModule, PrismaModule, AccountingModule],
-    controllers: [NbfcController],
-    providers: [NbfcService],
-    exports: [NbfcService],
+  imports: [SystemModule, PrismaModule, AccountingModule],
+  controllers: [NbfcController],
+  providers: [NbfcService],
+  exports: [NbfcService],
 })
-export class NbfcModule { }
+export class NbfcModule {}

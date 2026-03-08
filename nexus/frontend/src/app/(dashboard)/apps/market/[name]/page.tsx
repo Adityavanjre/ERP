@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ChevronLeft,
     Download,
@@ -13,7 +13,6 @@ import {
     Globe,
     Github,
     Package,
-    History,
     ShieldAlert,
     Verified,
     ExternalLink
@@ -22,51 +21,64 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+interface AppManifest {
+    name: string;
+    label: string;
+    version: string;
+    category: string;
+    author?: string;
+    installed: boolean;
+    description?: string;
+    dependencies?: string;
+    website?: string;
+}
+
 export default function AppDetailPage() {
     const params = useParams();
     const router = useRouter();
     const appName = params.name as string;
-    const [app, setApp] = useState<any>(null);
+    const [app, setApp] = useState<AppManifest | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncAppData = async (showLoading = false) => {
+    const syncAppData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("/system/apps");
-            const found = res.data.find((a: any) => a.name === appName);
+            const found = res.data.find((a: AppManifest) => a.name === appName);
             setApp(found);
         } catch (err) {
             console.error("Manifest Sync Failure:", err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [appName]);
 
     useEffect(() => {
         syncAppData(true);
         const interval = setInterval(() => syncAppData(false), 30000);
         return () => clearInterval(interval);
-    }, [appName]);
+    }, [syncAppData]);
 
-    const handleInstall = async () => {
+    const handleInstall = useCallback(async () => {
         try {
             await api.post(`/system/apps/${appName}/install`);
-            toast.success(`${app.label} activated successfully`);
+            toast.success(`${app?.label} activated successfully`);
             syncAppData(true);
-        } catch (err) {
+        } catch {
             toast.error("Installation failed");
         }
-    };
+    }, [appName, app, syncAppData]);
 
-    const handleUninstall = async () => {
+    const handleUninstall = useCallback(async () => {
         try {
             await api.post(`/system/apps/${appName}/uninstall`);
-            toast.success(`${app.label} removed successfully`);
+            toast.success(`${app?.label} removed successfully`);
             syncAppData(true);
-        } catch (err) {
+        } catch {
             toast.error("Removal error");
         }
-    };
+    }, [appName, app, syncAppData]);
+
 
     if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse">Loading Details...</div>;
     if (!app) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen font-black uppercase tracking-widest uppercase italic">Module [${appName}] not found in Klypso Store.</div>;

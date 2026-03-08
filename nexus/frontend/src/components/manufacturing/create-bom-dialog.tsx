@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,13 +46,7 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
     const [isOverheadFixed, setIsOverheadFixed] = useState(false);
     const [items, setItems] = useState<BOMItem[]>([]);
 
-    useEffect(() => {
-        if (open) {
-            fetchProducts();
-        }
-    }, [open]);
-
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         try {
             const res = await api.get('/inventory/products');
             // Handle both paginated ({ data: [...] }) and flat ([...]) responses
@@ -62,31 +56,39 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
             console.error(err);
             toast.error("Failed to load products. Check console.");
         }
-    };
+    }, []);
 
-    const addItem = () => {
-        setItems([...items, { productId: '', quantity: 1, unit: 'pcs' }]);
-    };
-
-    const updateItem = (index: number, field: keyof BOMItem, value: any) => {
-        const newItems = [...items];
-        newItems[index] = { ...newItems[index], [field]: value };
-
-        // Auto-set unit if product changes
-        if (field === 'productId') {
-            const product = products.find(p => p.id === value);
-            if (product) {
-                newItems[index].unit = product.unit || 'pcs';
-            }
+    useEffect(() => {
+        if (open) {
+            fetchProducts();
         }
-        setItems(newItems);
-    };
+    }, [open, fetchProducts]);
 
-    const removeItem = (index: number) => {
-        setItems(items.filter((_, i) => i !== index));
-    };
+    const addItem = useCallback(() => {
+        setItems(prev => [...prev, { productId: '', quantity: 1, unit: 'pcs' }]);
+    }, []);
 
-    const handleSubmit = async () => {
+    const updateItem = useCallback((index: number, field: keyof BOMItem, value: string | number) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], [field]: value };
+
+            // Auto-set unit if product changes
+            if (field === 'productId') {
+                const product = products.find(p => p.id === value);
+                if (product) {
+                    newItems[index].unit = product.unit || 'pcs';
+                }
+            }
+            return newItems;
+        });
+    }, [products]);
+
+    const removeItem = useCallback((index: number) => {
+        setItems(prev => prev.filter((_, i) => i !== index));
+    }, []);
+
+    const handleSubmit = useCallback(async () => {
         if (!name || !selectedProduct) {
             toast.error("Name and Finished Good are required");
             return;
@@ -119,7 +121,7 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
         } finally {
             setLoading(false);
         }
-    };
+    }, [name, selectedProduct, items, quantity, overheadRate, isOverheadFixed, refreshData]);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -184,7 +186,7 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                         <div className="flex justify-between items-center mb-4">
                             <div>
                                 <Label>Raw Materials / Components</Label>
-                                <p className="text-[10px] text-muted-foreground">Add the items required to build 1 unit of the finished good.</p>
+                                <p className="text-[10px] text-muted-foreground">Assemble raw materials into a finished good by defining its exact recipe. The &quot;Yield&quot; represents how many finished items this recipe produces.</p>
                             </div>
                             <Button size="sm" variant="outline" onClick={addItem}>
                                 <Plus className="w-4 h-4 mr-1" /> Add Component
@@ -227,7 +229,7 @@ export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps)
                             ))}
                             {items.length === 0 && (
                                 <div className="text-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm">
-                                    No items added. Click "Add Item" to start.
+                                    No items added. Click &quot;Add Item&quot; to start.
                                 </div>
                             )}
                         </div>

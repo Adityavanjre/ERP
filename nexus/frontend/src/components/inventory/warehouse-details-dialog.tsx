@@ -17,10 +17,28 @@ import {
 } from "@/components/ui/table";
 import { Package, MapPin, User, Boxes } from "lucide-react";
 
+interface WarehouseStock {
+    id: string;
+    quantity: number;
+    product: {
+        name: string;
+        sku: string;
+        category?: string;
+    };
+}
+
+interface WarehouseDetailed {
+    id: string;
+    name: string;
+    location?: string;
+    manager?: string;
+    stocks?: WarehouseStock[];
+}
+
 interface WarehouseDetailsDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    warehouse: any;
+    warehouse: WarehouseDetailed | null;
 }
 
 export function WarehouseDetailsDialog({
@@ -80,7 +98,7 @@ export function WarehouseDetailsDialog({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {warehouse.stocks?.map((stock: any) => (
+                                    {warehouse.stocks?.map((stock: WarehouseStock) => (
                                         <TableRow key={stock.id} className="border-slate-50 hover:bg-slate-50/50 transition-colors group">
                                             <TableCell className="pl-6 py-4">
                                                 <div className="flex flex-col">

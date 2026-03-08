@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     ArrowLeftRight,
     TrendingDown,
@@ -25,11 +25,36 @@ import {
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
+interface MinimalProduct {
+    id: string;
+    name: string;
+    sku: string;
+}
+
+interface StockLocation {
+    productId: string;
+    quantity: number | string;
+}
+
+interface MinimalWarehouse {
+    id: string;
+    name: string;
+    stocks?: StockLocation[];
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export default function StockMovementsPage() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [products, setProducts] = useState<any[]>([]);
-    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [products, setProducts] = useState<MinimalProduct[]>([]);
+    const [warehouses, setWarehouses] = useState<MinimalWarehouse[]>([]);
 
     // Form State
     const [movementType, setMovementType] = useState<"TRANSFER" | "IN" | "OUT">("TRANSFER");
@@ -39,7 +64,7 @@ export default function StockMovementsPage() {
     const [toWarehouse, setToWarehouse] = useState("");
     const [notes, setNotes] = useState("");
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
             const [prodRes, whRes] = await Promise.all([
@@ -48,18 +73,18 @@ export default function StockMovementsPage() {
             ]);
             setProducts(prodRes.data.data || []);
             setWarehouses(whRes.data || []);
-        } catch (err) {
+        } catch {
             toast.error("Failed to load inventory data");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [loadData]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!productId || !quantity || Number(quantity) <= 0) {
             toast.error("Please select a product and enter a valid quantity.");
@@ -99,12 +124,13 @@ export default function StockMovementsPage() {
             setQuantity("");
             setNotes("");
             loadData(); // Refresh stock caches
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to log movement");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to log movement");
         } finally {
             setSubmitting(false);
         }
-    };
+    }, [productId, quantity, movementType, fromWarehouse, toWarehouse, notes, loadData]);
 
     if (loading) return <LoadingSpinner className="h-full" text="Loading inventory data..." />;
 
@@ -281,7 +307,7 @@ export default function StockMovementsPage() {
                                 <div className="mt-6 space-y-4">
                                     {warehouses.map(w => {
                                         // Find stock for selected product in this warehouse
-                                        const stockLoc = w.stocks?.find((s: any) => s.productId === productId);
+                                        const stockLoc = w.stocks?.find((s: StockLocation) => s.productId === productId);
                                         const qty = stockLoc ? Number(stockLoc.quantity) : 0;
                                         if (qty <= 0) return null;
 
@@ -292,7 +318,7 @@ export default function StockMovementsPage() {
                                             </div>
                                         );
                                     })}
-                                    {!warehouses.some(w => w.stocks?.find((s: any) => s.productId === productId && Number(s.quantity) > 0)) && (
+                                    {!warehouses.some(w => w.stocks?.find((s: StockLocation) => s.productId === productId && Number(s.quantity) > 0)) && (
                                         <div className="text-xs font-bold text-rose-400 uppercase tracking-widest bg-rose-500/10 p-4 rounded-xl text-center">
                                             No stock available in any warehouse
                                         </div>

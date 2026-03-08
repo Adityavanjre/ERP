@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,6 +10,11 @@ import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
 import { DraftRecovery } from "@/components/auth/draft-recovery";
 
+interface DecodedToken {
+    type?: string;
+    [key: string]: string | number | boolean | undefined;
+}
+
 const DashboardLayout = ({
     children
 }: {
@@ -18,9 +24,10 @@ const DashboardLayout = ({
 
     useEffect(() => {
         try {
-            const token = localStorage.getItem("k_token");
+            const token = typeof window !== 'undefined' ? localStorage.getItem("k_token") : null;
             if (token) {
-                const decoded: any = jwtDecode(token);
+                const decoded = jwtDecode<DecodedToken>(token);
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setIsIdentityState(decoded.type === 'identity');
             } else {
                 setIsIdentityState(false);

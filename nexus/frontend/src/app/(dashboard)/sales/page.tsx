@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,12 +13,12 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Plus, ShoppingCart, TrendingUp, Package, Clock, Loader2, X } from "lucide-react";
+import { Plus, ShoppingCart, TrendingUp, Package, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useUX } from "@/components/providers/ux-provider";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
 import {
     Select,
@@ -30,21 +30,59 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface SalesOrder {
+    id: string;
+    createdAt: string;
+    total: number | string;
+    status: string;
+    customer?: {
+        firstName: string;
+        lastName: string;
+    };
+}
+
+interface SalesStats {
+    totalRevenue: number;
+    orderCount: number;
+    pendingOrders: number;
+}
+
+interface SalesProduct {
+    id: string;
+    name: string;
+    sku: string;
+    price: number | string;
+}
+
+interface SalesCustomer {
+    id: string;
+    firstName: string;
+    lastName: string;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export default function SalesPage() {
     const { setUILocked } = useUX();
-    const [orders, setOrders] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ totalRevenue: 0, orderCount: 0, pendingOrders: 0 });
+    const [orders, setOrders] = useState<SalesOrder[]>([]);
+    const [stats, setStats] = useState<SalesStats>({ totalRevenue: 0, orderCount: 0, pendingOrders: 0 });
     const [loading, setLoading] = useState(true);
 
     // New Order State
     const [showForm, setShowForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [products, setProducts] = useState<any[]>([]);
-    const [customers, setCustomers] = useState<any[]>([]);
+    const [products, setProducts] = useState<SalesProduct[]>([]);
+    const [customers, setCustomers] = useState<SalesCustomer[]>([]);
     const [orderData, setOrderData] = useState({ customerId: "", productId: "", quantity: 1 });
     const [showConfirm, setShowConfirm] = useState(false);
 
-    const syncSalesData = async (showLoading = false) => {
+    const syncSalesData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [orderRes, statsRes, prodRes, custRes] = await Promise.all([
@@ -62,33 +100,16 @@ export default function SalesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncSalesData(true);
         // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncSalesData(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncSalesData]);
 
-    const handleConfirmSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!orderData.customerId || !orderData.productId) {
-            toast.error("Please select customer and product");
-            return;
-        }
-
-        const selectedProduct = (products || []).find(p => p.id === orderData.productId);
-        const orderTotal = (selectedProduct ? Number(selectedProduct.price) : 0) * Number(orderData.quantity);
-
-        if (orderTotal > 100000) {
-            setShowConfirm(true);
-        } else {
-            submitOrder();
-        }
-    };
-
-    const submitOrder = async () => {
+    const submitOrder = useCallback(async () => {
         try {
             setIsSubmitting(true);
             setUILocked(true);
@@ -108,13 +129,31 @@ export default function SalesPage() {
             setOrderData({ customerId: "", productId: "", quantity: 1 });
             toast.success("Sales order processed successfully");
             syncSalesData();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Order processing failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Order processing failed");
         } finally {
             setIsSubmitting(false);
             setUILocked(false);
         }
-    };
+    }, [orderData, products, syncSalesData, setUILocked]);
+
+    const handleConfirmSubmit = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        if (!orderData.customerId || !orderData.productId) {
+            toast.error("Please select customer and product");
+            return;
+        }
+
+        const selectedProduct = (products || []).find(p => p.id === orderData.productId);
+        const orderTotal = (selectedProduct ? Number(selectedProduct.price) : 0) * Number(orderData.quantity);
+
+        if (orderTotal > 100000) {
+            setShowConfirm(true);
+        } else {
+            submitOrder();
+        }
+    }, [orderData, products, submitOrder]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {

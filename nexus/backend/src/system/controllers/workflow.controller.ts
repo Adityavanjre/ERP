@@ -9,7 +9,7 @@ import { WorkflowDto, WorkflowNodeDto } from '../dto/system.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('system/workflows')
 export class WorkflowController {
-  constructor(private readonly workflowService: WorkflowService) { }
+  constructor(private readonly workflowService: WorkflowService) {}
 
   @Get(':modelName')
   @Roles(Role.Owner)

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,32 +9,49 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wand2, Plus, Trash2, Save, Layers, Database, PanelsTopLeft, GitBranch, ShieldCheck, Send } from "lucide-react";
+import { Wand2, Plus, Trash2, Layers, Database, PanelsTopLeft, GitBranch, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+
+interface StudioField {
+    name: string;
+    label: string;
+    type: string;
+    required: boolean;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
 
 export default function StudioPage() {
     const [appName, setAppName] = useState("custom_app");
     const [modelName, setModelName] = useState("");
     const [modelLabel, setModelLabel] = useState("");
-    const [fields, setFields] = useState<any[]>([
+    const [fields, setFields] = useState<StudioField[]>([
         { name: "name", label: "Display Name", type: "Char", required: true }
     ]);
 
-    const addField = () => {
-        setFields([...fields, { name: "", label: "", type: "Char", required: false }]);
-    };
+    const addField = useCallback(() => {
+        setFields(prev => [...prev, { name: "", label: "", type: "Char", required: false }]);
+    }, []);
 
-    const updateField = (index: number, key: string, value: any) => {
-        const newFields = [...fields];
-        newFields[index][key] = value;
-        setFields(newFields);
-    };
+    const updateField = useCallback((index: number, key: keyof StudioField, value: string | boolean) => {
+        setFields(prev => {
+            const newFields = [...prev];
+            newFields[index] = { ...newFields[index], [key]: value };
+            return newFields;
+        });
+    }, []);
 
-    const removeField = (index: number) => {
-        setFields(fields.filter((_, i) => i !== index));
-    };
+    const removeField = useCallback((index: number) => {
+        setFields(prev => prev.filter((_, i) => i !== index));
+    }, []);
 
-    const handleGenerate = async () => {
+    const handleGenerate = useCallback(async () => {
         try {
             if (!modelName || !modelLabel) {
                 toast.error("Model technical name and label are required");
@@ -55,10 +72,12 @@ export default function StudioPage() {
             setModelName("");
             setModelLabel("");
             setFields([{ name: "name", label: "Display Name", type: "Char", required: true }]);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Creation failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Creation failed");
         }
-    };
+    }, [appName, modelName, modelLabel, fields]);
+
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 p-4 md:p-8 pt-2 md:pt-6">

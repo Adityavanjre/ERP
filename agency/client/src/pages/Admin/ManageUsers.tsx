@@ -47,8 +47,9 @@ const ManageUsers = () => {
         try {
             await api.put(`/api/users/${id}/role`, { isAdmin: !currentIsAdmin });
             setUsers(prev => prev.map(u => u._id === id ? { ...u, isAdmin: !currentIsAdmin } : u));
-        } catch (error: any) {
-            alert(error.response?.data?.message || 'Error updating user role');
+        } catch (error: unknown) {
+            const err = error as any;
+            alert(err.response?.data?.message || 'Error updating user role');
         }
     };
 
@@ -62,8 +63,9 @@ const ManageUsers = () => {
                 setNewPassword('');
                 setIsResetting(false);
             }
-        } catch (error: any) {
-            alert(error.response?.data?.message || 'Error deleting user');
+        } catch (error: unknown) {
+            const err = error as any;
+            alert(err.response?.data?.message || 'Error deleting user');
         }
     };
 
@@ -80,8 +82,9 @@ const ManageUsers = () => {
             await api.put(`/api/users/${selectedUser._id}/password`, { password: newPassword });
             alert('Password successfully updated.');
             setNewPassword('');
-        } catch (error: any) {
-            alert(error.response?.data?.message || 'Error resetting password');
+        } catch (error: unknown) {
+            const err = error as any;
+            alert(err.response?.data?.message || 'Error resetting password');
         } finally {
             setIsResetting(false);
         }
@@ -285,7 +288,15 @@ const ManageUsers = () => {
     );
 };
 
-const InfoBlock = ({ icon, label, value, isLink, link }: any) => (
+interface InfoBlockProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    isLink?: boolean;
+    link?: string;
+}
+
+const InfoBlock = ({ icon, label, value, isLink, link }: InfoBlockProps) => (
     <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 hover:border-[#C5A059]/20 transition-all group">
         <div className="flex items-center gap-3 mb-4">
             <span className="text-zinc-600 group-hover:text-[#C5A059] transition-colors">{icon}</span>

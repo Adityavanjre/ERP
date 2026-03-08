@@ -25,7 +25,7 @@ export class ApiKeyGuard implements CanActivate {
 
     try {
       const keyRecord = await this.apiKeyService.validateKey(apiKey);
-      
+
       // 1. Attach metadata to request
       request.user = {
         userId: 'API_CONSUMER',
@@ -35,10 +35,10 @@ export class ApiKeyGuard implements CanActivate {
       };
 
       // 2. Verify Scopes
-      const requiredScopes = this.reflector.getAllAndOverride<string[]>('scopes', [
-        context.getHandler(),
-        context.getClass(),
-      ]);
+      const requiredScopes = this.reflector.getAllAndOverride<string[]>(
+        'scopes',
+        [context.getHandler(), context.getClass()],
+      );
 
       if (!requiredScopes || requiredScopes.length === 0) {
         return true;

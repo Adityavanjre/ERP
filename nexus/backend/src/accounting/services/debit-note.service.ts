@@ -9,16 +9,26 @@ export class DebitNoteService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
-  ) { }
+  ) {}
 
   async create(tenantId: string, data: any) {
-    const { supplierId, purchaseOrderId, noteNumber, items, reason, date, idempotencyKey } = data;
+    const {
+      supplierId,
+      purchaseOrderId,
+      noteNumber,
+      items,
+      reason,
+      date,
+      idempotencyKey,
+    } = data;
 
     return this.prisma.$transaction(async (tx) => {
       // 0. Idempotency Guard
       if (idempotencyKey) {
         const existing = await tx.debitNote.findUnique({
-          where: { tenantId_idempotencyKey: { tenantId, idempotencyKey } } as any
+          where: {
+            tenantId_idempotencyKey: { tenantId, idempotencyKey },
+          } as any,
         });
         if (existing) return existing;
       }
@@ -34,8 +44,11 @@ export class DebitNoteService {
       let totalIGST = new Decimal(0);
 
       const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
-      const supplier = await tx.supplier.findUnique({ where: { id: supplierId } });
-      const isInterState = tenant?.state?.toLowerCase() !== supplier?.state?.toLowerCase();
+      const supplier = await tx.supplier.findUnique({
+        where: { id: supplierId },
+      });
+      const isInterState =
+        tenant?.state?.toLowerCase() !== supplier?.state?.toLowerCase();
 
       const enrichedItems = items.map((item: any) => {
         const taxable = this.ledger.round2(new Decimal(item.taxableAmount));
@@ -99,32 +112,71 @@ export class DebitNoteService {
       });
 
       // 3. Accounting Impact (Purchase Return)
-      const supplierLedger = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
-      const purchaseReturnAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.PURCHASE_RETURNS } });
+      const supplierLedger = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
+      });
+      const purchaseReturnAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.PURCHASE_RETURNS },
+      });
 
-      const cgstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INPUT_CGST } });
-      const sgstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INPUT_SGST } });
-      const igstAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INPUT_IGST } });
+      const cgstAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.INPUT_CGST },
+      });
+      const sgstAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.INPUT_SGST },
+      });
+      const igstAccount = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.INPUT_IGST },
+      });
 
       if (supplierLedger && purchaseReturnAccount) {
         const journalTransactions = [
-          { accountId: supplierLedger.id, type: 'Debit' as any, amount: totalAmount.toNumber(), description: 'Supplier Debit for Return' },
-          { accountId: purchaseReturnAccount.id, type: 'Credit' as any, amount: totalTaxable.toNumber(), description: 'Purchase Return Value' },
+          {
+            accountId: supplierLedger.id,
+            type: 'Debit' as any,
+            amount: totalAmount.toNumber(),
+            description: 'Supplier Debit for Return',
+          },
+          {
+            accountId: purchaseReturnAccount.id,
+            type: 'Credit' as any,
+            amount: totalTaxable.toNumber(),
+            description: 'Purchase Return Value',
+          },
         ];
 
         if (isInterState && igstAccount) {
-          journalTransactions.push({ accountId: igstAccount.id, type: 'Credit', amount: totalIGST.toNumber(), description: 'IGST ITC Reversal' });
+          journalTransactions.push({
+            accountId: igstAccount.id,
+            type: 'Credit',
+            amount: totalIGST.toNumber(),
+            description: 'IGST ITC Reversal',
+          });
         } else if (!isInterState && cgstAccount && sgstAccount) {
-          journalTransactions.push({ accountId: cgstAccount.id, type: 'Credit', amount: totalCGST.toNumber(), description: 'CGST ITC Reversal' });
-          journalTransactions.push({ accountId: sgstAccount.id, type: 'Credit', amount: totalSGST.toNumber(), description: 'SGST ITC Reversal' });
+          journalTransactions.push({
+            accountId: cgstAccount.id,
+            type: 'Credit',
+            amount: totalCGST.toNumber(),
+            description: 'CGST ITC Reversal',
+          });
+          journalTransactions.push({
+            accountId: sgstAccount.id,
+            type: 'Credit',
+            amount: totalSGST.toNumber(),
+            description: 'SGST ITC Reversal',
+          });
         }
 
-        const journal = await this.ledger.createJournalEntry(tenantId, {
-          date: debitNote.date.toISOString(),
-          description: `Debit Note: ${noteNumber} (Return for PO ${purchaseOrderId || 'Direct'})`,
-          reference: debitNote.id,
-          transactions: journalTransactions as any,
-        }, tx);
+        const journal = await this.ledger.createJournalEntry(
+          tenantId,
+          {
+            date: debitNote.date.toISOString(),
+            description: `Debit Note: ${noteNumber} (Return for PO ${purchaseOrderId || 'Direct'})`,
+            reference: debitNote.id,
+            transactions: journalTransactions as any,
+          },
+          tx,
+        );
 
         await tx.debitNote.update({
           where: { id: debitNote.id },
@@ -134,7 +186,7 @@ export class DebitNoteService {
 
       // 4. Warehouse & Stock Synchronization
       const warehouse = await tx.warehouse.findFirst({
-        where: { tenantId, name: 'Main Warehouse' }
+        where: { tenantId, name: 'Main Warehouse' },
       });
 
       for (const item of enrichedItems) {
@@ -152,8 +204,8 @@ export class DebitNoteService {
                 tenantId,
                 productId: item.productId,
                 warehouseId: warehouse.id,
-                notes: ''
-              }
+                notes: '',
+              },
             } as any,
             update: { quantity: { decrement: item.quantity } },
             create: {
@@ -161,10 +213,9 @@ export class DebitNoteService {
               productId: item.productId,
               warehouseId: warehouse.id,
               quantity: item.quantity.negated(),
-              notes: ''
-            } as any
+              notes: '',
+            } as any,
           });
-
 
           await tx.stockMovement.create({
             data: {
@@ -174,8 +225,8 @@ export class DebitNoteService {
               quantity: item.quantity,
               type: 'OUT',
               reference: noteNumber,
-              notes: `Purchase Return (DN)`
-            }
+              notes: `Purchase Return (DN)`,
+            },
           });
         }
       }
@@ -185,7 +236,12 @@ export class DebitNoteService {
           tenantId,
           action: 'DEBIT_NOTE_CREATED',
           resource: `DebitNote:${debitNote.id}`,
-          details: { noteNumber, supplierId, purchaseOrderId, amount: totalAmount.toNumber() } as any,
+          details: {
+            noteNumber,
+            supplierId,
+            purchaseOrderId,
+            amount: totalAmount.toNumber(),
+          } as any,
         },
       });
 
@@ -196,7 +252,11 @@ export class DebitNoteService {
   async findAll(tenantId: string) {
     return this.prisma.debitNote.findMany({
       where: { tenantId },
-      include: { supplier: true, purchaseOrder: true, items: { include: { product: true } } },
+      include: {
+        supplier: true,
+        purchaseOrder: true,
+        items: { include: { product: true } },
+      },
       orderBy: { date: 'desc' },
     });
   }

@@ -11,4 +11,4 @@ import { CoreDomainModule } from '../core-domain/core-domain.module';
   controllers: [ManufacturingController, MachineController],
   providers: [ManufacturingService, MachineService],
 })
-export class ManufacturingModule { }
+export class ManufacturingModule {}

@@ -14,7 +14,6 @@ import {
     BarChart3
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,13 +30,34 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CreateBOMDialog } from "@/components/manufacturing/create-bom-dialog";
 import { BOMDetailsDialog } from "@/components/manufacturing/bom-details-dialog";
 
+interface BOMItem {
+    id: string;
+    productId: string;
+    quantity: number;
+    product?: {
+        name: string;
+        sku: string;
+    };
+}
+
+interface BOM {
+    id: string;
+    name: string;
+    product?: {
+        name: string;
+    };
+    items?: BOMItem[];
+    overheadRate: number;
+    isOverheadFixed: boolean;
+}
+
 export default function BOMPage() {
-    const [boms, setBoms] = useState<any[]>([]);
+    const [boms, setBoms] = useState<BOM[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBomId, setSelectedBomId] = useState<string | null>(null);
 
-    const syncLogicStructs = async (showLoading = false) => {
+    const syncLogicStructs = React.useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("manufacturing/boms");
@@ -47,13 +67,13 @@ export default function BOMPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncLogicStructs(true);
         const interval = setInterval(() => syncLogicStructs(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncLogicStructs]);
 
     const filteredBoms = boms.filter(bom =>
         bom.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

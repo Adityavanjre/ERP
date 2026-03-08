@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../api/config';
+import api from '../api';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -23,7 +22,7 @@ const ProjectDetails = () => {
     useEffect(() => {
         const fetchProject = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/projects/${id}`, { timeout: 1500 });
+                const { data } = await api.get(`/projects/${id}`, { timeout: 1500 });
                 setProject(data);
             } catch (err) {
                 const localProject = (projectsData as any[]).find(p => p.id === id || p._id === id);

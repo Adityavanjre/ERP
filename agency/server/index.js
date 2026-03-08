@@ -1,4 +1,5 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
@@ -15,6 +16,9 @@ if (!process.env.ADMIN_PASSWORD) {
 }
 const app = express();
 
+app.use(cookieParser());
+
+
 app.set('trust proxy', 1);
 
 // Immediate Request Logger
@@ -24,8 +28,15 @@ app.use((req, res, next) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('--- CRITICAL UNCAUGHT EXCEPTION ---');
-    console.error(err);
+    console.error('--- [FATAL] UNCAUGHT EXCEPTION ---');
+    console.error(err.stack || err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('--- [FATAL] UNHANDLED REJECTION ---');
+    console.error('Reason:', reason.stack || reason);
+    process.exit(1);
 });
 
 app.get('/', (req, res) => {
@@ -101,6 +112,4 @@ server.keepAliveTimeout = 120 * 1000; // 120 seconds
 server.headersTimeout = 125 * 1000; // 125 seconds
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-    console.log(`Error: ${err.message}`);
-});
+// All process handlers moved to top of file

@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import API_URL from '../../api/config';
-import { useAuth } from '../../contexts/AuthContext';
+import api from '../../api';
 import { Trash2, Mail, Calendar, Search, Users, ExternalLink, MessageSquare, Briefcase, DollarSign, ChevronRight, Inbox } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,7 +18,6 @@ interface Enquiry {
 }
 
 const ManageEnquiries = () => {
-    const { user } = useAuth();
     const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,10 +28,7 @@ const ManageEnquiries = () => {
 
     const fetchEnquiries = useCallback(async () => {
         try {
-            const config = {
-                headers: { Authorization: `Bearer ${user?.token}` },
-            };
-            const { data } = await axios.get(`${API_URL}/api/enquiries`, config);
+            const { data } = await api.get('/enquiries');
             setEnquiries(data);
             if (data.length > 0) setSelectedId(data[0]._id);
         } catch (error) {
@@ -42,21 +36,18 @@ const ManageEnquiries = () => {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, []);
 
     useEffect(() => {
-        if (user) fetchEnquiries();
-    }, [user, fetchEnquiries]);
+        fetchEnquiries();
+    }, [fetchEnquiries]);
 
     const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (!window.confirm('Erase this enquiry from history?')) return;
 
         try {
-            const config = {
-                headers: { Authorization: `Bearer ${user?.token}` },
-            };
-            await axios.delete(`${API_URL}/api/enquiries/${id}`, config);
+            await api.delete(`/enquiries/${id}`);
             setEnquiries(prev => prev.filter(enq => enq._id !== id));
             if (selectedId === id) setSelectedId(null);
         } catch (error) {

@@ -34,7 +34,7 @@ import {
 @Module('crm')
 @Controller('crm')
 export class CrmController {
-  constructor(private readonly crmService: CrmService) { }
+  constructor(private readonly crmService: CrmService) {}
 
   @Post('customers')
   @Roles(Role.Owner, Role.Manager, Role.Biller)
@@ -55,7 +55,14 @@ export class CrmController {
   }
 
   @Get('customers')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_LEADS')
   findAll(
@@ -110,7 +117,11 @@ export class CrmController {
   @Post('opportunities/:id')
   @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
-  updateOpp(@Req() req: any, @Body() data: UpdateOpportunityDto, @Param('id') id: string) {
+  updateOpp(
+    @Req() req: any,
+    @Body() data: UpdateOpportunityDto,
+    @Param('id') id: string,
+  ) {
     return this.crmService.updateOpportunity(req.user.tenantId, id, data);
   }
 
@@ -141,7 +152,14 @@ export class CrmController {
   }
 
   @Get('customers/:id/opening-balances')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getOpeningBalances(@Req() req: any, @Param('id') id: string) {
     return this.crmService.getOpeningBalances(req.user.tenantId, id);

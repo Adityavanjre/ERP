@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,11 @@ import { api } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { Scale } from "lucide-react";
 
+interface Warehouse {
+    id: string;
+    name: string;
+}
+
 interface OpeningBalanceDialogProps {
     isOpen: boolean;
     onClose: () => void;
@@ -18,6 +24,23 @@ interface OpeningBalanceDialogProps {
     productId?: string;
     targetName: string;
     onSuccess: () => void;
+}
+
+interface OpeningBalancePayload {
+    date: string;
+    description: string;
+    amount?: number;
+    quantity?: number;
+    warehouseId?: string;
+    unitCost?: number;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
 }
 
 export function OpeningBalanceDialog({
@@ -32,21 +55,29 @@ export function OpeningBalanceDialog({
     const [amount, setAmount] = useState<number>(0); // This will be 'quantity' for products
     const [unitCost, setUnitCost] = useState<number>(0);
     const [warehouseId, setWarehouseId] = useState<string>("");
-    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [description, setDescription] = useState<string>('Initial Opening Balance');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    React.useEffect(() => {
-        if (isOpen && productId) {
-            api.get('/inventory/warehouses').then(res => {
-                setWarehouses(res.data);
-                if (res.data.length > 0) setWarehouseId(res.data[0].id);
-            });
+    const fetchWarehouses = useCallback(async () => {
+        try {
+            const res = await api.get('/inventory/warehouses');
+            const data = res.data;
+            setWarehouses(data);
+            if (data.length > 0) setWarehouseId(data[0].id);
+        } catch (err) {
+            console.error("Failed to fetch warehouses", err);
         }
-    }, [isOpen, productId]);
+    }, []);
 
-    const handleSubmit = async () => {
+    useEffect(() => {
+        if (isOpen && productId) {
+            fetchWarehouses();
+        }
+    }, [isOpen, productId, fetchWarehouses]);
+
+    const handleSubmit = useCallback(async () => {
         if (amount <= 0) {
             toast.error(productId ? "Please enter valid quantity" : "Please enter a valid amount");
             return;
@@ -60,7 +91,7 @@ export function OpeningBalanceDialog({
         setIsSubmitting(true);
         try {
             let endpoint = "";
-            let payload: any = { date, description };
+            const payload: OpeningBalancePayload = { date, description };
 
             if (customerId) {
                 endpoint = `/accounting/customers/${customerId}/opening-balance`;
@@ -80,12 +111,13 @@ export function OpeningBalanceDialog({
             toast.success("Opening balance recorded");
             onSuccess();
             onClose();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to record balance");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to record balance");
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [amount, date, description, customerId, supplierId, productId, warehouseId, unitCost, onSuccess, onClose]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

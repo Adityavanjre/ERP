@@ -34,7 +34,10 @@ export class CloudinaryService {
         { folder: 'nexus_erp' },
         (error, result) => {
           if (error) {
-            this.logger.error(`Cloudinary upload failed for ${file.originalname}`, error);
+            this.logger.error(
+              `Cloudinary upload failed for ${file.originalname}`,
+              error,
+            );
             return reject(error);
           }
           this.logger.log(`File uploaded successfully: ${file.originalname}`);
@@ -46,13 +49,18 @@ export class CloudinaryService {
     });
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Cloudinary upload timed out (5s)')), 5000)
+      setTimeout(
+        () => reject(new Error('Cloudinary upload timed out (5s)')),
+        5000,
+      ),
     );
 
     try {
       return await Promise.race([uploadPromise, timeoutPromise]);
     } catch (err: any) {
-      this.logger.error(`Media Provider Fail-Soft triggered for ${file.originalname}: ${err.message}`);
+      this.logger.error(
+        `Media Provider Fail-Soft triggered for ${file.originalname}: ${err.message}`,
+      );
       // Fallback: Return a unique fallback URL so the system continues
       const fallbackUrl = `https://nexus-storage-fallback.local/placeholder_${Date.now()}_${file.originalname}`;
       return {

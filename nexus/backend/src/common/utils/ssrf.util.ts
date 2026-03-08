@@ -1,4 +1,3 @@
-
 import * as dns from 'dns';
 import * as ipaddr from 'ipaddr.js';
 import { promisify } from 'util';
@@ -26,44 +25,48 @@ const logger = new Logger('SsrfUtil');
  * - Parse/URL error → throws with a clear message
  */
 export async function isSafeUrl(url: string): Promise<boolean> {
-    const parsed = new URL(url); // Throws on invalid URL — intentional, let it propagate
+  const parsed = new URL(url); // Throws on invalid URL — intentional, let it propagate
 
-    // 1. Only allow HTTPS for external calls
-    if (parsed.protocol !== 'https:') {
-        logger.warn(`SSRF_BLOCK: Rejected non-HTTPS URL: ${url}`);
-        return false;
-    }
+  // 1. Only allow HTTPS for external calls
+  if (parsed.protocol !== 'https:') {
+    logger.warn(`SSRF_BLOCK: Rejected non-HTTPS URL: ${url}`);
+    return false;
+  }
 
-    // 2. Resolve hostname to IP — let DNS failures propagate to the caller for retry
-    const { address } = await lookup(parsed.hostname);
+  // 2. Resolve hostname to IP — let DNS failures propagate to the caller for retry
+  const { address } = await lookup(parsed.hostname);
 
-    let addr: ipaddr.IPv4 | ipaddr.IPv6;
-    try {
-        addr = ipaddr.parse(address);
-    } catch (parseErr: any) {
-        // Extremely rare — address returned by OS DNS that ipaddr can't parse
-        logger.error(`SSRF_BLOCK: Could not parse resolved IP '${address}' for ${url}: ${parseErr.message}`);
-        return false;
-    }
+  let addr: ipaddr.IPv4 | ipaddr.IPv6;
+  try {
+    addr = ipaddr.parse(address);
+  } catch (parseErr: any) {
+    // Extremely rare — address returned by OS DNS that ipaddr can't parse
+    logger.error(
+      `SSRF_BLOCK: Could not parse resolved IP '${address}' for ${url}: ${parseErr.message}`,
+    );
+    return false;
+  }
 
-    const range = addr.range();
+  const range = addr.range();
 
-    // 3. Block restricted ranges
-    const restricted = [
-        'private',
-        'loopback',
-        'linkLocal',
-        'multicast',
-        'broadcast',
-        'unspecified',
-    ];
+  // 3. Block restricted ranges
+  const restricted = [
+    'private',
+    'loopback',
+    'linkLocal',
+    'multicast',
+    'broadcast',
+    'unspecified',
+  ];
 
-    if (restricted.includes(range)) {
-        logger.warn(`SSRF_BLOCK: Rejected ${url} — resolved to restricted IP ${address} (range: ${range})`);
-        return false;
-    }
+  if (restricted.includes(range)) {
+    logger.warn(
+      `SSRF_BLOCK: Rejected ${url} — resolved to restricted IP ${address} (range: ${range})`,
+    );
+    return false;
+  }
 
-    return true;
+  return true;
 }
 
 /**
@@ -71,29 +74,36 @@ export async function isSafeUrl(url: string): Promise<boolean> {
  * Throws on DNS failures (allowing the caller to implement retry).
  * Throws on SSRF detection with a clear message.
  */
-export async function safeFetch(url: string, options?: RequestInit): Promise<Response> {
-    let safe: boolean;
-    try {
-        safe = await isSafeUrl(url);
-    } catch (err: any) {
-        // DNS failure or URL parse error — throw with full context
-        throw new Error(`SSRF_CHECK_FAILED: Could not verify safety of "${url}": ${err.message}`);
-    }
+export async function safeFetch(
+  url: string,
+  options?: RequestInit,
+): Promise<Response> {
+  let safe: boolean;
+  try {
+    safe = await isSafeUrl(url);
+  } catch (err: any) {
+    // DNS failure or URL parse error — throw with full context
+    throw new Error(
+      `SSRF_CHECK_FAILED: Could not verify safety of "${url}": ${err.message}`,
+    );
+  }
 
-    if (!safe) {
-        throw new Error(`SSRF_BLOCK: Destination URL "${url}" resolved to a restricted address and was blocked.`);
-    }
+  if (!safe) {
+    throw new Error(
+      `SSRF_BLOCK: Destination URL "${url}" resolved to a restricted address and was blocked.`,
+    );
+  }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: options?.signal || controller.signal,
-        });
-        return response;
-    } finally {
-        clearTimeout(timeoutId);
-    }
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: options?.signal || controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }

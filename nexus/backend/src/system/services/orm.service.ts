@@ -15,7 +15,7 @@ export class OrmService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) { }
+  ) {}
 
   /**
    * Define a new model in the system metadata.
@@ -219,7 +219,13 @@ export class OrmService {
     // Soft-delete: mark as deleted rather than destroying the record
     return this.prisma.record.updateMany({
       where: { id, tenantId, modelName },
-      data: { data: { ...(record.data as object), _isDeleted: true, _deletedAt: new Date().toISOString() } },
+      data: {
+        data: {
+          ...(record.data as object),
+          _isDeleted: true,
+          _deletedAt: new Date().toISOString(),
+        },
+      },
     });
   }
 }

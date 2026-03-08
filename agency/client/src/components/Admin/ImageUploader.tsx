@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Loader2, Image as ImageIcon, Check } from 'lucide-react';
-import axios from 'axios';
-import API_URL from '../../api/config';
-import { useAuth } from '../../contexts/AuthContext';
+import api from '../../api';
 
 interface ImageUploaderProps {
     onUploadSuccess: (url: string) => void;
@@ -16,7 +14,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     label = "Upload Image",
     existingImage,
 }) => {
-    const { user } = useAuth();
     const [preview, setPreview] = useState<string | null>(existingImage || null);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -41,21 +38,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         formData.append('image', file);
 
         try {
-            const config = {
+            const { data } = await api.post('/upload', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${user?.token}`,
                 },
-            };
-
-            const { data } = await axios.post(`${API_URL}/api/upload`, formData, config);
+            });
 
             setPreview(data.url);
             onUploadSuccess(data.url);
             setCompleted(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.response?.data?.message || "Upload failed");
+            const errorObj = err as any;
+            setError(errorObj.response?.data?.message || "Upload failed");
         } finally {
             setUploading(false);
         }

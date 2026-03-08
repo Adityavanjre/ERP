@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../../api/config';
-import { useAuth } from '../../contexts/AuthContext';
+import api from '../../api';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Briefcase, MapPin, Clock, Search, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,7 +14,6 @@ interface Job {
 }
 
 const ManageCareers = () => {
-    const { user } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +21,7 @@ const ManageCareers = () => {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/jobs`);
+                const { data } = await api.get('/jobs');
                 setJobs(data);
             } catch (error) {
                 console.error("Failed to fetch jobs", error);
@@ -39,10 +36,7 @@ const ManageCareers = () => {
         e.preventDefault();
         if (!window.confirm('Erase this recruitment record?')) return;
         try {
-            const config = {
-                headers: { Authorization: `Bearer ${user?.token}` },
-            };
-            await axios.delete(`${API_URL}/api/jobs/${id}`, config);
+            await api.delete(`/jobs/${id}`);
             setJobs(prev => prev.filter(j => j._id !== id));
         } catch (error) {
             console.error("Failed to delete job", error);

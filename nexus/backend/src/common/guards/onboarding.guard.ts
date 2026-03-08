@@ -9,7 +9,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class OnboardingGuard implements CanActivate {
-  constructor(private reflector: Reflector) { }
+  constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -17,10 +17,10 @@ export class OnboardingGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    const allowUnboarded = this.reflector.getAllAndOverride<boolean>('allowUnboarded', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const allowUnboarded = this.reflector.getAllAndOverride<boolean>(
+      'allowUnboarded',
+      [context.getHandler(), context.getClass()],
+    );
 
     if (isPublic || allowUnboarded) {
       return true;

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,17 +17,15 @@ import {
     ShoppingBag,
     ClipboardList,
     LayoutGrid,
-    Search,
-    ChevronDown,
     Zap,
-    Wand2,
     RefreshCw,
     Command,
     ShieldCheck,
     ArrowLeftRight,
     BarChart2,
     Receipt,
-    Truck
+    Truck,
+    LucideIcon
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
 import { toast } from 'react-hot-toast';
@@ -40,17 +39,17 @@ type RoleName = 'Owner' | 'Manager' | 'Biller' | 'Storekeeper' | 'Accountant' | 
 interface SidebarItem {
     label: string;
     href: string;
-    icon: any;
+    icon: LucideIcon;
     allowedRoles: RoleName[];
 }
 
 interface BusinessStream {
     label: string;
-    icon: any;
+    icon: LucideIcon;
     items: SidebarItem[];
 }
 
-const ALL_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'];
+// const ALL_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'];
 const SALES_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller'];
 const STOCK_ROLES: RoleName[] = ['Owner', 'Manager', 'Storekeeper'];
 const FINANCE_ROLES: RoleName[] = ['Owner', 'Manager', 'Accountant', 'CA'];
@@ -105,37 +104,38 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const userRole = (user?.role as RoleName) || 'Biller'; // Default to most restrictive
 
     const [enabledModules, setEnabledModules] = useState<string[]>([]);
-    const [configLoading, setConfigLoading] = useState(true);
+    // const [configLoading, setConfigLoading] = useState(true);
+
+    const fetchConfig = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('k_token');
+            const identity = localStorage.getItem('k_identity');
+
+            // If the token is just the identity token, do not hit tenant-scoped APIs
+            if (token && identity && token === identity) {
+                setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
+                // setConfigLoading(false);
+                return;
+            }
+
+            const res = await api.get('system/config');
+            // Always ensure core modules are included even if API omits them
+            const apiModules: string[] = res.data.enabledModules || [];
+            const coreModules = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
+            const merged = Array.from(new Set([...coreModules, ...apiModules]));
+            setEnabledModules(merged);
+        } catch (err) {
+            console.error("Config fetch error:", err);
+            // Fallback to all core modules if API fails
+            setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
+        } finally {
+            // setConfigLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchConfig = async () => {
-            try {
-                const token = localStorage.getItem('k_token');
-                const identity = localStorage.getItem('k_identity');
-
-                // If the token is just the identity token, do not hit tenant-scoped APIs
-                if (token && identity && token === identity) {
-                    setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
-                    setConfigLoading(false);
-                    return;
-                }
-
-                const res = await api.get('system/config');
-                // Always ensure core modules are included even if API omits them
-                const apiModules: string[] = res.data.enabledModules || [];
-                const coreModules = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
-                const merged = Array.from(new Set([...coreModules, ...apiModules]));
-                setEnabledModules(merged);
-            } catch (err) {
-                console.error("Config fetch error:", err);
-                // Fallback to all core modules if API fails
-                setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
-            } finally {
-                setConfigLoading(false);
-            }
-        };
         fetchConfig();
-    }, []);
+    }, [fetchConfig]);
 
     // Filter streams: 
     // 1. Role-based filtering (already present)

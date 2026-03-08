@@ -1,10 +1,11 @@
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Send, Trash2, Reply, X, Paperclip } from 'lucide-react';
+import { MessageSquare, Send, Reply, X, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -30,7 +31,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
     const [loading, setLoading] = useState(true);
     const [replyTo, setReplyTo] = useState<Comment | null>(null);
 
-    const syncCommunicationFlux = async (showLoading = false) => {
+    const syncCommunicationFlux = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const { data } = await api.get(`/system/collaboration/comments/${resourceType}/${resourceId}`);
@@ -40,15 +41,15 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
         } finally {
             setLoading(false);
         }
-    };
+    }, [resourceType, resourceId]);
 
     useEffect(() => {
         syncCommunicationFlux(true);
         const interval = setInterval(() => syncCommunicationFlux(false), 30000);
         return () => clearInterval(interval);
-    }, [resourceType, resourceId]);
+    }, [syncCommunicationFlux]);
 
-    const addComment = async () => {
+    const addComment = useCallback(async () => {
         if (!newComment.trim()) return;
         try {
             await api.post('system/collaboration/comments', {
@@ -61,12 +62,38 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
             setReplyTo(null);
             syncCommunicationFlux(true);
             toast.success('Comment posted');
-        } catch (err) {
+        } catch {
             toast.error('Failed to post comment');
         }
-    };
+    }, [newComment, resourceType, resourceId, replyTo, syncCommunicationFlux]);
 
-    const renderComment = (comment: Comment, isReply = false) => (
+    const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const toastId = toast.loading("Uploading...");
+
+        try {
+            const { data } = await api.post('/system/collaboration/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const linkText = file.type.startsWith('image/') ? `\n![${file.name}](${data.url})` : `\n[Download ${file.name}](${data.url})`;
+            setNewComment(prev => prev + linkText);
+            toast.success("File attached", { id: toastId });
+        } catch (err) {
+            console.error(err);
+            toast.error("Upload failed", { id: toastId });
+        } finally {
+            // Reset the input so the same file can be selected again if needed
+            e.target.value = '';
+        }
+    }, []);
+
+    const renderComment = useCallback((comment: Comment, isReply = false): React.ReactNode => (
         <motion.div
             key={comment.id}
             initial={{ opacity: 0, y: 10 }}
@@ -99,7 +126,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
             </div>
             {comment.replies && comment.replies.map(reply => renderComment(reply, true))}
         </motion.div>
-    );
+    ), []);
 
     return (
         <Card className="p-4 bg-background/50 backdrop-blur-sm border-primary/20 shadow-xl lg:sticky lg:top-24">
@@ -145,31 +172,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
                         type="file"
                         id="file-upload"
                         className="hidden"
-                        onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-
-                            const formData = new FormData();
-                            formData.append('file', file);
-
-                            const toastId = toast.loading("Uploading...");
-
-                            try {
-                                const { data } = await api.post('/system/collaboration/upload', formData, {
-                                    headers: { 'Content-Type': 'multipart/form-data' }
-                                });
-
-                                const linkText = file.type.startsWith('image/') ? `\n![${file.name}](${data.url})` : `\n[Download ${file.name}](${data.url})`;
-                                setNewComment(prev => prev + linkText);
-                                toast.success("File attached", { id: toastId });
-                            } catch (err) {
-                                console.error(err);
-                                toast.error("Upload failed", { id: toastId });
-                            } finally {
-                                // Reset the input so the same file can be selected again if needed
-                                e.target.value = '';
-                            }
-                        }}
+                        onChange={handleFileUpload}
                     />
                     <Button
                         variant="outline"

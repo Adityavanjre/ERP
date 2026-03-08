@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -17,27 +17,57 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Truck, ShoppingBag, DollarSign, Package, CheckCircle2, XCircle, ShoppingCart, UserPlus, Scale } from "lucide-react";
+import { ShoppingBag, DollarSign, Package, CheckCircle2, ShoppingCart, UserPlus, Scale, Truck, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { CreateSupplierDialog } from "@/components/purchases/create-supplier-dialog";
 import { EditSupplierDialog } from "@/components/purchases/edit-supplier-dialog";
 import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
-import { Edit2 } from "lucide-react";
 import { NumericInput } from "@/components/ui/numeric-input";
 import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
 
+interface Supplier {
+    id: string;
+    name: string;
+    email: string;
+    category: string;
+    address: string;
+}
+
+interface Product {
+    id: string;
+    name: string;
+    sku: string;
+    costPrice: number;
+}
+
+interface PurchaseOrder {
+    id: string;
+    orderNumber: string;
+    orderDate: string;
+    totalAmount: number;
+    status: string;
+    supplier: {
+        name: string;
+    };
+}
+
+interface PurchaseStats {
+    totalSpent: number;
+    pendingPOs: number;
+}
+
 export default function PurchasesPage() {
-    const [suppliers, setSuppliers] = useState<any[]>([]);
-    const [products, setProducts] = useState<any[]>([]);
-    const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ totalSpent: 0, pendingPOs: 0 });
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+    const [stats, setStats] = useState<PurchaseStats>({ totalSpent: 0, pendingPOs: 0 });
     const [loading, setLoading] = useState(true);
     const [showPODialog, setShowPODialog] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
-    const [editingSupplier, setEditingSupplier] = useState<any>(null);
-    const [openingBalanceTarget, setOpeningBalanceTarget] = useState<any>(null);
+    const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+    const [openingBalanceTarget, setOpeningBalanceTarget] = useState<{ id: string, name: string } | null>(null);
     const [showConfirm, setShowConfirm] = useState(false);
 
     // Form state
@@ -49,7 +79,7 @@ export default function PurchasesPage() {
         orderDate: new Date().toISOString().split('T')[0]
     });
 
-    const syncProcurement = async (showLoading = false) => {
+    const syncProcurement = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [suppRes, prodRes, poRes, statsRes] = await Promise.all([
@@ -74,7 +104,7 @@ export default function PurchasesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncProcurement(true);
@@ -82,7 +112,7 @@ export default function PurchasesPage() {
         // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncProcurement(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncProcurement]);
 
     const handleConfirmSubmit = () => {
         if (!newPO.supplierId || !newPO.productId || newPO.quantity <= 0) {
@@ -119,7 +149,7 @@ export default function PurchasesPage() {
             setShowPODialog(false);
             setNewPO({ ...newPO, productId: "", quantity: 1, unitPrice: 0 });
             syncProcurement(true);
-        } catch (err) {
+        } catch {
             toast.error("Failed to create purchase order");
         } finally {
             setIsSubmitting(false);
@@ -131,7 +161,7 @@ export default function PurchasesPage() {
             await api.patch(`/purchases/orders/${id}/status`, { status });
             toast.success(`Purchase order marked as ${status}`);
             syncProcurement(true);
-        } catch (err) {
+        } catch {
             toast.error("Failed to update purchase order");
         }
     };
@@ -145,6 +175,8 @@ export default function PurchasesPage() {
             default: return <Badge variant="outline" className="bg-slate-100 text-slate-400 font-black text-[10px] uppercase tracking-tighter rounded-lg px-3 py-1">{status}</Badge>;
         }
     };
+
+    if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing supply chain data...</div>;
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">

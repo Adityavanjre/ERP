@@ -10,7 +10,7 @@ const RETRY_DELAYS_MS = [1000, 2000, 4000]; // Exponential backoff: 1s, 2s, 4s
 export class MailService {
   private readonly logger = new Logger(MailService.name);
 
-  constructor(private config: ConfigService) { }
+  constructor(private config: ConfigService) {}
 
   /**
    * Internal send with exponential backoff retry.
@@ -25,7 +25,7 @@ export class MailService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendApiKey}`,
+          Authorization: `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify(payload),
       });
@@ -39,29 +39,40 @@ export class MailService {
       // Do not retry client errors (4xx) — they indicate a configuration issue
       if (response.status >= 400 && response.status < 500) {
         const errorBody = await response.text().catch(() => 'No body');
-        this.logger.error(`Resend API client error (${response.status}): ${errorBody}`);
+        this.logger.error(
+          `Resend API client error (${response.status}): ${errorBody}`,
+        );
         return false;
       }
 
       // Server error (5xx) or unexpected — retry if attempts remain
       if (attempt < MAX_RETRIES - 1) {
         const delay = RETRY_DELAYS_MS[attempt] ?? 4000;
-        this.logger.warn(`Resend API server error (${response.status}). Retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        this.logger.warn(
+          `Resend API server error (${response.status}). Retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
         return this.sendWithRetry(payload, attempt + 1);
       }
 
-      this.logger.error(`Resend API failed after ${MAX_RETRIES} attempts: ${JSON.stringify(errorData)}`);
+      this.logger.error(
+        `Resend API failed after ${MAX_RETRIES} attempts: ${JSON.stringify(errorData)}`,
+      );
       return false;
     } catch (error: any) {
       // Network-level failure — retry if attempts remain
       if (attempt < MAX_RETRIES - 1) {
         const delay = RETRY_DELAYS_MS[attempt] ?? 4000;
-        this.logger.warn(`Resend network error. Retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${error.message}`);
+        this.logger.warn(
+          `Resend network error. Retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES}): ${error.message}`,
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
         return this.sendWithRetry(payload, attempt + 1);
       }
-      this.logger.error(`Resend permanently failed after ${MAX_RETRIES} attempts: ${error.message}`, error.stack);
+      this.logger.error(
+        `Resend permanently failed after ${MAX_RETRIES} attempts: ${error.message}`,
+        error.stack,
+      );
       return false;
     }
   }
@@ -91,8 +102,12 @@ export class MailService {
     const resendApiKey = this.config.get<string>('RESEND_API_KEY');
 
     if (!resendApiKey) {
-      this.logger.error(`CRITICAL: RESEND_API_KEY is missing. Cannot send email to ${to}`);
-      throw new Error('Email delivery failed due to missing configuration (RESEND_API_KEY).');
+      this.logger.error(
+        `CRITICAL: RESEND_API_KEY is missing. Cannot send email to ${to}`,
+      );
+      throw new Error(
+        'Email delivery failed due to missing configuration (RESEND_API_KEY).',
+      );
     }
 
     const success = await this.sendWithRetry({
@@ -107,10 +122,12 @@ export class MailService {
     } else {
       // BUG-FIX: Throw instead of silently returning false.
       // Previously AuthService continued as if the email was sent, giving the user false hope.
-      this.logger.error(`Failed to deliver password reset email to ${to} after ${MAX_RETRIES} attempts.`);
+      this.logger.error(
+        `Failed to deliver password reset email to ${to} after ${MAX_RETRIES} attempts.`,
+      );
       throw new Error(
         `Email delivery failed after ${MAX_RETRIES} retries. ` +
-        `Verify RESEND_API_KEY is set and that noreply@klypso.in is a verified Resend sender domain.`
+          `Verify RESEND_API_KEY is set and that noreply@klypso.in is a verified Resend sender domain.`,
       );
     }
 
@@ -123,9 +140,13 @@ export class MailService {
   async sendEmail(to: string, subject: string, html: string) {
     const resendApiKey = this.config.get<string>('RESEND_API_KEY');
     if (!resendApiKey) {
-      this.logger.error(`CRITICAL: RESEND_API_KEY is missing. Cannot send alert to ${to}`);
+      this.logger.error(
+        `CRITICAL: RESEND_API_KEY is missing. Cannot send alert to ${to}`,
+      );
       if (process.env.NODE_ENV === 'production') {
-        throw new Error('Email delivery failed: RESEND_API_KEY is missing in production.');
+        throw new Error(
+          'Email delivery failed: RESEND_API_KEY is missing in production.',
+        );
       }
       return false;
     }

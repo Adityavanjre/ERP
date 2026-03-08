@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,12 +11,23 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useUX } from "@/components/providers/ux-provider";
 
+interface SystemApp {
+    id: string;
+    name: string;
+    label: string;
+    description: string;
+    version: string;
+    author: string;
+    category: string;
+    installed: boolean;
+}
+
 export default function AppsMarketplace() {
     const { showConfirm } = useUX();
-    const [apps, setApps] = useState<any[]>([]);
+    const [apps, setApps] = useState<SystemApp[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const syncAppData = async (showLoading = false) => {
+    const syncAppData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("system/apps");
@@ -27,15 +38,15 @@ export default function AppsMarketplace() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncAppData(true);
         const interval = setInterval(() => syncAppData(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncAppData]);
 
-    const handleUninstall = (name: string) => {
+    const handleUninstall = useCallback((name: string) => {
         showConfirm({
             title: "Remove Module?",
             description: `This will remove the [${name}] module from your system. Any data specific to this module might become inaccessible.`,
@@ -47,23 +58,23 @@ export default function AppsMarketplace() {
                     toast.success(`Module [${name}] removed successfully`);
                     syncAppData(true);
                     window.dispatchEvent(new CustomEvent('system-apps-updated'));
-                } catch (err) {
+                } catch {
                     toast.error("Failed to remove module");
                 }
             }
         });
-    };
+    }, [showConfirm, syncAppData]);
 
-    const handleInstall = async (name: string) => {
+    const handleInstall = useCallback(async (name: string) => {
         try {
             await api.post(`/system/apps/${name}/install`);
             toast.success(`Module [${name}] installed successfully`);
             syncAppData(true);
             window.dispatchEvent(new CustomEvent('system-apps-updated'));
-        } catch (err) {
+        } catch {
             toast.error("Installation failed");
         }
-    };
+    }, [syncAppData]);
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8">
@@ -75,7 +86,7 @@ export default function AppsMarketplace() {
                     </h2>
                     <p className="text-slate-500 mt-2 font-medium">Install and manage add-on modules for your business.</p>
                 </div>
-                <Button className="rounded-2xl bg-white border border-slate-200 text-slate-600 shadow-sm font-bold h-11 px-5">
+                <Button className="rounded-2xl bg-white border border-slate-200 text-slate-600 shadow-sm font-bold h-11 px-5" variant="outline">
                     <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" /> System Verified
                 </Button>
             </div>
@@ -127,13 +138,14 @@ export default function AppsMarketplace() {
                             <Button
                                 key={type}
                                 className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
+                                variant="outline"
                                 onClick={async () => {
                                     try {
                                         await api.post("system/apps/preset", { type });
                                         toast.success(`${type} blueprint sequence initiated`);
                                         syncAppData(true);
                                         window.dispatchEvent(new CustomEvent('system-apps-updated'));
-                                    } catch (err) {
+                                    } catch {
                                         toast.error("Blueprint installation failed");
                                     }
                                 }}

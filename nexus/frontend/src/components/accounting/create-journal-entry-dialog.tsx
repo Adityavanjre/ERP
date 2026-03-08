@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,17 +11,31 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 
+interface Account {
+    id: string;
+    code: string;
+    name: string;
+}
+
 interface CreateJournalEntryDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
-    accounts: any[];
+    accounts: Account[];
 }
 
 interface JournalLine {
     accountId: string;
     type: "Debit" | "Credit";
     amount: string;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
 }
 
 export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accounts }: CreateJournalEntryDialogProps) {
@@ -32,27 +47,32 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
         { accountId: "", type: "Credit", amount: "" },
     ]);
 
-    const addLine = () => {
-        setLines([...lines, { accountId: "", type: "Debit", amount: "" }]);
-    };
+    const addLine = useCallback(() => {
+        setLines(prev => [...prev, { accountId: "", type: "Debit", amount: "" }]);
+    }, []);
 
-    const removeLine = (index: number) => {
-        if (lines.length > 2) {
-            setLines(lines.filter((_, i) => i !== index));
-        }
-    };
+    const removeLine = useCallback((index: number) => {
+        setLines(prev => {
+            if (prev.length > 2) {
+                return prev.filter((_, i) => i !== index);
+            }
+            return prev;
+        });
+    }, []);
 
-    const updateLine = (index: number, field: keyof JournalLine, value: string) => {
-        const newLines = [...lines];
-        newLines[index] = { ...newLines[index], [field]: value };
-        setLines(newLines);
-    };
+    const updateLine = useCallback((index: number, field: keyof JournalLine, value: string) => {
+        setLines(prev => {
+            const newLines = [...prev];
+            newLines[index] = { ...newLines[index], [field]: value } as JournalLine;
+            return newLines;
+        });
+    }, []);
 
-    const getTotalDebits = () => lines.filter(l => l.type === "Debit").reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0);
-    const getTotalCredits = () => lines.filter(l => l.type === "Credit").reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0);
-    const isBalanced = () => Math.abs(getTotalDebits() - getTotalCredits()) < 0.01;
+    const totalDebits = useMemo(() => lines.filter(l => l.type === "Debit").reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0), [lines]);
+    const totalCredits = useMemo(() => lines.filter(l => l.type === "Credit").reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0), [lines]);
+    const isBalanced = useMemo(() => Math.abs(totalDebits - totalCredits) < 0.01, [totalDebits, totalCredits]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
         // UI-001: Prevent double-execution during state-transition lag
@@ -68,7 +88,7 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
             return;
         }
 
-        if (!isBalanced()) {
+        if (!isBalanced) {
             toast.error("Debits and Credits must balance");
             return;
         }
@@ -97,12 +117,13 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
             ]);
             onOpenChange(false);
             onSuccess?.();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to create journal entry");
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            toast.error(err.response?.data?.message || "Failed to create journal entry");
         } finally {
             setLoading(false);
         }
-    };
+    }, [loading, description, date, lines, isBalanced, onOpenChange, onSuccess]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +133,6 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
                     <DialogDescription>
                         Record a manual journal entry. Every debit must have an equal credit (double-entry bookkeeping). Use this for corrections, adjustments, or transactions not covered by invoices/payments.
                     </DialogDescription>
-
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-6 py-4">
@@ -160,7 +180,6 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
                                         <select
                                             value={line.accountId}
                                             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateLine(index, "accountId", e.target.value)}
-
                                             className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm"
                                             required
                                         >
@@ -215,17 +234,17 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
                             <div className="grid grid-cols-2 gap-4 p-3 bg-slate-900 text-white rounded-lg font-bold">
                                 <div>
                                     <div className="text-xs opacity-70">Total Debits</div>
-                                    <div className="text-lg">₹{getTotalDebits().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                                    <div className="text-lg">₹{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                                 </div>
                                 <div>
                                     <div className="text-xs opacity-70">Total Credits</div>
-                                    <div className="text-lg">₹{getTotalCredits().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                                    <div className="text-lg">₹{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                                 </div>
                             </div>
 
-                            {!isBalanced() && getTotalDebits() > 0 && getTotalCredits() > 0 && (
+                            {!isBalanced && totalDebits > 0 && totalCredits > 0 && (
                                 <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                                    ⚠️ Entry is not balanced. Difference: ₹{Math.abs(getTotalDebits() - getTotalCredits()).toFixed(2)}
+                                    ⚠️ Entry is not balanced. Difference: ₹{Math.abs(totalDebits - totalCredits).toFixed(2)}
                                 </div>
                             )}
                         </div>
@@ -239,7 +258,7 @@ export function CreateJournalEntryDialog({ open, onOpenChange, onSuccess, accoun
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading || !isBalanced()} className="bg-amber-500 hover:bg-amber-600">
+                        <Button type="submit" disabled={loading || !isBalanced} className="bg-amber-500 hover:bg-amber-600">
                             {loading ? "Creating..." : "Create Entry"}
                         </Button>
                     </DialogFooter>

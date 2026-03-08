@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,23 +9,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import {
     Cpu,
     Zap,
-    ShieldCheck,
     Activity,
     LayoutGrid,
     DollarSign,
     Package,
     Users,
     ArrowDownRight,
-    Target,
-    BarChart3,
     Clock,
-    Terminal,
     CreditCard,
     Plus,
     Truck,
     FileText,
-    TrendingUp,
-    ArrowRight
+    TrendingUp
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -46,11 +41,52 @@ const SALES_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller'];
 const STOCK_ROLES: RoleName[] = ['Owner', 'Manager', 'Storekeeper'];
 const FINANCE_ROLES: RoleName[] = ['Owner', 'Manager', 'Accountant', 'CA'];
 
+interface HealthStats {
+    runRate: number;
+    burnRate: number;
+    growth: number;
+    healthScore: number;
+    alerts: string[];
+}
+
+interface ChartData {
+    month: string;
+    revenue: number;
+}
+
+interface ActivityLog {
+    message: string;
+    user: string;
+    time: string | Date;
+}
+
+interface ValueChainStep {
+    label: string;
+    count: number;
+    color: string;
+}
+
+interface IndustryConfig {
+    industry: string;
+    enabledModules: string[];
+    terminology: {
+        customer?: string;
+        product?: string;
+    };
+}
+
 export default function DashboardPage() {
     const router = useRouter();
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller';
-    const [systemStats, setSystemStats] = useState({
+    interface SystemStats {
+        apps: number;
+        installed: number;
+        records: number;
+        uptime: string;
+    }
+
+    const [, setSystemStats] = useState<SystemStats>({
         apps: 0,
         installed: 0,
         records: 0,
@@ -66,7 +102,7 @@ export default function DashboardPage() {
         inventoryCount: 0
     });
 
-    const [healthStats, setHealthStats] = useState<any>({
+    const [healthStats, setHealthStats] = useState<HealthStats>({
         runRate: 0,
         burnRate: 0,
         growth: 0,
@@ -74,70 +110,70 @@ export default function DashboardPage() {
         alerts: []
     });
 
-    const [chartData, setChartData] = useState<any[]>([]);
-    const [activity, setActivity] = useState<any[]>([]);
-    const [valueChain, setValueChain] = useState<any[]>([]);
+    const [chartData, setChartData] = useState<ChartData[]>([]);
+    const [activity, setActivity] = useState<ActivityLog[]>([]);
+    const [valueChain, setValueChain] = useState<ValueChainStep[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [enabledModules, setEnabledModules] = useState<string[]>([]);
-    const [industryConfig, setIndustryConfig] = useState<any>(null);
+    const [industryConfig, setIndustryConfig] = useState<IndustryConfig | null>(null);
+
+    const fetchData = useCallback(async () => {
+        try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
+            const identity = typeof window !== 'undefined' ? localStorage.getItem('k_identity') : null;
+            if (token && identity && token === identity) {
+                setLoading(false);
+                return;
+            }
+
+            const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.allSettled([
+                api.get('system/stats'),
+                api.get('analytics/summary'),
+                api.get('analytics/performance'),
+                api.get('analytics/health'),
+                api.get('analytics/activity'),
+                api.get('analytics/value-chain'),
+                api.get('system/config')
+            ]);
+
+            const getVal = <T,>(res: PromiseSettledResult<{ data: T }>) =>
+                res.status === 'fulfilled' ? res.value.data : null;
+
+            const sysData = getVal<SystemStats>(systemRes as PromiseSettledResult<{ data: SystemStats }>);
+            const sumData = getVal<Partial<typeof biStats>>(summaryRes as PromiseSettledResult<{ data: Partial<typeof biStats> }>);
+            const perfData = getVal<ChartData[]>(performanceRes as PromiseSettledResult<{ data: ChartData[] }>);
+            const healthData = getVal<HealthStats>(healthRes as PromiseSettledResult<{ data: HealthStats }>);
+            const actData = getVal<ActivityLog[]>(activityRes as PromiseSettledResult<{ data: ActivityLog[] }>);
+            const vcData = getVal<ValueChainStep[]>(vcRes as PromiseSettledResult<{ data: ValueChainStep[] }>);
+            const cfgData = getVal<IndustryConfig>(configRes as PromiseSettledResult<{ data: IndustryConfig }>);
+
+            if (sysData) setSystemStats(sysData);
+            if (cfgData) {
+                setIndustryConfig(cfgData);
+                const apiModules: string[] = cfgData.enabledModules || [];
+                const core = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
+                setEnabledModules(Array.from(new Set([...core, ...apiModules])));
+            }
+
+            setBiStats(prev => ({ ...prev, ...(sumData || {}) }));
+            setChartData(Array.isArray(perfData) ? perfData : []);
+            if (healthData) setHealthStats(healthData);
+            setActivity(Array.isArray(actData) ? actData : []);
+            setValueChain(Array.isArray(vcData) ? vcData : []);
+
+        } catch (err) {
+            console.error("Data update error:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const token = localStorage.getItem('k_token');
-                const identity = localStorage.getItem('k_identity');
-                if (token && identity && token === identity) {
-                    setLoading(false);
-                    return;
-                }
-
-                const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.allSettled([
-                    api.get('system/stats'),
-                    api.get('analytics/summary'),
-                    api.get('analytics/performance'),
-                    api.get('analytics/health'),
-                    api.get('analytics/activity'),
-                    api.get('analytics/value-chain'),
-                    api.get('system/config')
-                ]);
-
-                const getVal = (res: PromiseSettledResult<any>) =>
-                    res.status === 'fulfilled' ? res.value.data : null;
-
-                const sysData = getVal(systemRes);
-                const sumData = getVal(summaryRes);
-                const perfData = getVal(performanceRes);
-                const healthData = getVal(healthRes);
-                const actData = getVal(activityRes);
-                const vcData = getVal(vcRes);
-                const cfgData = getVal(configRes);
-
-                if (sysData) setSystemStats(sysData);
-                if (cfgData) {
-                    setIndustryConfig(cfgData);
-                    const apiModules: string[] = cfgData.enabledModules || [];
-                    const core = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
-                    setEnabledModules(Array.from(new Set([...core, ...apiModules])));
-                }
-
-                setBiStats(prev => ({ ...prev, ...(sumData || {}) }));
-                setChartData(Array.isArray(perfData) ? perfData : []);
-                if (healthData) setHealthStats(healthData);
-                setActivity(Array.isArray(actData) ? actData : []);
-                setValueChain(Array.isArray(vcData) ? vcData : []);
-
-            } catch (err) {
-                console.error("Data update error:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchData();
         const syncInterval = setInterval(fetchData, 30000);
         return () => clearInterval(syncInterval);
-    }, []);
+    }, [fetchData]);
 
     const term = industryConfig?.terminology || {};
 
@@ -175,6 +211,8 @@ export default function DashboardPage() {
             desc: `Active ${term.product?.toLowerCase() || 'products'}`
         }
     ];
+
+    if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing business intelligence...</div>;
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
@@ -314,7 +352,7 @@ export default function DashboardPage() {
                                         itemStyle={{ color: '#2563eb' }}
                                     />
                                     <Bar dataKey="revenue" radius={[10, 10, 0, 0]}>
-                                        {(chartData || []).map((entry, index) => (
+                                        {(chartData || []).map((_, index) => (
                                             <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? '#2563eb' : '#e2e8f0'} />
                                         ))}
                                     </Bar>

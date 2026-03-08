@@ -20,7 +20,12 @@ import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
 import { AiService } from '../system/services/ai.service';
-import { CreateBOMDto, CreateWorkOrderDto, CreateMachineDto, CompleteWorkOrderDto } from './dto/manufacturing.dto';
+import {
+  CreateBOMDto,
+  CreateWorkOrderDto,
+  CreateMachineDto,
+  CompleteWorkOrderDto,
+} from './dto/manufacturing.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
@@ -31,8 +36,8 @@ import { Role } from '@prisma/client';
 export class ManufacturingController {
   constructor(
     private readonly mfgService: ManufacturingService,
-    private readonly aiService: AiService
-  ) { }
+    private readonly aiService: AiService,
+  ) {}
 
   @Get('boms/:id/yield-analysis')
   @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
@@ -50,7 +55,14 @@ export class ManufacturingController {
   }
 
   @Get('boms')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getBOMs(@CurrentUser() user: any) {
     return this.mfgService.getBOMs(user.tenantId);
@@ -68,14 +80,28 @@ export class ManufacturingController {
   }
 
   @Get('boms/:id')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getBOMDetails(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.getBOMDetails(user.tenantId, id);
   }
 
   @Get('boms/:id/explode')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   async explodeBOM(
     @CurrentUser() user: any,
@@ -101,7 +127,14 @@ export class ManufacturingController {
   }
 
   @Get('work-orders')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getWOs(@CurrentUser() user: any) {
     return this.mfgService.getWorkOrders(user.tenantId);
@@ -135,7 +168,14 @@ export class ManufacturingController {
   }
 
   @Get('work-orders/:id/shortages')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   checkShortages(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.checkShortagesFromWO(user.tenantId, id);
@@ -158,7 +198,7 @@ export class ManufacturingController {
       dto.machineTimeHours,
       dto.operatorName,
       dto.warehouseId,
-      dto.idempotencyKey
+      dto.idempotencyKey,
     );
   }
 
@@ -171,7 +211,14 @@ export class ManufacturingController {
   }
 
   @Get('machines')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getMachines(@CurrentUser() user: any) {
     return this.mfgService.getMachines(user.tenantId);

@@ -6,20 +6,19 @@ interface User {
     name: string;
     email: string;
     isAdmin: boolean;
-    token: string;
 }
 
 interface AuthContextType {
     user: User | null;
     login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
     login: async () => { },
-    logout: () => { },
+    logout: async () => { },
     isLoading: true
 });
 
@@ -37,23 +36,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
-            // SEC-008: Use centralized api instance
+            // SEC-008: Now uses cookies (withCredentials: true in api)
             const { data } = await api.post('users/login', {
                 email,
                 password,
             });
             setUser(data);
             localStorage.setItem('userInfo', JSON.stringify(data));
-        } catch (error: any) {
-            throw new Error(error.response?.data?.message || 'Login failed');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            throw new Error(err.response?.data?.message || 'Login failed');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('userInfo');
-        setUser(null);
+    const logout = async () => {
+        try {
+            await api.post('users/logout');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            localStorage.removeItem('userInfo');
+            setUser(null);
+        }
     };
 
     return (

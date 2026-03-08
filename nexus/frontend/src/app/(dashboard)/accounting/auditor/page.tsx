@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     ShieldCheck,
     AlertTriangle,
@@ -12,7 +12,6 @@ import {
     Download,
     CheckCircle2,
     XCircle,
-    HelpCircle,
     Clock,
     ArrowRightLeft,
     Search,
@@ -21,15 +20,41 @@ import {
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
+interface RiskFlag {
+    type: string;
+    severity: 'BLOCKER' | 'WARNING';
+    count: number;
+}
+
+interface AuditorData {
+    confidenceScore: number;
+    status: 'CLEAN' | 'BLOCKED' | 'WARNING';
+    isLocked: boolean;
+    lockDetails: {
+        lockedAt: string;
+    };
+    hsnCoverage: number;
+    riskFlags: RiskFlag[];
+    errors: string[];
+    summary: {
+        totalSales: number;
+        totalGST: number;
+        totalReceipts: number;
+        totalPayments: number;
+        netBalanceDr: number;
+        netBalanceCr: number;
+    };
+}
+
 export default function AuditorDashboard() {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<AuditorData | null>(null);
     const [loading, setLoading] = useState(true);
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
     const [reopenReason, setReopenReason] = useState("");
     const [isReopening, setIsReopening] = useState(false);
 
-    const syncAuditorData = async (showLoading = false) => {
+    const syncAuditorData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
@@ -39,21 +64,22 @@ export default function AuditorDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [month, year]);
 
     useEffect(() => {
         syncAuditorData(true);
         const interval = setInterval(() => syncAuditorData(false), 30000);
         return () => clearInterval(interval);
-    }, [month, year]);
+    }, [syncAuditorData]);
 
     const handleLock = async () => {
         try {
             await api.post("accounting/auditor/lock", { month, year });
             toast.success("Period locked successfully");
             syncAuditorData(true);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to lock period");
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(error.response?.data?.message || "Failed to lock period");
         }
     };
 
@@ -69,6 +95,7 @@ export default function AuditorDashboard() {
             setReopenReason("");
             syncAuditorData(true);
         } catch (err) {
+            console.error(err);
             toast.error("Failed to reopen period");
         }
     };
@@ -80,8 +107,9 @@ export default function AuditorDashboard() {
             const res = await api.post("accounting/close-year", { year });
             toast.success(res.data.message);
             syncAuditorData(true);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to close year");
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(error.response?.data?.message || "Failed to close year");
         }
     };
 
@@ -100,6 +128,7 @@ export default function AuditorDashboard() {
             link.remove();
             toast.success("Vouchers exported successfully");
         } catch (err) {
+            console.error(err);
             toast.error("Failed to generate Tally Export");
         }
     };
@@ -119,6 +148,7 @@ export default function AuditorDashboard() {
             link.remove();
             toast.success("Masters exported successfully");
         } catch (err) {
+            console.error(err);
             toast.error("Failed to generate Tally Masters");
         }
     };
@@ -177,12 +207,12 @@ export default function AuditorDashboard() {
                     <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Confidence Score</p>
                     <div className="mt-2 flex items-baseline gap-2">
                         <span className="text-4xl font-black text-slate-900 tracking-tighter">{data?.confidenceScore}%</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${data?.confidenceScore > 90 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                            {data?.confidenceScore > 90 ? 'High' : 'Moderate'}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${(data?.confidenceScore ?? 0) > 90 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                            {(data?.confidenceScore ?? 0) > 90 ? 'High' : 'Moderate'}
                         </span>
                     </div>
                     <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${data?.confidenceScore}%` }}></div>
+                        <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${data?.confidenceScore ?? 0}%` }}></div>
                     </div>
                 </div>
 
@@ -214,18 +244,18 @@ export default function AuditorDashboard() {
                         <span className="text-2xl font-black text-slate-900 tracking-tighter">{data?.isLocked ? 'Closed' : 'Open'}</span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
-                        {data?.isLocked ? `Locked on ${new Date(data.lockDetails.lockedAt).toLocaleDateString()}` : 'Vouchers can still be edited'}
+                        {data?.isLocked && data.lockDetails ? `Locked on ${new Date(data.lockDetails.lockedAt).toLocaleDateString()}` : 'Vouchers can still be edited'}
                     </p>
                 </div>
 
                 <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
-                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Tax Coverage</p>
+                    <p className="text-slate-500 text-[10px) font-black uppercase tracking-widest">Tax Coverage</p>
                     <div className="mt-2 flex items-baseline gap-2">
                         <span className="text-4xl font-black text-slate-900 tracking-tighter">{(data?.hsnCoverage || 0).toFixed(0)}%</span>
                         <FileText className="w-4 h-4 text-slate-400" />
                     </div>
                     <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-blue-600 h-full transition-all duration-1000" style={{ width: `${data?.hsnCoverage}%` }}></div>
+                        <div className="bg-blue-600 h-full transition-all duration-1000" style={{ width: `${data?.hsnCoverage ?? 0}%` }}></div>
                     </div>
                 </div>
             </div>
@@ -239,12 +269,12 @@ export default function AuditorDashboard() {
                         Account Alerts & Blockers
                     </h2>
                     <div className="space-y-4">
-                        {data?.riskFlags?.length === 0 && (
+                        {(!data?.riskFlags || data.riskFlags.length === 0) && (
                             <div className="text-slate-400 font-bold italic py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                                 No major flags detected for this period.
                             </div>
                         )}
-                        {data?.riskFlags?.map((flag: any, i: number) => (
+                        {data?.riskFlags?.map((flag: RiskFlag, i: number) => (
                             <div key={i} className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all hover:scale-[1.01] ${flag.severity === 'BLOCKER' ? 'bg-red-50 border-red-100 text-red-900' : 'bg-amber-50 border-amber-100 text-amber-900'}`}>
                                 <div className="flex items-center gap-4">
                                     {flag.type === 'BACKDATED' && <Clock className="w-6 h-6 text-amber-600" />}
@@ -264,7 +294,7 @@ export default function AuditorDashboard() {
                     </div>
 
                     <div className="mt-8 space-y-3">
-                        {data?.errors.map((err: string, i: number) => (
+                        {data?.errors?.map((err: string, i: number) => (
                             <div key={i} className="text-sm text-red-400 flex gap-2">
                                 <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                 {err}
@@ -286,7 +316,7 @@ export default function AuditorDashboard() {
                                 <p className="text-2xl font-black text-slate-900 tracking-tighter">₹{data?.summary.totalSales.toLocaleString()}</p>
                             </div>
                             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total GST Liability</p>
+                                <p className="text-[10px) text-slate-500 font-bold uppercase tracking-widest">Total GST Liability</p>
                                 <p className="text-2xl font-black text-blue-600 tracking-tighter">₹{data?.summary.totalGST.toLocaleString()}</p>
                             </div>
                             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -411,4 +441,3 @@ export default function AuditorDashboard() {
         </div>
     );
 }
-

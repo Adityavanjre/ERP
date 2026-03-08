@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,11 +11,27 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+export interface Invoice {
+    id: string;
+    invoiceNumber: string;
+    customerId: string;
+    totalAmount: string | number;
+    amountPaid: string | number;
+}
+
 interface RecordPaymentModalProps {
-    invoice: any;
+    invoice: Invoice | null;
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
 }
 
 export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: RecordPaymentModalProps) {
@@ -27,11 +43,11 @@ export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: Reco
     // Calc outstanding
     const outstanding = Number(invoice?.totalAmount || 0) - Number(invoice?.amountPaid || 0);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
         // UI-001: Prevent double-execution during state-transition lag
-        if (loading) return;
+        if (loading || !invoice) return;
 
         if (!amount || Number(amount) <= 0) {
             toast.error("Please enter a valid amount");
@@ -55,12 +71,15 @@ export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: Reco
             toast.success("Payment recorded successfully");
             onSuccess();
             onClose();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to record payment");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to record payment");
         } finally {
             setLoading(false);
         }
-    };
+    }, [amount, mode, reference, loading, invoice, outstanding, onClose, onSuccess]);
+
+    if (!invoice) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,7 +87,7 @@ export function RecordPaymentModal({ invoice, isOpen, onClose, onSuccess }: Reco
                 <DialogHeader>
                     <DialogTitle>Record Payment</DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                        Record a payment for Invoice #{invoice?.invoiceNumber}
+                        Record a payment for Invoice #{invoice.invoiceNumber}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">

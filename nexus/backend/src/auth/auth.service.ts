@@ -12,8 +12,22 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { GoogleAuthService } from './google-auth.service';
-import { LoginDto, RegisterDto, GoogleLoginDto, OnboardingDto, CreateWorkspaceDto } from './dto/auth.dto';
-import { TenantType, PlanType, Role, Prisma, AuthProvider, SubscriptionStatus } from '@prisma/client';
+import {
+  LoginDto,
+  RegisterDto,
+  GoogleLoginDto,
+  OnboardingDto,
+  CreateWorkspaceDto,
+} from './dto/auth.dto';
+import {
+  TenantType,
+  PlanType,
+  Role,
+  Prisma,
+  User,
+  AuthProvider,
+  SubscriptionStatus,
+} from '@prisma/client';
 import { AccessChannel } from '@nexus/shared';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -59,13 +73,17 @@ export class AuthService {
       .replace(/^-+|-+$/g, '');
 
     if (!slug || slug.length < 3) {
-      throw new BadRequestException('Workspace name must contain at least 3 alphanumeric characters');
+      throw new BadRequestException(
+        'Workspace name must contain at least 3 alphanumeric characters',
+      );
     }
     let finalSlug = slug;
     // OPS-004: Use exact match check rather than startsWith count.
     // startsWith('acme') matches both 'acme' and 'acme-corp', producing wrong counts
     // and potentially duplicate slugs under concurrent creation.
-    const exactSlugExists = await this.prisma.tenant.findUnique({ where: { slug } });
+    const exactSlugExists = await this.prisma.tenant.findUnique({
+      where: { slug },
+    });
     if (exactSlugExists) {
       finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
     }
@@ -120,95 +138,109 @@ export class AuthService {
 
     try {
       // 3. Create User, Tenant, Membership and Init accounts in one atomic Transaction
-      const newUser = await this.prisma.$transaction(async (tx: any) => {
-        // Create User
-        const user = await tx.user.create({
-          data: {
-            email: dto.email,
-            passwordHash,
-            fullName: dto.fullName,
-            authProvider: AuthProvider.Email,
-            tokenVersion: 1, // FIX-AUTH-01: Always initialize to 1 to prevent null vs 1 mismatch on refresh
-          },
-        });
-
-        // Create Tenant (Company)
-        const sanitizedName = dto.tenantName.trim();
-        const slug = sanitizedName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-') // Strictly alphanumeric
-          .replace(/^-+|-+$/g, ''); // Trim hyphens
-
-        if (!slug || slug.length < 3) {
-          throw new BadRequestException('Company name must contain at least 3 alphanumeric characters');
-        }
-
-        // OPS-004: Exact slug lookup instead of startsWith count — prevents
-        // non-unique slugs when concurrent registrations share the same base slug.
-        let finalSlug = slug;
-        const exactSlugExists = await tx.tenant.findFirst({ where: { slug } });
-        if (exactSlugExists) {
-          finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
-        }
-
-        const tenant = await tx.tenant.create({
-          data: {
-            name: dto.tenantName,
-            slug: finalSlug,
-            type: (dto.companyType as TenantType) ?? TenantType.Retail,
-            plan: PlanType.Free,
-            subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
-            isOnboarded: false,
-          },
-        });
-
-        // Create Membership (Owner)
-        await tx.tenantUser.create({
-          data: {
-            userId: user.id,
-            tenantId: tenant.id,
-            role: Role.Owner,
-          },
-        });
-
-        // 4. Initialize Industry-Specific Accounts (Rule: Real money from day 1)
-        await this.accountingService.initializeTenantAccounts(
-          tenant.id,
-          tx,
-          tenant.type as string,
-        );
-
-        // Telemetry (Phase 4)
-        try {
-          await this.logging.log({
-            userId: user.id,
-            action: 'USER_REGISTERED',
-            resource: 'User',
-            details: { email: dto.email, tenant: dto.tenantName, industry: tenant.type },
+      const newUser = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // Create User
+          const user = await tx.user.create({
+            data: {
+              email: dto.email,
+              passwordHash,
+              fullName: dto.fullName,
+              authProvider: AuthProvider.Email,
+              tokenVersion: 1, // FIX-AUTH-01: Always initialize to 1 to prevent null vs 1 mismatch on refresh
+            },
           });
-        } catch (logErr) {
-          this.logger.warn('[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' + (logErr as any)?.message);
-        }
 
-        return user;
-      }, {
-        maxWait: 5000, // default is 2000
-        timeout: 20000, // default is 5000
-      });
+          // Create Tenant (Company)
+          const sanitizedName = dto.tenantName.trim();
+          const slug = sanitizedName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-') // Strictly alphanumeric
+            .replace(/^-+|-+$/g, ''); // Trim hyphens
+
+          if (!slug || slug.length < 3) {
+            throw new BadRequestException(
+              'Company name must contain at least 3 alphanumeric characters',
+            );
+          }
+
+          // OPS-004: Exact slug lookup instead of startsWith count — prevents
+          // non-unique slugs when concurrent registrations share the same base slug.
+          let finalSlug = slug;
+          const exactSlugExists = await tx.tenant.findFirst({
+            where: { slug },
+          });
+          if (exactSlugExists) {
+            finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
+          }
+
+          const tenant = await tx.tenant.create({
+            data: {
+              name: dto.tenantName,
+              slug: finalSlug,
+              type: (dto.companyType as TenantType) ?? TenantType.Retail,
+              plan: PlanType.Free,
+              subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
+              isOnboarded: false,
+            },
+          });
+
+          // Create Membership (Owner)
+          await tx.tenantUser.create({
+            data: {
+              userId: user.id,
+              tenantId: tenant.id,
+              role: Role.Owner,
+            },
+          });
+
+          // 4. Initialize Industry-Specific Accounts (Rule: Real money from day 1)
+          await this.accountingService.initializeTenantAccounts(
+            tenant.id,
+            tx,
+            tenant.type as string,
+          );
+
+          // Telemetry (Phase 4)
+          try {
+            await this.logging.log({
+              userId: user.id,
+              action: 'USER_REGISTERED',
+              resource: 'User',
+              details: { tenant: dto.tenantName, industry: tenant.type },
+            });
+          } catch (logErr) {
+            this.logger.warn(
+              '[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' +
+              logErr?.message,
+            );
+          }
+
+          return user;
+        },
+        {
+          maxWait: 5000, // default is 2000
+          timeout: 20000, // default is 5000
+        },
+      );
 
       // Re-fetch user with memberships so generateAuthResponse can map tenants correctly.
       // tx.user.create() does not return relation data even when a TenantUser was created
       // inside the same transaction, so we must query it after the transaction commits.
       const userWithMemberships = await this.prisma.user.findUnique({
-        where: { id: newUser!.id },
+        where: { id: newUser.id },
         include: { memberships: { include: { tenant: true } } },
       });
 
       // Identity response — pass 'WEB' channel so the token matches what login/web produces.
       // Without this the default is 'MOBILE' and the user would hit mobile-only restrictions.
       return this.generateAuthResponse(userWithMemberships!, false, 'WEB');
-    } catch (err: any) {
-      this.logger.error('[AUTH_REGISTER] Registration failed: ' + err?.message, err?.stack);
+    } catch (err: unknown) {
+      const error = err as Error;
+      this.logger.error(
+        '[AUTH_REGISTER] Registration failed: ' + error?.message,
+        error?.stack,
+      );
       throw err;
     }
   }
@@ -224,17 +256,19 @@ export class AuthService {
     });
 
     if (!user) {
-      this.logger.warn(`[LOGIN_FAILED] User not found: ${dto.email}`);
+      this.logger.warn(`[LOGIN_FAILED] Identity not found`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (user.authProvider !== AuthProvider.Email) {
-      this.logger.warn(`[LOGIN_FAILED] Identity mismatch for ${dto.email}: Provider is ${user.authProvider}`);
-      throw new UnauthorizedException(`This account uses ${user.authProvider} login. Please sign in using your social provider.`);
+      this.logger.warn(`[LOGIN_FAILED] Provider mismatch for identity`);
+      throw new UnauthorizedException(
+        `This account uses ${user.authProvider} login. Please sign in using your social provider.`,
+      );
     }
 
     if (!user.passwordHash) {
-      this.logger.warn(`[LOGIN_FAILED] Password hash missing for user: ${dto.email}`);
+      this.logger.warn(`[LOGIN_FAILED] Credential integrity failure`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -244,7 +278,10 @@ export class AuthService {
     // password is valid by observing the distinct lockout vs. invalid-credentials response.
     await this.checkBruteForce(user);
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
       await this.recordLoginFailure(user);
@@ -258,11 +295,16 @@ export class AuthService {
       // Anomaly detection: check for brute-force burst from same IP
       if (ipAddress) {
         // Non-blocking: anomaly check must not defer the error response
-        this.anomalyAlert.checkAuthFailureBurst(ipAddress).catch((anomalyErr) => {
-          // Non-blocking: anomaly check must not defer the error response.
-          // Logged so anomaly service failures are visible in ops.
-          console.error('[AUTH_ANOMALY_WARN] Anomaly burst check failed silently:', anomalyErr);
-        });
+        this.anomalyAlert
+          .checkAuthFailureBurst(ipAddress)
+          .catch((anomalyErr) => {
+            // Non-blocking: anomaly check must not defer the error response.
+            // Logged so anomaly service failures are visible in ops.
+            console.error(
+              '[AUTH_ANOMALY_WARN] Anomaly burst check failed silently:',
+              anomalyErr,
+            );
+          });
       }
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -270,15 +312,20 @@ export class AuthService {
     await this.resetLoginAttempts(user.id);
 
     // MFA Enforcement — only if user has explicitly enabled MFA
-    const userAny = user as any;
     const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
-    const hasSensitiveRole = user.memberships.some((m: any) => rolesRequiringMfa.includes(m.role));
+    const hasSensitiveRole = user.memberships.some((m) =>
+      rolesRequiringMfa.includes(m.role),
+    );
 
-    if (userAny.mfaEnabled) {
+    if (user.mfaEnabled) {
       return {
         requiresMfa: true,
-        tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge', channel }),
-        user: { id: user.id, email: user.email }
+        tempToken: this.jwtService.sign({
+          sub: user.id,
+          type: 'mfa_challenge',
+          channel,
+        }),
+        user: { id: user.id, email: user.email },
       };
     }
 
@@ -286,7 +333,12 @@ export class AuthService {
       userId: user.id,
       action: 'USER_LOGIN_SUCCESS',
       resource: 'Identity',
-      details: { method: 'Email', memberships: user.memberships.length, role: hasSensitiveRole ? 'Administrative' : 'Standard', channel },
+      details: {
+        method: 'Email',
+        memberships: user.memberships.length,
+        role: hasSensitiveRole ? 'Administrative' : 'Standard',
+        channel,
+      },
       ipAddress,
     });
 
@@ -306,31 +358,40 @@ export class AuthService {
       },
     });
 
-    const configAdminEmail = (this.config.get<string>('ADMIN_EMAIL') || 'adityavanjre111@gmail.com').toLowerCase();
+    const configAdminEmail = (
+      this.config.get<string>('ADMIN_EMAIL') || 'adityavanjre111@gmail.com'
+    ).toLowerCase();
     const isConfigAdmin = email === configAdminEmail;
 
     if (!user) {
-      this.logger.warn(`[ADMIN_LOGIN_FAILED] User not found: ${email}`);
+      this.logger.warn(`[ADMIN_LOGIN_FAILED] Identity not found`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (!user.isSuperAdmin && !isConfigAdmin) {
-      this.logger.warn(`[ADMIN_LOGIN_FAILED] Access denied for ${email}: Not a Super Admin`);
-      throw new UnauthorizedException('Access restricted to infrastructure administrators.');
+      this.logger.warn(
+        `[ADMIN_LOGIN_FAILED] Access denied: Insufficient privileges`,
+      );
+      throw new UnauthorizedException(
+        'Access restricted to infrastructure administrators.',
+      );
     }
 
     // Fail-safe: If they are the config admin but not flagged in DB (drift), fix it now.
     if (isConfigAdmin && !user.isSuperAdmin) {
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { isSuperAdmin: true }
+        data: { isSuperAdmin: true },
       });
       user.isSuperAdmin = true;
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash ?? '');
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      user.passwordHash ?? '',
+    );
     if (!isPasswordValid) {
-      this.logger.warn(`[ADMIN_LOGIN_FAILED] Password mismatch for: ${email}`);
+      this.logger.warn(`[ADMIN_LOGIN_FAILED] Password mismatch`);
       await this.recordLoginFailure(user);
       await this.logging.log({
         userId: user.id,
@@ -348,8 +409,12 @@ export class AuthService {
     if (user.mfaEnabled) {
       return {
         requiresMfa: true,
-        tempToken: this.jwtService.sign({ sub: user.id, type: 'mfa_challenge', isAdminFlow: true }),
-        user: { id: user.id, email: user.email }
+        tempToken: this.jwtService.sign({
+          sub: user.id,
+          type: 'mfa_challenge',
+          isAdminFlow: true,
+        }),
+        user: { id: user.id, email: user.email },
       };
     }
 
@@ -380,7 +445,9 @@ export class AuthService {
     if (user) {
       // Identity Safety Check (Rule E)
       if (user.authProvider === AuthProvider.Email) {
-        throw new ConflictException('An account already exists with this email using password login. Please log in with your password and link Google in settings.');
+        throw new ConflictException(
+          'An account already exists with this email using password login. Please log in with your password and link Google in settings.',
+        );
       }
       if (user.providerId !== googleUser.providerId) {
         // Handle edge case of changing provider ID (rare but possible if Google sub changes)
@@ -391,7 +458,7 @@ export class AuthService {
       }
     } else {
       // Create new Google User (Rule C: No tenant created yet, must onboard)
-      user = await this.prisma.user.create({
+      user = (await this.prisma.user.create({
         data: {
           email: googleUser.email!,
           fullName: googleUser.fullName,
@@ -400,14 +467,16 @@ export class AuthService {
           providerId: googleUser.providerId,
         },
         include: { memberships: { include: { tenant: true } } },
-      }) as any;
+      })) as any;
     }
 
     const finalUser = user! as any;
 
     // MFA Enforcement for Google Login
     const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
-    const hasSensitiveRole = (finalUser.memberships || []).some((m: any) => rolesRequiringMfa.includes(m.role));
+    const hasSensitiveRole = (finalUser.memberships || []).some((m: any) =>
+      rolesRequiringMfa.includes(m.role),
+    );
 
     if (finalUser.mfaEnabled || hasSensitiveRole) {
       if (!finalUser.mfaEnabled) {
@@ -443,22 +512,29 @@ export class AuthService {
     return this.generateAuthResponse(finalUser, false, channel);
   }
 
-  private generateAuthResponse(user: any, isMfaVerifiedOverride?: boolean, channel: AccessChannel = 'MOBILE', isAdminFlow: boolean = false) {
+  private generateAuthResponse(
+    user: Prisma.UserGetPayload<{
+      include: { memberships: { include: { tenant: true } } };
+    }>,
+    isMfaVerifiedOverride?: boolean,
+    channel: AccessChannel = 'MOBILE',
+    isAdminFlow: boolean = false,
+  ) {
     // Generate an "Identity Token" (No tenantId scope yet)
-    const userAny = user as any;
     const payload = {
       sub: user.id,
       email: user.email,
       jti: crypto.randomBytes(16).toString('hex'),
-      tokenVersion: userAny.tokenVersion ?? 1,
-      isMfaVerified: isMfaVerifiedOverride ?? !!userAny.isMfaVerified,
-      mfaEnabled: !!userAny.mfaEnabled,
+      tokenVersion: user.tokenVersion ?? 1,
+      isMfaVerified: isMfaVerifiedOverride ?? false,
+      mfaEnabled: !!user.mfaEnabled,
       isSuperAdmin: !!user.isSuperAdmin,
-      type: user.isSuperAdmin && isAdminFlow && (isMfaVerifiedOverride ?? !!userAny.isMfaVerified) ? 'admin' : 'identity',
+      type:
+        user.isSuperAdmin && isAdminFlow && (isMfaVerifiedOverride ?? false)
+          ? 'admin'
+          : 'identity',
       channel: channel ?? 'MOBILE',
     };
-
-
 
     const refreshToken = this.jwtService.sign(
       {
@@ -467,9 +543,9 @@ export class AuthService {
         originalType: payload.type,
         tokenVersion: payload.tokenVersion,
         isMfaVerified: payload.isMfaVerified,
-        channel: payload.channel
+        channel: payload.channel,
       },
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     return {
@@ -479,10 +555,10 @@ export class AuthService {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
-        mfaEnabled: !!userAny.mfaEnabled,
+        mfaEnabled: !!user.mfaEnabled,
         isSuperAdmin: !!user.isSuperAdmin,
       },
-      tenants: user.memberships.map((m: any) => ({
+      tenants: user.memberships.map((m) => ({
         id: m.tenant.id,
         name: m.tenant.name,
         slug: m.tenant.slug,
@@ -493,7 +569,12 @@ export class AuthService {
     };
   }
 
-  async selectTenant(userId: string, tenantId: string, isMfaVerified: boolean = false, channel: AccessChannel = 'MOBILE') {
+  async selectTenant(
+    userId: string,
+    tenantId: string,
+    isMfaVerified: boolean = false,
+    channel: AccessChannel = 'MOBILE',
+  ) {
     // 1. Verify membership (Rule B)
     const membership = await this.prisma.tenantUser.findUnique({
       where: { userId_tenantId: { userId, tenantId } },
@@ -512,14 +593,25 @@ export class AuthService {
     }
 
     // 2. B2B Context (Keep existing logic)
-    const [customer, supplier] = await this.tenantContext.run(tenantId, userId, membership.role, async () => {
-      return Promise.all([
-        this.prisma.customer.findFirst({ where: { userId, isDeleted: false, tenantId } }),
-        this.prisma.supplier.findFirst({ where: { userId, isDeleted: false, tenantId } }),
-      ]);
-    });
+    const [customer, supplier] = await this.tenantContext.run(
+      tenantId,
+      userId,
+      membership.role,
+      async () => {
+        return Promise.all([
+          this.prisma.customer.findFirst({
+            where: { userId, isDeleted: false, tenantId },
+          }),
+          this.prisma.supplier.findFirst({
+            where: { userId, isDeleted: false, tenantId },
+          }),
+        ]);
+      },
+    );
 
-    const userRecord = await this.prisma.user.findUnique({ where: { id: userId } });
+    const userRecord = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
 
     // 3. Generate Scoped Token
     const payload = {
@@ -549,9 +641,9 @@ export class AuthService {
         tenantId: payload.tenantId,
         tokenVersion: payload.tokenVersion,
         isMfaVerified: payload.isMfaVerified,
-        channel: payload.channel
+        channel: payload.channel,
       },
-      { expiresIn: '7d' }
+      { expiresIn: '7d' },
     );
 
     await this.logging.log({
@@ -575,7 +667,8 @@ export class AuthService {
   }
 
   async refreshSession(refreshTokenStr: string) {
-    if (!refreshTokenStr) throw new UnauthorizedException('Refresh token is required');
+    if (!refreshTokenStr)
+      throw new UnauthorizedException('Refresh token is required');
 
     let decoded: any;
     try {
@@ -590,7 +683,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: decoded.sub },
-      include: { memberships: { include: { tenant: true } } }
+      include: { memberships: { include: { tenant: true } } },
     });
 
     // FIX-AUTH-01: Use same null-coalesce fallback (|| 1) as generateAuthResponse so newly
@@ -598,13 +691,25 @@ export class AuthService {
     // on their very first token refresh. This is the root cause of the "Session expired" redirect
     // loop that appears immediately after the 24h access token expires.
     if (!user || (user.tokenVersion ?? 1) !== (decoded.tokenVersion ?? 1)) {
-      throw new UnauthorizedException('Session invalidated due to password reset or remote logout.');
+      throw new UnauthorizedException(
+        'Session invalidated due to password reset or remote logout.',
+      );
     }
 
     if (decoded.originalType === 'tenant_scoped') {
-      return this.selectTenant(decoded.sub, decoded.tenantId, decoded.isMfaVerified, decoded.channel);
+      return this.selectTenant(
+        decoded.sub,
+        decoded.tenantId,
+        decoded.isMfaVerified,
+        decoded.channel,
+      );
     } else {
-      return this.generateAuthResponse(user, decoded.isMfaVerified, decoded.channel, decoded.originalType === 'admin');
+      return this.generateAuthResponse(
+        user,
+        decoded.isMfaVerified,
+        decoded.channel,
+        decoded.originalType === 'admin',
+      );
     }
   }
 
@@ -615,7 +720,9 @@ export class AuthService {
     });
 
     if (!membership || membership.role !== Role.Owner) {
-      throw new ForbiddenException('Only the company owner can complete onboarding.');
+      throw new ForbiddenException(
+        'Only the company owner can complete onboarding.',
+      );
     }
 
     const currentTenant = await this.prisma.tenant.findUnique({
@@ -623,7 +730,9 @@ export class AuthService {
     });
 
     if (currentTenant?.isOnboarded) {
-      throw new ForbiddenException('Compliance Violation: Industry vertical is locked after onboarding. Mid-flight mutation is forbidden to prevent accounting drift.');
+      throw new ForbiddenException(
+        'Compliance Violation: Industry vertical is locked after onboarding. Mid-flight mutation is forbidden to prevent accounting drift.',
+      );
     }
 
     // 2. Platform-Level GSTIN Uniqueness Guard (TEN-002)
@@ -632,7 +741,7 @@ export class AuthService {
       if (!validateGSTIN(dto.gstin)) {
         throw new BadRequestException({
           message: `Compliance Error: The provided GSTIN '${dto.gstin}' is mathematically invalid (Checksum Mismatch). Please verify your registration certificate.`,
-          code: 'INVALID_GSTIN_CHECKSUM'
+          code: 'INVALID_GSTIN_CHECKSUM',
         });
       }
 
@@ -651,32 +760,38 @@ export class AuthService {
       }
     }
 
-    const transactionResult = await this.prisma.$transaction(async (tx: any) => {
-      const updatedTenant = await tx.tenant.update({
-        where: { id: dto.tenantId },
-        data: {
-          industry: dto.industry,
-          type: (dto.industry as any) ?? TenantType.Retail,
-          businessType: dto.businessType,
-          gstin: dto.gstin,
-          isOnboarded: true,
-        },
-      });
+    const transactionResult = await this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        const updatedTenant = await tx.tenant.update({
+          where: { id: dto.tenantId },
+          data: {
+            industry: dto.industry,
+            type: (dto.industry as any) ?? TenantType.Retail,
+            businessType: dto.businessType,
+            gstin: dto.gstin,
+            isOnboarded: true,
+          },
+        });
 
-      // 3. Initialize Infrastructure (Default Warehouse)
-      await tx.warehouse.create({
-        data: {
-          tenantId: updatedTenant.id,
-          name: 'Main Warehouse',
-          location: 'Default Location'
-        }
-      });
+        // 3. Initialize Infrastructure (Default Warehouse)
+        await tx.warehouse.create({
+          data: {
+            tenantId: updatedTenant.id,
+            name: 'Main Warehouse',
+            location: 'Default Location',
+          },
+        });
 
-      // 4. Initialize Industry-Based COA
-      await this.accountingService.initializeTenantAccounts(updatedTenant.id, tx, dto.industry);
+        // 4. Initialize Industry-Based COA
+        await this.accountingService.initializeTenantAccounts(
+          updatedTenant.id,
+          tx,
+          dto.industry,
+        );
 
-      return updatedTenant;
-    });
+        return updatedTenant;
+      },
+    );
 
     const tenant = transactionResult;
 
@@ -688,10 +803,12 @@ export class AuthService {
       details: { industry: dto.industry, businessType: dto.businessType },
     });
 
-    return { success: true, message: 'Onboarding completed successfully', tenant };
+    return {
+      success: true,
+      message: 'Onboarding completed successfully',
+      tenant,
+    };
   }
-
-
 
   async getTenantSecurityLogs(userId: string, tenantId: string) {
     // 1. Verify Owner/Admin Role
@@ -699,8 +816,13 @@ export class AuthService {
       where: { userId_tenantId: { userId, tenantId } },
     });
 
-    if (!membership || (membership.role !== Role.Owner && membership.role !== Role.Manager)) {
-      throw new ForbiddenException('Only Owners and Managers can access company security logs.');
+    if (
+      !membership ||
+      (membership.role !== Role.Owner && membership.role !== Role.Manager)
+    ) {
+      throw new ForbiddenException(
+        'Only Owners and Managers can access company security logs.',
+      );
     }
 
     // 2. Fetch and return logs
@@ -730,14 +852,18 @@ export class AuthService {
     const conditionalWait = async () => {
       const elapsed = Date.now() - startTime;
       const remaining = MINIMUM_RESPONSE_TIME_MS - elapsed;
-      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+      if (remaining > 0)
+        await new Promise((resolve) => setTimeout(resolve, remaining));
     };
 
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
-    const SAFE_RESPONSE = { message: 'If an account exists with this email, a reset link has been sent.' };
+    const SAFE_RESPONSE = {
+      message:
+        'If an account exists with this email, a reset link has been sent.',
+    };
 
     // BUG-FIX: Previously silently returned SAFE_RESPONSE for users with no memberships.
     // A user SHOULD be able to reset their password even if they haven't created a workspace yet.
@@ -768,15 +894,22 @@ export class AuthService {
     });
 
     try {
-      await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName ?? '');
+      await this.mailService.sendPasswordResetEmail(
+        user.email,
+        token,
+        user.fullName ?? '',
+      );
     } catch (mailErr: any) {
       // Fatal mail error — log it loudly, but never reveal to the caller.
       // The token is already written to the DB; the user can try again.
-      console.error(`[MAIL_DELIVERY_FAILURE] Error sending reset link to ${user.email}:`, mailErr.message);
+      console.error(
+        `[MAIL_DELIVERY_FAILURE] Error sending reset link to ${user.email}:`,
+        mailErr.message,
+      );
       this.logging.log({
         action: 'PASSWORD_RESET_EMAIL_FAILED',
         resource: 'MailService',
-        details: { email: user.email, error: mailErr?.message },
+        details: { identityId: user.id },
       });
     }
 
@@ -794,7 +927,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid or expired reset token for this email');
+      throw new UnauthorizedException(
+        'Invalid or expired reset token for this email',
+      );
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -826,7 +961,10 @@ export class AuthService {
       details: { timestamp: new Date() },
     });
 
-    return { success: true, message: 'All active sessions have been invalidated.' };
+    return {
+      success: true,
+      message: 'All active sessions have been invalidated.',
+    };
   }
 
   // MOB-008 / GET /auth/me
@@ -859,7 +997,6 @@ export class AuthService {
     };
   }
 
-
   async getTenants(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -874,7 +1011,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    return user.memberships.map((m: any) => ({
+    return user.memberships.map((m) => ({
       id: m.tenant.id,
       name: m.tenant.name,
       slug: m.tenant.slug,
@@ -886,7 +1023,9 @@ export class AuthService {
   // --- MFA (TOTP) Implementation ---
 
   async setupMfa(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
     if (!user) throw new UnauthorizedException('User not found');
 
     const secret = authenticator.generateSecret();
@@ -896,7 +1035,7 @@ export class AuthService {
     await this.prisma.user.update({
       where: { id: userId },
       // SEC-004: Encrypt TOTP secret before writing — never store plaintext
-      data: { mfaSecret: this.mfaCrypto.encrypt(secret) } as any,
+      data: { mfaSecret: this.mfaCrypto.encrypt(secret) },
     });
 
     return {
@@ -906,23 +1045,30 @@ export class AuthService {
   }
 
   async verifyMfaSetup(userId: string, token: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
-    if (!user || !user.mfaSecret) throw new BadRequestException('MFA setup not initiated');
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user || !user.mfaSecret)
+      throw new BadRequestException('MFA setup not initiated');
 
     // SEC-004: Decrypt the stored secret before passing to otplib
     const decryptedSecret = this.mfaCrypto.decrypt(user.mfaSecret);
     const isValid = authenticator.verify({ token, secret: decryptedSecret });
     if (!isValid) throw new UnauthorizedException('Invalid MFA token');
 
-    const recoveryCodes = Array.from({ length: 10 }, () => crypto.randomBytes(4).toString('hex'));
-    const hashedRecoveryCodes = await Promise.all(recoveryCodes.map(code => bcrypt.hash(code, 10)));
+    const recoveryCodes = Array.from({ length: 10 }, () =>
+      crypto.randomBytes(4).toString('hex'),
+    );
+    const hashedRecoveryCodes = await Promise.all(
+      recoveryCodes.map((code) => bcrypt.hash(code, 10)),
+    );
 
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         mfaEnabled: true,
         mfaRecoveryCodes: hashedRecoveryCodes,
-      } as any,
+      },
     });
 
     await this.logging.log({
@@ -937,30 +1083,37 @@ export class AuthService {
 
   async verifyMfaLogin(tempToken: string, totpCode: string) {
     try {
-      const payload = this.jwtService.verify(tempToken) as any;
-      if (payload.type !== 'mfa_challenge') throw new UnauthorizedException('Invalid challenge token');
+      const payload = this.jwtService.verify(tempToken);
+      if (payload.type !== 'mfa_challenge')
+        throw new UnauthorizedException('Invalid challenge token');
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
         include: { memberships: { include: { tenant: true } } },
-      }) as any;
+      });
 
-      if (!user || !user.mfaSecret) throw new UnauthorizedException('MFA not configured');
+      if (!user || !user.mfaSecret)
+        throw new UnauthorizedException('MFA not configured');
 
       // SEC-004: Decrypt the stored secret before passing to otplib
       const decryptedSecret = this.mfaCrypto.decrypt(user.mfaSecret);
-      const isValid = authenticator.verify({ token: totpCode, secret: decryptedSecret });
+      const isValid = authenticator.verify({
+        token: totpCode,
+        secret: decryptedSecret,
+      });
 
       if (!isValid) {
         let isRecovery = false;
-        for (const hashed of (user.mfaRecoveryCodes || [])) {
+        for (const hashed of user.mfaRecoveryCodes || []) {
           if (await bcrypt.compare(totpCode, hashed)) {
             isRecovery = true;
             await this.prisma.user.update({
               where: { id: user.id },
               data: {
-                mfaRecoveryCodes: user.mfaRecoveryCodes.filter((c: string) => c !== hashed)
-              } as any
+                mfaRecoveryCodes: user.mfaRecoveryCodes.filter(
+                  (c) => c !== hashed,
+                ),
+              },
             });
             break;
           }
@@ -986,28 +1139,40 @@ export class AuthService {
 
       await this.resetLoginAttempts(user.id);
 
-      return this.generateAuthResponse(user, true, payload.channel, !!payload.isAdminFlow);
-    } catch (e) {
-      if (e instanceof UnauthorizedException) {
+      return this.generateAuthResponse(
+        user,
+        true,
+        payload.channel,
+        !!payload.isAdminFlow,
+      );
+    } catch (err: unknown) {
+      if (err instanceof UnauthorizedException) {
         // Already a typed NestJS exception (e.g. 'Invalid MFA token') — rethrow as-is
         // to preserve the original message without losing stack trace info.
-        throw e;
+        throw err;
       }
+      const error = err as Error;
       // Unexpected error (e.g. crypto failure, DB error) — wrap with context.
-      throw new UnauthorizedException((e as any)?.message || 'MFA Verification Failed');
+      throw new UnauthorizedException(
+        error?.message || 'MFA Verification Failed',
+      );
     }
   }
 
   // --- Brute Force Protection ---
 
-  private async checkBruteForce(user: any) {
+  private async checkBruteForce(user: User) {
     if (user.lockoutUntil && new Date(user.lockoutUntil) > new Date()) {
-      const minutesLeft = Math.ceil((new Date(user.lockoutUntil).getTime() - Date.now()) / 60000);
-      throw new UnauthorizedException(`Account locked. Try again in ${minutesLeft} minutes.`);
+      const minutesLeft = Math.ceil(
+        (new Date(user.lockoutUntil).getTime() - Date.now()) / 60000,
+      );
+      throw new UnauthorizedException(
+        `Account locked. Try again in ${minutesLeft} minutes.`,
+      );
     }
   }
 
-  private async recordLoginFailure(user: any) {
+  private async recordLoginFailure(user: User) {
     const attempts = (user.failedLoginAttempts || 0) + 1;
     let lockoutUntil = null;
 
@@ -1020,11 +1185,13 @@ export class AuthService {
       data: {
         failedLoginAttempts: attempts,
         lockoutUntil,
-      } as any,
+      },
     });
 
     if (attempts >= 5) {
-      throw new UnauthorizedException('Account locked due to too many failed attempts. Try again in 15 minutes.');
+      throw new UnauthorizedException(
+        'Account locked due to too many failed attempts. Try again in 15 minutes.',
+      );
     }
   }
 
@@ -1034,7 +1201,7 @@ export class AuthService {
       data: {
         failedLoginAttempts: 0,
         lockoutUntil: null,
-      } as any,
+      },
     });
   }
 

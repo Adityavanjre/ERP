@@ -19,7 +19,7 @@ import { PrismaService } from '../../prisma/prisma.service';
  */
 @Injectable()
 export class B2BGuard implements CanActivate {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -37,7 +37,9 @@ export class B2BGuard implements CanActivate {
 
     if (user.role === Role.Customer) {
       if (!user.customerId) {
-        throw new ForbiddenException('Incomplete Customer Profile: No linked account');
+        throw new ForbiddenException(
+          'Incomplete Customer Profile: No linked account',
+        );
       }
       // DB RE-VERIFICATION: confirm the customerId in the JWT actually belongs
       // to the authenticated user within their tenant.
@@ -49,13 +51,17 @@ export class B2BGuard implements CanActivate {
         select: { id: true },
       });
       if (!verified) {
-        throw new ForbiddenException('B2B Access Denied: Customer claim could not be verified');
+        throw new ForbiddenException(
+          'B2B Access Denied: Customer claim could not be verified',
+        );
       }
     }
 
     if (user.role === Role.Supplier) {
       if (!user.supplierId) {
-        throw new ForbiddenException('Incomplete Supplier Profile: No linked account');
+        throw new ForbiddenException(
+          'Incomplete Supplier Profile: No linked account',
+        );
       }
       // DB RE-VERIFICATION: confirm the supplierId in the JWT actually belongs
       // to the authenticated user within their tenant.
@@ -67,7 +73,9 @@ export class B2BGuard implements CanActivate {
         select: { id: true },
       });
       if (!verified) {
-        throw new ForbiddenException('B2B Access Denied: Supplier claim could not be verified');
+        throw new ForbiddenException(
+          'B2B Access Denied: Supplier claim could not be verified',
+        );
       }
     }
 

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -31,11 +32,23 @@ const customerSchema = z.object({
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
 
+interface Customer {
+    id: string;
+    firstName: string;
+    lastName?: string;
+    email: string;
+    phone?: string;
+    company?: string;
+    address?: string;
+    state: string;
+    gstin?: string;
+}
+
 interface EditCustomerDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
-    customer: any | null;
+    customer: Customer | null;
 }
 
 export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: EditCustomerDialogProps) {
@@ -44,7 +57,6 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
     const {
         register,
         handleSubmit,
-        setValue,
         reset,
         formState: { errors },
     } = useForm<CustomerFormValues>({
@@ -76,7 +88,8 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
         }
     }, [customer, reset]);
 
-    const onSubmit = async (data: CustomerFormValues) => {
+    const onSubmit = useCallback(async (data: CustomerFormValues) => {
+        if (!customer) return;
         setLoading(true);
         try {
             await api.patch(`crm/customers/${customer.id}`, data);
@@ -84,12 +97,17 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
             onOpenChange(false);
             onSuccess?.();
             reset();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to update customer");
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            toast.error(err.response?.data?.message || "Failed to update customer");
         } finally {
             setLoading(false);
         }
-    };
+    }, [customer, onOpenChange, onSuccess, reset]);
+
+    const handleCancel = useCallback(() => {
+        onOpenChange(false);
+    }, [onOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -188,7 +206,7 @@ export function EditCustomerDialog({ open, onOpenChange, onSuccess, customer }: 
                         <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => onOpenChange(false)}
+                            onClick={handleCancel}
                             className="rounded-xl font-bold h-11 px-6"
                         >
                             Cancel

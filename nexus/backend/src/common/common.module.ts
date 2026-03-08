@@ -24,4 +24,4 @@ import { SystemInitService } from './services/system-init.service';
   ],
   exports: [HttpCacheInterceptor, TraceService, SecurityStorageService],
 })
-export class CommonModule { }
+export class CommonModule {}

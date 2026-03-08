@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
     Factory,
@@ -9,7 +9,6 @@ import {
     Settings,
     CheckCircle2,
     AlertCircle,
-    Play,
     Plus,
     ArrowRight,
     TrendingUp,
@@ -38,17 +37,67 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+interface BOMItem {
+    id: string;
+}
+
+interface BOM {
+    id: string;
+    name: string;
+    items?: BOMItem[];
+    product?: {
+        name: string;
+    };
+}
+
+interface WorkOrder {
+    id: string;
+    orderNumber: string;
+    quantity: number;
+    status: string;
+    bom?: BOM;
+}
+
+interface Warehouse {
+    id: string;
+    name: string;
+}
+
+interface Machine {
+    id: string;
+    name: string;
+    code: string;
+}
+
+interface CompletionData {
+    producedQty: number;
+    scrapQty: number;
+    warehouseId: string;
+    machineId: string;
+    machineTimeHours: number;
+    operatorName: string;
+    idempotencyKey: string;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export default function ManufacturingDashboard() {
-    const [boms, setBoms] = useState<any[]>([]);
-    const [workOrders, setWorkOrders] = useState<any[]>([]);
+    const [boms, setBoms] = useState<BOM[]>([]);
+    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     const [showCompleteModal, setShowCompleteModal] = useState(false);
-    const [selectedWO, setSelectedWO] = useState<any>(null);
-    const [warehouses, setWarehouses] = useState<any[]>([]);
-    const [machines, setMachines] = useState<any[]>([]);
-    const [completionData, setCompletionData] = useState({
+    const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+    const [machines, setMachines] = useState<Machine[]>([]);
+    const [completionData, setCompletionData] = useState<CompletionData>({
         producedQty: 0,
         scrapQty: 0,
         warehouseId: "",
@@ -58,7 +107,7 @@ export default function ManufacturingDashboard() {
         idempotencyKey: "",
     });
 
-    const syncManufacturingData = async (showLoading = false) => {
+    const syncManufacturingData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [b, w, wh, m] = await Promise.all([
@@ -76,9 +125,9 @@ export default function ManufacturingDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleOpenComplete = (wo: any) => {
+    const handleOpenComplete = (wo: WorkOrder) => {
         setSelectedWO(wo);
         setCompletionData({
             producedQty: wo.quantity,
@@ -93,7 +142,7 @@ export default function ManufacturingDashboard() {
     };
 
     const submitCompletion = async () => {
-        if (!completionData.warehouseId) {
+        if (!completionData.warehouseId || !selectedWO) {
             toast.error("Please select a target warehouse");
             return;
         }
@@ -110,8 +159,9 @@ export default function ManufacturingDashboard() {
             toast.success("Production Completed! Inventory Updated.");
             setShowCompleteModal(false);
             syncManufacturingData();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Production failed. Check raw materials.");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Production failed. Check raw materials.");
         }
     };
 
@@ -121,7 +171,7 @@ export default function ManufacturingDashboard() {
         // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncManufacturingData(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncManufacturingData]);
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -180,7 +230,7 @@ export default function ManufacturingDashboard() {
                     </div>
 
                     <div className="space-y-4">
-                        {workOrders.map((wo: any) => (
+                        {workOrders.map((wo: WorkOrder) => (
                             <div key={wo.id} className="bg-white border border-slate-200 p-8 rounded-[32px] hover:border-emerald-300 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative border-none shadow-xl shadow-slate-200/40">
                                 <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-50 opacity-0 group-hover:opacity-100 blur-[80px] transition-all -z-0"></div>
 
@@ -266,7 +316,7 @@ export default function ManufacturingDashboard() {
                             <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">{boms.length} BOMs</span>
                         </div>
                         <div className="space-y-3">
-                            {boms.map((bom: any) => (
+                            {boms.map((bom: BOM) => (
                                 <div key={bom.id} className="bg-white border border-slate-100 p-5 rounded-3xl flex justify-between items-center group hover:bg-slate-50 cursor-pointer transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 shadow-sm">
                                     <div className="flex gap-5 items-center">
                                         <div className="p-2.5 bg-slate-50 rounded-xl group-hover:bg-white group-hover:shadow-inner group-hover:scale-110 transition-all">
@@ -329,7 +379,7 @@ export default function ManufacturingDashboard() {
                                             <SelectValue placeholder="Select machine" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {machines.map((m: any) => (
+                                            {machines.map((m: Machine) => (
                                                 <SelectItem key={m.id} value={m.id} className="font-bold">{m.name} ({m.code})</SelectItem>
                                             ))}
                                         </SelectContent>
@@ -365,7 +415,7 @@ export default function ManufacturingDashboard() {
                                         <SelectValue placeholder="Select destination" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {warehouses.map((wh: any) => (
+                                        {warehouses.map((wh: Warehouse) => (
                                             <SelectItem key={wh.id} value={wh.id} className="font-bold">{wh.name}</SelectItem>
                                         ))}
                                     </SelectContent>
@@ -400,4 +450,3 @@ export default function ManufacturingDashboard() {
         </div>
     );
 }
-

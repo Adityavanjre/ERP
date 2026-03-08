@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send, Link as LinkIcon, Eye, Save, Loader2 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ImageUploader from '../../components/Admin/ImageUploader';
@@ -12,7 +10,6 @@ import ImageUploader from '../../components/Admin/ImageUploader';
 const EditBlog = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     const [title, setTitle] = useState('');
     const [slug, setSlug] = useState('');
@@ -34,7 +31,7 @@ const EditBlog = () => {
     useEffect(() => {
         const fetchBlog = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/blogs/${id}`);
+                const { data } = await api.get(`/blogs/${id}`);
                 setTitle(data.title);
                 setSlug(data.slug || '');
                 setStatus(data.status || 'draft');
@@ -78,14 +75,7 @@ const EditBlog = () => {
         setError(null);
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user?.token}`,
-                },
-            };
-
-            await axios.put(`${API_URL}/api/blogs/${id}`, {
+            await api.put(`/blogs/${id}`, {
                 title,
                 slug,
                 status,
@@ -96,7 +86,7 @@ const EditBlog = () => {
                 author,
                 readTime,
                 tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '')
-            }, config);
+            });
 
             navigate('/admin/blogs');
         } catch (err: any) {

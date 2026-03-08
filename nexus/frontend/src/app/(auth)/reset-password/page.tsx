@@ -45,8 +45,9 @@ function ResetPasswordForm() {
             await api.post("auth/reset-password", { token, newPassword })
             toast.success("Password reset successful!")
             router.push("/login")
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Invalid or expired token")
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            setError(error.response?.data?.message || "Invalid or expired token")
         } finally {
             setLoading(false)
         }

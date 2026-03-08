@@ -1,9 +1,15 @@
-
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@nexus/shared';
+import { Prisma } from '@prisma/client';
 import { BillingService } from '../system/services/billing.service';
 
 @Injectable()
@@ -11,11 +17,11 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private billing: BillingService,
-  ) { }
+  ) {}
 
   async findById(id: string) {
     return this.prisma.user.findUnique({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -50,13 +56,14 @@ export class UsersService {
     });
 
     // 2. Transact: Create user (if new) and membership
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // SECURITY (BILL-001): Atomic Quota Check with row-level lock
       await this.billing.checkQuota(tenantId, 'maxUsers', tx);
 
       if (!user) {
+        const rawPassword = require('crypto').randomBytes(12).toString('hex');
         const salt = await bcrypt.genSalt(10);
-        const defaultPassword = await bcrypt.hash('password123', salt);
+        const defaultPassword = await bcrypt.hash(rawPassword, salt);
         user = await tx.user.create({
           data: {
             email: dto.email,
@@ -65,6 +72,8 @@ export class UsersService {
           },
         });
       }
+      if (!user)
+        throw new InternalServerErrorException('Failed to resolve user');
 
       // Check for existing membership in THIS tenant
       const existingMembership = await tx.tenantUser.findUnique({
@@ -119,9 +128,9 @@ export class UsersService {
         role: dto.role,
         user: {
           update: {
-            tokenVersion: { increment: 1 }
-          }
-        }
+            tokenVersion: { increment: 1 },
+          },
+        },
       },
     });
   }

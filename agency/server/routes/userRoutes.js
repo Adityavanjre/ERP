@@ -1,14 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUserPassword } = require('../controllers/userController');
-const { restoreAdmin, diagnostic } = require('../controllers/setupController');
+const { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUserPassword, logoutUser } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
-// Recovery route (Development only)
-if (process.env.NODE_ENV !== 'production') {
-    router.get('/setup/restore-admin', restoreAdmin);
-    router.get('/setup/diagnostic', diagnostic);
-}
+// Recovery routes removed from HTTP surface. Use CLI scripts for break-glass recovery.
 
 // User management routes
 router.route('/')
@@ -25,5 +20,6 @@ router.route('/:id/password')
     .put(protect, admin, updateUserPassword);
 
 router.post('/login', authUser);
+router.post('/logout', protect, logoutUser);
 
 module.exports = router;

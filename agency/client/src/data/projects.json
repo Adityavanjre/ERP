@@ -2,7 +2,9 @@
   {
     "id": "1",
     "title": "Vantage Logistics System",
-    "category": "Web Systems",
+    "categories": [
+      "Web Systems"
+    ],
     "description": "Enterprise-grade fleet intelligence dashboard handling 50k+ daily assets.",
     "fullDescription": "Vantage required a complete digital transformation of their legacy logistics infrastructure. We architected a real-time command center that aggregates data from IoT sensors across their global fleet. The system processes streams of location, fuel, and diagnostic data to predict maintenance needs and optimize routes in real-time.",
     "challenge": "The legacy system suffered from 5-minute data latency, resulting in $2M/year in fuel inefficiencies. They needed sub-second updates.",
@@ -18,8 +20,18 @@
       "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["System Architecture", "Real-time Infrastructure", "UX Design"],
-    "technologies": ["React", "Mapbox GL", "Node.js", "Redis", "Docker"],
+    "services": [
+      "System Architecture",
+      "Real-time Infrastructure",
+      "UX Design"
+    ],
+    "technologies": [
+      "React",
+      "Mapbox GL",
+      "Node.js",
+      "Redis",
+      "Docker"
+    ],
     "impact": "Reduced fuel costs by 18% in Q1. Incident response time cut by 60%.",
     "testimonial": {
       "quote": "The level of clarity this system provides is unprecedented in our industry. Klypso didn't just build a dashboard; they built our central nervous system.",
@@ -27,12 +39,15 @@
       "role": "COO, Vantage Logistics"
     },
     "link": "#",
-    "results": ["18% Fuel Cost Reduction", "Sub-second Data Latency", "50k+ Assets Tracked"]
+    "results": [
+      "18% Fuel Cost Reduction",
+      "Sub-second Data Latency",
+      "50k+ Assets Tracked"
+    ]
   },
   {
     "id": "2",
     "title": "Aura Financial",
-    "category": "App Development",
     "description": "Next-gen mobile banking interface for high-net-worth individuals.",
     "fullDescription": "Aura is a digital-first private bank. They needed a mobile experience that felt as premium as their service. We built a React Native application that prioritizes security without sacrificing fluidity. Features include biometric transaction signing, real-time portfolio analysis, and a concierge chat interface.",
     "challenge": "Creating a seamless, 60fps experience while adhering to strict banking security compliance standards (SOC2 / GDPR).",
@@ -48,8 +63,17 @@
       "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1565514020176-dbf2277f0c3e?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Mobile Engineering", "Security Audit", "Interface Design"],
-    "technologies": ["React Native", "TypeScript", "Node.js", "GraphQL"],
+    "services": [
+      "Mobile Engineering",
+      "Security Audit",
+      "Interface Design"
+    ],
+    "technologies": [
+      "React Native",
+      "TypeScript",
+      "Node.js",
+      "GraphQL"
+    ],
     "impact": "$400M in assets under management processed through the app in year one.",
     "testimonial": {
       "quote": "Our clients expect perfection. Klypso delivered an app that feels solid, secure, and incredibly fast.",
@@ -57,12 +81,21 @@
       "role": "Product Director, Aura"
     },
     "link": "#",
-    "results": ["$400M AUM Processed", "4.9 App Store Rating", "Bank-Grade Encryption"]
+    "results": [
+      "$400M AUM Processed",
+      "4.9 App Store Rating",
+      "Bank-Grade Encryption"
+    ],
+    "categories": [
+      "App Development"
+    ]
   },
   {
     "id": "3",
     "title": "Carbon Trace AI",
-    "category": "Data & Cloud",
+    "categories": [
+      "Data & Cloud"
+    ],
     "description": "SaaS platform for calculating and visualizing corporate carbon footprints.",
     "fullDescription": "With upcoming ESG regulations, enterprises need accurate reporting. Carbon Trace creates a digital twin of a company's supply chain to calculate emissions. We built the frontend visualization layer that turns millions of rows of supply chain data into actionable insights.",
     "challenge": "Rendering massive datasets in the browser without crashing the client.",
@@ -78,8 +111,17 @@
       "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Data Visualization", "Full Stack Dev", "Cloud Architecture"],
-    "technologies": ["Vue.js", "Python", "AWS Lambda", "D3.js"],
+    "services": [
+      "Data Visualization",
+      "Full Stack Dev",
+      "Cloud Architecture"
+    ],
+    "technologies": [
+      "Vue.js",
+      "Python",
+      "AWS Lambda",
+      "D3.js"
+    ],
     "impact": "Adopted by 3 Fortune 500 companies for their 2025 sustainability reports.",
     "testimonial": {
       "quote": "Complex data became beautiful logic. This tool is now essential to our compliance strategy.",
@@ -87,12 +129,15 @@
       "role": "Chief Sustainability Officer"
     },
     "link": "#",
-    "results": ["Fortune 500 Adoption", "Zero Downtime Launch", "Real-time Emissions Tracking"]
+    "results": [
+      "Fortune 500 Adoption",
+      "Zero Downtime Launch",
+      "Real-time Emissions Tracking"
+    ]
   },
   {
     "id": "4",
     "title": "Lumina Studios",
-    "category": "Design & Brand",
     "description": "Immersive portfolio site for an award-winning architectural firm.",
     "fullDescription": "Lumina creates physical spaces that defy convention. Their digital presence needed to reflect that. We built a site that breaks the traditional grid, using fluid WebGL transitions and micro-interactions to treat each project reveal like a cinematic premiere.",
     "challenge": "Balancing heavy high-resolution imagery with load performance.",
@@ -108,8 +153,17 @@
       "https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Creative Direction", "Web Development", "3D Implementation"],
-    "technologies": ["Next.js", "Framer Motion", "WebGL", "Sanity CMS"],
+    "services": [
+      "Creative Direction",
+      "Web Development",
+      "3D Implementation"
+    ],
+    "technologies": [
+      "Next.js",
+      "Framer Motion",
+      "WebGL",
+      "Sanity CMS"
+    ],
     "impact": "Time-on-site increased by 300%. Direct inquiries for commercial projects doubled.",
     "testimonial": {
       "quote": "It's not a website; it's an exhibition. Klypso understood our aesthetic language perfectly.",
@@ -117,12 +171,21 @@
       "role": "Principal Architect"
     },
     "link": "#",
-    "results": ["300% Time-on-Site", "Awwwards Nominee", "Doubled Inquiries"]
+    "results": [
+      "300% Time-on-Site",
+      "Awwwards Nominee",
+      "Doubled Inquiries"
+    ],
+    "categories": [
+      "Design & Brand"
+    ]
   },
   {
     "id": "5",
     "title": "Revoke E-Com",
-    "category": "Marketing",
+    "categories": [
+      "Marketing"
+    ],
     "description": "Headless commerce migration for a streetwear giant.",
     "fullDescription": "Revoke needed to scale past their monolithic platform limitations. We migrated them to a headless Shopify Plus setup with a custom storefront. This allowed for rich merchandising, drop-culture countdowns, and instant page loads that boosted conversion rates.",
     "challenge": "Migrating 100k+ SKUs and maintaining SEO rankings during a platform switch.",
@@ -138,8 +201,17 @@
       "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["E-Commerce Dev", "SEO Strategy", "Migration"],
-    "technologies": ["Shopify Plus", "Hydrogen", "React", "Vercel"],
+    "services": [
+      "E-Commerce Dev",
+      "SEO Strategy",
+      "Migration"
+    ],
+    "technologies": [
+      "Shopify Plus",
+      "Hydrogen",
+      "React",
+      "Vercel"
+    ],
     "impact": "Conversion rate jumped from 1.2% to 2.8% post-launch. Black Friday traffic handled with 0% downtime.",
     "testimonial": {
       "quote": "We finally have a site that moves as fast as our drops do. The ROI was immediate.",
@@ -147,12 +219,15 @@
       "role": "Head of Digital"
     },
     "link": "#",
-    "results": ["2.8% Conversion Rate", "100k+ SKU Migration", "0% Downtime"]
+    "results": [
+      "2.8% Conversion Rate",
+      "100k+ SKU Migration",
+      "0% Downtime"
+    ]
   },
   {
     "id": "6",
     "title": "MediSync Portal",
-    "category": "App Development",
     "description": "Provider-facing portal for managing patient telemetry.",
     "fullDescription": "MediSync creates IoT heart monitors. They needed a portal for doctors to view live telemetry from patients at home. We built a HIPAA-compliant dashboard that alerts doctors to anomalies in real-time, reducing hospital readmission rates.",
     "challenge": "Displaying live ECG waves in a browser with medical-grade accuracy.",
@@ -168,8 +243,17 @@
       "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Healthcare Dev", "Compliance Validation", "Frontend Eng"],
-    "technologies": ["React", "Canvas API", "Node.js", "FHIR"],
+    "services": [
+      "Healthcare Dev",
+      "Compliance Validation",
+      "Frontend Eng"
+    ],
+    "technologies": [
+      "React",
+      "Canvas API",
+      "Node.js",
+      "FHIR"
+    ],
     "impact": "Hospital readmissions for heart failure patients reduced by 12%.",
     "testimonial": {
       "quote": "This tool saves lives. The reliability and clarity of the data visualization are world-class.",
@@ -177,12 +261,21 @@
       "role": "Medical Director"
     },
     "link": "#",
-    "results": ["12% Reduced Readmissions", "HIPAA Compliant", "Real-time Telemetry"]
+    "results": [
+      "12% Reduced Readmissions",
+      "HIPAA Compliant",
+      "Real-time Telemetry"
+    ],
+    "categories": [
+      "App Development"
+    ]
   },
   {
     "id": "7",
     "title": "CipherGuard Platform",
-    "category": "Cloud",
+    "categories": [
+      "Cloud"
+    ],
     "description": "Zero-trust security infrastructure for decentralized finance.",
     "fullDescription": "In the world of DeFi, security is the product. CipherGuard needed a visual identity and a dashboard that conveyed impenetrability. We built a dark-mode-first, audit-ready interface that allows institutional investors to verify protocol solvencies on-chain.",
     "challenge": "Translating complex blockchain proofs into trust-building visual indicators for non-technical investors.",
@@ -198,8 +291,17 @@
       "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Blockchain Dev", "UI Engineering", "Cybersecurity"],
-    "technologies": ["Solidity", "React", "Ethers.js", "The Graph"],
+    "services": [
+      "Blockchain Dev",
+      "UI Engineering",
+      "Cybersecurity"
+    ],
+    "technologies": [
+      "Solidity",
+      "React",
+      "Ethers.js",
+      "The Graph"
+    ],
     "impact": "$1.2B Total Value Locked (TVL) achieved within 3 months of launch.",
     "testimonial": {
       "quote": "Klypso understood that trust is visual. They made our security visible.",
@@ -207,12 +309,15 @@
       "role": "Core Contributor"
     },
     "link": "#",
-    "results": ["$1.2B TVL", "Zero Exploits", "Audit Grade UI"]
+    "results": [
+      "$1.2B TVL",
+      "Zero Exploits",
+      "Audit Grade UI"
+    ]
   },
   {
     "id": "8",
     "title": "Neon Horizon Brand",
-    "category": "Design & Brand",
     "description": "Rebranding a legacy media conglomerate for the streaming era.",
     "fullDescription": "Pacific Media was a giant with an aging face. They needed a rebrand that screamed 'future' to compete with Netflix and Hulu. We delivered 'Neon Horizon'—a fluid, liquid-motion identity system that adapts to every screen size, from cinema to smartwatch.",
     "challenge": "Unifying 40 disparate sub-brands under one cohesive visual language.",
@@ -228,8 +333,17 @@
       "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Brand Identity", "Motion Design", "Design Systems"],
-    "technologies": ["Adobe CC", "WebGL", "Lottie", "Figma"],
+    "services": [
+      "Brand Identity",
+      "Motion Design",
+      "Design Systems"
+    ],
+    "technologies": [
+      "Adobe CC",
+      "WebGL",
+      "Lottie",
+      "Figma"
+    ],
     "impact": "Brand sentiment score increased by 65% among Gen Z demographics.",
     "testimonial": {
       "quote": "We didn't just get a logo; we got a living, breathing visual language.",
@@ -237,12 +351,21 @@
       "role": "CMO, Pacific Media"
     },
     "link": "#",
-    "results": ["65% Sentiment Uplift", "Unified 40 Sub-brands", "Clio Award Winner"]
+    "results": [
+      "65% Sentiment Uplift",
+      "Unified 40 Sub-brands",
+      "Clio Award Winner"
+    ],
+    "categories": [
+      "Design & Brand"
+    ]
   },
   {
     "id": "9",
     "title": "Kyoto Monochrome",
-    "category": "Photography",
+    "categories": [
+      "Photography"
+    ],
     "description": "A study of silence and structure in Japan's ancient capital.",
     "fullDescription": "In a world of noise, we sought silence. This photographic anthology documents the interplay between traditional machiya architecture and modern urban encroachment in Kyoto. Shot entirely on medium format film, this series explores how the old world bleeds into the new, creating a visual stillness that has been featured in exhibitions worldwide.",
     "challenge": "Capturing the essence of 'Ma' (negative space) in a bustling metropolis.",
@@ -258,8 +381,16 @@
       "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=2000",
       "https://images.unsplash.com/photo-1624253321171-1be53e12f5f4?auto=format&fit=crop&q=80&w=2000"
     ],
-    "services": ["Art Direction", "Photography", "Exhibition Design"],
-    "technologies": ["Hasselblad H6D", "Phase One", "Darkroom"],
+    "services": [
+      "Art Direction",
+      "Photography",
+      "Exhibition Design"
+    ],
+    "technologies": [
+      "Hasselblad H6D",
+      "Phase One",
+      "Darkroom"
+    ],
     "impact": "Sold out gallery exhibition in Tokyo and New York.",
     "testimonial": {
       "quote": "Klypso sees what others miss. They don't just take photos; they capture silence.",
@@ -267,6 +398,10 @@
       "role": "Curator"
     },
     "link": "#",
-    "results": ["Sold Out Exhibition", "Published in Monocle", "International Awards"]
+    "results": [
+      "Sold Out Exhibition",
+      "Published in Monocle",
+      "International Awards"
+    ]
   }
 ]

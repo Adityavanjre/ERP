@@ -1,26 +1,36 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
+interface UserData {
+    fullName: string;
+}
+
 export const UserMenu = () => {
     const router = useRouter();
-    const [user, setUser] = useState<{ fullName: string } | null>(null);
+    const [user, setUser] = useState<UserData | null>(null);
 
     useEffect(() => {
         const userStr = localStorage.getItem("k_user");
         if (userStr) {
-            setUser(JSON.parse(userStr));
+            try {
+                const data = JSON.parse(userStr) as UserData;
+                requestAnimationFrame(() => setUser(data));
+            } catch (e) {
+                console.error("Failed to parse user data from localStorage", e);
+            }
         }
     }, []);
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(() => {
         localStorage.removeItem("k_token");
         localStorage.removeItem("k_user");
         router.push("/login");
-    };
+    }, [router]);
 
     return (
         <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 p-1.5 pl-4 rounded-2xl shadow-sm">

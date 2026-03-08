@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { Package, Search } from 'lucide-react';
 
@@ -13,7 +13,7 @@ interface Product {
 }
 
 interface ProductGridProps {
-    onProductClick: (product: any) => void;
+    onProductClick: (product: Product) => void;
 }
 
 export function ProductGrid({ onProductClick }: ProductGridProps) {
@@ -22,20 +22,21 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const res = await api.get('/inventory/products?limit=100'); // Load top 100 for POS
-                const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-                setProducts(list);
-            } catch (err) {
-                console.error("Failed to fetch products for POS:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProducts();
+    const fetchProducts = useCallback(async () => {
+        try {
+            const res = await api.get('/inventory/products?limit=100'); // Load top 100 for POS
+            const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+            setProducts(list);
+        } catch (err) {
+            console.error("Failed to fetch products for POS:", err);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
 
     const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'Uncategorized')))];
 

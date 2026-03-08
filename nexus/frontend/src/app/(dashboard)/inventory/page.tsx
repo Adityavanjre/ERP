@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, Sparkles, Brain, Clock, AlertCircle, Upload, Edit3, CheckCircle2, Info, ChevronRight, Tags, Scale } from "lucide-react";
+import { Package, Plus, Search, Filter, TrendingDown, Layers, Boxes, AlertCircle, Upload, Edit3, Clock, Tags, Scale, Brain } from "lucide-react";
 import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
 import { Input } from "@/components/ui/input";
 import { NumericInput } from "@/components/ui/numeric-input";
@@ -24,17 +24,71 @@ import { Badge } from "@/components/ui/badge";
 import { useUX } from "@/components/providers/ux-provider";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
+interface Product {
+    id: string;
+    name: string;
+    sku: string;
+    stock: number;
+    price: number;
+    costPrice: number;
+    category: string;
+    tags: string;
+    brand: string;
+    manufacturer: string;
+    minStockLevel: number;
+    hsnCode: string;
+    gstRate: number;
+    description: string;
+    barcode: string;
+    isService: boolean;
+    updatedAt: string;
+    updatedBy?: {
+        fullName: string;
+    };
+}
+
+interface InventoryStats {
+    totalProducts: number;
+    lowStock: number;
+    totalValue: number;
+}
+
+interface ForecastRecommendation {
+    sku: string;
+    name: string;
+    recommendation: string;
+    velocity: string;
+    daysRemaining: number;
+    predictedShortage?: string;
+}
+
+interface InventoryForecast {
+    recommendations: ForecastRecommendation[];
+}
+
+interface WakeupError extends Error {
+    isWakeup?: boolean;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export default function InventoryPage() {
     const { showConfirm, setUILocked } = useUX();
-    const [products, setProducts] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ totalProducts: 0, lowStock: 0, totalValue: 0 });
-    const [forecast, setForecast] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [stats, setStats] = useState<InventoryStats>({ totalProducts: 0, lowStock: 0, totalValue: 0 });
+    const [forecast, setForecast] = useState<InventoryForecast | null>(null);
+    const [, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<any>(null);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [obProduct, setObProduct] = useState<any>(null);
+    const [obProduct, setObProduct] = useState<Product | null>(null);
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -60,7 +114,7 @@ export default function InventoryPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const syncInventory = async (showLoading = false) => {
+    const syncInventory = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             setFetchError(null);
@@ -79,14 +133,15 @@ export default function InventoryPage() {
 
             setStats(statsRes.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
             setForecast(aiRes.data || null);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Inventory Sync Failure:", err);
-            const msg = err.isWakeup ? err.message : "Inventory update interrupted";
+            const error = err as WakeupError;
+            const msg = error.isWakeup ? error.message : "Inventory update interrupted";
             setFetchError(msg);
         } finally {
             setLoading(false);
         }
-    };
+    }, [page]);
 
     useEffect(() => {
         setMounted(true);
@@ -95,7 +150,7 @@ export default function InventoryPage() {
         // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncInventory(false), 30000);
         return () => clearInterval(interval);
-    }, [page]);
+    }, [syncInventory]);
 
     if (!mounted) return null;
 
@@ -126,8 +181,9 @@ export default function InventoryPage() {
             });
             toast.success("Product details updated");
             syncInventory(false);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Creation failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Creation failed");
         } finally {
             setIsSubmitting(false);
             setUILocked(false);
@@ -160,15 +216,16 @@ export default function InventoryPage() {
             });
             toast.success("Product updated");
             syncInventory(false);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Update failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Update failed");
         } finally {
             setIsSubmitting(false);
             setUILocked(false);
         }
     };
 
-    const startEdit = (p: any) => {
+    const startEdit = (p: Product) => {
         setEditingProduct(p);
         setFormData({
             name: p.name || "",
@@ -202,7 +259,7 @@ export default function InventoryPage() {
                     await api.delete(`/inventory/products/${id}`);
                     toast.success("Product deleted successfully");
                     syncInventory(false);
-                } catch (err) {
+                } catch {
                     toast.error("Failed to delete product");
                 } finally {
                     setUILocked(false);
@@ -237,7 +294,7 @@ export default function InventoryPage() {
                     console.warn(res.data.errors);
                 }
                 syncInventory(false);
-            } catch (err) {
+            } catch {
                 toast.dismiss();
                 toast.error("Import failed");
             }
@@ -247,6 +304,13 @@ export default function InventoryPage() {
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+            {fetchError && (
+                <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 font-bold text-sm mb-4">
+                    <AlertCircle className="w-5 h-5" />
+                    {fetchError}
+                    <Button variant="ghost" className="ml-auto text-rose-600 hover:bg-rose-100 rounded-xl" onClick={() => syncInventory(true)}>Retry</Button>
+                </div>
+            )}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
@@ -537,7 +601,7 @@ export default function InventoryPage() {
                 </CardHeader>
                 <CardContent className="pt-8">
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                        {Array.isArray(forecast?.recommendations) && forecast.recommendations.slice(0, 4).map((rec: any, i: number) => (
+                        {Array.isArray(forecast?.recommendations) && forecast.recommendations.slice(0, 4).map((rec: ForecastRecommendation, i: number) => (
                             <div key={i} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-4 relative overflow-hidden group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all border-b-2 border-b-transparent hover:border-b-blue-500">
                                 <div className="flex justify-between items-start relative z-10">
                                     <div className="space-y-1">
@@ -613,7 +677,7 @@ export default function InventoryPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {(filteredProducts || []).map((p) => (
+                            {(filteredProducts || []).map((p: Product) => (
                                 <TableRow key={p.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                     <TableCell className="pl-8 font-black text-[10px] text-blue-600 tracking-widest bg-slate-50/30 group-hover:bg-blue-50/30 transition-all">#{p.sku.toUpperCase()}</TableCell>
                                     <TableCell className="font-black text-slate-900 tracking-tight">{p.name}</TableCell>
@@ -734,25 +798,4 @@ export default function InventoryPage() {
             />
         </div>
     );
-}
-
-function AlertTriangleIcon(props: any) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-            <path d="M12 9v4" />
-            <path d="M12 17h.01" />
-        </svg>
-    )
 }

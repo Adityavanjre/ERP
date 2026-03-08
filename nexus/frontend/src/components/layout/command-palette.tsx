@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import {
     Search,
     Zap,
-    Calculator,
     Settings,
     Users,
     Package,
@@ -15,10 +14,9 @@ import {
     Activity,
     Landmark,
     LayoutGrid,
-    BarChart3,
-    Clock,
     FileText,
-    ArrowRight
+    ArrowRight,
+    Loader2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
@@ -31,10 +29,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
+interface SearchResult {
+    type: 'Product' | 'Customer' | 'Bill' | 'Order';
+    title: string;
+    subtitle: string;
+    path: string;
+}
+
 export function CommandPalette(): React.ReactNode {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState<any[]>([]);
+    const [results, setResults] = useState<SearchResult[]>([]);
     const [searching, setSearching] = useState(false);
     const router = useRouter();
 
@@ -104,14 +109,22 @@ export function CommandPalette(): React.ReactNode {
             <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
                 <DialogHeader className="p-4 sm:p-6 border-b border-slate-100">
                     <div className="flex items-center gap-3 sm:gap-4">
+                        <DialogTitle className="sr-only">Command Palette</DialogTitle>
                         <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
-                        <Input
-                            autoFocus
-                            placeholder="Search..."
-                            className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-6 sm:py-8 font-medium px-0 sm:px-3"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                        />
+                        <div className="relative flex-1">
+                            <Input
+                                autoFocus
+                                placeholder="Search..."
+                                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-6 sm:py-8 font-medium px-0 sm:px-3 w-full"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                            {searching && (
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                                </div>
+                            )}
+                        </div>
                         <div className="flex items-center gap-2 shrink-0">
                             <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 font-black text-[10px] hidden sm:flex">ESC</Badge>
                         </div>
@@ -185,7 +198,7 @@ export function CommandPalette(): React.ReactNode {
                     ) : (
                         <div className="p-16 text-center space-y-4">
                             <Search className="h-16 w-16 text-slate-100 mx-auto" />
-                            <p className="text-slate-400 text-sm font-medium">No results found for "{query}"</p>
+                            <p className="text-slate-400 text-sm font-medium">No results found for &quot;{query}&quot;</p>
                         </div>
                     )}
                 </div>

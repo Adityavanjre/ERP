@@ -1,48 +1,69 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, RefreshCw, Landmark, Calendar, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { useUX } from "@/components/providers/ux-provider";
 
+interface Asset {
+    id: string;
+    name: string;
+    assetCode: string;
+    type: string;
+    purchaseValue: string | number;
+    accumulatedDepreciation: string | number;
+    status: 'Active' | 'Disposed';
+}
+
+interface ApiError {
+    message?: string;
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function FixedAssetTab() {
     const { setUILocked } = useUX();
-    const [assets, setAssets] = useState<any[]>([]);
+    const [assets, setAssets] = useState<Asset[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchAssets = async () => {
+    const fetchAssets = useCallback(async () => {
         try {
             setLoading(true);
             const res = await api.get("/accounting/fixed-assets");
             setAssets(res.data);
-        } catch (err: any) {
+        } catch {
             toast.error("Failed to fetch assets");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchAssets();
-    }, []);
+    }, [fetchAssets]);
 
-    const runDepreciation = async (assetId: string) => {
+    const runDepreciation = useCallback(async (assetId: string) => {
         try {
             setUILocked(true);
             await api.post(`/accounting/fixed-assets/${assetId}/depreciate`, {});
             toast.success("Depreciation processed successfully!");
             fetchAssets();
-        } catch (err: any) {
-            toast.error(err.message || "Depreciation failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || error.message || "Depreciation failed");
         } finally {
             setUILocked(false);
         }
-    };
+    }, [setUILocked, fetchAssets]);
 
     return (
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,14 @@ interface CreateSupplierDialogProps {
     onSuccess?: () => void;
 }
 
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSupplierDialogProps) {
     const [loading, setLoading] = useState(false);
 
@@ -42,7 +50,7 @@ export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSu
         }
     });
 
-    const onSubmit = async (data: SupplierFormData) => {
+    const onSubmit = useCallback(async (data: SupplierFormData) => {
         setLoading(true);
         try {
             await api.post("purchases/suppliers", data);
@@ -50,12 +58,13 @@ export function CreateSupplierDialog({ open, onOpenChange, onSuccess }: CreateSu
             reset();
             onOpenChange(false);
             onSuccess?.();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to add supplier");
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            toast.error(err.response?.data?.message || "Failed to add supplier");
         } finally {
             setLoading(false);
         }
-    };
+    }, [reset, onOpenChange, onSuccess]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

@@ -5,13 +5,7 @@ import { InventoryModule } from '../inventory/inventory.module';
 import { AccountingModule } from '../accounting/accounting.module';
 
 @Module({
-    imports: [
-        InventoryModule,
-        AccountingModule,
-    ],
-    exports: [
-        InventoryModule,
-        AccountingModule,
-    ],
+  imports: [InventoryModule, AccountingModule],
+  exports: [InventoryModule, AccountingModule],
 })
-export class CoreDomainModule { }
+export class CoreDomainModule {}

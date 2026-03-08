@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,15 +16,25 @@ interface CreateAccountDialogProps {
     onSuccess?: () => void;
 }
 
+type AccountType = "Asset" | "Liability" | "Equity" | "Revenue" | "Expense";
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAccountDialogProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         code: "",
-        type: "Asset" as "Asset" | "Liability" | "Equity" | "Revenue" | "Expense",
+        type: "Asset" as AccountType,
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
         const name = formData.name.trim();
@@ -41,12 +52,13 @@ export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAcc
             setFormData({ name: "", code: "", type: "Asset" });
             onOpenChange(false);
             onSuccess?.();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to create account");
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            toast.error(err.response?.data?.message || "Failed to create account");
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData, onOpenChange, onSuccess]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,7 +68,6 @@ export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAcc
                     <DialogDescription>
                         Add a new account to organize your finances. Common examples: Petty Cash, Office Rent, Salary Expense, Sales Revenue.
                     </DialogDescription>
-
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-6 py-4">
@@ -95,7 +106,7 @@ export function CreateAccountDialog({ open, onOpenChange, onSuccess }: CreateAcc
                             </Label>
                             <Select
                                 value={formData.type}
-                                onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+                                onValueChange={(value: AccountType) => setFormData({ ...formData, type: value })}
                             >
                                 <SelectTrigger className="h-11">
                                     <SelectValue placeholder="Select account type" />

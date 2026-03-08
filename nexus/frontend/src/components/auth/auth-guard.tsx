@@ -20,15 +20,10 @@ const ROUTE_ACCESS: Record<string, string[]> = {
 
 import { TenantSelector } from "./TenantSelector";
 
-function getRoleFromToken(): string | null {
-    try {
-        const token = localStorage.getItem("k_token");
-        if (!token) return null;
-        const decoded: any = jwtDecode(token);
-        return decoded.role || null;
-    } catch {
-        return null;
-    }
+interface DecodedToken {
+    role?: string;
+    type?: string;
+    isOnboarded?: boolean;
 }
 
 function isRouteAllowed(pathname: string, role: string): boolean {
@@ -72,7 +67,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
             }
 
             try {
-                const decoded: any = jwtDecode(token);
+                const decoded = jwtDecode<DecodedToken>(token);
                 const role = decoded.role;
                 const type = decoded.type;
                 const isOnboarded = decoded.isOnboarded;

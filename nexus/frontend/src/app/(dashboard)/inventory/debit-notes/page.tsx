@@ -1,21 +1,35 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Truck, Plus, Search, Filter, RefreshCw, FileText, BadgeCheck } from "lucide-react";
+import { Truck, Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
+interface DebitNote {
+    id: string;
+    noteNumber: string;
+    date: string;
+    totalAmount: number | string;
+    supplier?: {
+        name: string;
+        category?: string;
+    };
+    purchaseOrder?: {
+        orderNumber: string;
+    };
+}
+
 export default function DebitNotesPage() {
-    const [notes, setNotes] = useState<any[]>([]);
+    const [notes, setNotes] = useState<DebitNote[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const fetchNotes = async () => {
+    const fetchNotes = React.useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.get("/accounting/debit-notes");
@@ -25,11 +39,11 @@ export default function DebitNotesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchNotes();
-    }, []);
+    }, [fetchNotes]);
 
     const filteredNotes = notes.filter(n =>
         n.noteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

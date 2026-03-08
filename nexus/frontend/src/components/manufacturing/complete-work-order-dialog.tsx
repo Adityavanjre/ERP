@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { CheckCircle2, Factory, Cpu, User } from "lucide-react";
+import { CheckCircle2, Factory, User } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
     Select,
@@ -23,12 +23,36 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
+interface MinimalWorkOrder {
+    id: string;
+    orderNumber: string;
+    quantity: number;
+    bom?: {
+        product?: {
+            name: string;
+        };
+    };
+}
+
+interface Machine {
+    id: string;
+    name: string;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function CompleteWorkOrderDialog({
     workOrder,
     refreshData,
     children,
 }: {
-    workOrder: any;
+    workOrder: MinimalWorkOrder;
     refreshData: () => void;
     children: React.ReactNode;
 }) {
@@ -41,15 +65,24 @@ export function CompleteWorkOrderDialog({
     const [machineId, setMachineId] = useState("");
     const [machineTimeHours, setMachineTimeHours] = useState("0");
     const [operatorName, setOperatorName] = useState("");
-    const [machines, setMachines] = useState<any[]>([]);
+    const [machines, setMachines] = useState<Machine[]>([]);
 
-    React.useEffect(() => {
-        if (open) {
-            api.get("manufacturing/machines").then(res => setMachines(res.data || [])).catch(() => { });
+    const fetchMachines = useCallback(async () => {
+        try {
+            const res = await api.get("manufacturing/machines");
+            setMachines(res.data || []);
+        } catch {
+            // Ignore fetch errors for machines
         }
-    }, [open]);
+    }, []);
 
-    const handleComplete = async () => {
+    useEffect(() => {
+        if (open) {
+            fetchMachines();
+        }
+    }, [open, fetchMachines]);
+
+    const handleComplete = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -76,12 +109,13 @@ export function CompleteWorkOrderDialog({
             toast.success("Work order completed successfully.");
             setOpen(false);
             refreshData();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to complete work order");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to complete work order");
         } finally {
             setLoading(false);
         }
-    };
+    }, [producedQuantity, scrapQuantity, machineId, machineTimeHours, operatorName, workOrder.id, refreshData]);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -142,7 +176,7 @@ export function CompleteWorkOrderDialog({
                                     <SelectValue placeholder="Select machine" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {machines.map((m: any) => (
+                                    {machines.map((m) => (
                                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                                     ))}
                                 </SelectContent>

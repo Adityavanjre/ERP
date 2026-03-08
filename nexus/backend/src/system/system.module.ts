@@ -36,7 +36,11 @@ import { WebhookSecretRotationService } from './services/webhook-secret-rotation
 import { JwtModule } from '@nestjs/jwt';
 import { CollaborationGateway } from './gateways/collaboration.gateway';
 import { BullModule } from '@nestjs/bullmq';
-import { QUEUE_WEBHOOK_DLQ, QUEUE_BULK_IMPORT, QUEUE_YEAR_CLOSE } from '../infrastructure/queue/queue.module';
+import {
+  QUEUE_WEBHOOK_DLQ,
+  QUEUE_BULK_IMPORT,
+  QUEUE_YEAR_CLOSE,
+} from '../infrastructure/queue/queue.module';
 
 @Global()
 @Module({
@@ -108,4 +112,4 @@ import { QUEUE_WEBHOOK_DLQ, QUEUE_BULK_IMPORT, QUEUE_YEAR_CLOSE } from '../infra
     WebhookSecretRotationService,
   ],
 })
-export class SystemModule { }
+export class SystemModule {}

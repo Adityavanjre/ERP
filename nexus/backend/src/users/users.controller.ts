@@ -1,4 +1,3 @@
-
 import {
   Controller,
   Get,
@@ -10,7 +9,9 @@ import {
   UseGuards,
   Request,
   UseInterceptors,
+  Req,
 } from '@nestjs/common';
+import { AuthenticatedRequest } from '../common/interfaces/request.interface';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -24,39 +25,49 @@ import { Role } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard, MfaGuard)
 @UseInterceptors(AuditInterceptor)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   @Roles(Role.Owner, Role.Manager)
-  async findAll(@Request() req: any) {
-    return this.usersService.findAll(req.user.tenantId);
+  async findAll(@Req() req: AuthenticatedRequest) {
+    return this.usersService.findAll(req.user.tenantId as string);
   }
 
   @Post()
   @Roles(Role.Owner, Role.Manager)
-  async create(@Request() req: any, @Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(req.user.tenantId, createUserDto);
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    return this.usersService.create(req.user.tenantId as string, createUserDto);
   }
 
   @Patch(':id/role')
   @Roles(Role.Owner)
   async updateRole(
-    @Request() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param('id') userId: string,
     @Body() updateRoleDto: UpdateRoleDto,
   ) {
-    return this.usersService.updateRole(req.user.tenantId, userId, updateRoleDto);
+    return this.usersService.updateRole(
+      req.user.tenantId as string,
+      userId,
+      updateRoleDto,
+    );
   }
 
   @Post(':id/reset-password')
   @Roles(Role.Owner)
-  async resetPassword(@Request() req: any, @Param('id') userId: string) {
-    return this.usersService.resetPassword(req.user.tenantId, userId);
+  async resetPassword(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') userId: string,
+  ) {
+    return this.usersService.resetPassword(req.user.tenantId as string, userId);
   }
 
   @Delete(':id')
   @Roles(Role.Owner)
-  async remove(@Request() req: any, @Param('id') userId: string) {
-    return this.usersService.remove(req.user.tenantId, userId);
+  async remove(@Req() req: AuthenticatedRequest, @Param('id') userId: string) {
+    return this.usersService.remove(req.user.tenantId as string, userId);
   }
 }

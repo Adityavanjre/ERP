@@ -153,7 +153,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
                         </div>
                         <DialogTitle className="text-2xl font-black uppercase tracking-tight">Session Terminated</DialogTitle>
                         <DialogDescription className="text-slate-500 font-medium leading-relaxed">
-                            Your security token has expired. For your safety, we've locked the session. Please re-authenticate to continue.
+                            Your security token has expired. For your safety, we&apos;ve locked the session. Please re-authenticate to continue.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-8">

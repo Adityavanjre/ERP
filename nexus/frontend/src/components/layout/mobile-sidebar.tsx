@@ -11,13 +11,16 @@ export const MobileSidebar = () => {
     const [isMounted, setIsMounted] = useState(false);
     const pathname = usePathname();
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
+    const [prevPathname, setPrevPathname] = useState(pathname);
+    if (pathname !== prevPathname) {
+        setPrevPathname(pathname);
+        setIsOpen(false);
+    }
 
     useEffect(() => {
-        setIsOpen(false);
-    }, [pathname]);
+        const frame = requestAnimationFrame(() => setIsMounted(true));
+        return () => cancelAnimationFrame(frame);
+    }, []);
 
     // Prevent body scroll when mobile menu is open
     useEffect(() => {

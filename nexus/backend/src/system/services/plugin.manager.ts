@@ -15,7 +15,7 @@ export class PluginManager implements OnModuleInit {
   private readonly logger = new Logger('PluginManager');
   private readonly pluginsPath = path.join(process.cwd(), 'plugins');
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async onModuleInit() {
     this.logger.log('Klypso Nexus: Initializing Plugin System...');
@@ -23,7 +23,10 @@ export class PluginManager implements OnModuleInit {
       await this.ensurePluginsDir();
       await this.syncInstalledPlugins();
     } catch (error) {
-      this.logger.error('Failed to initialize Plugin System. Carrying on without plugins.', error);
+      this.logger.error(
+        'Failed to initialize Plugin System. Carrying on without plugins.',
+        error,
+      );
     }
   }
 
@@ -38,16 +41,19 @@ export class PluginManager implements OnModuleInit {
    * Scans the plugins folder and syncs state with the DB
    */
   private async syncInstalledPlugins() {
-    const folders = fs.readdirSync(this.pluginsPath, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
+    const folders = fs
+      .readdirSync(this.pluginsPath, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name);
 
-    this.logger.log(`Found ${folders.length} plugin candidate(s) in local storage.`);
+    this.logger.log(
+      `Found ${folders.length} plugin candidate(s) in local storage.`,
+    );
 
     for (const name of folders) {
       // Logic to check if already in DB
       const existing = await this.prisma.plugin.findUnique({
-        where: { name }
+        where: { name },
       });
 
       if (!existing) {
@@ -56,8 +62,8 @@ export class PluginManager implements OnModuleInit {
           data: {
             name,
             version: '1.0.0', // Read from a manifest in future
-            isActive: false,  // Default to off
-          }
+            isActive: false, // Default to off
+          },
         });
       }
     }
@@ -65,15 +71,17 @@ export class PluginManager implements OnModuleInit {
 
   async getActivePlugins() {
     return this.prisma.plugin.findMany({
-      where: { isActive: true }
+      where: { isActive: true },
     });
   }
 
   async togglePlugin(id: string, active: boolean) {
-    this.logger.log(`Switching plugin [${id}] to ${active ? 'ACTIVE' : 'INACTIVE'}`);
+    this.logger.log(
+      `Switching plugin [${id}] to ${active ? 'ACTIVE' : 'INACTIVE'}`,
+    );
     return this.prisma.plugin.update({
       where: { id },
-      data: { isActive: active }
+      data: { isActive: active },
     });
   }
 }

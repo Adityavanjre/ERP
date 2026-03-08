@@ -7,24 +7,11 @@ import API_URL from './config';
  */
 const api = axios.create({
     baseURL: API_URL,
+    withCredentials: true,
 });
 
-// Request interceptor for token injection
-api.interceptors.request.use(
-    (config) => {
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            const { token } = JSON.parse(userInfo);
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
+// Request interceptor removed (no longer needed for cookie-based auth)
+
 
 // Response interceptor for global error handling (e.g., 401 logout)
 api.interceptors.response.use(

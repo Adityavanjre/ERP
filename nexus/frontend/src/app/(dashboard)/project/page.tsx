@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,33 +13,55 @@ import {
     Clock,
     LayoutGrid,
     ListTodo,
-    Check,
-    X,
-    Trash2
+    Check
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 
+interface ProjectTask {
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    projectId: string;
+}
+
+interface Project {
+    id: string;
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    tasks: ProjectTask[];
+}
+
+interface ProjectStats {
+    total: number;
+    active: number;
+    completed: number;
+}
+
 export default function ProjectPage() {
-    const [projects, setProjects] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ total: 0, active: 0, completed: 0 });
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [stats, setStats] = useState<ProjectStats>({ total: 0, active: 0, completed: 0 });
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
 
     // Task Management
-    const [selectedProject, setSelectedProject] = useState<any>(null);
-    const [projectTasks, setProjectTasks] = useState<any[]>([]);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
     const [newTaskTitle, setNewTaskTitle] = useState("");
 
     const [formData, setFormData] = useState({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
 
-    const syncProjectData = async (showLoading = false) => {
+    const syncProjectData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const [projRes, statsRes] = await Promise.all([
@@ -54,19 +76,19 @@ export default function ProjectPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncProjectData(true);
         const interval = setInterval(() => syncProjectData(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncProjectData]);
 
     const fetchTasks = async (projectId: string) => {
         try {
             const res = await api.get(`/projects/tasks/all?projectId=${projectId}`);
             setProjectTasks(res.data);
-        } catch (err) {
+        } catch {
             toast.error("Failed to load tasks");
         }
     };
@@ -79,7 +101,7 @@ export default function ProjectPage() {
             setFormData({ name: "", description: "", startDate: "", endDate: "", status: "Planning" });
             toast.success("Project created successfully");
             syncProjectData(true);
-        } catch (err) {
+        } catch {
             toast.error("Project creation failed");
         }
     };
@@ -99,12 +121,12 @@ export default function ProjectPage() {
             toast.success("Task added");
             fetchTasks(selectedProject.id);
             syncProjectData(true); // Refresh progress bars
-        } catch (err) {
+        } catch {
             toast.error("Task creation failed");
         }
     };
 
-    const toggleTaskStatus = async (task: any) => {
+    const toggleTaskStatus = async (task: ProjectTask) => {
         const newStatus = task.status === 'Completed' ? 'Pending' : 'Completed';
         try {
             // Optimistic update
@@ -112,9 +134,9 @@ export default function ProjectPage() {
 
             await api.patch(`/projects/tasks/${task.id}/status`, { status: newStatus });
             syncProjectData(true); // Refresh global progress
-        } catch (err) {
+        } catch {
             toast.error("Status update failed");
-            fetchTasks(selectedProject.id); // Revert
+            if (selectedProject) fetchTasks(selectedProject.id); // Revert
         }
     };
 
@@ -208,7 +230,7 @@ export default function ProjectPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {projects.map((project) => {
                     const progress = project.tasks?.length > 0
-                        ? (project.tasks.filter((t: any) => t.status === 'Completed').length / project.tasks.length) * 100
+                        ? (project.tasks.filter((t: ProjectTask) => t.status === 'Completed').length / project.tasks.length) * 100
                         : 0;
 
                     return (
@@ -351,7 +373,7 @@ export default function ProjectPage() {
     );
 }
 
-function Activity(props: any) {
+function Activity(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}

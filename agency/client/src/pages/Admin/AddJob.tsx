@@ -2,13 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Briefcase, Plus, X } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 
 const AddJob = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     const [role, setRole] = useState('');
     const [type, setType] = useState('Full-time');
@@ -37,20 +34,13 @@ const AddJob = () => {
         setError(null);
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user?.token}`,
-                },
-            };
-
-            await axios.post(`${API_URL}/api/jobs`, {
+            await api.post('/jobs', {
                 role,
                 type,
                 location,
                 description,
                 requirements
-            }, config);
+            });
 
             navigate('/admin/careers');
         } catch (err: any) {

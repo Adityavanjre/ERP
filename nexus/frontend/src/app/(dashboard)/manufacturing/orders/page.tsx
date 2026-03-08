@@ -7,15 +7,10 @@ import {
     Search,
     Calendar,
     Clock,
-    CheckCircle2,
-    AlertCircle,
     Boxes,
-    ArrowRight,
-    TrendingUp,
     BadgeCheck
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,12 +27,28 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CreateWorkOrderDialog } from "@/components/manufacturing/create-work-order-dialog";
 import { CompleteWorkOrderDialog } from "@/components/manufacturing/complete-work-order-dialog";
 
+interface WorkOrder {
+    id: string;
+    orderNumber: string;
+    priority: string;
+    quantity: number;
+    status: string;
+    startDate?: string;
+    dueDate?: string;
+    bom?: {
+        name: string;
+        product?: {
+            name: string;
+        };
+    };
+}
+
 export default function WorkOrdersPage() {
-    const [workOrders, setWorkOrders] = useState<any[]>([]);
+    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
-    const syncExecutionQueues = async (showLoading = false) => {
+    const syncExecutionQueues = React.useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("manufacturing/work-orders");
@@ -47,19 +58,13 @@ export default function WorkOrdersPage() {
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        syncExecutionQueues(true);
-        const interval = setInterval(() => syncExecutionQueues(false), 30000);
-        return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
         syncExecutionQueues(true);
         const interval = setInterval(() => syncExecutionQueues(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncExecutionQueues]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {

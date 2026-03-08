@@ -1,10 +1,11 @@
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, Calendar, AlertCircle, TrendingDown, Clock } from 'lucide-react';
+import { TrendingUp, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { motion } from 'framer-motion';
 
@@ -19,18 +20,17 @@ interface Projection {
 interface ForecastData {
     projections: Projection[];
     totalExpected: number;
+    avgSettlementDays?: number;
+    trendPercentage?: number;
 }
 
 export function ForecastingWidget() {
     const [data, setData] = useState<ForecastData | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchForecast();
-    }, []);
-
-    const fetchForecast = async () => {
+    const fetchForecast = useCallback(async () => {
         try {
+            setLoading(true);
             const resp = await api.get('system/health/forecast');
             setData(resp.data);
         } catch (err) {
@@ -38,7 +38,11 @@ export function ForecastingWidget() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchForecast();
+    }, [fetchForecast]);
 
     if (loading) return <div className="h-[300px] flex items-center justify-center animate-pulse text-muted-foreground">Analyzing patterns...</div>;
     if (!data) return null;
@@ -65,12 +69,12 @@ export function ForecastingWidget() {
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">Expected Inflow</span>
                         <div className="text-2xl font-black text-slate-900">₹{data.totalExpected.toLocaleString()}</div>
                         <span className="text-[10px] text-green-600 font-bold flex items-center gap-1 mt-1">
-                            +12% vs last period <TrendingUp className="w-3 h-3" />
+                            +{data.trendPercentage || 12}% vs last period <TrendingUp className="w-3 h-3" />
                         </span>
                     </div>
                     <div className="p-4 rounded-2xl bg-white border border-amber-100 shadow-sm">
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">Avg. Settlement</span>
-                        <div className="text-2xl font-black text-slate-900">18.5 Days</div>
+                        <div className="text-2xl font-black text-slate-900">{data.avgSettlementDays || 18.5} Days</div>
                         <span className="text-[10px] text-blue-600 font-bold flex items-center gap-1 mt-1">
                             Improved by 4.2 days <Clock className="w-3 h-3" />
                         </span>
@@ -96,7 +100,7 @@ export function ForecastingWidget() {
                             <div className="text-right">
                                 <div className="text-sm font-black text-slate-900">₹{proj.amount.toLocaleString()}</div>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <Progress value={proj.probability} className="h-1 w-12 bg-slate-100" />
+                                    <Progress value={proj.probability} className="h-1 w-12 bg-slate-100 placeholder:bg-slate-200" />
                                     <span className="text-[9px] font-black text-amber-600">{proj.probability}% Confidence</span>
                                 </div>
                             </div>
@@ -107,10 +111,10 @@ export function ForecastingWidget() {
                 <div className="pt-2">
                     <div className="bg-amber-900/5 p-3 rounded-xl flex gap-3 border border-amber-900/10">
                         <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
-                        <p className="text-[11px] font-medium text-amber-800 leading-relaxed">
-                            <strong>Insight:</strong> 3 invoices from "Aura Financial" are trending 4 days late. Settlement probability adjusted to 65%.
+                        <div className="text-[11px] font-medium text-amber-800 leading-relaxed">
+                            <strong>Insight:</strong> 3 invoices from &quot;Aura Financial&quot; are trending 4 days late. Settlement probability adjusted to 65%.
                             Recommend manual follow-up via Klypso Ion.
-                        </p>
+                        </div>
                     </div>
                 </div>
             </CardContent>

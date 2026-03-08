@@ -1,21 +1,36 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Plus, Search, Filter, ArrowLeft, RefreshCw, FileText, CheckCircle2 } from "lucide-react";
+import { Receipt, Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
+interface CreditNote {
+    id: string;
+    noteNumber: string;
+    date: string;
+    totalAmount: number | string;
+    customer?: {
+        firstName: string;
+        lastName: string;
+        company?: string;
+    };
+    invoice?: {
+        invoiceNumber: string;
+    };
+}
+
 export default function CreditNotesPage() {
-    const [notes, setNotes] = useState<any[]>([]);
+    const [notes, setNotes] = useState<CreditNote[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const fetchNotes = async () => {
+    const fetchNotes = React.useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.get("/accounting/credit-notes");
@@ -25,11 +40,11 @@ export default function CreditNotesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchNotes();
-    }, []);
+    }, [fetchNotes]);
 
     const filteredNotes = notes.filter(n =>
         n.noteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

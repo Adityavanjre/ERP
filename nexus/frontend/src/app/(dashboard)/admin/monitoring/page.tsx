@@ -1,10 +1,9 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     HeartPulse,
-    AlertCircle,
     TrendingDown,
     Users,
     DollarSign,
@@ -17,33 +16,63 @@ import {
     PlayCircle,
     BarChart2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { toast } from "react-hot-toast";
+
+interface TopAtRiskTenant {
+    tenantId: string;
+    tenantName: string;
+    healthScore: number;
+    status: 'RED' | 'AMBER';
+    plan: string;
+    mrr: number;
+    signals: string[];
+    interventions?: {
+        action: 'SCHEDULE_SUPPORT_CALL' | 'SEND_TRAINING_VIDEO';
+    };
+}
+
+interface MonitoringReport {
+    tenantName: string;
+    status: 'RED' | 'AMBER';
+    signals: string[];
+}
+
+interface MonitoringData {
+    mrrAtRisk: number;
+    systemStatus: number;
+    totalTenants: number;
+    topAtRisk: TopAtRiskTenant[];
+    allReports: MonitoringReport[];
+}
+
+interface SignalFeedItem extends MonitoringReport {
+    signal: string;
+}
 
 export default function FounderMonitoring() {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<MonitoringData | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncDashboardStats = async (showLoading = false) => {
+    const syncDashboardStats = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("system/founder-dashboard");
-            setData(res);
+            setData(res.data);
         } catch (err) {
             console.error("Dashboard Sync Failure:", err);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncDashboardStats(true);
         const interval = setInterval(() => syncDashboardStats(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncDashboardStats]);
 
     if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">Loading System Overview...</div>;
     if (!data) return null;
@@ -134,7 +163,7 @@ export default function FounderMonitoring() {
                     </div>
 
                     <div className="space-y-6">
-                        {data.topAtRisk.map((tenant: any) => (
+                        {data.topAtRisk.map((tenant: TopAtRiskTenant) => (
                             <Card key={tenant.tenantId} className="bg-white border-none shadow-xl shadow-slate-200/40 p-8 rounded-[40px] hover:shadow-2xl transition-all flex flex-col lg:flex-row gap-8 justify-between items-start md:items-center group border-l-8 border-l-transparent hover:border-l-red-500">
                                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-start sm:items-center">
                                     <div className={`w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-[28px] flex items-center justify-center font-black text-xl md:text-2xl transition-all ${tenant.status === 'RED' ? 'bg-red-50 text-red-600 shadow-lg shadow-red-500/10' : 'bg-amber-50 text-amber-600'}`}>
@@ -186,7 +215,7 @@ export default function FounderMonitoring() {
                         Recent Activity
                     </h2>
                     <Card className="bg-slate-900 border-none rounded-[3rem] p-10 h-[700px] overflow-y-auto space-y-10 shadow-2xl shadow-slate-900/20">
-                        {data.allReports.flatMap((r: any) => r.signals.map((s: string) => ({ ...r, signal: s }))).map((item: any, i: number) => (
+                        {data.allReports.flatMap((r: MonitoringReport) => r.signals.map((s: string) => ({ ...r, signal: s }))).map((item: SignalFeedItem, i: number) => (
                             <div key={i} className="relative pl-8 border-l-2 border-slate-800 group">
                                 <div className={`absolute left-[-6px] top-1.5 w-3 h-3 rounded-full ${item.status === 'RED' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-amber-500'}`}></div>
                                 <div className="space-y-2">
@@ -239,4 +268,3 @@ function HistoryFeedIcon() {
         </svg>
     );
 }
-

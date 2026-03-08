@@ -1,7 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,10 +14,10 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Plus, Wallet, ArrowUpRight, ArrowDownRight, Landmark, Receipt, Printer, Search, RefreshCw, ShoppingCart, MessageCircle, FileDown, Users, Activity, Ban } from "lucide-react";
+import { Plus, Wallet, ArrowUpRight, ArrowDownRight, Landmark, Receipt, Printer, Search, RefreshCw, ShoppingCart, MessageCircle, Ban, Activity, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { RecordPaymentModal } from "@/components/accounting/record-payment-modal";
+import { RecordPaymentModal, type Invoice as PaymentInvoice } from "@/components/accounting/record-payment-modal";
 import { CreateInvoiceDialog } from "@/components/accounting/create-invoice-dialog";
 import { CreateAccountDialog } from "@/components/accounting/create-account-dialog";
 import { CreateJournalEntryDialog } from "@/components/accounting/create-journal-entry-dialog";
@@ -28,47 +28,107 @@ import { FixedAssetTab } from "@/components/accounting/fixed-asset-tab";
 import { AuditorDashboard } from "@/components/accounting/auditor-dashboard";
 import { EmptyState } from "@/components/ui/empty-state";
 
+interface Account {
+    id: string;
+    code: string;
+    name: string;
+    type: string;
+    balance: number;
+}
+
+interface Transaction {
+    id: string;
+    date: string;
+    account: { name: string };
+    type: 'Credit' | 'Debit';
+    amount: number;
+    description: string;
+}
+
+interface AccountingInvoice extends PaymentInvoice {
+    customer: { firstName: string; lastName: string; phone?: string };
+    issueDate: string;
+    totalAmount: number;
+    amountPaid: number;
+    status: string;
+}
+
+interface AccountingStats {
+    receivable: number;
+    netProfit: number;
+    income: number;
+    expenses: number;
+    overdueAmount: number;
+    gstLiability?: number;
+    topDebtors: Array<{ name: string; amount: number; aging?: number }>;
+}
+
+interface HealthScore {
+    status: 'RED' | 'YELLOW' | 'BLUE';
+    riskScore: number;
+    metrics: {
+        avgEntryLag: number;
+        taggingRatio: string;
+    };
+    signals: string[];
+}
+
+interface LeaderboardUser {
+    name: string;
+    invoices: number;
+    avgLag: number;
+}
+
+interface RecoveryMemory {
+    opportunities: Array<{
+        name: string;
+        phone?: string;
+        daysSilent: number;
+    }>;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
+interface AccountingDraft {
+    items: Array<{
+        productId: string;
+    }>;
+}
+
 export default function AccountingPage() {
     const { setUILocked, showConfirm } = useUX();
-    const [accounts, setAccounts] = useState<any[]>([]);
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [invoices, setInvoices] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
-    const [invStats, setInvStats] = useState<any>({ lowStock: 0 });
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [invoices, setInvoices] = useState<AccountingInvoice[]>([]);
+    const [stats, setStats] = useState<AccountingStats>({ receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
     const [loading, setLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<AccountingInvoice | null>(null);
     const [showCreateInvoice, setShowCreateInvoice] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
     const [invoicePage, setInvoicePage] = useState(1);
     const [invoiceTotalPages, setInvoiceTotalPages] = useState(1);
-    const [pendingDraft, setPendingDraft] = useState<any>(null);
-    const [healthScore, setHealthScore] = useState<any>(null);
-    const [leaderboard, setLeaderboard] = useState<any[]>([]);
-    const [recoveryMemory, setRecoveryMemory] = useState<any[]>([]);
+    const [pendingDraft, setPendingDraft] = useState<AccountingDraft | null>(null);
+    const [healthScore, setHealthScore] = useState<HealthScore | null>(null);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+    const [recoveryMemory, setRecoveryMemory] = useState<RecoveryMemory | null>(null);
     const [showCreateAccount, setShowCreateAccount] = useState(false);
     const [showCreateJournalEntry, setShowCreateJournalEntry] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
 
-    useEffect(() => {
-        const draft = localStorage.getItem("invoice_draft");
-        if (draft) {
-            try {
-                const parsed = JSON.parse(draft);
-                if (parsed.items?.length > 0 && parsed.items[0].productId) {
-                    setPendingDraft(parsed);
-                }
-            } catch (e) { }
-        }
-    }, [showCreateInvoice]);
-
-    const syncLedgers = async (silent = false) => {
+    const syncLedgers = useCallback(async (silent = false) => {
         try {
             if (!silent) setLoading(true);
             else setIsSyncing(true);
 
-            const [accRes, txRes, invRes, statsRes, invStatsRes, healthRes, leaderRes, recoveryRes] = await Promise.all([
+            const [accRes, txRes, invRes, statsRes, , healthRes, leaderRes, recoveryRes] = await Promise.all([
                 api.get("accounting/accounts"),
                 api.get("accounting/transactions"),
                 api.get(`/accounting/invoices?page=${invoicePage}&limit=50`),
@@ -78,6 +138,7 @@ export default function AccountingPage() {
                 api.get("accounting/leaderboard"),
                 api.get("accounting/recovery-memory")
             ]);
+
             setAccounts(accRes.data);
             setTransactions(txRes.data.data || txRes.data);
             setHealthScore(healthRes.data);
@@ -92,7 +153,7 @@ export default function AccountingPage() {
             }
 
             setStats(statsRes.data);
-            setInvStats(invStatsRes.data);
+            // invStats info not directly used in major UI blocks yet but could be in future.
             setLastSyncTime(Date.now());
         } catch (err) {
             console.error("Ledger Sync Failure:", err);
@@ -101,38 +162,23 @@ export default function AccountingPage() {
             setLoading(false);
             setIsSyncing(false);
         }
-    };
+    }, [invoicePage]);
 
-    const handleTallyMasters = async () => {
-        try {
-            toast.info("Generating Tally Ledger Masters...");
-            const response = await api.get(`/accounting/export/masters`, {
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Tally_Masters.xml`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            toast.success("Ledger Masters generated successfully");
-        } catch (err) {
-            toast.error("Failed to generate Tally Masters");
+    useEffect(() => {
+        const draft = localStorage.getItem("invoice_draft");
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                if (parsed.items?.length > 0 && parsed.items[0].productId) {
+                    setPendingDraft(parsed);
+                }
+            } catch {
+                // Silently ignore malformed drafts
+            }
         }
-    };
+    }, [showCreateInvoice]);
 
-    const handleCancelInvoice = (id: string) => {
-        // UI-005: Stale State Protection
-        if (Date.now() - lastSyncTime > 60000) {
-            toast.warning("Accounting data might be stale. Syncing before action...", { icon: <RefreshCw className="h-4 w-4 animate-spin" /> });
-            syncLedgers().then(() => proceedWithCancellation(id));
-            return;
-        }
-        proceedWithCancellation(id);
-    };
-
-    const proceedWithCancellation = (id: string) => {
+    const proceedWithCancellation = useCallback((id: string) => {
         showConfirm({
             title: "Cancel Invoice?",
             description: "Are you sure you want to cancel this invoice? This will reverse all ledger entries and stock movements. This action cannot be undone.",
@@ -144,62 +190,40 @@ export default function AccountingPage() {
                     await api.post(`/accounting/invoices/${id}/cancel`, { reason: "User cancelled from dashboard" });
                     toast.success("Invoice cancelled successfully");
                     syncLedgers();
-                } catch (err: any) {
-                    toast.error(err.response?.data?.message || "Cancellation failed");
+                } catch (err: unknown) {
+                    const error = err as ApiError;
+                    toast.error(error.response?.data?.message || "Cancellation failed");
                 } finally {
                     setUILocked(false);
                 }
             }
         });
-    };
+    }, [showConfirm, setUILocked, syncLedgers]);
 
-    const handleTallyExport = async () => {
-        try {
-            const month = new Date().getMonth() + 1;
-            const year = new Date().getFullYear();
-
-            // 1. Pre-flight Integrity Check
-            toast.info("Validating financial data for Tally...");
-            const valRes = await api.get(`/accounting/export/validate?month=${month}&year=${year}`);
-
-            if (!valRes.data.isValid) {
-                toast.error(`Export Blocked: ${valRes.data.errors[0]}`, {
-                    description: `Found ${valRes.data.errors.length} integrity issues. Please fix before exporting.`,
-                    duration: 5000
-                });
-                return;
-            }
-
-            // 2. Procced with Download
-            const response = await api.get(`/accounting/export/tally?month=${month}&year=${year}`, {
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Tally_Full_Sync_${month}_${year}.xml`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            toast.success("Tally Full Sync generated successfully");
-        } catch (err) {
-            toast.error("Failed to generate Tally export");
+    const handleCancelInvoice = useCallback((id: string) => {
+        if (Date.now() - lastSyncTime > 60000) {
+            toast.warning("Accounting data might be stale. Syncing before action...", { icon: <RefreshCw className="h-4 w-4 animate-spin" /> });
+            syncLedgers().then(() => proceedWithCancellation(id));
+            return;
         }
-    };
+        proceedWithCancellation(id);
+    }, [lastSyncTime, syncLedgers, proceedWithCancellation]);
 
-    const filteredInvoices = invoices.filter((inv: any) => {
-        const customerName = [inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(" ").toLowerCase();
-        return inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            customerName.includes(searchQuery.toLowerCase());
-    });
+    const filteredInvoices = useMemo(() => {
+        return invoices.filter((inv) => {
+            const customerName = [inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(" ").toLowerCase();
+            return inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                customerName.includes(searchQuery.toLowerCase());
+        });
+    }, [invoices, searchQuery]);
 
     useEffect(() => {
         syncLedgers();
-
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncLedgers(true), 30000);
         return () => clearInterval(interval);
-    }, [invoicePage]);
+    }, [syncLedgers]);
+
+    if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><RefreshCw className="h-8 w-8 animate-spin text-amber-500" /></div>;
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
@@ -299,7 +323,6 @@ export default function AccountingPage() {
                 </Card>
             </div>
 
-            {/* Data Layer */}
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                     <ForecastingWidget />
@@ -309,7 +332,6 @@ export default function AccountingPage() {
                 </div>
             </div>
 
-            {/* Top Debtors Section */}
             {stats.topDebtors && stats.topDebtors.length > 0 && (
                 <div className="grid gap-6 md:grid-cols-2">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none group">
@@ -319,7 +341,7 @@ export default function AccountingPage() {
                         </CardHeader>
                         <CardContent className="p-8">
                             <div className="space-y-6">
-                                {stats.topDebtors.map((d: any, i: number) => (
+                                {stats.topDebtors.map((d, i) => (
                                     <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-5 last:border-0 hover:translate-x-1 transition-transform">
                                         <div className="flex items-center gap-5">
                                             <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center text-xs font-black text-white shadow-lg shadow-slate-900/10">
@@ -447,7 +469,7 @@ export default function AccountingPage() {
                                     {filteredInvoices.length === 0 && !loading && (
                                         <TableRow>
                                             <TableCell colSpan={6} className="py-12 px-6">
-                                                <EmptyState 
+                                                <EmptyState
                                                     icon={Receipt}
                                                     title="No Invoices Found"
                                                     description="You haven't issued any tax invoices yet. Start by creating your first compliant invoice."
@@ -543,7 +565,7 @@ export default function AccountingPage() {
                                         <TableRow key={tx.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="pl-8 font-black text-[10px] text-slate-600 tracking-widest">{new Date(tx.date).toLocaleDateString()}</TableCell>
                                             <TableCell className="font-black text-slate-900 tracking-tight">{tx.account?.name}</TableCell>
-                                            <TableCell className="text-slate-500 font-bold text-xs italic">"{tx.description}"</TableCell>
+                                            <TableCell className="text-slate-500 font-bold text-xs italic">&quot;{tx.description}&quot;</TableCell>
                                             <TableCell className={`text-right pr-8 font-black text-lg ${tx.type === 'Credit' ? "text-emerald-600" : "text-rose-600"}`}>
                                                 {tx.type === 'Credit' ? '▲' : '▼'} ₹{Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </TableCell>
@@ -590,14 +612,14 @@ export default function AccountingPage() {
                                         </div>
                                         <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Entry Delay</p>
-                                            <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics.avgEntryLag} <span className="text-xs font-bold text-slate-400">MINS</span></p>
+                                            <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.avgEntryLag || 0} <span className="text-xs font-bold text-slate-400">MINS</span></p>
                                             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
                                                 <div className="h-full bg-blue-600 w-[40%]" />
                                             </div>
                                         </div>
                                         <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Fulfillment Ratio</p>
-                                            <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics.taggingRatio}</p>
+                                            <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.taggingRatio || "0%"}</p>
                                             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
                                                 <div className="h-full bg-emerald-500 w-[85%]" />
                                             </div>
@@ -609,7 +631,7 @@ export default function AccountingPage() {
                                             Health Alerts
                                             <div className="h-px flex-1 bg-slate-100" />
                                         </h4>
-                                        {healthScore.signals.length > 0 ? (
+                                        {healthScore.signals?.length > 0 ? (
                                             <div className="grid gap-3">
                                                 {healthScore.signals.map((s: string, i: number) => (
                                                     <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-slate-50/50 border border-slate-100 group hover:border-blue-500/20 transition-all">
@@ -638,7 +660,7 @@ export default function AccountingPage() {
                                             </CardHeader>
                                             <CardContent className="p-8">
                                                 <div className="space-y-6">
-                                                    {leaderboard.map((u, i) => (
+                                                    {leaderboard.map((u: LeaderboardUser, i: number) => (
                                                         <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-4 last:border-0 hover:translate-x-1 transition-transform">
                                                             <div className="flex items-center gap-4">
                                                                 <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 text-xs">{(i + 1).toString().padStart(2, '0')}</div>
@@ -665,7 +687,7 @@ export default function AccountingPage() {
                                             </CardHeader>
                                             <CardContent className="p-8">
                                                 <div className="space-y-6">
-                                                    {recoveryMemory && (recoveryMemory as any).opportunities?.map((c: any, i: number) => (
+                                                    {recoveryMemory?.opportunities?.map((c, i: number) => (
                                                         <div key={i} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-blue-500/5 group">
                                                             <div>
                                                                 <p className="text-slate-900 font-black tracking-tight">{c.name}</p>
@@ -681,7 +703,7 @@ export default function AccountingPage() {
                                                             </Button>
                                                         </div>
                                                     ))}
-                                                    {(!recoveryMemory || ((recoveryMemory as any).opportunities?.length === 0)) && (
+                                                    {(!recoveryMemory || recoveryMemory?.opportunities?.length === 0) && (
                                                         <div className="text-center py-16 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                                                             <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">All caught up</p>
                                                         </div>
@@ -722,7 +744,7 @@ export default function AccountingPage() {
                 onSuccess={syncLedgers}
                 accounts={accounts}
             />
-        </div >
-
+        </div>
     );
 }
+

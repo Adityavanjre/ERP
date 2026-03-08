@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../system/services/audit.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -13,7 +18,7 @@ export class HrService {
     private prisma: PrismaService,
     private audit: AuditService,
     private accounting: AccountingService,
-  ) { }
+  ) {}
 
   // --- Departments ---
   async createDepartment(tenantId: string, data: any) {
@@ -64,7 +69,10 @@ export class HrService {
     const employee = await this.prisma.employee.findFirst({
       where: { id: data.employeeId, tenantId },
     });
-    if (!employee) throw new NotFoundException(`Employee '${data.employeeId}' not found in this tenant.`);
+    if (!employee)
+      throw new NotFoundException(
+        `Employee '${data.employeeId}' not found in this tenant.`,
+      );
 
     const leave = await this.prisma.leave.create({
       data: { ...data, tenantId },
@@ -94,7 +102,10 @@ export class HrService {
       where: { id, employee: { tenantId } },
       include: { employee: true },
     });
-    if (!leave) throw new NotFoundException(`Leave record '${id}' not found in this tenant.`);
+    if (!leave)
+      throw new NotFoundException(
+        `Leave record '${id}' not found in this tenant.`,
+      );
 
     await this.prisma.leave.updateMany({
       where: { id, employee: { tenantId } },
@@ -117,7 +128,10 @@ export class HrService {
     const employee = await this.prisma.employee.findFirst({
       where: { id: employeeId, tenantId },
     });
-    if (!employee) throw new BadRequestException('Employee not found in this tenant context');
+    if (!employee)
+      throw new BadRequestException(
+        'Employee not found in this tenant context',
+      );
 
     // 1. Transactional Guard: ensure payroll record and journal entry are atomic.
     return this.prisma.$transaction(async (tx) => {
@@ -133,7 +147,9 @@ export class HrService {
       });
 
       if (!salaryAccount || !cashAccount) {
-        throw new BadRequestException(`Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`);
+        throw new BadRequestException(
+          `Audit Block: Payroll cannot be generated because Salary Expense or Cash/Bank account is missing in Chart of Accounts.`,
+        );
       }
 
       // IDEMPOTENCY GUARD
@@ -149,8 +165,8 @@ export class HrService {
       if (existingPayroll) {
         throw new BadRequestException(
           `Payroll Integrity Block: A payroll record already exists for Employee ${employeeId} ` +
-          `for the period ${data.periodStart} – ${data.periodEnd}. ` +
-          `Use a reversal entry to correct errors. Reference ID: ${existingPayroll.id}`,
+            `for the period ${data.periodStart} – ${data.periodEnd}. ` +
+            `Use a reversal entry to correct errors. Reference ID: ${existingPayroll.id}`,
         );
       }
 
@@ -173,15 +189,29 @@ export class HrService {
       });
 
       // 3. Post Journal Entry
-      await this.accounting.createJournalEntry(tenantId, {
-        date: new Date().toISOString(),
-        description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
-        reference: payroll.id,
-        transactions: [
-          { accountId: salaryAccount.id, type: 'Debit', amount: netPay, description: 'Salary Disbursement' },
-          { accountId: cashAccount.id, type: 'Credit', amount: netPay, description: 'Salary Disbursement' },
-        ],
-      }, tx);
+      await this.accounting.createJournalEntry(
+        tenantId,
+        {
+          date: new Date().toISOString(),
+          description: `Payroll: ${employee.firstName} ${employee.lastName} - ${data.periodStart} to ${data.periodEnd}`,
+          reference: payroll.id,
+          transactions: [
+            {
+              accountId: salaryAccount.id,
+              type: 'Debit',
+              amount: netPay,
+              description: 'Salary Disbursement',
+            },
+            {
+              accountId: cashAccount.id,
+              type: 'Credit',
+              amount: netPay,
+              description: 'Salary Disbursement',
+            },
+          ],
+        },
+        tx,
+      );
 
       return payroll;
     });
@@ -189,32 +219,45 @@ export class HrService {
 
   async importEmployees(tenantId: string, csvContent: string) {
     const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+    const headers = lines[0].split(',').map((h) => h.trim());
+    const results = {
+      total: lines.length - 1,
+      imported: 0,
+      failed: 0,
+      errors: [] as string[],
+    };
 
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
-      const cols = lines[i].split(',').map(c => c.trim());
+      const cols = lines[i].split(',').map((c) => c.trim());
       const data: any = {};
-      headers.forEach((h, idx) => { data[h] = cols[idx]; });
+      headers.forEach((h, idx) => {
+        data[h] = cols[idx];
+      });
 
       try {
         const firstName = data.firstName;
         const lastName = data.lastName || '';
         const email = data.email;
-        const employeeId = data.employeeId || `EMP-${Date.now().toString().slice(-4)}-${i}`;
+        const employeeId =
+          data.employeeId || `EMP-${Date.now().toString().slice(-4)}-${i}`;
 
-        if (!firstName || !email) throw new BadRequestException("First Name and Email are required for employee import.");
+        if (!firstName || !email)
+          throw new BadRequestException(
+            'First Name and Email are required for employee import.',
+          );
 
         // Look up department by name if provided
         let departmentId = data.departmentId;
         if (data.departmentName && !departmentId) {
-          const dept = await this.prisma.department.findFirst({ where: { tenantId, name: data.departmentName } });
+          const dept = await this.prisma.department.findFirst({
+            where: { tenantId, name: data.departmentName },
+          });
           departmentId = dept?.id;
         }
 
         const existing = await this.prisma.employee.findFirst({
-          where: { tenantId, OR: [{ email }, { employeeId }] }
+          where: { tenantId, OR: [{ email }, { employeeId }] },
         });
 
         if (existing) {
@@ -226,9 +269,11 @@ export class HrService {
               phone: data.phone || existing.phone,
               departmentId: departmentId || existing.departmentId,
               jobTitle: data.jobTitle || data.designation || existing.jobTitle,
-              salary: data.basicSalary ? new Decimal(data.basicSalary) : existing.salary,
-              status: (data.status as EmployeeStatus) || existing.status
-            }
+              salary: data.basicSalary
+                ? new Decimal(data.basicSalary)
+                : existing.salary,
+              status: (data.status as EmployeeStatus) || existing.status,
+            },
           });
         } else {
           await this.prisma.employee.create({
@@ -242,7 +287,7 @@ export class HrService {
               jobTitle: data.jobTitle || data.designation || 'Staff',
               departmentId,
               salary: new Decimal(data.basicSalary || data.salary || 0),
-            }
+            },
           });
         }
         results.imported++;

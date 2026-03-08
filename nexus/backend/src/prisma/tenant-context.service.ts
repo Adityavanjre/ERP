@@ -9,7 +9,12 @@ export class TenantContextService {
     role?: string;
   }>();
 
-  run(tenantId: string, userId: string | undefined, role: string | undefined, next: () => any) {
+  run(
+    tenantId: string,
+    userId: string | undefined,
+    role: string | undefined,
+    next: () => any,
+  ) {
     return TenantContextService.storage.run({ tenantId, userId, role }, next);
   }
 

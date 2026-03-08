@@ -29,7 +29,7 @@ import { Role } from '@prisma/client';
 @Module('hr')
 @Controller('hr')
 export class HrController {
-  constructor(private readonly hrService: HrService) { }
+  constructor(private readonly hrService: HrService) {}
 
   // Departments
   @Post('departments')
@@ -40,7 +40,14 @@ export class HrController {
   }
 
   @Get('departments')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS) // General operational view
   getDepts(@CurrentUser() user: any) {
     return this.hrService.getDepartments(user.tenantId);
@@ -55,7 +62,14 @@ export class HrController {
   }
 
   @Get('employees')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getEmployees(@CurrentUser() user: any) {
     return this.hrService.getEmployees(user.tenantId);
@@ -81,7 +95,14 @@ export class HrController {
   }
 
   @Get('leaves')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_LEAVES')
   getLeaves(@CurrentUser() user: any) {

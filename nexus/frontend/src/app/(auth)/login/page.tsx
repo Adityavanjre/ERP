@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -13,14 +14,25 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
-import { toast } from "sonner"
-
 import { Eye, EyeOff } from "lucide-react"
 
+interface AuthUser {
+    id: string;
+    fullName: string;
+    email: string;
+    isSuperAdmin: boolean;
+}
+
+interface AuthResponse {
+    user: AuthUser;
+    requiresMfa?: boolean;
+    tempToken?: string;
+    tenants?: Array<{ id: string; name: string }>;
+}
+
 export default function LoginPage() {
-    const router = useRouter()
+    // const router = useRouter() // Unused
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
@@ -32,7 +44,38 @@ export default function LoginPage() {
     const [tempToken, setTempToken] = useState("")
     const [mfaCode, setMfaCode] = useState("")
 
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    const completeLogin = useCallback((data: AuthResponse) => {
+        // SEC-006: Sensitive tokens are now in HttpOnly cookies (nexus_token / nexus_refresh).
+        // We only store the user profile for UI hydration.
+        localStorage.setItem("k_user", JSON.stringify(data.user))
+
+        const SAFE_FALLBACK = "/portal/dashboard"
+        const returnTo = localStorage.getItem("return_to")
+        localStorage.removeItem("return_to")
+
+        if (data.user?.isSuperAdmin && (!data.tenants || data.tenants.length === 0)) {
+            window.location.href = "/portal/admin/monitoring"
+            return
+        }
+
+        const safeRedirect = (raw: string | null): string => {
+            if (!raw) return SAFE_FALLBACK
+            if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return SAFE_FALLBACK
+            if (raw.startsWith("//")) return SAFE_FALLBACK
+            if (!raw.startsWith("/portal")) return SAFE_FALLBACK
+            try {
+                const parsed = new URL(raw, window.location.origin)
+                if (parsed.origin !== window.location.origin) return SAFE_FALLBACK
+                return parsed.pathname + parsed.search + parsed.hash
+            } catch {
+                return SAFE_FALLBACK
+            }
+        }
+
+        window.location.href = safeRedirect(returnTo)
+    }, []);
+
+    const handleLogin = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setLoading(true)
         setError("")
@@ -66,16 +109,17 @@ export default function LoginPage() {
                     return;
                 }
 
-                completeLogin(res.data);
+                completeLogin(res.data as AuthResponse);
             } else {
                 // MFA Step
                 const res = await api.post("auth/mfa/verify-login", {
                     tempToken,
                     totpCode: mfaCode
                 });
-                completeLogin(res.data);
+                completeLogin(res.data as AuthResponse);
             }
-        } catch (err: any) {
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
             console.error(err);
             if (!err.response) {
                 setError("Network Error: Unable to reach the server.");
@@ -86,44 +130,21 @@ export default function LoginPage() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [step, email, password, isAdmin, tempToken, mfaCode, completeLogin]);
 
-    const completeLogin = (data: any) => {
-        localStorage.setItem("k_token", data.accessToken)
-        localStorage.setItem("k_identity", data.accessToken)
-        localStorage.setItem("k_user", JSON.stringify(data.user))
-
-        const SAFE_FALLBACK = "/portal/dashboard"
-        const returnTo = localStorage.getItem("return_to")
-        localStorage.removeItem("return_to")
-
-        if (res.data.user.isSuperAdmin && (!res.data.tenants || res.data.tenants.length === 0)) {
-            window.location.href = "/portal/admin/monitoring"
-            return
-        }
-
-        const safeRedirect = (raw: string | null): string => {
-            if (!raw) return SAFE_FALLBACK
-            if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return SAFE_FALLBACK
-            if (raw.startsWith("//")) return SAFE_FALLBACK
-            if (!raw.startsWith("/portal")) return SAFE_FALLBACK
-            try {
-                const parsed = new URL(raw, window.location.origin)
-                if (parsed.origin !== window.location.origin) return SAFE_FALLBACK
-                return parsed.pathname + parsed.search + parsed.hash
-            } catch {
-                return SAFE_FALLBACK
-            }
-        }
-
-        window.location.href = safeRedirect(returnTo)
-    }
-
-    const goBack = () => {
+    const goBack = useCallback(() => {
         setStep("identity");
         setMfaCode("");
         setError("");
-    }
+    }, []);
+
+    const toggleAdmin = useCallback(() => {
+        setIsAdmin(prev => !prev);
+    }, []);
+
+    const toggleShowPassword = useCallback(() => {
+        setShowPassword(prev => !prev);
+    }, []);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-slate-50 selection:bg-blue-500/10">
@@ -192,7 +213,7 @@ export default function LoginPage() {
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
+                                            onClick={toggleShowPassword}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                                         >
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -242,7 +263,7 @@ export default function LoginPage() {
                         <div className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-tighter">
                             <button
                                 type="button"
-                                onClick={() => setIsAdmin(!isAdmin)}
+                                onClick={toggleAdmin}
                                 className="text-blue-600 hover:text-blue-700 underline underline-offset-4"
                             >
                                 {isAdmin ? "Standard Login" : "Super Admin Mode"}

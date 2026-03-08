@@ -9,7 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class TenantMembershipGuard implements CanActivate {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -63,7 +63,8 @@ export class TenantMembershipGuard implements CanActivate {
     // RULE-READ-ONLY: Block mutations if account is in read-only mode.
     if (tenant.subscriptionStatus === 'ReadOnly' && request.method !== 'GET') {
       throw new ForbiddenException({
-        message: 'Account Restricted: This workspace is in Read-Only mode due to expiry.',
+        message:
+          'Account Restricted: This workspace is in Read-Only mode due to expiry.',
         code: 'TENANT_READ_ONLY',
       });
     }

@@ -11,7 +11,7 @@ const securityHeaders = [
         // Exposing backend URLs in CSP headers leaks infrastructure topology and circumvents the gateway model.
         value: process.env.NODE_ENV === 'production'
             ? "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self';"
-            : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://localhost:3000 http://localhost:5000;",
+            : "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://localhost:3000 http://localhost:5000 http://localhost:5173;",
     },
     {
         key: 'X-DNS-Prefetch-Control',

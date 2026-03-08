@@ -33,7 +33,7 @@ export function NumericInput({
                 setDisplayValue(value.toString());
             }
         }
-    }, [value]);
+    }, [value, displayValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let val = e.target.value;
@@ -87,7 +87,7 @@ export function NumericInput({
             onChange(0);
         } else {
             // Final sanitization: remove trailing dots or clean up ".5" -> "0.5"
-            let finalStr = parsed.toString();
+            const finalStr = parsed.toString();
             setDisplayValue(finalStr);
             onChange(parsed);
         }

@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller(['system/apps', 'kernel/apps'])
 export class RegistryController {
-  constructor(private readonly registryService: RegistryService) { }
+  constructor(private readonly registryService: RegistryService) {}
 
   @Get()
   @Roles(Role.Owner)

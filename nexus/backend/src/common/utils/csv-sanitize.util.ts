@@ -19,13 +19,13 @@ const FORMULA_PREFIX_CHARS = /^[=+\-@|]/;
  * Sanitize a single CSV cell value to prevent formula injection.
  */
 export function sanitizeCsvCell(value: unknown): string {
-    if (value === null || value === undefined) return '';
-    const str = String(value);
-    if (FORMULA_PREFIX_CHARS.test(str)) {
-        // Prefix with tab to neutralize formula interpretation
-        return `\t${str}`;
-    }
-    return str;
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (FORMULA_PREFIX_CHARS.test(str)) {
+    // Prefix with tab to neutralize formula interpretation
+    return `\t${str}`;
+  }
+  return str;
 }
 
 /**
@@ -33,23 +33,23 @@ export function sanitizeCsvCell(value: unknown): string {
  * All string cell values are sanitized against formula injection.
  */
 export function objectsToSafeCsv(rows: Record<string, unknown>[]): string {
-    if (!rows.length) return '';
+  if (!rows.length) return '';
 
-    const headers = Object.keys(rows[0]);
-    const headerRow = headers.map(sanitizeCsvCell).join(',');
+  const headers = Object.keys(rows[0]);
+  const headerRow = headers.map(sanitizeCsvCell).join(',');
 
-    const dataRows = rows.map((row) =>
-        headers
-            .map((h) => {
-                const val = sanitizeCsvCell(row[h]);
-                // Wrap in quotes if value contains comma, newline, or quote
-                if (val.includes(',') || val.includes('\n') || val.includes('"')) {
-                    return `"${val.replace(/"/g, '""')}"`;
-                }
-                return val;
-            })
-            .join(','),
-    );
+  const dataRows = rows.map((row) =>
+    headers
+      .map((h) => {
+        const val = sanitizeCsvCell(row[h]);
+        // Wrap in quotes if value contains comma, newline, or quote
+        if (val.includes(',') || val.includes('\n') || val.includes('"')) {
+          return `"${val.replace(/"/g, '""')}"`;
+        }
+        return val;
+      })
+      .join(','),
+  );
 
-    return [headerRow, ...dataRows].join('\n');
+  return [headerRow, ...dataRows].join('\n');
 }

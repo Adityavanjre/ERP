@@ -20,9 +20,13 @@ import { Gstr1ExportService } from './services/gstr1-export.service';
 import { OnboardingService } from './services/onboarding.service';
 import { ReportingService } from './services/reporting.service';
 
-
 @Module({
-  imports: [PrismaModule, SystemModule, LedgerModule, forwardRef(() => InventoryModule)],
+  imports: [
+    PrismaModule,
+    SystemModule,
+    LedgerModule,
+    forwardRef(() => InventoryModule),
+  ],
   controllers: [AccountingController, TdsController, BrsController],
   providers: [
     AccountingService,
@@ -55,6 +59,5 @@ import { ReportingService } from './services/reporting.service';
     OnboardingService,
     ReportingService,
   ],
-
 })
-export class AccountingModule { }
+export class AccountingModule {}

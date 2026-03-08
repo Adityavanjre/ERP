@@ -28,7 +28,7 @@ import { Module } from '../common/decorators/module.decorator';
 @UseInterceptors(AuditInterceptor)
 @Controller('manufacturing/machines')
 export class MachineController {
-  constructor(private readonly machineService: MachineService) { }
+  constructor(private readonly machineService: MachineService) {}
 
   @Post()
   @Roles(Role.Owner, Role.Manager)
@@ -52,7 +52,11 @@ export class MachineController {
     @Param('id') id: string,
     @Body('status') status: MachineStatus,
   ) {
-    return this.machineService.updateMachineStatus(req.user.tenantId, id, status);
+    return this.machineService.updateMachineStatus(
+      req.user.tenantId,
+      id,
+      status,
+    );
   }
 
   @Delete(':id')

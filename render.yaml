@@ -92,13 +92,15 @@ services:
     sync: false
   - key: ADMIN_PASSWORD
     sync: false
+  - key: SENTRY_DSN
+    sync: false
   - key: REDIS_HOST
     value: red-d6k747bh46gs73ec5ah0
   - key: REDIS_PORT
     value: "6379"
   region: oregon
   buildCommand: npm install && npm run build:shared && cd backend && npx prisma generate && npm run build
-  startCommand: node backend/dist/backend/src/main.js || node dist/backend/src/main.js
+  startCommand: cd backend && node dist/backend/src/main.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
   rootDir: nexus
@@ -114,9 +116,11 @@ services:
     sync: false
   - key: KLYPSO_BACKEND_URL
     sync: false
+  - key: NEXT_PUBLIC_API_URL
+    sync: false
   region: oregon
   buildCommand: npm install && npm run build:shared && cd frontend && npx next build --webpack
-  startCommand: cd frontend && npx next start -H 0.0.0.0 -p 10000
+  startCommand: cd frontend && npx next start -H 0.0.0.0 -p ${PORT:-10000}
   autoDeployTrigger: "off"
   rootDir: nexus
 - type: web

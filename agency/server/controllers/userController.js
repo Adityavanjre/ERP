@@ -27,12 +27,23 @@ const authUser = async (req, res) => {
 
     if (isMatch) {
         console.log(`[AUDIT] [${eventId}] EVENT: LOGIN_SUCCESS | USER_ID: ${user._id}`);
+
+        const token = generateToken(user._id);
+
+        // Set HttpOnly secure cookie
+        res.cookie('auth_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
         res.json({
             _id: user._id,
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
-            token: generateToken(user._id),
+            // token excluded from body for security
         });
     } else {
         console.log(`[AUDIT] [${eventId}] EVENT: LOGIN_FAILED | REASON: CREDENTIALS_MISMATCH`);
@@ -61,12 +72,20 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+        const token = generateToken(user._id);
+
+        res.cookie('auth_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
             isAdmin: user.isAdmin,
-            token: generateToken(user._id),
         });
     } else {
         res.status(400);
@@ -150,4 +169,15 @@ const updateUserPassword = async (req, res) => {
     }
 };
 
-module.exports = { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUserPassword };
+// @desc    Logout user / clear cookie
+// @route   POST /api/users/logout
+// @access  Private
+const logoutUser = async (req, res) => {
+    res.cookie('auth_token', '', {
+        httpOnly: true,
+        expires: new Date(0)
+    });
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
+module.exports = { authUser, registerUser, getUsers, deleteUser, updateUserRole, updateUserPassword, logoutUser };

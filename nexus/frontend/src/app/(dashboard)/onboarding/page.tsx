@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +26,14 @@ const onboardingSchema = z.object({
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export default function OnboardingPage() {
     const router = useRouter();
     const { user } = useAuth();
@@ -40,7 +48,7 @@ export default function OnboardingPage() {
         resolver: zodResolver(onboardingSchema),
     });
 
-    const onSubmit = async (data: OnboardingFormData) => {
+    const onSubmit = useCallback(async (data: OnboardingFormData) => {
         if (!user?.tenantId) {
             toast.error("Session error", {
                 description: "Could not read your workspace. Please refresh the page.",
@@ -82,14 +90,16 @@ export default function OnboardingPage() {
 
             // Hard reload to flush all React state with the new isOnboarded token
             window.location.href = "/portal/dashboard";
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as ApiError;
             toast.error("Onboarding failed", {
                 description: error.response?.data?.message || "Something went wrong.",
             });
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user, router]);
+
 
     return (
         <div className="flex items-center justify-center min-h-[80vh]">

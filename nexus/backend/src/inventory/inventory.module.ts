@@ -11,9 +11,15 @@ import { HsnService } from './services/hsn.service';
 import { AccountingModule } from '../accounting/accounting.module';
 
 @Module({
-  imports: [PrismaModule, LedgerModule, SystemModule, CommonModule, forwardRef(() => AccountingModule)],
+  imports: [
+    PrismaModule,
+    LedgerModule,
+    SystemModule,
+    CommonModule,
+    forwardRef(() => AccountingModule),
+  ],
   controllers: [InventoryController],
   providers: [InventoryService, WarehouseService, HsnService],
   exports: [InventoryService, HsnService],
 })
-export class InventoryModule { }
+export class InventoryModule {}

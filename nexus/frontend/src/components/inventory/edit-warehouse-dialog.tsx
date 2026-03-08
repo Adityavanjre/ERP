@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,11 +9,26 @@ import { api } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 
+interface MinimalWarehouse {
+    id: string;
+    name: string;
+    location?: string;
+    manager?: string;
+}
+
 interface EditWarehouseDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    warehouse: any;
+    warehouse: MinimalWarehouse | null;
     onSuccess?: () => void;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
 }
 
 export function EditWarehouseDialog({ open, onOpenChange, warehouse, onSuccess }: EditWarehouseDialogProps) {
@@ -34,10 +49,10 @@ export function EditWarehouseDialog({ open, onOpenChange, warehouse, onSuccess }
         }
     }, [warehouse, open]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.name) {
+        if (!formData.name || !warehouse) {
             toast.error("Warehouse name is required");
             return;
         }
@@ -48,12 +63,13 @@ export function EditWarehouseDialog({ open, onOpenChange, warehouse, onSuccess }
             toast.success("Warehouse updated successfully");
             onOpenChange(false);
             onSuccess?.();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to update warehouse");
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            toast.error(err.response?.data?.message || "Failed to update warehouse");
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData, warehouse, onOpenChange, onSuccess]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

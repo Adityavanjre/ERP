@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
@@ -12,8 +13,17 @@ import { toast } from "sonner";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
 const API_V1 = BASE_URL.endsWith('/') ? `${BASE_URL}v1` : `${BASE_URL}/v1`;
 
+interface WakeupError extends Error {
+    isWakeup?: boolean;
+}
+
+interface HttpError extends Error {
+    status?: number;
+    data?: Record<string, unknown>;
+}
+
 async function authFetch(path: string, options: RequestInit = {}) {
-    const token = localStorage.getItem("k_identity") || localStorage.getItem("k_token");
+    const token = typeof window !== 'undefined' ? (localStorage.getItem("k_identity") || localStorage.getItem("k_token")) : null;
     const res = await fetch(`${API_V1}/${path}`, {
         ...options,
         headers: {
@@ -28,14 +38,14 @@ async function authFetch(path: string, options: RequestInit = {}) {
     if (contentType.includes('text/html')) {
         const text = await res.text();
         if (text.includes('Render') || text.includes('Waking up') || text.includes('Application loading')) {
-            const wakeErr: any = new Error('Klypso is starting up. Please wait...');
+            const wakeErr = new Error('Klypso is starting up. Please wait...') as WakeupError;
             wakeErr.isWakeup = true;
             throw wakeErr;
         }
     }
 
     if (!res.ok) {
-        const err: any = new Error(`HTTP ${res.status}`);
+        const err = new Error(`HTTP ${res.status}`) as HttpError;
         err.status = res.status;
         try { err.data = await res.json(); } catch { err.data = {}; }
         throw err;
@@ -55,41 +65,73 @@ export function TenantSelector() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
     const [selecting, setSelecting] = useState<string | null>(null);
+    const [shouldRetry, setShouldRetry] = useState(false);
     const router = useRouter();
+    const isMounted = useRef(true);
 
     useEffect(() => {
-        const fetchTenants = async () => {
-            try {
-                const data: Tenant[] = await authFetch("auth/tenants");
-
-                if (data.length === 0) {
-                    router.push("/onboarding");
-                    return;
-                }
-
-                setTenants(data);
-            } catch (err: any) {
-                const status = err?.status;
-                if (err?.isWakeup) {
-                    toast.error("Klypso is starting up. Please wait a moment and try again.");
-                    console.warn("[TenantSelector] Backend is waking up on Render, retrying in 5s...");
-                    setTimeout(fetchTenants, 5000);
-                } else if (status === 401 || status === 403) {
-                    toast.error("Session expired. Please log in again.");
-                    handleLogout();
-                } else {
-                    toast.error("Could not load workspaces. Please try again.");
-                    console.error("Failed to fetch tenants", err);
-                }
-            } finally {
-                setLoading(false);
-            }
+        return () => {
+            isMounted.current = false;
         };
-
-        fetchTenants();
     }, []);
 
-    const handleSelect = async (tenantId: string) => {
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem("k_token");
+        localStorage.removeItem("k_identity");
+        localStorage.removeItem("k_user");
+        router.push("/login");
+    }, [router]);
+
+    const fetchTenants = useCallback(async () => {
+        try {
+            const data: Tenant[] = await authFetch("auth/tenants");
+
+            if (!isMounted.current) return;
+
+            if (data.length === 0) {
+                router.push("/onboarding");
+                return;
+            }
+
+            setTenants(data);
+            setLoading(false);
+            setShouldRetry(false);
+        } catch (err: unknown) {
+            if (!isMounted.current) return;
+            const error = err as WakeupError & HttpError;
+            const status = error?.status;
+            if (error?.isWakeup) {
+                toast.error("Klypso is starting up. Please wait a moment and try again.");
+                console.warn("[TenantSelector] Backend is waking up on Render, retrying in 5s...");
+                setShouldRetry(true);
+            } else if (status === 401 || status === 403) {
+                toast.error("Session expired. Please log in again.");
+                handleLogout();
+            } else {
+                toast.error("Could not load workspaces. Please try again.");
+                console.error("Failed to fetch tenants", error);
+                setLoading(false);
+            }
+        }
+    }, [router, handleLogout]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchTenants();
+    }, [fetchTenants]);
+
+    useEffect(() => {
+        if (shouldRetry) {
+            const timer = setTimeout(() => {
+                if (isMounted.current) {
+                    fetchTenants();
+                }
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [shouldRetry, fetchTenants]);
+
+    const handleSelect = useCallback(async (tenantId: string) => {
         setSelecting(tenantId);
         try {
             const data = await authFetch("auth/select-tenant", {
@@ -99,18 +141,15 @@ export function TenantSelector() {
             localStorage.setItem("k_token", data.accessToken);
             // Hard reload to reset all React state with the new scoped token
             window.location.href = "/portal/dashboard";
-        } catch (err) {
+        } catch {
             toast.error("Failed to select workspace");
             setSelecting(null);
         }
-    };
+    }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem("k_token");
-        localStorage.removeItem("k_identity");
-        localStorage.removeItem("k_user");
-        router.push("/login");
-    };
+    const navigateToOnboarding = useCallback(() => {
+        router.push("/onboarding");
+    }, [router]);
 
     if (loading) {
         return (
@@ -179,7 +218,7 @@ export function TenantSelector() {
                             ))}
 
                             <button
-                                onClick={() => router.push("/onboarding")}
+                                onClick={navigateToOnboarding}
                                 className="w-full flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/30 transition-all font-bold uppercase text-[10px] tracking-widest"
                             >
                                 <Plus size={16} /> Create New Workspace

@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send, Link as LinkIcon, Eye, Save } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ImageUploader from '../../components/Admin/ImageUploader';
@@ -61,14 +60,7 @@ const AddBlog = () => {
         setError(null);
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user?.token}`,
-                },
-            };
-
-            await axios.post(`${API_URL}/api/blogs`, {
+            await api.post('/blogs', {
                 title,
                 slug,
                 status,
@@ -79,7 +71,7 @@ const AddBlog = () => {
                 author,
                 readTime,
                 tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '')
-            }, config);
+            });
 
             navigate('/admin/blogs');
         } catch (err: any) {

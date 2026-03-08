@@ -19,7 +19,7 @@ export class RegistryService implements OnModuleInit {
   private readonly logger = new Logger(RegistryService.name);
   private readonly appsPath = path.join(process.cwd(), 'src', 'apps');
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async onModuleInit() {
     this.logger.log('Klypso Kernel: Initializing App Registry...');
@@ -52,7 +52,9 @@ export class RegistryService implements OnModuleInit {
           const manifest: AppManifest = JSON.parse(content);
           await this.upsertModule(manifest);
         } catch (err) {
-          this.logger.error(`Failed to parse manifest for app [${folder}]: ${err.message}`);
+          this.logger.error(
+            `Failed to parse manifest for app [${folder}]: ${err.message}`,
+          );
         }
       }
     }

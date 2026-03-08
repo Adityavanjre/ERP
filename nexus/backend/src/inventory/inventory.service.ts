@@ -14,14 +14,19 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { Industry } from '@nexus/shared';
 
 import { BillingService } from '../system/services/billing.service';
-import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
+import {
+  AccountSelectors,
+  StandardAccounts,
+} from '../accounting/constants/account-names';
 import { HsnService } from './services/hsn.service';
 
 // DI-002: Typed sentinel for dry-run transaction rollback.
 // Using a named class (not a generic Error) prevents accidentally swallowing
 // unrelated errors that happen to share the same message string.
 class DryRunRollbackSignal extends Error {
-  constructor() { super('DRY_RUN_ROLLBACK'); }
+  constructor() {
+    super('DRY_RUN_ROLLBACK');
+  }
 }
 
 @Injectable()
@@ -32,20 +37,34 @@ export class InventoryService {
     private billing: BillingService,
     private hsn: HsnService,
     private readonly traceService: TraceService,
-  ) { }
+  ) {}
 
-  async createProduct(tenantId: string, data: any & { correlationId?: string }, userId?: string) {
+  async createProduct(
+    tenantId: string,
+    data: any & { correlationId?: string },
+    userId?: string,
+  ) {
     // --- INDUSTRY INVARIANT: NBFC BLOCK ---
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     const industry = tenant?.industry || tenant?.type;
 
     if (industry === Industry.NBFC) {
-      throw new ForbiddenException('Vertical Compliance Violation: NBFC tenants are legally restricted from creating physical inventory items. Please use the NBFC Loan Management module for loan products.');
+      throw new ForbiddenException(
+        'Vertical Compliance Violation: NBFC tenants are legally restricted from creating physical inventory items. Please use the NBFC Loan Management module for loan products.',
+      );
     }
 
     // --- INDUSTRY INVARIANT: HEALTHCARE SAFETY ---
-    if (industry === Industry.Healthcare && !data.expiryDate && !data.isNonExpiring) {
-      throw new BadRequestException('Compliance Requirement: Healthcare vertical requires an Expiry Date (or isNonExpiring flag) for all medical/pharmacy items to ensure patient safety.');
+    if (
+      industry === Industry.Healthcare &&
+      !data.expiryDate &&
+      !data.isNonExpiring
+    ) {
+      throw new BadRequestException(
+        'Compliance Requirement: Healthcare vertical requires an Expiry Date (or isNonExpiring flag) for all medical/pharmacy items to ensure patient safety.',
+      );
     }
 
     const { stock, warehouseId, ...productData } = data;
@@ -60,8 +79,8 @@ export class InventoryService {
       if (!isValid && !productData.isGstOverride) {
         throw new BadRequestException(
           `Compliance Error: GST Rate mismatch for HSN ${productData.hsnCode}. ` +
-          `Official Rate: ${officialRate}%, Provided: ${productData.gstRate}%. ` +
-          `Set 'isGstOverride' to true if this is an intentional audit-logged override.`,
+            `Official Rate: ${officialRate}%, Provided: ${productData.gstRate}%. ` +
+            `Set 'isGstOverride' to true if this is an intentional audit-logged override.`,
         );
       }
     }
@@ -69,10 +88,12 @@ export class InventoryService {
     // Forensic SKU Uniqueness Guard
     if (productData.sku) {
       const existing = await this.prisma.product.findFirst({
-        where: { tenantId, sku: productData.sku }
+        where: { tenantId, sku: productData.sku },
       });
       if (existing) {
-        throw new Error(`Integrity Violation: SKU '${productData.sku}' already exists${existing.isDeleted ? ' (in archive)' : ''}. Please resolve collision before creation.`);
+        throw new Error(
+          `Integrity Violation: SKU '${productData.sku}' already exists${existing.isDeleted ? ' (in archive)' : ''}. Please resolve collision before creation.`,
+        );
       }
     }
 
@@ -83,7 +104,8 @@ export class InventoryService {
       const product = await tx.product.create({
         data: {
           ...productData,
-          correlationId: data.correlationId || this.traceService.getCorrelationId(),
+          correlationId:
+            data.correlationId || this.traceService.getCorrelationId(),
           stock: 0, // Initial stock is handled via movement logic
           tenantId,
         },
@@ -91,11 +113,13 @@ export class InventoryService {
 
       if (stock && stock > 0) {
         if (!warehouseId) {
-          throw new BadRequestException('Warehouse ID is required for initial stock.');
+          throw new BadRequestException(
+            'Warehouse ID is required for initial stock.',
+          );
         }
 
         // Log movement through WarehouseService (which now has tracing too)
-        // Note: WarehouseService is not directly available here to avoid circularity if possible, 
+        // Note: WarehouseService is not directly available here to avoid circularity if possible,
         // but it's usually better to just use prisma/tx here.
 
         await tx.stockMovement.create({
@@ -107,7 +131,8 @@ export class InventoryService {
             type: 'IN',
             reference: 'INITIAL-STOCK',
             notes: 'Initial stock on product creation',
-            correlationId: data.correlationId || this.traceService.getCorrelationId(),
+            correlationId:
+              data.correlationId || this.traceService.getCorrelationId(),
           },
         });
 
@@ -139,24 +164,41 @@ export class InventoryService {
 
         // 4. Ledger Sync for Initial Stock
         const invAccount = await tx.account.findFirst({
-          where: { tenantId, name: { in: AccountSelectors.INVENTORY } }
+          where: { tenantId, name: { in: AccountSelectors.INVENTORY } },
         });
         const equityAccount = await tx.account.findFirst({
-          where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY }
+          where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
         });
 
         if (invAccount && equityAccount) {
-          const movementValue = new Decimal(product.costPrice as any || 0).mul(new Decimal(stock));
-          await this.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Initial Stock: ${product.name}`,
-            reference: `OB-${product.sku}`,
-            correlationId: data.correlationId || this.traceService.getCorrelationId(),
-            transactions: [
-              { accountId: invAccount.id, type: 'Debit', amount: movementValue.toNumber(), description: 'Opening Stock Entry' },
-              { accountId: equityAccount.id, type: 'Credit', amount: movementValue.toNumber(), description: 'Opening Stock Entry' }
-            ]
-          }, tx);
+          const movementValue = new Decimal(product.costPrice || 0).mul(
+            new Decimal(stock),
+          );
+          await this.ledger.createJournalEntry(
+            tenantId,
+            {
+              date: new Date().toISOString(),
+              description: `Initial Stock: ${product.name}`,
+              reference: `OB-${product.sku}`,
+              correlationId:
+                data.correlationId || this.traceService.getCorrelationId(),
+              transactions: [
+                {
+                  accountId: invAccount.id,
+                  type: 'Debit',
+                  amount: movementValue.toNumber(),
+                  description: 'Opening Stock Entry',
+                },
+                {
+                  accountId: equityAccount.id,
+                  type: 'Credit',
+                  amount: movementValue.toNumber(),
+                  description: 'Opening Stock Entry',
+                },
+              ],
+            },
+            tx,
+          );
         }
       }
 
@@ -198,9 +240,9 @@ export class InventoryService {
       where: { id, tenantId },
       include: {
         stockLocations: {
-          include: { warehouse: true }
-        }
-      }
+          include: { warehouse: true },
+        },
+      },
     });
   }
 
@@ -212,24 +254,30 @@ export class InventoryService {
         OR: [
           { sku: code },
           { barcode: code },
-          { name: { contains: code, mode: 'insensitive' } }
-        ]
+          { name: { contains: code, mode: 'insensitive' } },
+        ],
       },
       include: {
         stockLocations: {
-          include: { warehouse: true }
-        }
-      }
+          include: { warehouse: true },
+        },
+      },
     });
   }
 
-  async updateProduct(tenantId: string, id: string, data: any, userId?: string) {
+  async updateProduct(
+    tenantId: string,
+    id: string,
+    data: any,
+    userId?: string,
+  ) {
     return this.prisma.product.update({
       where: { id, tenantId } as any,
       data: {
         ...data,
-        correlationId: data.correlationId || this.traceService.getCorrelationId(),
-      }
+        correlationId:
+          data.correlationId || this.traceService.getCorrelationId(),
+      },
     });
   }
 
@@ -239,7 +287,7 @@ export class InventoryService {
     if (new Decimal(newStock).lt(0)) {
       throw new BadRequestException(
         `Integrity Error: Stock for "${productName}" cannot go below zero. ` +
-        `Current Transaction Attempted Value: ${newStock}`
+          `Current Transaction Attempted Value: ${newStock}`,
       );
     }
   }
@@ -254,12 +302,18 @@ export class InventoryService {
     warehouseId: string,
     quantity: number | Decimal,
     notes: string = '',
-    options: { tenantId?: string; reference?: string; correlationId?: string } = {},
+    options: {
+      tenantId?: string;
+      reference?: string;
+      correlationId?: string;
+    } = {},
   ) {
     const amount = new Decimal(quantity);
 
     const product = await tx.product.findUnique({
-      where: options.tenantId ? { id: productId, tenantId: options.tenantId } : { id: productId }
+      where: options.tenantId
+        ? { id: productId, tenantId: options.tenantId }
+        : { id: productId },
     });
     const productName = product?.name || productId;
 
@@ -269,20 +323,25 @@ export class InventoryService {
         warehouseId,
         notes,
         quantity: { gte: amount }, // THE GUARD
-        ...(options.tenantId ? { tenantId: options.tenantId } : {})
+        ...(options.tenantId ? { tenantId: options.tenantId } : {}),
       },
       data: {
-        quantity: { decrement: amount }
-      }
+        quantity: { decrement: amount },
+      },
     });
 
     if (result.count === 0) {
       const currentLoc = await tx.stockLocation.findFirst({
-        where: { productId, warehouseId, notes, ...(options.tenantId ? { tenantId: options.tenantId } : {}) }
+        where: {
+          productId,
+          warehouseId,
+          notes,
+          ...(options.tenantId ? { tenantId: options.tenantId } : {}),
+        },
       });
       throw new BadRequestException(
         `Insufficient stock for "${productName}" at specified location. ` +
-        `Requested: ${amount}, Available: ${currentLoc?.quantity || 0}`
+          `Requested: ${amount}, Available: ${currentLoc?.quantity || 0}`,
       );
     }
 
@@ -291,15 +350,17 @@ export class InventoryService {
       where: {
         id: productId,
         stock: { gte: amount },
-        ...(options.tenantId ? { tenantId: options.tenantId } : {})
+        ...(options.tenantId ? { tenantId: options.tenantId } : {}),
       },
       data: {
-        stock: { decrement: amount }
-      }
+        stock: { decrement: amount },
+      },
     });
 
     if (productResult.count === 0) {
-      throw new BadRequestException(`Global stock sync failed for "${productName}". Possible concurrent state mismatch.`);
+      throw new BadRequestException(
+        `Global stock sync failed for "${productName}". Possible concurrent state mismatch.`,
+      );
     }
 
     // AUDIT-011: Inject StockMovement creation atomically so every deduction is traceable
@@ -328,13 +389,21 @@ export class InventoryService {
     });
   }
 
-  async importProducts(tenantId: string, csvContent: string, options: { dryRun?: boolean; correlationId?: string } = {}) {
+  async importProducts(
+    tenantId: string,
+    csvContent: string,
+    options: { dryRun?: boolean; correlationId?: string } = {},
+  ) {
     const isDryRun = options.dryRun === true;
     let dryRunResults: any = null;
 
-    const lines = csvContent.split(/\r?\n/).filter(line => line.trim().length > 0);
+    const lines = csvContent
+      .split(/\r?\n/)
+      .filter((line) => line.trim().length > 0);
     if (lines.length > 501) {
-      throw new BadRequestException('SME Stress Guard: Bulk import limited to 500 rows per batch to ensure transactional integrity.');
+      throw new BadRequestException(
+        'SME Stress Guard: Bulk import limited to 500 rows per batch to ensure transactional integrity.',
+      );
     }
 
     try {
@@ -348,17 +417,22 @@ export class InventoryService {
           errors: [] as { row: number; item?: string; message: string }[],
           imported: 0,
           failed: 0,
-          preview: [] as any[]
+          preview: [] as any[],
         };
 
         const wh = await tx.warehouse.findFirst({ where: { tenantId } });
-        if (!wh) throw new BadRequestException("Import Failed: No warehouse found. Create at least one warehouse first.");
+        if (!wh)
+          throw new BadRequestException(
+            'Import Failed: No warehouse found. Create at least one warehouse first.',
+          );
 
         // --- INDUSTRY INVARIANT: NBFC BLOCK ---
         const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
         const industry = tenant?.industry || tenant?.type;
         if (industry === Industry.NBFC) {
-          throw new ForbiddenException('Migration Blocked: NBFC tenants cannot import physical inventory. Integrity Drift detected.');
+          throw new ForbiddenException(
+            'Migration Blocked: NBFC tenants cannot import physical inventory. Integrity Drift detected.',
+          );
         }
 
         let totalOpeningValue = new Decimal(0);
@@ -372,9 +446,12 @@ export class InventoryService {
           });
 
           const sku = data.sku || data.code;
-          if (!sku) throw new BadRequestException(`Line ${i + 1}: Missing SKU or Code`);
+          if (!sku)
+            throw new BadRequestException(`Line ${i + 1}: Missing SKU or Code`);
 
-          let product = await tx.product.findFirst({ where: { tenantId, sku } });
+          let product = await tx.product.findFirst({
+            where: { tenantId, sku },
+          });
           const existing = !!product;
 
           const productPayload = {
@@ -389,18 +466,19 @@ export class InventoryService {
             gstRate: Number(data.gstrate || data.tax) || 18,
             hsnCode: data.hsncode || data.hsn,
             uom: data.uom || 'Unit',
-            correlationId: options.correlationId || this.traceService.getCorrelationId(),
+            correlationId:
+              options.correlationId || this.traceService.getCorrelationId(),
           };
 
           if (existing) {
             product = await tx.product.update({
               where: { id: product.id },
-              data: productPayload
+              data: productPayload,
             });
             results.updated++;
           } else {
             product = await tx.product.create({
-              data: { ...productPayload, tenantId }
+              data: { ...productPayload, tenantId },
             });
             results.created++;
           }
@@ -408,7 +486,7 @@ export class InventoryService {
           // Handle initial stock in import
           const importStock = Number(data.stock || data.openingstock) || 0;
           if (importStock > 0) {
-            await (tx as any).stockMovement.create({
+            await tx.stockMovement.create({
               data: {
                 tenantId,
                 productId: product.id,
@@ -417,38 +495,41 @@ export class InventoryService {
                 type: 'IN',
                 reference: 'IMPORT-OB',
                 notes: 'Bulk import opening balance',
-                correlationId: options.correlationId || this.traceService.getCorrelationId(),
-              }
+                correlationId:
+                  options.correlationId || this.traceService.getCorrelationId(),
+              },
             });
 
-            await (tx as any).stockLocation.upsert({
+            await tx.stockLocation.upsert({
               where: {
                 tenantId_productId_warehouseId_notes: {
                   tenantId,
                   productId: product.id,
                   warehouseId: wh.id,
-                  notes: ''
-                }
+                  notes: '',
+                },
               },
               create: {
                 tenantId,
                 productId: product.id,
                 warehouseId: wh.id,
                 quantity: importStock,
-                notes: ''
+                notes: '',
               },
               update: {
-                quantity: { increment: importStock }
-              }
+                quantity: { increment: importStock },
+              },
             });
 
             await tx.product.update({
               where: { id: product.id },
-              data: { stock: { increment: importStock } }
+              data: { stock: { increment: importStock } },
             });
 
             const cost = Number(product.costPrice) || 0;
-            totalOpeningValue = totalOpeningValue.add(new Decimal(cost).mul(importStock));
+            totalOpeningValue = totalOpeningValue.add(
+              new Decimal(cost).mul(importStock),
+            );
           }
 
           results.imported++;
@@ -457,26 +538,44 @@ export class InventoryService {
             name: product.name,
             sku: product.sku,
             gstRate: product.gstRate,
-            stock: importStock
+            stock: importStock,
           });
-
         }
 
         if (totalOpeningValue.gt(0)) {
-          const invAccount = await tx.account.findFirst({ where: { tenantId, name: { in: AccountSelectors.INVENTORY } } });
-          const equityAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+          const invAccount = await tx.account.findFirst({
+            where: { tenantId, name: { in: AccountSelectors.INVENTORY } },
+          });
+          const equityAccount = await tx.account.findFirst({
+            where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+          });
 
           if (invAccount && equityAccount) {
-            await this.ledger.createJournalEntry(tenantId, {
-              date: new Date().toISOString(),
-              description: `Bulk Opening Stock Sync (${results.created + results.updated} items)`,
-              reference: `IMPORT-OB-${Date.now()}`,
-              correlationId: options.correlationId || this.traceService.getCorrelationId(),
-              transactions: [
-                { accountId: invAccount.id, type: 'Debit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' },
-                { accountId: equityAccount.id, type: 'Credit', amount: totalOpeningValue.toNumber(), description: 'Bulk Opening Stock Entry' }
-              ]
-            }, tx);
+            await this.ledger.createJournalEntry(
+              tenantId,
+              {
+                date: new Date().toISOString(),
+                description: `Bulk Opening Stock Sync (${results.created + results.updated} items)`,
+                reference: `IMPORT-OB-${Date.now()}`,
+                correlationId:
+                  options.correlationId || this.traceService.getCorrelationId(),
+                transactions: [
+                  {
+                    accountId: invAccount.id,
+                    type: 'Debit',
+                    amount: totalOpeningValue.toNumber(),
+                    description: 'Bulk Opening Stock Entry',
+                  },
+                  {
+                    accountId: equityAccount.id,
+                    type: 'Credit',
+                    amount: totalOpeningValue.toNumber(),
+                    description: 'Bulk Opening Stock Entry',
+                  },
+                ],
+              },
+              tx,
+            );
           }
         }
 
@@ -507,46 +606,55 @@ export class InventoryService {
       this.prisma.product.count({ where: { tenantId, isDeleted: false } }),
       this.prisma.product.aggregate({
         where: { tenantId, isDeleted: false },
-        _sum: { stock: true }
+        _sum: { stock: true },
       }),
       this.prisma.product.count({
         where: {
           tenantId,
           isDeleted: false,
-          stock: { lt: 10 }
-        }
-      })
+          stock: { lt: 10 },
+        },
+      }),
     ]);
 
     return {
       totalProducts,
       totalStock: totalStock._sum.stock || 0,
-      lowStockCount: lowStock
+      lowStockCount: lowStock,
     };
   }
 
   // --- Retail Depth: Multi-Store Pricing ---
-  async updateLocationPrice(tenantId: string, productId: string, warehouseId: string, price: number) {
+  async updateLocationPrice(
+    tenantId: string,
+    productId: string,
+    warehouseId: string,
+    price: number,
+  ) {
     return (this.prisma as any).warehousePrice.upsert({
       where: {
-        tenantId_productId_warehouseId: { tenantId, productId, warehouseId }
+        tenantId_productId_warehouseId: { tenantId, productId, warehouseId },
       },
       update: { price },
-      create: { tenantId, productId, warehouseId, price }
+      create: { tenantId, productId, warehouseId, price },
     });
   }
 
-  async getLocationPrice(tenantId: string, productId: string, warehouseId: string) {
+  async getLocationPrice(
+    tenantId: string,
+    productId: string,
+    warehouseId: string,
+  ) {
     const locPrice = await (this.prisma as any).warehousePrice.findUnique({
       where: {
-        tenantId_productId_warehouseId: { tenantId, productId, warehouseId }
-      }
+        tenantId_productId_warehouseId: { tenantId, productId, warehouseId },
+      },
     });
 
     if (locPrice) return locPrice.price;
 
     const product = await this.prisma.product.findUnique({
-      where: { id: productId, tenantId }
+      where: { id: productId, tenantId },
     });
     return product?.price || 0;
   }
@@ -560,38 +668,41 @@ export class InventoryService {
       where: {
         tenantId,
         isDeleted: false,
-        shelfLifeDays: { not: null }
-      }
+        shelfLifeDays: { not: null },
+      },
     });
 
     const products = await (this.prisma.product as any).findMany({
       where: {
         tenantId,
         isDeleted: false,
-        shelfLifeDays: { not: null }
+        shelfLifeDays: { not: null },
       },
       include: {
         stockLocations: {
-          where: { quantity: { gt: 0 } }
-        }
+          where: { quantity: { gt: 0 } },
+        },
       },
       skip,
       take: limit,
-      orderBy: { shelfLifeDays: 'asc' }
+      orderBy: { shelfLifeDays: 'asc' },
     });
 
     const suggestions = [];
 
     for (const product of products) {
-      const shelfLifeDays = (product as any).shelfLifeDays;
+      const shelfLifeDays = product.shelfLifeDays;
       if (!shelfLifeDays) continue;
 
-      for (const loc of (product as any).stockLocations) {
-        const ageInDays = Math.floor((Date.now() - new Date(loc.updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+      for (const loc of product.stockLocations) {
+        const ageInDays = Math.floor(
+          (Date.now() - new Date(loc.updatedAt).getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
 
         // 100x Logic: Dynamic Aging Calculus
         if (ageInDays > shelfLifeDays) {
-          const discount = ageInDays > (shelfLifeDays * 1.5) ? 0.30 : 0.15; // 30% or 15% markdown
+          const discount = ageInDays > shelfLifeDays * 1.5 ? 0.3 : 0.15; // 30% or 15% markdown
           const suggestedPrice = new Decimal(product.price).mul(1 - discount);
 
           suggestions.push({
@@ -602,7 +713,7 @@ export class InventoryService {
             threshold: shelfLifeDays,
             suggestedDiscount: `${discount * 100}%`,
             suggestedPrice: suggestedPrice.toFixed(2),
-            reason: `Stock is ${ageInDays} days old (Threshold: ${shelfLifeDays}). Aging markdown recommended.`
+            reason: `Stock is ${ageInDays} days old (Threshold: ${shelfLifeDays}). Aging markdown recommended.`,
           });
         }
       }
@@ -614,8 +725,8 @@ export class InventoryService {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 }

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import {
     Table,
@@ -11,46 +11,49 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter, MoreHorizontal, Database, ArrowRightLeft } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 
 interface DynamicViewProps {
     modelName: string;
     appName: string;
 }
 
-export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
-    const [records, setRecords] = useState<any[]>([]);
-    const [model, setModel] = useState<any>(null);
+interface SystemRecord {
+    id: string;
+    name?: string;
+    label?: string;
+    [key: string]: unknown;
+}
+
+export const DynamicView = ({ modelName }: DynamicViewProps) => {
+    const [records, setRecords] = useState<SystemRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const syncNodeData = async (showLoading = false) => {
+    const syncNodeData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const [recordsRes, appsRes] = await Promise.all([
-                api.get(`/system/studio/records/${modelName}`),
-                api.get(`/system/apps`)
-            ]);
-
-            setRecords(recordsRes.data.data || recordsRes.data || []);
-
-            // Find model definition
-            const currentApp = appsRes.data.find((a: any) => a.name === appName);
+            const recordsRes = await api.get(`/system/studio/records/${modelName}`);
+            const data = recordsRes.data.data || recordsRes.data || [];
+            setRecords(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Node Data Sync Failure:", err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [modelName]);
 
     useEffect(() => {
         syncNodeData(true);
         const interval = setInterval(() => syncNodeData(false), 30000);
         return () => clearInterval(interval);
-    }, [modelName]);
+    }, [syncNodeData]);
+
+    const formattedModelName = modelName
+        .split('.')
+        .map((s: string) => s.charAt(0).toUpperCase() + s.slice(1))
+        .join(' ');
 
     return (
         <div className="space-y-8">
@@ -58,7 +61,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-white flex items-center">
                         <Database className="mr-3 h-8 w-8 text-indigo-400" />
-                        {modelName.split('.').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}
+                        {formattedModelName}
                     </h2>
                     <p className="text-zinc-500 mt-1">View and manage {modelName} records directly.</p>
                 </div>
@@ -112,7 +115,7 @@ export const DynamicView = ({ modelName, appName }: DynamicViewProps) => {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {records.length === 0 && (
+                            {records.length === 0 && !loading && (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center py-32 text-zinc-600 italic">
                                         No records found.

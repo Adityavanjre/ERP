@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,14 @@ interface CreateWarehouseDialogProps {
     onSuccess?: () => void;
 }
 
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function CreateWarehouseDialog({ open, onOpenChange, onSuccess }: CreateWarehouseDialogProps) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -23,7 +31,7 @@ export function CreateWarehouseDialog({ open, onOpenChange, onSuccess }: CreateW
         manager: ""
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.name) {
@@ -38,12 +46,13 @@ export function CreateWarehouseDialog({ open, onOpenChange, onSuccess }: CreateW
             setFormData({ name: "", location: "", manager: "" });
             onOpenChange(false);
             onSuccess?.();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to create warehouse");
+        } catch (error: unknown) {
+            const err = error as ApiError;
+            toast.error(err.response?.data?.message || "Failed to create warehouse");
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData, onOpenChange, onSuccess]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

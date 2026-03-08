@@ -10,4 +10,4 @@ import { SystemModule } from '../system/system.module';
   controllers: [PurchasesController],
   providers: [PurchasesService],
 })
-export class PurchasesModule { }
+export class PurchasesModule {}

@@ -9,18 +9,20 @@ export class ClusterService {
   private static readonly logger = new Logger('ClusterService');
 
   static clusterize(callback: Function): void {
-    const isPrimary = (cluster as any).isPrimary || (cluster as any).isMaster;
+    const isPrimary = cluster.isPrimary || cluster.isMaster;
     if (isPrimary) {
       const numCPUs = os.cpus().length;
-      this.logger.log(`MASTER: High-Scale Engine starting. Spawning ${numCPUs} workers...`);
+      this.logger.log(
+        `MASTER: High-Scale Engine starting. Spawning ${numCPUs} workers...`,
+      );
 
       for (let i = 0; i < numCPUs; i++) {
-        (cluster as any).fork();
+        cluster.fork();
       }
 
-      (cluster as any).on('exit', (worker: any, code: any, signal: any) => {
+      cluster.on('exit', (worker: any, code: any, signal: any) => {
         this.logger.warn(`WORKER: ${worker.process.pid} died. Reviving...`);
-        (cluster as any).fork();
+        cluster.fork();
       });
     } else {
       callback();

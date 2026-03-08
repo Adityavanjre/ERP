@@ -140,4 +140,3 @@ export class MfaSetupDto {
   @MaxLength(6)
   totpCode: string;
 }
-

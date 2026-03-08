@@ -23,7 +23,7 @@ export class HealthController {
     private memory: MemoryHealthIndicator,
     private disk: DiskHealthIndicator,
     private saas: SaasAnalyticsService,
-  ) { }
+  ) {}
 
   @Get('readiness')
   @Public() // DevOps probe
@@ -64,7 +64,8 @@ export class HealthController {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
       // Check if we have at least some free disk space (Windows safe path logic)
-      () => this.disk.checkStorage('disk', { path: 'C:', thresholdPercent: 0.99 }),
+      () =>
+        this.disk.checkStorage('disk', { path: 'C:', thresholdPercent: 0.99 }),
     ]);
   }
 }

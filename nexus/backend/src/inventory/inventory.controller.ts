@@ -29,7 +29,7 @@ import {
   PostOpeningBalanceDto,
   TransferStockDto,
   CreateProductDto,
-  UpdateProductDto
+  UpdateProductDto,
 } from './dto/inventory.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
@@ -39,10 +39,17 @@ export class InventoryController {
   constructor(
     private readonly inventoryService: InventoryService,
     private readonly warehouseService: WarehouseService,
-  ) { }
+  ) {}
 
   @Get('warehouses')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getWarehouses(@TenantId() tenantId: string) {
     return this.warehouseService.getWarehouses(tenantId);
@@ -51,7 +58,10 @@ export class InventoryController {
   @Post('warehouses')
   @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
-  createWarehouse(@TenantId() tenantId: string, @Body() data: CreateWarehouseDto) {
+  createWarehouse(
+    @TenantId() tenantId: string,
+    @Body() data: CreateWarehouseDto,
+  ) {
     return this.warehouseService.createWarehouse(tenantId, data);
   }
 
@@ -79,7 +89,7 @@ export class InventoryController {
   postOpeningBalance(
     @TenantId() tenantId: string,
     @Param('id') id: string,
-    @Body() data: PostOpeningBalanceDto
+    @Body() data: PostOpeningBalanceDto,
   ) {
     return this.warehouseService.logOpeningBalance(tenantId, {
       ...data,
@@ -118,12 +128,19 @@ export class InventoryController {
     return this.inventoryService.importProducts(
       req.user.tenantId,
       typeof csvContent === 'string' ? csvContent : '',
-      { dryRun: dryRun === 'true', correlationId: req['correlationId'] }
+      { dryRun: dryRun === 'true', correlationId: req['correlationId'] },
     );
   }
 
   @Get('products')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   @MobileAction('VIEW_PRODUCTS')
   findAll(
@@ -141,14 +158,28 @@ export class InventoryController {
   }
 
   @Get('products/find-by-code')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findByCode(@Req() req: any, @Query('code') code: string) {
     return this.inventoryService.findProductByCode(req.user.tenantId, code);
   }
 
   @Get('products/:id')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findOne(@Req() req: any, @Param('id') id: string) {
     return this.inventoryService.getProduct(req.user.tenantId, id);

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,8 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-import { useRef } from "react";
-import { Loader2, Plus, Trash2, Calendar, User, ShoppingCart, MessageCircle } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useUX } from "@/components/providers/ux-provider";
 
 interface CreateInvoiceDialogProps {
@@ -19,26 +19,125 @@ interface CreateInvoiceDialogProps {
     onSuccess: () => void;
 }
 
+interface Customer {
+    id: string;
+    firstName: string;
+    lastName: string;
+    company: string;
+    email: string;
+}
+
+interface Product {
+    id: string;
+    name: string;
+    sku: string;
+    price: string | number;
+    gstRate?: number;
+    hsnCode?: string;
+    category?: string;
+}
+
+interface InvoiceItem {
+    productId: string;
+    quantity: number;
+    price: number;
+    gstRate: number;
+    hsnCode: string;
+    total: number;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoiceDialogProps) {
-    const [customers, setCustomers] = useState<any[]>([]);
-    const [products, setProducts] = useState<any[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(false);
-    const { setUILocked } = useUX();
+    const { setUILocked, showConfirm } = useUX();
 
     // Form State
     const [customerId, setCustomerId] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
-    const [items, setItems] = useState<any[]>([]);
+    const [items, setItems] = useState<InvoiceItem[]>([]);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [productFilter, setProductFilter] = useState("");
     const searchRef = useRef<HTMLInputElement>(null);
 
+    const handleAddItem = useCallback(() => {
+        setItems(prev => [...prev, { productId: "", quantity: 1, price: 0, gstRate: 0, hsnCode: "", total: 0 }]);
+    }, []);
+
+    const executeSubmit = useCallback(async () => {
+        setLoading(true);
+        setUILocked(true);
+        try {
+            await api.post("accounting/invoices", {
+                customerId,
+                issueDate: invoiceDate,
+                dueDate: dueDate || invoiceDate,
+                items: items.map(i => ({
+                    productId: i.productId,
+                    quantity: Number(i.quantity),
+                    price: Number(i.price)
+                }))
+            });
+
+            toast.success("Invoice issued successfully");
+            localStorage.removeItem("invoice_draft");
+            setItems([{ productId: "", quantity: 1, price: 0, gstRate: 0, hsnCode: "", total: 0 }]);
+            setCustomerId("");
+            onSuccess();
+            onClose();
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to issue invoice");
+        } finally {
+            setLoading(false);
+            setUILocked(false);
+        }
+    }, [customerId, invoiceDate, dueDate, items, onSuccess, onClose, setUILocked]);
+
+    const handleSubmit = useCallback(() => {
+        if (loading) return;
+
+        if (!customerId || !customerId.trim()) {
+            toast.error("Please select a valid customer");
+            return;
+        }
+        if (items.some(i => !i.productId)) {
+            toast.error("Please select products for all lines");
+            return;
+        }
+
+        const customerName = customers.find(c => c.id === customerId)?.company || "Selected Customer";
+
+        const subtotalValue = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const totalTaxValue = items.reduce((sum, item) => sum + ((item.price * item.quantity) * (item.gstRate / 100)), 0);
+        const grandTotalValue = subtotalValue + totalTaxValue;
+
+        showConfirm({
+            title: "Confirm Tax Invoice Posting",
+            description: `You are about to post a compliant tax invoice for ₹${grandTotalValue.toLocaleString('en-IN')} to ${customerName}. This action will affect your accounting ledgers and cannot be deleted once saved (only cancelled).`,
+            confirmText: "Issue & Post",
+            cancelText: "Review",
+            onConfirm: async () => {
+                await executeSubmit();
+            }
+        });
+    }, [loading, customerId, items, customers, showConfirm, executeSubmit]);
+
     useEffect(() => {
+        if (!isOpen) return;
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (!isOpen) return;
-            if (e.key === "Escape" && isOpen && !loading) {
+            if (e.key === "Escape" && !loading) {
                 onClose();
+                return;
             }
             if (e.altKey && e.key === "n") {
                 e.preventDefault();
@@ -51,11 +150,12 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, items, customerId]);
+    }, [isOpen, loading, onClose, handleAddItem, handleSubmit]);
 
     useEffect(() => {
         if (isOpen) {
-            setTimeout(() => searchRef.current?.focus(), 150);
+            const timer = setTimeout(() => searchRef.current?.focus(), 150);
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
@@ -70,7 +170,7 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
                     setInvoiceDate(parsed.invoiceDate || new Date().toISOString().split('T')[0]);
                     setDueDate(parsed.dueDate || "");
                     setItems(parsed.items || [{ productId: "", quantity: 1, price: 0, gstRate: 0, hsnCode: "", total: 0 }]);
-                } catch (e) {
+                } catch {
                     setItems([{ productId: "", quantity: 1, price: 0, gstRate: 0, hsnCode: "", total: 0 }]);
                 }
             } else {
@@ -86,129 +186,78 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
         }
     }, [customerId, invoiceDate, dueDate, items, isOpen, isInitialLoad]);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchData();
-        }
-    }, [isOpen]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [custRes, prodRes] = await Promise.all([
                 api.get("crm/customers"),
                 api.get("inventory/products")
             ]);
 
-            // Normalize: API may return paginated { data: [] } or plain array
             const rawCustomers = custRes.data?.data ?? custRes.data;
             const rawProducts = prodRes.data?.data ?? prodRes.data;
             setCustomers(Array.isArray(rawCustomers) ? rawCustomers : []);
             setProducts(Array.isArray(rawProducts) ? rawProducts : []);
-        } catch (err) {
+        } catch {
             toast.error("Failed to load resources");
-            // Ensure state is always an array so .filter() never crashes
             setCustomers([]);
             setProducts([]);
         }
-    };
+    }, []);
 
-    const handleAddItem = () => {
-        setItems([...items, { productId: "", quantity: 1, price: 0, gstRate: 0, hsnCode: "", total: 0 }]);
-    };
-
-    const handleRemoveItem = (index: number) => {
-        const newItems = [...items];
-        newItems.splice(index, 1);
-        setItems(newItems);
-    };
-
-    const handleProductChange = (index: number, productId: string) => {
-        const product = products.find(p => p.id === productId);
-        if (!product) return;
-
-        const newItems = [...items];
-        newItems[index] = {
-            ...newItems[index],
-            productId,
-            price: Number(product.price),
-            gstRate: Number(product.gstRate || 0),
-            hsnCode: product.hsnCode || "",
-            total: Number(product.price) * newItems[index].quantity
-        };
-        setItems(newItems);
-    };
-
-    const handleQuantityChange = (index: number, qty: number) => {
-        const newItems = [...items];
-        newItems[index].quantity = qty;
-        newItems[index].total = newItems[index].price * qty;
-        setItems(newItems);
-    };
-
-    const calculateTotals = () => {
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const totalTax = items.reduce((sum, item) => sum + ((item.price * item.quantity) * (item.gstRate / 100)), 0);
-        return { subtotal, totalTax, grandTotal: subtotal + totalTax };
-    };
-
-    const { subtotal, totalTax, grandTotal } = calculateTotals();
-    const { showConfirm } = useUX();
-
-    const handleSubmit = async () => {
-        // UI-001: Prevent double-execution during state-transition lag
-        if (loading) return;
-
-        if (!customerId || !customerId.trim()) {
-            toast.error("Please select a valid customer");
-            return;
+    useEffect(() => {
+        if (isOpen) {
+            fetchData();
         }
-        if (items.some(i => !i.productId)) {
-            toast.error("Please select products for all lines");
-            return;
-        }
+    }, [isOpen, fetchData]);
 
-        const customerName = customers.find(c => c.id === customerId)?.company || "Selected Customer";
-
-        showConfirm({
-            title: "Confirm Tax Invoice Posting",
-            description: `You are about to post a compliant tax invoice for ₹${grandTotal.toLocaleString('en-IN')} to ${customerName}. This action will affect your accounting ledgers and cannot be deleted once saved (only cancelled).`,
-            confirmText: "Issue & Post",
-            cancelText: "Review",
-            onConfirm: async () => {
-                await executeSubmit();
-            }
+    const handleRemoveItem = useCallback((index: number) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems.splice(index, 1);
+            return newItems;
         });
-    };
+    }, []);
 
-    const executeSubmit = async () => {
+    const handleProductChange = useCallback((index: number, productId: string) => {
+        setProducts(currentProducts => {
+            const product = currentProducts.find(p => p.id === productId);
+            if (!product) return currentProducts; // This is a bit tricky since we need for setItems
+            return currentProducts;
+        });
 
-        setLoading(true);
-        setUILocked(true);
-        try {
-            await api.post("accounting/invoices", {
-                customerId,
-                issueDate: invoiceDate,
-                dueDate: dueDate || invoiceDate,
-                items: items.map(i => ({
-                    productId: i.productId,
-                    quantity: Number(i.quantity),
-                    price: Number(i.price)
-                }))
-            }); // Note: Backend handles tax calculation based on product ID, but passing price ensures manual override if supported
+        setItems(prev => {
+            const product = products.find(p => p.id === productId);
+            if (!product) return prev;
+            const newItems = [...prev];
+            newItems[index] = {
+                ...newItems[index],
+                productId,
+                price: Number(product.price),
+                gstRate: Number(product.gstRate || 0),
+                hsnCode: product.hsnCode || "",
+                total: Number(product.price) * newItems[index].quantity
+            };
+            return newItems;
+        });
+    }, [products]);
 
-            toast.success("Invoice issued successfully");
-            localStorage.removeItem("invoice_draft");
-            setItems([{ productId: "", quantity: 1, price: 0, gstRate: 0, hsnCode: "", total: 0 }]);
-            setCustomerId("");
-            onSuccess();
-            onClose();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to issue invoice");
-        } finally {
-            setLoading(false);
-            setUILocked(false);
-        }
-    };
+    const handleQuantityChange = useCallback((index: number, qty: number) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index].quantity = qty;
+            newItems[index].total = newItems[index].price * qty;
+            return newItems;
+        });
+    }, []);
+
+    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalTax = items.reduce((sum, item) => sum + ((item.price * item.quantity) * (item.gstRate / 100)), 0);
+    const grandTotal = subtotal + totalTax;
+
+    const onQuickCounterSale = useCallback(() => {
+        const walkIn = customers.find(c => c.email === 'walkin@system.local');
+        if (walkIn) setCustomerId(walkIn.id);
+    }, [customers]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -234,10 +283,7 @@ export function CreateInvoiceDialog({ isOpen, onClose, onSuccess }: CreateInvoic
                         <Button
                             variant="link"
                             className="text-[10px] text-amber-500 h-auto p-0 hover:text-amber-400"
-                            onClick={() => {
-                                const walkIn = customers.find(c => c.email === 'walkin@system.local');
-                                if (walkIn) setCustomerId(walkIn.id);
-                            }}
+                            onClick={onQuickCounterSale}
                         >
                             Quick Counter Sale (Walk-In)
                         </Button>

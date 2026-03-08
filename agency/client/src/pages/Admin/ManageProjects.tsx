@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../../api/config';
-import { useAuth } from '../../contexts/AuthContext';
+import api from '../../api';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, ExternalLink, Edit, FolderOpen, LayoutGrid, List, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,7 +14,6 @@ interface Project {
 }
 
 const ManageProjects = () => {
-    const { user } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -25,7 +22,7 @@ const ManageProjects = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/projects`);
+                const { data } = await api.get('/projects');
                 setProjects(data);
             } catch (error) {
                 console.error("Failed to fetch projects", error);
@@ -40,10 +37,7 @@ const ManageProjects = () => {
         e.preventDefault();
         if (!window.confirm('Erase this project from the showcase?')) return;
         try {
-            const config = {
-                headers: { Authorization: `Bearer ${user?.token}` },
-            };
-            await axios.delete(`${API_URL}/api/projects/${id}`, config);
+            await api.delete(`/projects/${id}`);
             setProjects(prev => prev.filter(p => p._id !== id));
         } catch (error) {
             console.error("Failed to delete project", error);

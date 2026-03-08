@@ -30,8 +30,9 @@ export default function ForgotPasswordPage() {
         try {
             await api.post("auth/forgot-password", { email })
             setSuccess(true)
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Something went wrong. Please try again.")
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            setError(error.response?.data?.message || "Something went wrong. Please try again.")
         } finally {
             setLoading(false)
         }
@@ -49,7 +50,7 @@ export default function ForgotPasswordPage() {
                         </div>
                         <CardTitle className="text-3xl font-extrabold tracking-tight uppercase">Check Email</CardTitle>
                         <CardDescription className="text-slate-500 font-medium">
-                            If an account exists for {email}, we've sent a recovery link.
+                            If an account exists for {email}, we&apos;ve sent a recovery link.
                         </CardDescription>
                     </CardHeader>
                     <CardFooter className="flex flex-col gap-4 pb-8">

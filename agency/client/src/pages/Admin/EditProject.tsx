@@ -2,15 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Save, Loader2, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 import ImageUploader from '../../components/Admin/ImageUploader';
 
 const EditProject = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     // Form state
     const [title, setTitle] = useState('');
@@ -37,7 +34,7 @@ const EditProject = () => {
     useEffect(() => {
         const fetchProject = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/projects/${id}`);
+                const { data } = await api.get(`/projects/${id}`);
                 setTitle(data.title);
                 setDescription(data.description);
                 setFullDescription(data.fullDescription || '');
@@ -68,14 +65,7 @@ const EditProject = () => {
         setError(null);
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user?.token}`,
-                },
-            };
-
-            await axios.put(`${API_URL}/api/projects/${id}`, {
+            await api.put(`/projects/${id}`, {
                 title,
                 description,
                 fullDescription,
@@ -88,7 +78,7 @@ const EditProject = () => {
                 impact,
                 testimonial: { quote, author, role },
                 gallery: gallery.split(',').map(g => g.trim()).filter(g => g !== '')
-            }, config);
+            });
 
             navigate('/admin/projects');
         } catch (err: any) {

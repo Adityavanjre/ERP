@@ -2,14 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Save } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-import API_URL from '../../api/config';
+import api from '../../api';
 import ImageUploader from '../../components/Admin/ImageUploader';
 
 const AddProject = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     // Form state
     const [title, setTitle] = useState('');
@@ -38,14 +36,7 @@ const AddProject = () => {
         setError(null);
 
         try {
-            const config = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user?.token}`,
-                },
-            };
-
-            await axios.post(`${API_URL}/api/projects`, {
+            await api.post('/projects', {
                 title,
                 description,
                 fullDescription,
@@ -58,7 +49,7 @@ const AddProject = () => {
                 impact,
                 testimonial: { quote, author, role },
                 gallery: gallery.split(',').map(g => g.trim()).filter(g => g !== '')
-            }, config);
+            });
 
             navigate('/admin');
         } catch (err: unknown) {

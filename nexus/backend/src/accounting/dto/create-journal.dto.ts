@@ -58,4 +58,3 @@ export class CreateJournalEntryDto {
   @MaxLength(100)
   correlationId?: string;
 }
-

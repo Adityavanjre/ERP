@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { NbfcService } from './nbfc.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -6,53 +15,77 @@ import { ModuleGuard } from '../common/guards/module.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
-import { LoanApplicationDto, LoanDisbursementDto, KycSubmitDto } from './dto/nbfc.dto';
+import {
+  LoanApplicationDto,
+  LoanDisbursementDto,
+  KycSubmitDto,
+} from './dto/nbfc.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, ModuleGuard)
 @Module('nbfc')
 @Controller('nbfc')
 export class NbfcController {
-    constructor(private readonly nbfcService: NbfcService) { }
+  constructor(private readonly nbfcService: NbfcService) {}
 
-    @Post('loans')
-    @Roles(Role.Owner, Role.Manager)
-    apply(@Req() req: any, @Body() data: LoanApplicationDto) {
-        return this.nbfcService.applyForLoan(req.user.tenantId, data);
-    }
+  @Post('loans')
+  @Roles(Role.Owner, Role.Manager)
+  apply(@Req() req: any, @Body() data: LoanApplicationDto) {
+    return this.nbfcService.applyForLoan(req.user.tenantId, data);
+  }
 
-    @Patch('loans/:id/approve')
-    @Roles(Role.Owner, Role.Manager)
-    approve(@Req() req: any, @Param('id') id: string) {
-        return this.nbfcService.approveLoan(req.user.tenantId, id);
-    }
+  @Patch('loans/:id/approve')
+  @Roles(Role.Owner, Role.Manager)
+  approve(@Req() req: any, @Param('id') id: string) {
+    return this.nbfcService.approveLoan(req.user.tenantId, id);
+  }
 
-    @Post('loans/:id/disburse')
-    @Roles(Role.Owner, Role.Accountant)
-    disburse(@Req() req: any, @Param('id') id: string, @Body() data: LoanDisbursementDto) {
-        return this.nbfcService.disburseLoan(req.user.tenantId, id, data);
-    }
+  @Post('loans/:id/disburse')
+  @Roles(Role.Owner, Role.Accountant)
+  disburse(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() data: LoanDisbursementDto,
+  ) {
+    return this.nbfcService.disburseLoan(req.user.tenantId, id, data);
+  }
 
-    @Patch('kyc/:loanId/status')
-    @Roles(Role.Owner, Role.Manager)
-    updateKYC(@Req() req: any, @Param('loanId') loanId: string, @Body('status') status: string) {
-        return this.nbfcService.updateKYCStatus(req.user.tenantId, loanId, status);
-    }
+  @Patch('kyc/:loanId/status')
+  @Roles(Role.Owner, Role.Manager)
+  updateKYC(
+    @Req() req: any,
+    @Param('loanId') loanId: string,
+    @Body('status') status: string,
+  ) {
+    return this.nbfcService.updateKYCStatus(req.user.tenantId, loanId, status);
+  }
 
-    @Post('kyc/:loanId')
-    @Roles(Role.Owner, Role.Manager)
-    submitKYC(@Req() req: any, @Param('loanId') loanId: string, @Body() data: KycSubmitDto) {
-        return this.nbfcService.submitKYC(req.user.tenantId, loanId, data);
-    }
+  @Post('kyc/:loanId')
+  @Roles(Role.Owner, Role.Manager)
+  submitKYC(
+    @Req() req: any,
+    @Param('loanId') loanId: string,
+    @Body() data: KycSubmitDto,
+  ) {
+    return this.nbfcService.submitKYC(req.user.tenantId, loanId, data);
+  }
 
-    @Post('loans/:id/recalculate')
-    @Roles(Role.Owner, Role.Manager)
-    recalculate(@Req() req: any, @Param('id') id: string, @Body('newRate') newRate: number) {
-        return this.nbfcService.recalculateLoanSchedule(req.user.tenantId, id, newRate);
-    }
+  @Post('loans/:id/recalculate')
+  @Roles(Role.Owner, Role.Manager)
+  recalculate(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body('newRate') newRate: number,
+  ) {
+    return this.nbfcService.recalculateLoanSchedule(
+      req.user.tenantId,
+      id,
+      newRate,
+    );
+  }
 
-    @Post('interest-accrual')
-    @Roles(Role.Owner, Role.Accountant)
-    runAccrual(@Req() req: any) {
-        return this.nbfcService.runDailyInterestAccrual(req.user.tenantId);
-    }
+  @Post('interest-accrual')
+  @Roles(Role.Owner, Role.Accountant)
+  runAccrual(@Req() req: any) {
+    return this.nbfcService.runDailyInterestAccrual(req.user.tenantId);
+  }
 }

@@ -1,6 +1,14 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AccountSelectors, StandardAccounts } from '../accounting/constants/account-names';
+import {
+  AccountSelectors,
+  StandardAccounts,
+} from '../accounting/constants/account-names';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AccountingService } from '../accounting/accounting.service';
 import { TraceService } from '../common/services/trace.service';
@@ -15,14 +23,21 @@ export class ManufacturingService {
     private accounting: AccountingService,
     private traceService: TraceService,
     private inventoryService: InventoryService,
-  ) { }
+  ) {}
 
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
    */
-  async explodeBOM(tenantId: string, bomId: string, multiplier: number = 1, visitedBoms = new Set<string>()) {
+  async explodeBOM(
+    tenantId: string,
+    bomId: string,
+    multiplier: number = 1,
+    visitedBoms = new Set<string>(),
+  ) {
     if (visitedBoms.has(bomId)) {
-      throw new BadRequestException(`Production Audit Error: Circular dependency detected in Bill of Materials. BOM ID ${bomId} points back to an active parent assembly.`);
+      throw new BadRequestException(
+        `Production Audit Error: Circular dependency detected in Bill of Materials. BOM ID ${bomId} points back to an active parent assembly.`,
+      );
     }
     visitedBoms.add(bomId);
 
@@ -46,12 +61,23 @@ export class ManufacturingService {
       if (subBOM) {
         // Clone the Set for sub-branches to allow sibling reuse without false cycle flags
         const subVisited = new Set(visitedBoms);
-        const subRequirements = await this.explodeBOM(tenantId, subBOM.id, totalQty.toNumber(), subVisited);
+        const subRequirements = await this.explodeBOM(
+          tenantId,
+          subBOM.id,
+          totalQty.toNumber(),
+          subVisited,
+        );
         requirements = [...requirements, ...subRequirements];
       } else {
         // INV-007: Support Unit Conversions
         const baseUnit = (item.product as any).baseUnit || 'pcs';
-        const baseQty = await this.convertUnit(tenantId, item.productId, totalQty, item.unit ?? 'pcs', baseUnit);
+        const baseQty = await this.convertUnit(
+          tenantId,
+          item.productId,
+          totalQty,
+          item.unit ?? 'pcs',
+          baseUnit,
+        );
         requirements.push({
           productId: item.productId,
           productName: item.product.name,
@@ -66,7 +92,13 @@ export class ManufacturingService {
   }
 
   // INV-007: Helper for Unit Conversions
-  private async convertUnit(tenantId: string, productId: string, quantity: Decimal, fromUnit: string, toUnit: string): Promise<Decimal> {
+  private async convertUnit(
+    tenantId: string,
+    productId: string,
+    quantity: Decimal,
+    fromUnit: string,
+    toUnit: string,
+  ): Promise<Decimal> {
     if (fromUnit === toUnit) return quantity;
 
     // Check for product-specific conversion
@@ -158,22 +190,33 @@ export class ManufacturingService {
    */
   async importBoms(tenantId: string, csvContent: string) {
     const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+    const headers = lines[0].split(',').map((h) => h.trim());
+    const results = {
+      total: lines.length - 1,
+      imported: 0,
+      failed: 0,
+      errors: [] as string[],
+    };
 
     // --- INDUSTRY INVARIANT: MANUFACTURING BLOCK ---
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     const industry = tenant?.industry || tenant?.type;
 
     if (industry !== 'Manufacturing' && industry !== 'Construction') {
-      throw new BadRequestException('Migration Blocked: BOM imports are reserved for Manufacturing or Construction verticals. Integrity Drift detected.');
+      throw new BadRequestException(
+        'Migration Blocked: BOM imports are reserved for Manufacturing or Construction verticals. Integrity Drift detected.',
+      );
     }
 
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
-      const cols = lines[i].split(',').map(c => c.trim());
+      const cols = lines[i].split(',').map((c) => c.trim());
       const data: any = {};
-      headers.forEach((h, idx) => { data[h] = cols[idx]; });
+      headers.forEach((h, idx) => {
+        data[h] = cols[idx];
+      });
 
       try {
         const finishSku = data.finishProductSku;
@@ -181,30 +224,36 @@ export class ManufacturingService {
         const qty = parseFloat(data.quantity) || 0;
 
         if (!finishSku || !ingredientSku || qty <= 0) {
-          throw new Error("Missing Sku or Quantity");
+          throw new Error('Missing Sku or Quantity');
         }
 
         const [finishProd, ingredient] = await Promise.all([
-          this.prisma.product.findFirst({ where: { tenantId, sku: finishSku } }),
-          this.prisma.product.findFirst({ where: { tenantId, sku: ingredientSku } })
+          this.prisma.product.findFirst({
+            where: { tenantId, sku: finishSku },
+          }),
+          this.prisma.product.findFirst({
+            where: { tenantId, sku: ingredientSku },
+          }),
         ]);
 
-        if (!finishProd) throw new Error(`Finish Product SKU ${finishSku} not found`);
-        if (!ingredient) throw new Error(`Ingredient SKU ${ingredientSku} not found`);
+        if (!finishProd)
+          throw new Error(`Finish Product SKU ${finishSku} not found`);
+        if (!ingredient)
+          throw new Error(`Ingredient SKU ${ingredientSku} not found`);
 
-        let bom = await this.prisma.billOfMaterial.findFirst({
-          where: { tenantId, productId: finishProd.id, status: 'Active' }
+        const bom = await this.prisma.billOfMaterial.findFirst({
+          where: { tenantId, productId: finishProd.id, status: 'Active' },
         });
 
         if (bom) {
           const existingItem = await this.prisma.bOMItem.findFirst({
-            where: { bomId: (bom as any).id, productId: ingredient.id }
+            where: { bomId: (bom as any).id, productId: ingredient.id },
           });
 
           if (existingItem) {
             await this.prisma.bOMItem.update({
               where: { id: existingItem.id },
-              data: { quantity: new Decimal(qty) }
+              data: { quantity: new Decimal(qty) },
             });
           } else {
             await (this.prisma as any).bOMItem.create({
@@ -213,8 +262,8 @@ export class ManufacturingService {
                 bomId: (bom as any).id,
                 productId: ingredient.id,
                 quantity: new Decimal(qty),
-                unit: data.unit || 'Unit'
-              }
+                unit: data.unit || 'Unit',
+              },
             });
           }
         }
@@ -253,7 +302,9 @@ export class ManufacturingService {
 
     // Mobile Governance: Owners/Managers only
     if (channel === 'MOBILE' && role !== 'Owner' && role !== 'Manager') {
-      throw new BadRequestException('Governance Error: Only Owners or Managers can approve job cards from mobile.');
+      throw new BadRequestException(
+        'Governance Error: Only Owners or Managers can approve job cards from mobile.',
+      );
     }
 
     const wo = await this.prisma.workOrder.findFirst({
@@ -290,7 +341,9 @@ export class ManufacturingService {
     const role = user.role;
 
     if (channel === 'MOBILE' && role !== 'Owner' && role !== 'Manager') {
-      throw new BadRequestException('Governance Error: Only Owners or Managers can reject job cards from mobile.');
+      throw new BadRequestException(
+        'Governance Error: Only Owners or Managers can reject job cards from mobile.',
+      );
     }
 
     const wo = await this.prisma.workOrder.findFirst({
@@ -322,10 +375,15 @@ export class ManufacturingService {
     return updated;
   }
 
-  async startWorkOrder(tenantId: string, woId: string, warehouseId?: string, idempotencyKey?: string) {
+  async startWorkOrder(
+    tenantId: string,
+    woId: string,
+    warehouseId?: string,
+    idempotencyKey?: string,
+  ) {
     const wo = await this.prisma.workOrder.findFirst({
       where: { id: woId, tenantId },
-      include: { bom: true }
+      include: { bom: true },
     });
 
     if (!wo) throw new NotFoundException('Work Order not found');
@@ -333,47 +391,63 @@ export class ManufacturingService {
     // approveWorkOrder() sets status to 'Confirmed', so requiring only 'Planned'
     // made it impossible to start an approved work order.
     const startableStatuses = ['Planned', 'Confirmed'];
-    if (!startableStatuses.includes(wo.status)) throw new BadRequestException(`Cannot start Work Order in ${wo.status} status. Expected: Planned or Confirmed.`);
+    if (!startableStatuses.includes(wo.status))
+      throw new BadRequestException(
+        `Cannot start Work Order in ${wo.status} status. Expected: Planned or Confirmed.`,
+      );
 
-    const requirements = await this.explodeBOM(tenantId, wo.bomId, Number(wo.quantity));
+    const requirements = await this.explodeBOM(
+      tenantId,
+      wo.bomId,
+      Number(wo.quantity),
+    );
 
     return await this.prisma.$transaction(async (tx) => {
       if (idempotencyKey) {
-        const existing = await tx.workOrder.findFirst({ where: { id: woId, tenantId, status: 'InProgress' } });
+        const existing = await tx.workOrder.findFirst({
+          where: { id: woId, tenantId, status: 'InProgress' },
+        });
         if (existing) return { success: true, alreadyStarted: true };
       }
 
       await this.accounting.ledger.checkPeriodLock(tenantId, new Date(), tx);
 
-      const warehouse = await tx.warehouse.findFirst({
-        where: { tenantId, id: warehouseId || undefined }
-      }) || await tx.warehouse.findFirst({ where: { tenantId } });
+      const warehouse =
+        (await tx.warehouse.findFirst({
+          where: { tenantId, id: warehouseId || undefined },
+        })) || (await tx.warehouse.findFirst({ where: { tenantId } }));
 
-      if (!warehouse) throw new BadRequestException('No warehouse found. Please create a warehouse first.');
+      if (!warehouse)
+        throw new BadRequestException(
+          'No warehouse found. Please create a warehouse first.',
+        );
       const targetWarehouse = warehouseId || warehouse?.id;
 
-      if (!targetWarehouse) throw new Error('No valid warehouse found for production storage.');
+      if (!targetWarehouse)
+        throw new Error('No valid warehouse found for production storage.');
 
-      for (const req of (requirements as any[])) {
+      for (const req of requirements) {
         const loc = await (tx.stockLocation as any).findUnique({
           where: {
             tenantId_productId_warehouseId_notes: {
               tenantId,
               productId: req.productId,
               warehouseId: targetWarehouse,
-              notes: ''
-            }
-          }
+              notes: '',
+            },
+          },
         });
 
         if (!loc || loc.quantity.lessThan(req.quantity)) {
-          throw new BadRequestException(`Insufficient stock for ${req.productName}. Required: ${req.quantity}, Available: ${loc?.quantity || 0}`);
+          throw new BadRequestException(
+            `Insufficient stock for ${req.productName}. Required: ${req.quantity}, Available: ${loc?.quantity || 0}`,
+          );
         }
 
         // Move from RM/Normal to WIP
         await tx.stockLocation.update({
           where: { id: loc.id },
-          data: { quantity: { decrement: new Decimal(req.quantity) } }
+          data: { quantity: { decrement: new Decimal(req.quantity) } },
         });
 
         const wipLoc = await (tx.stockLocation as any).findUnique({
@@ -382,15 +456,15 @@ export class ManufacturingService {
               tenantId,
               productId: req.productId,
               warehouseId: targetWarehouse,
-              notes: 'WIP_BIN'
-            }
-          }
+              notes: 'WIP_BIN',
+            },
+          },
         });
 
         if (wipLoc) {
           await tx.stockLocation.update({
             where: { id: wipLoc.id },
-            data: { quantity: { increment: new Decimal(req.quantity) } }
+            data: { quantity: { increment: new Decimal(req.quantity) } },
           });
         } else {
           await (tx.stockLocation as any).create({
@@ -399,8 +473,8 @@ export class ManufacturingService {
               productId: req.productId,
               warehouseId: targetWarehouse,
               quantity: new Decimal(req.quantity),
-              notes: 'WIP_BIN'
-            }
+              notes: 'WIP_BIN',
+            },
           });
         }
 
@@ -414,7 +488,7 @@ export class ManufacturingService {
             reference: wo.orderNumber,
             notes: `WIP Issue: Production Start`,
             correlationId: (this.traceService as any).getCorrelationId(), // Trace Link
-          }
+          },
         });
 
         await (tx.stockMovement as any).create({
@@ -427,40 +501,56 @@ export class ManufacturingService {
             reference: wo.orderNumber,
             notes: `WIP Receipt: Internal Transfer`,
             correlationId: (this.traceService as any).getCorrelationId(), // Trace Link
-          }
+          },
         });
       }
 
       const wipAccount = await tx.account.findFirst({
-        where: { tenantId, name: { in: AccountSelectors.WIP } }
+        where: { tenantId, name: { in: AccountSelectors.WIP } },
       });
       const rmAccount = await tx.account.findFirst({
-        where: { tenantId, name: { in: AccountSelectors.RAW_MATERIALS } }
+        where: { tenantId, name: { in: AccountSelectors.RAW_MATERIALS } },
       });
 
       if (wipAccount && rmAccount) {
         let totalWipValue = new Decimal(0);
-        for (const req of (requirements as any[])) {
-          totalWipValue = totalWipValue.add(new Decimal(req.costPrice || 0).mul(req.quantity));
+        for (const req of requirements) {
+          totalWipValue = totalWipValue.add(
+            new Decimal(req.costPrice || 0).mul(req.quantity),
+          );
         }
 
         if (totalWipValue.gt(0)) {
-          await this.accounting.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Production Issue (WIP): ${wo.orderNumber}`,
-            reference: wo.orderNumber,
-            correlationId: this.traceService.getCorrelationId(), // Trace Link
-            transactions: [
-              { accountId: wipAccount.id, type: 'Debit', amount: totalWipValue.toNumber(), description: 'RM to WIP Transfer' },
-              { accountId: rmAccount.id, type: 'Credit', amount: totalWipValue.toNumber(), description: 'RM to WIP Transfer' }
-            ]
-          }, tx);
+          await this.accounting.ledger.createJournalEntry(
+            tenantId,
+            {
+              date: new Date().toISOString(),
+              description: `Production Issue (WIP): ${wo.orderNumber}`,
+              reference: wo.orderNumber,
+              correlationId: this.traceService.getCorrelationId(), // Trace Link
+              transactions: [
+                {
+                  accountId: wipAccount.id,
+                  type: 'Debit',
+                  amount: totalWipValue.toNumber(),
+                  description: 'RM to WIP Transfer',
+                },
+                {
+                  accountId: rmAccount.id,
+                  type: 'Credit',
+                  amount: totalWipValue.toNumber(),
+                  description: 'RM to WIP Transfer',
+                },
+              ],
+            },
+            tx,
+          );
         }
       }
 
       await tx.workOrder.update({
         where: { id: woId },
-        data: { status: 'InProgress', startDate: new Date() }
+        data: { status: 'InProgress', startDate: new Date() },
       });
 
       await tx.auditLog.create({
@@ -468,8 +558,11 @@ export class ManufacturingService {
           tenantId,
           action: 'MANUFACTURING_STARTED',
           resource: `WorkOrder:${wo.id}`,
-          details: { orderNumber: wo.orderNumber, warehouseId: warehouse.id } as any,
-        }
+          details: {
+            orderNumber: wo.orderNumber,
+            warehouseId: warehouse.id,
+          } as any,
+        },
       });
 
       return { success: true, orderNumber: wo.orderNumber };
@@ -501,14 +594,16 @@ export class ManufacturingService {
       if (!acc[productId]) {
         acc[productId] = { ...curr, quantity: new Decimal(curr.quantity) };
       } else {
-        acc[productId].quantity = acc[productId].quantity.add(new Decimal(curr.quantity));
+        acc[productId].quantity = acc[productId].quantity.add(
+          new Decimal(curr.quantity),
+        );
       }
       return acc;
     }, {});
 
     return Object.values(aggregated).map((r: any) => ({
       ...r,
-      quantity: r.quantity.toNumber()
+      quantity: r.quantity.toNumber(),
     }));
   }
 
@@ -521,7 +616,9 @@ export class ManufacturingService {
     const requirements: any[] = await this.explodeBOM(tenantId, bomId, 1);
     let materialCost = new Decimal(0);
     for (const req of requirements) {
-      materialCost = materialCost.add(new Decimal(req.costPrice || 0).mul(req.quantity));
+      materialCost = materialCost.add(
+        new Decimal(req.costPrice || 0).mul(req.quantity),
+      );
     }
 
     const overheadRate = new Decimal(bom.overheadRate || 0);
@@ -538,7 +635,11 @@ export class ManufacturingService {
   }
 
   async checkShortages(tenantId: string, bomId: string, quantity: number) {
-    const requirements: any[] = await this.explodeBOM(tenantId, bomId, quantity);
+    const requirements: any[] = await this.explodeBOM(
+      tenantId,
+      bomId,
+      quantity,
+    );
     const shortages = [];
 
     for (const req of requirements) {
@@ -559,23 +660,43 @@ export class ManufacturingService {
     return shortages;
   }
 
-  async completeWorkOrder(tenantId: string, woId: string, producedQtyStr?: number | string, scrapQtyStr?: number | string, machineId?: string, machineTimeHours?: number, operatorName?: string, warehouseId?: string, idempotencyKey?: string) {
-    const wo = await this.prisma.workOrder.findFirst({
+  async completeWorkOrder(
+    tenantId: string,
+    woId: string,
+    producedQtyStr?: number | string,
+    scrapQtyStr?: number | string,
+    machineId?: string,
+    machineTimeHours?: number,
+    operatorName?: string,
+    warehouseId?: string,
+    idempotencyKey?: string,
+  ) {
+    const wo = (await this.prisma.workOrder.findFirst({
       where: { id: woId, tenantId },
       include: { bom: { include: { product: true } } },
-    }) as any;
+    })) as any;
 
     if (!wo) throw new NotFoundException('Work Order not found');
 
     // 1. Idempotency Check
-    if (idempotencyKey && wo.idempotencyKey === idempotencyKey && wo.status === 'Completed') {
-      return wo.completionLog || { success: true, message: 'Already completed (Idempotent)' };
+    if (
+      idempotencyKey &&
+      wo.idempotencyKey === idempotencyKey &&
+      wo.status === 'Completed'
+    ) {
+      return (
+        wo.completionLog || {
+          success: true,
+          message: 'Already completed (Idempotent)',
+        }
+      );
     }
 
     if (wo.status === 'Completed')
       throw new BadRequestException('Work Order already completed');
 
-    const producedQty = producedQtyStr !== undefined ? Number(producedQtyStr) : wo.quantity;
+    const producedQty =
+      producedQtyStr !== undefined ? Number(producedQtyStr) : wo.quantity;
     const scrapQty = scrapQtyStr !== undefined ? Number(scrapQtyStr) : 0;
 
     await this.accounting.checkPeriodLock(tenantId, new Date());
@@ -583,25 +704,46 @@ export class ManufacturingService {
     try {
       // Consume raw materials based on the sum of produced and scrap
       const totalConsumedQty = producedQty + scrapQty;
-      const requirements: any[] = await this.explodeBOM(tenantId, wo.bomId, totalConsumedQty > 0 ? totalConsumedQty : wo.quantity);
+      const requirements: any[] = await this.explodeBOM(
+        tenantId,
+        wo.bomId,
+        totalConsumedQty > 0 ? totalConsumedQty : wo.quantity,
+      );
 
       return await this.prisma.$transaction(async (tx) => {
-        const targetWarehouse = warehouseId || (await tx.warehouse.findFirst({
-          where: { tenantId },
-          orderBy: { id: 'asc' }
-        }))?.id;
+        const targetWarehouse =
+          warehouseId ||
+          (
+            await tx.warehouse.findFirst({
+              where: { tenantId },
+              orderBy: { id: 'asc' },
+            })
+          )?.id;
 
-        if (!targetWarehouse) throw new Error('No valid warehouse found for production storage.');
+        if (!targetWarehouse)
+          throw new Error('No valid warehouse found for production storage.');
 
-        for (const req of (requirements as any[])) {
+        for (const req of requirements) {
           const isFromWIP = wo.status === 'InProgress';
 
           if (isFromWIP) {
             // Consume from WIP Bin (Guarded)
-            await this.inventoryService.deductStock(tx, req.productId, targetWarehouse, req.quantity, 'WIP_BIN');
+            await this.inventoryService.deductStock(
+              tx,
+              req.productId,
+              targetWarehouse,
+              req.quantity,
+              'WIP_BIN',
+            );
           } else {
             // Direct consumption from Store (Guarded)
-            await this.inventoryService.deductStock(tx, req.productId, targetWarehouse, req.quantity, '');
+            await this.inventoryService.deductStock(
+              tx,
+              req.productId,
+              targetWarehouse,
+              req.quantity,
+              '',
+            );
           }
 
           await (tx as any).stockMovement.create({
@@ -614,7 +756,7 @@ export class ManufacturingService {
               reference: targetWarehouse, // Using warehouseId as reference for trace
               notes: isFromWIP ? `WIP Consumption` : `Store Consumption`,
               correlationId: this.traceService.getCorrelationId(), // Trace Link
-            }
+            },
           });
         }
 
@@ -625,17 +767,17 @@ export class ManufacturingService {
               tenantId,
               productId: wo.bom.productId,
               warehouseId: targetWarehouse,
-              notes: ''
-            }
+              notes: '',
+            },
           },
           create: {
             tenantId,
             productId: wo.bom.productId,
             warehouseId: targetWarehouse,
             quantity: new Decimal(producedQty),
-            notes: ''
+            notes: '',
           },
-          update: { quantity: { increment: new Decimal(producedQty) } }
+          update: { quantity: { increment: new Decimal(producedQty) } },
         });
 
         await tx.product.updateMany({
@@ -646,21 +788,21 @@ export class ManufacturingService {
         await (tx as any).stockMovement.create({
           data: {
             tenantId,
-            productId: (wo.bom as any).productId,
+            productId: wo.bom.productId,
             warehouseId: targetWarehouse,
             quantity: new Decimal(producedQty),
             type: 'IN',
-            reference: (wo as any).orderNumber,
+            reference: wo.orderNumber,
             notes: `Production Receipt (Good Qty: ${producedQty}, Scrap Qty: ${scrapQty})`,
             correlationId: (this.traceService as any).getCorrelationId(), // Trace Link
-          }
+          },
         });
 
         const fgAccount = await tx.account.findFirst({
           where: { tenantId, name: { in: AccountSelectors.FINISHED_GOODS } },
         });
         const wipAccount = await tx.account.findFirst({
-          where: { tenantId, name: { in: AccountSelectors.WIP } }
+          where: { tenantId, name: { in: AccountSelectors.WIP } },
         });
         const rmAccount = await tx.account.findFirst({
           where: { tenantId, name: { in: AccountSelectors.RAW_MATERIALS } },
@@ -668,36 +810,62 @@ export class ManufacturingService {
 
         if (fgAccount && (wipAccount || rmAccount)) {
           const costData = await this.getBOMCost(tenantId, wo.bomId);
-          let totalProductionValue = new Decimal(costData.totalCost).mul(producedQty);
-          const materialValueConsumed = new Decimal(costData.materialCost).mul(totalConsumedQty);
+          let totalProductionValue = new Decimal(costData.totalCost).mul(
+            producedQty,
+          );
+          const materialValueConsumed = new Decimal(costData.materialCost).mul(
+            totalConsumedQty,
+          );
           const scrapValue = new Decimal(costData.materialCost).mul(scrapQty);
-          let overheadValue = new Decimal(costData.overheadCost).mul(producedQty);
+          let overheadValue = new Decimal(costData.overheadCost).mul(
+            producedQty,
+          );
 
           // If machine info is provided, override overhead calculation for precision
           if (machineId && machineTimeHours) {
-            const machine = await (tx as any).machine.findFirst({ where: { id: machineId, tenantId } });
+            const machine = await (tx as any).machine.findFirst({
+              where: { id: machineId, tenantId },
+            });
             if (machine && machine.hourlyRate) {
-              const machineCost = new Decimal(machine.hourlyRate).mul(machineTimeHours);
+              const machineCost = new Decimal(machine.hourlyRate).mul(
+                machineTimeHours,
+              );
               overheadValue = machineCost; // Precision Overhead
-              totalProductionValue = materialValueConsumed.sub(scrapValue).add(overheadValue);
+              totalProductionValue = materialValueConsumed
+                .sub(scrapValue)
+                .add(overheadValue);
             }
           }
 
           const isFromWIP = wo.status === 'InProgress';
-          const creditAccount = (isFromWIP && wipAccount) ? wipAccount : rmAccount!;
+          const creditAccount =
+            isFromWIP && wipAccount ? wipAccount : rmAccount!;
 
           const transactions = [
-            { accountId: fgAccount.id, type: 'Debit' as any, amount: totalProductionValue.toNumber(), description: `Finished Goods - ${wo.orderNumber}` },
-            { accountId: creditAccount.id, type: 'Credit' as any, amount: materialValueConsumed.toNumber(), description: `${isFromWIP ? 'WIP' : 'RM'} Consumption - ${wo.orderNumber}` },
+            {
+              accountId: fgAccount.id,
+              type: 'Debit' as any,
+              amount: totalProductionValue.toNumber(),
+              description: `Finished Goods - ${wo.orderNumber}`,
+            },
+            {
+              accountId: creditAccount.id,
+              type: 'Credit' as any,
+              amount: materialValueConsumed.toNumber(),
+              description: `${isFromWIP ? 'WIP' : 'RM'} Consumption - ${wo.orderNumber}`,
+            },
           ];
 
           // 100x Logic: Activity-Based Costing (ABC) expansion
           // Split overheads into Machine vs Labor components if specific accounts exist
           const laborAccount = await tx.account.findFirst({
-            where: { tenantId, name: 'Manufacturing Labor Absorbed' }
+            where: { tenantId, name: 'Manufacturing Labor Absorbed' },
           });
           const deprAccount = await tx.account.findFirst({
-            where: { tenantId, name: StandardAccounts.MANUFACTURING_OVERHEAD_ABSORBED }
+            where: {
+              tenantId,
+              name: StandardAccounts.MANUFACTURING_OVERHEAD_ABSORBED,
+            },
           });
 
           if (deprAccount) {
@@ -706,7 +874,7 @@ export class ManufacturingService {
               accountId: deprAccount.id,
               type: 'Credit' as any,
               amount: overheadValue.toNumber(),
-              description: `ABC Machine Overhead Absorbed - ${wo.orderNumber}`
+              description: `ABC Machine Overhead Absorbed - ${wo.orderNumber}`,
             });
           }
 
@@ -716,7 +884,9 @@ export class ManufacturingService {
             // If the machine has no hourlyRate configured, labor absorption is skipped
             // rather than posting an inaccurate fixed value to the ledger.
             const machineForLabor = machineId
-              ? await (tx as any).machine.findFirst({ where: { id: machineId, tenantId } })
+              ? await (tx as any).machine.findFirst({
+                  where: { id: machineId, tenantId },
+                })
               : null;
             const effectiveLaborRate = machineForLabor?.hourlyRate
               ? new Decimal(machineForLabor.hourlyRate)
@@ -728,30 +898,46 @@ export class ManufacturingService {
                 accountId: laborAccount.id,
                 type: 'Credit' as any,
                 amount: absorbedLabor.toNumber(),
-                description: `ABC Labor Cost Absorbed (${effectiveLaborRate}/hr × ${machineTimeHours}h) - ${wo.orderNumber}`
+                description: `ABC Labor Cost Absorbed (${effectiveLaborRate}/hr × ${machineTimeHours}h) - ${wo.orderNumber}`,
               });
               // Total FG value includes absorbed labor
-              transactions[0].amount = new Decimal(transactions[0].amount).add(absorbedLabor).toNumber();
+              transactions[0].amount = new Decimal(transactions[0].amount)
+                .add(absorbedLabor)
+                .toNumber();
             }
           }
 
           const scrapAccount = await tx.account.findFirst({
-            where: { tenantId, name: StandardAccounts.SCRAP_EXPENSE }
+            where: { tenantId, name: StandardAccounts.SCRAP_EXPENSE },
           });
           if (scrapAccount && scrapValue.greaterThan(0)) {
-            transactions.push({ accountId: scrapAccount.id, type: 'Debit' as any, amount: scrapValue.toNumber(), description: `Production Scrap - ${wo.orderNumber}` });
+            transactions.push({
+              accountId: scrapAccount.id,
+              type: 'Debit' as any,
+              amount: scrapValue.toNumber(),
+              description: `Production Scrap - ${wo.orderNumber}`,
+            });
           }
 
-          await this.accounting.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Production Completion: ${wo.orderNumber}`,
-            reference: wo.orderNumber,
-            correlationId: this.traceService.getCorrelationId(), // Trace Link
-            transactions
-          }, tx);
+          await this.accounting.ledger.createJournalEntry(
+            tenantId,
+            {
+              date: new Date().toISOString(),
+              description: `Production Completion: ${wo.orderNumber}`,
+              reference: wo.orderNumber,
+              correlationId: this.traceService.getCorrelationId(), // Trace Link
+              transactions,
+            },
+            tx,
+          );
         }
 
-        const completionLog = { success: true, producedQty, scrapQty, timestamp: new Date() };
+        const completionLog = {
+          success: true,
+          producedQty,
+          scrapQty,
+          timestamp: new Date(),
+        };
 
         await tx.workOrder.update({
           where: { id: woId },
@@ -764,7 +950,7 @@ export class ManufacturingService {
             machineTimeHours: machineTimeHours || null,
             operatorName: operatorName || null,
             idempotencyKey: idempotencyKey,
-            completionLog: completionLog as any
+            completionLog: completionLog as any,
           } as any,
         });
 
@@ -778,22 +964,33 @@ export class ManufacturingService {
               producedQuantity: producedQty,
               scrapQuantity: scrapQty,
               machineId,
-              operatorName
+              operatorName,
             } as any,
           },
         });
 
         // Set machine to Idle if it was Running
         if (machineId) {
-          await tx.machine.update({ where: { id: machineId }, data: { status: 'Idle' } });
+          await tx.machine.update({
+            where: { id: machineId },
+            data: { status: 'Idle' },
+          });
         }
 
         return completionLog;
       });
     } catch (err: any) {
-      if (err instanceof BadRequestException || err instanceof NotFoundException) throw err;
-      this.logger.error(`Critical Production Failure for WO ${wo.orderNumber}: ${err.message}`);
-      throw new BadRequestException(`Production Completion Failure: ${err.message}`);
+      if (
+        err instanceof BadRequestException ||
+        err instanceof NotFoundException
+      )
+        throw err;
+      this.logger.error(
+        `Critical Production Failure for WO ${wo.orderNumber}: ${err.message}`,
+      );
+      throw new BadRequestException(
+        `Production Completion Failure: ${err.message}`,
+      );
     }
   }
 
@@ -815,11 +1012,15 @@ export class ManufacturingService {
     if (!bom) throw new NotFoundException('BOM not found');
 
     // --- INDUSTRY INVARIANT: MANUFACTURING BLOCK ---
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+    });
     const industry = tenant?.industry || tenant?.type;
 
     if (industry !== 'Manufacturing' && industry !== 'Construction') {
-      throw new BadRequestException('Vertical Compliance Violation: Work Orders are reserved for Manufacturing or Construction fabrication flows.');
+      throw new BadRequestException(
+        'Vertical Compliance Violation: Work Orders are reserved for Manufacturing or Construction fabrication flows.',
+      );
     }
 
     const count = await this.prisma.workOrder.count({ where: { tenantId } });

@@ -1,39 +1,50 @@
-import { Controller, Get, Post, Body, UseGuards, Req, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Param,
+} from '@nestjs/common';
 import { BillingService } from '../services/billing.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { PlanType, Role } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('system/billing')
 export class BillingController {
-  constructor(private readonly billingService: BillingService) { }
+  constructor(private readonly billingService: BillingService) {}
 
   // --- Tenant-facing ---
 
   @Get('status')
   @Roles(Role.Owner)
-  getStatus(@Req() req: any) {
-    return this.billingService.getTenantSubscription(req.user.tenantId);
+  getStatus(@Req() req: AuthenticatedRequest) {
+    return this.billingService.getTenantSubscription(
+      req.user.tenantId as string,
+    );
   }
 
   @Get('history')
   @Roles(Role.Owner)
-  getHistory(@Req() req: any) {
-    return this.billingService.getBillingHistory(req.user.tenantId);
+  getHistory(@Req() req: AuthenticatedRequest) {
+    return this.billingService.getBillingHistory(req.user.tenantId as string);
   }
 
   // SEC: Only the workspace Owner can initiate a plan upgrade.
   // Manager, CA, Biller roles do not have billing authority.
   @Roles(Role.Owner)
   @Post('upgrade')
-  upgrade(@Req() req: any, @Body('plan') plan: PlanType) {
+  upgrade(@Req() req: AuthenticatedRequest, @Body('plan') plan: PlanType) {
     return this.billingService.upgradePlan(
-      req.user.tenantId,
+      req.user.tenantId as string,
       plan,
-      req.user.userId,
+      req.user.sub,
     );
   }
 
@@ -47,9 +58,13 @@ export class BillingController {
   suspendTenant(
     @Param('tenantId') tenantId: string,
     @Body('reason') reason: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.billingService.suspendTenant(tenantId, reason ?? 'admin-action', req.user.userId);
+    return this.billingService.suspendTenant(
+      tenantId,
+      reason ?? 'admin-action',
+      req.user.sub,
+    );
   }
 
   @Post('admin/:tenantId/reactivate')
@@ -58,9 +73,9 @@ export class BillingController {
   reactivateTenant(
     @Param('tenantId') tenantId: string,
     @Body('plan') plan: PlanType,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.billingService.reactivateTenant(tenantId, plan, req.user.userId);
+    return this.billingService.reactivateTenant(tenantId, plan, req.user.sub);
   }
 
   @Post('admin/:tenantId/grace-period')
@@ -69,9 +84,13 @@ export class BillingController {
   enterGracePeriod(
     @Param('tenantId') tenantId: string,
     @Body('reason') reason: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.billingService.enterGracePeriod(tenantId, reason ?? 'payment-overdue', req.user.userId);
+    return this.billingService.enterGracePeriod(
+      tenantId,
+      reason ?? 'payment-overdue',
+      req.user.sub,
+    );
   }
 
   @Post('admin/:tenantId/read-only')
@@ -80,8 +99,12 @@ export class BillingController {
   downgradeToReadOnly(
     @Param('tenantId') tenantId: string,
     @Body('reason') reason: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.billingService.downgradeToReadOnly(tenantId, reason ?? 'grace-expired', req.user.userId);
+    return this.billingService.downgradeToReadOnly(
+      tenantId,
+      reason ?? 'grace-expired',
+      req.user.sub,
+    );
   }
 }

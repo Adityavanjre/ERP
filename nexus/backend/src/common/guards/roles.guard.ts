@@ -14,8 +14,8 @@ import { LoggingService } from '../services/logging.service';
 export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private logging: LoggingService
-  ) { }
+    private logging: LoggingService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -43,25 +43,32 @@ export class RolesGuard implements CanActivate {
     // Identity or Admin tokens (no tenantId/role) MUST NOT access generic endpoints
     // unless explicitly tagged with @AllowIdentity()
     if (user.type === 'identity' || user.type === 'admin') {
-      const allowIdentity = this.reflector.getAllAndOverride<boolean>(ALLOW_IDENTITY_KEY, [
-        context.getHandler(),
-        context.getClass(),
-      ]);
+      const allowIdentity = this.reflector.getAllAndOverride<boolean>(
+        ALLOW_IDENTITY_KEY,
+        [context.getHandler(), context.getClass()],
+      );
 
       if (!allowIdentity) {
-        this.logging.log({
-          userId: user.sub,
-          action: 'SECURITY_VIOLATION_GLOBAL_TOKEN_USE',
-          resource: context.getClass().name,
-          details: {
-            handler: context.getHandler().name,
-            type: user.type,
-            reason: 'Global token attempted to access tenant-scoped or protected route'
-          },
-          ipAddress: request.ip,
-        }).catch(err => console.error('Failed to log security violation', err));
+        this.logging
+          .log({
+            userId: user.sub,
+            action: 'SECURITY_VIOLATION_GLOBAL_TOKEN_USE',
+            resource: context.getClass().name,
+            details: {
+              handler: context.getHandler().name,
+              type: user.type,
+              reason:
+                'Global token attempted to access tenant-scoped or protected route',
+            },
+            ipAddress: request.ip,
+          })
+          .catch((err) =>
+            console.error('Failed to log security violation', err),
+          );
 
-        throw new ForbiddenException('A tenant-scoped token is required for this operation. Please select a company.');
+        throw new ForbiddenException(
+          'A tenant-scoped token is required for this operation. Please select a company.',
+        );
       }
 
       // 🟢 Admin Override: If it's an 'admin' token and user is SuperAdmin,
@@ -82,15 +89,24 @@ export class RolesGuard implements CanActivate {
       // SECURITY (AUTH-004): Strict Fail-Closed for Mutations.
       // Every POST/PUT/PATCH/DELETE *must* explicitly declare who is allowed to run it.
       if (request.method !== 'GET' && request.method !== 'OPTIONS') {
-        this.logging.log({
-          userId: user.sub,
-          action: 'SECURITY_VIOLATION_MISSING_RBAC',
-          resource: context.getClass().name,
-          details: { handler: context.getHandler().name, reason: 'Mutation endpoint is missing @Roles() decorator' },
-          ipAddress: request.ip,
-        }).catch(err => console.error('Failed to log security violation', err));
+        this.logging
+          .log({
+            userId: user.sub,
+            action: 'SECURITY_VIOLATION_MISSING_RBAC',
+            resource: context.getClass().name,
+            details: {
+              handler: context.getHandler().name,
+              reason: 'Mutation endpoint is missing @Roles() decorator',
+            },
+            ipAddress: request.ip,
+          })
+          .catch((err) =>
+            console.error('Failed to log security violation', err),
+          );
 
-        throw new ForbiddenException('Strict RBAC Enforcement: This mutation is missing an explicit @Roles() assignment and has been blocked.');
+        throw new ForbiddenException(
+          'Strict RBAC Enforcement: This mutation is missing an explicit @Roles() assignment and has been blocked.',
+        );
       }
       return true; // GET requests default to any valid tenant member.
     }

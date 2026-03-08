@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -28,33 +28,84 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+
+interface Employee {
+    id: string;
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    jobTitle: string;
+    status: string;
+    department?: {
+        name: string;
+    };
+}
+
+interface Leave {
+    id: string;
+    type: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    employee: {
+        firstName: string;
+        lastName: string;
+    };
+}
+
+interface Payroll {
+    id: string;
+    periodStart: string;
+    periodEnd: string;
+    netPay: number;
+    status: string;
+    employee: {
+        firstName: string;
+        lastName: string;
+    };
+}
+
+interface Department {
+    id: string;
+    name: string;
+    _count: {
+        employees: number;
+    };
+}
+
+interface HrStats {
+    activeEmployees: number;
+    pendingLeaves: number;
+    totalPayroll: number;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
 
 export default function HrPage() {
-    const [employees, setEmployees] = useState<any[]>([]);
-    const [leaves, setLeaves] = useState<any[]>([]);
-    const [payrolls, setPayrolls] = useState<any[]>([]);
-    const [departments, setDepartments] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>({ activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [leaves, setLeaves] = useState<Leave[]>([]);
+    const [payrolls, setPayrolls] = useState<Payroll[]>([]);
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [stats, setStats] = useState<HrStats>({ activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
-    const [fetchError, setFetchError] = useState<string | null>(null);
 
     // Add Employee Dialog State
     const [addOpen, setAddOpen] = useState(false);
     const [addLoading, setAddLoading] = useState(false);
     const [empForm, setEmpForm] = useState({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "" });
 
-    const syncEmployeeData = async (showLoading = false) => {
+    const syncEmployeeData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            setFetchError(null);
             const [empRes, leaveRes, payrollRes, deptRes, statsRes] = await Promise.all([
                 api.get("hr/employees"),
                 api.get("hr/leaves"),
@@ -67,14 +118,13 @@ export default function HrPage() {
             setPayrolls(Array.isArray(payrollRes.data) ? payrollRes.data : []);
             setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
             setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("HR data load failed:", err);
-            const msg = "Failed to load HR data. Please refresh.";
-            setFetchError(msg);
+            // const msg = "Failed to load HR data. Please refresh.";
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -83,7 +133,7 @@ export default function HrPage() {
         // CONTINUOUS BACKGROUND SYNC: 30s interval
         const interval = setInterval(() => syncEmployeeData(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncEmployeeData]);
 
     const handleAddEmployee = async () => {
         if (!empForm.firstName || !empForm.lastName || !empForm.employeeId) {
@@ -100,8 +150,9 @@ export default function HrPage() {
             setAddOpen(false);
             setEmpForm({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "" });
             syncEmployeeData(true);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to add employee");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to add employee");
         } finally {
             setAddLoading(false);
         }
@@ -112,12 +163,14 @@ export default function HrPage() {
             await api.patch(`/hr/leaves/${leaveId}/status`, { status: action });
             toast.success(`Leave ${action.toLowerCase()} successfully`);
             syncEmployeeData(false);
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Action failed");
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Action failed");
         }
     };
 
     if (!mounted) return null;
+    if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing personnel data...</div>;
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">

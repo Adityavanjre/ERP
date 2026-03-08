@@ -56,7 +56,7 @@ const Photography = () => {
         ? photoCollection.filter(p => p.albumId === activeAlbum)
         : [];
 
-    const handleImageLoad = (_id: string) => {
+    const handleImageLoad = () => {
         // Log image load if needed or remove entirely
     };
 
@@ -69,12 +69,12 @@ const Photography = () => {
 
     useEffect(() => {
         if (lightboxIndex !== null) {
-            document.body.style.overflow = 'hidden';
+            document.documentElement.classList.add('no-scroll');
         } else {
-            document.body.style.overflow = 'auto';
+            document.documentElement.classList.remove('no-scroll');
         }
         return () => {
-            document.body.style.overflow = 'auto';
+            document.documentElement.classList.remove('no-scroll');
         };
     }, [lightboxIndex]);
 
@@ -190,7 +190,7 @@ const Photography = () => {
                                             <img
                                                 src={photo.url}
                                                 alt={photo.title}
-                                                onLoad={() => handleImageLoad(photo.id)}
+                                                onLoad={handleImageLoad}
                                                 className={`w-full h-auto block rounded-[1.8rem] grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-[1.02] shadow-2xl`}
                                             />
 

@@ -19,7 +19,7 @@ export class SaasAnalyticsService {
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private forecasting: ForecastingService,
-  ) { }
+  ) {}
 
   async getCashflowProjections(tenantId: string) {
     return this.forecasting.getCashflowForecast(tenantId);
@@ -47,7 +47,9 @@ export class SaasAnalyticsService {
         message = `New Lead: ${(fname + ' ' + lname).trim() || 'Customer'} registered`;
       } else if (log.action === 'POST' && log.resource.includes('/purchases')) {
         const orderNum = details?.body?.orderNumber || details?.orderNumber;
-        message = orderNum ? `Procurement: Purchase Order #${orderNum} issued` : 'Procurement: New purchase order issued';
+        message = orderNum
+          ? `Procurement: Purchase Order #${orderNum} issued`
+          : 'Procurement: New purchase order issued';
       }
 
       return {
@@ -114,7 +116,11 @@ export class SaasAnalyticsService {
       }),
       // 6. Period Lock status
       (this.prisma as any).periodLock.findFirst({
-        where: { tenantId, month: today.getMonth() + 1, year: today.getFullYear() }
+        where: {
+          tenantId,
+          month: today.getMonth() + 1,
+          year: today.getFullYear(),
+        },
       }),
       // 7. Active Customers (Moved to end for indexing safety)
       this.prisma.customer.findMany({
@@ -131,7 +137,7 @@ export class SaasAnalyticsService {
         status: 'GREEN',
         signals: ['NEW_TENANT: Waiting for initial data pulse'],
         metrics: { paymentRatio: 0, activityPulse: 0 },
-        interventions: []
+        interventions: [],
       };
     }
 
@@ -155,8 +161,8 @@ export class SaasAnalyticsService {
     const avgLag =
       lags.length > 0
         ? Math.floor(
-          lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
-        )
+            lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
+          )
         : 0;
 
     // Behavioral Risk Formula (Score 0-100)
@@ -370,7 +376,7 @@ export class SaasAnalyticsService {
       lastTransaction: Number(c.invoices[0]?.totalAmount || 0),
       daysSilent: Math.floor(
         (Date.now() - c.invoices[0]?.issueDate.getTime()) /
-        (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
       ),
     }));
 
@@ -460,9 +466,9 @@ export class SaasAnalyticsService {
       systemHealth:
         reports.length > 0
           ? Math.round(
-            reports.reduce((sum, r) => sum + r.healthScore, 0) /
-            reports.length,
-          )
+              reports.reduce((sum, r) => sum + r.healthScore, 0) /
+                reports.length,
+            )
           : 0,
       topAtRisk,
       allReports: reports,

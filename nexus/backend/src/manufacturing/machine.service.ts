@@ -8,7 +8,7 @@ export class MachineService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) { }
+  ) {}
 
   async createMachine(tenantId: string, data: any) {
     const machine = await this.prisma.machine.create({
@@ -35,7 +35,11 @@ export class MachineService {
     });
   }
 
-  async updateMachineStatus(tenantId: string, id: string, status: MachineStatus) {
+  async updateMachineStatus(
+    tenantId: string,
+    id: string,
+    status: MachineStatus,
+  ) {
     const machine = await this.prisma.machine.findFirst({
       where: { id, tenantId },
     });

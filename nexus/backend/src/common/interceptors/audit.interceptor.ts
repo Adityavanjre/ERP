@@ -18,7 +18,7 @@ export class AuditInterceptor implements NestInterceptor {
   constructor(
     private prisma: PrismaService,
     private readonly traceService: TraceService,
-  ) { }
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const req = context.switchToHttp().getRequest();
@@ -57,14 +57,23 @@ export class AuditInterceptor implements NestInterceptor {
                 query: req.query,
                 params: req.params,
                 correlationId: req['correlationId'],
-                ...(channel === 'MOBILE' ? { mobileIntent: 'MOBILE_INTENT_ONLY' } : {}),
+                ...(channel === 'MOBILE'
+                  ? { mobileIntent: 'MOBILE_INTENT_ONLY' }
+                  : {}),
               },
-              ipAddress: req.header('x-forwarded-for')?.split(',')[0].trim() || req.header('x-real-ip') || req.ip || '0.0.0.0',
+              ipAddress:
+                req.header('x-forwarded-for')?.split(',')[0].trim() ||
+                req.header('x-real-ip') ||
+                req.ip ||
+                '0.0.0.0',
             },
           });
         } catch (error) {
           // AUDIT-INT-001: Use Logger instead of console.error so log drains receive this.
-          this.logger.error('Audit log write failed — mutation was NOT recorded in audit trail', error);
+          this.logger.error(
+            'Audit log write failed — mutation was NOT recorded in audit trail',
+            error,
+          );
           // Non-blocking: audit failure must never crash the main request.
         }
       }),
@@ -79,7 +88,10 @@ export class AuditInterceptor implements NestInterceptor {
     for (const key in sanitized) {
       if (sensitiveKeys.some((sk) => key.toLowerCase().includes(sk))) {
         sanitized[key] = '[MASKED]';
-      } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+      } else if (
+        typeof sanitized[key] === 'object' &&
+        sanitized[key] !== null
+      ) {
         sanitized[key] = this.sanitizePayload(sanitized[key]);
       }
     }

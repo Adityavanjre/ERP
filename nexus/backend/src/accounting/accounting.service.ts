@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma, Role, User } from '@prisma/client';
 import { LedgerService } from './services/ledger.service';
 import { InvoiceService } from './services/invoice.service';
 import { PaymentService } from './services/payment.service';
@@ -29,19 +29,32 @@ export class AccountingService {
     private readonly fixedAsset: FixedAssetService,
     private readonly onboarding: OnboardingService,
     private readonly reporting: ReportingService,
-  ) { }
-
+  ) {}
 
   // --- Chart of Accounts ---
-  async createAccount(tenantId: string, data: any) {
-    return this.ledger.createAccount(tenantId, data);
+  async createAccount(
+    tenantId: string,
+    data: Omit<Prisma.AccountUncheckedCreateInput, 'tenantId'> & {
+      openingBalance?: number | string | Decimal;
+    },
+  ) {
+    return this.ledger.createAccount(tenantId, data as any);
   }
 
-  async getAccounts(tenantId: string, page: number = 1, limit: number = 100, isActive: boolean = false) {
+  async getAccounts(
+    tenantId: string,
+    page: number = 1,
+    limit: number = 100,
+    isActive: boolean = false,
+  ) {
     return this.ledger.getAccounts(tenantId, page, limit, isActive);
   }
 
-  async initializeTenantAccounts(tenantId: string, tx?: any, industry?: string) {
+  async initializeTenantAccounts(
+    tenantId: string,
+    tx?: Prisma.TransactionClient,
+    industry?: string,
+  ) {
     return this.ledger.initializeTenantAccounts(tenantId, tx, industry);
   }
 
@@ -50,7 +63,11 @@ export class AccountingService {
   }
 
   // --- Transactions / Journals ---
-  async getTransactions(tenantId: string, page: number = 1, limit: number = 50) {
+  async getTransactions(
+    tenantId: string,
+    page: number = 1,
+    limit: number = 50,
+  ) {
     return this.ledger.getTransactions(tenantId, page, limit);
   }
 
@@ -58,16 +75,29 @@ export class AccountingService {
     return this.reporting.exportTransactionsCsvStream(tenantId);
   }
 
-  async createJournalEntry(tenantId: string, data: any, tx?: any) {
+  async createJournalEntry(
+    tenantId: string,
+    data: CreateJournalEntryDto,
+    tx?: Prisma.TransactionClient,
+  ) {
     return this.ledger.createJournalEntry(tenantId, data, tx);
   }
 
-  async checkPeriodLock(tenantId: string, date: Date | string, tx?: any) {
+  async checkPeriodLock(
+    tenantId: string,
+    date: Date | string,
+    tx?: Prisma.TransactionClient,
+  ) {
     return this.ledger.checkPeriodLock(tenantId, date, tx);
   }
 
   // --- Invoices ---
-  async createInvoice(tenantId: string, data: any, txOverride?: any, deductStock: boolean = true) {
+  async createInvoice(
+    tenantId: string,
+    data: any,
+    txOverride?: Prisma.TransactionClient,
+    deductStock: boolean = true,
+  ) {
     return this.invoice.createInvoice(tenantId, data, txOverride, deductStock);
   }
 
@@ -125,7 +155,6 @@ export class AccountingService {
     return this.payment.getSupplierLedger(tenantId, supplierId);
   }
 
-
   // --- Fixed Assets & Depreciation ---
   // NOTE: getFixedAssets, createFixedAsset, runMonthlyDepreciation are defined at the bottom of this service.
   //       runDepreciation (bulk, month-level) is kept here for backward compatibility.
@@ -142,10 +171,14 @@ export class AccountingService {
 
     for (const asset of assets) {
       const depreciableAmount = asset.purchaseValue.minus(asset.salvageValue);
-      const monthlyCharge = depreciableAmount.div(asset.usefulLife).toDecimalPlaces(2);
+      const monthlyCharge = depreciableAmount
+        .div(asset.usefulLife)
+        .toDecimalPlaces(2);
 
       // Guard: Don't over-depreciate
-      const remainingToDepreciate = depreciableAmount.minus(asset.accumulatedDepreciation);
+      const remainingToDepreciate = depreciableAmount.minus(
+        asset.accumulatedDepreciation,
+      );
       const finalCharge = Decimal.min(monthlyCharge, remainingToDepreciate);
 
       if (finalCharge.gt(0)) {
@@ -153,21 +186,32 @@ export class AccountingService {
       }
     }
 
-    if (entries.length === 0) return { message: 'No depreciation required for this period.' };
+    if (entries.length === 0)
+      return { message: 'No depreciation required for this period.' };
 
     return this.prisma.$transaction(async (tx) => {
-      const depExpAccount = await tx.account.findFirst({ where: { tenantId, name: 'Depreciation Expense' } });
-      const accDepAccount = await tx.account.findFirst({ where: { tenantId, name: 'Accumulated Depreciation' } });
+      const depExpAccount = await tx.account.findFirst({
+        where: { tenantId, name: 'Depreciation Expense' },
+      });
+      const accDepAccount = await tx.account.findFirst({
+        where: { tenantId, name: 'Accumulated Depreciation' },
+      });
 
       if (!depExpAccount || !accDepAccount) {
-        throw new BadRequestException('Depreciation accounts not found in Chart of Accounts.');
+        throw new BadRequestException(
+          'Depreciation accounts not found in Chart of Accounts.',
+        );
       }
 
       let totalCharge = new Decimal(0);
-      const updatePromises = entries.map(entry => {
+      const updatePromises = entries.map((entry) => {
         totalCharge = totalCharge.plus(entry.charge);
-        const newAccumulated = entry.asset.accumulatedDepreciation.plus(entry.charge);
-        const isFullyDepreciated = newAccumulated.equals(entry.asset.purchaseValue.minus(entry.asset.salvageValue));
+        const newAccumulated = entry.asset.accumulatedDepreciation.plus(
+          entry.charge,
+        );
+        const isFullyDepreciated = newAccumulated.equals(
+          entry.asset.purchaseValue.minus(entry.asset.salvageValue),
+        );
 
         return (tx as any).fixedAsset.updateMany({
           where: { id: entry.asset.id, tenantId },
@@ -184,18 +228,34 @@ export class AccountingService {
       // 2. Book Single Consolidated Journal Entry
       const totalChargeNumber = Number(totalCharge.toFixed(2));
       if (totalChargeNumber > 0) {
-        await this.ledger.createJournalEntry(tenantId, {
-          date: new Date(year, month - 1, 28).toISOString(), // Standardized string date
-          description: `Consolidated Monthly Depreciation for ${month}/${year}`,
-          reference: `DEP-BULK-${month}-${year}`,
-          transactions: [
-            { accountId: depExpAccount.id, type: 'Debit', amount: totalChargeNumber, description: `Depreciation Charge (${entries.length} assets)` },
-            { accountId: accDepAccount.id, type: 'Credit', amount: totalChargeNumber, description: `Accumulated Prov (${entries.length} assets)` },
-          ],
-        }, tx);
+        await this.ledger.createJournalEntry(
+          tenantId,
+          {
+            date: new Date(year, month - 1, 28).toISOString(), // Standardized string date
+            description: `Consolidated Monthly Depreciation for ${month}/${year}`,
+            reference: `DEP-BULK-${month}-${year}`,
+            transactions: [
+              {
+                accountId: depExpAccount.id,
+                type: 'Debit',
+                amount: totalChargeNumber,
+                description: `Depreciation Charge (${entries.length} assets)`,
+              },
+              {
+                accountId: accDepAccount.id,
+                type: 'Credit',
+                amount: totalChargeNumber,
+                description: `Accumulated Prov (${entries.length} assets)`,
+              },
+            ],
+          },
+          tx,
+        );
       }
 
-      return { message: `Depreciation processed for ${entries.length} assets.` };
+      return {
+        message: `Depreciation processed for ${entries.length} assets.`,
+      };
     });
   }
 
@@ -220,8 +280,22 @@ export class AccountingService {
     return this.tally.getAuditorDashboard(tenantId, month, year);
   }
 
-  async togglePeriodLock(tenantId: string, month: number, year: number, userId: string, action: 'LOCK' | 'UNLOCK', reason?: string) {
-    return this.tally.togglePeriodLock(tenantId, month, year, userId, action, reason);
+  async togglePeriodLock(
+    tenantId: string,
+    month: number,
+    year: number,
+    userId: string,
+    action: 'LOCK' | 'UNLOCK',
+    reason?: string,
+  ) {
+    return this.tally.togglePeriodLock(
+      tenantId,
+      month,
+      year,
+      userId,
+      action,
+      reason,
+    );
   }
 
   async exportLedgerMasters(tenantId: string) {
@@ -232,7 +306,7 @@ export class AccountingService {
     return this.tally.generateLedgerMastersStream(tenantId);
   }
 
-  round2(val: any) {
+  round2(val: number | string | Decimal) {
     return this.ledger.round2(val);
   }
 
@@ -301,17 +375,21 @@ export class AccountingService {
     let totalRevenue = new Decimal(0);
     let totalExpense = new Decimal(0);
 
-    const revenue = accounts.filter(a => a.type === 'Revenue').map(a => {
-      const bal = new Decimal(a.balance || 0);
-      totalRevenue = totalRevenue.add(bal);
-      return { id: a.id, name: a.name, balance: bal.toFixed(2) };
-    });
+    const revenue = accounts
+      .filter((a) => a.type === 'Revenue')
+      .map((a) => {
+        const bal = new Decimal(a.balance || 0);
+        totalRevenue = totalRevenue.add(bal);
+        return { id: a.id, name: a.name, balance: bal.toFixed(2) };
+      });
 
-    const expenses = accounts.filter(a => a.type === 'Expense').map(a => {
-      const bal = new Decimal(a.balance || 0);
-      totalExpense = totalExpense.add(bal);
-      return { id: a.id, name: a.name, balance: bal.toFixed(2) };
-    });
+    const expenses = accounts
+      .filter((a) => a.type === 'Expense')
+      .map((a) => {
+        const bal = new Decimal(a.balance || 0);
+        totalExpense = totalExpense.add(bal);
+        return { id: a.id, name: a.name, balance: bal.toFixed(2) };
+      });
 
     const netProfit = totalRevenue.sub(totalExpense);
 
@@ -338,8 +416,11 @@ export class AccountingService {
     return this.fixedAsset.importAssets(tenantId, csvContent);
   }
 
-  async createFixedAsset(tenantId: string, data: any) {
-    return this.fixedAsset.create(tenantId, data);
+  async createFixedAsset(
+    tenantId: string,
+    data: Omit<Prisma.FixedAssetUncheckedCreateInput, 'tenantId'>,
+  ) {
+    return this.fixedAsset.create(tenantId, data as any);
   }
 
   async runMonthlyDepreciation(tenantId: string, assetId: string) {
@@ -350,7 +431,7 @@ export class AccountingService {
    * Financial Year Closing Logic
    */
   async closeFinancialYear(tenantId: string, year: number, userId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Verify all 12 months are locked AND form a contiguous sequence
       // Checking count=12 is insufficient: 12 arbitrary months could satisfy it
       // without covering the actual fiscal year range.
@@ -360,18 +441,22 @@ export class AccountingService {
       });
 
       if (locks.length < 12) {
-        throw new BadRequestException(`Cannot close Financial Year ${year}. Only ${locks.length} of 12 months are locked.`);
+        throw new BadRequestException(
+          `Cannot close Financial Year ${year}. Only ${locks.length} of 12 months are locked.`,
+        );
       }
 
       // Contiguity check: locked months must be exactly 1 through 12
       const lockedMonths = locks.map((l) => l.month).sort((a, b) => a - b);
       const expectedMonths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-      const isContiguous = expectedMonths.every((m, i) => lockedMonths[i] === m);
+      const isContiguous = expectedMonths.every(
+        (m, i) => lockedMonths[i] === m,
+      );
       if (!isContiguous) {
         const missing = expectedMonths.filter((m) => !lockedMonths.includes(m));
         throw new BadRequestException(
           `Cannot close Financial Year ${year}. Months ${missing.join(', ')} are not locked. ` +
-          `All 12 calendar months must be locked in sequence before closure.`,
+            `All 12 calendar months must be locked in sequence before closure.`,
         );
       }
 
@@ -379,10 +464,13 @@ export class AccountingService {
       const tenant = await tx.tenant.findUnique({ where: { id: tenantId } });
 
       if (!tenant) {
-        throw new BadRequestException('Tenant configuration not found. Closure aborted.');
+        throw new BadRequestException(
+          'Tenant configuration not found. Closure aborted.',
+        );
       }
 
-      const fyEndMonth = tenant.fyStartMonth === 1 ? 11 : tenant.fyStartMonth - 2; // zero-indexed. If start=4 (April), end=2 (March)
+      const fyEndMonth =
+        tenant.fyStartMonth === 1 ? 11 : tenant.fyStartMonth - 2; // zero-indexed. If start=4 (April), end=2 (March)
       const closeYear = tenant.fyStartMonth === 1 ? year : year + 1; // FY 2023 ends Mar 2024
       const closingDate = new Date(closeYear, fyEndMonth + 1, 0); // Last day of fyEndMonth
 
@@ -418,7 +506,10 @@ export class AccountingService {
       }
 
       if (journalTransactions.length === 0) {
-        return { message: `Year ${year} already appears closed or has no balances.`, year };
+        return {
+          message: `Year ${year} already appears closed or has no balances.`,
+          year,
+        };
       }
 
       const retainedEarnings = await tx.account.findFirst({
@@ -426,7 +517,9 @@ export class AccountingService {
       });
 
       if (!retainedEarnings) {
-        throw new BadRequestException('Retained Earnings account not found. Please initialize COA.');
+        throw new BadRequestException(
+          'Retained Earnings account not found. Please initialize COA.',
+        );
       }
 
       if (netProfit.greaterThan(0)) {
@@ -445,12 +538,16 @@ export class AccountingService {
         });
       }
 
-      await this.ledger.createJournalEntry(tenantId, {
-        date: closingDate.toISOString(),
-        description: `Financial Year ${year} Closing Entry`,
-        reference: `FY-CLOSE-${year}`,
-        transactions: journalTransactions,
-      }, tx);
+      await this.ledger.createJournalEntry(
+        tenantId,
+        {
+          date: closingDate.toISOString(),
+          description: `Financial Year ${year} Closing Entry`,
+          reference: `FY-CLOSE-${year}`,
+          transactions: journalTransactions,
+        },
+        tx,
+      );
 
       await tx.auditLog.create({
         data: {
@@ -461,7 +558,7 @@ export class AccountingService {
           details: {
             year,
             netProfit: netProfit.toFixed(2),
-            msg: `Closed financial year ${year}`
+            msg: `Closed financial year ${year}`,
           } as any,
         },
       });
@@ -480,7 +577,13 @@ export class AccountingService {
     });
   }
 
-  async lockPeriod(tenantId: string, month: number, year: number, userId: string, tx?: any) {
+  async lockPeriod(
+    tenantId: string,
+    month: number,
+    year: number,
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ) {
     const client = tx || this.prisma;
     const lock = await client.periodLock.upsert({
       where: {
@@ -508,9 +611,16 @@ export class AccountingService {
     return lock;
   }
 
-  async unlockPeriod(tenantId: string, month: number, year: number, reason: string) {
+  async unlockPeriod(
+    tenantId: string,
+    month: number,
+    year: number,
+    reason: string,
+  ) {
     if (!reason) {
-      throw new BadRequestException('Compliance Requirement: A reason must be provided for reopening a locked period.');
+      throw new BadRequestException(
+        'Compliance Requirement: A reason must be provided for reopening a locked period.',
+      );
     }
 
     const lock = await this.prisma.periodLock.update({
@@ -533,5 +643,3 @@ export class AccountingService {
     return lock;
   }
 }
-
-

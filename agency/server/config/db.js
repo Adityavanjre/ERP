@@ -37,8 +37,10 @@ const createAdminSafely = async () => {
         const Job = require('../models/Job');
 
         const adminEmail = (process.env.ADMIN_EMAIL || 'adityavanjre111@gmail.com').trim().toLowerCase();
-        const rawPassword = process.env.ADMIN_PASSWORD;
-        const adminPassword = (rawPassword || 'password123').trim();
+        if (!process.env.ADMIN_PASSWORD) {
+            throw new Error('SEC-020: ADMIN_PASSWORD is required for system initialization.');
+        }
+        const adminPassword = process.env.ADMIN_PASSWORD.trim();
         const userExists = await User.findOne({ email: adminEmail });
 
         if (!userExists) {

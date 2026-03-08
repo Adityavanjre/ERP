@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Settings, Shield, CreditCard, Bell, Globe, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Users, UserPlus, Key, Trash2, ShieldAlert } from "lucide-react";
+import { UserPlus, Key, Trash2, ShieldAlert } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,12 +20,46 @@ import { Role } from "@nexus/shared";
 
 // Use shared Role enum instead of local string literals
 
+interface Tenant {
+    id: string;
+    name: string;
+    slug: string;
+}
+
+interface BillingQuota {
+    maxUsers: number;
+    maxProducts: number;
+    aiEnabled: boolean;
+}
+
+interface BillingInfo {
+    plan: string;
+    quotas: BillingQuota;
+}
+
+interface Member {
+    id: string;
+    fullName: string;
+    email: string;
+    role: Role;
+}
+
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+    isWakeup?: boolean;
+    message?: string;
+}
+
 export default function SettingsPage() {
-    const [tenant, setTenant] = useState<any>(null);
+    const [tenant, setTenant] = useState<Tenant | null>(null);
     const [orgName, setOrgName] = useState('');
     const [loading, setLoading] = useState(true);
-    const [billingInfo, setBillingInfo] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]);
+    const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
+    const [members, setMembers] = useState<Member[]>([]);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     const [newUser, setNewUser] = useState({ fullName: '', email: '', role: Role.Biller });
     const [isResetOpen, setIsResetOpen] = useState(false);
@@ -35,7 +69,7 @@ export default function SettingsPage() {
     const { user: currentUser } = useAuth();
     const isOwner = currentUser?.role === Role.Owner;
 
-    const fetchSettings = async () => {
+    const fetchSettings = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -48,22 +82,23 @@ export default function SettingsPage() {
             setOrgName(profRes.data?.tenant?.name || '');
             setBillingInfo(billRes.data || null);
             setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.isWakeup ? err.message : "Failed to load settings. Please refresh.");
+            const error = err as ApiError;
+            setError(error.isWakeup ? (error.message || "Wakeup error") : "Failed to load settings. Please refresh.");
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         setMounted(true);
         fetchSettings();
-    }, []);
+    }, [fetchSettings]);
 
-    if (!mounted) return null; // Prevent hydration mismatch
 
-    const handleAddUser = async (e: React.FormEvent) => {
+
+    const handleAddUser = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await api.post("users", newUser);
@@ -71,59 +106,61 @@ export default function SettingsPage() {
             setIsAddUserOpen(false);
             const res = await api.get("users");
             setMembers(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
+        } catch {
             toast.error("Failed to add user");
         }
-    };
+    }, [newUser]);
 
-    const handleUpdateRole = async (userId: string, role: Role) => {
+    const handleUpdateRole = useCallback(async (userId: string, role: Role) => {
         try {
             await api.patch(`/users/${userId}/role`, { role });
             toast.success("Role updated successfully");
             const res = await api.get("users");
             setMembers(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
+        } catch {
             toast.error("Failed to update role");
         }
-    };
+    }, []);
 
-    const handleResetPassword = async (userId: string) => {
+    const handleResetPassword = useCallback(async (userId: string) => {
         try {
             const res = await api.post(`/users/${userId}/reset-password`);
             setTempPassword(res.data.temporaryPassword);
             setIsResetOpen(true);
             toast.success("Temporary password generated");
-        } catch (err) {
+        } catch {
             toast.error("Failed to generate password");
         }
-    };
+    }, []);
 
-    const handleRemoveUser = async (userId: string) => {
+    const handleRemoveUser = useCallback(async (userId: string) => {
         if (!confirm("Are you sure you want to remove this user? This cannot be undone.")) return;
         try {
             await api.delete(`/users/${userId}`);
             toast.success("User removed from tenant");
             const res = await api.get("users");
             setMembers(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
+        } catch {
             toast.error("Failed to remove user");
         }
-    };
+    }, []);
 
-    const handleUpdate = async (e: React.FormEvent) => {
+    const handleUpdate = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         toast.success("Settings updated successfully");
-    };
+    }, []);
 
-    const handleUpgrade = async (plan: string) => {
+    const handleUpgrade = useCallback(async (plan: string) => {
         try {
             await api.post("system/billing/upgrade", { plan });
             toast.success(`Successfully upgraded to ${plan} plan`);
             location.reload();
-        } catch (err) {
+        } catch {
             toast.error("Upgrade failed. Please try again.");
         }
-    }
+    }, []);
+
+    if (!mounted) return null; // Prevent hydration mismatch
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
@@ -245,7 +282,7 @@ export default function SettingsPage() {
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                                                         {isOwner && member.email !== currentUser?.email && (
                                                             <>
-                                                                <Select onValueChange={(val: any) => handleUpdateRole(member.id, val)}>
+                                                                <Select onValueChange={(val: Role) => handleUpdateRole(member.id, val)}>
                                                                     <SelectTrigger className="w-[120px] h-8 text-xs font-bold border-slate-200">
                                                                         <SelectValue placeholder="Change Role" />
                                                                     </SelectTrigger>
@@ -436,7 +473,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Role</Label>
-                            <Select value={newUser.role} onValueChange={(val: any) => setNewUser({ ...newUser, role: val })}>
+                            <Select value={newUser.role} onValueChange={(val: Role) => setNewUser({ ...newUser, role: val })}>
                                 <SelectTrigger className="bg-slate-50 border-slate-200 h-11 font-bold">
                                     <SelectValue />
                                 </SelectTrigger>

@@ -12,13 +12,15 @@ export class CrmService {
     private prisma: PrismaService,
     private audit: AuditService,
     private ledger: LedgerService,
-  ) { }
+  ) {}
 
   async createCustomer(tenantId: string, data: any) {
     const { openingBalance, ...customerData } = data;
 
     if (customerData.firstName && customerData.firstName.trim().length < 3) {
-      throw new BadRequestException('Customer First Name must be at least 3 characters.');
+      throw new BadRequestException(
+        'Customer First Name must be at least 3 characters.',
+      );
     }
 
     const customer = await this.prisma.customer.create({
@@ -29,7 +31,7 @@ export class CrmService {
       await this.addOpeningBalance(tenantId, customer.id, {
         amount: Number(openingBalance),
         description: 'Opening Balance Migration',
-        date: new Date()
+        date: new Date(),
       });
     }
 
@@ -79,7 +81,8 @@ export class CrmService {
     return {
       data: (customers as any[]).map((c) => {
         const invoiceReceivable = (c.invoices || []).reduce(
-          (sum: number, inv: any) => sum + (Number(inv.totalAmount) - Number(inv.amountPaid)),
+          (sum: number, inv: any) =>
+            sum + (Number(inv.totalAmount) - Number(inv.amountPaid)),
           0,
         );
         const openingBal = (c.openingBalances || []).reduce(
@@ -115,15 +118,17 @@ export class CrmService {
 
       const cols = row.split(',').map((c) => c.trim());
       const data: any = {};
-      headers.forEach((h, idx) => { data[h] = cols[idx]; });
+      headers.forEach((h, idx) => {
+        data[h] = cols[idx];
+      });
 
       try {
         await this.prisma.$transaction(async (tx) => {
           const email = data.email;
-          if (!email) throw new Error("Email is required");
+          if (!email) throw new Error('Email is required');
 
           const existing = await tx.customer.findFirst({
-            where: { tenantId, email, isDeleted: false }
+            where: { tenantId, email, isDeleted: false },
           });
 
           let customerId = existing?.id;
@@ -135,22 +140,35 @@ export class CrmService {
             address: data.address || '',
             state: data.state || null,
             gstin: data.gstin || null,
-            status: CustomerStatus.Customer
+            status: CustomerStatus.Customer,
           };
 
           if (existing) {
-            await tx.customer.update({ where: { id: existing.id }, data: customerPayload });
+            await tx.customer.update({
+              where: { id: existing.id },
+              data: customerPayload,
+            });
           } else {
-            const newC = await tx.customer.create({ data: { ...customerPayload, tenantId, email } });
+            const newC = await tx.customer.create({
+              data: { ...customerPayload, tenantId, email },
+            });
             customerId = newC.id;
           }
 
           const ob = parseFloat(data.openingBalance) || 0;
           if (ob !== 0 && customerId) {
-            const existingOB = await tx.customerOpeningBalance.findFirst({ where: { tenantId, customerId } });
+            const existingOB = await tx.customerOpeningBalance.findFirst({
+              where: { tenantId, customerId },
+            });
             if (!existingOB) {
               await tx.customerOpeningBalance.create({
-                data: { tenantId, customerId, amount: ob, description: 'Imported', date: new Date() }
+                data: {
+                  tenantId,
+                  customerId,
+                  amount: ob,
+                  description: 'Imported',
+                  date: new Date(),
+                },
               });
               aggregateOpeningBalance += ob;
             }
@@ -165,8 +183,12 @@ export class CrmService {
 
     // Ledger Sync: Restore balance sheet integrity
     if (aggregateOpeningBalance !== 0) {
-      const arAcc = await this.prisma.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
-      const obAcc = await this.prisma.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
+      const arAcc = await this.prisma.account.findFirst({
+        where: { tenantId, name: 'Accounts Receivable' },
+      });
+      const obAcc = await this.prisma.account.findFirst({
+        where: { tenantId, name: 'Opening Balance Equity' },
+      });
 
       if (arAcc && obAcc) {
         await this.ledger.createJournalEntry(tenantId, {
@@ -174,9 +196,19 @@ export class CrmService {
           description: `Bulk Import Sync: ${results.imported} Customers`,
           reference: 'SYS-IMPORT-CUST',
           transactions: [
-            { accountId: arAcc.id, type: 'Debit', amount: Math.abs(aggregateOpeningBalance), description: 'Bulk OB' },
-            { accountId: obAcc.id, type: 'Credit', amount: Math.abs(aggregateOpeningBalance), description: 'Bulk OB' }
-          ]
+            {
+              accountId: arAcc.id,
+              type: 'Debit',
+              amount: Math.abs(aggregateOpeningBalance),
+              description: 'Bulk OB',
+            },
+            {
+              accountId: obAcc.id,
+              type: 'Credit',
+              amount: Math.abs(aggregateOpeningBalance),
+              description: 'Bulk OB',
+            },
+          ],
         });
       }
     }
@@ -185,8 +217,12 @@ export class CrmService {
   }
 
   async getStats(tenantId: string) {
-    const totalCustomers = await this.prisma.customer.count({ where: { tenantId, isDeleted: false } });
-    const leads = await this.prisma.customer.count({ where: { tenantId, status: CustomerStatus.Lead, isDeleted: false } });
+    const totalCustomers = await this.prisma.customer.count({
+      where: { tenantId, isDeleted: false },
+    });
+    const leads = await this.prisma.customer.count({
+      where: { tenantId, status: CustomerStatus.Lead, isDeleted: false },
+    });
     return { totalCustomers, leads };
   }
 
@@ -211,10 +247,17 @@ export class CrmService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const headers = ['firstName', 'lastName', 'email', 'phone', 'company', 'status'];
+    const headers = [
+      'firstName',
+      'lastName',
+      'email',
+      'phone',
+      'company',
+      'status',
+    ];
     const exportData = customers.map((c: any) => {
       const row: any = {};
-      headers.forEach(h => row[h] = c[h] || '');
+      headers.forEach((h) => (row[h] = c[h] || ''));
       return row;
     });
 
@@ -246,22 +289,40 @@ export class CrmService {
   async addOpeningBalance(tenantId: string, customerId: string, data: any) {
     return this.prisma.$transaction(async (tx) => {
       const ob = await tx.customerOpeningBalance.create({
-        data: { ...data, tenantId, customerId }
+        data: { ...data, tenantId, customerId },
       });
 
-      const arAcc = await tx.account.findFirst({ where: { tenantId, name: 'Accounts Receivable' } });
-      const obAcc = await tx.account.findFirst({ where: { tenantId, name: 'Opening Balance Equity' } });
+      const arAcc = await tx.account.findFirst({
+        where: { tenantId, name: 'Accounts Receivable' },
+      });
+      const obAcc = await tx.account.findFirst({
+        where: { tenantId, name: 'Opening Balance Equity' },
+      });
 
       if (arAcc && obAcc) {
-        await this.ledger.createJournalEntry(tenantId, {
-          date: new Date().toISOString(),
-          description: 'Opening Balance Adjustment',
-          reference: `OB-${ob.id.slice(0, 8)}`,
-          transactions: [
-            { accountId: arAcc.id, type: 'Debit', amount: Math.abs(Number(ob.amount)), description: 'Customer OB' },
-            { accountId: obAcc.id, type: 'Credit', amount: Math.abs(Number(ob.amount)), description: 'Customer OB' }
-          ]
-        }, tx);
+        await this.ledger.createJournalEntry(
+          tenantId,
+          {
+            date: new Date().toISOString(),
+            description: 'Opening Balance Adjustment',
+            reference: `OB-${ob.id.slice(0, 8)}`,
+            transactions: [
+              {
+                accountId: arAcc.id,
+                type: 'Debit',
+                amount: Math.abs(Number(ob.amount)),
+                description: 'Customer OB',
+              },
+              {
+                accountId: obAcc.id,
+                type: 'Credit',
+                amount: Math.abs(Number(ob.amount)),
+                description: 'Customer OB',
+              },
+            ],
+          },
+          tx,
+        );
       }
       return ob;
     });

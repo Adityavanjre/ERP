@@ -10,10 +10,21 @@ import {
   ForbiddenException,
   UnauthorizedException,
   Res,
+  Req,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request as ExpressRequest } from 'express';
+import { AuthenticatedRequest } from '../common/interfaces/request.interface';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, ForgotPasswordDto, ResetPasswordDto, GoogleLoginDto, OnboardingDto, MfaVerifyDto, MfaSetupDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  GoogleLoginDto,
+  OnboardingDto,
+  MfaVerifyDto,
+  MfaSetupDto,
+} from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AllowUnboarded } from '../common/decorators/allow-unboarded.decorator';
 import { AllowIdentity } from '../common/decorators/allow-identity.decorator';
@@ -34,14 +45,22 @@ export class AuthController {
     private authService: AuthService,
     private security: SecurityStorageService,
     private anomalyAlert: AnomalyAlertService,
-  ) { }
+  ) {}
 
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Public()
   @Post('login/web')
-  async loginWeb(@Request() req: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result: any = await this.authService.login(loginDto, 'WEB', req.ip || req.get('X-Forwarded-For'));
+  async loginWeb(
+    @Req() req: ExpressRequest,
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result: any = await this.authService.login(
+      loginDto,
+      'WEB',
+      req.ip || (req.get('X-Forwarded-For') as string),
+    );
     if (result && result.accessToken) {
       this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
@@ -52,16 +71,27 @@ export class AuthController {
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Public()
   @Post('login/mobile')
-  async loginMobile(@Request() req: any, @Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto, 'MOBILE', req.ip || req.get('X-Forwarded-For'));
+  async loginMobile(@Req() req: ExpressRequest, @Body() loginDto: LoginDto) {
+    return this.authService.login(
+      loginDto,
+      'MOBILE',
+      req.ip || (req.get('X-Forwarded-For') as string),
+    );
   }
 
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 30, ttl: 300000 } }) // Relaxed: 30 attempts per 5 minutes for setup
   @Public()
   @Post('login/admin')
-  async loginAdmin(@Request() req: any, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result: any = await this.authService.adminLogin(loginDto, req.ip || req.get('X-Forwarded-For'));
+  async loginAdmin(
+    @Req() req: ExpressRequest,
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result: any = await this.authService.adminLogin(
+      loginDto,
+      req.ip || (req.get('X-Forwarded-For') as string),
+    );
     if (result && result.accessToken) {
       this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
@@ -72,8 +102,14 @@ export class AuthController {
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Public()
   @Post('google-login/web')
-  async googleLoginWeb(@Body() googleLoginDto: GoogleLoginDto, @Res({ passthrough: true }) res: Response) {
-    const result: any = await this.authService.googleLogin(googleLoginDto, 'WEB');
+  async googleLoginWeb(
+    @Body() googleLoginDto: GoogleLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result: any = await this.authService.googleLogin(
+      googleLoginDto,
+      'WEB',
+    );
     if (result && result.accessToken) {
       this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
@@ -95,10 +131,19 @@ export class AuthController {
   @AllowUnboarded()
   @MobileAction('SELECT_TENANT')
   @Post('select-tenant')
-  async selectTenant(@Request() req: any, @Body('tenantId') tenantId: string, @Res({ passthrough: true }) res: Response) {
+  async selectTenant(
+    @Req() req: AuthenticatedRequest,
+    @Body('tenantId') tenantId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     // SECURITY: The 'channel' is inherited from the existing Identity token, which was anchored at login.
-    const channel = (req.user as any).channel || 'MOBILE'; // Default to Mobile if missing (Safety First)
-    const result: any = await this.authService.selectTenant(req.user.sub, tenantId, req.user.isMfaVerified, channel);
+    const channel = req.user.channel || 'MOBILE'; // Default to Mobile if missing (Safety First)
+    const result: any = await this.authService.selectTenant(
+      req.user.sub,
+      tenantId,
+      req.user.isMfaVerified,
+      channel,
+    );
     if (result && result.accessToken && channel === 'WEB') {
       this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
@@ -109,7 +154,7 @@ export class AuthController {
   @AllowIdentity()
   @MobileAction('VIEW_TENANTS')
   @Get('tenants')
-  async getTenants(@Request() req: any) {
+  async getTenants(@Req() req: AuthenticatedRequest) {
     return this.authService.getTenants(req.user.sub);
   }
 
@@ -119,7 +164,10 @@ export class AuthController {
   @AllowUnboarded()
   @MobileAction('ONBOARDING')
   @Post('onboarding')
-  async onboarding(@Request() req: any, @Body() dto: OnboardingDto) {
+  async onboarding(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: OnboardingDto,
+  ) {
     return this.authService.onboarding(req.user.sub, dto);
   }
 
@@ -127,11 +175,16 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('security-logs')
   @Roles(Role.Owner)
-  async getSecurityLogs(@Request() req: any) {
+  async getSecurityLogs(@Req() req: AuthenticatedRequest) {
     if (!req.user.tenantId) {
-      throw new ForbiddenException('A company context is required to view security logs.');
+      throw new ForbiddenException(
+        'A company context is required to view security logs.',
+      );
     }
-    return this.authService.getTenantSecurityLogs(req.user.sub, req.user.tenantId);
+    return this.authService.getTenantSecurityLogs(
+      req.user.sub,
+      req.user.tenantId,
+    );
   }
 
   // MON-002: Client-side Browser Telemetry Ingestion
@@ -141,7 +194,7 @@ export class AuthController {
   @AllowIdentity()
   @Post('client-telemetry')
   async reportClientTelemetry(
-    @Request() req: any,
+    @Req() req: AuthenticatedRequest,
     @Body('eventType') eventType: string,
     @Body('details') details: Record<string, unknown> = {},
   ) {
@@ -152,7 +205,7 @@ export class AuthController {
         req.user.tenantId || 'unknown',
         eventType,
         details,
-        req.ip || req.get('X-Forwarded-For') || 'unknown',
+        req.ip || (req.get('X-Forwarded-For') as string) || 'unknown',
       )
       .catch(() => void 0);
     return { received: true };
@@ -163,7 +216,10 @@ export class AuthController {
   @AllowIdentity()
   @AllowUnboarded()
   @Post('push-token')
-  async updatePushToken(@Request() req: any, @Body('token') token: string) {
+  async updatePushToken(
+    @Req() req: AuthenticatedRequest,
+    @Body('token') token: string,
+  ) {
     return this.authService.updatePushToken(req.user.sub, token);
   }
 
@@ -180,7 +236,7 @@ export class AuthController {
   @AllowIdentity()
   @MobileAction('CREATE_WORKSPACE')
   @Post('create-workspace')
-  async createWorkspace(@Request() req: any, @Body() dto: any) {
+  async createWorkspace(@Req() req: AuthenticatedRequest, @Body() dto: any) {
     return this.authService.createWorkspace(req.user.sub, dto);
   }
 
@@ -189,7 +245,7 @@ export class AuthController {
   @AllowUnboarded()
   @MobileAction('VIEW_PROFILE')
   @Get('profile')
-  getProfile(@Request() req: any) {
+  getProfile(@Req() req: AuthenticatedRequest) {
     return req.user;
   }
 
@@ -217,7 +273,11 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto.email, dto.token, dto.newPassword);
+    return this.authService.resetPassword(
+      dto.email,
+      dto.token,
+      dto.newPassword,
+    );
   }
 
   // --- MFA Endpoints ---
@@ -232,9 +292,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @AllowIdentity()
   @Post('mfa/verify-setup')
-  async verifyMfaSetup(@Request() req: any, @Body() dto: MfaSetupDto, @Res({ passthrough: true }) res: Response) {
-    const result: any = await this.authService.verifyMfaSetup(req.user.sub, dto.totpCode);
-    const channel = (req.user as any).channel || 'WEB';
+  async verifyMfaSetup(
+    @Request() req: any,
+    @Body() dto: MfaSetupDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result: any = await this.authService.verifyMfaSetup(
+      req.user.sub,
+      dto.totpCode,
+    );
+    const channel = req.user.channel || 'WEB';
     if (result && result.accessToken && channel === 'WEB') {
       this.setAuthCookies(res, result.accessToken, result.refreshToken);
     }
@@ -245,8 +312,14 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('mfa/verify-login')
-  async verifyMfaLogin(@Body() dto: MfaVerifyDto, @Res({ passthrough: true }) res: Response) {
-    const result: any = await this.authService.verifyMfaLogin(dto.token, dto.totpCode);
+  async verifyMfaLogin(
+    @Body() dto: MfaVerifyDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result: any = await this.authService.verifyMfaLogin(
+      dto.token,
+      dto.totpCode,
+    );
     // SEC-006: Only set cookies if the original session was a web session.
     // The channel is embedded in the MFA challenge token and propagated through
     // generateAuthResponse back to the result — use it to decide cookie behaviour.
@@ -281,18 +354,27 @@ export class AuthController {
   @AllowIdentity()
   @AllowUnboarded()
   @Post('logout-all')
-  async logoutAll(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+  async logoutAll(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     await this.authService.logoutAll(req.user.sub);
     res.clearCookie('nexus_token');
     res.clearCookie('nexus_refresh');
-    return { success: true, message: 'All active sessions have been invalidated.' };
+    return {
+      success: true,
+      message: 'All active sessions have been invalidated.',
+    };
   }
-
 
   @HttpCode(HttpStatus.OK)
   @Public()
   @Post('refresh')
-  async refresh(@Request() req: any, @Body('refreshToken') bodyToken: string, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Request() req: any,
+    @Body('refreshToken') bodyToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     let token = bodyToken;
     if (!token && req.cookies && req.cookies['nexus_refresh']) {
       token = req.cookies['nexus_refresh'];

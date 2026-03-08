@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Logs an enterprise-grade audit trail entry.
@@ -22,7 +22,9 @@ export class AuditService {
     try {
       const finalDetails = {
         ...(data.details || {}),
-        ...(data.channel === 'MOBILE' ? { mobileIntent: 'MOBILE_INTENT_ONLY' } : {}),
+        ...(data.channel === 'MOBILE'
+          ? { mobileIntent: 'MOBILE_INTENT_ONLY' }
+          : {}),
       };
 
       return await this.prisma.auditLog.create({
@@ -37,16 +39,21 @@ export class AuditService {
         },
       });
     } catch (err: any) {
-      this.logger.error(`CRITICAL: Audit logging failed for action ${data.action}`, err?.stack || err);
+      this.logger.error(
+        `CRITICAL: Audit logging failed for action ${data.action}`,
+        err?.stack || err,
+      );
 
       // LOG-004: Ensure system resilience by not breaking the business transaction.
       // We also attempt to report the log failure to Sentry if available.
       if (process.env.SENTRY_DSN) {
-        import('@sentry/node').then(Sentry => {
-          Sentry.captureException(err, {
-            extra: { auditAction: data.action, auditResource: data.resource }
-          });
-        }).catch(() => void 0);
+        import('@sentry/node')
+          .then((Sentry) => {
+            Sentry.captureException(err, {
+              extra: { auditAction: data.action, auditResource: data.resource },
+            });
+          })
+          .catch(() => void 0);
       }
 
       return null;

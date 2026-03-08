@@ -13,9 +13,15 @@ import { PosService } from './services/pos.service';
 import { SystemModule } from '../system/system.module';
 
 @Module({
-  imports: [PrismaModule, AccountingModule, CommonModule, InventoryModule, SystemModule],
+  imports: [
+    PrismaModule,
+    AccountingModule,
+    CommonModule,
+    InventoryModule,
+    SystemModule,
+  ],
   controllers: [SalesController],
   providers: [SalesService, PosService],
   exports: [SalesService, PosService],
 })
-export class SalesModule { }
+export class SalesModule {}

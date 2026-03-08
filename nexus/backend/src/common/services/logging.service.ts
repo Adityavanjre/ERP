@@ -32,7 +32,7 @@ export class LoggingService {
     if (!this.hmacSecret) {
       this.logger.warn(
         'AUDIT_HMAC_SECRET is not set. Audit log hash chain is DISABLED. ' +
-        'Add AUDIT_HMAC_SECRET to environment variables to enable tamper detection.',
+          'Add AUDIT_HMAC_SECRET to environment variables to enable tamper detection.',
       );
     }
   }
@@ -45,10 +45,27 @@ export class LoggingService {
     if (!obj || typeof obj !== 'object') return obj;
     if (Array.isArray(obj)) return obj.map((item) => this.scrubDetails(item));
 
-    const sensitiveKeys = ['password', 'token', 'secret', 'jwt', 'creditCard', 'cvv', 'mfaSecret', 'totp', 'apiKey'];
+    const sensitiveKeys = [
+      'password',
+      'token',
+      'secret',
+      'jwt',
+      'creditCard',
+      'cvv',
+      'mfaSecret',
+      'totp',
+      'apiKey',
+      'email',
+      'gstin',
+      'phone',
+      'mobile',
+      'pan',
+    ];
     const scrubbed: any = {};
     for (const key in obj) {
-      if (sensitiveKeys.some((sk) => key.toLowerCase().includes(sk.toLowerCase()))) {
+      if (
+        sensitiveKeys.some((sk) => key.toLowerCase().includes(sk.toLowerCase()))
+      ) {
         scrubbed[key] = '[REDACTED]';
       } else if (typeof obj[key] === 'object') {
         scrubbed[key] = this.scrubDetails(obj[key]);
@@ -97,7 +114,8 @@ export class LoggingService {
     correlationId?: string;
     responseTimeMs?: number;
   }) {
-    const correlationId = data.correlationId || this.traceService.getCorrelationId();
+    const correlationId =
+      data.correlationId || this.traceService.getCorrelationId();
 
     try {
       // Wrap in a SERIALIZABLE transaction so the prevHash fetch + create are atomic.
@@ -149,8 +167,10 @@ export class LoggingService {
       );
     } catch (error) {
       // Fail-safe: never crash the main request flow because of audit logging.
-      this.logger.error('Audit log write failure — entry was NOT recorded', error);
+      this.logger.error(
+        'Audit log write failure — entry was NOT recorded',
+        error,
+      );
     }
   }
 }
-

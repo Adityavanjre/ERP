@@ -1,13 +1,46 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Package, Calculator, Layers } from 'lucide-react';
+
+interface BOMItemDetailed {
+    id: string;
+    productId: string;
+    quantity: number;
+    product?: {
+        name: string;
+        sku: string;
+        unit: string;
+        costPrice?: number;
+    };
+}
+
+interface BOMDetails {
+    id: string;
+    name: string;
+    quantity: number;
+    overheadRate: number;
+    isOverheadFixed: boolean;
+    product?: {
+        name: string;
+        sku: string;
+        unit: string;
+    };
+    items?: BOMItemDetailed[];
+}
+
+interface CostAnalysis {
+    materialCost: number;
+    overheadCost: number;
+    totalBatchCost: number;
+    estimatedUnitCost: number;
+}
 
 interface BOMDetailsDialogProps {
     bomId: string | null;
@@ -16,20 +49,12 @@ interface BOMDetailsDialogProps {
 }
 
 export function BOMDetailsDialog({ bomId, open, onOpenChange }: BOMDetailsDialogProps) {
-    const [bom, setBom] = useState<any>(null);
+    const [bom, setBom] = useState<BOMDetails | null>(null);
     const [loading, setLoading] = useState(false);
-    const [costAnalysis, setCostAnalysis] = useState<any>(null);
+    const [costAnalysis, setCostAnalysis] = useState<CostAnalysis | null>(null);
 
-    useEffect(() => {
-        if (open && bomId) {
-            fetchBOMDetails();
-        } else {
-            setBom(null);
-            setCostAnalysis(null);
-        }
-    }, [open, bomId]);
-
-    const fetchBOMDetails = async () => {
+    const fetchBOMDetails = useCallback(async () => {
+        if (!bomId) return;
         try {
             setLoading(true);
             const [bomRes, costRes] = await Promise.all([
@@ -43,7 +68,16 @@ export function BOMDetailsDialog({ bomId, open, onOpenChange }: BOMDetailsDialog
         } finally {
             setLoading(false);
         }
-    };
+    }, [bomId]);
+
+    useEffect(() => {
+        if (open && bomId) {
+            fetchBOMDetails();
+        } else {
+            setBom(null);
+            setCostAnalysis(null);
+        }
+    }, [open, bomId, fetchBOMDetails]);
 
     if (!open) return null;
 
@@ -129,7 +163,7 @@ export function BOMDetailsDialog({ bomId, open, onOpenChange }: BOMDetailsDialog
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {bom.items?.map((item: any) => (
+                                    {bom.items?.map((item: BOMItemDetailed) => (
                                         <TableRow key={item.id} className="hover:bg-slate-50">
                                             <TableCell className="font-medium text-slate-700">{item.product?.name}</TableCell>
                                             <TableCell className="font-mono text-xs text-slate-500">{item.product?.sku}</TableCell>

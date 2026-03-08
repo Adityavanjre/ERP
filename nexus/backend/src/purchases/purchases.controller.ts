@@ -25,7 +25,7 @@ import { Module } from '../common/decorators/module.decorator';
 @Module('purchases')
 @Controller('purchases')
 export class PurchasesController {
-  constructor(private readonly purchasesService: PurchasesService) { }
+  constructor(private readonly purchasesService: PurchasesService) {}
 
   @Post('suppliers')
   @Roles(Role.Owner, Role.Manager, Role.CA)
@@ -35,7 +35,14 @@ export class PurchasesController {
   }
 
   @Get('suppliers')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getSuppliers(@Req() req: any) {
     return this.purchasesService.getSuppliers(req.user.tenantId);
@@ -67,10 +74,25 @@ export class PurchasesController {
   }
 
   @Get('orders')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
-  getPOs(@Req() req: any, @Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.purchasesService.getPurchaseOrders(req.user.tenantId, page ? Number(page) : 1, limit ? Number(limit) : 50);
+  getPOs(
+    @Req() req: any,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.purchasesService.getPurchaseOrders(
+      req.user.tenantId,
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 50,
+    );
   }
 
   @Patch('orders/:id/status')
@@ -82,7 +104,12 @@ export class PurchasesController {
     @Body('status') status: POStatus,
     @Body('warehouseId') warehouseId?: string,
   ) {
-    return this.purchasesService.updatePOStatus(req.user.tenantId, id, status, warehouseId);
+    return this.purchasesService.updatePOStatus(
+      req.user.tenantId,
+      id,
+      status,
+      warehouseId,
+    );
   }
 
   @Get('stats')
@@ -97,13 +124,26 @@ export class PurchasesController {
   @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   addOpeningBalance(@Req() req: any, @Body() dto: any) {
-    return this.purchasesService.addSupplierOpeningBalance(req.user.tenantId, dto);
+    return this.purchasesService.addSupplierOpeningBalance(
+      req.user.tenantId,
+      dto,
+    );
   }
 
   @Get('suppliers/:id/opening-balances')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getOpeningBalances(@Req() req: any, @Param('id') id: string) {
-    return this.purchasesService.getSupplierOpeningBalances(req.user.tenantId, id);
+    return this.purchasesService.getSupplierOpeningBalances(
+      req.user.tenantId,
+      id,
+    );
   }
 }

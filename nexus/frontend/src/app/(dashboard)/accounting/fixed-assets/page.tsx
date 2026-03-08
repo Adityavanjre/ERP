@@ -59,8 +59,9 @@ export default function FixedAssetsPage() {
             setFetchError(null);
             const res = await api.get("accounting/fixed-assets");
             setAssets(Array.isArray(res.data) ? res.data : []);
-        } catch (err: any) {
-            const msg = err.response?.data?.message || "Failed to load fixed assets";
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            const msg = error.response?.data?.message || "Failed to load fixed assets";
             setFetchError(msg);
             toast.error(msg);
         } finally {
@@ -91,8 +92,9 @@ export default function FixedAssetsPage() {
             setDialogOpen(false);
             setForm({ name: "", assetCode: "", purchaseDate: new Date().toISOString().split("T")[0], purchaseValue: "", salvageValue: "0", usefulLife: "60" });
             fetchAssets();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to add asset");
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(error.response?.data?.message || "Failed to add asset");
         }
     };
 
@@ -101,8 +103,9 @@ export default function FixedAssetsPage() {
             const res = await api.post(`accounting/fixed-assets/${assetId}/depreciate`);
             toast.success(`Depreciation of ₹${res.data.monthlyDepreciation} posted for ${assetName}`);
             fetchAssets();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Depreciation failed");
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            toast.error(error.response?.data?.message || "Depreciation failed");
         }
     };
 

@@ -25,11 +25,9 @@ export default function RootError({
                 </div>
 
                 <div className="space-y-4">
-                    <h1 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic">
-                        Something went wrong
-                    </h1>
+                    <h1 className="text-4xl font-black text-rose-500 tracking-tight">We&apos;re sorry, something went wrong.</h1>
                     <p className="text-slate-500 font-medium leading-relaxed">
-                        We've encountered an unexpected error. The system has safely stopped the current action to protect your data.
+                        We&apos;ve encountered an unexpected error. The system has safely stopped the current action to protect your data.
                     </p>
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Error Digest</p>

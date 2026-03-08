@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import API_URL from '../api/config';
+import api from '../api';
 import { motion } from 'framer-motion';
 import { Briefcase, MapPin, Clock, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -21,7 +20,7 @@ const Careers = () => {
     useEffect(() => {
         const fetchJobs = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/jobs`);
+                const { data } = await api.get('/jobs');
                 setJobs(data || []);
             } catch (err) {
                 console.error("Error fetching jobs:", err);

@@ -33,8 +33,8 @@ import { PosService } from './services/pos.service';
 export class SalesController {
   constructor(
     private readonly salesService: SalesService,
-    private readonly posService: PosService
-  ) { }
+    private readonly posService: PosService,
+  ) {}
 
   @Post('pos/checkout')
   @Roles(Role.Owner, Role.Manager, Role.Biller)

@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { POStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -16,7 +20,7 @@ export class PurchasesService {
     private ledger: LedgerService,
     private tds: TdsService,
     private readonly traceService: TraceService,
-  ) { }
+  ) {}
 
   // --- Suppliers ---
   async createSupplier(tenantId: string, data: any) {
@@ -41,19 +45,37 @@ export class PurchasesService {
         });
 
         // GL Journal: Dr Opening Balance Equity / Cr Accounts Payable
-        const apAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
-        const obAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+        const apAcc = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
+        });
+        const obAcc = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+        });
 
         if (apAcc && obAcc) {
-          await this.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Opening Balance: ${supplier.name}`,
-            reference: `OB-${supplier.id.slice(0, 8)}`,
-            transactions: [
-              { accountId: obAcc.id, type: 'Debit', amount: obAmount.abs().toNumber(), description: 'Supplier Opening Balance' },
-              { accountId: apAcc.id, type: 'Credit', amount: obAmount.abs().toNumber(), description: 'Supplier Opening Balance' },
-            ],
-          }, tx);
+          await this.ledger.createJournalEntry(
+            tenantId,
+            {
+              date: new Date().toISOString(),
+              description: `Opening Balance: ${supplier.name}`,
+              reference: `OB-${supplier.id.slice(0, 8)}`,
+              transactions: [
+                {
+                  accountId: obAcc.id,
+                  type: 'Debit',
+                  amount: obAmount.abs().toNumber(),
+                  description: 'Supplier Opening Balance',
+                },
+                {
+                  accountId: apAcc.id,
+                  type: 'Credit',
+                  amount: obAmount.abs().toNumber(),
+                  description: 'Supplier Opening Balance',
+                },
+              ],
+            },
+            tx,
+          );
         }
       });
     }
@@ -88,24 +110,34 @@ export class PurchasesService {
    */
   async importSuppliers(tenantId: string, csvContent: string) {
     const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const results = { total: lines.length - 1, imported: 0, failed: 0, errors: [] as string[] };
+    const headers = lines[0].split(',').map((h) => h.trim());
+    const results = {
+      total: lines.length - 1,
+      imported: 0,
+      failed: 0,
+      errors: [] as string[],
+    };
     let aggregateAP = 0;
 
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
-      const cols = lines[i].split(',').map(c => c.trim());
+      const cols = lines[i].split(',').map((c) => c.trim());
       const data: any = {};
-      headers.forEach((h, idx) => { data[h] = cols[idx]; });
+      headers.forEach((h, idx) => {
+        data[h] = cols[idx];
+      });
 
       try {
         await this.prisma.$transaction(async (tx) => {
           const name = data.name;
           const email = data.email;
-          if (!name) throw new BadRequestException('Supplier Name is required for import.');
+          if (!name)
+            throw new BadRequestException(
+              'Supplier Name is required for import.',
+            );
 
           const existing = await tx.supplier.findFirst({
-            where: { tenantId, name, isDeleted: false }
+            where: { tenantId, name, isDeleted: false },
           });
 
           let supplierId = existing?.id;
@@ -116,22 +148,36 @@ export class PurchasesService {
             company: data.company || '',
             address: data.address || '',
             gstin: data.gstin || null,
-            isDeleted: false
+            isDeleted: false,
           };
 
           if (existing) {
-            await tx.supplier.update({ where: { id: existing.id }, data: supplierPayload });
+            await tx.supplier.update({
+              where: { id: existing.id },
+              data: supplierPayload,
+            });
           } else {
-            const newS = await tx.supplier.create({ data: { ...supplierPayload, tenantId } });
+            const newS = await tx.supplier.create({
+              data: { ...supplierPayload, tenantId },
+            });
             supplierId = newS.id;
           }
 
           const ob = parseFloat(data.openingBalance) || 0;
           if (ob !== 0 && supplierId) {
-            const existingOB = await tx.supplierOpeningBalance.findFirst({ where: { tenantId, supplierId } });
+            const existingOB = await tx.supplierOpeningBalance.findFirst({
+              where: { tenantId, supplierId },
+            });
             if (!existingOB) {
               await tx.supplierOpeningBalance.create({
-                data: { tenantId, supplierId, amount: ob, description: 'Bulk Import', date: new Date(), correlationId: this.traceService.getCorrelationId() } as any
+                data: {
+                  tenantId,
+                  supplierId,
+                  amount: ob,
+                  description: 'Bulk Import',
+                  date: new Date(),
+                  correlationId: this.traceService.getCorrelationId(),
+                } as any,
               });
               aggregateAP += ob;
             }
@@ -146,8 +192,12 @@ export class PurchasesService {
 
     // Ledger Sync: Restore Liability integrity
     if (aggregateAP !== 0) {
-      const apAcc = await this.prisma.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
-      const obAcc = await this.prisma.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+      const apAcc = await this.prisma.account.findFirst({
+        where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
+      });
+      const obAcc = await this.prisma.account.findFirst({
+        where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+      });
 
       if (apAcc && obAcc) {
         await this.ledger.createJournalEntry(tenantId, {
@@ -155,10 +205,20 @@ export class PurchasesService {
           description: `Bulk Import Sync: ${results.imported} Suppliers`,
           reference: 'SYS-IMPORT-SUPP',
           transactions: [
-            { accountId: obAcc.id, type: 'Debit', amount: Math.abs(aggregateAP), description: 'Bulk OB' },
-            { accountId: apAcc.id, type: 'Credit', amount: Math.abs(aggregateAP), description: 'Bulk OB' }
+            {
+              accountId: obAcc.id,
+              type: 'Debit',
+              amount: Math.abs(aggregateAP),
+              description: 'Bulk OB',
+            },
+            {
+              accountId: apAcc.id,
+              type: 'Credit',
+              amount: Math.abs(aggregateAP),
+              description: 'Bulk OB',
+            },
           ],
-          correlationId: this.traceService.getCorrelationId()
+          correlationId: this.traceService.getCorrelationId(),
         });
       }
     }
@@ -179,15 +239,22 @@ export class PurchasesService {
         if (existing) return existing;
       }
 
-      await this.ledger.checkPeriodLock(tenantId, data.orderDate || new Date(), tx);
+      await this.ledger.checkPeriodLock(
+        tenantId,
+        data.orderDate || new Date(),
+        tx,
+      );
 
       const [tenant, supplier] = await Promise.all([
         tx.tenant.findUnique({ where: { id: tenantId } }),
         tx.supplier.findUnique({ where: { id: supplierId } }),
       ]);
 
-      const autoInterState = tenant?.state?.trim().toLowerCase() !== supplier?.state?.trim().toLowerCase();
-      const isInterState = data.isInterState !== undefined ? data.isInterState : autoInterState;
+      const autoInterState =
+        tenant?.state?.trim().toLowerCase() !==
+        supplier?.state?.trim().toLowerCase();
+      const isInterState =
+        data.isInterState !== undefined ? data.isInterState : autoInterState;
 
       // Compute GST per item
       let totalTaxable = new Decimal(0);
@@ -208,7 +275,9 @@ export class PurchasesService {
           const gstRate = new Decimal(product?.gstRate || item.gstRate || 0);
           const gstAmount = this.ledger.round2(taxable.mul(gstRate).div(100));
 
-          const cgst = isInterState ? new Decimal(0) : gstAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_DOWN);
+          const cgst = isInterState
+            ? new Decimal(0)
+            : gstAmount.div(2).toDecimalPlaces(2, Decimal.ROUND_DOWN);
           const sgst = isInterState ? new Decimal(0) : gstAmount.sub(cgst);
           const igst = isInterState ? gstAmount : new Decimal(0);
 
@@ -237,7 +306,8 @@ export class PurchasesService {
       const grandTotal = this.ledger.round2(totalTaxable.add(totalGST));
 
       const poCount = await tx.purchaseOrder.count({ where: { tenantId } });
-      const orderNumber = data.orderNumber || `PO-${(poCount + 1).toString().padStart(4, '0')}`;
+      const orderNumber =
+        data.orderNumber || `PO-${(poCount + 1).toString().padStart(4, '0')}`;
 
       const po = await tx.purchaseOrder.create({
         data: {
@@ -261,8 +331,11 @@ export class PurchasesService {
     });
   }
 
-
-  async getPurchaseOrders(tenantId: string, page: number = 1, limit: number = 50) {
+  async getPurchaseOrders(
+    tenantId: string,
+    page: number = 1,
+    limit: number = 50,
+  ) {
     const skip = (page - 1) * limit;
     const [orders, total] = await Promise.all([
       this.prisma.purchaseOrder.findMany({
@@ -291,7 +364,12 @@ export class PurchasesService {
     };
   }
 
-  async updatePOStatus(tenantId: string, id: string, status: POStatus, warehouseId?: string) {
+  async updatePOStatus(
+    tenantId: string,
+    id: string,
+    status: POStatus,
+    warehouseId?: string,
+  ) {
     // 0. Governance: Period Lock
     await this.accounting.checkPeriodLock(tenantId, new Date());
 
@@ -332,7 +410,10 @@ export class PurchasesService {
             const totalQty = oldStock.add(newQty);
 
             if (totalQty.greaterThan(0)) {
-              const exactMAC = (oldStock.mul(oldCost).add(newQty.mul(newPrice))).div(totalQty);
+              const exactMAC = oldStock
+                .mul(oldCost)
+                .add(newQty.mul(newPrice))
+                .div(totalQty);
               newMAC = this.ledger.round2(exactMAC);
             }
             newMAC = this.ledger.round2(newMAC);
@@ -351,11 +432,13 @@ export class PurchasesService {
               where: {
                 tenantId,
                 id: warehouseId, // Optional filter if provided
-                OR: warehouseId ? undefined : [
-                  { name: 'Main Warehouse' },
-                  {} // Fallback to any warehouse if no ID provides
-                ]
-              }
+                OR: warehouseId
+                  ? undefined
+                  : [
+                      { name: 'Main Warehouse' },
+                      {}, // Fallback to any warehouse if no ID provides
+                    ],
+              },
             });
 
             if (warehouse) {
@@ -366,15 +449,15 @@ export class PurchasesService {
                     tenantId,
                     productId: item.productId,
                     warehouseId: warehouse.id,
-                    notes: ''
-                  }
-                } as any
+                    notes: '',
+                  },
+                } as any,
               });
 
               if (existingLoc) {
                 await tx.stockLocation.update({
                   where: { id: existingLoc.id },
-                  data: { quantity: { increment: newQty } }
+                  data: { quantity: { increment: newQty } },
                 });
               } else {
                 await tx.stockLocation.create({
@@ -383,8 +466,8 @@ export class PurchasesService {
                     productId: item.productId,
                     warehouseId: warehouse.id,
                     quantity: newQty,
-                    notes: ''
-                  } as any
+                    notes: '',
+                  } as any,
                 });
               }
 
@@ -398,8 +481,8 @@ export class PurchasesService {
                   type: 'IN', // MovementType.IN
                   reference: po.orderNumber,
                   notes: `PO Receipt`,
-                  correlationId: this.traceService.getCorrelationId()
-                } as any
+                  correlationId: this.traceService.getCorrelationId(),
+                } as any,
               });
             }
             // -------------------------------------------
@@ -418,11 +501,15 @@ export class PurchasesService {
         });
 
         if (inventoryAccount && apAccount) {
-          const taxableValue = new Decimal(po.totalAmount).sub(new Decimal(po.totalGST || 0));
+          const taxableValue = new Decimal(po.totalAmount).sub(
+            new Decimal(po.totalGST || 0),
+          );
           const taxAmount = new Decimal(po.totalGST || 0);
           const totalAmount = new Decimal(po.totalAmount);
 
-          const supplier = await tx.supplier.findFirst({ where: { id: po.supplierId, tenantId } });
+          const supplier = await tx.supplier.findFirst({
+            where: { id: po.supplierId, tenantId },
+          });
           const isURD = !supplier?.gstin || supplier.gstin.trim() === '';
 
           // GST-004: URD RCM (Reverse Charge Mechanism)
@@ -441,63 +528,110 @@ export class PurchasesService {
           let ruleId: string | undefined;
 
           const poAny = po as any;
-          const activeTdsSection = poAny.tdsSection || (supplier as any)?.defaultTdsSection;
+          const activeTdsSection =
+            poAny.tdsSection || (supplier as any)?.defaultTdsSection;
 
           if (activeTdsSection) {
-            const res = await this.tds.calculateTds(tenantId, po.supplierId, activeTdsSection, vendorPayable.toNumber());
+            const res = await this.tds.calculateTds(
+              tenantId,
+              po.supplierId,
+              activeTdsSection,
+              vendorPayable.toNumber(),
+            );
             tdsAmount = res.tdsAmount;
             netAmount = res.netAmount;
             ruleId = res.ruleId;
           }
 
           const transactions = [
-            { accountId: inventoryAccount.id, type: 'Debit' as any, amount: taxableValue.toNumber(), description: `Stock Value - ${po.orderNumber}` },
-            { accountId: apAccount.id, type: 'Credit' as any, amount: netAmount.toNumber(), description: `Vendor Liability ${isURD ? '(RCM Base)' : ''} - ${po.orderNumber}` },
+            {
+              accountId: inventoryAccount.id,
+              type: 'Debit' as any,
+              amount: taxableValue.toNumber(),
+              description: `Stock Value - ${po.orderNumber}`,
+            },
+            {
+              accountId: apAccount.id,
+              type: 'Credit' as any,
+              amount: netAmount.toNumber(),
+              description: `Vendor Liability ${isURD ? '(RCM Base)' : ''} - ${po.orderNumber}`,
+            },
           ];
 
           if (itcAccount && taxAmount.greaterThan(0)) {
-            transactions.push({ accountId: itcAccount.id, type: 'Debit' as any, amount: taxAmount.toNumber(), description: `ITC Claim - ${po.orderNumber}` });
+            transactions.push({
+              accountId: itcAccount.id,
+              type: 'Debit' as any,
+              amount: taxAmount.toNumber(),
+              description: `ITC Claim - ${po.orderNumber}`,
+            });
           }
 
           if (rcmLiabilityAmount.greaterThan(0)) {
-            const rcmAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.GST_PAYABLE } });
-            if (!rcmAccount) throw new BadRequestException(`Missing '${StandardAccounts.GST_PAYABLE}' account. Required for URD Reverse Charge.`);
-            transactions.push({ accountId: rcmAccount.id, type: 'Credit' as any, amount: rcmLiabilityAmount.toNumber(), description: `RCM Liability (URD) - ${po.orderNumber}` });
+            const rcmAccount = await tx.account.findFirst({
+              where: { tenantId, name: StandardAccounts.GST_PAYABLE },
+            });
+            if (!rcmAccount)
+              throw new BadRequestException(
+                `Missing '${StandardAccounts.GST_PAYABLE}' account. Required for URD Reverse Charge.`,
+              );
+            transactions.push({
+              accountId: rcmAccount.id,
+              type: 'Credit' as any,
+              amount: rcmLiabilityAmount.toNumber(),
+              description: `RCM Liability (URD) - ${po.orderNumber}`,
+            });
           }
 
           if (tdsAmount.greaterThan(0)) {
             const tdsPayableAccount = await tx.account.findFirst({
               where: { tenantId, name: StandardAccounts.TDS_PAYABLE },
             });
-            if (!tdsPayableAccount) throw new BadRequestException(`Missing '${StandardAccounts.TDS_PAYABLE}' account. Please create TDS Payable in your Chart of Accounts before receiving this PO.`);
-            transactions.push({ accountId: tdsPayableAccount.id, type: 'Credit' as any, amount: tdsAmount.toNumber(), description: `TDS Deducted (${poAny.tdsSection})` });
+            if (!tdsPayableAccount)
+              throw new BadRequestException(
+                `Missing '${StandardAccounts.TDS_PAYABLE}' account. Please create TDS Payable in your Chart of Accounts before receiving this PO.`,
+              );
+            transactions.push({
+              accountId: tdsPayableAccount.id,
+              type: 'Credit' as any,
+              amount: tdsAmount.toNumber(),
+              description: `TDS Deducted (${poAny.tdsSection})`,
+            });
 
             // Record TDS Transaction
             if (ruleId) {
-              await this.tds.recordTdsTransaction(tenantId, {
-                ruleId,
-                supplierId: po.supplierId,
-                amount: totalAmount,
-                tdsAmount,
-                purchaseOrderId: po.id,
-                date: new Date(),
-              }, tx);
+              await this.tds.recordTdsTransaction(
+                tenantId,
+                {
+                  ruleId,
+                  supplierId: po.supplierId,
+                  amount: totalAmount,
+                  tdsAmount,
+                  purchaseOrderId: po.id,
+                  date: new Date(),
+                },
+                tx,
+              );
             }
           }
 
           // Use LedgerService for atomic update and balance synchronization
-          await this.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Purchase Receipt: ${po.orderNumber}`,
-            reference: po.orderNumber,
-            transactions,
-            correlationId: this.traceService.getCorrelationId()
-          }, tx);
+          await this.ledger.createJournalEntry(
+            tenantId,
+            {
+              date: new Date().toISOString(),
+              description: `Purchase Receipt: ${po.orderNumber}`,
+              reference: po.orderNumber,
+              transactions,
+              correlationId: this.traceService.getCorrelationId(),
+            },
+            tx,
+          );
 
           // Update PO with TDS info
           await (tx.purchaseOrder as any).update({
             where: { id: po.id },
-            data: { tdsAmount, netAmount, status } as any
+            data: { tdsAmount, netAmount, status } as any,
           });
         } else {
           throw new BadRequestException(
@@ -513,11 +647,17 @@ export class PurchasesService {
           // ATOMIC stock decrement: guarded with gte to prevent race-condition negative stock.
           // This mirrors the pattern in InventoryService.deductStock().
           const stockResult = await tx.product.updateMany({
-            where: { id: item.productId, tenantId, stock: { gte: item.quantity } },
-            data: { stock: { decrement: item.quantity } }
+            where: {
+              id: item.productId,
+              tenantId,
+              stock: { gte: item.quantity },
+            },
+            data: { stock: { decrement: item.quantity } },
           });
           if (stockResult.count === 0) {
-            throw new BadRequestException(`Stock integrity check failed for Product ${item.productId}: insufficient stock available to reverse this receipt. Stock may have been adjusted by a concurrent operation.`);
+            throw new BadRequestException(
+              `Stock integrity check failed for Product ${item.productId}: insufficient stock available to reverse this receipt. Stock may have been adjusted by a concurrent operation.`,
+            );
           }
 
           // B. Find where it was received (Auditor search)
@@ -526,14 +666,18 @@ export class PurchasesService {
               tenantId,
               productId: item.productId,
               reference: po.orderNumber,
-              type: 'IN'
-            }
+              type: 'IN',
+            },
           });
 
           if (movement) {
             await tx.stockLocation.updateMany({
-              where: { productId: item.productId, warehouseId: movement.warehouseId, warehouse: { tenantId } },
-              data: { quantity: { decrement: item.quantity } }
+              where: {
+                productId: item.productId,
+                warehouseId: movement.warehouseId,
+                warehouse: { tenantId },
+              },
+              data: { quantity: { decrement: item.quantity } },
             });
 
             await tx.stockMovement.create({
@@ -545,16 +689,22 @@ export class PurchasesService {
                 type: 'OUT',
                 reference: `CAN-${po.orderNumber}`,
                 notes: `PO Cancellation Reversal`,
-                correlationId: this.traceService.getCorrelationId()
-              } as any
+                correlationId: this.traceService.getCorrelationId(),
+              } as any,
             });
           }
         }
 
         // C. Financial Reversal (Credit Inventory, Debit Accounts Payable)
-        const inventoryAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.INVENTORY_ASSET } });
-        const apAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
-        const itcAccount = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.GST_RECEIVABLE } });
+        const inventoryAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.INVENTORY_ASSET },
+        });
+        const apAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
+        });
+        const itcAccount = await tx.account.findFirst({
+          where: { tenantId, name: StandardAccounts.GST_RECEIVABLE },
+        });
 
         if (inventoryAccount && apAccount) {
           const taxableValue = new Decimal(po.totalTaxable || 0);
@@ -562,21 +712,40 @@ export class PurchasesService {
           const totalAmount = new Decimal(po.totalAmount);
 
           const transactions = [
-            { accountId: inventoryAccount.id, type: 'Credit' as any, amount: taxableValue.toNumber(), description: `Reverse: Stock Value - ${po.orderNumber}` },
-            { accountId: apAccount.id, type: 'Debit' as any, amount: totalAmount.toNumber(), description: `Reverse: Vendor Liability - ${po.orderNumber}` },
+            {
+              accountId: inventoryAccount.id,
+              type: 'Credit' as any,
+              amount: taxableValue.toNumber(),
+              description: `Reverse: Stock Value - ${po.orderNumber}`,
+            },
+            {
+              accountId: apAccount.id,
+              type: 'Debit' as any,
+              amount: totalAmount.toNumber(),
+              description: `Reverse: Vendor Liability - ${po.orderNumber}`,
+            },
           ];
 
           if (itcAccount && taxAmount.greaterThan(0)) {
-            transactions.push({ accountId: itcAccount.id, type: 'Credit' as any, amount: taxAmount.toNumber(), description: `Reverse: ITC Claim - ${po.orderNumber}` });
+            transactions.push({
+              accountId: itcAccount.id,
+              type: 'Credit' as any,
+              amount: taxAmount.toNumber(),
+              description: `Reverse: ITC Claim - ${po.orderNumber}`,
+            });
           }
 
-          await this.ledger.createJournalEntry(tenantId, {
-            date: new Date().toISOString(),
-            description: `Cancellation of Purchase #${po.orderNumber}`,
-            reference: `CAN-${po.orderNumber}`,
-            transactions,
-            correlationId: this.traceService.getCorrelationId()
-          }, tx);
+          await this.ledger.createJournalEntry(
+            tenantId,
+            {
+              date: new Date().toISOString(),
+              description: `Cancellation of Purchase #${po.orderNumber}`,
+              reference: `CAN-${po.orderNumber}`,
+              transactions,
+              correlationId: this.traceService.getCorrelationId(),
+            },
+            tx,
+          );
         }
       }
 
@@ -627,27 +796,47 @@ export class PurchasesService {
         data: {
           ...data,
           tenantId,
-          amount: new Decimal(data.amount)
-        }
+          amount: new Decimal(data.amount),
+        },
       });
 
-      const supplier = await tx.supplier.findUnique({ where: { id: data.supplierId } });
+      const supplier = await tx.supplier.findUnique({
+        where: { id: data.supplierId },
+      });
 
       // GL Journal: Dr Opening Balance Equity / Cr Accounts Payable
-      const apAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE } });
-      const obAcc = await tx.account.findFirst({ where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY } });
+      const apAcc = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
+      });
+      const obAcc = await tx.account.findFirst({
+        where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+      });
 
       const obAmount = this.ledger.round2(ob.amount);
       if (apAcc && obAcc) {
-        await this.ledger.createJournalEntry(tenantId, {
-          date: new Date(data.date || new Date()).toISOString(),
-          description: `Opening Balance Adjustment: ${supplier?.name || ''}`,
-          reference: `OB-${ob.id.slice(0, 8)}`,
-          transactions: [
-            { accountId: obAcc.id, type: 'Debit', amount: obAmount.abs().toNumber(), description: 'Opening Balance Entry' },
-            { accountId: apAcc.id, type: 'Credit', amount: obAmount.abs().toNumber(), description: 'Opening Balance Entry' },
-          ],
-        }, tx);
+        await this.ledger.createJournalEntry(
+          tenantId,
+          {
+            date: new Date(data.date || new Date()).toISOString(),
+            description: `Opening Balance Adjustment: ${supplier?.name || ''}`,
+            reference: `OB-${ob.id.slice(0, 8)}`,
+            transactions: [
+              {
+                accountId: obAcc.id,
+                type: 'Debit',
+                amount: obAmount.abs().toNumber(),
+                description: 'Opening Balance Entry',
+              },
+              {
+                accountId: apAcc.id,
+                type: 'Credit',
+                amount: obAmount.abs().toNumber(),
+                description: 'Opening Balance Entry',
+              },
+            ],
+          },
+          tx,
+        );
       }
 
       return ob;
@@ -657,7 +846,7 @@ export class PurchasesService {
   async getSupplierOpeningBalances(tenantId: string, supplierId: string) {
     return this.prisma.supplierOpeningBalance.findMany({
       where: { tenantId, supplierId },
-      orderBy: { date: 'desc' }
+      orderBy: { date: 'desc' },
     });
   }
 }

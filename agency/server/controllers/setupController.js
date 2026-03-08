@@ -4,6 +4,9 @@ const User = require('../models/User');
 // @route   GET /api/users/setup/restore-admin
 // @access  Public (Temporal)
 const restoreAdmin = async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ message: 'Diagnostic and recovery tools are disabled in production to protect system integrity.' });
+    }
     const email = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
     const adminPassword = process.env.ADMIN_PASSWORD.trim();
 
@@ -36,6 +39,9 @@ const restoreAdmin = async (req, res) => {
 // @desc    Diagnostic check
 // @route   GET /api/users/setup/diagnostic
 const diagnostic = async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ message: 'Diagnostic tools are disabled in production.' });
+    }
     const adminEmail = (process.env.ADMIN_EMAIL || 'admin@klypso.agency').trim().toLowerCase();
     const user = await User.findOne({ email: adminEmail });
 

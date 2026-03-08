@@ -25,11 +25,11 @@
  */
 
 import {
-    CanActivate,
-    ExecutionContext,
-    Injectable,
-    ForbiddenException,
-    Logger,
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
@@ -37,67 +37,69 @@ const CSRF_EXEMPT_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
 @Injectable()
 export class CsrfGuard implements CanActivate {
-    private readonly logger = new Logger(CsrfGuard.name);
+  private readonly logger = new Logger(CsrfGuard.name);
 
-    constructor(private reflector: Reflector) { }
+  constructor(private reflector: Reflector) {}
 
-    canActivate(context: ExecutionContext): boolean {
-        const request = context.switchToHttp().getRequest();
-        const method = request.method?.toUpperCase();
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const method = request.method?.toUpperCase();
 
-        // CSRF only applies to state-mutating requests
-        if (CSRF_EXEMPT_METHODS.includes(method)) {
-            return true;
-        }
-
-        // Bearer token auth in the Authorization header is inherently CSRF-immune.
-        // A cross-site attacker cannot forge the Authorization header (unlike cookies).
-        // The frontend and backend are on different domains, so the cookie-based
-        // double-submit CSRF pattern cannot function. Skip CSRF for Bearer token requests.
-        const authHeader = (request.headers?.authorization || request.headers?.Authorization || '') as string;
-        if (authHeader.toLowerCase().startsWith('bearer ')) {
-            return true;
-        }
-
-        // CSRF only applies to web channel (mobile uses Authorization header, no cookies)
-        const user = request.user;
-        if (!user) {
-            // If no user (e.g., @Public() route), skip CSRF — those routes don't have cookies
-            return true;
-        }
-
-        const channel: string = user.channel || 'MOBILE';
-        if (channel !== 'WEB') {
-            return true;
-        }
-
-        // Verify double-submit cookie pattern
-        const cookieToken: string | undefined = request.cookies?.['nexus-csrf'];
-        const headerToken: string | undefined = request.headers?.['x-csrf-token'];
-
-        if (!cookieToken || !headerToken) {
-            this.logger.warn(
-                `CSRF validation failed — missing token. Method: ${method}, Path: ${request.path}, IP: ${request.ip}`,
-            );
-            throw new ForbiddenException(
-                'CSRF token missing. Web requests require the X-CSRF-Token header matching the nexus-csrf cookie.',
-            );
-        }
-
-        // Constant-time comparison to prevent timing attacks
-        const cookieBuf = Buffer.from(cookieToken);
-        const headerBuf = Buffer.from(headerToken);
-
-        if (
-            cookieBuf.length !== headerBuf.length ||
-            !require('crypto').timingSafeEqual(cookieBuf, headerBuf)
-        ) {
-            this.logger.warn(
-                `CSRF validation failed — token mismatch. Method: ${method}, Path: ${request.path}, IP: ${request.ip}`,
-            );
-            throw new ForbiddenException('CSRF token invalid.');
-        }
-
-        return true;
+    // CSRF only applies to state-mutating requests
+    if (CSRF_EXEMPT_METHODS.includes(method)) {
+      return true;
     }
+
+    // Bearer token auth in the Authorization header is inherently CSRF-immune.
+    // A cross-site attacker cannot forge the Authorization header (unlike cookies).
+    // The frontend and backend are on different domains, so the cookie-based
+    // double-submit CSRF pattern cannot function. Skip CSRF for Bearer token requests.
+    const authHeader = (request.headers?.authorization ||
+      request.headers?.Authorization ||
+      '') as string;
+    if (authHeader.toLowerCase().startsWith('bearer ')) {
+      return true;
+    }
+
+    // CSRF only applies to web channel (mobile uses Authorization header, no cookies)
+    const user = request.user;
+    if (!user) {
+      // If no user (e.g., @Public() route), skip CSRF — those routes don't have cookies
+      return true;
+    }
+
+    const channel: string = user.channel || 'MOBILE';
+    if (channel !== 'WEB') {
+      return true;
+    }
+
+    // Verify double-submit cookie pattern
+    const cookieToken: string | undefined = request.cookies?.['nexus-csrf'];
+    const headerToken: string | undefined = request.headers?.['x-csrf-token'];
+
+    if (!cookieToken || !headerToken) {
+      this.logger.warn(
+        `CSRF validation failed — missing token. Method: ${method}, Path: ${request.path}, IP: ${request.ip}`,
+      );
+      throw new ForbiddenException(
+        'CSRF token missing. Web requests require the X-CSRF-Token header matching the nexus-csrf cookie.',
+      );
+    }
+
+    // Constant-time comparison to prevent timing attacks
+    const cookieBuf = Buffer.from(cookieToken);
+    const headerBuf = Buffer.from(headerToken);
+
+    if (
+      cookieBuf.length !== headerBuf.length ||
+      !require('crypto').timingSafeEqual(cookieBuf, headerBuf)
+    ) {
+      this.logger.warn(
+        `CSRF validation failed — token mismatch. Method: ${method}, Path: ${request.path}, IP: ${request.ip}`,
+      );
+      throw new ForbiddenException('CSRF token invalid.');
+    }
+
+    return true;
+  }
 }

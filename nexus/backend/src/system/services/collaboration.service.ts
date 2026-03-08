@@ -11,26 +11,37 @@ export class CollaborationService {
     private prisma: PrismaService,
     private audit: AuditService,
     private gateway: CollaborationGateway,
-  ) { }
+  ) {}
 
-  async getComments(tenantId: string, resourceType: string, resourceId: string) {
+  async getComments(
+    tenantId: string,
+    resourceType: string,
+    resourceId: string,
+  ) {
     return this.prisma.comment.findMany({
       where: { tenantId, resourceType, resourceId },
       orderBy: { createdAt: 'desc' },
       include: {
         replies: {
           orderBy: { createdAt: 'asc' },
-        }
-      }
+        },
+      },
     });
   }
 
   async addComment(
     tenantId: string,
     userId: string,
-    data: { resourceType: string; resourceId: string; content: string; parentId?: string },
+    data: {
+      resourceType: string;
+      resourceId: string;
+      content: string;
+      parentId?: string;
+    },
   ) {
-    this.logger.log(`Klypso Ion: Adding comment to [${data.resourceType}:${data.resourceId}]`);
+    this.logger.log(
+      `Klypso Ion: Adding comment to [${data.resourceType}:${data.resourceId}]`,
+    );
     const comment = await this.prisma.comment.create({
       data: {
         tenantId,
@@ -62,7 +73,8 @@ export class CollaborationService {
       select: { resourceType: true, resourceId: true },
     });
 
-    if (!comment) throw new NotFoundException('Comment not found or access denied');
+    if (!comment)
+      throw new NotFoundException('Comment not found or access denied');
 
     await this.audit.log({
       tenantId,
@@ -76,8 +88,14 @@ export class CollaborationService {
     });
   }
 
-  async deleteCommentsByResource(tenantId: string, resourceType: string, resourceId: string) {
-    this.logger.log(`Klypso Ion: Cleaning up discussion for [${resourceType}:${resourceId}]`);
+  async deleteCommentsByResource(
+    tenantId: string,
+    resourceType: string,
+    resourceId: string,
+  ) {
+    this.logger.log(
+      `Klypso Ion: Cleaning up discussion for [${resourceType}:${resourceId}]`,
+    );
     return this.prisma.comment.deleteMany({
       where: { tenantId, resourceType, resourceId },
     });

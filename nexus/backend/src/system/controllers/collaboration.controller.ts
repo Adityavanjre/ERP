@@ -1,4 +1,16 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Request, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { CollaborationService } from '../services/collaboration.service';
@@ -7,7 +19,12 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-import { validateFileMagicBytes, validateFileSize, ALLOWED_MIME_TYPES } from '../../common/utils/file-magic.util';
+import {
+  validateFileMagicBytes,
+  validateFileSize,
+  ALLOWED_MIME_TYPES,
+} from '../../common/utils/file-magic.util';
+import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
 @Controller('collaboration')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -15,15 +32,27 @@ export class CollaborationController {
   constructor(
     private readonly collaborationService: CollaborationService,
     private readonly cloudinaryService: CloudinaryService,
-  ) { }
+  ) {}
 
   @Post('upload')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.Biller, Role.Storekeeper, Role.CA)
-  @UseInterceptors(FileInterceptor('file', {
-    storage: memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB hard limit at transport layer
-  }))
-  async uploadFile(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Accountant,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.CA,
+  )
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB hard limit at transport layer
+    }),
+  )
+  async uploadFile(
+    @Req() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -45,19 +74,44 @@ export class CollaborationController {
 
   @Get('comments/:type/:id')
   @Roles(Role.Owner)
-  async getComments(@Request() req: any, @Param('type') type: string, @Param('id') id: string) {
-    return this.collaborationService.getComments(req.user.tenantId, type, id);
+  async getComments(
+    @Req() req: AuthenticatedRequest,
+    @Param('type') type: string,
+    @Param('id') id: string,
+  ) {
+    return this.collaborationService.getComments(
+      req.user.tenantId as string,
+      type,
+      id,
+    );
   }
 
   @Post('comments')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.Biller, Role.Storekeeper, Role.CA)
-  async addComment(@Request() req: any, @Body() body: any) {
-    return this.collaborationService.addComment(req.user.tenantId, req.user.userId, body);
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Accountant,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.CA,
+  )
+  async addComment(@Req() req: AuthenticatedRequest, @Body() body: any) {
+    return this.collaborationService.addComment(
+      req.user.tenantId as string,
+      req.user.sub,
+      body,
+    );
   }
 
   @Delete('comments/:id')
   @Roles(Role.Owner, Role.Manager)
-  async deleteComment(@Request() req: any, @Param('id') id: string) {
-    return this.collaborationService.deleteComment(id, req.user.tenantId);
+  async deleteComment(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.collaborationService.deleteComment(
+      id,
+      req.user.tenantId as string,
+    );
   }
 }

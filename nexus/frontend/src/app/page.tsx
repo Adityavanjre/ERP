@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe, Cpu, CheckCircle2, Settings2, Smartphone, Download } from "lucide-react";
+import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe, Cpu, CheckCircle2, Smartphone, Download } from "lucide-react";
 import { KlypsoLogo } from "@/components/brand/logo";
 import Script from "next/script";
 import { InternalLink } from "@/components/seo/internal-link";

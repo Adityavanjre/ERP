@@ -16,30 +16,30 @@ export const QUEUE_WEBHOOK_DLQ = 'webhook-dlq';
 
 @Global()
 @Module({
-    imports: [
-        BullModule.forRootAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (config: ConfigService) => ({
-                connection: {
-                    host: config.get<string>('REDIS_HOST', 'localhost'),
-                    port: config.get<number>('REDIS_PORT', 6379),
-                },
-                defaultJobOptions: {
-                    removeOnComplete: 100,
-                    removeOnFail: 500,
-                    attempts: 3,
-                    backoff: { type: 'exponential', delay: 5000 },
-                },
-            }),
-        }),
-        BullModule.registerQueue(
-            { name: QUEUE_BULK_IMPORT },
-            { name: QUEUE_YEAR_CLOSE },
-            { name: QUEUE_TALLY_EXPORT },
-            { name: QUEUE_WEBHOOK_DLQ },
-        ),
-    ],
-    exports: [BullModule],
+  imports: [
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('REDIS_HOST', 'localhost'),
+          port: config.get<number>('REDIS_PORT', 6379),
+        },
+        defaultJobOptions: {
+          removeOnComplete: 100,
+          removeOnFail: 500,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+        },
+      }),
+    }),
+    BullModule.registerQueue(
+      { name: QUEUE_BULK_IMPORT },
+      { name: QUEUE_YEAR_CLOSE },
+      { name: QUEUE_TALLY_EXPORT },
+      { name: QUEUE_WEBHOOK_DLQ },
+    ),
+  ],
+  exports: [BullModule],
 })
-export class QueueModule { }
+export class QueueModule {}

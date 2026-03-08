@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import {
     Unlock,
     CheckCircle2,
     AlertTriangle,
-    Info,
     RefreshCw,
     FileSearch,
     ChevronRight
@@ -20,9 +20,33 @@ import {
 import { toast } from "sonner";
 import { useUX } from "@/components/providers/ux-provider";
 
+interface RiskFlag {
+    type: string;
+    severity: 'BLOCKER' | 'WARNING';
+    count: number;
+}
+
+interface AuditorData {
+    isLocked: boolean;
+    confidenceScore: number;
+    hsnCoverage: number;
+    status: string;
+    riskFlags: RiskFlag[];
+    errors: string[];
+}
+
+interface ApiError {
+    message?: string;
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+}
+
 export function AuditorDashboard() {
     const { setUILocked, showConfirm } = useUX();
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<AuditorData | null>(null);
     const [loading, setLoading] = useState(true);
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
@@ -34,23 +58,23 @@ export function AuditorDashboard() {
 
     const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-    const fetchDashboard = async () => {
+    const fetchDashboard = useCallback(async () => {
         try {
             setLoading(true);
             const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
             setData(res.data);
-        } catch (err: any) {
+        } catch {
             toast.error("Failed to load auditor data");
         } finally {
             setLoading(false);
         }
-    };
+    }, [month, year]);
 
     useEffect(() => {
         fetchDashboard();
-    }, [month, year]);
+    }, [fetchDashboard]);
 
-    const toggleLock = async () => {
+    const toggleLock = useCallback(() => {
         const action = data?.isLocked ? 'UNLOCK' : 'LOCK';
 
         showConfirm({
@@ -68,14 +92,15 @@ export function AuditorDashboard() {
                     });
                     toast.success(`Period ${action.toLowerCase()}ed successfully`);
                     fetchDashboard();
-                } catch (err: any) {
-                    toast.error(err.message || `Failed to ${action.toLowerCase()} period`);
+                } catch (err: unknown) {
+                    const error = err as ApiError;
+                    toast.error(error.response?.data?.message || error.message || `Failed to ${action.toLowerCase()} period`);
                 } finally {
                     setUILocked(false);
                 }
             }
         });
-    };
+    }, [data, month, year, showConfirm, setUILocked, fetchDashboard]);
 
     if (loading) return <div className="p-12 text-center font-bold text-slate-400">Auditing books...</div>;
 
@@ -145,7 +170,7 @@ export function AuditorDashboard() {
                                 { label: 'Tally Readiness', val: `${data?.confidenceScore}%`, color: 'text-emerald-500', icon: ShieldCheck },
                                 { label: 'HSN Coverage', val: `${data?.hsnCoverage}%`, color: 'text-blue-500', icon: FileSearch },
                                 { label: 'Voucher Status', val: data?.status || 'PENDING', color: data?.status === 'CLEAN' ? 'text-emerald-500' : 'text-amber-500', icon: CheckCircle2 },
-                                { label: 'Critical Risks', val: data?.riskFlags?.length || 0, color: data?.riskFlags?.length > 0 ? 'text-rose-500' : 'text-slate-400', icon: ShieldAlert },
+                                { label: 'Critical Risks', val: data?.riskFlags?.length || 0, color: (data?.riskFlags?.length ?? 0) > 0 ? 'text-rose-500' : 'text-slate-400', icon: ShieldAlert },
                             ].map((s, i) => (
                                 <div key={i} className="space-y-1">
                                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -161,7 +186,7 @@ export function AuditorDashboard() {
                                 <AlertTriangle className="h-4 w-4 text-amber-500" /> Validation Messages
                             </h3>
                             <div className="space-y-3">
-                                {data?.errors?.map((err: string, i: number) => (
+                                {data?.errors?.map((err, i) => (
                                     <div key={i} className="flex items-start gap-4 p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-sm font-bold">
                                         <ShieldAlert className="h-5 w-5 mt-0.5" />
                                         {err}
@@ -185,7 +210,7 @@ export function AuditorDashboard() {
                         <CardDescription className="font-bold">Automated audit checkpoints</CardDescription>
                     </CardHeader>
                     <CardContent className="p-8 space-y-6">
-                        {data?.riskFlags?.map((flag: any, i: number) => (
+                        {data?.riskFlags?.map((flag, i) => (
                             <div key={i} className="flex justify-between items-center group cursor-help">
                                 <div className="flex items-center gap-3">
                                     <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${flag.severity === 'BLOCKER' ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-500'}`}>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     TrendingUp,
     Wallet,
@@ -10,37 +10,66 @@ import {
     History,
     Zap,
     Trophy,
-    Rocket,
-    AlertCircle,
-    CheckCircle2,
-    ArrowRight,
     Sparkles,
-    Timer
+    Timer,
+    Rocket,
+    CheckCircle2,
+    ArrowRight
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { toast } from "react-hot-toast";
+
+interface RecoveryOpportunity {
+    id: string;
+    name: string;
+    daysSilent: number;
+    lastTransaction: number;
+}
+
+interface RecoveryData {
+    anchors: {
+        monthlyProtection: number;
+        lifetimeRecovery: number;
+        daysSinceDrift: number;
+    };
+    moneyFound: {
+        total: number;
+        overdueRecovered: number;
+        disputesPrevented: number;
+        shrinkageAvoided: number;
+    };
+    efficiency: {
+        improvement: number;
+        avgPaymentLag: number;
+        baselineLag: number;
+    };
+    timeSaved: {
+        hours: number;
+        monetaryValue: number;
+    };
+    opportunities: RecoveryOpportunity[];
+}
 
 export default function RecoveryMemoryDashboard() {
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<RecoveryData | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const syncRecoveryData = async (showLoading = false) => {
+    const syncRecoveryData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get("accounting/recovery-memory");
-            setData(res);
+            setData(res.data);
         } catch (err) {
             console.error("Recovery Sync Failure:", err);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         syncRecoveryData(true);
         const interval = setInterval(() => syncRecoveryData(false), 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [syncRecoveryData]);
 
     if (loading) return <div className="p-8 text-zinc-400">Loading Profit Insights...</div>;
     if (!data) return null;
@@ -154,7 +183,7 @@ export default function RecoveryMemoryDashboard() {
                     </div>
                     <div>
                         <h2 className="text-3xl font-black mb-2 tracking-tight">Time Saved</h2>
-                        <p className="text-slate-500 font-medium">Tasks handled automatically, so you don't have to.</p>
+                        <p className="text-slate-500 font-medium">Tasks handled automatically, so you don&apos;t have to.</p>
                     </div>
                     <div className="flex items-center gap-8 pt-4">
                         <div className="space-y-1">
@@ -180,7 +209,7 @@ export default function RecoveryMemoryDashboard() {
                             <History className="w-10 h-10 text-blue-600" />
                             Recovery Opportunities
                         </h2>
-                        <p className="text-slate-500 font-medium text-lg">Customers who haven't purchased recently. Reach out to bring them back.</p>
+                        <p className="text-slate-500 font-medium text-lg">Customers who haven&apos;t purchased recently. Reach out to bring them back.</p>
                     </div>
                     <button className="flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95">
                         Bulk Export Target Leads
@@ -189,7 +218,7 @@ export default function RecoveryMemoryDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {data.opportunities.map((opp: any) => (
+                    {data.opportunities.map((opp: RecoveryOpportunity) => (
                         <div key={opp.id} className="bg-slate-50/50 border border-slate-100 p-8 rounded-[2rem] hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all group">
                             <div className="flex justify-between mb-6">
                                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center font-black text-slate-400 border border-slate-100 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all shadow-sm">
@@ -223,7 +252,7 @@ export default function RecoveryMemoryDashboard() {
                     <div className="space-y-4 text-center lg:text-left relative z-10">
                         <h2 className="text-4xl font-black text-white tracking-tighter">Maximize System Protection.</h2>
                         <p className="text-slate-400 text-xl font-medium max-w-2xl leading-relaxed">
-                            You've already saved a lot with this plan. Upgrade to <span className="text-white font-bold">Prime Plan</span> to unlock advanced overdue detection and automated follow-ups.
+                            You&apos;ve already saved a lot with this plan. Upgrade to <span className="text-white font-bold">Prime Plan</span> to unlock advanced overdue detection and automated follow-ups.
                         </p>
                     </div>
                     <button className="bg-blue-600 text-white px-12 py-6 rounded-[2.5rem] font-black text-xl hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/20 flex items-center gap-4 relative z-10 active:scale-95 group">
@@ -241,4 +270,3 @@ export default function RecoveryMemoryDashboard() {
         </div>
     );
 }
-

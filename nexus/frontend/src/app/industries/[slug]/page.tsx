@@ -1,10 +1,10 @@
+import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, ShieldCheck, BarChart3, Settings2, Home } from "lucide-react";
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { industryThemes } from "@/constants/industries";
-import { InternalLink } from "@/components/seo/internal-link";
 import Script from "next/script";
 import { SmartContent } from "@/components/seo/smart-content";
 
@@ -12,7 +12,7 @@ interface Props {
     params: Promise<{ slug: string }>;
 }
 
-const icons: Record<string, any> = {
+const icons: Record<string, React.ReactNode> = {
     Settings2: <Settings2 className="h-12 w-12 text-blue-600" />,
     ShieldCheck: <ShieldCheck className="h-12 w-12 text-emerald-600" />,
     BarChart3: <BarChart3 className="h-12 w-12 text-amber-600" />,

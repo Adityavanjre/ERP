@@ -10,9 +10,14 @@ export class ApiKeyService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) { }
+  ) {}
 
-  async generateKey(tenantId: string, name: string, scopes: string[], data: { quotaLimit?: number } = {}) {
+  async generateKey(
+    tenantId: string,
+    name: string,
+    scopes: string[],
+    data: { quotaLimit?: number } = {},
+  ) {
     const prefix = 'klp_' + crypto.randomBytes(4).toString('hex');
     const secret = crypto.randomBytes(24).toString('hex');
     const fullKey = `${prefix}.${secret}`;
@@ -66,10 +71,7 @@ export class ApiKeyService {
     const updateResult = await this.prisma.apiKey.updateMany({
       where: {
         id: keyRecord.id,
-        OR: [
-          { lastUsedAt: null },
-          { lastUsedAt: { lt: oneSecondAgo } },
-        ],
+        OR: [{ lastUsedAt: null }, { lastUsedAt: { lt: oneSecondAgo } }],
       },
       data: {
         lastUsedAt: now,
@@ -94,8 +96,8 @@ export class ApiKeyService {
         scopes: true,
         lastUsedAt: true,
         expiresAt: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
   }
 

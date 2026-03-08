@@ -1,55 +1,76 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Phone, Mail, Building, FileText, Wallet } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Phone, Mail, Building, FileText, Wallet, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+interface CustomerDetail {
+    id: string;
+    firstName: string;
+    lastName: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+    status: string;
+    createdAt: string;
+}
+
+interface LedgerEntry {
+    id: string;
+    type: string;
+    date: string;
+    title?: string;
+    ref: string;
+    debit: number;
+    credit: number;
+    balance: number;
+}
 
 export default function CustomerDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const [customer, setCustomer] = useState<any>(null);
-    const [ledger, setLedger] = useState<any[]>([]);
+    const [customer, setCustomer] = useState<CustomerDetail | null>(null);
+    const [ledger, setLedger] = useState<LedgerEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const syncRelationDetail = async (showLoading = false) => {
+    const syncRelationDetail = useCallback(async (showLoading = false) => {
         if (!params.id) return;
         try {
             if (showLoading) setLoading(true);
             const custRes = await api.get("/crm/customers");
-            const found = custRes.data.find((c: any) => c.id === params.id);
-            setCustomer(found);
+            const found = custRes.data.find((c: CustomerDetail) => c.id === params.id);
+            setCustomer(found || null);
 
             const ledgerRes = await api.get(`/accounting/ledger/${params.id}`);
-            setLedger(ledgerRes.data);
+            setLedger(ledgerRes.data || []);
         } catch (err) {
             console.error("Relation Sync Failure:", err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [params.id]);
 
     useEffect(() => {
         syncRelationDetail(true);
         const interval = setInterval(() => syncRelationDetail(false), 30000);
         return () => clearInterval(interval);
-    }, [params.id]);
+    }, [syncRelationDetail]);
 
     if (loading) {
-        return <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900"><Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" /> Initializing Node Pulse...</div>;
+        return <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900 min-h-screen"><Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" /> Initializing Node Pulse...</div>;
     }
 
     if (!customer) {
         return <div className="text-slate-900 p-8 h-screen bg-slate-50 font-black uppercase tracking-widest flex items-center justify-center">Strategic Relation Not Found.</div>;
     }
 
-    const currentBalance = ledger.length > 0 ? ledger[ledger.length - 1].balance : 0;
+    const currentBalance = (ledger && ledger.length > 0) ? ledger[ledger.length - 1].balance : 0;
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50 min-h-screen w-full max-w-full overflow-hidden">
@@ -112,7 +133,7 @@ export default function CustomerDetailPage() {
                             <CardTitle className="text-slate-900 text-xl font-black tracking-tight print:text-black">Audit Statement</CardTitle>
                             <CardDescription className="text-slate-500 font-medium print:text-zinc-600">Transaction history for: {customer.firstName} {customer.lastName}</CardDescription>
                         </div>
-                        <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-bold h-11 px-6 print:hidden shadow-sm" onClick={() => window.print()}>
+                        <Button variant="outline" className="rounded-2xl border-slate-200 text-slate-600 font-bold h-11 px-6 print:hidden shadow-sm" onClick={() => (typeof window !== 'undefined' && window.print())}>
                             <FileText className="mr-2 h-4 w-4" /> Export Record
                         </Button>
                     </CardHeader>
@@ -139,7 +160,7 @@ export default function CustomerDetailPage() {
                                     <TableCell className="text-right pr-8 font-black text-slate-900">₹0.00</TableCell>
                                 </TableRow>
 
-                                {ledger.map((entry: any) => (
+                                {(ledger || []).map((entry: LedgerEntry) => (
                                     <TableRow key={`${entry.type}-${entry.id}`} className="border-slate-50 hover:bg-slate-50/50 print:border-zinc-200 print:text-black group">
                                         <TableCell className="pl-8 text-slate-900 text-xs font-black tracking-tighter print:text-black">{new Date(entry.title || entry.date).toLocaleDateString()}</TableCell>
                                         <TableCell>

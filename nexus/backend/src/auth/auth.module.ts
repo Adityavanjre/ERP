@@ -22,7 +22,9 @@ import { MfaCryptoService } from './mfa-crypto.service';
       useFactory: async (configService: ConfigService) => {
         const jwtSecret = configService.get<string>('JWT_SECRET');
         if (!jwtSecret) {
-          throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.');
+          throw new Error(
+            'FATAL: JWT_SECRET environment variable is not set. Refusing to start with an insecure secret.',
+          );
         }
         return {
           secret: jwtSecret,
@@ -32,8 +34,14 @@ import { MfaCryptoService } from './mfa-crypto.service';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, GoogleAuthService, LoggingService, MfaCryptoService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    GoogleAuthService,
+    LoggingService,
+    MfaCryptoService,
+  ],
   controllers: [AuthController],
   exports: [AuthService],
 })
-export class AuthModule { }
+export class AuthModule {}
