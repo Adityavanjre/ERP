@@ -47,7 +47,7 @@ export class AuthController {
     private authService: AuthService,
     private security: SecurityStorageService,
     private anomalyAlert: AnomalyAlertService,
-  ) { }
+  ) {}
 
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 15, ttl: 60000 } })

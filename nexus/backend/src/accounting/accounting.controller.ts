@@ -46,7 +46,7 @@ export class AccountingController {
     private readonly saas: SaasAnalyticsService,
     private readonly collaboration: CollaborationService,
     private readonly gstr1: Gstr1ExportService,
-  ) { }
+  ) {}
 
   @Get('health-score')
   @Roles(Role.Owner)

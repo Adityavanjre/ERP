@@ -10,7 +10,7 @@ export class NbfcService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     private traceService: TraceService,
-  ) { }
+  ) {}
 
   // --- Loan Management System ---
   async addInterestSlabs(

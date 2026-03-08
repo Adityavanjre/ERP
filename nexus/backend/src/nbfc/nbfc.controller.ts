@@ -28,7 +28,7 @@ import {
 @Module('nbfc')
 @Controller('nbfc')
 export class NbfcController {
-  constructor(private readonly nbfcService: NbfcService) { }
+  constructor(private readonly nbfcService: NbfcService) {}
 
   @Post('loans')
   @Roles(Role.Owner, Role.Manager)

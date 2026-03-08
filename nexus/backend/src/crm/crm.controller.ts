@@ -34,7 +34,7 @@ import {
 @Module('crm')
 @Controller('crm')
 export class CrmController {
-  constructor(private readonly crmService: CrmService) { }
+  constructor(private readonly crmService: CrmService) {}
 
   @Post('customers')
   @Roles(Role.Owner, Role.Manager, Role.Biller)

@@ -29,7 +29,7 @@ import { Role } from '@prisma/client';
 @Module('hr')
 @Controller('hr')
 export class HrController {
-  constructor(private readonly hrService: HrService) { }
+  constructor(private readonly hrService: HrService) {}
 
   // Departments
   @Post('departments')
