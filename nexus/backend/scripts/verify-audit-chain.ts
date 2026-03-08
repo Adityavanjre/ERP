@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
+import * as dotenv from 'dotenv';
+
+// Load environment variables for standalone execution
+dotenv.config();
 
 /**
  * Audit Log Hash Chain Verification Utility
