@@ -23,7 +23,7 @@ export class ManufacturingService {
     private accounting: AccountingService,
     private traceService: TraceService,
     private inventoryService: InventoryService,
-  ) { }
+  ) {}
 
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
@@ -31,7 +31,7 @@ export class ManufacturingService {
   async explodeBOM(tenantId: string, bomId: string, multiplier: number = 1) {
     // MFG-002: Performance Scaling via Recursive CTE
     // This replaces a potentially deep recursive JS chain with a single database round-trip.
-    const results: any[] = await this.prisma.$queryRaw`
+    const rawResults: any[] = await this.prisma.$queryRaw`
       WITH RECURSIVE exploded_bom AS (
         -- Anchor member: get the initial items for the starting BOM
         SELECT 
@@ -70,29 +70,23 @@ export class ManufacturingService {
         WHERE eb.is_cycle = false
       )
       SELECT 
-        "productId",
-        "productName",
-        quantity,
-        unit,
-        "costPrice",
-        "baseUnit",
-        is_cycle
+        eb.*,
+        EXISTS (
+          SELECT 1 FROM "BillOfMaterial" sub_bom 
+          WHERE sub_bom."productId" = eb."productId" 
+          AND sub_bom."tenantId" = ${tenantId} 
+          AND sub_bom.status = 'Active'
+        ) as "hasActiveBom"
       FROM exploded_bom eb
-      WHERE NOT EXISTS (
-        SELECT 1 FROM "BillOfMaterial" sub_bom 
-        WHERE sub_bom."productId" = eb."productId" 
-        AND sub_bom."tenantId" = ${tenantId} 
-        AND sub_bom.status = 'Active'
-      )
     `;
 
-    if (results.some((res) => res.is_cycle)) {
+    if (rawResults.some((res) => res.is_cycle)) {
       throw new BadRequestException(
         `Production Audit Error: Circular dependency detected in Bill of Materials. BOM ID ${bomId} points back to an active parent assembly.`,
       );
     }
 
-    if (!results || results.length === 0) {
+    if (!rawResults || rawResults.length === 0) {
       // Check if BOM exists at all to match previous behavior
       const bom = await this.prisma.billOfMaterial.findFirst({
         where: { id: bomId, tenantId },
@@ -101,8 +95,11 @@ export class ManufacturingService {
       return [];
     }
 
+    // Filter to leaf materials (those that don't have their own active BOM)
+    const leafResults = rawResults.filter((res) => !res.hasActiveBom);
+
     let requirements: any[] = [];
-    for (const res of results) {
+    for (const res of leafResults) {
       // INV-007: Support Unit Conversions (Post-flattening)
       const baseUnit = res.baseUnit || 'pcs';
       const baseQty = await this.convertUnit(
@@ -919,8 +916,8 @@ export class ManufacturingService {
             // rather than posting an inaccurate fixed value to the ledger.
             const machineForLabor = machineId
               ? await (tx as any).machine.findFirst({
-                where: { id: machineId, tenantId },
-              })
+                  where: { id: machineId, tenantId },
+                })
               : null;
             const effectiveLaborRate = machineForLabor?.hourlyRate
               ? new Decimal(machineForLabor.hourlyRate)
