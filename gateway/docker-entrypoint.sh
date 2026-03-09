@@ -5,10 +5,17 @@ echo "Generating nginx config..."
 
 cat > /etc/nginx/conf.d/default.conf << NGINX_EOF
 server {
-    listen 80;
+    listen ${PORT:-80};
     server_name localhost;
 
     resolver 8.8.8.8 valid=30s;
+
+    # Health Check Endpoint
+    location /health {
+        access_log off;
+        return 200 'healthy';
+        add_header Content-Type text/plain;
+    }
 
     # GATE-001: Enforce Strict-Transport-Security (HSTS)
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
