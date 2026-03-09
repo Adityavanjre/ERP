@@ -153,5 +153,10 @@
   "directories": {
     "test": "test"
   },
-  "keywords": []
+  "keywords": [],
+  "overrides": {
+    "multer": "2.1.1",
+    "minimist": "^1.2.8",
+    "webpack": "^5.94.0"
+  }
 }

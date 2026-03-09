@@ -37,7 +37,7 @@ export class InventoryService {
     private billing: BillingService,
     private hsn: HsnService,
     private readonly traceService: TraceService,
-  ) {}
+  ) { }
 
   async createProduct(
     tenantId: string,
@@ -79,8 +79,8 @@ export class InventoryService {
       if (!isValid && !productData.isGstOverride) {
         throw new BadRequestException(
           `Compliance Error: GST Rate mismatch for HSN ${productData.hsnCode}. ` +
-            `Official Rate: ${officialRate}%, Provided: ${productData.gstRate}%. ` +
-            `Set 'isGstOverride' to true if this is an intentional audit-logged override.`,
+          `Official Rate: ${officialRate}%, Provided: ${productData.gstRate}%. ` +
+          `Set 'isGstOverride' to true if this is an intentional audit-logged override.`,
         );
       }
     }
@@ -158,7 +158,7 @@ export class InventoryService {
         });
 
         await tx.product.update({
-          where: { id: product.id },
+          where: { id: product.id, tenantId },
           data: { stock },
         });
 
@@ -287,7 +287,7 @@ export class InventoryService {
     if (new Decimal(newStock).lt(0)) {
       throw new BadRequestException(
         `Integrity Error: Stock for "${productName}" cannot go below zero. ` +
-          `Current Transaction Attempted Value: ${newStock}`,
+        `Current Transaction Attempted Value: ${newStock}`,
       );
     }
   }
@@ -317,49 +317,64 @@ export class InventoryService {
     });
     const productName = product?.name || productId;
 
-    const result = await tx.stockLocation.updateMany({
+    // PRISMA_FIX: updateMany does not support atomic increment/decrement for Decimals correctly in all versions.
+    // We use findUnique/First with the composite key then update by ID.
+    const loc = await tx.stockLocation.findUnique({
       where: {
-        productId,
-        warehouseId,
-        notes,
-        quantity: { gte: amount }, // THE GUARD
-        ...(options.tenantId ? { tenantId: options.tenantId } : {}),
+        tenantId_productId_warehouseId_notes: {
+          tenantId: options.tenantId || '',
+          productId,
+          warehouseId,
+          notes: notes || '',
+        }
+      }
+    });
+
+    if (!loc || new Decimal(loc.quantity).lt(amount)) {
+      throw new BadRequestException(
+        `Insufficient stock for "${productName}" at specified location. ` +
+        `Requested: ${amount}, Available: ${loc?.quantity || 0}`,
+      );
+    }
+
+    // BUG-001 FIX: Atomic conditional updates against race conditions
+    // By using `updateMany` with a `quantity >= amount` condition, the database 
+    // natively blocks concurrent transactions from pushing the stock below zero.
+    // ALSO added `tenantId` constraint for strict isolation.
+    const locUpdate = await tx.stockLocation.updateMany({
+      where: {
+        id: loc.id,
+        tenantId: options.tenantId,
+        quantity: { gte: amount },
       },
       data: {
         quantity: { decrement: amount },
       },
     });
 
-    if (result.count === 0) {
-      const currentLoc = await tx.stockLocation.findFirst({
-        where: {
-          productId,
-          warehouseId,
-          notes,
-          ...(options.tenantId ? { tenantId: options.tenantId } : {}),
-        },
-      });
+    if (locUpdate.count === 0) {
       throw new BadRequestException(
-        `Insufficient stock for "${productName}" at specified location. ` +
-          `Requested: ${amount}, Available: ${currentLoc?.quantity || 0}`,
+        `Concurrency Integrity Error: Failed to deduct stock for "${productName}". ` +
+        `The requested quantity (${amount}) became unavailable during transaction execution.`
       );
     }
 
-    // Sync global product stock (also guarded)
-    const productResult = await tx.product.updateMany({
+    // Sync global product stock (also atomic update, firmly tenant-isolated)
+    const prodUpdate = await tx.product.updateMany({
       where: {
         id: productId,
+        tenantId: options.tenantId,
         stock: { gte: amount },
-        ...(options.tenantId ? { tenantId: options.tenantId } : {}),
       },
       data: {
         stock: { decrement: amount },
       },
     });
 
-    if (productResult.count === 0) {
+    if (prodUpdate.count === 0) {
+      // Only happens if loc and product stock are out of sync somehow, but protects from negative product.stock
       throw new BadRequestException(
-        `Global stock sync failed for "${productName}". Possible concurrent state mismatch.`,
+        `Concurrency Integrity Error: Insufficient global stock for "${productName}".`
       );
     }
 
@@ -522,7 +537,7 @@ export class InventoryService {
             });
 
             await tx.product.update({
-              where: { id: product.id },
+              where: { id: product.id, tenantId },
               data: { stock: { increment: importStock } },
             });
 
@@ -697,7 +712,7 @@ export class InventoryService {
       for (const loc of product.stockLocations) {
         const ageInDays = Math.floor(
           (Date.now() - new Date(loc.updatedAt).getTime()) /
-            (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
         );
 
         // 100x Logic: Dynamic Aging Calculus

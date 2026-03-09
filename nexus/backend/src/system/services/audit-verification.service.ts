@@ -44,9 +44,12 @@ export class AuditVerificationService implements OnModuleInit {
 
     this.logger.log('Verifying Audit Log Hash Chain integrity...');
 
-    // Scan the last 24 hours of logs for all tenants
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    // ARCH-001: Expanded scan window logic. 
+    // Perform a deep verify of ALL historical chunks on Mondays, 
+    // and a quick-audit (last 48h) on other days to ensure continuity.
+    const isDeepScanDay = new Date().getDay() === 1; // 1 = Monday
+    const scanWindow = new Date();
+    scanWindow.setDate(scanWindow.getDate() - (isDeepScanDay ? 3650 : 2)); // 10 years for deep scan, 2 days for quick scan
 
     // Get all tenants to verify chains individually
     const tenants = await this.prisma.tenant.findMany({ select: { id: true } });
@@ -57,19 +60,19 @@ export class AuditVerificationService implements OnModuleInit {
       const logs = await this.prisma.auditLog.findMany({
         where: {
           tenantId: tenant.id,
-          createdAt: { gte: yesterday },
+          createdAt: { gte: scanWindow },
         },
         orderBy: { createdAt: 'asc' },
-        take: 1000, // Safely paginate cross-sweeps
+        take: 5000, // Higher batch size for audits
       });
       if (logs.length > 0) {
         tenantLogs[tenant.id] = logs;
       }
     }
 
-    // Also handle GLOBAL logs if any
+    // Verify GLOBAL logs
     const globalLogs = await this.prisma.auditLog.findMany({
-      where: { tenantId: null, createdAt: { gte: yesterday } },
+      where: { tenantId: null, createdAt: { gte: scanWindow } },
       orderBy: { createdAt: 'asc' },
       take: 1000,
     });

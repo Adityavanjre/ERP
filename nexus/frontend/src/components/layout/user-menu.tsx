@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface UserData {
     fullName: string;
@@ -26,9 +27,15 @@ export const UserMenu = () => {
         }
     }, []);
 
-    const handleLogout = useCallback(() => {
+    const handleLogout = useCallback(async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch (e) {
+            console.error("Logout API failed", e);
+        }
         localStorage.removeItem("k_token");
         localStorage.removeItem("k_user");
+        localStorage.removeItem("k_identity");
         router.push("/login");
     }, [router]);
 

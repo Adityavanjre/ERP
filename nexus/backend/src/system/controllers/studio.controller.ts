@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { OrmService } from '../services/orm.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -20,12 +21,15 @@ import { AuthenticatedRequest } from '../../common/interfaces/request.interface'
 @Roles(Role.Owner, Role.Manager)
 @Controller('system/studio')
 export class StudioController {
-  constructor(private readonly ormService: OrmService) {}
+  constructor(private readonly ormService: OrmService) { }
 
   @Post('models')
-  defineModel(@Body() dto: DefineModelDto) {
-    // Expected DTO: { appName, name, label, fields: [...] }
-    return this.ormService.defineModel(dto.appName, dto);
+  defineModel(@Body() dto: DefineModelDto, @Req() req: AuthenticatedRequest) {
+    return this.ormService.defineModel(
+      req.user.tenantId as string,
+      dto.appName,
+      dto,
+    );
   }
 
   @Get('records/:modelName')
@@ -54,6 +58,7 @@ export class StudioController {
       req.user.tenantId as string,
       modelName,
       data,
+      req.user.role as string,
     );
   }
 
@@ -83,6 +88,22 @@ export class StudioController {
       modelName,
       id,
       data,
+      req.user.role as string,
+    );
+  }
+
+  @Delete('records/:modelName/:id')
+  @Roles(Role.Owner, Role.Manager)
+  deleteRecord(
+    @Req() req: AuthenticatedRequest,
+    @Param('modelName') modelName: string,
+    @Param('id') id: string,
+  ) {
+    return this.ormService.deleteRecord(
+      req.user.tenantId as string,
+      modelName,
+      id,
+      req.user.role as string,
     );
   }
 }

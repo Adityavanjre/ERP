@@ -15,12 +15,13 @@ export class OrmService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) {}
+  ) { }
 
   /**
    * Define a new model in the system metadata.
    */
   async defineModel(
+    tenantId: string,
     appName: string,
     modelData: {
       name: string;
@@ -41,13 +42,17 @@ export class OrmService {
     if (!app) throw new NotFoundException(`App ${appName} not found`);
 
     const existing = await this.prisma.modelDefinition.findFirst({
-      where: { name: modelData.name },
+      where: {
+        name: modelData.name,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
     });
     if (existing)
       throw new ConflictException(`Model ${modelData.name} already exists`);
 
     return this.prisma.modelDefinition.create({
       data: {
+        tenantId,
         moduleId: app.id,
         name: modelData.name,
         label: modelData.label,
@@ -55,6 +60,7 @@ export class OrmService {
         isSystem: modelData.isSystem || false,
         fields: {
           create: modelData.fields.map((f) => ({
+            tenantId,
             name: f.name,
             label: f.label,
             type: f.type,
@@ -78,14 +84,17 @@ export class OrmService {
     permission: 'read' | 'write' | 'create' | 'unlink',
   ) {
     const model = await this.prisma.modelDefinition.findFirst({
-      where: { name: modelName },
+      where: {
+        name: modelName,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
       include: { accessRights: true },
     });
 
     if (!model) return true; // System models without definitions follow default rules
-    if (model.accessRights.length === 0) return true; // No specific restrictions
+    if ((model as any).accessRights.length === 0) return true; // No specific restrictions
 
-    const access = model.accessRights.find((a) => a.role === role);
+    const access = (model as any).accessRights.find((a: any) => a.role === role);
     if (!access) return false;
 
     switch (permission) {
@@ -109,7 +118,7 @@ export class OrmService {
     tenantId: string,
     modelName: string,
     data: any,
-    userRole: any = 'Admin',
+    userRole: string,
   ) {
     const hasAccess = await this.checkAccess(
       tenantId,
@@ -124,13 +133,16 @@ export class OrmService {
 
     // Validate model exists
     const model = await this.prisma.modelDefinition.findFirst({
-      where: { name: modelName },
+      where: {
+        name: modelName,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
       include: { fields: true },
     });
     if (!model) throw new NotFoundException(`Model ${modelName} not found`);
 
     // Basic validation against field definitions
-    for (const field of model.fields) {
+    for (const field of (model as any).fields || []) {
       if (field.required && !data[field.name]) {
         throw new ConflictException(
           `Field ${field.name} is required for model ${modelName}`,
@@ -188,7 +200,18 @@ export class OrmService {
     modelName: string,
     id: string,
     data: any,
+    userRole: string,
   ) {
+    const hasAccess = await this.checkAccess(
+      tenantId,
+      modelName,
+      userRole,
+      'write',
+    );
+    if (!hasAccess)
+      throw new ConflictException(
+        `Access Denied: You do not have 'write' rights on ${modelName}`,
+      );
     const record = await this.prisma.record.findFirst({
       where: { id, tenantId, modelName },
     });
@@ -202,7 +225,23 @@ export class OrmService {
     });
   }
 
-  async deleteRecord(tenantId: string, modelName: string, id: string) {
+  async deleteRecord(
+    tenantId: string,
+    modelName: string,
+    id: string,
+    userRole: string,
+  ) {
+    const hasAccess = await this.checkAccess(
+      tenantId,
+      modelName,
+      userRole,
+      'unlink',
+    );
+    if (!hasAccess)
+      throw new ConflictException(
+        `Access Denied: You do not have 'unlink' rights on ${modelName}`,
+      );
+
     const record = await this.prisma.record.findFirst({
       where: { id, tenantId, modelName },
     });

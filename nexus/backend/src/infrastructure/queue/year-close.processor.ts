@@ -120,20 +120,24 @@ export class YearCloseProcessor extends WorkerHost {
 
     await job.updateProgress(75);
 
-    // Execute as a single DB transaction
-    await this.prisma.$transaction(async (tx) => {
-      // Create the closing journal entry
-      const entry = await tx.journalEntry.create({
-        data: {
-          tenantId,
-          date: new Date(year, 11, 31), // Dec 31
+    // 5. Execute as a single DB transaction
+    return this.prisma.$transaction(async (tx) => {
+      // Create the closing journal entry via LedgerService to ensure balances are updated
+      const ledgerService = new (require('../../accounting/services/ledger.service').LedgerService)(this.prisma, null, null, null);
+
+      const journalEntry = await ledgerService.createJournalEntry(
+        tenantId,
+        {
+          date: new Date(year, 11, 31).toISOString(),
           description: `Financial Year ${year} Closing Entry`,
           reference: `FY-CLOSE-${year}`,
-          transactions: { create: journalTransactions },
+          transactions: journalTransactions,
+          userId,
         },
-      });
+        tx,
+      );
 
-      // Audit log
+      // 6. Audit log
       await tx.auditLog.create({
         data: {
           tenantId,
@@ -144,16 +148,17 @@ export class YearCloseProcessor extends WorkerHost {
             year,
             netProfit: netProfit.toFixed(2),
             jobId: job.id,
+            journalId: journalEntry.id,
           } as any,
         },
       });
+
+      await job.updateProgress(100);
+      this.logger.log(
+        `[JOB:${job.id}] Year ${year} close complete. Net Profit: ${netProfit.toFixed(2)}`,
+      );
+
+      return { year, netProfit: netProfit.toFixed(2), journalId: journalEntry.id };
     });
-
-    await job.updateProgress(100);
-    this.logger.log(
-      `[JOB:${job.id}] Year ${year} close complete. Net Profit: ${netProfit.toFixed(2)}`,
-    );
-
-    return { year, netProfit: netProfit.toFixed(2) };
   }
 }

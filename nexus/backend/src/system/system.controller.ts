@@ -28,10 +28,10 @@ export class SystemController {
     private readonly saas: SaasAnalyticsService,
     private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   @Get('stats')
-  @Roles(Role.Owner)
+  @Roles(Role.Owner, Role.Manager, Role.Accountant)
   async getSystemStats(@Req() req: any) {
     const tenantId = req.user.tenantId;
     const [products, customers, invoices, transactions] = await Promise.all([
@@ -51,7 +51,7 @@ export class SystemController {
   }
 
   @Get('config')
-  @Roles(Role.Owner)
+  // No explicit @Roles means all authenticated tenant users can fetch UI config
   async getModuleConfig(@Req() req: any) {
     const industry =
       req.user.tenant?.industry ||

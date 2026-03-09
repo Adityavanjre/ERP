@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../accounting/services/ledger.service';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -12,7 +12,7 @@ export class HealthcareService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     private trace: TraceService,
-  ) {}
+  ) { }
 
   // --- Patient Registry (EMR/EHR) ---
   async registerPatient(tenantId: string, data: any) {
@@ -39,9 +39,17 @@ export class HealthcareService {
             firstName,
             lastName,
             email,
-            status: 'Customer', // In healthcare, patient is a customer
+            status: 'Customer',
           },
         });
+      }
+
+      // BUG-HLTH-001: PII Collision / Double-Registration Guard
+      const existingPatient = await tx.patient.findUnique({
+        where: { customerId: customer.id },
+      });
+      if (existingPatient) {
+        throw new BadRequestException('Patient already exists with this email.');
       }
 
       // Create Patient profile
@@ -91,6 +99,14 @@ export class HealthcareService {
   async createMedicalRecord(tenantId: string, data: any) {
     const { patientId, diagnosis, prescription, labResults, notes } = data;
 
+    // BUG-003 FIX: IDOR Prevention - Verify patient belongs to this tenant
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId, tenantId },
+    });
+    if (!patient) {
+      throw new NotFoundException('Patient not found or access denied in your workspace.');
+    }
+
     // 100x Logic: Clinical Value Triage Engine
     // IND-001: Dynamic Thresholds from Governance Profile
     const gov = await this.prisma.governanceProfile.findUnique({
@@ -110,16 +126,22 @@ export class HealthcareService {
         glWarn: gov?.warningGlucose || 200,
       };
 
+      // BUG-HLTH-002: Triage NaN / Undefined Risk
+      // Coerce all inputs to numbers and default to zero to prevent comparison failures.
+      const potassium = Number(results.potassium) || 0;
+      const hemoglobin = Number(results.hemoglobin) || 0;
+      const glucose = Number(results.glucose) || 0;
+
       if (
-        results.potassium > thresholds.kCrit ||
-        results.hemoglobin < thresholds.hbCrit ||
-        results.glucose > thresholds.glCrit
+        potassium > thresholds.kCrit ||
+        (hemoglobin > 0 && hemoglobin < thresholds.hbCrit) ||
+        glucose > thresholds.glCrit
       ) {
         triageStatus = 'Critical';
       } else if (
-        results.potassium > thresholds.kWarn ||
-        results.hemoglobin < thresholds.hbWarn ||
-        results.glucose > thresholds.glWarn
+        potassium > thresholds.kWarn ||
+        (hemoglobin > 0 && hemoglobin < thresholds.hbWarn) ||
+        glucose > thresholds.glWarn
       ) {
         triageStatus = 'Warning';
       }
@@ -142,6 +164,42 @@ export class HealthcareService {
   // --- Appointment Scheduling ---
   async scheduleAppointment(tenantId: string, data: any) {
     const { patientId, employeeId, date, startTime, note } = data;
+
+    // BUG-003 FIX: IDOR Prevention - Verify patient belongs to this tenant
+    const patient = await this.prisma.patient.findUnique({
+      where: { id: patientId, tenantId },
+    });
+    if (!patient) {
+      throw new NotFoundException('Patient not found or access denied in your workspace.');
+    }
+
+    // BUG-003 FIX: IDOR Prevention - Verify employee belongs to this tenant
+    if (employeeId) {
+      const employee = await this.prisma.employee.findUnique({
+        where: { id: employeeId, tenantId },
+      });
+      if (!employee) {
+        throw new NotFoundException('Consultant/Employee not found or access denied in your workspace.');
+      }
+    }
+
+    // BUG-HLTH-003: Double-Booking / Appointment Overlap Prevention
+    if (employeeId) {
+      const overlap = await this.prisma.appointment.findFirst({
+        where: {
+          tenantId,
+          employeeId,
+          date: new Date(date),
+          startTime,
+          status: { not: 'Cancelled' },
+        },
+      });
+      if (overlap) {
+        throw new BadRequestException(
+          'Consultant is already booked for this time slot.',
+        );
+      }
+    }
 
     return this.prisma.appointment.create({
       data: {

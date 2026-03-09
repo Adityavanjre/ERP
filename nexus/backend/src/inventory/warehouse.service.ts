@@ -21,7 +21,7 @@ export class WarehouseService {
     @Inject(forwardRef(() => AccountingService))
     private accounting: AccountingService,
     private readonly traceService: TraceService,
-  ) {}
+  ) { }
 
   async createWarehouse(tenantId: string, data: any) {
     return this.prisma.warehouse.create({
@@ -114,8 +114,8 @@ export class WarehouseService {
       });
 
       // 3. Update global product stock cache
-      await tx.product.updateMany({
-        where: { id: data.productId, tenantId },
+      await tx.product.update({
+        where: { id: data.productId },
         data: {
           stock: {
             [data.type === MovementType.IN ? 'increment' : 'decrement']:
@@ -244,8 +244,8 @@ export class WarehouseService {
       });
 
       // 3. Update global product stock cache
-      await tx.product.updateMany({
-        where: { id: data.productId, tenantId },
+      await tx.product.update({
+        where: { id: data.productId },
         data: { stock: { increment: data.quantity } },
       });
 
@@ -332,8 +332,8 @@ export class WarehouseService {
         throw new Error(`Insufficient stock in warehouse ${fromWH.name}`);
       }
 
-      await tx.stockLocation.updateMany({
-        where: { id: fromLoc.id, warehouse: { tenantId } },
+      await tx.stockLocation.update({
+        where: { id: fromLoc.id },
         data: { quantity: { decrement: qty } },
       });
 

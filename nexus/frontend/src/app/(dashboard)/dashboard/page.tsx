@@ -122,9 +122,10 @@ export default function DashboardPage() {
         try {
             const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
             const identity = typeof window !== 'undefined' ? localStorage.getItem('k_identity') : null;
+            // Relax the identity-match block to allow dashboard to bootstrap state for new users
             if (token && identity && token === identity) {
-                setLoading(false);
-                return;
+                // Identity tokens (non-scoped) can still pull global config/basics
+                // but we let it fall through to at least hit basic stats.
             }
 
             const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.allSettled([

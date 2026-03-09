@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Logs an enterprise-grade audit trail entry.
@@ -27,6 +28,32 @@ export class AuditService {
           : {}),
       };
 
+      // ARCH-011: Audit Trail HMAC Integrity
+      // Fetch the last entry for this tenant to link the hash chain.
+      const lastEntry = await this.prisma.auditLog.findFirst({
+        where: { tenantId: data.tenantId || null },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const prevHash = lastEntry?.entryHash || null;
+      const createdAt = new Date();
+
+      // Canonical HMAC Input Generation
+      const canonicalInput = [
+        prevHash ?? 'GENESIS',
+        data.action,
+        data.resource,
+        createdAt.toISOString(),
+        JSON.stringify(finalDetails),
+      ].join('|');
+
+      const entryHash = process.env.AUDIT_HMAC_SECRET
+        ? crypto
+          .createHmac('sha256', process.env.AUDIT_HMAC_SECRET)
+          .update(canonicalInput)
+          .digest('hex')
+        : null;
+
       return await this.prisma.auditLog.create({
         data: {
           tenantId: data.tenantId,
@@ -36,6 +63,9 @@ export class AuditService {
           details: finalDetails,
           ipAddress: data.ipAddress,
           channel: data.channel,
+          createdAt,
+          prevHash,
+          entryHash,
         },
       });
     } catch (err: any) {

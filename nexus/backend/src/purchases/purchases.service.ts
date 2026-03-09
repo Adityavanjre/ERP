@@ -20,7 +20,7 @@ export class PurchasesService {
     private ledger: LedgerService,
     private tds: TdsService,
     private readonly traceService: TraceService,
-  ) {}
+  ) { }
 
   // --- Suppliers ---
   async createSupplier(tenantId: string, data: any) {
@@ -117,7 +117,15 @@ export class PurchasesService {
       failed: 0,
       errors: [] as string[],
     };
-    let aggregateAP = 0;
+
+    // BUG-006 FIX: Ledger integrity requires writing the Journal Entry 
+    // INSIDE the isolated transaction for every single supplier.
+    const apAcc = await this.prisma.account.findFirst({
+      where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
+    });
+    const obAcc = await this.prisma.account.findFirst({
+      where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+    });
 
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
@@ -169,7 +177,7 @@ export class PurchasesService {
               where: { tenantId, supplierId },
             });
             if (!existingOB) {
-              await tx.supplierOpeningBalance.create({
+              const obRecord = await tx.supplierOpeningBalance.create({
                 data: {
                   tenantId,
                   supplierId,
@@ -179,7 +187,30 @@ export class PurchasesService {
                   correlationId: this.traceService.getCorrelationId(),
                 } as any,
               });
-              aggregateAP += ob;
+
+              // BUG-006 FIX: Post to GL securely within the `tx` bounds
+              if (apAcc && obAcc) {
+                await this.ledger.createJournalEntry(tenantId, {
+                  date: new Date().toISOString(),
+                  description: `Bulk Import Opening Balance: ${name}`,
+                  reference: `IMP-OB-${obRecord.id.slice(0, 8)}`,
+                  transactions: [
+                    {
+                      accountId: obAcc.id,
+                      type: 'Debit',
+                      amount: Math.abs(ob),
+                      description: 'Imported Supplier OB',
+                    },
+                    {
+                      accountId: apAcc.id,
+                      type: 'Credit',
+                      amount: Math.abs(ob),
+                      description: 'Imported Supplier OB',
+                    },
+                  ],
+                  correlationId: this.traceService.getCorrelationId(),
+                }, tx);
+              }
             }
           }
         });
@@ -187,39 +218,6 @@ export class PurchasesService {
       } catch (e: any) {
         results.failed++;
         results.errors.push(`Row ${i}: ${e.message}`);
-      }
-    }
-
-    // Ledger Sync: Restore Liability integrity
-    if (aggregateAP !== 0) {
-      const apAcc = await this.prisma.account.findFirst({
-        where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
-      });
-      const obAcc = await this.prisma.account.findFirst({
-        where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
-      });
-
-      if (apAcc && obAcc) {
-        await this.ledger.createJournalEntry(tenantId, {
-          date: new Date().toISOString(),
-          description: `Bulk Import Sync: ${results.imported} Suppliers`,
-          reference: 'SYS-IMPORT-SUPP',
-          transactions: [
-            {
-              accountId: obAcc.id,
-              type: 'Debit',
-              amount: Math.abs(aggregateAP),
-              description: 'Bulk OB',
-            },
-            {
-              accountId: apAcc.id,
-              type: 'Credit',
-              amount: Math.abs(aggregateAP),
-              description: 'Bulk OB',
-            },
-          ],
-          correlationId: this.traceService.getCorrelationId(),
-        });
       }
     }
 
@@ -370,12 +368,9 @@ export class PurchasesService {
     status: POStatus,
     warehouseId?: string,
   ) {
-    // 0. Governance: Period Lock
-    await this.accounting.checkPeriodLock(tenantId, new Date());
-
     // Transactional Safety for Stock + Financials
     return this.prisma.$transaction(async (tx) => {
-      // 0. Audit Guard
+      // Audit Guard: period lock check INSIDE the transaction to prevent TOCTOU race condition.
       await this.accounting.ledger.checkPeriodLock(tenantId, new Date(), tx);
 
       const po = await tx.purchaseOrder.findFirst({
@@ -435,9 +430,9 @@ export class PurchasesService {
                 OR: warehouseId
                   ? undefined
                   : [
-                      { name: 'Main Warehouse' },
-                      {}, // Fallback to any warehouse if no ID provides
-                    ],
+                    { name: 'Main Warehouse' },
+                    {}, // Fallback to any warehouse if no ID provides
+                  ],
               },
             });
 
@@ -671,11 +666,14 @@ export class PurchasesService {
           });
 
           if (movement) {
+            // BUG-004 FIX: Target the exact stock location bin (notes: '') to prevent
+            // cross-deducting from WIP or staging bins simultaneously.
             await tx.stockLocation.updateMany({
               where: {
+                tenantId,
                 productId: item.productId,
                 warehouseId: movement.warehouseId,
-                warehouse: { tenantId },
+                notes: '',
               },
               data: { quantity: { decrement: item.quantity } },
             });

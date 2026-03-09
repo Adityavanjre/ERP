@@ -5,11 +5,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class WorkflowService {
   private readonly logger = new Logger(WorkflowService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  async createWorkflow(data: { name: string; modelName: string }) {
+  async createWorkflow(tenantId: string, data: { name: string; modelName: string }) {
     return this.prisma.workflowDefinition.create({
       data: {
+        tenantId,
         name: data.name,
         modelName: data.modelName,
         isActive: true,
@@ -17,19 +18,24 @@ export class WorkflowService {
     });
   }
 
-  async getWorkflowsByModel(modelName: string) {
+  async getWorkflowsByModel(tenantId: string, modelName: string) {
     return this.prisma.workflowDefinition.findMany({
-      where: { modelName },
+      where: {
+        modelName,
+        OR: [{ tenantId }, { tenantId: null }],
+      },
       include: { nodes: true, transitions: true },
     });
   }
 
   async addNode(
+    tenantId: string,
     workflowId: string,
     node: { name: string; type: string; config?: any },
   ) {
     return this.prisma.workflowNode.create({
       data: {
+        tenantId,
         workflowId,
         name: node.name,
         type: node.type,
@@ -39,6 +45,7 @@ export class WorkflowService {
   }
 
   async addTransition(
+    tenantId: string,
     workflowId: string,
     transition: {
       fromNodeId: string;
@@ -50,6 +57,7 @@ export class WorkflowService {
   ) {
     return this.prisma.workflowTransition.create({
       data: {
+        tenantId,
         workflowId,
         fromNodeId: transition.fromNodeId,
         toNodeId: transition.toNodeId,

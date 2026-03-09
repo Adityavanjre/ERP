@@ -57,9 +57,11 @@ export default function LoginPage() {
         const returnTo = localStorage.getItem("return_to")
         localStorage.removeItem("return_to")
 
+        // Super Admin: Only redirect to admin panel if they have NO existing tenants
+        // If they have tenants (e.g. they own a test retail outlet), they must see the TenantSelector
         if (data.user?.isSuperAdmin && (!data.tenants || data.tenants.length === 0)) {
-            window.location.href = "/portal/admin/monitoring"
-            return
+            window.location.href = "/portal/admin/monitoring";
+            return;
         }
 
         const safeRedirect = (raw: string | null): string => {

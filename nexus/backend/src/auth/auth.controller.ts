@@ -47,7 +47,7 @@ export class AuthController {
     private authService: AuthService,
     private security: SecurityStorageService,
     private anomalyAlert: AnomalyAlertService,
-  ) {}
+  ) { }
 
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 15, ttl: 60000 } })
@@ -235,8 +235,17 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Public()
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponse> {
+    const result = (await this.authService.register(
+      registerDto,
+    )) as AuthResponse;
+    if (result && result.accessToken && result.refreshToken) {
+      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    }
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -359,10 +368,10 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { jti, exp } = req.user;
-    if (jti && exp) {
-      await this.security.blacklistToken(jti, exp);
-    }
+    // SECURITY BUG-010: Blacklisting the AT's jti leaves the RT fully functional since RT lacks jti.
+    // Instead of maintaining complex blacklist states, we forcibly increment the user's tokenVersion.
+    // This instantly invalidates ALL active tokens (both AT and RT) for this user across all devices.
+    await this.authService.logoutAll(req.user.sub);
     res.clearCookie('nexus_token');
     res.clearCookie('nexus_refresh');
     return { success: true, message: 'Session terminated. Token revoked.' };

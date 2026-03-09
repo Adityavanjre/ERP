@@ -55,7 +55,7 @@ export class AuthService {
     private readonly logging: LoggingService,
     private readonly anomalyAlert: AnomalyAlertService,
     private readonly mfaCrypto: MfaCryptoService,
-  ) {}
+  ) { }
 
   async createWorkspace(userId: string, dto: CreateWorkspaceDto) {
     const user = await this.prisma.user.findUnique({
@@ -93,6 +93,7 @@ export class AuthService {
         name: dto.name,
         slug: finalSlug,
         type: (dto.type as TenantType) ?? TenantType.Retail,
+        industry: dto.type, // FIX: Capture industry during initial workspace creation
         plan: PlanType.Free,
         isOnboarded: false,
       },
@@ -179,6 +180,7 @@ export class AuthService {
               name: dto.tenantName,
               slug: finalSlug,
               type: (dto.companyType as TenantType) ?? TenantType.Retail,
+              industry: dto.companyType, // PERSIST_INDUSTRY_FIX
               plan: PlanType.Free,
               subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
               isOnboarded: false,
@@ -212,7 +214,7 @@ export class AuthService {
           } catch (logErr) {
             this.logger.warn(
               '[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' +
-                logErr?.message,
+              logErr?.message,
             );
           }
 
@@ -385,6 +387,9 @@ export class AuthService {
       });
       user.isSuperAdmin = true;
     }
+
+    // SEC-007: Brute-force check runs BEFORE password evaluation.
+    await this.checkBruteForce(user);
 
     const isPasswordValid = await bcrypt.compare(
       password,
@@ -782,12 +787,8 @@ export class AuthService {
           },
         });
 
-        // 4. Initialize Industry-Based COA
-        await this.accountingService.initializeTenantAccounts(
-          updatedTenant.id,
-          tx,
-          dto.industry,
-        );
+        // BUG-011 FIX: Do not re-initialize Chart of Accounts here.
+        // It's already created during the initial registration transaction.
 
         return updatedTenant;
       },

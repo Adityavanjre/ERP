@@ -5,8 +5,7 @@ import { TenantContextService } from './tenant-context.service';
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private _isolatedClient: any;
 
   constructor(private tenantContext: TenantContextService) {
@@ -56,6 +55,15 @@ export class PrismaService
                                     'AuditLog',
                                     'RevokedToken',
                                     'WebhookSecretRotation',
+                                    'WebhookDeadLetter',
+                                    'ModelDefinition',
+                                    'FieldDefinition',
+                                    'AccessRight',
+                                    'WorkflowDefinition',
+                                    'WorkflowNode',
+                                    'WorkflowTransition',
+                                    'IdempotencyKey',
+                                    'BackgroundJob',
                                   ];
 
                                   // SEC-004: Audit Log Immutability Enforcement (Transaction Layer)
@@ -253,6 +261,15 @@ export class PrismaService
               'AuditLog',
               'RevokedToken',
               'WebhookSecretRotation',
+              'WebhookDeadLetter',
+              'ModelDefinition',
+              'FieldDefinition',
+              'AccessRight',
+              'WorkflowDefinition',
+              'WorkflowNode',
+              'WorkflowTransition',
+              'IdempotencyKey',
+              'BackgroundJob',
             ];
 
             // SEC-004: Audit Log Immutability Enforcement (Middleware Layer)

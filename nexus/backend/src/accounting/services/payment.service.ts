@@ -24,7 +24,7 @@ export class PaymentService {
     private ledger: LedgerService,
     private tds: TdsService,
     private readonly traceService: TraceService,
-  ) {}
+  ) { }
 
   async createPayment(tenantId: string, data: CreatePaymentDto) {
     if (!data.customerId && !data.supplierId) {
@@ -375,7 +375,11 @@ export class PaymentService {
       if (pay.notes?.includes('CANCELLED'))
         throw new BadRequestException('Payment is already cancelled');
 
+      // BUG-AUTH-02 FIX: Check both the original payment date AND today (the reversal date).
+      // Without this, a cancellation reversal can be posted into a currently-open period
+      // that was accidentally left unlocked, while the original period is correctly locked.
       await this.ledger.checkPeriodLock(tenantId, pay.date, tx);
+      await this.ledger.checkPeriodLock(tenantId, new Date(), tx);
 
       // 1. Find the Journal Entry associated with this payment
       const journal = await tx.journalEntry.findFirst({
@@ -511,14 +515,42 @@ export class PaymentService {
         },
       });
 
-      // 5. Cleanup TDS Transactions to reverse threshold calculation without hard-deleting
-      return (tx as any).tdsTransaction.updateMany({
+      // 5. Audit log for supplier payments (customer payments log happens inside createJournalEntry invoke flow)
+      if (pay.supplierId) {
+        await (tx as any).auditLog.create({
+          data: {
+            tenantId,
+            action: 'PAYMENT_CANCELLED',
+            resource: `Payment:${pay.id}`,
+            details: {
+              amount: pay.amount,
+              supplierId: pay.supplierId,
+              reason,
+            },
+          },
+        });
+      }
+
+      // 6. BUG-AUTH-01 FIX: Reverse TDS transactions by creating a reversing entry.
+      // Zeroing amounts (previous approach) distorts the historical TDS threshold ledger
+      // and breaks forensic auditability. A reversal entry preserves the original record
+      // while correctly cancelling its effect on the threshold calculation.
+      const tdsEntries = await (tx as any).tdsTransaction.findMany({
         where: { tenantId, paymentId: id },
-        data: {
-          amount: 0,
-          tdsAmount: 0,
-        },
       });
+      for (const entry of tdsEntries) {
+        await (tx as any).tdsTransaction.create({
+          data: {
+            tenantId,
+            ruleId: entry.ruleId,
+            supplierId: entry.supplierId,
+            amount: -Number(entry.amount),
+            tdsAmount: -Number(entry.tdsAmount),
+            date: new Date(),
+            notes: `REVERSAL of TDS entry ${entry.id} for cancelled payment ${id}: ${reason}`,
+          },
+        });
+      }
     });
   }
 
@@ -528,30 +560,32 @@ export class PaymentService {
     });
     if (!pay) throw new NotFoundException('Payment not found');
 
-    // Audit Guard: Check lock for EXISTING record date
-    await this.ledger.checkPeriodLock(tenantId, pay.date);
-    // Audit Guard: Check lock for NEW record date if changed
-    if (data.date) await this.ledger.checkPeriodLock(tenantId, data.date);
+    return this.prisma.$transaction(async (tx) => {
+      // Audit Guard: Check lock for EXISTING record date inside the transaction
+      await this.ledger.checkPeriodLock(tenantId, pay.date, tx);
+      // Audit Guard: Check lock for NEW record date if changed
+      if (data.date) await this.ledger.checkPeriodLock(tenantId, data.date, tx);
 
-    // FINANCIAL INTEGRITY GUARD: Block direct updates to critical fields
-    const criticalFields = [
-      'amount',
-      'date',
-      'invoiceId',
-      'customerId',
-      'supplierId',
-    ];
-    for (const field of criticalFields) {
-      if (data[field] !== undefined && data[field] !== (pay as any)[field]) {
-        throw new BadRequestException(
-          `Financial Integrity Violation: Cannot directly update '${field}'. Please cancel and re-create the payment if correction is needed.`,
-        );
+      // FINANCIAL INTEGRITY GUARD: Block direct updates to critical fields
+      const criticalFields = [
+        'amount',
+        'date',
+        'invoiceId',
+        'customerId',
+        'supplierId',
+      ];
+      for (const field of criticalFields) {
+        if (data[field] !== undefined && data[field] !== (pay as any)[field]) {
+          throw new BadRequestException(
+            `Financial Integrity Violation: Cannot directly update '${field}'. Please cancel and re-create the payment if correction is needed.`,
+          );
+        }
       }
-    }
 
-    return this.prisma.payment.updateMany({
-      where: { id, tenantId },
-      data,
+      return tx.payment.updateMany({
+        where: { id, tenantId },
+        data,
+      });
     });
   }
 

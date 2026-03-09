@@ -127,7 +127,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
             // If the token is just the identity token, do not hit tenant-scoped APIs
             if (token && identity && token === identity) {
-                setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
+                setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm', 'healthcare']);
                 // setConfigLoading(false);
                 return;
             }
@@ -135,13 +135,13 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             const res = await api.get('system/config');
             // Always ensure core modules are included even if API omits them
             const apiModules: string[] = res.data.enabledModules || [];
-            const coreModules = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
+            const coreModules = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm', 'healthcare'];
             const merged = Array.from(new Set([...coreModules, ...apiModules]));
             setEnabledModules(merged);
         } catch (err) {
             console.error("Config fetch error:", err);
             // Fallback to all core modules if API fails
-            setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm']);
+            setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm', 'healthcare']);
         } finally {
             // setConfigLoading(false);
         }
@@ -189,12 +189,12 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         href="/dashboard"
                         onClick={onItemClick}
                         className={cn(
-                            "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
-                            pathname === '/dashboard' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
+                            "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                            pathname === '/dashboard' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
                         )}
                     >
                         <div className="flex items-center flex-1">
-                            <LayoutDashboard className={cn("h-4 w-4 mr-3 transition-colors", pathname === '/dashboard' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
+                            <LayoutDashboard className={cn("h-4 w-4 mr-3 transition-all duration-300 group-hover:rotate-12", pathname === '/dashboard' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
                             Dashboard
                         </div>
                     </Link>
@@ -213,12 +213,12 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                                     href={item.href}
                                     onClick={onItemClick}
                                     className={cn(
-                                        "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
-                                        isActive ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
+                                        "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                                        isActive ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
                                     )}
                                 >
                                     <div className="flex items-center flex-1">
-                                        <item.icon className={cn("h-4 w-4 mr-3 transition-colors", isActive ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
+                                        <item.icon className={cn("h-4 w-4 mr-3 transition-all duration-500 group-hover:rotate-[20deg] group-hover:scale-125", isActive ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
                                         {item.label}
                                     </div>
                                 </Link>
@@ -234,12 +234,12 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         href="/settings"
                         onClick={onItemClick}
                         className={cn(
-                            "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest",
-                            pathname === '/settings' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500"
+                            "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                            pathname === '/settings' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
                         )}
                     >
                         <div className="flex items-center flex-1">
-                            <Settings className={cn("h-4 w-4 mr-3 transition-colors", pathname === '/settings' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
+                            <Settings className={cn("h-4 w-4 mr-3 transition-all duration-500 group-hover:rotate-90 group-hover:scale-125", pathname === '/settings' ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500")} />
                             Settings
                         </div>
                     </Link>
@@ -255,10 +255,10 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                             toast.error("Identity session lost. Please log in again.");
                         }
                     }}
-                    className="text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-200 uppercase tracking-widest text-slate-500"
+                    className="text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest text-slate-500 hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <div className="flex items-center flex-1">
-                        <RefreshCw className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                        <RefreshCw className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:rotate-180" />
                         Switch Workspace
                     </div>
                 </button>

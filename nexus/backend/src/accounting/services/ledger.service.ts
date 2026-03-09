@@ -16,7 +16,7 @@ export class LedgerService {
     @Inject(CACHE_MANAGER) private cacheManager: any,
     private readonly traceService: TraceService,
     private billing: BillingService,
-  ) {}
+  ) { }
 
   round2(val: number | string | Decimal): Decimal {
     if (val instanceof Decimal) {
@@ -545,9 +545,10 @@ export class LedgerService {
       }
 
       // Apply one atomic increment per distinct account
+      // PRISMA_FIX: Use update() for atomic increment on unique ID
       await Promise.all(
         Array.from(balanceDeltas.entries()).map(([accountId, delta]) =>
-          client.account.updateMany({
+          client.account.update({
             where: { id: accountId, tenantId },
             data: { balance: { increment: delta } },
           }),

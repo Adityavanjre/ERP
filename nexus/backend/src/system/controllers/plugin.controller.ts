@@ -12,16 +12,17 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 import { PluginManager } from '../services/plugin.manager';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('system/plugins')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.Owner) // Registration/Management restricted to system owners
+@UseGuards(JwtAuthGuard, RolesGuard, AdminGuard)
+@Roles(Role.Owner) // Virtual Role for Admins mapped in RolesGuard
 export class PluginController {
   constructor(
     private readonly pluginManager: PluginManager,
     private readonly prisma: PrismaService,
-  ) {}
+  ) { }
 
   @Get()
   async listPlugins() {

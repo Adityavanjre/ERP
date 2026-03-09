@@ -98,6 +98,12 @@ model Tenant {
   workOrders              WorkOrder[]
   records                 Record[]
   warehouses              Warehouse[]
+  modelDefinitions        ModelDefinition[]
+  fieldDefinitions        FieldDefinition[]
+  accessRights            AccessRight[]
+  workflowDefinitions     WorkflowDefinition[]
+  workflowNodes           WorkflowNode[]
+  workflowTransitions     WorkflowTransition[]
   stockMovements          StockMovement[]
   fixedAssets             FixedAsset[]
   comments                Comment[]
@@ -1326,8 +1332,9 @@ model Plugin {
 
 model ModelDefinition {
   id           String            @id @default(uuid())
+  tenantId      String? // NULL = System-wide definition
   moduleId     String?
-  name         String            @unique
+  name         String
   label        String
   description  String?
   isSystem     Boolean           @default(false)
@@ -1335,10 +1342,14 @@ model ModelDefinition {
   updatedAt    DateTime          @updatedAt
   fields       FieldDefinition[]
   accessRights AccessRight[]
+  tenant       Tenant?           @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, name])
 }
 
 model FieldDefinition {
   id               String          @id @default(uuid())
+  tenantId         String?
   modelId          String
   name             String
   label            String
@@ -1347,10 +1358,12 @@ model FieldDefinition {
   targetModel      String?
   selectionOptions Json?
   model            ModelDefinition @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  tenant           Tenant?         @relation(fields: [tenantId], references: [id])
 }
 
 model AccessRight {
   id         String          @id @default(uuid())
+  tenantId   String?
   modelId    String
   role       String
   permRead   Boolean         @default(true)
@@ -1358,6 +1371,7 @@ model AccessRight {
   permCreate Boolean         @default(false)
   permUnlink Boolean         @default(false)
   model      ModelDefinition @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  tenant     Tenant?         @relation(fields: [tenantId], references: [id])
 }
 
 model Record {
@@ -1374,6 +1388,7 @@ model Record {
 
 model WorkflowDefinition {
   id          String               @id @default(uuid())
+  tenantId    String?
   name        String
   modelName   String
   isActive    Boolean              @default(true)
@@ -1381,23 +1396,29 @@ model WorkflowDefinition {
   updatedAt   DateTime             @updatedAt
   nodes       WorkflowNode[]
   transitions WorkflowTransition[]
+  tenant      Tenant?              @relation(fields: [tenantId], references: [id])
 
   @@index([modelName])
+  @@index([tenantId])
 }
 
 model WorkflowNode {
   id         String             @id @default(uuid())
+  tenantId   String?
   workflowId String
   name       String
   type       String
   config     Json               @default("{}")
   workflow   WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  tenant     Tenant?            @relation(fields: [tenantId], references: [id])
 
   @@index([workflowId])
+  @@index([tenantId])
 }
 
 model WorkflowTransition {
   id          String             @id @default(uuid())
+  tenantId    String?
   workflowId  String
   fromNodeId  String
   toNodeId    String
@@ -1405,8 +1426,10 @@ model WorkflowTransition {
   label       String?
   condition   String?
   workflow    WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  tenant      Tenant?            @relation(fields: [tenantId], references: [id])
 
   @@index([workflowId])
+  @@index([tenantId])
 }
 
 model TdsRule {

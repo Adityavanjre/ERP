@@ -13,7 +13,7 @@ export class SalesService {
     private prisma: PrismaService,
     private accountingService: AccountingService,
     private audit: AuditService,
-  ) {}
+  ) { }
 
   async createOrder(tenantId: string, data: any, user?: any) {
     const { items, customerId, idempotencyKey, ...orderData } = data;
@@ -142,12 +142,22 @@ export class SalesService {
   }
 
   async updateOrderStatus(tenantId: string, id: string, status: OrderStatus) {
-    // 0. Security Guard: Prevent modifying old orders in locked periods
-    await this.accountingService.checkPeriodLock(tenantId, new Date());
-
-    return this.prisma.order.updateMany({
+    const order = await this.prisma.order.findFirst({
       where: { id, tenantId },
-      data: { status },
+    });
+    if (!order) throw new BadRequestException('Order not found');
+
+    // BUG-007 FIX: Security Guard: Prevent modifying old orders in locked periods
+    // By checking 'order.createdAt' instead of 'new Date()', we strictly 
+    // prevent modification of historical orders that belong to a closed period.
+    return this.prisma.$transaction(async (tx) => {
+      // BUG-FIN-013 FIX: Secure Period Lock Validation natively within transaction
+      await this.accountingService.checkPeriodLock(tenantId, order.createdAt, tx);
+
+      return tx.order.update({
+        where: { id },
+        data: { status },
+      });
     });
   }
 

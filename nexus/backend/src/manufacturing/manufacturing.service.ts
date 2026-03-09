@@ -23,7 +23,7 @@ export class ManufacturingService {
     private accounting: AccountingService,
     private traceService: TraceService,
     private inventoryService: InventoryService,
-  ) {}
+  ) { }
 
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
@@ -43,7 +43,8 @@ export class ManufacturingService {
           p."costPrice" as "costPrice",
           p."baseUnit" as "baseUnit",
           ARRAY[${bomId}::text] as path,
-          false as is_cycle
+          false as is_cycle,
+          1 as depth
         FROM "BOMItem" bi
         JOIN "Product" p ON bi."productId" = p.id
         WHERE bi."bomId" = ${bomId} AND bi."tenantId" = ${tenantId}
@@ -60,14 +61,15 @@ export class ManufacturingService {
           sub_p."costPrice" as "costPrice",
           sub_p."baseUnit" as "baseUnit",
           eb.path || bom.id::text as path,
-          bom.id::text = ANY(eb.path) as is_cycle
+          bom.id::text = ANY(eb.path) as is_cycle,
+          eb.depth + 1 as depth
         FROM exploded_bom eb
         JOIN "BillOfMaterial" bom ON eb."productId" = bom."productId" 
           AND bom."tenantId" = ${tenantId} 
           AND bom.status = 'Active'
         JOIN "BOMItem" sub_bi ON bom.id = sub_bi."bomId" AND sub_bi."tenantId" = ${tenantId}
         JOIN "Product" sub_p ON sub_bi."productId" = sub_p.id
-        WHERE eb.is_cycle = false
+        WHERE eb.is_cycle = false AND eb.depth < 10 -- Zenith Guard: Limit recursion depth
       )
       SELECT 
         eb.*,
@@ -343,8 +345,8 @@ export class ManufacturingService {
     });
     if (!wo) throw new NotFoundException('Work Order not found');
 
-    const updated = await this.prisma.workOrder.update({
-      where: { id },
+    const updated = await this.prisma.workOrder.updateMany({
+      where: { id, tenantId },
       data: { status: 'Confirmed' },
     });
 
@@ -382,8 +384,8 @@ export class ManufacturingService {
     });
     if (!wo) throw new NotFoundException('Work Order not found');
 
-    const updated = await this.prisma.workOrder.update({
-      where: { id },
+    const updated = await this.prisma.workOrder.updateMany({
+      where: { id, tenantId },
       data: { status: 'Cancelled' },
     });
 
@@ -730,7 +732,11 @@ export class ManufacturingService {
       producedQtyStr !== undefined ? Number(producedQtyStr) : wo.quantity;
     const scrapQty = scrapQtyStr !== undefined ? Number(scrapQtyStr) : 0;
 
-    await this.accounting.checkPeriodLock(tenantId, new Date());
+    if (producedQty < 0 || scrapQty < 0) {
+      throw new BadRequestException(
+        'Zenith Guard: Production and scrap quantities must be non-negative.',
+      );
+    }
 
     try {
       // Consume raw materials based on the sum of produced and scrap
@@ -742,6 +748,10 @@ export class ManufacturingService {
       );
 
       return await this.prisma.$transaction(async (tx) => {
+        // BUG-002 FIX: Period lock check MUST occur inside the transaction 
+        // to prevent race conditions where a period is locked immediately after the check.
+        await this.accounting.checkPeriodLock(tenantId, new Date(), tx);
+
         const targetWarehouse =
           warehouseId ||
           (
@@ -811,8 +821,8 @@ export class ManufacturingService {
           update: { quantity: { increment: new Decimal(producedQty) } },
         });
 
-        await tx.product.updateMany({
-          where: { id: wo.bom.productId, tenantId },
+        await tx.product.update({
+          where: { id: wo.bom.productId },
           data: { stock: { increment: new Decimal(producedQty) } },
         });
 
@@ -841,12 +851,42 @@ export class ManufacturingService {
 
         if (fgAccount && (wipAccount || rmAccount)) {
           const costData = await this.getBOMCost(tenantId, wo.bomId);
+
+          let materialValueConsumed = new Decimal(costData.materialCost).mul(
+            totalConsumedQty,
+          );
+
+          const isFromWIP = wo.status === 'InProgress';
+
+          // BUG-MFG-003: Prevent WIP value leak by recovering actual issue cost
+          if (isFromWIP && wipAccount) {
+            const previousIssue = await tx.journalEntry.findFirst({
+              where: {
+                tenantId,
+                reference: wo.orderNumber,
+                description: { contains: 'Issue' },
+              },
+              include: {
+                transactions: {
+                  where: { accountId: wipAccount.id, type: 'Debit' },
+                },
+              },
+            });
+
+            if (previousIssue && previousIssue.transactions.length > 0) {
+              const issueValue = new Decimal(previousIssue.transactions[0].amount);
+              // If we are consuming exactly what was planned, use the exact recorded value to clear the account.
+              // This prevents residuals if the Product costPrice was changed during production.
+              if (new Decimal(wo.quantity).equals(totalConsumedQty)) {
+                materialValueConsumed = issueValue;
+              }
+            }
+          }
+
           let totalProductionValue = new Decimal(costData.totalCost).mul(
             producedQty,
           );
-          const materialValueConsumed = new Decimal(costData.materialCost).mul(
-            totalConsumedQty,
-          );
+
           const scrapValue = new Decimal(costData.materialCost).mul(scrapQty);
           let overheadValue = new Decimal(costData.overheadCost).mul(
             producedQty,
@@ -868,7 +908,6 @@ export class ManufacturingService {
             }
           }
 
-          const isFromWIP = wo.status === 'InProgress';
           const creditAccount =
             isFromWIP && wipAccount ? wipAccount : rmAccount!;
 
@@ -916,8 +955,8 @@ export class ManufacturingService {
             // rather than posting an inaccurate fixed value to the ledger.
             const machineForLabor = machineId
               ? await (tx as any).machine.findFirst({
-                  where: { id: machineId, tenantId },
-                })
+                where: { id: machineId, tenantId },
+              })
               : null;
             const effectiveLaborRate = machineForLabor?.hourlyRate
               ? new Decimal(machineForLabor.hourlyRate)

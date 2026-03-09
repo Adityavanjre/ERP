@@ -75,7 +75,12 @@ export function TenantSelector() {
         };
     }, []);
 
-    const handleLogout = useCallback(() => {
+    const handleLogout = useCallback(async () => {
+        try {
+            await authFetch("auth/logout", { method: 'POST' });
+        } catch (e) {
+            console.error("Backend logout failed", e);
+        }
         localStorage.removeItem("k_token");
         localStorage.removeItem("k_identity");
         localStorage.removeItem("k_user");

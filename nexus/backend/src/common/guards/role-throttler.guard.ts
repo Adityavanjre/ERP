@@ -5,7 +5,14 @@ import { Role } from '@prisma/client';
 @Injectable()
 export class RoleThrottlerGuard extends ThrottlerGuard {
   protected async getTracker(req: Record<string, any>): Promise<string> {
-    return req.ip; // Or use user ID if available
+    const user = req.user;
+    // If authenticated, track by User ID + Tenant ID to ensure fair usage within a shared workspace
+    // While preventing a single IP (corporate NAT) from exhausting the global pool.
+    if (user && user.sub && user.tenantId) {
+      return `user:${user.sub}:${user.tenantId}`;
+    }
+    // Fallback to IP for public endpoints (identity tokens use IP)
+    return req.ip;
   }
 
   protected async handleRequest(

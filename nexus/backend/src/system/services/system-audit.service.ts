@@ -6,7 +6,7 @@ import { StandardAccounts } from '../../accounting/constants/account-names';
 
 @Injectable()
 export class SystemAuditService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async verifyFinancialIntegrity(tenantId: string) {
     // 1. Trial Balance Audit (Global Dr == Cr)
@@ -23,6 +23,43 @@ export class SystemAuditService {
     });
 
     const tbBalanced = totalDebit.equals(totalCredit);
+
+    // 1b. Account-Ledger Consistency Audit (Account.balance == SUM(Transactions))
+    // BUG-FIN-012: Detects out-of-band DB mutations that bypass LedgerService
+    const accounts = await this.prisma.account.findMany({ where: { tenantId } });
+    const desyncedAccounts = [];
+
+    // Group transactions by account
+    const txByAccount = allTransactions.reduce((acc, t) => {
+      const amt = new Decimal(t.amount);
+      const isDebit = t.type === 'Debit';
+      const existing = acc.get(t.accountId) || new Decimal(0);
+
+      // Simple Dr-Cr sum (normalized)
+      acc.set(t.accountId, isDebit ? existing.add(amt) : existing.sub(amt));
+      return acc;
+    }, new Map<string, Decimal>());
+
+    for (const acc of accounts) {
+      const txSum = txByAccount.get(acc.id) || new Decimal(0);
+      const cachedBalance = new Decimal(acc.balance);
+
+      // Account Balance logic: 
+      // Assets/Expenses: Balance = Dr - Cr
+      // Liability/Equity/Revenue: Balance = Cr - Dr
+      const isAssetOrExpense = ['Asset', 'Expense'].includes(acc.type);
+      const expectedBalance = isAssetOrExpense ? txSum : txSum.negated();
+
+      if (!expectedBalance.equals(cachedBalance)) {
+        desyncedAccounts.push({
+          id: acc.id,
+          name: acc.name,
+          expected: expectedBalance.toNumber(),
+          actual: cachedBalance.toNumber(),
+          diff: expectedBalance.sub(cachedBalance).toNumber(),
+        });
+      }
+    }
 
     // 2. Per-Journal Invariant Audit (Local Dr == Cr)
     const journals = await this.prisma.journalEntry.findMany({
@@ -85,6 +122,7 @@ export class SystemAuditService {
     // 5. Audit Risk Assessment
     const riskScore = this.calculateForensicRisk(
       unbalancedJournals.length,
+      desyncedAccounts.length,
       orphanedTx.length,
       documentsMissingTrace.total,
       industryAnomalies.length,
@@ -102,6 +140,10 @@ export class SystemAuditService {
         riskScore,
         invariants: {
           globalDrCr: tbBalanced ? 'PASSED' : 'FAILED',
+          ledgerDesync:
+            desyncedAccounts.length === 0
+              ? 'PASSED'
+              : `${desyncedAccounts.length} Discrepancies`,
           perJournalDrCr:
             unbalancedJournals.length === 0
               ? 'PASSED'
@@ -117,10 +159,12 @@ export class SystemAuditService {
         },
         financials: {
           tbDrift: totalDebit.sub(totalCredit).toNumber(),
+          ledgerDriftTotal: desyncedAccounts.reduce((s, a) => s + Math.abs(a.diff), 0),
           inventoryDrift: physicalStockValue.sub(ledgerStockValue).toNumber(),
           mutationsDetected: mutationCount,
         },
         violations: {
+          desyncedAccounts,
           unbalancedJournalIds: unbalancedJournals
             .slice(0, 10)
             .map((j) => j.id),
@@ -133,6 +177,7 @@ export class SystemAuditService {
       },
       recommendations: this.generateForensicRecommendations(
         unbalancedJournals.length,
+        desyncedAccounts.length,
         orphanedTx.length,
         documentsMissingTrace.total + stockMissingTrace,
         mutationCount,
@@ -224,16 +269,18 @@ export class SystemAuditService {
 
   private calculateForensicRisk(
     unbalanced: number,
+    desynced: number,
     orphans: number,
     gaps: number,
     anomalies: number,
   ): number {
-    // High weights for Dr!=Cr (corruption indicator)
-    return unbalanced * 100 + orphans * 50 + gaps * 10 + anomalies * 25;
+    // High weights for Dr!=Cr or cached balance != tx sum (corruption indicators)
+    return unbalanced * 100 + desynced * 150 + orphans * 50 + gaps * 10 + anomalies * 25;
   }
 
   private generateForensicRecommendations(
     unbalanced: number,
+    desynced: number,
     orphans: number,
     gaps: number,
     mutations: number,
@@ -243,6 +290,10 @@ export class SystemAuditService {
     if (unbalanced > 0)
       recs.push(
         `CRITICAL: ${unbalanced} journals violates Dr=Cr. Manual intervention required to restore ledger integrity.`,
+      );
+    if (desynced > 0)
+      recs.push(
+        `CRITICAL: ${desynced} accounts have balances that DO NOT match their transaction history. Detects unauthorized DB edits.`,
       );
     if (mutations > 0)
       recs.push(

@@ -88,7 +88,7 @@ export class ResetPasswordDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(1000)
+  @MaxLength(64)
   token: string;
 
   @IsString()

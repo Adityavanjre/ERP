@@ -33,7 +33,7 @@ export class InvoiceService {
     private billing: BillingService,
     @Inject(forwardRef(() => InventoryService))
     private inventoryService: InventoryService,
-  ) {}
+  ) { }
 
   private validateGstin(gstin: string): boolean {
     if (!gstin) return true; // Unregistered
@@ -416,8 +416,6 @@ export class InvoiceService {
       );
     }
 
-    await this.ledger.checkPeriodLock(tenantId, inv.issueDate);
-
     // Whitelist approach: Only minor metadata can be updated
     const allowed = ['notes', 'summary', 'dueDate', 'billingTimeSeconds'];
     const forbidden = Object.keys(data).filter((k) => !allowed.includes(k));
@@ -428,9 +426,14 @@ export class InvoiceService {
       );
     }
 
-    return this.prisma.invoice.update({
-      where: { id },
-      data,
+    return this.prisma.$transaction(async (tx) => {
+      // BUG-FIN-013 FIX: Secure Period Lock Validation natively within transaction
+      await this.ledger.checkPeriodLock(tenantId, inv.issueDate, tx);
+
+      return tx.invoice.update({
+        where: { id },
+        data,
+      });
     });
   }
 
@@ -464,9 +467,9 @@ export class InvoiceService {
         // throw an explicit error — an empty warehouseId would silently corrupt stock.
         const fallbackWarehouse = !originalMovement?.warehouseId
           ? await tx.warehouse.findFirst({
-              where: { tenantId },
-              orderBy: { id: 'asc' },
-            })
+            where: { tenantId },
+            orderBy: { id: 'asc' },
+          })
           : null;
 
         const warehouseId =
@@ -475,7 +478,7 @@ export class InvoiceService {
         if (!warehouseId) {
           throw new BadRequestException(
             `Stock reversal failed for Product ${item.productId}: no warehouse found. ` +
-              `Create at least one warehouse before cancelling stock-tracked invoices.`,
+            `Create at least one warehouse before cancelling stock-tracked invoices.`,
           );
         }
 
@@ -811,8 +814,8 @@ export class InvoiceService {
       if (!isValid && !item.isGstOverride) {
         throw new BadRequestException(
           `Compliance Error: GST Rate mismatch for product ${product.name} (HSN: ${product.hsnCode}). ` +
-            `Official Rate: ${officialRate}%, Invoice Rate: ${gstRate}%. ` +
-            `Set 'isGstOverride' to true to allow this manual override.`,
+          `Official Rate: ${officialRate}%, Invoice Rate: ${gstRate}%. ` +
+          `Set 'isGstOverride' to true to allow this manual override.`,
         );
       }
 

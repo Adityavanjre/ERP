@@ -10,7 +10,7 @@ export class NbfcService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     private traceService: TraceService,
-  ) {}
+  ) { }
 
   // --- Loan Management System ---
   async addInterestSlabs(
@@ -68,9 +68,8 @@ export class NbfcService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      await this.ledger.checkPeriodLock(tenantId, new Date(), tx);
       // 1. Create Journal Entry for Disbursement
-      // Debit: Loan Asset Account
-      // Credit: Bank Account
       const journal = await this.ledger.createJournalEntry(
         tenantId,
         {
@@ -96,62 +95,34 @@ export class NbfcService {
         tx,
       );
 
-      // 2. Generate EMI Schedule (Graduated Slabs Support)
-      const slabs = await tx.loanInterestSlab.findMany({
-        where: { loanId: id, tenantId },
-        orderBy: { thresholdAmount: 'asc' },
-      });
-
+      // 2. Generate EMI Schedule (Equated Monthly Installment)
       const loanAmount = new Decimal(loan.loanAmount as any);
       const tenureMonths = new Decimal(loan.tenureMonths);
-
-      const monthlyPrincipal = loanAmount.div(tenureMonths);
       const baseMonthlyRate = new Decimal(loan.interestRate).div(100).div(12);
 
+      // Formula: E = P * r * (1 + r)^n / ((1 + r)^n - 1)
+      let emiAmount: Decimal;
+      if (baseMonthlyRate.equals(0)) {
+        emiAmount = loanAmount.div(tenureMonths);
+      } else {
+        const onePlusRToN = new Decimal(1).add(baseMonthlyRate).pow(tenureMonths.toNumber());
+        emiAmount = loanAmount.mul(baseMonthlyRate).mul(onePlusRToN).div(onePlusRToN.sub(1));
+      }
+
       const emiPromises = [];
+      let currentPrincipalBalance = loanAmount;
+
       for (let i = 1; i <= loan.tenureMonths; i++) {
         const dueDate = new Date(loan.startDate);
         dueDate.setMonth(dueDate.getMonth() + i);
 
-        const remainingBalance = new Decimal(loan.loanAmount).sub(
-          monthlyPrincipal.mul(i - 1),
-        );
+        let monthlyInterestPart = currentPrincipalBalance.mul(baseMonthlyRate);
+        let principalPart = emiAmount.sub(monthlyInterestPart);
 
-        // 100x Logic: Graduated Interest Calculus
-        let monthlyInterestPart = new Decimal(0);
-
-        if (slabs.length > 0) {
-          let tempBalance = remainingBalance;
-          let prevThreshold = new Decimal(0);
-
-          for (const slab of slabs) {
-            const threshold = new Decimal(slab.thresholdAmount);
-            const slabPrincipal = Decimal.min(
-              tempBalance,
-              threshold.sub(prevThreshold),
-            );
-
-            if (slabPrincipal.greaterThan(0)) {
-              const slabMonthlyRate = new Decimal(slab.interestRate)
-                .div(100)
-                .div(12);
-              monthlyInterestPart = monthlyInterestPart.add(
-                slabPrincipal.mul(slabMonthlyRate),
-              );
-              tempBalance = tempBalance.sub(slabPrincipal);
-              prevThreshold = threshold;
-            }
-          }
-          if (tempBalance.greaterThan(0)) {
-            monthlyInterestPart = monthlyInterestPart.add(
-              tempBalance.mul(baseMonthlyRate),
-            );
-          }
-        } else {
-          monthlyInterestPart = remainingBalance.mul(baseMonthlyRate);
+        if (i === loan.tenureMonths) {
+          principalPart = currentPrincipalBalance;
+          emiAmount = principalPart.add(monthlyInterestPart);
         }
-
-        const totalEMI = monthlyPrincipal.add(monthlyInterestPart);
 
         emiPromises.push(
           tx.eMISchedule.create({
@@ -159,20 +130,21 @@ export class NbfcService {
               tenantId,
               loanId: id,
               dueDate,
-              principalPart: monthlyPrincipal,
-              interestPart: monthlyInterestPart,
-              totalEMI: totalEMI,
+              principalPart: principalPart.toDecimalPlaces(2),
+              interestPart: monthlyInterestPart.toDecimalPlaces(2),
+              totalEMI: emiAmount.toDecimalPlaces(2),
               status: 'Pending',
               correlationId: this.traceService.getCorrelationId(),
             },
           }),
         );
+        currentPrincipalBalance = currentPrincipalBalance.sub(principalPart);
       }
       await Promise.all(emiPromises);
 
       // 3. Update Loan Status
       return tx.loan.update({
-        where: { id },
+        where: { id, tenantId },
         data: {
           status: 'Active',
           disbursedDate: new Date(),
@@ -186,9 +158,29 @@ export class NbfcService {
   async runDailyInterestAccrual(tenantId: string) {
     const activeLoans = await this.prisma.loan.findMany({
       where: { tenantId, status: 'Active' },
+      include: {
+        emiSchedule: {
+          where: { status: 'Paid' },
+        },
+      },
     });
 
     if (activeLoans.length === 0) return { accrued: 0 };
+
+    // BUG-005 FIX: Idempotency check to prevent duplicate batch runs on the same day.
+    // Checks if any accrual was already logged for this tenant since midnight UTC.
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const existingRun = await this.prisma.interestAccrual.findFirst({
+      where: {
+        tenantId,
+        date: { gte: startOfDay },
+      },
+    });
+
+    if (existingRun) {
+      return { accrued: 0, message: 'Daily interest accrual already completed for today.' };
+    }
 
     const today = new Date().toISOString();
     const accrualData: {
@@ -198,12 +190,17 @@ export class NbfcService {
       correlationId: string | null;
     }[] = [];
 
-    // Dynamic Chart of Account Lookups
     const interestReceivableAcc = await this.prisma.account.findFirst({
-      where: { tenantId, name: { contains: 'Receivable' } },
+      where: {
+        tenantId,
+        name: { equals: 'Interest Receivable', mode: 'insensitive' },
+      },
     });
     const interestRevenueAcc = await this.prisma.account.findFirst({
-      where: { tenantId, name: { contains: 'Interest Income - Loans' } },
+      where: {
+        tenantId,
+        name: { equals: 'Interest Income - Loans', mode: 'insensitive' },
+      },
     });
 
     if (!interestReceivableAcc || !interestRevenueAcc) {
@@ -213,21 +210,31 @@ export class NbfcService {
     }
 
     for (const loan of activeLoans) {
-      const dailyInterest = new Decimal(loan.loanAmount)
-        .mul(loan.interestRate)
+      const paidPrincipal = loan.emiSchedule.reduce(
+        (sum, emi) => sum.add(new Decimal(emi.principalPart as any)),
+        new Decimal(0),
+      );
+      const currentPrincipal = new Decimal(loan.loanAmount as any).sub(paidPrincipal);
+
+      const dailyInterest = currentPrincipal
+        .mul(new Decimal(loan.interestRate as any))
         .div(100)
-        .div(365);
-      accrualData.push({
-        tenantId,
-        loanId: loan.id,
-        amount: dailyInterest,
-        correlationId: this.traceService.getCorrelationId() ?? null,
-      });
+        .div(365)
+        .toDecimalPlaces(6); // Enhanced Precision for Daily Accruals
+
+      if (dailyInterest.gt(0)) {
+        accrualData.push({
+          tenantId,
+          loanId: loan.id,
+          amount: dailyInterest,
+          correlationId: this.traceService.getCorrelationId() ?? null,
+        });
+      }
     }
 
-    // Single transaction: bulk-create journal entry + all accrual records
     return this.prisma.$transaction(async (tx) => {
-      // Batch journal entry for all accruals (single compound entry)
+      await this.ledger.checkPeriodLock(tenantId, new Date(), tx);
+
       const journal = await this.ledger.createJournalEntry(
         tenantId,
         {
@@ -252,7 +259,6 @@ export class NbfcService {
         tx as any,
       );
 
-      // Bulk-create all accrual records in a single INSERT
       await tx.interestAccrual.createMany({
         data: accrualData.map((a) => ({
           tenantId: a.tenantId,
@@ -275,7 +281,7 @@ export class NbfcService {
         loanId,
         documentType: data.documentType,
         documentNumber: data.documentNumber,
-        documentUrl: data.documentUrl, // COMP-001: Persist visual evidence URL
+        documentUrl: data.documentUrl,
         verificationStatus: 'Pending',
       },
     });
@@ -291,10 +297,6 @@ export class NbfcService {
     });
   }
 
-  /**
-   * NBFC Depth: Mid-Term Floating Rate Recalculation
-   * Handles specialized financial math that Excel fails to track at scale during mid-term adjustments.
-   */
   async recalculateLoanSchedule(
     tenantId: string,
     loanId: string,
@@ -313,7 +315,6 @@ export class NbfcService {
     if (pendingEmis.length === 0)
       return { message: 'No pending EMIs to recalculate' };
 
-    // 1. Calculate remaining principal
     const remainingPrincipal = pendingEmis.reduce(
       (sum: Decimal, emi: any) => sum.add(emi.principalPart),
       new Decimal(0),
@@ -321,34 +322,47 @@ export class NbfcService {
     const monthlyInterestRate = new Decimal(newRate).div(100).div(12);
 
     return this.prisma.$transaction(async (tx) => {
-      // 2. Update loan with new interest rate
+      await this.ledger.checkPeriodLock(tenantId, new Date(), tx);
+
       await tx.loan.update({
-        where: { id: loanId },
+        where: { id: loanId, tenantId },
         data: { interestRate: newRate },
       });
 
-      // 3. Regen pending EMIs (Amortized based on remaining principal)
       const count = pendingEmis.length;
       const updatedEmis = [];
+      let currentBalance = remainingPrincipal;
+
+      let newEmiAmount: Decimal;
+      if (monthlyInterestRate.equals(0)) {
+        newEmiAmount = remainingPrincipal.div(count);
+      } else {
+        const onePlusRToN = new Decimal(1).add(monthlyInterestRate).pow(count);
+        newEmiAmount = remainingPrincipal.mul(monthlyInterestRate).mul(onePlusRToN).div(onePlusRToN.sub(1));
+      }
 
       for (let i = 0; i < count; i++) {
         const emi = pendingEmis[i];
-        const principalPart = remainingPrincipal.div(count);
-        const interestPart = remainingPrincipal
-          .sub(principalPart.mul(i))
-          .mul(monthlyInterestRate);
-        const totalEMI = principalPart.add(interestPart);
+        const interestPart = currentBalance.mul(monthlyInterestRate);
+        let principalPart = newEmiAmount.sub(interestPart);
+
+        if (i === count - 1) {
+          principalPart = currentBalance;
+          newEmiAmount = principalPart.add(interestPart);
+        }
 
         updatedEmis.push(
           tx.eMISchedule.update({
             where: { id: emi.id },
             data: {
-              interestPart,
-              totalEMI,
+              principalPart: principalPart.toDecimalPlaces(2),
+              interestPart: interestPart.toDecimalPlaces(2),
+              totalEMI: newEmiAmount.toDecimalPlaces(2),
               correlationId: this.traceService.getCorrelationId(),
             },
           }),
         );
+        currentBalance = currentBalance.sub(principalPart);
       }
 
       await Promise.all(updatedEmis);
