@@ -277,7 +277,8 @@ export default function RegisterPage() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="companyType" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Industry</Label>
-                                    <Select onValueChange={(val) => setCompanyValue('companyType', val)}>
+                                    <input type="hidden" {...registerCompany('companyType')} />
+                                    <Select onValueChange={(val) => setCompanyValue('companyType', val, { shouldValidate: true })}>
                                         <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
                                             <SelectValue placeholder="Select Industry" />
                                         </SelectTrigger>
