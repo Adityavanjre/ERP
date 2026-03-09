@@ -210,7 +210,7 @@ export class AuthService {
               action: 'USER_REGISTERED',
               resource: 'User',
               details: { tenant: dto.tenantName, industry: tenant.type },
-            });
+            }, tx);
           } catch (logErr) {
             this.logger.warn(
               '[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' +
@@ -221,8 +221,8 @@ export class AuthService {
           return user;
         },
         {
-          maxWait: 5000, // default is 2000
-          timeout: 20000, // default is 5000
+          maxWait: 10000,
+          timeout: 45000,
         },
       );
 
@@ -602,6 +602,7 @@ export class AuthService {
       tenantId,
       userId,
       membership.role,
+      undefined,
       async () => {
         return Promise.all([
           this.prisma.customer.findFirst({

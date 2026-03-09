@@ -4,18 +4,27 @@ import { AsyncLocalStorage } from 'async_hooks';
 @Injectable()
 export class TenantContextService {
   private static readonly storage = new AsyncLocalStorage<{
-    tenantId: string;
+    tenantId?: string;
     userId?: string;
     role?: string;
+    userType?: string;
   }>();
 
   run(
-    tenantId: string,
+    tenantId: string | undefined,
     userId: string | undefined,
     role: string | undefined,
+    userType: string | undefined,
     next: () => any,
   ) {
-    return TenantContextService.storage.run({ tenantId, userId, role }, next);
+    return TenantContextService.storage.run(
+      { tenantId, userId, role, userType },
+      next,
+    );
+  }
+
+  getUserType(): string | undefined {
+    return TenantContextService.storage.getStore()?.userType;
   }
 
   getTenantId(): string | undefined {

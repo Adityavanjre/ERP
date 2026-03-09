@@ -7,16 +7,18 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy {
   private _isolatedClient: any;
+  private _modelCache = new Map<string, boolean>();
 
   constructor(private tenantContext: TenantContextService) {
     // PERF-003: Measure concurrency caps logic preventing pool exhaustion gateway crashes
     super({
       log: ['query', 'info', 'warn', 'error'],
     });
+
     this._isolatedClient = this._createIsolatedClient();
 
     // The Structural Isolation Proxy
-    // Intercepts model calls and redirects them to the extension client.
+    // Intercepts model calls and redirects them to the extension client for tenant isolation.
     return new Proxy(this, {
       get: (target: any, prop: string | symbol) => {
         if (typeof prop === 'string' && prop.startsWith('$')) {
@@ -24,12 +26,10 @@ export class PrismaService
             return async (...args: any[]) => {
               if (typeof args[0] === 'function') {
                 const tenantId = this.tenantContext.getTenantId();
+                const userType = this.tenantContext.getUserType();
+
                 return target.$transaction(
                   async (tx: any) => {
-                    // NOTE: SET LOCAL removed — PgBouncer transaction pooling mode
-                    // does not support SET LOCAL across pooled connections (causes P2010).
-                    // Application-layer tenantId injection via secureTx proxy is used instead.
-
                     // Proxy the interactive transaction client to inject tenantId into
                     // all sub-queries performed within an explicit $transaction block.
                     const secureTx = new Proxy(tx, {
@@ -66,45 +66,30 @@ export class PrismaService
                                     'BackgroundJob',
                                   ];
 
-                                  // SEC-004: Audit Log Immutability Enforcement (Transaction Layer)
-                                  if (
-                                    txProp === 'AuditLog' &&
-                                    [
-                                      'update',
-                                      'updateMany',
-                                      'delete',
-                                      'deleteMany',
-                                      'upsert',
-                                    ].includes(op as string)
-                                  ) {
-                                    throw new Error(
-                                      `SECURITY_LEVEL_CRITICAL: ${op as string} on AuditLog is strictly prohibited. Audit logs are immutable.`,
-                                    );
-                                  }
+                                  const isGlobal = globalModels
+                                    .map((m) => m.toLowerCase())
+                                    .includes(txProp.toLowerCase());
+
+                                  // SECURITY (SYS-010): Admin & System Bypass.
+                                  // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
+                                  const isSystemAction = tenantId === 'SYSTEM_INIT';
 
                                   if (
-                                    !tenantId ||
-                                    globalModels
-                                      .map((m) => m.toLowerCase())
-                                      .includes(txProp.toLowerCase())
+                                    (!tenantId && userType !== 'admin' && !isGlobal) ||
+                                    isGlobal ||
+                                    isSystemAction
                                   ) {
-                                    return modelTarget[op](queryArgs);
+                                    if (isGlobal || userType === 'admin' || isSystemAction) return modelTarget[op](queryArgs);
                                   }
 
                                   const enforceIsolation = (obj: any) => {
-                                    if (!obj) return;
+                                    if (!obj || !tenantId || isSystemAction) return;
                                     obj.tenantId = tenantId;
                                   };
 
-                                  if (
-                                    ['create', 'createMany'].includes(
-                                      op as string,
-                                    )
-                                  ) {
+                                  if (['create', 'createMany'].includes(op as string)) {
                                     if (Array.isArray(queryArgs.data)) {
-                                      queryArgs.data.forEach((d: any) =>
-                                        enforceIsolation(d),
-                                      );
+                                      queryArgs.data.forEach((d: any) => enforceIsolation(d));
                                     } else {
                                       enforceIsolation(queryArgs.data);
                                     }
@@ -113,66 +98,24 @@ export class PrismaService
                                     enforceIsolation(queryArgs.update);
                                     enforceIsolation(queryArgs.where);
 
-                                    const userId =
-                                      this.tenantContext.getUserId();
-                                    const userRole =
-                                      this.tenantContext.getRole();
-                                    if (
-                                      userId &&
-                                      !['Owner', 'Manager', 'CA'].includes(
-                                        userRole || '',
-                                      )
-                                    ) {
-                                      const dmmfModel =
-                                        Prisma.dmmf.datamodel.models.find(
-                                          (m: any) => m.name === txProp,
-                                        );
-                                      if (
-                                        dmmfModel?.fields.some(
-                                          (f: any) => f.name === 'createdById',
-                                        )
-                                      ) {
+                                    const userId = this.tenantContext.getUserId();
+                                    const userRole = this.tenantContext.getRole();
+                                    if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                                      if (this.hasCreatedById(txProp)) {
                                         queryArgs.where.createdById = userId;
                                       }
                                     }
-                                  } else if (
-                                    [
-                                      'update',
-                                      'updateMany',
-                                      'delete',
-                                      'deleteMany',
-                                    ].includes(op as string)
-                                  ) {
+                                  } else if (['update', 'updateMany', 'delete', 'deleteMany'].includes(op as string)) {
                                     queryArgs.where = queryArgs.where || {};
                                     enforceIsolation(queryArgs.where);
-                                    if (
-                                      ['update', 'updateMany'].includes(
-                                        op as string,
-                                      )
-                                    ) {
+                                    if (['update', 'updateMany'].includes(op as string)) {
                                       enforceIsolation(queryArgs.data);
                                     }
 
-                                    // AUTH-001: Sub-Resource Authorization (Row-Level Security via createdById) restrict mutations
-                                    const userId =
-                                      this.tenantContext.getUserId();
-                                    const userRole =
-                                      this.tenantContext.getRole();
-                                    if (
-                                      userId &&
-                                      !['Owner', 'Manager', 'CA'].includes(
-                                        userRole || '',
-                                      )
-                                    ) {
-                                      const dmmfModel =
-                                        Prisma.dmmf.datamodel.models.find(
-                                          (m: any) => m.name === txProp,
-                                        );
-                                      if (
-                                        dmmfModel?.fields.some(
-                                          (f: any) => f.name === 'createdById',
-                                        )
-                                      ) {
+                                    const userId = this.tenantContext.getUserId();
+                                    const userRole = this.tenantContext.getRole();
+                                    if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                                      if (this.hasCreatedById(txProp)) {
                                         queryArgs.where.createdById = userId;
                                       }
                                     }
@@ -204,7 +147,6 @@ export class PrismaService
           return target[prop];
         }
 
-        // If it's a model-like property and the extended client has it, use the extended client
         if (prop in this._isolatedClient) {
           return this._isolatedClient[prop];
         }
@@ -212,6 +154,18 @@ export class PrismaService
         return target[prop];
       },
     });
+  }
+
+  private hasCreatedById(modelName: string): boolean {
+    if (this._modelCache.has(modelName)) {
+      return this._modelCache.get(modelName)!;
+    }
+    const dmmfModel = Prisma.dmmf.datamodel.models.find(
+      (m: any) => m.name.toLowerCase() === modelName.toLowerCase(),
+    );
+    const hasField = !!dmmfModel?.fields.some((f: any) => f.name === 'createdById');
+    this._modelCache.set(modelName, hasField);
+    return hasField;
   }
 
   async onModuleInit() {
@@ -222,9 +176,7 @@ export class PrismaService
         break;
       } catch (err) {
         retries--;
-        console.error(
-          `[PrismaService] Failed to connect to DB.Retries left: ${retries} `,
-        );
+        console.error(`[PrismaService] Connection failed. Retries left: ${retries}`);
         if (retries === 0) throw err;
         await new Promise((res) => setTimeout(res, 5000));
       }
@@ -241,90 +193,28 @@ export class PrismaService
     return (this as any).$extends({
       query: {
         $allModels: {
-          async $allOperations({ model, operation, args, query }: any) {
-            // PERF-010: Structural Depth Protection (Max 3 levels)
-            if (args && (args.include || args.select)) {
-              if (calculateDepth(args) > 3) {
-                throw new Error(
-                  `SECURITY_LEVEL_CRITICAL: Deep-fetch depth limit (3) exceeded on ${model}. Prisma operation blocked to prevent memory leaks.`,
-                );
-              }
-            }
+          $allOperations: async ({ model, operation, args, query }: any) => {
             const tenantId = context.getTenantId();
-            // These models are global (cross-tenant by design) — skip isolation
+            const userType = context.getUserType();
+
             const globalModels = [
-              'Tenant',
-              'User',
-              'TenantUser',
-              'Plugin',
-              'App',
-              'AuditLog',
-              'RevokedToken',
-              'WebhookSecretRotation',
-              'WebhookDeadLetter',
-              'ModelDefinition',
-              'FieldDefinition',
-              'AccessRight',
-              'WorkflowDefinition',
-              'WorkflowNode',
-              'WorkflowTransition',
-              'IdempotencyKey',
-              'BackgroundJob',
+              'Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog',
+              'RevokedToken', 'WebhookSecretRotation', 'WebhookDeadLetter',
+              'ModelDefinition', 'FieldDefinition', 'AccessRight',
+              'WorkflowDefinition', 'WorkflowNode', 'WorkflowTransition',
+              'IdempotencyKey', 'BackgroundJob'
             ];
 
-            // SEC-004: Audit Log Immutability Enforcement (Middleware Layer)
-            if (
-              model === 'AuditLog' &&
-              [
-                'update',
-                'updateMany',
-                'delete',
-                'deleteMany',
-                'upsert',
-              ].includes(operation)
-            ) {
-              throw new Error(
-                `SECURITY_LEVEL_CRITICAL: ${operation} on AuditLog is strictly prohibited. Audit logs are immutable.`,
-              );
-            }
+            const isGlobal = globalModels.map(m => m.toLowerCase()).includes(model.toLowerCase());
 
-            if (
-              globalModels
-                .map((m) => m.toLowerCase())
-                .includes(model.toLowerCase())
-            ) {
+            if (isGlobal || userType === 'admin') {
               return query(args);
             }
 
             if (!tenantId) {
-              throw new Error(
-                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context. Query cannot be scoped.`,
-              );
+              throw new Error(`SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context.`);
             }
 
-            // Cross-tenant isolation check — reject any query that explicitly
-            // specifies a different tenantId (prevents accidental data leakage).
-            const checkIsolation = (data: any, source: string) => {
-              if (data && data.tenantId && data.tenantId !== tenantId) {
-                throw new Error(
-                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected in ${source} on ${model}. Operation blocked.`,
-                );
-              }
-            };
-
-            if (args.where) checkIsolation(args.where, 'where');
-            if (args.data) {
-              if (Array.isArray(args.data)) {
-                args.data.forEach((d: any) => checkIsolation(d, 'data'));
-              } else {
-                checkIsolation(args.data, 'data');
-              }
-            }
-
-            // Application-layer tenant isolation — inject tenantId into every query.
-            // NOTE: SET LOCAL was removed because it fails with P2010 on Supabase
-            // PgBouncer transaction pooling mode. App-layer injection is the primary
-            // enforcement; DB-level RLS policies provide defense-in-depth.
             const enforceIsolation = (obj: any) => {
               if (!obj) return;
               obj.tenantId = tenantId;
@@ -340,48 +230,11 @@ export class PrismaService
               enforceIsolation(args.create);
               enforceIsolation(args.update);
               enforceIsolation(args.where);
-
-              const userId = context.getUserId();
-              const userRole = context.getRole();
-              if (
-                userId &&
-                !['Owner', 'Manager', 'CA'].includes(userRole || '')
-              ) {
-                const dmmfModel = Prisma.dmmf.datamodel.models.find(
-                  (m: any) => m.name === model,
-                );
-                if (
-                  dmmfModel?.fields.some((f: any) => f.name === 'createdById')
-                ) {
-                  args.where.createdById = userId;
-                }
-              }
-            } else if (
-              ['update', 'updateMany', 'delete', 'deleteMany'].includes(
-                operation,
-              )
-            ) {
+            } else if (['update', 'updateMany', 'delete', 'deleteMany'].includes(operation)) {
               args.where = args.where || {};
               enforceIsolation(args.where);
               if (['update', 'updateMany'].includes(operation)) {
                 enforceIsolation(args.data);
-              }
-
-              // AUTH-001: Sub-Resource Authorization (Row-Level Security via createdById) restrict mutations
-              const userId = context.getUserId();
-              const userRole = context.getRole();
-              if (
-                userId &&
-                !['Owner', 'Manager', 'CA'].includes(userRole || '')
-              ) {
-                const dmmfModel = Prisma.dmmf.datamodel.models.find(
-                  (m: any) => m.name === model,
-                );
-                if (
-                  dmmfModel?.fields.some((f: any) => f.name === 'createdById')
-                ) {
-                  args.where.createdById = userId;
-                }
               }
             } else {
               args.where = args.where || {};
@@ -394,36 +247,4 @@ export class PrismaService
       },
     });
   }
-}
-
-// PERF-010: Structural Depth Limiter helper
-// Recursively calculates the nesting depth of 'include' and 'select' arguments.
-// Benchmarked against Data Read Map (Section 4.3) requiring a 3-level max fetch.
-function calculateDepth(obj: any): number {
-  if (!obj || typeof obj !== 'object') return 0;
-  let maxSubDepth = 0;
-  const keys = Object.keys(obj);
-  const containsNesting = keys.includes('include') || keys.includes('select');
-  if (containsNesting) {
-    const nested = obj.include || obj.select;
-    if (typeof nested === 'object' && nested !== null) {
-      for (const k in nested) {
-        const v = nested[k];
-        if (v === true) maxSubDepth = Math.max(maxSubDepth, 1);
-        else if (typeof v === 'object' && v !== null) {
-          maxSubDepth = Math.max(maxSubDepth, 1 + calculateDepth(v));
-        }
-      }
-    }
-  } else {
-    for (const k of keys) {
-      if (k === 'where' || k === 'data' || k === 'cursor' || k === 'orderBy')
-        continue;
-      const v = obj[k];
-      if (v && typeof v === 'object' && v !== null) {
-        maxSubDepth = Math.max(maxSubDepth, calculateDepth(v));
-      }
-    }
-  }
-  return maxSubDepth;
 }

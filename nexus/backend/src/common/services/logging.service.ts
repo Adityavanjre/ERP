@@ -32,7 +32,7 @@ export class LoggingService {
     if (!this.hmacSecret) {
       this.logger.warn(
         'AUDIT_HMAC_SECRET is not set. Audit log hash chain is DISABLED. ' +
-          'Add AUDIT_HMAC_SECRET to environment variables to enable tamper detection.',
+        'Add AUDIT_HMAC_SECRET to environment variables to enable tamper detection.',
       );
     }
   }
@@ -113,58 +113,56 @@ export class LoggingService {
     ipAddress?: string;
     correlationId?: string;
     responseTimeMs?: number;
-  }) {
+  }, txOverride?: any) {
     const correlationId =
       data.correlationId || this.traceService.getCorrelationId();
 
+    const client = txOverride || this.prisma;
+
     try {
-      // Wrap in a SERIALIZABLE transaction so the prevHash fetch + create are atomic.
-      // Without this, two concurrent log writes can read the same prevHash, forking
-      // the chain and silently breaking tamper-detection integrity.
-      return await this.prisma.$transaction(
-        async (tx) => {
-          const createdAt = new Date();
-          let prevHash: string | null = null;
-          let entryHash: string | null = null;
+      // PERF-011: Removed Serializable isolation level. 
+      // It caused massive contention and P2028 timeouts on Render during concurrent ops.
+      // We now accept an optional txOverride to participate in existing business transactions.
+      const createdAt = new Date();
+      let prevHash: string | null = null;
+      let entryHash: string | null = null;
 
-          if (this.hmacSecret) {
-            const lastEntry = await (tx as any).auditLog.findFirst({
-              where: { tenantId: data.tenantId ?? undefined },
-              orderBy: { createdAt: 'desc' },
-              select: { entryHash: true },
-            });
+      if (this.hmacSecret) {
+        // Query last entry to maintain hash chain
+        const lastEntry = await client.auditLog.findFirst({
+          where: { tenantId: data.tenantId ?? undefined },
+          orderBy: { createdAt: 'desc' },
+          select: { entryHash: true },
+        });
 
-            prevHash = lastEntry?.entryHash ?? null;
-            entryHash = this.computeEntryHash(
-              prevHash,
-              data.action,
-              data.resource,
-              createdAt,
-              data.details,
-            );
-          }
+        prevHash = lastEntry?.entryHash ?? null;
+        entryHash = this.computeEntryHash(
+          prevHash,
+          data.action,
+          data.resource,
+          createdAt,
+          data.details,
+        );
+      }
 
-          const scrubbedDetails = this.scrubDetails(data.details);
+      const scrubbedDetails = this.scrubDetails(data.details);
 
-          return await (tx as any).auditLog.create({
-            data: {
-              userId: data.userId,
-              tenantId: data.tenantId,
-              action: this.sanitizeString(data.action),
-              resource: this.sanitizeString(data.resource),
-              details: scrubbedDetails || {},
-              channel: data.channel,
-              ipAddress: data.ipAddress,
-              correlationId,
-              responseTimeMs: data.responseTimeMs,
-              createdAt,
-              prevHash,
-              entryHash,
-            } as any,
-          });
-        },
-        { isolationLevel: 'Serializable' },
-      );
+      return await client.auditLog.create({
+        data: {
+          userId: data.userId,
+          tenantId: data.tenantId,
+          action: this.sanitizeString(data.action),
+          resource: this.sanitizeString(data.resource),
+          details: scrubbedDetails || {},
+          channel: data.channel,
+          ipAddress: data.ipAddress,
+          correlationId,
+          responseTimeMs: data.responseTimeMs,
+          createdAt,
+          prevHash,
+          entryHash,
+        } as any,
+      });
     } catch (error) {
       // Fail-safe: never crash the main request flow because of audit logging.
       this.logger.error(
