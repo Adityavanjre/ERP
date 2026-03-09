@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  NotFoundException,
   GoneException,
   Logger,
 } from '@nestjs/common';
@@ -175,11 +176,22 @@ export class AuthService {
             finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
           }
 
+          // Normalize industry type for enum compatibility
+          let tenantType: TenantType = TenantType.Retail;
+          if (dto.companyType) {
+            const normalized = dto.companyType.charAt(0).toUpperCase() + dto.companyType.slice(1).toLowerCase();
+            if (Object.values(TenantType).includes(normalized as any)) {
+              tenantType = normalized as TenantType;
+            } else if (dto.companyType.toUpperCase() === 'NBFC') {
+              tenantType = TenantType.NBFC;
+            }
+          }
+
           const tenant = await tx.tenant.create({
             data: {
               name: dto.tenantName,
               slug: finalSlug,
-              type: (dto.companyType as TenantType) ?? TenantType.Retail,
+              type: tenantType,
               industry: dto.companyType, // PERSIST_INDUSTRY_FIX
               plan: PlanType.Free,
               subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
@@ -731,11 +743,18 @@ export class AuthService {
       );
     }
 
+    // 1.1 Explicit Tenant Verification (Prevents cryptic P2025 / 404 from update)
     const currentTenant = await this.prisma.tenant.findUnique({
       where: { id: dto.tenantId },
     });
 
-    if (currentTenant?.isOnboarded) {
+    if (!currentTenant) {
+      throw new NotFoundException(
+        `Workspace with ID '${dto.tenantId}' was not found. Please relogin or contact support.`,
+      );
+    }
+
+    if (currentTenant.isOnboarded) {
       throw new ForbiddenException(
         'Compliance Violation: Industry vertical is locked after onboarding. Mid-flight mutation is forbidden to prevent accounting drift.',
       );
@@ -766,44 +785,69 @@ export class AuthService {
       }
     }
 
+    // Map industry string to TenantType enum if possible, default to Retail
+    // This prevents validation errors if the frontend sends mismatched strings
+    let mappedType: TenantType = TenantType.Retail;
+    if (dto.industry) {
+      const normalized = dto.industry.charAt(0).toUpperCase() + dto.industry.slice(1).toLowerCase();
+      if (Object.values(TenantType).includes(normalized as any)) {
+        mappedType = normalized as TenantType;
+      } else if (dto.industry.toUpperCase() === 'NBFC') {
+        mappedType = TenantType.NBFC;
+      }
+    }
+
+    // PERF-015: Increased transaction timeout to prevent P2028 on high-latency Render instances
     const transactionResult = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
         const updatedTenant = await tx.tenant.update({
           where: { id: dto.tenantId },
           data: {
             industry: dto.industry,
-            type: (dto.industry as any) ?? TenantType.Retail,
+            type: mappedType,
             businessType: dto.businessType,
-            gstin: dto.gstin,
+            gstin: dto.gstin || null,
             isOnboarded: true,
           },
         });
 
         // 3. Initialize Infrastructure (Default Warehouse)
-        await tx.warehouse.create({
-          data: {
-            tenantId: updatedTenant.id,
-            name: 'Main Warehouse',
-            location: 'Default Location',
-          },
+        // Check if warehouse already exists to prevent duplicate creation on retry
+        const existingWarehouse = await tx.warehouse.findFirst({
+          where: { tenantId: updatedTenant.id, name: 'Main Warehouse' },
         });
+
+        if (!existingWarehouse) {
+          await tx.warehouse.create({
+            data: {
+              tenantId: updatedTenant.id,
+              name: 'Main Warehouse',
+              location: 'Default Location',
+            },
+          });
+        }
 
         // BUG-011 FIX: Do not re-initialize Chart of Accounts here.
         // It's already created during the initial registration transaction.
 
         return updatedTenant;
       },
+      {
+        maxWait: 5000,
+        timeout: 30000, // 30s cutoff for onboarding transaction
+      },
     );
 
     const tenant = transactionResult;
 
-    await this.logging.log({
+    // Async log without blocking (failsafe in Service)
+    this.logging.log({
       userId,
       tenantId: dto.tenantId,
       action: 'ONBOARDING_COMPLETED',
       resource: 'Tenant',
       details: { industry: dto.industry, businessType: dto.businessType },
-    });
+    }).catch(err => this.logger.warn(`Failed to log onboarding event: ${err.message}`));
 
     return {
       success: true,

@@ -8,6 +8,25 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy {
   private _isolatedClient: any;
   private _modelCache = new Map<string, boolean>();
+  private static readonly GLOBAL_MODELS = new Set([
+    'tenant',
+    'user',
+    'tenantuser',
+    'plugin',
+    'app',
+    'auditlog',
+    'revokedtoken',
+    'webhooksecretrotation',
+    'webhookdeadletter',
+    'modeldefinition',
+    'fielddefinition',
+    'accessright',
+    'workflowdefinition',
+    'workflownode',
+    'workflowtransition',
+    'idempotencykey',
+    'backgroundjob',
+  ]);
 
   constructor(private tenantContext: TenantContextService) {
     // PERF-003: Measure concurrency caps logic preventing pool exhaustion gateway crashes
@@ -46,29 +65,7 @@ export class PrismaService
                                 typeof modelTarget[op] === 'function'
                               ) {
                                 return async (queryArgs: any = {}) => {
-                                  const globalModels = [
-                                    'Tenant',
-                                    'User',
-                                    'TenantUser',
-                                    'Plugin',
-                                    'App',
-                                    'AuditLog',
-                                    'RevokedToken',
-                                    'WebhookSecretRotation',
-                                    'WebhookDeadLetter',
-                                    'ModelDefinition',
-                                    'FieldDefinition',
-                                    'AccessRight',
-                                    'WorkflowDefinition',
-                                    'WorkflowNode',
-                                    'WorkflowTransition',
-                                    'IdempotencyKey',
-                                    'BackgroundJob',
-                                  ];
-
-                                  const isGlobal = globalModels
-                                    .map((m) => m.toLowerCase())
-                                    .includes(txProp.toLowerCase());
+                                  const isGlobal = PrismaService.GLOBAL_MODELS.has(txProp.toLowerCase());
 
                                   // SECURITY (SYS-010): Admin & System Bypass.
                                   // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
@@ -197,15 +194,7 @@ export class PrismaService
             const tenantId = context.getTenantId();
             const userType = context.getUserType();
 
-            const globalModels = [
-              'Tenant', 'User', 'TenantUser', 'Plugin', 'App', 'AuditLog',
-              'RevokedToken', 'WebhookSecretRotation', 'WebhookDeadLetter',
-              'ModelDefinition', 'FieldDefinition', 'AccessRight',
-              'WorkflowDefinition', 'WorkflowNode', 'WorkflowTransition',
-              'IdempotencyKey', 'BackgroundJob'
-            ];
-
-            const isGlobal = globalModels.map(m => m.toLowerCase()).includes(model.toLowerCase());
+            const isGlobal = PrismaService.GLOBAL_MODELS.has(model.toLowerCase());
 
             if (isGlobal || userType === 'admin') {
               return query(args);
