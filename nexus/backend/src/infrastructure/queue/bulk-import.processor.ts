@@ -74,6 +74,7 @@ export class BulkImportProcessor extends WorkerHost {
         tenantId,
         userId,
         undefined,
+        undefined,
         async () => {
           // Robust CSV Split (handles quotes)
           const parseCSV = (content: string) => {

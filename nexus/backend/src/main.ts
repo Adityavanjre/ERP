@@ -1,4 +1,5 @@
-﻿import { otracing } from './tracing';
+﻿import 'dotenv/config';
+import { otracing } from './tracing';
 // Force resolution of critical validation packages before NestJS starts
 import 'class-validator';
 import 'class-transformer';
@@ -248,9 +249,9 @@ async function bootstrap() {
 
   console.log(
     '[BOOT] CORS origins: ' +
-      allowedOrigins
-        .map((o) => (o instanceof RegExp ? o.source : o))
-        .join(' | '),
+    allowedOrigins
+      .map((o) => (o instanceof RegExp ? o.source : o))
+      .join(' | '),
   );
 
   app.enableCors({
