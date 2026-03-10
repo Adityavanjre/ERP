@@ -75,7 +75,7 @@ export default function SettingsPage() {
         try {
             const [profRes, billRes, usersRes] = await Promise.all([
                 api.get("auth/profile"),
-                api.get("system/billing/plan"),
+                api.get("system/billing/status"),
                 api.get("users")
             ]);
             setTenant(profRes.data?.tenant || null);
@@ -147,7 +147,7 @@ export default function SettingsPage() {
 
     const handleUpdate = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        toast.success("Settings updated successfully");
+        toast.info("Profile updates restricted in current version");
     }, []);
 
     const handleUpgrade = useCallback(async (plan: string) => {

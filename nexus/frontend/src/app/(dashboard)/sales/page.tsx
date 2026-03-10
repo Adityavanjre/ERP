@@ -15,7 +15,6 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { Plus, ShoppingCart, TrendingUp, Package, Clock, Trash2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useUX } from "@/components/providers/ux-provider";

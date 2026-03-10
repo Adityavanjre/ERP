@@ -111,7 +111,7 @@ export default function ProjectPage() {
         if (!selectedProject || !newTaskTitle.trim()) return;
 
         try {
-            await api.post("projects/tasks", {
+            await api.post(`projects/${selectedProject.id}/tasks`, {
                 title: newTaskTitle,
                 projectId: selectedProject.id,
                 status: "Pending", // Default
@@ -137,6 +137,16 @@ export default function ProjectPage() {
         } catch {
             toast.error("Status update failed");
             if (selectedProject) fetchTasks(selectedProject.id); // Revert
+        }
+    };
+
+    const handleArchive = async (id: string) => {
+        try {
+            await api.delete(`/projects/${id}`);
+            toast.success("Project archived successfully");
+            syncProjectData(true);
+        } catch {
+            toast.error("Failed to archive project");
         }
     };
 
@@ -271,7 +281,7 @@ export default function ProjectPage() {
                                 </div>
 
                                 <div className="flex gap-3 pt-2">
-                                    <Button variant="ghost" className="w-full text-slate-400 hover:text-slate-600 font-bold text-[10px] uppercase tracking-widest h-10 rounded-xl">
+                                    <Button variant="ghost" className="w-full text-slate-400 hover:text-slate-600 font-bold text-[10px] uppercase tracking-widest h-10 rounded-xl" onClick={() => handleArchive(project.id)}>
                                         Archive
                                     </Button>
                                     <Button

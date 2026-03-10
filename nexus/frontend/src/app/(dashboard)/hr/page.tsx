@@ -18,6 +18,13 @@ import { Plus, Users, Calendar, Banknote, Building2, Check, X } from "lucide-rea
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -101,7 +108,12 @@ export default function HrPage() {
     // Add Employee Dialog State
     const [addOpen, setAddOpen] = useState(false);
     const [addLoading, setAddLoading] = useState(false);
-    const [empForm, setEmpForm] = useState({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "" });
+    const [empForm, setEmpForm] = useState({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "", departmentId: "" });
+
+    // Add Department Dialog State
+    const [addDeptOpen, setAddDeptOpen] = useState(false);
+    const [addDeptLoading, setAddDeptLoading] = useState(false);
+    const [deptName, setDeptName] = useState("");
 
     const syncEmployeeData = useCallback(async (showLoading = false) => {
         try {
@@ -148,13 +160,33 @@ export default function HrPage() {
             });
             toast.success("Employee added successfully");
             setAddOpen(false);
-            setEmpForm({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "" });
+            setEmpForm({ firstName: "", lastName: "", email: "", phone: "", jobTitle: "", employeeId: "", salary: "", departmentId: "" });
             syncEmployeeData(true);
         } catch (err: unknown) {
             const error = err as ApiError;
             toast.error(error.response?.data?.message || "Failed to add employee");
         } finally {
             setAddLoading(false);
+        }
+    };
+
+    const handleAddDepartment = async () => {
+        if (!deptName.trim()) {
+            toast.error("Department name is required.");
+            return;
+        }
+        try {
+            setAddDeptLoading(true);
+            await api.post("/hr/departments", { name: deptName });
+            toast.success("Department created successfully");
+            setAddDeptOpen(false);
+            setDeptName("");
+            syncEmployeeData(true);
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            toast.error(error.response?.data?.message || "Failed to create department");
+        } finally {
+            setAddDeptLoading(false);
         }
     };
 
@@ -225,9 +257,25 @@ export default function HrPage() {
                                         <Input value={empForm.phone} onChange={e => setEmpForm(p => ({ ...p, phone: e.target.value }))} placeholder="9876543210" className="h-10 font-mono" />
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Monthly Gross Salary (INR)</Label>
-                                    <Input type="number" value={empForm.salary} onChange={e => setEmpForm(p => ({ ...p, salary: e.target.value }))} placeholder="0" className="h-10 font-mono" />
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Monthly Gross Salary (INR)</Label>
+                                        <Input type="number" value={empForm.salary} onChange={e => setEmpForm(p => ({ ...p, salary: e.target.value }))} placeholder="0" className="h-10 font-mono" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Department</Label>
+                                        <Select value={empForm.departmentId} onValueChange={v => setEmpForm(p => ({ ...p, departmentId: v }))}>
+                                            <SelectTrigger className="h-10 bg-white">
+                                                <SelectValue placeholder="Select dept" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map(d => (
+                                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                                ))}
+                                                {departments.length === 0 && <SelectItem value="none" disabled>No departments</SelectItem>}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
                             </div>
                             <DialogFooter>
@@ -302,7 +350,7 @@ export default function HrPage() {
                                 <TableBody>
                                     {(employees || []).map((emp) => (
                                         <TableRow key={emp.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
-                                            <TableCell className="font-black text-[10px] text-blue-600 tracking-widest pl-8 bg-slate-50/30">#{emp.employeeId.toUpperCase()}</TableCell>
+                                            <TableCell className="font-black text-[10px] text-blue-600 tracking-widest pl-8 bg-slate-50/30">#{emp.employeeId ? emp.employeeId.toUpperCase() : 'UNKNOWN'}</TableCell>
                                             <TableCell className="font-black text-slate-900 tracking-tight">{emp.firstName} {emp.lastName}</TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-md border-none uppercase tracking-tighter">{emp.department?.name || "UNASSIGNED"}</Badge>
@@ -329,8 +377,35 @@ export default function HrPage() {
                 <TabsContent value="departments">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
                         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
-                            <CardTitle className="text-slate-900 text-xl font-black">Department Groups</CardTitle>
-                            <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Structural mapping of business departments</CardDescription>
+                            <div className="flex justify-between items-center w-full">
+                                <div>
+                                    <CardTitle className="text-slate-900 text-xl font-black">Department Groups</CardTitle>
+                                    <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Structural mapping of business departments</CardDescription>
+                                </div>
+                                <Dialog open={addDeptOpen} onOpenChange={setAddDeptOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-6 shadow-sm text-white h-10">
+                                            <Plus className="mr-2 h-4 w-4" /> New Dept
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>Add Department</DialogTitle>
+                                            <DialogDescription>Create a new business department block.</DialogDescription>
+                                        </DialogHeader>
+                                        <div className="py-4">
+                                            <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">Department Name *</Label>
+                                            <Input value={deptName} onChange={e => setDeptName(e.target.value)} placeholder="e.g. Sales" className="h-10" />
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setAddDeptOpen(false)} disabled={addDeptLoading}>Cancel</Button>
+                                            <Button onClick={handleAddDepartment} disabled={addDeptLoading} className="bg-blue-600 hover:bg-blue-700 font-bold">
+                                                {addDeptLoading ? "Saving..." : "Create"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
                         </CardHeader>
                         <CardContent className="p-4 md:p-8">
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

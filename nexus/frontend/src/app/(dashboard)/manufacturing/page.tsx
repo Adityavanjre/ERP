@@ -246,7 +246,7 @@ export default function ManufacturingDashboard() {
                                             <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] block mb-1">WO-{wo.orderNumber}</span>
                                             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{wo.bom?.product?.name}</h3>
                                             <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
-                                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-lg border-none uppercase">Level 1 Assembly</Badge>
+                                                <Badge variant="secondary" className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-lg border-none uppercase text-ellipsis overflow-hidden whitespace-nowrap max-w-[150px]">{wo.bom?.name || "Standard Unit"}</Badge>
                                                 {wo.status !== 'Completed' && <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest animate-pulse italic">In Production</span>}
                                             </div>
                                         </div>
@@ -261,11 +261,16 @@ export default function ManufacturingDashboard() {
                                 <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
                                     <div className="flex gap-3 sm:gap-5 items-center pl-[4rem] sm:pl-0">
                                         <div className="flex -space-x-3">
-                                            {[1, 2, 3].map(i => (
+                                            {Array.from({ length: Math.min(wo.bom?.items?.length || 0, 3) }).map((_, i) => (
                                                 <div key={i} className="w-8 h-8 rounded-xl bg-slate-100 border-2 border-white shadow-sm flex items-center justify-center text-[10px] font-black text-slate-400">RC</div>
                                             ))}
+                                            {(wo.bom?.items?.length || 0) > 3 && (
+                                                <div className="w-8 h-8 rounded-xl bg-emerald-50 border-2 border-white shadow-sm flex items-center justify-center text-[10px] font-black text-emerald-600">
+                                                    +{(wo.bom?.items?.length || 0) - 3}
+                                                </div>
+                                            )}
                                         </div>
-                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">3 Materials Used</span>
+                                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{wo.bom?.items?.length || 0} Materials Used</span>
                                     </div>
 
                                     {wo.status !== 'Completed' ? (
@@ -294,17 +299,23 @@ export default function ManufacturingDashboard() {
                         <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Production Stats</h2>
                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 p-8 rounded-[40px] border-none group relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
-                                <TrendingUp className="h-24 w-24 text-blue-900" />
+                                <TrendingUp className="h-24 w-24 text-emerald-900" />
                             </div>
                             <div className="space-y-8 relative z-10">
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Avg. Completion Time</p>
-                                    <p className="text-4xl font-black text-slate-900 tracking-tighter">14.2<span className="text-sm font-bold ml-1 text-slate-400">MINS</span></p>
+                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Pending Production</p>
+                                    <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                                        {workOrders.filter(w => w.status !== 'Completed').length}
+                                        <span className="text-sm font-bold ml-2 text-slate-400">ORDERS</span>
+                                    </p>
                                 </div>
                                 <div className="h-px bg-slate-100" />
                                 <div>
-                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Defect Rate</p>
-                                    <p className="text-4xl font-black text-emerald-600 tracking-tighter">0.8<span className="text-sm font-bold ml-1">%</span></p>
+                                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">Total Output units</p>
+                                    <p className="text-4xl font-black text-emerald-600 tracking-tighter">
+                                        {workOrders.filter((w: WorkOrder) => w.status === 'Completed').reduce((sum, w) => sum + w.quantity, 0).toLocaleString('en-IN')}
+                                        <span className="text-sm font-bold ml-2">UNITS</span>
+                                    </p>
                                 </div>
                             </div>
                         </Card>

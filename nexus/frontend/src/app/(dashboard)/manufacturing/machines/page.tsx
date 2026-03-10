@@ -210,7 +210,7 @@ export default function MachinesPage() {
                                         <CardTitle className="text-xl mt-3">{m.name}</CardTitle>
                                         <CardDescription>{m.code} • {m.type}</CardDescription>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white">
+                                    <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white" onClick={() => toast.info("Asset settings module in development")}>
                                         <Settings className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -240,10 +240,10 @@ export default function MachinesPage() {
                                 </div>
 
                                 <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" className="flex-1 bg-slate-900/50 border-slate-800 hover:bg-slate-800 text-xs h-8">
+                                    <Button variant="outline" className="flex-1 bg-slate-900/50 border-slate-800 hover:bg-slate-800 text-xs h-8" onClick={() => toast.info("Real-time diagnostics coming in v2.0")}>
                                         Diagnostics
                                     </Button>
-                                    <Button variant="outline" className="flex-1 bg-slate-900/50 border-slate-800 hover:bg-slate-800 text-xs h-8">
+                                    <Button variant="outline" className="flex-1 bg-slate-900/50 border-slate-800 hover:bg-slate-800 text-xs h-8" onClick={() => toast.info("Maintenance history log coming soon")}>
                                         History
                                     </Button>
                                 </div>
