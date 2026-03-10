@@ -118,25 +118,18 @@ export default function DashboardPage() {
     const [enabledModules, setEnabledModules] = useState<string[]>([]);
     const [industryConfig, setIndustryConfig] = useState<IndustryConfig | null>(null);
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (isInitial = false) => {
+        // DEADLINE TIMER: If initial load, force-unblock the loading spinner after 2s
+        // no matter what. API data will fill in progressively as calls resolve.
+        let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
+        if (isInitial) {
+            deadlineTimer = setTimeout(() => setLoading(false), 2000);
+        }
+
         try {
-            // STEP 1: Urgent Bootstrapping (Unblock UI Shell)
-            // We fetch the industry config first so we know what terminology and modules to show.
-            const configRes = await api.get('system/config').catch(() => null);
-
-            if (configRes?.data) {
-                const cfgData = configRes.data;
-                setIndustryConfig(cfgData);
-                const apiModules: string[] = cfgData.enabledModules || [];
-                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
-                setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
-                // UNBLOCK: Show the dashboard shell immediately even if BI data is still in flight
-                setLoading(false);
-            }
-
-            // STEP 2: Background BI Synchronization
-            // These heavy calls run in parallel and populate their respective cards as they settle.
-            const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.allSettled([
+            // Fire ALL calls concurrently. Config + all analytics start at the same time.
+            const [configRes, systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.allSettled([
+                api.get('system/config'),
                 api.get('system/stats'),
                 api.get('analytics/summary'),
                 api.get('analytics/performance'),
@@ -148,6 +141,7 @@ export default function DashboardPage() {
             const getVal = <T,>(res: PromiseSettledResult<{ data: T }>) =>
                 res.status === 'fulfilled' ? res.value.data : null;
 
+            const cfgData = getVal<IndustryConfig>(configRes as PromiseSettledResult<{ data: IndustryConfig }>);
             const sysData = getVal<SystemStats>(systemRes as PromiseSettledResult<{ data: SystemStats }>);
             const sumData = getVal<Partial<typeof biStats>>(summaryRes as PromiseSettledResult<{ data: Partial<typeof biStats> }>);
             const perfData = getVal<ChartData[]>(performanceRes as PromiseSettledResult<{ data: ChartData[] }>);
@@ -155,6 +149,12 @@ export default function DashboardPage() {
             const actData = getVal<ActivityLog[]>(activityRes as PromiseSettledResult<{ data: ActivityLog[] }>);
             const vcData = getVal<ValueChainStep[]>(vcRes as PromiseSettledResult<{ data: ValueChainStep[] }>);
 
+            if (cfgData) {
+                setIndustryConfig(cfgData);
+                const apiModules: string[] = cfgData.enabledModules || [];
+                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
+                setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
+            }
             if (sysData) setSystemStats(sysData);
             if (sumData) setBiStats(prev => ({ ...prev, ...sumData }));
             if (perfData) setChartData(perfData);
@@ -165,14 +165,14 @@ export default function DashboardPage() {
         } catch (err) {
             console.error("Data update error:", err);
         } finally {
-            // Final safety unblock if config failed but loop finished
+            if (deadlineTimer) clearTimeout(deadlineTimer);
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchData();
-        const syncInterval = setInterval(fetchData, 30000);
+        fetchData(true);
+        const syncInterval = setInterval(() => fetchData(false), 30000);
         return () => clearInterval(syncInterval);
     }, [fetchData]);
 

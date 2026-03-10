@@ -161,14 +161,19 @@ interface IndustryTerminology {
     [key: string]: string | undefined;
 }
 
+
+// Module-level config cache: persists across Sidebar remounts within the same
+// browser session. Eliminates blank sidebar flash when navigating between pages.
+let _cachedModules: string[] | null = null;
+let _cachedTerminology: IndustryTerminology | null = null;
 export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const pathname = usePathname();
     const router = useRouter();
     const { user } = useAuth();
     const userRole = user?.isSuperAdmin ? 'Owner' : (user?.role as RoleName) || 'Biller';
 
-    const [enabledModules, setEnabledModules] = useState<string[]>(['dashboard']);
-    const [terminology, setTerminology] = useState<IndustryTerminology>({});
+    const [enabledModules, setEnabledModules] = useState<string[]>(_cachedModules ?? ['dashboard']);
+    const [terminology, setTerminology] = useState<IndustryTerminology>(_cachedTerminology ?? {});
 
     const fetchConfig = useCallback(async () => {
         try {
@@ -183,12 +188,20 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
             const res = await api.get('system/config');
             const config = res.data || {};
-            setEnabledModules(config.enabledModules || []);
-            setTerminology(config.terminology || {});
+            const modules = config.enabledModules || [];
+            const terms = config.terminology || {};
+            _cachedModules = modules;
+            _cachedTerminology = terms;
+            setEnabledModules(modules);
+            setTerminology(terms);
         } catch (err) {
             console.error("Critical: Failed to sync industry configuration", err);
             // Safety fallback: Limit visibility to basic operations on auth failure.
-            setEnabledModules(['dashboard', 'sales', 'inventory', 'accounting', 'crm']);
+            const fallback = ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
+            if (!_cachedModules) {
+                _cachedModules = fallback;
+                setEnabledModules(fallback);
+            }
         }
     }, []);
 
@@ -408,3 +421,5 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         </div>
     );
 };
+
+
