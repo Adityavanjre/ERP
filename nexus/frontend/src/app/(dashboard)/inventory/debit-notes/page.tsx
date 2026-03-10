@@ -9,6 +9,7 @@ import { Truck, Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface DebitNote {
     id: string;
@@ -65,7 +66,7 @@ export default function DebitNotesPage() {
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
-                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200">
+                    <Button onClick={() => toast.info("Debit Note creation module is coming in the next update.")} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200">
                         <Plus className="w-4 h-4 mr-2" />
                         Issue Debit Note
                     </Button>

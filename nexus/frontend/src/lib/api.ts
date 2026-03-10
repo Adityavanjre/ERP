@@ -221,18 +221,26 @@ api.interceptors.response.use(
                 reject(err);
               });
           });
-        }
-      } else if (typeof window !== 'undefined' && MUTATING_METHODS.has(originalRequest.method?.toLowerCase()) && originalRequest.data) {
-        // AUTH-003: Buffer even if it wasn't a refreshable token expiring (e.g. hard 401)
-        try {
-          localStorage.setItem(`k_draft_recovery`, JSON.stringify({
-            url: originalRequest.url,
-            method: originalRequest.method,
-            data: typeof originalRequest.data === 'string' ? JSON.parse(originalRequest.data) : originalRequest.data,
-            timestamp: Date.now()
-          }));
-        } catch {
-          console.error("Draft buffer overflow: localStorage is full");
+        } else if (!isAuthPage && !isIdentityScopeError && !isForbidden) {
+          // Hard 401: It's NOT a token expiry, meaning it's an invalid signature,
+          // revoked token, or tampered token. The user MUST log in again immediately.
+          if (typeof window !== 'undefined') {
+            if (MUTATING_METHODS.has(originalRequest.method?.toLowerCase()) && originalRequest.data) {
+              // AUTH-003: Buffer even if it wasn't a refreshable token expiring (e.g. hard 401)
+              try {
+                localStorage.setItem(`k_draft_recovery`, JSON.stringify({
+                  url: originalRequest.url,
+                  method: originalRequest.method,
+                  data: typeof originalRequest.data === 'string' ? JSON.parse(originalRequest.data) : originalRequest.data,
+                  timestamp: Date.now()
+                }));
+              } catch {
+                console.error("Draft buffer overflow: localStorage is full");
+              }
+            }
+            localStorage.removeItem('k_user');
+            window.dispatchEvent(new CustomEvent('session-expired'));
+          }
         }
       }
     }
