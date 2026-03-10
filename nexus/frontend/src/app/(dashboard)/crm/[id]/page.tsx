@@ -49,8 +49,7 @@ export default function CustomerDetailPage() {
 
             const ledgerRes = await api.get(`/accounting/ledger/${params.id}`);
             setLedger(ledgerRes.data || []);
-        } catch (err) {
-            console.error("Relation Sync Failure:", err);
+        } catch {
         } finally {
             setLoading(false);
         }

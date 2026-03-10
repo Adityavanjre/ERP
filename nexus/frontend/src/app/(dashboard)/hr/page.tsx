@@ -119,7 +119,7 @@ export default function HrPage() {
             setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
             setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
         } catch (err: unknown) {
-            console.error("HR data load failed:", err);
+            // Suppressed in prod: HR data load failed
             // const msg = "Failed to load HR data. Please refresh.";
         } finally {
             setLoading(false);

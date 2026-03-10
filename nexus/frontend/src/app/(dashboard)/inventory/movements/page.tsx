@@ -8,7 +8,9 @@ import {
     PackageSearch,
     AlertCircle,
     Truck,
-    CheckCircle2
+    CheckCircle2,
+    Calendar,
+    X
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -17,6 +19,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from "@/components/ui/table";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -24,6 +29,19 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Badge } from "@/components/ui/badge";
+
+interface MovementLog {
+    id: string;
+    type: string;
+    quantity: number;
+    notes?: string;
+    createdAt: string;
+    product?: { name: string; sku: string };
+    warehouse?: { name: string };
+    fromWarehouse?: { name: string };
+    toWarehouse?: { name: string };
+}
 
 interface MinimalProduct {
     id: string;
@@ -64,15 +82,22 @@ export default function StockMovementsPage() {
     const [toWarehouse, setToWarehouse] = useState("");
     const [notes, setNotes] = useState("");
 
+    // BUG-015 FIX: date filter state for movement log
+    const [movements, setMovements] = useState<MovementLog[]>([]);
+    const [filterFrom, setFilterFrom] = useState("");
+    const [filterTo, setFilterTo] = useState("");
+
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const [prodRes, whRes] = await Promise.all([
-                api.get("/inventory/products?limit=1000"), // Minimal pagination for now
+            const [prodRes, whRes, movRes] = await Promise.all([
+                api.get("/inventory/products?limit=1000"),
                 api.get("/inventory/warehouses"),
+                api.get("/inventory/movements").catch(() => ({ data: [] }))
             ]);
             setProducts(prodRes.data.data || []);
             setWarehouses(whRes.data || []);
+            setMovements(Array.isArray(movRes.data) ? movRes.data : (movRes.data?.data || []));
         } catch {
             toast.error("Failed to load inventory data");
         } finally {
@@ -123,7 +148,7 @@ export default function StockMovementsPage() {
             // Reset form
             setQuantity("");
             setNotes("");
-            loadData(); // Refresh stock caches
+            loadData(); // Refresh stock caches + movement log
         } catch (err: unknown) {
             const error = err as ApiError;
             toast.error(error.response?.data?.message || "Failed to log movement");
@@ -337,6 +362,105 @@ export default function StockMovementsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* BUG-015 FIX: Date-filtered movement history */}
+            <Card className="border-none shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden bg-white">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-6 md:px-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="text-xl font-black text-slate-900">Movement History</CardTitle>
+                            <CardDescription className="font-bold uppercase tracking-widest text-[10px] text-slate-500 mt-1">
+                                Filter by date range
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
+                                <Input
+                                    type="date"
+                                    value={filterFrom}
+                                    onChange={(e) => setFilterFrom(e.target.value)}
+                                    className="h-9 w-36 rounded-xl border-slate-200 text-sm"
+                                />
+                                <span className="text-slate-400 text-xs font-bold">to</span>
+                                <Input
+                                    type="date"
+                                    value={filterTo}
+                                    onChange={(e) => setFilterTo(e.target.value)}
+                                    className="h-9 w-36 rounded-xl border-slate-200 text-sm"
+                                />
+                            </div>
+                            {(filterFrom || filterTo) && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => { setFilterFrom(""); setFilterTo(""); }}
+                                    className="h-9 px-3 text-slate-400 hover:text-slate-700 rounded-xl"
+                                >
+                                    <X className="h-4 w-4 mr-1" /> Clear
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0 overflow-x-auto">
+                    {(() => {
+                        const filtered = movements.filter(m => {
+                            const d = new Date(m.createdAt);
+                            if (filterFrom && d < new Date(filterFrom)) return false;
+                            if (filterTo && d > new Date(filterTo + "T23:59:59")) return false;
+                            return true;
+                        });
+                        if (filtered.length === 0) {
+                            return (
+                                <div className="h-32 flex items-center justify-center text-slate-400 font-bold text-sm">
+                                    {movements.length === 0 ? "No movements recorded yet." : "No movements in selected date range."}
+                                </div>
+                            );
+                        }
+                        return (
+                            <Table className="min-w-[600px]">
+                                <TableHeader className="bg-slate-50/50">
+                                    <TableRow className="border-slate-100 hover:bg-transparent">
+                                        <TableHead className="pl-8 text-[10px] font-black uppercase tracking-widest text-slate-500">Date</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Product</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500">Warehouse</TableHead>
+                                        <TableHead className="text-right pr-8 text-[10px] font-black uppercase tracking-widest text-slate-500">Qty</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filtered.map((m) => (
+                                        <TableRow key={m.id} className="border-slate-50 hover:bg-slate-50/50">
+                                            <TableCell className="pl-8 text-slate-500 text-xs font-bold">
+                                                {new Date(m.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge className={`text-[9px] font-black uppercase rounded-lg border-none ${m.type === 'IN' ? 'bg-emerald-50 text-emerald-700' :
+                                                        m.type === 'OUT' ? 'bg-rose-50 text-rose-700' :
+                                                            'bg-blue-50 text-blue-700'
+                                                    }`}>{m.type}</Badge>
+                                            </TableCell>
+                                            <TableCell className="font-bold text-slate-900 text-sm">
+                                                {m.product?.name || '—'}
+                                                {m.product?.sku && <span className="text-slate-400 font-mono text-[10px] ml-2">{m.product.sku}</span>}
+                                            </TableCell>
+                                            <TableCell className="text-slate-500 text-sm font-medium">
+                                                {m.type === 'TRANSFER'
+                                                    ? `${m.fromWarehouse?.name || '?'} → ${m.toWarehouse?.name || '?'}`
+                                                    : (m.warehouse?.name || '—')}
+                                            </TableCell>
+                                            <TableCell className="text-right pr-8 font-black text-slate-900 tabular-nums">
+                                                {m.quantity}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        );
+                    })()}
+                </CardContent>
+            </Card>
         </div>
     );
 }

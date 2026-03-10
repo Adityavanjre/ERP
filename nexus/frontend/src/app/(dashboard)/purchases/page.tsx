@@ -97,7 +97,7 @@ export default function PurchasesPage() {
             setPurchaseOrders(Array.isArray(rawOrders) ? rawOrders : []);
             setStats(statsRes.data || { totalSpent: 0, pendingPOs: 0 });
         } catch (err) {
-            console.error("Procurement Sync Failure:", err);
+            // Suppressed in prod: Procurement sync failed silently
             setSuppliers([]);
             setProducts([]);
             setPurchaseOrders([]);

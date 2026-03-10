@@ -83,7 +83,7 @@ export default function SettingsPage() {
             setBillingInfo(billRes.data || null);
             setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
         } catch (err: unknown) {
-            console.error(err);
+            // Suppressed in prod
             const error = err as ApiError;
             setError(error.isWakeup ? (error.message || "Wakeup error") : "Failed to load settings. Please refresh.");
         } finally {

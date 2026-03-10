@@ -33,7 +33,7 @@ export default function AppsMarketplace() {
             const res = await api.get("system/apps");
             setApps(res.data);
         } catch (err) {
-            console.error("App Sync Failure:", err);
+            // Suppressed in prod: App sync failed silently
             toast.error("Failed to load apps. Please refresh.");
         } finally {
             setLoading(false);

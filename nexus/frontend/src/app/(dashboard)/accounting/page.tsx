@@ -168,7 +168,7 @@ export default function AccountingPage() {
             });
 
         } catch (err) {
-            console.error("Ledger Sync Failure:", err);
+            // Suppressed in prod: Ledger sync failed silently
             if (!silent) toast.error("Failed to load accounting data. Please refresh.");
         } finally {
             setIsSyncing(false);

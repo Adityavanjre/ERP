@@ -38,7 +38,7 @@ export default function WarehousesPage() {
             const res = await api.get('inventory/warehouses');
             setWarehouses(res.data);
         } catch (err) {
-            console.error("Warehouse Sync Failure:", err);
+            // Suppressed in prod: Warehouse sync failed silently
         } finally {
             setLoading(false);
         }

@@ -65,7 +65,7 @@ export default function FounderMonitoring() {
             const res = await api.get("system/founder-dashboard");
             setData(res.data);
         } catch (err) {
-            console.error("Dashboard Sync Failure:", err);
+            // Suppressed in prod: Dashboard sync failed silently
         } finally {
             setLoading(false);
         }

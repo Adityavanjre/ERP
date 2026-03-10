@@ -121,7 +121,7 @@ export default function ManufacturingDashboard() {
             setWarehouses(wh.data || []);
             setMachines(m.data || []);
         } catch (err) {
-            console.error("Manufacturing Sync Failure:", err);
+            // Suppressed in prod: Manufacturing sync failed silently
         } finally {
             setLoading(false);
         }

@@ -37,7 +37,7 @@ export default function CreditNotesPage() {
             const res = await api.get("/accounting/credit-notes");
             setNotes(res.data);
         } catch (err) {
-            console.error("Failed to fetch credit notes", err);
+            // Suppressed in prod
         } finally {
             setLoading(false);
         }

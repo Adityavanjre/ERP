@@ -54,7 +54,7 @@ export default function WorkOrdersPage() {
             const res = await api.get("manufacturing/work-orders");
             setWorkOrders(res.data);
         } catch (err) {
-            console.error("Execution Queue Sync Failure:", err);
+            // Suppressed in prod: Execution Queue sync failed silently
         } finally {
             setLoading(false);
         }

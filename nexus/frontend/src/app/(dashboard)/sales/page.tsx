@@ -14,7 +14,8 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Plus, ShoppingCart, TrendingUp, Package, Clock } from "lucide-react";
+import { Plus, ShoppingCart, TrendingUp, Package, Clock, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useUX } from "@/components/providers/ux-provider";
@@ -76,13 +77,21 @@ export default function SalesPage() {
     const [stats, setStats] = useState<SalesStats>({ totalRevenue: 0, orderCount: 0, pendingOrders: 0 });
     const [loading, setLoading] = useState(true);
 
-    // New Order State
+    // BUG-017 FIX: replaced single-item orderData with multi-item orderItems array
     const [showForm, setShowForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [products, setProducts] = useState<SalesProduct[]>([]);
     const [customers, setCustomers] = useState<SalesCustomer[]>([]);
-    const [orderData, setOrderData] = useState({ customerId: "", productId: "", quantity: 1 });
+    const [customerId, setCustomerId] = useState("");
+    const [orderItems, setOrderItems] = useState([{ productId: "", quantity: 1 }]);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    const addOrderItem = () => setOrderItems(prev => [...prev, { productId: "", quantity: 1 }]);
+    const removeOrderItem = (i: number) => setOrderItems(prev => prev.filter((_, idx) => idx !== i));
+    const updateOrderItem = (i: number, field: "productId" | "quantity", value: string | number) =>
+        setOrderItems(prev => prev.map((item, idx) => idx === i ? { ...item, [field]: value } : item));
+
+    const resetForm = () => { setCustomerId(""); setOrderItems([{ productId: "", quantity: 1 }]); };
 
     const syncSalesData = useCallback(async (showLoading = false) => {
         try {
@@ -98,7 +107,7 @@ export default function SalesPage() {
             setProducts(Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data.data || []));
             setCustomers(Array.isArray(custRes.data) ? custRes.data : (custRes.data.data || []));
         } catch (err) {
-            console.error("Sales Sync Failure:", err);
+            // Suppressed in prod: Sales sync failed silently
         } finally {
             setLoading(false);
         }
@@ -115,20 +124,15 @@ export default function SalesPage() {
         try {
             setIsSubmitting(true);
             setUILocked(true);
-            const selectedProduct = (products || []).find(p => p.id === orderData.productId);
-
-            await api.post("sales/orders", {
-                customerId: orderData.customerId,
-                items: [
-                    {
-                        productId: orderData.productId,
-                        quantity: Number(orderData.quantity),
-                        price: selectedProduct ? Number(selectedProduct.price) : 0
-                    }
-                ]
-            });
+            const items = orderItems
+                .filter(item => item.productId)
+                .map(item => {
+                    const p = (products || []).find(p => p.id === item.productId);
+                    return { productId: item.productId, quantity: Number(item.quantity), price: p ? Number(p.price) : 0 };
+                });
+            await api.post("sales/orders", { customerId, items });
             setShowForm(false);
-            setOrderData({ customerId: "", productId: "", quantity: 1 });
+            resetForm();
             toast.success("Sales order processed successfully");
             syncSalesData();
         } catch (err: unknown) {
@@ -138,24 +142,25 @@ export default function SalesPage() {
             setIsSubmitting(false);
             setUILocked(false);
         }
-    }, [orderData, products, syncSalesData, setUILocked]);
+    }, [orderItems, customerId, products, syncSalesData, setUILocked]);
 
     const handleConfirmSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();
-        if (!orderData.customerId || !orderData.productId) {
-            toast.error("Please select customer and product");
+        const validItems = orderItems.filter(i => i.productId);
+        if (!customerId || validItems.length === 0) {
+            toast.error("Please select a customer and at least one product");
             return;
         }
-
-        const selectedProduct = (products || []).find(p => p.id === orderData.productId);
-        const orderTotal = (selectedProduct ? Number(selectedProduct.price) : 0) * Number(orderData.quantity);
-
+        const orderTotal = validItems.reduce((sum, item) => {
+            const p = (products || []).find(p => p.id === item.productId);
+            return sum + (p ? Number(p.price) : 0) * Number(item.quantity);
+        }, 0);
         if (orderTotal > 100000) {
             setShowConfirm(true);
         } else {
             submitOrder();
         }
-    }, [orderData, products, submitOrder]);
+    }, [orderItems, customerId, products, submitOrder]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -329,16 +334,17 @@ export default function SalesPage() {
                 </CardContent>
             </Card>
 
-            <Dialog open={showForm} onOpenChange={setShowForm}>
-                <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-lg bg-white border-none shadow-2xl rounded-[40px] overflow-hidden p-0">
+            <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) resetForm(); }}>
+                <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-xl bg-white border-none shadow-2xl rounded-[40px] overflow-hidden p-0">
                     <div className="bg-slate-900 p-10 pb-16">
                         <DialogTitle className="text-white font-black text-3xl tracking-tight">Create New Order</DialogTitle>
                         <p className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] mt-3">Add a new customer order or invoice</p>
                     </div>
-                    <form onSubmit={handleConfirmSubmit} className="p-10 -mt-8 bg-white rounded-t-[40px] space-y-8">
+                    <form onSubmit={handleConfirmSubmit} className="p-10 -mt-8 bg-white rounded-t-[40px] space-y-6">
+                        {/* Customer */}
                         <div className="space-y-3">
                             <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">Select Customer</Label>
-                            <Select value={orderData.customerId} onValueChange={v => setOrderData({ ...orderData, customerId: v })}>
+                            <Select value={customerId} onValueChange={setCustomerId}>
                                 <SelectTrigger className="bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-14 px-5 font-bold focus:ring-blue-500/20 text-base">
                                     <SelectValue placeholder="Choose Customer" />
                                 </SelectTrigger>
@@ -354,42 +360,51 @@ export default function SalesPage() {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        {/* BUG-017 FIX: Multi-item line rows */}
                         <div className="space-y-3">
-                            <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">Select Product</Label>
-                            <Select value={orderData.productId} onValueChange={v => setOrderData({ ...orderData, productId: v })}>
-                                <SelectTrigger className="bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-14 px-5 font-bold focus:ring-blue-500/20 text-base">
-                                    <SelectValue placeholder="Choose Product" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
-                                    {(products || []).map(p => (
-                                        <SelectItem key={p.id} value={p.id} className="rounded-xl py-3 font-black text-slate-700">
-                                            <div className="flex justify-between items-center w-full min-w-[300px]">
-                                                <span>{p.name}</span>
-                                                <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-lg text-[9px] ml-4">₹{p.price}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                    {(!products || products.length === 0) && (
-                                        <div className="p-4 text-center text-[10px] font-black text-slate-600 uppercase tracking-widest">No Products Found</div>
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <div className="flex justify-between items-center">
+                                <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">Order Items</Label>
+                                <button type="button" onClick={addOrderItem} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                                    <Plus className="h-3 w-3" /> Add Line
+                                </button>
+                            </div>
+                            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                {orderItems.map((item, i) => (
+                                    <div key={i} className="flex gap-2 items-center">
+                                        <Select value={item.productId} onValueChange={v => updateOrderItem(i, "productId", v)}>
+                                            <SelectTrigger className="flex-1 bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-12 px-4 font-bold text-sm">
+                                                <SelectValue placeholder="Choose Product" />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-2xl border-slate-100 shadow-2xl p-2">
+                                                {(products || []).map(p => (
+                                                    <SelectItem key={p.id} value={p.id} className="rounded-xl py-2 font-black text-slate-700">
+                                                        <div className="flex justify-between items-center w-full min-w-[260px]">
+                                                            <span>{p.name}</span>
+                                                            <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-lg text-[9px] ml-4">₹{p.price}</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Input
+                                            type="number" min="1"
+                                            value={item.quantity}
+                                            onChange={e => updateOrderItem(i, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
+                                            className="w-20 bg-slate-50 border-slate-100 rounded-2xl h-12 text-center font-black text-slate-900 tabular-nums"
+                                        />
+                                        {orderItems.length > 1 && (
+                                            <button type="button" onClick={() => removeOrderItem(i)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors rounded-xl">
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="space-y-3">
-                            <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">Quantity</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                className="bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-14 px-5 text-2xl font-black focus:ring-blue-500/20 tabular-nums"
-                                value={orderData.quantity || ""}
-                                onChange={e => {
-                                    const val = e.target.value === "" ? 1 : parseInt(e.target.value, 10);
-                                    setOrderData({ ...orderData, quantity: isNaN(val) ? 1 : Math.max(1, val) });
-                                }}
-                            />
-                        </div>
-                        <div className="flex gap-4 pt-6">
-                            <Button type="button" variant="ghost" className="flex-1 h-14 text-slate-600 font-black rounded-2xl hover:bg-rose-50 hover:text-rose-600 transition-all" onClick={() => setShowForm(false)}>Cancel</Button>
+
+                        <div className="flex gap-4 pt-4">
+                            <Button type="button" variant="ghost" className="flex-1 h-14 text-slate-600 font-black rounded-2xl hover:bg-rose-50 hover:text-rose-600 transition-all" onClick={() => { setShowForm(false); resetForm(); }}>Cancel</Button>
                             <Button type="submit" disabled={isSubmitting} className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-14 shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98]">
                                 {isSubmitting ? "Creating Order..." : "Create Order"}
                             </Button>

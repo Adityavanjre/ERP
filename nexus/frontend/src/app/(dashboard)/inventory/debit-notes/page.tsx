@@ -36,7 +36,7 @@ export default function DebitNotesPage() {
             const res = await api.get("/accounting/debit-notes");
             setNotes(res.data);
         } catch (err) {
-            console.error("Failed to fetch debit notes", err);
+            // Suppressed in prod
         } finally {
             setLoading(false);
         }

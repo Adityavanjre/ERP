@@ -46,8 +46,7 @@ export default function AppDetailPage() {
             const res = await api.get("/system/apps");
             const found = res.data.find((a: AppManifest) => a.name === appName);
             setApp(found);
-        } catch (err) {
-            console.error("Manifest Sync Failure:", err);
+        } catch {
         } finally {
             setLoading(false);
         }

@@ -134,7 +134,7 @@ export default function InventoryPage() {
             setStats(statsRes.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
             setForecast(aiRes.data || null);
         } catch (err: unknown) {
-            console.error("Inventory Sync Failure:", err);
+            // Suppressed in prod: Inventory sync failed silently
             const error = err as WakeupError;
             const msg = error.isWakeup ? error.message : "Inventory update interrupted";
             setFetchError(msg);
@@ -291,7 +291,7 @@ export default function InventoryPage() {
                 toast.success(`Processed: ${res.data.imported} products imported`);
                 if (res.data.failed > 0) {
                     toast.warning(`${res.data.failed} rows failed. Check console.`);
-                    console.warn(res.data.errors);
+                    // Suppressed in prod: import warnings
                 }
                 syncInventory(false);
             } catch {

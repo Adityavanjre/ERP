@@ -168,7 +168,7 @@ export default function DashboardPage() {
             setSyncDegraded(!anySucceeded);
 
         } catch (err) {
-            console.error("Data update error:", err);
+            // Suppressed in prod: data update error
         } finally {
             if (deadlineTimer) clearTimeout(deadlineTimer);
             setLoading(false);

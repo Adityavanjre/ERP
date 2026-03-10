@@ -63,7 +63,7 @@ export default function BOMPage() {
             const res = await api.get("manufacturing/boms");
             setBoms(res.data);
         } catch (err) {
-            console.error("Logic Struct Sync Failure:", err);
+            // Suppressed in prod: Logic Struct sync failed silently
         } finally {
             setLoading(false);
         }

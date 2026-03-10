@@ -46,7 +46,7 @@ export default function WorkflowBuilder() {
             const res = await api.get(`/system/workflows/${modelName}`);
             setWorkflows(res.data);
         } catch (err) {
-            console.error("Workflows Sync Failure:", err);
+            // Suppressed in prod: Workflows sync failed silently
         } finally {
             setLoading(false);
         }
