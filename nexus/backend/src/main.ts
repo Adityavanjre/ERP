@@ -229,7 +229,6 @@ async function bootstrap() {
   const allowedOrigins: (string | RegExp)[] = [
     'https://klypso.in',
     'https://www.klypso.in',
-    'https://nexus.klypso.in',
     /\.klypso\.in$/, // Trust all klypso.in subdomains
     'http://localhost:3000',
     'http://localhost:5173', // Vite dev server

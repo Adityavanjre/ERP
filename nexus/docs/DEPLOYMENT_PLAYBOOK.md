@@ -38,8 +38,8 @@ curl -X POST https://api.render.com/deploy/srv-<YOUR_SERVICE_ID>?key=<YOUR_DEPLO
 
 ## 4. Verification Post-Deploy
 Immediately after Phase C is complete, verify the following forensic health check:
-1.  **Public API**: `https://nexus.klypso.in/portal/api/v1/health/liveness` should return 200/Healthy.
-2.  **Nginx Mapping**: Verify `https://nexus.klypso.in/agency-api/api/health` returns MongoDB connection status.
+1.  **Public API**: `https://klypso.in/portal/api/v1/health/liveness` should return 200/Healthy.
+2.  **Nginx Mapping**: Verify `https://klypso.in/agency-api/api/health` returns MongoDB connection status.
 3.  **Mobile Kill Switch**: Confirm that setting `MOBILE_WRITE_ENABLED=false` in Render Dashboard instantly blocks mobile mutations.
 
 ---
