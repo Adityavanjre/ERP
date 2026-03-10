@@ -136,7 +136,7 @@ export default function AccountingPage() {
             const [accRes, txRes, invRes] = await Promise.all([
                 api.get("accounting/accounts").catch(() => ({ data: [] })),
                 api.get("accounting/transactions").catch(() => ({ data: { data: [] } })),
-                api.get(`/accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } }))
+                api.get(`accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } }))
             ]);
 
             setAccounts(accRes.data || []);
@@ -198,7 +198,7 @@ export default function AccountingPage() {
             onConfirm: async () => {
                 try {
                     setUILocked(true);
-                    await api.post(`/accounting/invoices/${id}/cancel`, { reason: "User cancelled from dashboard" });
+                    await api.post(`accounting/invoices/${id}/cancel`, { reason: "User cancelled from dashboard" });
                     toast.success("Invoice cancelled successfully");
                     syncLedgers();
                 } catch (err: unknown) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Command,
     Plus,
@@ -37,6 +37,8 @@ interface BOMItem {
     product?: {
         name: string;
         sku: string;
+        unit: string;
+        costPrice?: number;
     };
 }
 
@@ -56,6 +58,9 @@ export default function BOMPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedBomId, setSelectedBomId] = useState<string | null>(null);
+    const [selectedBom, setSelectedBom] = useState<BOM | null>(null);
+    const [costAnalysis, setCostAnalysis] = useState<{ materialCost: number, estimatedUnitCost: number } | null>(null);
+    const [detailsLoading, setDetailsLoading] = useState(false);
 
     const syncLogicStructs = React.useCallback(async (showLoading = false) => {
         try {
@@ -69,11 +74,33 @@ export default function BOMPage() {
         }
     }, []);
 
+    const fetchDetails = useCallback(async (id: string) => {
+        try {
+            setDetailsLoading(true);
+            const [bomRes, costRes] = await Promise.all([
+                api.get(`/manufacturing/boms/${id}`),
+                api.get(`/manufacturing/boms/${id}/cost`)
+            ]);
+            setSelectedBom(bomRes.data);
+            setCostAnalysis(costRes.data);
+        } catch (err) {
+            // Error handled by showing empty state
+        } finally {
+            setDetailsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         syncLogicStructs(true);
         const interval = setInterval(() => syncLogicStructs(false), 30000);
         return () => clearInterval(interval);
     }, [syncLogicStructs]);
+
+    useEffect(() => {
+        if (selectedBomId) {
+            fetchDetails(selectedBomId);
+        }
+    }, [selectedBomId, fetchDetails]);
 
     const filteredBoms = boms.filter(bom =>
         bom.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,11 +111,7 @@ export default function BOMPage() {
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
-            <BOMDetailsDialog
-                open={!!selectedBomId}
-                onOpenChange={(open) => !open && setSelectedBomId(null)}
-                bomId={selectedBomId}
-            />
+            {/* Removed BAMDetailsDialog as we are now using on-page cards for details */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
@@ -194,13 +217,39 @@ export default function BOMPage() {
                         </CardTitle>
                         <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Detailed component & sub-assembly list</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8 flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300">
-                            <Boxes className="h-8 w-8" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-slate-600">Select a BOM to see recursive material requirements including sub-assemblies.</p>
-                        </div>
+                    <CardContent className="p-0">
+                        {detailsLoading ? (
+                            <div className="p-12 flex justify-center"><LoadingSpinner /></div>
+                        ) : selectedBom ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent border-slate-100">
+                                        <TableHead className="text-[9px] uppercase font-bold pl-6">Material</TableHead>
+                                        <TableHead className="text-[9px] uppercase font-bold text-right pr-6">Quantity</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {selectedBom.items?.map((item) => (
+                                        <TableRow key={item.id} className="border-slate-50">
+                                            <TableCell className="pl-6 py-3">
+                                                <div className="font-bold text-slate-700 text-sm">{item.product?.name}</div>
+                                                <div className="text-[10px] text-slate-400 font-mono">{item.product?.sku}</div>
+                                            </TableCell>
+                                            <TableCell className="text-right pr-6 py-3 font-black text-slate-900">
+                                                {item.quantity} <span className="text-[10px] text-slate-400 font-bold">{item.product?.unit}</span>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300">
+                                    <Boxes className="h-8 w-8" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-600">Select a BOM to see recursive material requirements including sub-assemblies.</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -212,13 +261,33 @@ export default function BOMPage() {
                         </CardTitle>
                         <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total manufacturing value projection</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-8 flex flex-col items-center justify-center text-center space-y-4">
-                        <div className="h-16 w-16 rounded-3xl bg-white/5 flex items-center justify-center text-white/20">
-                            <ArrowRight className="h-8 w-8" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-slate-400">Select a BOM to calculate total production cost based on current raw material prices.</p>
-                        </div>
+                    <CardContent className="p-8">
+                        {detailsLoading ? (
+                            <div className="flex justify-center"><LoadingSpinner /></div>
+                        ) : selectedBom && costAnalysis ? (
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Base Material Cost</span>
+                                    <span className="text-2xl font-black">₹{costAnalysis.materialCost.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
+                                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Estimated Unit Cost</span>
+                                    <span className="text-2xl font-black text-emerald-400">₹{costAnalysis.estimatedUnitCost.toLocaleString()}</span>
+                                </div>
+                                <div className="pt-2">
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                                        Includes {selectedBom.overheadRate}% overhead ({selectedBom.isOverheadFixed ? 'Fixed' : 'Variable'})
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="h-16 w-16 rounded-3xl bg-white/5 flex items-center justify-center text-white/20">
+                                    <ArrowRight className="h-8 w-8" />
+                                </div>
+                                <p className="text-sm font-bold text-slate-400">Select a BOM to calculate total production cost based on current raw material prices.</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

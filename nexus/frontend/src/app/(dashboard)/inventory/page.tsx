@@ -88,6 +88,8 @@ export default function InventoryPage() {
     const [showForm, setShowForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("ALL");
+    const [warehouses, setWarehouses] = useState<any[]>([]);
     const [obProduct, setObProduct] = useState<Product | null>(null);
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
@@ -95,6 +97,7 @@ export default function InventoryPage() {
         name: "",
         sku: "",
         stock: 0,
+        warehouseId: "",
         price: 0,
         costPrice: 0,
         category: "",
@@ -118,10 +121,11 @@ export default function InventoryPage() {
         try {
             if (showLoading) setLoading(true);
             setFetchError(null);
-            const [prodRes, statsRes, aiRes] = await Promise.all([
+            const [prodRes, statsRes, aiRes, whRes] = await Promise.all([
                 api.get(`/inventory/products?page=${page}&limit=50`),
                 api.get("inventory/stats"),
-                api.get("system/ai/inventory-forecast")
+                api.get("system/ai/inventory-forecast"),
+                api.get("inventory/warehouses")
             ]);
 
             if (prodRes.data?.data) {
@@ -133,6 +137,7 @@ export default function InventoryPage() {
 
             setStats(statsRes.data || { totalProducts: 0, lowStock: 0, totalValue: 0 });
             setForecast(aiRes.data || null);
+            setWarehouses(whRes.data || []);
         } catch (err: unknown) {
             // Suppressed in prod: Inventory sync failed silently
             const error = err as WakeupError;
@@ -175,7 +180,7 @@ export default function InventoryPage() {
 
             setShowForm(false);
             setFormData({
-                name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "",
+                name: "", sku: "", stock: 0, warehouseId: "", price: 0, costPrice: 0, category: "",
                 tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0,
                 description: "", barcode: "", isService: false
             });
@@ -210,7 +215,7 @@ export default function InventoryPage() {
 
             setEditingProduct(null);
             setFormData({
-                name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "",
+                name: "", sku: "", stock: 0, warehouseId: "", price: 0, costPrice: 0, category: "",
                 tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0,
                 description: "", barcode: "", isService: false
             });
@@ -242,7 +247,8 @@ export default function InventoryPage() {
             gstRate: Number(p.gstRate) || 0,
             description: p.description || "",
             barcode: p.barcode || "",
-            isService: p.isService || false
+            isService: p.isService || false,
+            warehouseId: ""
         });
         setShowForm(false); // Close add form if open
     };
@@ -268,13 +274,19 @@ export default function InventoryPage() {
         });
     };
 
-    const filteredProducts = (products || []).filter(p =>
-        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (p.tags && p.tags.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredProducts = (products || []).filter(p => {
+        const matchesSearch = p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (p.tags && p.tags.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()));
+
+        const matchesCategory = selectedCategory === "ALL" || p.category === selectedCategory;
+
+        return matchesSearch && matchesCategory;
+    });
+
+    const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -339,10 +351,10 @@ export default function InventoryPage() {
                         <Layers className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-slate-900 tracking-tighter">{stats.totalProducts} Items</div>
+                        <div className={`text-3xl font-black tracking-tighter ${stats.totalProducts > 0 ? "text-slate-900" : "text-slate-300"}`}>{stats.totalProducts} Items</div>
                         <p className="text-xs text-slate-500 mt-2 flex items-center font-bold">
-                            <TrendingDown className="h-3 w-3 mr-1 text-emerald-500" />
-                            Stable supply levels
+                            <TrendingDown className={`h-3 w-3 mr-1 ${stats.lowStock > 0 ? "text-amber-500" : "text-emerald-500"}`} />
+                            {stats.lowStock > 0 ? "Replenishment tracker active" : "Stable supply levels"}
                         </p>
                     </CardContent>
                 </Card>
@@ -389,12 +401,25 @@ export default function InventoryPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col gap-2">
                                         <NumericInput
                                             className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
                                             value={formData.stock}
                                             onChange={val => setFormData({ ...formData, stock: val })}
                                         />
+                                        {formData.stock > 0 && (
+                                            <select
+                                                className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl h-9 px-3 text-[10px] font-black uppercase appearance-none"
+                                                value={formData.warehouseId}
+                                                onChange={e => setFormData({ ...formData, warehouseId: e.target.value })}
+                                                required
+                                            >
+                                                <option value="">Choose Warehouse *</option>
+                                                {warehouses.map(w => (
+                                                    <option key={w.id} value={w.id}>{w.name}</option>
+                                                ))}
+                                            </select>
+                                        )}
                                         <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
                                             <input type="checkbox" id="isService" checked={formData.isService} onChange={e => setFormData({ ...formData, isService: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                                             <label htmlFor="isService" className="text-[10px] font-black text-slate-500 uppercase">Service</label>
@@ -482,7 +507,7 @@ export default function InventoryPage() {
             )}
 
             {/* EDIT PRODUCT DIALOG */}
-            <Dialog open={!!editingProduct} onOpenChange={(open) => { if (!open) { setEditingProduct(null); setFormData({ name: "", sku: "", stock: 0, price: 0, costPrice: 0, category: "", tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0, description: "", barcode: "", isService: false }); } }}>
+            <Dialog open={!!editingProduct} onOpenChange={(open) => { if (!open) { setEditingProduct(null); setFormData({ name: "", sku: "", stock: 0, warehouseId: "", price: 0, costPrice: 0, category: "", tags: "", brand: "", manufacturer: "", minStockLevel: 0, hsnCode: "", gstRate: 0, description: "", barcode: "", isService: false }); } }}>
                 <DialogContent className="sm:max-w-[780px] bg-white border-slate-200 text-slate-900 rounded-[28px] shadow-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="pb-4 border-b border-slate-100">
                         <DialogTitle className="text-slate-900 font-black text-xl">Edit Product</DialogTitle>
@@ -501,12 +526,16 @@ export default function InventoryPage() {
                                 <Input className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono" value={formData.sku} disabled />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Stock Control <span className="text-rose-500">*</span></Label>
+                                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest flex items-center gap-2">
+                                    Stock Level
+                                    <span className="text-[10px] text-amber-500 normal-case font-normal">(Use Movements to adjust)</span>
+                                </Label>
                                 <div className="flex gap-2">
                                     <NumericInput
-                                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                                        className="bg-slate-100 border-slate-200 text-slate-500 rounded-xl h-11 cursor-not-allowed"
                                         value={formData.stock}
-                                        onChange={val => setFormData({ ...formData, stock: val })}
+                                        onChange={() => { }}
+                                        disabled
                                     />
                                     <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
                                         <input type="checkbox" id="isServiceEdit" checked={formData.isService} onChange={e => setFormData({ ...formData, isService: e.target.checked })} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
@@ -657,7 +686,17 @@ export default function InventoryPage() {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Button variant="ghost" size="icon" className="h-12 w-12 bg-white border border-slate-200 text-slate-400 rounded-2xl hover:bg-slate-50">
+                            <select
+                                className="h-12 border border-slate-200 text-slate-500 rounded-2xl px-4 font-bold uppercase text-[10px] tracking-widest bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                            >
+                                <option value="ALL">All Categories</option>
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                            <Button variant="ghost" size="icon" className="h-12 w-12 bg-white border border-slate-200 text-slate-400 rounded-2xl hover:bg-slate-50" onClick={() => { setSearchQuery(""); setSelectedCategory("ALL"); }}>
                                 <Filter className="h-4 w-4" />
                             </Button>
                         </div>

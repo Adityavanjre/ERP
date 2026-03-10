@@ -53,8 +53,8 @@ export default function ReportsPage() {
         try {
             setLoading(true);
             const [tbRes, plRes] = await Promise.all([
-                api.get("/accounting/reports/trial-balance"),
-                api.get("/accounting/reports/profit-loss"),
+                api.get("accounting/reports/trial-balance"),
+                api.get("accounting/reports/profit-loss"),
             ]);
             setTrialBalance(tbRes.data);
             setProfitLoss(plRes.data);

@@ -38,7 +38,7 @@ export function FixedAssetTab() {
     const fetchAssets = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await api.get("/accounting/fixed-assets");
+            const res = await api.get("accounting/fixed-assets");
             setAssets(res.data);
         } catch {
             toast.error("Failed to fetch assets");
@@ -54,7 +54,7 @@ export function FixedAssetTab() {
     const runDepreciation = useCallback(async (assetId: string) => {
         try {
             setUILocked(true);
-            await api.post(`/accounting/fixed-assets/${assetId}/depreciate`, {});
+            await api.post(`accounting/fixed-assets/${assetId}/depreciate`, {});
             toast.success("Depreciation processed successfully!");
             fetchAssets();
         } catch (err: unknown) {

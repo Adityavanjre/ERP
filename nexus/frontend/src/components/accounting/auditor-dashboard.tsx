@@ -61,7 +61,7 @@ export function AuditorDashboard() {
     const fetchDashboard = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
+            const res = await api.get(`accounting/auditor/dashboard?month=${month}&year=${year}`);
             setData(res.data);
         } catch {
             toast.error("Failed to load auditor data");

@@ -57,7 +57,7 @@ export default function AuditorDashboard() {
     const syncAuditorData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const res = await api.get(`/accounting/auditor/dashboard?month=${month}&year=${year}`);
+            const res = await api.get(`accounting/auditor/dashboard?month=${month}&year=${year}`);
             setData(res.data);
         } catch (err) {
             // Suppressed in prod: Auditor sync failed silently
@@ -116,7 +116,7 @@ export default function AuditorDashboard() {
     const handleTallyExport = async () => {
         try {
             toast.info(`Generating Tally Vouchers for ${new Date(0, month - 1).toLocaleString('default', { month: 'long' })} ${year}...`);
-            const response = await api.get(`/accounting/export/tally?month=${month}&year=${year}`, {
+            const response = await api.get(`accounting/export/tally?month=${month}&year=${year}`, {
                 responseType: 'blob'
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -136,7 +136,7 @@ export default function AuditorDashboard() {
     const handleTallyMasters = async () => {
         try {
             toast.info("Generating Tally Masters (Ledgers + Items)...");
-            const response = await api.get(`/accounting/export/masters`, {
+            const response = await api.get(`accounting/export/masters`, {
                 responseType: 'blob'
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));

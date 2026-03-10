@@ -62,7 +62,7 @@ export function OpeningBalanceDialog({
 
     const fetchWarehouses = useCallback(async () => {
         try {
-            const res = await api.get('/inventory/warehouses');
+            const res = await api.get('inventory/warehouses');
             const data = res.data;
             setWarehouses(data);
             if (data.length > 0) setWarehouseId(data[0].id);
@@ -94,13 +94,13 @@ export function OpeningBalanceDialog({
             const payload: OpeningBalancePayload = { date, description };
 
             if (customerId) {
-                endpoint = `/accounting/customers/${customerId}/opening-balance`;
+                endpoint = `accounting/customers/${customerId}/opening-balance`;
                 payload.amount = amount;
             } else if (supplierId) {
-                endpoint = `/accounting/suppliers/${supplierId}/opening-balance`;
+                endpoint = `accounting/suppliers/${supplierId}/opening-balance`;
                 payload.amount = amount;
             } else if (productId) {
-                endpoint = `/inventory/products/${productId}/opening-balance`;
+                endpoint = `inventory/products/${productId}/opening-balance`;
                 payload.quantity = amount;
                 payload.warehouseId = warehouseId;
                 payload.unitCost = unitCost;

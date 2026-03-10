@@ -1031,14 +1031,16 @@ export class AuthService {
     } catch (mailErr: any) {
       // Fatal mail error — log it loudly, but never reveal to the caller.
       // The token is already written to the DB; the user can try again.
+      const hasResendKey = !!process.env.RESEND_API_KEY;
       console.error(
-        `[MAIL_DELIVERY_FAILURE] Error sending reset link to ${user.email}:`,
-        mailErr.message,
+        `[MAIL_DELIVERY_FAILURE] Failed to send reset link to ${user.email}. ` +
+        `RESEND_API_KEY present: ${hasResendKey}. ` +
+        `Reason: ${mailErr.message}`,
       );
       this.logging.log({
         action: 'PASSWORD_RESET_EMAIL_FAILED',
         resource: 'MailService',
-        details: { identityId: user.id },
+        details: { identityId: user.id, reason: mailErr.message, hasResendKey },
       });
     }
 
