@@ -130,9 +130,8 @@ export class SaasAnalyticsService {
         },
       }),
       // 7. Active Customers (Moved to end for indexing safety)
-      this.prisma.customer.findMany({
+      this.prisma.customer.count({
         where: { tenantId, isDeleted: false },
-        select: { id: true, firstName: true, lastName: true, createdAt: true },
       }),
     ]);
 
@@ -241,7 +240,7 @@ export class SaasAnalyticsService {
         taggingRatio: taggingRatio.toFixed(1) + '%',
         todayAdjustments: adjustments,
         lastSeen: lastAction?.createdAt || null,
-        totalCustomers: activeCustomers.length,
+        totalCustomers: activeCustomers as unknown as number,
         periodLockStatus: periodLock ? 'Locked' : 'Vulnerable',
       },
       interventions: this.getInterventionStrategy(status, healthScore),

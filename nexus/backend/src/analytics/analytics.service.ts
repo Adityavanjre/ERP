@@ -67,30 +67,12 @@ export class AnalyticsService {
       select: { totalAmount: true, issueDate: true },
     });
 
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const result = months.map((m, i) => {
-      const monthInvoices = invoices.filter(
-        (o) => o.issueDate.getMonth() === i,
-      );
-      const revenue = monthInvoices.reduce(
-        (sum, o) => sum + Number(o.totalAmount),
-        0,
-      );
-      return { month: m, revenue };
-    });
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlySums = new Array(12).fill(0);
+    for (const o of invoices) {
+      monthlySums[o.issueDate.getMonth()] += Number(o.totalAmount);
+    }
+    const result = months.map((m, i) => ({ month: m, revenue: monthlySums[i] }));
 
     await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
     return result;
@@ -126,6 +108,10 @@ export class AnalyticsService {
   }
 
   async getBillingLeaderboard(tenantId: string) {
+    const cacheKey = `nexus:analytics:billing_leaderboard:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     // ANALYTICS-001: Original grouped by tenantId — returned one row (useless).
     // Correct approach: read AuditLog for INVOICE_CREATED actions today and aggregate by user.
     const startOfDay = new Date();
@@ -158,7 +144,7 @@ export class AnalyticsService {
       userMap.set(key, existing);
     }
 
-    return Array.from(userMap.values())
+    const result = Array.from(userMap.values())
       .map((u) => ({
         name: u.name,
         billCount: u.count,
@@ -168,6 +154,9 @@ export class AnalyticsService {
       .sort((a, b) => b.billCount - a.billCount)
       .slice(0, 5)
       .map((u, i) => ({ rank: i + 1, ...u }));
+
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   async getActivityFeed(tenantId: string) {
