@@ -135,7 +135,11 @@ export class PrismaService
 
                     return args[0](secureTx);
                   },
-                  ...args.slice(1),
+                  {
+                    maxWait: 15000, // Wait for connection up to 15s
+                    timeout: 30000, // Allow large financial ops up to 30s
+                    ...args.slice(1)[0], // Allow overrides
+                  },
                 );
               }
               return target.$transaction(...args);
@@ -175,7 +179,9 @@ export class PrismaService
         retries--;
         console.error(`[PrismaService] Connection failed. Retries left: ${retries}`);
         if (retries === 0) throw err;
-        await new Promise((res) => setTimeout(res, 5000));
+        // ARCH-001: Faster failure for build-time audits
+        const delay = process.env.NODE_ENV === 'production' ? 5000 : 1000;
+        await new Promise((res) => setTimeout(res, delay));
       }
     }
   }
@@ -195,8 +201,12 @@ export class PrismaService
             const userType = context.getUserType();
 
             const isGlobal = PrismaService.GLOBAL_MODELS.has(model.toLowerCase());
+            const isSystemAction = tenantId === 'SYSTEM_INIT';
 
-            if (isGlobal || userType === 'admin') {
+            // SECURITY (SYS-010): Admin & System Bypass.
+            // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
+            // IMPORTANT: If tenantId is present (Shadow Mode), we DO NOT bypass isolation.
+            if (isGlobal || (userType === 'admin' && !tenantId) || isSystemAction) {
               return query(args);
             }
 
@@ -228,6 +238,10 @@ export class PrismaService
             } else {
               args.where = args.where || {};
               enforceIsolation(args.where);
+              // Handle findUnique isolation - Prisma doesn't allow extra fields in findUnique
+              if (operation === 'findUnique') {
+                return (this._isolatedClient[model] as any).findFirst(args);
+              }
             }
 
             return query(args);

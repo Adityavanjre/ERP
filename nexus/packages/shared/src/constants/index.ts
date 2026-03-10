@@ -62,7 +62,7 @@ export interface IndustryModuleConfig {
 
 export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
     [Industry.Manufacturing]: {
-        enabledModules: ['accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases'],
+        enabledModules: ['accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales'],
         mobileRestrictedModules: ['accounting'], // Risk management: No heavy accounting on mobile
         terminology: {
             customer: 'Customer',
@@ -73,7 +73,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.Retail]: {
-        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
+        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'],
         terminology: {
             customer: 'Shopper/Consumer',
             product: 'Stock Item',
@@ -82,7 +82,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.Construction]: {
-        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction'],
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction', 'sales'],
         terminology: {
             customer: 'Principal/Owner',
             product: 'Building Material',
@@ -91,7 +91,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.Healthcare]: {
-        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'healthcare'],
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'healthcare', 'sales'],
         terminology: {
             customer: 'Patient',
             product: 'Medicine/Service',
@@ -100,7 +100,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.Logistics]: {
-        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'logistics'],
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'logistics', 'sales'],
         terminology: {
             customer: 'Client/Receiver',
             product: 'Consumable/Fuel',
@@ -109,7 +109,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.NBFC]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'nbfc'],
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'nbfc', 'sales'],
         terminology: {
             customer: 'Borrower',
             product: 'Loan Product',
@@ -118,7 +118,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.Service]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects'],
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects', 'sales'],
         terminology: {
             customer: 'Client',
             product: 'Service Item',
@@ -127,7 +127,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
         }
     },
     [Industry.Wholesale]: {
-        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
+        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'],
         terminology: {
             customer: 'Distributor/Vendor',
             product: 'Bulk Commodity',
@@ -135,22 +135,22 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Logistics Bay'
         }
     },
+    [Industry.RealEstate]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects', 'sales'],
+        terminology: {
+            customer: 'Tenant/Lead',
+            product: 'Property/Unit',
+            inventory: 'Assets',
+            department: 'Estate/Wing'
+        }
+    },
     [Industry.Education]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases'],
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'sales'],
         terminology: {
             customer: 'Student/Parent',
             product: 'Course/Service',
             inventory: 'Institutional Supplies',
             department: 'Academic Dept'
-        }
-    },
-    [Industry.RealEstate]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects'],
-        terminology: {
-            customer: 'Buyer/Tenant',
-            product: 'Property/Unit',
-            inventory: 'Building Materials',
-            department: 'Project Team'
         }
     },
     [Industry.Gov]: {

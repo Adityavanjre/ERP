@@ -56,7 +56,8 @@ export class InvoiceService {
     }
 
     // --- INDUSTRY INVARIANT: CONSTRUCTION PROJECT LINKAGE ---
-    const tenant = await this.prisma.tenant.findUnique({
+    const client = txOverride || this.prisma;
+    const tenant = await client.tenant.findUnique({
       where: { id: tenantId },
     });
     const industry = tenant?.industry || tenant?.type;
@@ -809,6 +810,7 @@ export class InvoiceService {
         tenantId,
         product.hsnCode,
         gstRate,
+        tx,
       );
 
       if (!isValid && !item.isGstOverride) {

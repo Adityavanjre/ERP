@@ -6,9 +6,13 @@ import { jwtDecode } from "jwt-decode";
 
 interface User {
     id: string;
+    sub?: string;
     email: string;
     role: string;
     tenantId: string;
+    industry?: string;
+    type?: string;
+    isSuperAdmin?: boolean;
 }
 
 export function useAuth() {
@@ -20,10 +24,15 @@ export function useAuth() {
             const token = localStorage.getItem("k_token");
             if (token) {
                 try {
-                    const decoded = jwtDecode<User>(token);
+                    const decoded = jwtDecode<any>(token);
+                    const userData: User = {
+                        ...decoded,
+                        id: decoded.id || decoded.sub, // Fallback to 'sub' from JWT
+                    };
+
                     // Prevent identity mismatch if token changed in another tab
-                    if (!user || user.id !== decoded.id || user.tenantId !== decoded.tenantId) {
-                        setUser(decoded);
+                    if (!user || user.id !== userData.id || user.tenantId !== userData.tenantId) {
+                        setUser(userData);
                     }
                 } catch (err) {
                     console.error("Failed to decode token", err);

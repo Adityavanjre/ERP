@@ -29,5 +29,6 @@ export interface AuthResponse {
   tempToken?: string;
   setupToken?: string;
   channel?: AccessChannel;
+  isAdminFlow?: boolean;
   recoveryCodes?: string[];
 }

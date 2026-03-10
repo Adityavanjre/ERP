@@ -19,7 +19,7 @@ export class SaasAnalyticsService {
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private forecasting: ForecastingService,
-  ) {}
+  ) { }
 
   async getCashflowProjections(tenantId: string) {
     return this.forecasting.getCashflowForecast(tenantId);
@@ -115,7 +115,7 @@ export class SaasAnalyticsService {
         },
       }),
       // 6. Period Lock status
-      (this.prisma as any).periodLock.findFirst({
+      this.prisma.periodLock.findFirst({
         where: {
           tenantId,
           month: today.getMonth() + 1,
@@ -161,8 +161,8 @@ export class SaasAnalyticsService {
     const avgLag =
       lags.length > 0
         ? Math.floor(
-            lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
-          )
+          lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
+        )
         : 0;
 
     // Behavioral Risk Formula (Score 0-100)
@@ -376,7 +376,7 @@ export class SaasAnalyticsService {
       lastTransaction: Number(c.invoices[0]?.totalAmount || 0),
       daysSilent: Math.floor(
         (Date.now() - c.invoices[0]?.issueDate.getTime()) /
-          (1000 * 60 * 60 * 24),
+        (1000 * 60 * 60 * 24),
       ),
     }));
 
@@ -436,8 +436,24 @@ export class SaasAnalyticsService {
             };
           }
 
-          // If not cached, we return a "Pending" state instead of blocking the whole dashboard
-          // A background job should ideally populate these.
+          // If not cached and we are early in the batch, trigger a sync calculation
+          // This ensures the dashboard starts populating immediately for small/medium tenant counts.
+          if (i < 50) {
+            try {
+              const fresh = await this.getClientHealthScore(t.id);
+              return {
+                tenantName: t.name,
+                plan: t.plan,
+                mrr: this.getMRR(t.plan),
+                healthScore: fresh.healthScore,
+                status: fresh.status,
+                signals: fresh.signals,
+              };
+            } catch (err) {
+              // Fallback to GRAY if calculation fails
+            }
+          }
+
           return {
             tenantName: t.name,
             plan: t.plan,
@@ -466,9 +482,9 @@ export class SaasAnalyticsService {
       systemHealth:
         reports.length > 0
           ? Math.round(
-              reports.reduce((sum, r) => sum + r.healthScore, 0) /
-                reports.length,
-            )
+            reports.reduce((sum, r) => sum + r.healthScore, 0) /
+            reports.length,
+          )
           : 0,
       topAtRisk,
       allReports: reports,

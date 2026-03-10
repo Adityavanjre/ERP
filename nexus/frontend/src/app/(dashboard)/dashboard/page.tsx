@@ -153,8 +153,9 @@ export default function DashboardPage() {
             if (cfgData) {
                 setIndustryConfig(cfgData);
                 const apiModules: string[] = cfgData.enabledModules || [];
-                const core = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm'];
-                setEnabledModules(Array.from(new Set([...core, ...apiModules])));
+                // Dashboard infrastructure modules that are always safe to display
+                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
+                setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
             }
 
             setBiStats(prev => ({ ...prev, ...(sumData || {}) }));
@@ -273,10 +274,12 @@ export default function DashboardPage() {
                     const roleAllowed = action.roles.includes(userRole);
                     if (!roleAllowed) return false;
 
-                    const moduleKey = action.href.split('/')[1];
+                    const pathParts = action.href.split('/').filter(p => p !== '');
+                    const moduleKey = pathParts[0];
+
                     if (moduleKey && enabledModules.length > 0) {
-                        // Special case: 'crm' belongs to 'sales' module
-                        if (moduleKey === 'crm') return enabledModules.includes('sales');
+                        // CRM is a core platform service, usually mapped to the 'customer' terminology
+                        if (moduleKey === 'crm') return true;
                         return enabledModules.includes(moduleKey);
                     }
                     return true;
@@ -284,6 +287,12 @@ export default function DashboardPage() {
                     <button
                         key={i}
                         onClick={() => router.push(action.href)}
+                        onMouseEnter={() => {
+                            const moduleKey = action.href.split('/')[1];
+                            if (moduleKey === 'sales') api.get('analytics/summary').catch(() => { });
+                            if (moduleKey === 'inventory') api.get('system/stats').catch(() => { });
+                            if (moduleKey === 'accounting') api.get('analytics/performance').catch(() => { });
+                        }}
                         className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
                     >
                         <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}>

@@ -16,7 +16,7 @@ export class SalesService {
   ) { }
 
   async createOrder(tenantId: string, data: any, user?: any) {
-    const { items, customerId, idempotencyKey, ...orderData } = data;
+    const { items, customerId, idempotencyKey, orderDate, issueDate, ...orderData } = data;
     const channel = user?.channel || 'WEB';
     const role = user?.role;
 
@@ -61,6 +61,7 @@ export class SalesService {
           tenantId,
           customerId,
           idempotencyKey,
+          createdAt: orderDate || issueDate || new Date(),
           status: forceDraft ? OrderStatus.Draft : OrderStatus.Pending,
           total: items.reduce(
             (sum: Decimal, item: any) =>
@@ -85,8 +86,10 @@ export class SalesService {
           {
             customerId,
             invoiceNumber: `INV-${order.id.split('-')[0].toUpperCase()}`,
-            issueDate: new Date(),
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            issueDate: data.orderDate || data.issueDate || new Date(),
+            dueDate:
+              data.dueDate ||
+              new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             items: items.map((i: any) => ({
               productId: i.productId,
               quantity: new Decimal(i.quantity),

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Toaster as HotToaster } from 'react-hot-toast';
@@ -9,22 +9,23 @@ import { Suspense } from "react";
 import { PerformanceMonitor } from "@/components/seo/performance-monitor";
 import Script from "next/script";
 
-const geistSans = Geist({
+const geistSans = Inter({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: 'swap',
 });
 
-const geistMono = Geist_Mono({
+const geistMono = Roboto_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://nexus.klypso.in/portal'),
-  title: "Nexus ERP | Advanced Business OS for Manufacturing & GST Compliance",
+  metadataBase: new URL('https://klypso.in/portal'), title: "Nexus ERP | Advanced Business OS for Manufacturing & GST Compliance",
   description: "The imperial standard for SME management. Professional ERP with Tally Prime sync, automated GST GSTR-1 compliance, manufacturing BOM/WIP tracking, and double-entry accounting.",
   alternates: {
-    canonical: 'https://nexus.klypso.in/portal',
+    canonical: 'https://klypso.in/portal',
   },
   keywords: [
     "Best ERP for Manufacturing India",
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Nexus ERP | The OS for Modern Indian Business",
     description: "Scale your factory or retail business with elite-grade accounting and inventory.",
-    url: "https://nexus.klypso.in",
+    url: "https://klypso.in",
     siteName: "Nexus ERP",
     images: [
       {
@@ -91,8 +92,8 @@ const organizationJsonLd = {
   "@type": "Organization",
   "name": "Nexus ERP",
   "alternateName": "Klypso Nexus",
-  "url": "https://nexus.klypso.in/portal",
-  "logo": "https://nexus.klypso.in/portal/favicon.svg",
+  "url": "https://klypso.in/portal",
+  "logo": "https://klypso.in/portal/favicon.svg",
   "contactPoint": {
     "@type": "ContactPoint",
     "telephone": "+91-XXXXXXXXXX",
@@ -107,7 +108,7 @@ const organizationJsonLd = {
   ],
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://nexus.klypso.in/portal/search?q={search_term_string}",
+    "target": "https://klypso.in/portal/search?q={search_term_string}",
     "query-input": "required name=search_term_string"
   }
 };
@@ -123,7 +124,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="ai-content" content="index, follow" />
-        <meta name="discovery" content="https://nexus.klypso.in/portal/sitemap.xml" />
+        <meta name="discovery" content="https://klypso.in/portal/sitemap.xml" />
         <link rel="dns-prefetch" href="https://klypso-backend.onrender.com" />
         <link rel="preconnect" href="https://klypso-backend.onrender.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />

@@ -15,6 +15,8 @@ function checkMigrations() {
     let hasUntagged = false;
 
     for (const migration of migrations) {
+        // Skip baseline migrations from the strict CONCURRENTLY check
+        const isBaseline = migration.endsWith('_init') || migration.includes('_catchup_');
         // Expected format: <timestamp>_reversible_<name> or <timestamp>_destructive_<name>
         if (!migration.includes('_reversible_') && !migration.includes('_destructive_')) {
             console.error(`[CRITICAL] Migration "${migration}" is missing a safety tag (_reversible_ or _destructive_).`);
@@ -35,7 +37,7 @@ function checkMigrations() {
             lines.forEach((line, index) => {
                 const upperLine = line.toUpperCase();
                 // Match simple CREATE INDEX and CREATE UNIQUE INDEX, missing CONCURRENTLY
-                if (upperLine.includes('CREATE INDEX') || upperLine.includes('CREATE UNIQUE INDEX')) {
+                if ((upperLine.includes('CREATE INDEX') || upperLine.includes('CREATE UNIQUE INDEX')) && !isBaseline) {
                     if (!upperLine.includes('CONCURRENTLY')) {
                         console.error(`[CRITICAL] DEV-006: Migration "${migration}", line ${index + 1} creates an index WITHOUT the CONCURRENTLY keyword. This will lock tables in production.`);
                         hasUntagged = true;

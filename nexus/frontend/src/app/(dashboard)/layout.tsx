@@ -27,8 +27,9 @@ const DashboardLayout = ({
             const token = typeof window !== 'undefined' ? localStorage.getItem("k_token") : null;
             if (token) {
                 const decoded = jwtDecode<DecodedToken>(token);
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setIsIdentityState(decoded.type === 'identity');
+                // Identification/Identity and Global Admin sessions without tenant context 
+                // should render full-screen (selector, monitoring, onboarding).
+                setIsIdentityState(decoded.type === 'identity' || (decoded.type === 'admin' && !decoded.tenantId));
             } else {
                 setIsIdentityState(false);
             }

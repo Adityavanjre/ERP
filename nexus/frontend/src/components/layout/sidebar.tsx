@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
     LayoutDashboard,
@@ -104,46 +104,109 @@ const businessStreams: BusinessStream[] = [
         label: 'Healthcare',
         icon: Activity,
         items: [
-            { label: 'Patients', href: '/healthcare/patients', icon: Users, allowedRoles: SALES_ROLES },
+            { label: 'Patients', href: '/healthcare', icon: Users, allowedRoles: SALES_ROLES },
             { label: 'Appointments', href: '/healthcare/appointments', icon: Calendar, allowedRoles: SALES_ROLES },
-            { label: 'Medical Records', href: '/healthcare/medical-records', icon: ClipboardList, allowedRoles: FINANCE_ROLES },
+            { label: 'Medical Records', href: '/healthcare/records', icon: ClipboardList, allowedRoles: FINANCE_ROLES },
             { label: 'Pharmacy', href: '/healthcare/pharmacy', icon: Package, allowedRoles: STOCK_ROLES },
+        ]
+    },
+    {
+        label: 'NBFC Operations',
+        icon: Landmark,
+        items: [
+            { label: 'Loan Portfolio', href: '/nbfc', icon: Landmark, allowedRoles: FINANCE_ROLES },
+            { label: 'Collections', href: '/nbfc/collections', icon: Receipt, allowedRoles: SALES_ROLES },
+            { label: 'KYC Registry', href: '/nbfc/kyc', icon: ShieldCheck, allowedRoles: SALES_ROLES },
+        ]
+    },
+    {
+        label: 'Logistics',
+        icon: Truck,
+        items: [
+            { label: 'Fleet Management', href: '/logistics', icon: Truck, allowedRoles: STOCK_ROLES },
+            { label: 'Consignments', href: '/logistics/consignments', icon: ShoppingBag, allowedRoles: SALES_ROLES },
+        ]
+    },
+    {
+        label: 'Construction',
+        icon: LayoutGrid,
+        items: [
+            { label: 'Project Sites', href: '/construction', icon: LayoutGrid, allowedRoles: SALES_ROLES },
+            { label: 'Task Console', href: '/projects', icon: ClipboardList, allowedRoles: SALES_ROLES },
+            { label: 'Material at Site', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
+            { label: 'Sub-contractors', href: '/construction/subs', icon: Users, allowedRoles: SALES_ROLES },
+        ]
+    },
+    {
+        label: 'Projects & Tasks',
+        icon: ClipboardList,
+        items: [
+            { label: 'Project Console', href: '/projects', icon: LayoutDashboard, allowedRoles: SALES_ROLES },
         ]
     }
 ];
 
+interface IndustryTerminology {
+    customer?: string;
+    product?: string;
+    inventory?: string;
+    department?: string;
+    [key: string]: string | undefined;
+}
+
 export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const pathname = usePathname();
+    const router = useRouter();
     const { user } = useAuth();
-    const userRole = (user?.role as RoleName) || 'Biller'; // Default to most restrictive
+    const userRole = user?.isSuperAdmin ? 'Owner' : (user?.role as RoleName) || 'Biller';
 
-    const [enabledModules, setEnabledModules] = useState<string[]>([]);
-    // const [configLoading, setConfigLoading] = useState(true);
+    const [enabledModules, setEnabledModules] = useState<string[]>(['dashboard']);
+    const [terminology, setTerminology] = useState<IndustryTerminology>({});
 
     const fetchConfig = useCallback(async () => {
         try {
             const token = localStorage.getItem('k_token');
             const identity = localStorage.getItem('k_identity');
 
-            // If the token is just the identity token, do not hit tenant-scoped APIs
+            // SEC-011: Identity Isolation for Registration and Onboarding
             if (token && identity && token === identity) {
-                setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm', 'healthcare']);
-                // setConfigLoading(false);
+                setEnabledModules(['dashboard', 'onboarding']);
                 return;
             }
 
             const res = await api.get('system/config');
-            // Always ensure core modules are included even if API omits them
-            const apiModules: string[] = res.data.enabledModules || [];
-            const coreModules = ['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm', 'healthcare'];
-            const merged = Array.from(new Set([...coreModules, ...apiModules]));
-            setEnabledModules(merged);
+            const config = res.data || {};
+            setEnabledModules(config.enabledModules || []);
+            setTerminology(config.terminology || {});
         } catch (err) {
-            console.error("Config fetch error:", err);
-            // Fallback to all core modules if API fails
-            setEnabledModules(['sales', 'inventory', 'purchases', 'manufacturing', 'accounting', 'crm', 'healthcare']);
-        } finally {
-            // setConfigLoading(false);
+            console.error("Critical: Failed to sync industry configuration", err);
+            // Safety fallback: Limit visibility to basic operations on auth failure.
+            setEnabledModules(['dashboard', 'sales', 'inventory', 'accounting', 'crm']);
+        }
+    }, []);
+
+    // PERF-001: Navigation Pre-warming
+    // Proactively pre-fetches module data on hover to hit 'Zero Latency' goal.
+    const prewarmModule = useCallback((modulePath: string) => {
+        // Only pre-warm specific heavy-weight dashboard routes if needed
+        // The api cache handles the actual caching logic.
+        if (modulePath.includes('/dashboard')) {
+            api.get('system/stats').catch(() => { });
+        }
+        if (modulePath.includes('/admin/monitoring')) {
+            api.get('system/founder-dashboard').catch(() => { });
+        }
+        if (modulePath.includes('/sales')) {
+            api.get('analytics/summary').catch(() => { });
+        }
+        if (modulePath.includes('/accounting')) {
+            api.get('analytics/performance').catch(() => { });
+        }
+        if (modulePath.includes('/inventory')) {
+            api.get('system/stats').catch(() => { });
+        }
+        if (modulePath.includes('/crm')) {
+            api.get('analytics/activity').catch(() => { });
         }
     }, []);
 
@@ -157,19 +220,36 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const visibleStreams = businessStreams
         .map(stream => ({
             ...stream,
-            items: stream.items.filter(item => {
-                // Check Role
-                const roleAllowed = item.allowedRoles.includes(userRole);
-                if (!roleAllowed) return false;
+            items: stream.items
+                .filter(item => {
+                    // UI-GOV-001: SuperAdmin Role Bypass
+                    // Super Admin can bypass role restrictions within enabled modules.
+                    const roleAllowed = user?.isSuperAdmin || (item.allowedRoles as RoleName[]).includes(userRole);
+                    if (!roleAllowed) return false;
 
-                // Check Industry/Module enablement
-                // Map href to module key
-                const moduleKey = item.href.split('/')[1];
-                if (moduleKey && enabledModules.length > 0) {
-                    return enabledModules.includes(moduleKey);
-                }
-                return true;
-            })
+                    // Check Industry/Module Status
+                    const pathParts = item.href.split('/').filter(p => p !== '');
+                    const moduleKey = pathParts[0];
+
+                    if (moduleKey) {
+                        // Core modules are platform-wide
+                        if (moduleKey === 'crm' || moduleKey === 'dashboard' || moduleKey === 'settings') return true;
+
+                        // Check if module is enabled for this industry
+                        if (!enabledModules.includes(moduleKey)) return false;
+
+                        return true;
+                    }
+                    return true;
+                })
+                .map(item => {
+                    // Apply Dynamic Terminology
+                    let translatedLabel = item.label;
+                    if (item.label === 'CRM') translatedLabel = terminology.customer || 'CRM';
+                    if (item.label === 'Products') translatedLabel = terminology.product || 'Products';
+
+                    return { ...item, label: translatedLabel };
+                })
         }))
         .filter(stream => stream.items.length > 0);
 
@@ -181,6 +261,12 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                 <Link href="/dashboard" onClick={onItemClick} className="flex items-center transition-all hover:opacity-80">
                     <KlypsoLogo />
                 </Link>
+                {user?.isSuperAdmin && (
+                    <div className="mt-4 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">
+                        <ShieldCheck className="w-3 h-3 text-amber-500" />
+                        <span className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em]">System Sovereign</span>
+                    </div>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 space-y-8 min-h-0">
@@ -188,6 +274,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                     <Link
                         href="/dashboard"
                         onClick={onItemClick}
+                        onMouseEnter={() => prewarmModule('/dashboard')}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                             pathname === '/dashboard' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
@@ -211,7 +298,9 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                                 <Link
                                     key={item.href}
                                     href={item.href}
+                                    prefetch={true}
                                     onClick={onItemClick}
+                                    onMouseEnter={() => prewarmModule(item.href)}
                                     className={cn(
                                         "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                                         isActive ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
@@ -229,10 +318,28 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             </div>
 
             <div className="shrink-0 p-6 pt-4 border-t border-slate-100 space-y-4">
+                {user?.isSuperAdmin && (
+                    <Link
+                        href="/admin/monitoring"
+                        onClick={onItemClick}
+                        onMouseEnter={() => prewarmModule('/admin/monitoring')}
+                        className={cn(
+                            "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                            pathname === '/admin/monitoring' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-amber-600"
+                        )}
+                    >
+                        <div className="flex items-center flex-1">
+                            <ShieldCheck className={cn("h-4 w-4 mr-3 transition-all duration-500 group-hover:scale-125", pathname === '/admin/monitoring' ? "text-blue-600" : "text-amber-500 group-hover:text-amber-600")} />
+                            Admin Console
+                        </div>
+                    </Link>
+                )}
+
                 {canAccessSettings && (
                     <Link
                         href="/settings"
                         onClick={onItemClick}
+                        onMouseEnter={() => prewarmModule('/settings')}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                             pathname === '/settings' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
@@ -250,7 +357,9 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         const identityToken = localStorage.getItem("k_identity");
                         if (identityToken) {
                             localStorage.setItem("k_token", identityToken);
-                            window.location.href = "/portal/dashboard";
+                            // Clear industry config from cache to prevent stale layout
+                            setEnabledModules(['dashboard']);
+                            router.push("/portal/dashboard");
                         } else {
                             toast.error("Identity session lost. Please log in again.");
                         }

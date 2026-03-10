@@ -4,9 +4,11 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // Build the API base URL without any Axios interceptors.
 // Using fetch() directly — the same approach the console test proved works.
@@ -63,6 +65,7 @@ interface Tenant {
 
 export function TenantSelector() {
     const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
     const [selecting, setSelecting] = useState<string | null>(null);
     const [shouldRetry, setShouldRetry] = useState(false);
@@ -190,7 +193,24 @@ export function TenantSelector() {
                     </CardHeader>
                     <CardContent className="p-8 -mt-6 bg-white rounded-t-[2.5rem]">
                         <div className="space-y-3">
-                            {tenants.map((tenant) => (
+                            {tenants.length > 10 && (
+                                <div className="mb-6 relative">
+                                    <Input
+                                        placeholder="Search Workspaces..."
+                                        className="h-12 rounded-2xl bg-slate-50 border-slate-100 pl-10 text-[11px] font-bold uppercase tracking-widest text-slate-900 focus:ring-blue-500/10 placeholder:text-slate-400"
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                                    />
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <Building2 size={14} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {tenants.filter(t =>
+                                !searchQuery ||
+                                t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                t.id.toLowerCase().includes(searchQuery.toLowerCase())
+                            ).map((tenant) => (
                                 <button
                                     key={tenant.id}
                                     onClick={() => handleSelect(tenant.id)}
@@ -206,7 +226,12 @@ export function TenantSelector() {
                                                 {tenant.name}
                                             </p>
                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{tenant.role}</span>
+                                                <span className={cn(
+                                                    "text-[10px] font-black uppercase tracking-widest",
+                                                    tenant.role === 'Shadow' ? "text-amber-500" : "text-blue-600"
+                                                )}>
+                                                    {tenant.role === 'Shadow' ? 'Shadow-Admin' : tenant.role}
+                                                </span>
                                                 <span className="text-[10px] text-slate-400">•</span>
                                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active</span>
                                             </div>

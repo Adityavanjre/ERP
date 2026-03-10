@@ -191,6 +191,11 @@ export class LedgerService {
         type: AccountType.Asset,
         code: '1008',
       },
+      {
+        name: StandardAccounts.INVENTORY_ASSET,
+        type: AccountType.Asset,
+        code: '1004',
+      },
       // INPUT GST accounts (ITC claimable) are Assets — they represent tax paid
       // to suppliers that is recoverable from the government. Classifying these as
       // Liability was a statutory error that produced incorrect Balance Sheets.
@@ -234,6 +239,16 @@ export class LedgerService {
         name: StandardAccounts.OUTPUT_SGST,
         type: AccountType.Liability,
         code: '2004',
+      },
+      {
+        name: StandardAccounts.GST_PAYABLE,
+        type: AccountType.Liability,
+        code: '2007',
+      },
+      {
+        name: StandardAccounts.TDS_PAYABLE,
+        type: AccountType.Liability,
+        code: '2008',
       },
       { name: StandardAccounts.SALES, type: AccountType.Revenue, code: '4001' },
       {

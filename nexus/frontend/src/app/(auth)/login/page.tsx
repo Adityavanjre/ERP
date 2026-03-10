@@ -30,6 +30,7 @@ interface AuthResponse {
     refreshToken: string;
     requiresMfa?: boolean;
     tempToken?: string;
+    isAdminFlow?: boolean;
     tenants?: Array<{ id: string; name: string }>;
 }
 
@@ -59,7 +60,8 @@ export default function LoginPage() {
 
         // Super Admin: Only redirect to admin panel if they have NO existing tenants
         // If they have tenants (e.g. they own a test retail outlet), they must see the TenantSelector
-        if (data.user?.isSuperAdmin && (!data.tenants || data.tenants.length === 0)) {
+        // Super Admin Routing: Always prioritize the infrastructure console.
+        if (data.user?.isSuperAdmin) {
             window.location.href = "/portal/admin/monitoring";
             return;
         }

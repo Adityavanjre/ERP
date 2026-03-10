@@ -20,6 +20,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface TopAtRiskTenant {
     tenantId: string;
@@ -55,6 +57,7 @@ interface SignalFeedItem extends MonitoringReport {
 export default function FounderMonitoring() {
     const [data, setData] = useState<MonitoringData | null>(null);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     const syncDashboardStats = useCallback(async (showLoading = false) => {
         try {
@@ -199,7 +202,18 @@ export default function FounderMonitoring() {
                                             Send Nudge
                                         </Button>
                                     )}
-                                    <button className="h-14 w-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center hover:bg-slate-100 transition-all text-slate-400">
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const res = await api.post('auth/select-tenant', { tenantId: tenant.tenantId });
+                                                localStorage.setItem('k_token', res.data.accessToken);
+                                                router.push('/portal/dashboard');
+                                            } catch (err) {
+                                                toast.error("Shadow Access Failed: Infrastructure bypass rejected.");
+                                            }
+                                        }}
+                                        className="h-14 w-14 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all text-white shadow-xl shadow-slate-900/20 active:scale-90"
+                                    >
                                         <ArrowUpRight className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -247,6 +261,12 @@ export default function FounderMonitoring() {
                 </div>
 
                 <div className="flex gap-6">
+                    <Button
+                        onClick={() => window.location.href = '/portal/onboarding'}
+                        className="h-14 px-10 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/20 active:scale-95"
+                    >
+                        Provision New Tenant
+                    </Button>
                     <Button variant="ghost" className="h-14 px-10 rounded-2xl text-[11px] font-black tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all uppercase">
                         Remind All (Low Risk)
                     </Button>

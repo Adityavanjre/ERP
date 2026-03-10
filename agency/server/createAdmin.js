@@ -16,8 +16,8 @@ const connectDB = async () => {
 };
 
 const createAdmin = async () => {
-    const adminEmail = process.env.INITIAL_ADMIN_EMAIL;
-    const adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD;
 
     if (!adminEmail || !adminPassword) {
         console.error('SEC-020: INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD must be set in environment variables.');

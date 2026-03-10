@@ -7,6 +7,11 @@ import axios from 'axios';
 const baseURL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
 const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
 
+// PERF-001: Zero-Latency Caching Layer
+// Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
+const requestCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 5000; // 5s freshness window
+
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -58,7 +63,24 @@ api.interceptors.request.use(
     // Bearer-token requests are already CSRF-immune (CsrfGuard skips them), but
     // sending the header is harmless and activates protection for any future
     // cookie-only session paths.
+    if (config.method?.toLowerCase() === 'get') {
+      const cached = requestCache.get(config.url || '');
+      if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        // Return a custom "thenable" to bypass the actual XHR.
+        // We throw an object that we'll catch in the response interceptor as a 'cache-hit'.
+        config.adapter = () => Promise.resolve({
+          data: cached.data,
+          status: 200,
+          statusText: 'OK (Cache Hit)',
+          headers: {},
+          config
+        } as any);
+      }
+    }
+
     if (config.method && MUTATING_METHODS.has(config.method.toLowerCase())) {
+      // Flush cache on mutations to ensure freshness
+      requestCache.clear();
       const csrfToken = getCookie('nexus-csrf');
       if (csrfToken) {
         config.headers['X-CSRF-Token'] = csrfToken;
@@ -95,6 +117,14 @@ api.interceptors.response.use(
         localStorage.setItem('nexus_version', appVersion);
         window.location.reload();
       }
+    }
+
+    // Cache successful GET requests
+    if (response.config.method?.toLowerCase() === 'get' && response.config.url) {
+      requestCache.set(response.config.url, {
+        data: response.data,
+        timestamp: Date.now()
+      });
     }
 
     return response;

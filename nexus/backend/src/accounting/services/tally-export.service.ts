@@ -11,7 +11,7 @@ export class TallyService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
-  ) {}
+  ) { }
 
   private escapeXml(unsafe: string): string {
     if (!unsafe) return '';
@@ -177,8 +177,8 @@ export class TallyService {
       confidenceScore: Math.max(
         0,
         100 -
-          errors.length * 15 -
-          riskFlags.filter((f) => f.severity === 'BLOCKER').length * 25,
+        errors.length * 15 -
+        riskFlags.filter((f) => f.severity === 'BLOCKER').length * 25,
       ),
     };
   }
@@ -501,12 +501,12 @@ export class TallyService {
         const dateStr = pay.date.toISOString().split('T')[0].replace(/-/g, '');
         const partyName = isReceipt
           ? this.escapeXml(
-              pay.customer?.company || pay.customer?.firstName || 'Customer',
-            )
+            pay.customer?.company || pay.customer?.firstName || 'Customer',
+          )
           : this.escapeXml(pay.supplier?.name || 'Supplier');
         const refNo = this.escapeXml(
           pay.reference ||
-            (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8),
+          (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8),
         );
         const vchType = isReceipt ? 'Receipt' : 'Payment';
 
@@ -890,7 +890,7 @@ export class TallyService {
       });
 
       // PERIOD-CACHE-001: Invalidate LedgerService cache
-      await (this.ledger as any).cacheManager.delete(cacheKey);
+      await (this.ledger as any).cacheManager.del(cacheKey);
       return lock;
     } else {
       const lock = await this.prisma.periodLock.update({
@@ -899,7 +899,7 @@ export class TallyService {
       });
 
       // PERIOD-CACHE-001: Invalidate LedgerService cache
-      await (this.ledger as any).cacheManager.delete(cacheKey);
+      await (this.ledger as any).cacheManager.del(cacheKey);
       return lock;
     }
   }

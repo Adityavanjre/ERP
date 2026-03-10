@@ -4,10 +4,15 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class HsnService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
-  async getGstRate(tenantId: string, hsnCode: string): Promise<Decimal | null> {
-    const hsn = await this.prisma.hsnMaster.findUnique({
+  async getGstRate(
+    tenantId: string,
+    hsnCode: string,
+    tx?: any,
+  ): Promise<Decimal | null> {
+    const client = tx || this.prisma;
+    const hsn = await client.hsnMaster.findUnique({
       where: {
         tenantId_hsnCode: {
           tenantId,
@@ -23,13 +28,11 @@ export class HsnService {
     tenantId: string,
     hsnCode: string,
     rate: number | Decimal,
+    tx?: any,
   ): Promise<{ isValid: boolean; officialRate?: Decimal }> {
-    const officialRate = await this.getGstRate(tenantId, hsnCode);
+    const officialRate = await this.getGstRate(tenantId, hsnCode, tx);
     if (!officialRate) {
-      return { isValid: true }; // No HSN master for this code, allow anything? Or block?
-      // Requirement says "Enforce lookup from HSN master", which implies we should have records.
-      // But for practicality, if master is empty, we might allow.
-      // Let's assume for now that if it exists, it MUST match.
+      return { isValid: true };
     }
 
     const isValid = new Decimal(rate).equals(officialRate);

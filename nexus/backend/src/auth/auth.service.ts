@@ -79,9 +79,6 @@ export class AuthService {
       );
     }
     let finalSlug = slug;
-    // OPS-004: Use exact match check rather than startsWith count.
-    // startsWith('acme') matches both 'acme' and 'acme-corp', producing wrong counts
-    // and potentially duplicate slugs under concurrent creation.
     const exactSlugExists = await this.prisma.tenant.findUnique({
       where: { slug },
     });
@@ -89,31 +86,58 @@ export class AuthService {
       finalSlug = `${slug}-${require('crypto').randomBytes(2).toString('hex')}`;
     }
 
-    const tenant = await this.prisma.tenant.create({
-      data: {
-        name: dto.name,
-        slug: finalSlug,
-        type: (dto.type as TenantType) ?? TenantType.Retail,
-        industry: dto.type, // FIX: Capture industry during initial workspace creation
-        plan: PlanType.Free,
-        isOnboarded: false,
-      },
+    // Normalize industry type
+    let tenantType: TenantType = TenantType.Retail;
+    if (dto.type) {
+      const normalized = dto.type.charAt(0).toUpperCase() + dto.type.slice(1).toLowerCase();
+      if (Object.values(TenantType).includes(normalized as any)) {
+        tenantType = normalized as TenantType;
+      } else if (dto.type.toUpperCase() === 'NBFC') {
+        tenantType = TenantType.NBFC;
+      }
+    }
+
+    // 1. Transactional Creation & Accounting Init (Rule: Real money from day 1)
+    const result = await this.prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: dto.name,
+          slug: finalSlug,
+          type: tenantType,
+          industry: dto.type,
+          plan: PlanType.Free,
+          isOnboarded: false,
+        },
+      });
+
+      await tx.tenantUser.create({
+        data: {
+          userId: user.id,
+          tenantId: tenant.id,
+          role: Role.Owner,
+        },
+      });
+
+      // Initialize accounts
+      await this.accountingService.initializeTenantAccounts(
+        tenant.id,
+        tx,
+        tenantType as string,
+      );
+
+      return tenant;
+    }, {
+      timeout: 30000, // 30s for accounting init
     });
 
-    await this.prisma.tenantUser.create({
-      data: {
-        userId: user.id,
-        tenantId: tenant.id,
-        role: Role.Owner,
-      },
-    });
+    const tenant = result;
 
     await this.logging.log({
       userId: user.id,
       tenantId: tenant.id,
       action: 'WORKSPACE_CREATED',
       resource: 'Tenant',
-      details: { name: dto.name },
+      details: { name: dto.name, industry: tenantType },
     });
 
     return {
@@ -286,6 +310,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Fail-safe (SYS-011): Sync SuperAdmin status if config admin logs in via standard flow
+    const configAdminEmail = (
+      this.config.get<string>('ADMIN_EMAIL') || 'adityavanjre111@gmail.com'
+    ).toLowerCase();
+    if (user.email.toLowerCase() === configAdminEmail && !user.isSuperAdmin) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isSuperAdmin: true },
+      });
+      user.isSuperAdmin = true;
+    }
+
     // SEC-007: Brute-force check runs BEFORE password evaluation.
     // A locked account must return the lockout error regardless of whether
     // the supplied password is correct — otherwise an attacker learns the
@@ -429,6 +465,7 @@ export class AuthService {
         tempToken: this.jwtService.sign({
           sub: user.id,
           type: 'mfa_challenge',
+          channel: 'WEB',
           isAdminFlow: true,
         }),
         user: { id: user.id, email: user.email },
@@ -489,6 +526,22 @@ export class AuthService {
 
     const finalUser = user! as any;
 
+    // Fail-safe (SYS-011): Sync SuperAdmin status if config admin logs in via social flow
+    const configAdminEmail = (
+      this.config.get<string>('ADMIN_EMAIL') || 'adityavanjre111@gmail.com'
+    ).toLowerCase();
+
+    if (
+      finalUser.email.toLowerCase() === configAdminEmail &&
+      !finalUser.isSuperAdmin
+    ) {
+      await this.prisma.user.update({
+        where: { id: finalUser.id },
+        data: { isSuperAdmin: true },
+      });
+      finalUser.isSuperAdmin = true;
+    }
+
     // MFA Enforcement for Google Login
     const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
     const hasSensitiveRole = (finalUser.memberships || []).some((m: any) =>
@@ -512,7 +565,7 @@ export class AuthService {
       return {
         requiresMfa: true,
         tempToken: this.jwtService.sign(
-          { sub: finalUser.id, type: 'mfa_challenge' },
+          { sub: finalUser.id, type: 'mfa_challenge', channel },
           { expiresIn: '10m' },
         ),
         user: { id: finalUser.id, email: finalUser.email },
@@ -582,7 +635,8 @@ export class AuthService {
         role: m.role,
         isOnboarded: m.tenant.isOnboarded,
       })),
-      requiresOnboarding: user.memberships.length === 0,
+      requiresOnboarding: user.memberships.length === 0 && !user.isSuperAdmin,
+      isAdminFlow: isAdminFlow && !!user.isSuperAdmin,
     };
   }
 
@@ -593,10 +647,29 @@ export class AuthService {
     channel: AccessChannel = 'MOBILE',
   ) {
     // 1. Verify membership (Rule B)
-    const membership = await this.prisma.tenantUser.findUnique({
+    let membership = await this.prisma.tenantUser.findUnique({
       where: { userId_tenantId: { userId, tenantId } },
       include: { tenant: true },
     });
+
+    const userRecord = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    // 1.1 Support Super Admin Shadowing: Infrastucture admins can manage any workspace
+    if (!membership && userRecord?.isSuperAdmin) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
+      if (tenant) {
+        membership = {
+          userId,
+          tenantId,
+          role: Role.Owner, // Grant virtual Owner role for administration
+          tenant,
+        } as any;
+      }
+    }
 
     if (!membership) {
       throw new UnauthorizedException('You do not have access to this tenant.');
@@ -627,10 +700,6 @@ export class AuthService {
       },
     );
 
-    const userRecord = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
     // 3. Generate Scoped Token
     const payload = {
       sub: userId,
@@ -642,7 +711,7 @@ export class AuthService {
       mfaEnabled: (userRecord as any)?.mfaEnabled ?? false,
       customerId: customer?.id ?? null,
       supplierId: supplier?.id ?? null,
-      type: 'tenant_scoped',
+      type: userRecord?.isSuperAdmin ? 'admin' : 'tenant_scoped',
       isOnboarded: membership.tenant.isOnboarded,
       industry: membership.tenant.industry,
       tenantType: membership.tenant.type,
@@ -737,9 +806,16 @@ export class AuthService {
       where: { userId_tenantId: { userId, tenantId: dto.tenantId } },
     });
 
-    if (!membership || membership.role !== Role.Owner) {
+    const userRecord = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (
+      (!membership || membership.role !== Role.Owner) &&
+      !userRecord?.isSuperAdmin
+    ) {
       throw new ForbiddenException(
-        'Only the company owner can complete onboarding.',
+        'Only the company owner or system administrator can complete onboarding.',
       );
     }
 
@@ -1055,6 +1131,26 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+
+    // 🔴 DEEP FIX: Super Admin Shadowing
+    // Allow system administrators to manage ANY workspace in the system globally.
+    if (user.isSuperAdmin) {
+      const allTenants = await this.prisma.tenant.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 200, // Reasonable cap for global list
+      });
+
+      return allTenants.map((t) => {
+        const membership = user.memberships.find((m) => m.tenantId === t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          slug: t.slug,
+          role: (membership?.role as string) || 'Shadow', // Explicitly label shadowed tenants
+          isOnboarded: t.isOnboarded,
+        };
+      });
     }
 
     return user.memberships.map((m) => ({

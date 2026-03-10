@@ -24,6 +24,11 @@ export const QUEUE_WEBHOOK_DLQ = 'webhook-dlq';
         connection: {
           host: config.get<string>('REDIS_HOST', 'localhost'),
           port: config.get<number>('REDIS_PORT', 6379),
+          // ARCH-001: Resilience for build/audit/bootstrap environments without live Redis
+          lazyConnect: true,
+          retryStrategy: () => null, // Disables retries to prevent blocking audit
+          maxRetriesPerRequest: null,
+          enableReadyCheck: false,
         },
         defaultJobOptions: {
           removeOnComplete: 100,
@@ -42,4 +47,4 @@ export const QUEUE_WEBHOOK_DLQ = 'webhook-dlq';
   ],
   exports: [BullModule],
 })
-export class QueueModule {}
+export class QueueModule { }

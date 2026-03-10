@@ -71,9 +71,9 @@ export class RolesGuard implements CanActivate {
         );
       }
 
-      // 🟢 Admin Override: If it's an 'admin' token and user is SuperAdmin,
+      // 🟢 Admin Override: If user is SuperAdmin,
       // they effectively have the highest role (Owner) for global routes.
-      if (user.type === 'admin' && user.isSuperAdmin) {
+      if (user.isSuperAdmin) {
         user.role = Role.Owner; // Set virtual role for downstream guards/controllers
         return true;
       }

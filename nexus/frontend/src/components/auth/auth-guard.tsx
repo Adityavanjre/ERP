@@ -72,8 +72,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 const type = decoded.type;
                 const isOnboarded = decoded.isOnboarded;
 
-                // 1. Identity Token handling (No tenant selected yet)
-                if (type === 'identity') {
+                const tenantId = (decoded as any).tenantId;
+
+                // 1. Identity/Admin Token handling (No specific tenant scoped yet)
+                // If it's an admin with a tenantId, it's a Shadow Mode session and should be treated as Scoped.
+                if (type === 'identity' || (type === 'admin' && !tenantId)) {
                     // Allow the onboarding page to render directly even with identity token
                     if (pathname === '/onboarding') {
                         setAuthorized(true);
