@@ -127,28 +127,20 @@ export default function AccountingPage() {
 
     const syncLedgers = useCallback(async (silent = false) => {
         try {
-            if (!silent) setLoading(true);
-            else setIsSyncing(true);
+            if (!silent && !isSyncing) setIsSyncing(true);
 
             const hasFullAccess = ['Owner', 'Manager', 'Accountant', 'CA'].includes(user?.role || '') || user?.isSuperAdmin;
             const isOwner = user?.role === 'Owner' || user?.isSuperAdmin;
 
-            const [accRes, txRes, invRes, statsRes, invStatsRes, healthRes, leaderRes, recoveryRes] = await Promise.all([
+            // CORE DATA: Fetch accounts, transactions, and invoices first to unblock UI
+            const [accRes, txRes, invRes] = await Promise.all([
                 api.get("accounting/accounts").catch(() => ({ data: [] })),
                 api.get("accounting/transactions").catch(() => ({ data: { data: [] } })),
-                api.get(`/accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } })),
-                hasFullAccess ? api.get("accounting/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
-                hasFullAccess ? api.get("inventory/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
-                isOwner ? api.get("accounting/health-score").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
-                hasFullAccess ? api.get("accounting/leaderboard").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                hasFullAccess ? api.get("accounting/recovery-memory").catch(() => ({ data: null })) : Promise.resolve({ data: null })
+                api.get(`/accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } }))
             ]);
 
             setAccounts(accRes.data || []);
             setTransactions(txRes.data?.data || txRes.data || []);
-            setHealthScore(healthRes.data);
-            setLeaderboard(leaderRes.data || []);
-            setRecoveryMemory(recoveryRes.data);
 
             if (invRes.data?.data) {
                 setInvoices(invRes.data.data);
@@ -157,17 +149,31 @@ export default function AccountingPage() {
                 setInvoices(invRes.data || []);
             }
 
-            setStats(statsRes.data || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
-            // invStats info not directly used in major UI blocks yet but could be in future.
-            setLastSyncTime(Date.now());
+            // Unblock UI immediately after core data is ready
+            setLoading(false);
+
+            // ANALYTICAL DATA: Fetch background analytical stats without blocking the UI
+            Promise.all([
+                hasFullAccess ? api.get("accounting/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                hasFullAccess ? api.get("inventory/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                isOwner ? api.get("accounting/health-score").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                hasFullAccess ? api.get("accounting/leaderboard").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                hasFullAccess ? api.get("accounting/recovery-memory").catch(() => ({ data: null })) : Promise.resolve({ data: null })
+            ]).then(([statsRes, , healthRes, leaderRes, recoveryRes]) => {
+                setStats(statsRes.data || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
+                setHealthScore(healthRes.data);
+                setLeaderboard(leaderRes.data || []);
+                setRecoveryMemory(recoveryRes.data);
+                setLastSyncTime(Date.now());
+            });
+
         } catch (err) {
             console.error("Ledger Sync Failure:", err);
             if (!silent) toast.error("Failed to load accounting data. Please refresh.");
         } finally {
-            setLoading(false);
             setIsSyncing(false);
         }
-    }, [invoicePage]);
+    }, [invoicePage, user?.role, user?.isSuperAdmin]);
 
     useEffect(() => {
         const draft = localStorage.getItem("invoice_draft");

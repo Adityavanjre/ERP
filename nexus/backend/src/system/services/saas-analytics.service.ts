@@ -280,6 +280,10 @@ export class SaasAnalyticsService {
   }
 
   async getStaffLeaderboard(tenantId: string) {
+    const cacheKey = `nexus:staff:leaderboard:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const logs = await this.prisma.auditLog.findMany({
       where: {
         tenantId,
@@ -308,16 +312,23 @@ export class SaasAnalyticsService {
       userStats.set(userName, existing);
     }
 
-    return Array.from(userStats.values())
+    const result = Array.from(userStats.values())
       .map((u) => ({
         name: u.name,
         invoices: u.count,
         avgLag: Math.round(u.totalLag / u.count),
       }))
       .sort((a, b) => b.invoices - a.invoices);
+
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   async getRecoveryMemory(tenantId: string) {
+    const cacheKey = `nexus:recovery:memory:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 
@@ -390,7 +401,7 @@ export class SaasAnalyticsService {
     const totalMoneyFound =
       overdueRecovered + invoices.length * 50 + shrinkageAvoided;
 
-    return {
+    const result = {
       moneyFound: {
         total: totalMoneyFound,
         overdueRecovered,
@@ -413,6 +424,9 @@ export class SaasAnalyticsService {
       },
       opportunities: recoveryOpportunities,
     };
+
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   async getFounderDashboard() {

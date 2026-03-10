@@ -1,4 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AccountType, InvoiceStatus, POStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -11,6 +13,7 @@ export class TallyService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
   private escapeXml(unsafe: string): string {
@@ -184,6 +187,10 @@ export class TallyService {
   }
 
   async getStats(tenantId: string) {
+    const cacheKey = `nexus:accounting:stats:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const totalReceivable = await this.prisma.invoice.aggregate({
       where: { tenantId, status: InvoiceStatus.Unpaid },
       _sum: { totalAmount: true },
@@ -238,7 +245,7 @@ export class TallyService {
     const baseExpenses = new Decimal(expenses._sum.balance ?? 0);
     const baseGst = new Decimal(gstLiability._sum.totalGST ?? 0);
 
-    return {
+    const result = {
       receivable: this.ledger.round2(baseReceivable.add(partialAmount)),
       payable: this.ledger.round2(basePayable),
       overdueAmount: this.ledger.round2(overdueAmount),
@@ -247,6 +254,9 @@ export class TallyService {
       gstLiability: this.ledger.round2(baseGst),
       netProfit: this.ledger.round2(baseIncome.sub(baseExpenses)),
     };
+
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   async *generateTallyXmlStream(
