@@ -834,9 +834,11 @@ export class AuthService {
     }
 
     if (currentTenant.isOnboarded) {
-      throw new ForbiddenException(
-        'Compliance Violation: Industry vertical is locked after onboarding. Mid-flight mutation is forbidden to prevent accounting drift.',
-      );
+      return {
+        success: true,
+        message: 'Onboarding already completed',
+        tenant: currentTenant,
+      };
     }
 
     // 2. Platform-Level GSTIN Uniqueness Guard (TEN-002)
