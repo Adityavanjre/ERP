@@ -1,4 +1,5 @@
 ﻿import 'dotenv/config';
+import 'reflect-metadata';
 import { otracing } from './tracing';
 // Force resolution of critical validation packages before NestJS starts
 import 'class-validator';

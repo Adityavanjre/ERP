@@ -54,10 +54,15 @@ var Permission;
     Permission["VIEW_REPORTS"] = "VIEW_REPORTS";
     Permission["ACCESS_HEALTH_CORE"] = "ACCESS_HEALTH_CORE";
     Permission["MANAGE_USERS"] = "MANAGE_USERS";
+    Permission["MANAGE_ACCOUNTS"] = "MANAGE_ACCOUNTS";
+    Permission["MANAGE_INVENTORY"] = "MANAGE_INVENTORY";
+    Permission["MANAGE_CUSTOMERS"] = "MANAGE_CUSTOMERS";
+    Permission["MANAGE_SUPPLIERS"] = "MANAGE_SUPPLIERS";
+    Permission["MANAGE_EMPLOYEES"] = "MANAGE_EMPLOYEES";
 })(Permission || (exports.Permission = Permission = {}));
 exports.INDUSTRY_CONFIGS = {
     [Industry.Manufacturing]: {
-        enabledModules: ['accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases'],
+        enabledModules: ['accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales'],
         mobileRestrictedModules: ['accounting'],
         terminology: {
             customer: 'Customer',
@@ -68,25 +73,25 @@ exports.INDUSTRY_CONFIGS = {
         }
     },
     [Industry.Retail]: {
-        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
+        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'],
         terminology: {
-            customer: 'Customer',
-            product: 'Product/SKU',
-            inventory: 'Inventory',
+            customer: 'Shopper/Consumer',
+            product: 'Stock Item',
+            inventory: 'Shelf Stock',
             department: 'Store Section'
         }
     },
     [Industry.Construction]: {
-        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction'],
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction', 'sales'],
         terminology: {
-            customer: 'Client',
-            product: 'Material',
-            inventory: 'Site Stock',
-            department: 'Site Team'
+            customer: 'Principal/Owner',
+            product: 'Building Material',
+            inventory: 'Site Inventory',
+            department: 'Project Site'
         }
     },
     [Industry.Healthcare]: {
-        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'healthcare'],
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'healthcare', 'sales'],
         terminology: {
             customer: 'Patient',
             product: 'Medicine/Service',
@@ -95,7 +100,7 @@ exports.INDUSTRY_CONFIGS = {
         }
     },
     [Industry.Logistics]: {
-        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'logistics'],
+        enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'logistics', 'sales'],
         terminology: {
             customer: 'Client/Receiver',
             product: 'Consumable/Fuel',
@@ -104,7 +109,7 @@ exports.INDUSTRY_CONFIGS = {
         }
     },
     [Industry.NBFC]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'nbfc'],
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'nbfc', 'sales'],
         terminology: {
             customer: 'Borrower',
             product: 'Loan Product',
@@ -113,7 +118,7 @@ exports.INDUSTRY_CONFIGS = {
         }
     },
     [Industry.Service]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects'],
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects', 'sales'],
         terminology: {
             customer: 'Client',
             product: 'Service Item',
@@ -122,30 +127,30 @@ exports.INDUSTRY_CONFIGS = {
         }
     },
     [Industry.Wholesale]: {
-        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr'],
+        enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'],
         terminology: {
-            customer: 'Retailer/Buyer',
-            product: 'Bulk Item',
-            inventory: 'Warehouse Stock',
-            department: 'Distribution Unit'
+            customer: 'Distributor/Vendor',
+            product: 'Bulk Commodity',
+            inventory: 'Warehouse Inventory',
+            department: 'Logistics Bay'
+        }
+    },
+    [Industry.RealEstate]: {
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects', 'sales'],
+        terminology: {
+            customer: 'Tenant/Lead',
+            product: 'Property/Unit',
+            inventory: 'Assets',
+            department: 'Estate/Wing'
         }
     },
     [Industry.Education]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases'],
+        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'sales'],
         terminology: {
             customer: 'Student/Parent',
             product: 'Course/Service',
             inventory: 'Institutional Supplies',
             department: 'Academic Dept'
-        }
-    },
-    [Industry.RealEstate]: {
-        enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects'],
-        terminology: {
-            customer: 'Buyer/Tenant',
-            product: 'Property/Unit',
-            inventory: 'Building Materials',
-            department: 'Project Team'
         }
     },
     [Industry.Gov]: {
@@ -177,6 +182,11 @@ exports.RolePermissions = {
         Permission.VIEW_PRODUCTS,
         Permission.VIEW_REPORTS,
         Permission.EXPORT_TALLY,
+        Permission.MANAGE_ACCOUNTS,
+        Permission.MANAGE_INVENTORY,
+        Permission.MANAGE_CUSTOMERS,
+        Permission.MANAGE_SUPPLIERS,
+        Permission.MANAGE_EMPLOYEES,
     ],
     [Role.Biller]: [
         Permission.CREATE_INVOICE,
@@ -189,8 +199,15 @@ exports.RolePermissions = {
         Permission.LOCK_MONTH,
         Permission.EXPORT_TALLY,
         Permission.VIEW_PRODUCTS,
+        Permission.MANAGE_ACCOUNTS,
+        Permission.MANAGE_INVENTORY,
     ],
-    [Role.CA]: [Permission.VIEW_REPORTS, Permission.VIEW_PRODUCTS],
+    [Role.CA]: [
+        Permission.VIEW_REPORTS,
+        Permission.VIEW_PRODUCTS,
+        Permission.MANAGE_ACCOUNTS,
+        Permission.MANAGE_EMPLOYEES,
+    ],
     [Role.Customer]: [],
     [Role.Supplier]: [],
 };

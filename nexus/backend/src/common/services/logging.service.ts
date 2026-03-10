@@ -128,9 +128,10 @@ export class LoggingService {
       let entryHash: string | null = null;
 
       if (this.hmacSecret) {
-        // Query last entry to maintain hash chain
+        // PERF-012: Use strict null check for global logs to leverage index.
+        // Prisma treats 'undefined' as 'no filter', which leads to full table scans.
         const lastEntry = await client.auditLog.findFirst({
-          where: { tenantId: data.tenantId ?? undefined },
+          where: { tenantId: data.tenantId ?? null },
           orderBy: { createdAt: 'desc' },
           select: { entryHash: true },
         });

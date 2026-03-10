@@ -21,7 +21,9 @@ export const HasPermission: React.FC<HasPermissionProps> = ({
     const { user } = useAuth();
     const userRole = user?.role;
 
-    const userPermissions = userRole ? (RolePermissions[userRole as keyof typeof RolePermissions] || []) : [];
+    const userPermissions = (userRole && typeof RolePermissions !== 'undefined' && RolePermissions)
+        ? (RolePermissions[userRole as keyof typeof RolePermissions] || [])
+        : [];
     const hasAccess = userPermissions.includes(permission);
 
     if (!hasAccess) {

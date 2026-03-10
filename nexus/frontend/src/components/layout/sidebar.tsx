@@ -245,8 +245,21 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                 .map(item => {
                     // Apply Dynamic Terminology
                     let translatedLabel = item.label;
-                    if (item.label === 'CRM') translatedLabel = terminology.customer || 'CRM';
-                    if (item.label === 'Products') translatedLabel = terminology.product || 'Products';
+
+                    // Direct Mapping Matrix
+                    const labelToKey: Record<string, string> = {
+                        'CRM': 'customer',
+                        'Products': 'product',
+                        'Warehouses': 'inventory',
+                        'Work Orders': 'Work Order',
+                        'Material at Site': 'inventory',
+                        'Patients': 'customer' // Special case for healthcare stream template
+                    };
+
+                    const termKey = labelToKey[item.label];
+                    if (termKey && terminology[termKey]) {
+                        translatedLabel = terminology[termKey] as string;
+                    }
 
                     return { ...item, label: translatedLabel };
                 })

@@ -203,12 +203,11 @@ export class AuthService {
           // Normalize industry type for enum compatibility
           let tenantType: TenantType = TenantType.Retail;
           if (dto.companyType) {
-            const normalized = dto.companyType.charAt(0).toUpperCase() + dto.companyType.slice(1).toLowerCase();
-            if (Object.values(TenantType).includes(normalized as any)) {
-              tenantType = normalized as TenantType;
-            } else if (dto.companyType.toUpperCase() === 'NBFC') {
-              tenantType = TenantType.NBFC;
-            }
+            const mappedType = (Object.values(TenantType) as string[]).find(
+              (t) => t.toLowerCase() === dto.companyType?.toLowerCase(),
+            ) as TenantType || TenantType.Retail;
+
+            tenantType = mappedType;
           }
 
           const tenant = await tx.tenant.create({
@@ -379,7 +378,10 @@ export class AuthService {
       };
     }
 
-    await this.logging.log({
+    // PERF-013: Non-blocking success log to prevent 408 Timeout on auth.
+    // We already have a fail-safe in the logger, but removing await here ensures the 
+    // user gets their token immediately even if the audit table is under load.
+    this.logging.log({
       userId: user.id,
       action: 'USER_LOGIN_SUCCESS',
       resource: 'Identity',
@@ -390,7 +392,7 @@ export class AuthService {
         channel,
       },
       ipAddress,
-    });
+    }).catch(err => this.logger.error(`[AUDIT_FAIL] Success log dropped: ${err.message}`));
 
     return this.generateAuthResponse(user, false, channel);
   }
@@ -472,12 +474,13 @@ export class AuthService {
       };
     }
 
-    await this.logging.log({
+    // PERF-014: Non-blocking admin success log.
+    this.logging.log({
       userId: user.id,
       action: 'ADMIN_LOGIN_SUCCESS',
       resource: 'Identity',
       ipAddress,
-    });
+    }).catch(err => this.logger.error(`[AUDIT_ADMIN_FAIL] Success log dropped: ${err.message}`));
 
     return this.generateAuthResponse(user, true, 'WEB', true);
   }
@@ -865,9 +868,11 @@ export class AuthService {
     // This prevents validation errors if the frontend sends mismatched strings
     let mappedType: TenantType = TenantType.Retail;
     if (dto.industry) {
-      const normalized = dto.industry.charAt(0).toUpperCase() + dto.industry.slice(1).toLowerCase();
-      if (Object.values(TenantType).includes(normalized as any)) {
-        mappedType = normalized as TenantType;
+      const foundType = (Object.values(TenantType) as string[]).find(
+        (t) => t.toLowerCase() === dto.industry.toLowerCase(),
+      ) as TenantType;
+      if (foundType) {
+        mappedType = foundType;
       } else if (dto.industry.toUpperCase() === 'NBFC') {
         mappedType = TenantType.NBFC;
       }

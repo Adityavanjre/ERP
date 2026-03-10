@@ -8,7 +8,7 @@ export class AnalyticsService {
   constructor(
     private prisma: PrismaService,
     private saas: SaasAnalyticsService,
-  ) {}
+  ) { }
 
   async getExecutiveSummary(tenantId: string) {
     const stats = await Promise.all([
@@ -100,13 +100,13 @@ export class AnalyticsService {
         health.signals.length > 0
           ? health.signals
           : [
-              summary.expenses > summary.revenue
-                ? 'Negative Cashflow detected'
-                : 'Operating within margin',
-              summary.inventoryCount < 10
-                ? 'Supply chain bottleneck risk'
-                : 'Inventory stable',
-            ],
+            summary.expenses > summary.revenue
+              ? 'Negative Cashflow detected'
+              : 'Operating within margin',
+            summary.inventoryCount < 10
+              ? 'Supply chain bottleneck risk'
+              : 'Inventory stable',
+          ],
     };
   }
 
@@ -273,6 +273,51 @@ export class AnalyticsService {
         { label: 'Pending EMIs', count: emis, color: 'amber' },
         { label: 'KYC Files', count: kyc, color: 'indigo' },
         { label: 'Bank Recs', count: reconciliations, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'Education') {
+      const [students, invoices, depts, supplies] = await Promise.all([
+        this.prisma.customer.count({ where: { tenantId } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+        this.prisma.department.count({ where: { tenantId } }),
+        this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
+      ]);
+      return [
+        { label: 'Enrollment', count: students, color: 'sky' },
+        { label: 'Fee Receivables', count: invoices, color: 'amber' },
+        { label: 'Academic Depts', count: depts, color: 'indigo' },
+        { label: 'Supply Stock', count: supplies, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'RealEstate' || type === 'Service') {
+      const [projects, leads, ops, receivables] = await Promise.all([
+        this.prisma.project.count({ where: { tenantId } }),
+        this.prisma.customer.count({ where: { tenantId, status: 'Lead' } }),
+        this.prisma.opportunity.count({ where: { tenantId } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Active Projects', count: projects, color: 'sky' },
+        { label: 'Total Leads', count: leads, color: 'amber' },
+        { label: 'Sales Pipeline', count: ops, color: 'indigo' },
+        { label: 'Receivables', count: receivables, color: 'emerald' },
+      ];
+    }
+
+    if (type === 'Gov') {
+      const [depts, po, inventory, receivables] = await Promise.all([
+        this.prisma.department.count({ where: { tenantId } }),
+        this.prisma.purchaseOrder.count({ where: { tenantId } }),
+        this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+      return [
+        { label: 'Divisions', count: depts, color: 'sky' },
+        { label: 'Procurement', count: po, color: 'amber' },
+        { label: 'Public Assets', count: inventory, color: 'indigo' },
+        { label: 'Revenue Streams', count: receivables, color: 'emerald' },
       ];
     }
 

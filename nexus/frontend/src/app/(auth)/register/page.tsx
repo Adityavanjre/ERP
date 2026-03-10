@@ -291,6 +291,7 @@ export default function RegisterPage() {
                                             <SelectItem value="Construction">Construction</SelectItem>
                                             <SelectItem value="Logistics">Logistics</SelectItem>
                                             <SelectItem value="RealEstate">Real Estate</SelectItem>
+                                            <SelectItem value="NBFC">Non-Bank Finance (NBFC)</SelectItem>
                                             <SelectItem value="Service">Service</SelectItem>
                                             <SelectItem value="Gov">Government</SelectItem>
                                         </SelectContent>

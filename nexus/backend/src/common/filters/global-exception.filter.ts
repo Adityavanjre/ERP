@@ -57,6 +57,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           message =
             'Relation violation: the change would break a required relation.';
           break;
+        case 'P2024':
+          status = HttpStatus.SERVICE_UNAVAILABLE;
+          message = 'Database connection timeout. The server is currently overloaded. Please try again in a few seconds.';
+          break;
+        case 'P2028':
+          status = HttpStatus.REQUEST_TIMEOUT;
+          message = 'Database transaction timeout. The operation took too long to complete.';
+          break;
         case 'P2022':
           status = HttpStatus.INTERNAL_SERVER_ERROR;
           const missingColumn = prismaErr.meta?.column_name || 'unknown';
@@ -68,6 +76,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           break;
         default:
           status = HttpStatus.BAD_REQUEST;
+          // Distinguish between critical infra errors (500s/503s) and client errors (400s)
+          if (prismaErr.code?.startsWith('P1')) {
+            status = HttpStatus.SERVICE_UNAVAILABLE;
+          } else if (prismaErr.code?.startsWith('P202')) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+          } else {
+            status = HttpStatus.BAD_REQUEST;
+          }
           message = `Database error (${prismaErr.code}). Please try again or contact support.`;
           this.logger.error(
             `Unhandled Prisma error: ${prismaErr.code}`,

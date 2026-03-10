@@ -4,13 +4,13 @@ export declare const OrderItemSchema: z.ZodObject<{
     quantity: z.ZodNumber;
     price: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    price: number;
-    quantity: number;
     productId: string;
+    quantity: number;
+    price: number;
 }, {
-    price: number;
-    quantity: number;
     productId: string;
+    quantity: number;
+    price: number;
 }>;
 export declare const CreateOrderSchema: z.ZodObject<{
     customerId: z.ZodString;
@@ -19,29 +19,29 @@ export declare const CreateOrderSchema: z.ZodObject<{
         quantity: z.ZodNumber;
         price: z.ZodNumber;
     }, "strip", z.ZodTypeAny, {
-        price: number;
-        quantity: number;
         productId: string;
+        quantity: number;
+        price: number;
     }, {
-        price: number;
-        quantity: number;
         productId: string;
+        quantity: number;
+        price: number;
     }>, "many">;
     status: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     customerId: string;
     items: {
-        price: number;
-        quantity: number;
         productId: string;
+        quantity: number;
+        price: number;
     }[];
     status?: string | undefined;
 }, {
     customerId: string;
     items: {
-        price: number;
-        quantity: number;
         productId: string;
+        quantity: number;
+        price: number;
     }[];
     status?: string | undefined;
 }>;

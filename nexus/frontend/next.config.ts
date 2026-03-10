@@ -40,6 +40,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+    // Monorepo support: Transpile shared package for both client and server runtime
+    transpilePackages: ['@nexus/shared'],
     // Point Next.js file tracing to the monorepo root to silence
     // the Render/workspace root detection warning about multiple lockfiles.
     outputFileTracingRoot: path.join(__dirname, '../../'),

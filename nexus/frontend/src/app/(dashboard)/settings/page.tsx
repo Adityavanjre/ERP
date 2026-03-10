@@ -61,13 +61,13 @@ export default function SettingsPage() {
     const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
     const [members, setMembers] = useState<Member[]>([]);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-    const [newUser, setNewUser] = useState({ fullName: '', email: '', role: Role.Biller });
+    const [newUser, setNewUser] = useState({ fullName: '', email: '', role: 'Biller' });
     const [isResetOpen, setIsResetOpen] = useState(false);
     const [tempPassword, setTempPassword] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { user: currentUser } = useAuth();
-    const isOwner = currentUser?.role === Role.Owner;
+    const isOwner = currentUser?.role === 'Owner';
 
     const fetchSettings = useCallback(async () => {
         setLoading(true);
@@ -272,11 +272,11 @@ export default function SettingsPage() {
                                                 </div>
 
                                                 <div className="flex flex-wrap items-center gap-4">
-                                                    <Badge className={`font-black ${member.role === Role.Owner ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                        member.role === Role.Manager ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                    <Badge className={`font-black ${member.role === 'Owner' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                        member.role === 'Manager' ? 'bg-blue-50 text-blue-600 border-blue-100' :
                                                             'bg-slate-50 text-slate-500 border-slate-100'
                                                         }`}>
-                                                        {member.role ? member.role.toUpperCase() : 'UNKNOWN'}
+                                                        {member.role ? (typeof member.role === 'string' ? member.role.toUpperCase() : 'USER') : 'UNKNOWN'}
                                                     </Badge>
 
                                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                                                                         <SelectValue placeholder="Change Role" />
                                                                     </SelectTrigger>
                                                                     <SelectContent className="bg-white">
-                                                                        {[Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA].map(r => (
+                                                                        {['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'].map(r => (
                                                                             <SelectItem key={r} value={r} className="text-xs font-bold">{r}</SelectItem>
                                                                         ))}
                                                                     </SelectContent>
@@ -473,16 +473,16 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Role</Label>
-                            <Select value={newUser.role} onValueChange={(val: Role) => setNewUser({ ...newUser, role: val })}>
+                            <Select value={newUser.role} onValueChange={(val: any) => setNewUser({ ...newUser, role: val })}>
                                 <SelectTrigger className="bg-slate-50 border-slate-200 h-11 font-bold">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
-                                    <SelectItem value={Role.Owner} className="font-bold">Owner (Full System Access)</SelectItem>
-                                    <SelectItem value={Role.Manager} className="font-bold">Manager (Operational Admin)</SelectItem>
-                                    <SelectItem value={Role.Biller} className="font-bold">Biller (Checkout & Sales)</SelectItem>
-                                    <SelectItem value={Role.Storekeeper} className="font-bold">Storekeeper (Stock & Logistics)</SelectItem>
-                                    <SelectItem value={Role.Accountant} className="font-bold">Accountant (Finance & Audit)</SelectItem>
+                                    <SelectItem value="Owner" className="font-bold">Owner (Full System Access)</SelectItem>
+                                    <SelectItem value="Manager" className="font-bold">Manager (Operational Admin)</SelectItem>
+                                    <SelectItem value="Biller" className="font-bold">Biller (Checkout & Sales)</SelectItem>
+                                    <SelectItem value="Storekeeper" className="font-bold">Storekeeper (Stock & Logistics)</SelectItem>
+                                    <SelectItem value="Accountant" className="font-bold">Accountant (Finance & Audit)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

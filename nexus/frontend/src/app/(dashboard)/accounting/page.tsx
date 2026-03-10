@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -102,6 +103,7 @@ interface AccountingDraft {
 }
 
 export default function AccountingPage() {
+    const { user } = useAuth();
     const { setUILocked, showConfirm } = useUX();
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -128,31 +130,34 @@ export default function AccountingPage() {
             if (!silent) setLoading(true);
             else setIsSyncing(true);
 
-            const [accRes, txRes, invRes, statsRes, , healthRes, leaderRes, recoveryRes] = await Promise.all([
-                api.get("accounting/accounts"),
-                api.get("accounting/transactions"),
-                api.get(`/accounting/invoices?page=${invoicePage}&limit=50`),
-                api.get("accounting/stats"),
-                api.get("inventory/stats"),
-                api.get("accounting/health-score"),
-                api.get("accounting/leaderboard"),
-                api.get("accounting/recovery-memory")
+            const hasFullAccess = ['Owner', 'Manager', 'Accountant', 'CA'].includes(user?.role || '') || user?.isSuperAdmin;
+            const isOwner = user?.role === 'Owner' || user?.isSuperAdmin;
+
+            const [accRes, txRes, invRes, statsRes, invStatsRes, healthRes, leaderRes, recoveryRes] = await Promise.all([
+                api.get("accounting/accounts").catch(() => ({ data: [] })),
+                api.get("accounting/transactions").catch(() => ({ data: { data: [] } })),
+                api.get(`/accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } })),
+                hasFullAccess ? api.get("accounting/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                hasFullAccess ? api.get("inventory/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                isOwner ? api.get("accounting/health-score").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                hasFullAccess ? api.get("accounting/leaderboard").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                hasFullAccess ? api.get("accounting/recovery-memory").catch(() => ({ data: null })) : Promise.resolve({ data: null })
             ]);
 
-            setAccounts(accRes.data);
-            setTransactions(txRes.data.data || txRes.data);
+            setAccounts(accRes.data || []);
+            setTransactions(txRes.data?.data || txRes.data || []);
             setHealthScore(healthRes.data);
-            setLeaderboard(leaderRes.data);
+            setLeaderboard(leaderRes.data || []);
             setRecoveryMemory(recoveryRes.data);
 
-            if (invRes.data.data) {
+            if (invRes.data?.data) {
                 setInvoices(invRes.data.data);
-                setInvoiceTotalPages(invRes.data.meta.totalPages);
+                setInvoiceTotalPages(invRes.data.meta?.totalPages || 1);
             } else {
-                setInvoices(invRes.data);
+                setInvoices(invRes.data || []);
             }
 
-            setStats(statsRes.data);
+            setStats(statsRes.data || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
             // invStats info not directly used in major UI blocks yet but could be in future.
             setLastSyncTime(Date.now());
         } catch (err) {
