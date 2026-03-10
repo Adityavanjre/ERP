@@ -51,6 +51,7 @@ interface BusinessStream {
     label: string;
     icon: LucideIcon;
     items: SidebarItem[];
+    requiredModule?: string;
 }
 
 // const ALL_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'];
@@ -84,6 +85,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Manufacturing',
         icon: Factory,
+        requiredModule: 'manufacturing',
         items: [
             { label: 'Overview', href: '/manufacturing', icon: Factory, allowedRoles: STOCK_ROLES },
             { label: 'Bill of Materials', href: '/manufacturing/bom', icon: Command, allowedRoles: STOCK_ROLES },
@@ -103,6 +105,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Healthcare',
         icon: Activity,
+        requiredModule: 'healthcare',
         items: [
             { label: 'Patients', href: '/healthcare', icon: Users, allowedRoles: SALES_ROLES },
             { label: 'Appointments', href: '/healthcare/appointments', icon: Calendar, allowedRoles: SALES_ROLES },
@@ -113,6 +116,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'NBFC Operations',
         icon: Landmark,
+        requiredModule: 'nbfc',
         items: [
             { label: 'Loan Portfolio', href: '/nbfc', icon: Landmark, allowedRoles: FINANCE_ROLES },
             { label: 'Collections', href: '/nbfc/collections', icon: Receipt, allowedRoles: SALES_ROLES },
@@ -122,6 +126,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Logistics',
         icon: Truck,
+        requiredModule: 'logistics',
         items: [
             { label: 'Fleet Management', href: '/logistics', icon: Truck, allowedRoles: STOCK_ROLES },
             { label: 'Consignments', href: '/logistics/consignments', icon: ShoppingBag, allowedRoles: SALES_ROLES },
@@ -130,6 +135,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Construction',
         icon: LayoutGrid,
+        requiredModule: 'construction',
         items: [
             { label: 'Project Sites', href: '/construction', icon: LayoutGrid, allowedRoles: SALES_ROLES },
             { label: 'Task Console', href: '/projects', icon: ClipboardList, allowedRoles: SALES_ROLES },
@@ -140,6 +146,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Projects & Tasks',
         icon: ClipboardList,
+        requiredModule: 'projects',
         items: [
             { label: 'Project Console', href: '/projects', icon: LayoutDashboard, allowedRoles: SALES_ROLES },
         ]
@@ -218,6 +225,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     // 1. Role-based filtering (already present)
     // 2. Industry-based filtering (new)
     const visibleStreams = businessStreams
+        .filter(stream => !stream.requiredModule || enabledModules.includes(stream.requiredModule))
         .map(stream => ({
             ...stream,
             items: stream.items

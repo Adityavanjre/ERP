@@ -120,22 +120,29 @@ export default function DashboardPage() {
 
     const fetchData = useCallback(async () => {
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('k_token') : null;
-            const identity = typeof window !== 'undefined' ? localStorage.getItem('k_identity') : null;
-            // Relax the identity-match block to allow dashboard to bootstrap state for new users
-            if (token && identity && token === identity) {
-                // Identity tokens (non-scoped) can still pull global config/basics
-                // but we let it fall through to at least hit basic stats.
+            // STEP 1: Urgent Bootstrapping (Unblock UI Shell)
+            // We fetch the industry config first so we know what terminology and modules to show.
+            const configRes = await api.get('system/config').catch(() => null);
+
+            if (configRes?.data) {
+                const cfgData = configRes.data;
+                setIndustryConfig(cfgData);
+                const apiModules: string[] = cfgData.enabledModules || [];
+                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
+                setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
+                // UNBLOCK: Show the dashboard shell immediately even if BI data is still in flight
+                setLoading(false);
             }
 
-            const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes, configRes] = await Promise.allSettled([
+            // STEP 2: Background BI Synchronization
+            // These heavy calls run in parallel and populate their respective cards as they settle.
+            const [systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.allSettled([
                 api.get('system/stats'),
                 api.get('analytics/summary'),
                 api.get('analytics/performance'),
                 api.get('analytics/health'),
                 api.get('analytics/activity'),
-                api.get('analytics/value-chain'),
-                api.get('system/config')
+                api.get('analytics/value-chain')
             ]);
 
             const getVal = <T,>(res: PromiseSettledResult<{ data: T }>) =>
@@ -147,26 +154,18 @@ export default function DashboardPage() {
             const healthData = getVal<HealthStats>(healthRes as PromiseSettledResult<{ data: HealthStats }>);
             const actData = getVal<ActivityLog[]>(activityRes as PromiseSettledResult<{ data: ActivityLog[] }>);
             const vcData = getVal<ValueChainStep[]>(vcRes as PromiseSettledResult<{ data: ValueChainStep[] }>);
-            const cfgData = getVal<IndustryConfig>(configRes as PromiseSettledResult<{ data: IndustryConfig }>);
 
             if (sysData) setSystemStats(sysData);
-            if (cfgData) {
-                setIndustryConfig(cfgData);
-                const apiModules: string[] = cfgData.enabledModules || [];
-                // Dashboard infrastructure modules that are always safe to display
-                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
-                setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
-            }
-
-            setBiStats(prev => ({ ...prev, ...(sumData || {}) }));
-            setChartData(Array.isArray(perfData) ? perfData : []);
+            if (sumData) setBiStats(prev => ({ ...prev, ...sumData }));
+            if (perfData) setChartData(perfData);
             if (healthData) setHealthStats(healthData);
-            setActivity(Array.isArray(actData) ? actData : []);
-            setValueChain(Array.isArray(vcData) ? vcData : []);
+            if (actData) setActivity(actData);
+            if (vcData) setValueChain(vcData);
 
         } catch (err) {
             console.error("Data update error:", err);
         } finally {
+            // Final safety unblock if config failed but loop finished
             setLoading(false);
         }
     }, []);

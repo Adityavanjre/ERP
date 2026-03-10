@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrderStatus, POStatus } from '@prisma/client';
 import { SaasAnalyticsService } from '../system/services/saas-analytics.service';
@@ -8,9 +10,14 @@ export class AnalyticsService {
   constructor(
     private prisma: PrismaService,
     private saas: SaasAnalyticsService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
   async getExecutiveSummary(tenantId: string) {
+    const cacheKey = `nexus:analytics:exec_summary:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const stats = await Promise.all([
       // Sales Total (Invoices)
       this.prisma.invoice.aggregate({
@@ -32,7 +39,7 @@ export class AnalyticsService {
     const salesSum = Number(stats[0]._sum.totalAmount || 0);
     const purchaseSum = Number(stats[1]._sum.totalAmount || 0);
 
-    return {
+    const result = {
       revenue: salesSum,
       expenses: purchaseSum,
       profit: salesSum - purchaseSum,
@@ -40,9 +47,16 @@ export class AnalyticsService {
       customerCount: stats[2],
       inventoryCount: stats[3],
     };
+
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   async getMonthlyPerformance(tenantId: string) {
+    const cacheKey = `nexus:analytics:monthly_perf:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const invoices = await this.prisma.invoice.findMany({
       where: {
         tenantId,
@@ -67,7 +81,7 @@ export class AnalyticsService {
       'Nov',
       'Dec',
     ];
-    const performance = months.map((m, i) => {
+    const result = months.map((m, i) => {
       const monthInvoices = invoices.filter(
         (o) => o.issueDate.getMonth() === i,
       );
@@ -78,7 +92,8 @@ export class AnalyticsService {
       return { month: m, revenue };
     });
 
-    return performance;
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   async getHealthMetrics(tenantId: string) {
@@ -160,12 +175,18 @@ export class AnalyticsService {
   }
 
   async getValueChain(tenantId: string) {
+    const cacheKey = `nexus:analytics:value_chain:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { type: true },
     });
 
     const type = tenant?.type || 'General';
+
+    let result: any[] = [];
 
     // Define industry-specific data fetching
     if (type === 'Manufacturing') {
@@ -179,15 +200,13 @@ export class AnalyticsService {
         this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
       ]);
-      return [
+      result = [
         { label: 'Procurement', count: purchases, color: 'sky' },
         { label: 'Work Orders', count: wos, color: 'amber' },
         { label: 'Stock Level', count: inventory, color: 'indigo' },
         { label: 'Receivables', count: receivables, color: 'emerald' },
       ];
-    }
-
-    if (type === 'Construction') {
+    } else if (type === 'Construction') {
       const [projects, materialPO, siteInventory, receivables] =
         await Promise.all([
           this.prisma.project.count({
@@ -199,15 +218,13 @@ export class AnalyticsService {
           this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
           this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
         ]);
-      return [
+      result = [
         { label: 'Active Projects', count: projects, color: 'sky' },
         { label: 'Site Orders', count: materialPO, color: 'amber' },
         { label: 'Site Stock', count: siteInventory, color: 'indigo' },
         { label: 'Receivables', count: receivables, color: 'emerald' },
       ];
-    }
-
-    if (type === 'Wholesale' || type === 'Retail') {
+    } else if (type === 'Wholesale' || type === 'Retail') {
       const [po, stock, customers, receivables] = await Promise.all([
         this.prisma.purchaseOrder.count({
           where: { tenantId, status: POStatus.Ordered },
@@ -219,7 +236,7 @@ export class AnalyticsService {
         this.prisma.customer.count({ where: { tenantId } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
       ]);
-      return [
+      result = [
         { label: 'Inbound POs', count: po, color: 'sky' },
         {
           label: 'Total Stock',
@@ -229,113 +246,104 @@ export class AnalyticsService {
         { label: 'Active Leads', count: customers, color: 'indigo' },
         { label: 'Receivables', count: receivables, color: 'emerald' },
       ];
-    }
-
-    if (type === 'Healthcare') {
+    } else if (type === 'Healthcare') {
       const [appointments, patients, records, billing] = await Promise.all([
         this.prisma.appointment.count({ where: { tenantId } }),
         this.prisma.patient.count({ where: { tenantId } }),
         this.prisma.medicalRecord.count({ where: { tenantId } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
       ]);
-      return [
+      result = [
         { label: 'Appointments', count: appointments, color: 'sky' },
         { label: 'Total Patients', count: patients, color: 'amber' },
         { label: 'Med Records', count: records, color: 'indigo' },
         { label: 'Billing Due', count: billing, color: 'emerald' },
       ];
-    }
-
-    if (type === 'Logistics') {
+    } else if (type === 'Logistics') {
       const [vehicles, routes, fuel, delivery] = await Promise.all([
         this.prisma.vehicle.count({ where: { tenantId } }),
         this.prisma.routeLog.count({ where: { tenantId } }),
         this.prisma.fuelLog.count({ where: { tenantId } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
       ]);
-      return [
+      result = [
         { label: 'Fleet Size', count: vehicles, color: 'sky' },
         { label: 'Active Routes', count: routes, color: 'amber' },
         { label: 'Fuel Entries', count: fuel, color: 'indigo' },
         { label: 'Open Invoices', count: delivery, color: 'emerald' },
       ];
-    }
-
-    if (type === 'NBFC') {
+    } else if (type === 'NBFC') {
       const [loans, emis, kyc, reconciliations] = await Promise.all([
         this.prisma.loan.count({ where: { tenantId } }),
         this.prisma.eMISchedule.count({ where: { tenantId } }),
         this.prisma.kYCRecord.count({ where: { tenantId } }),
         this.prisma.bankReconciliation.count({ where: { tenantId } }),
       ]);
-      return [
+      result = [
         { label: 'Active Loans', count: loans, color: 'sky' },
         { label: 'Pending EMIs', count: emis, color: 'amber' },
         { label: 'KYC Files', count: kyc, color: 'indigo' },
         { label: 'Bank Recs', count: reconciliations, color: 'emerald' },
       ];
-    }
-
-    if (type === 'Education') {
+    } else if (type === 'Education') {
       const [students, invoices, depts, supplies] = await Promise.all([
         this.prisma.customer.count({ where: { tenantId } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
         this.prisma.department.count({ where: { tenantId } }),
         this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
       ]);
-      return [
+      result = [
         { label: 'Enrollment', count: students, color: 'sky' },
         { label: 'Fee Receivables', count: invoices, color: 'amber' },
         { label: 'Academic Depts', count: depts, color: 'indigo' },
         { label: 'Supply Stock', count: supplies, color: 'emerald' },
       ];
-    }
-
-    if (type === 'RealEstate' || type === 'Service') {
+    } else if (type === 'RealEstate' || type === 'Service') {
       const [projects, leads, ops, receivables] = await Promise.all([
         this.prisma.project.count({ where: { tenantId } }),
         this.prisma.customer.count({ where: { tenantId, status: 'Lead' } }),
         this.prisma.opportunity.count({ where: { tenantId } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
       ]);
-      return [
+      result = [
         { label: 'Active Projects', count: projects, color: 'sky' },
         { label: 'Total Leads', count: leads, color: 'amber' },
         { label: 'Sales Pipeline', count: ops, color: 'indigo' },
         { label: 'Receivables', count: receivables, color: 'emerald' },
       ];
-    }
-
-    if (type === 'Gov') {
+    } else if (type === 'Gov') {
       const [depts, po, inventory, receivables] = await Promise.all([
         this.prisma.department.count({ where: { tenantId } }),
         this.prisma.purchaseOrder.count({ where: { tenantId } }),
         this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
         this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
       ]);
-      return [
+      result = [
         { label: 'Divisions', count: depts, color: 'sky' },
         { label: 'Procurement', count: po, color: 'amber' },
         { label: 'Public Assets', count: inventory, color: 'indigo' },
         { label: 'Revenue Streams', count: receivables, color: 'emerald' },
       ];
+    } else {
+      // Default: General
+      const [purchases, inventory, pipeline, receivables] = await Promise.all([
+        this.prisma.purchaseOrder.count({
+          where: { tenantId, status: POStatus.Ordered },
+        }),
+        this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
+        this.prisma.opportunity.count({ where: { tenantId } }),
+        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
+      ]);
+
+      result = [
+        { label: 'Procurement', count: purchases, color: 'sky' },
+        { label: 'Inventory Items', count: inventory, color: 'amber' },
+        { label: 'Sales Pipeline', count: pipeline, color: 'indigo' },
+        { label: 'Receivables', count: receivables, color: 'emerald' },
+      ];
     }
 
-    // Default: General
-    const [purchases, inventory, pipeline, receivables] = await Promise.all([
-      this.prisma.purchaseOrder.count({
-        where: { tenantId, status: POStatus.Ordered },
-      }),
-      this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }),
-      this.prisma.opportunity.count({ where: { tenantId } }),
-      this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }),
-    ]);
-
-    return [
-      { label: 'Procurement', count: purchases, color: 'sky' },
-      { label: 'Inventory Items', count: inventory, color: 'amber' },
-      { label: 'Sales Pipeline', count: pipeline, color: 'indigo' },
-      { label: 'Receivables', count: receivables, color: 'emerald' },
-    ];
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 }
