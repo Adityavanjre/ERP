@@ -26,6 +26,10 @@ export class SaasAnalyticsService {
   }
 
   async getGlobalActivity(tenantId: string) {
+    const cacheKey = `nexus:system:activity:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const logs = await this.prisma.auditLog.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
@@ -33,7 +37,7 @@ export class SaasAnalyticsService {
       include: { user: { select: { fullName: true } } },
     });
 
-    return logs.map((log) => {
+    const result = logs.map((log) => {
       let message = `${log.action} on ${log.resource}`;
       const details = log.details as any;
 
@@ -60,6 +64,9 @@ export class SaasAnalyticsService {
         resource: log.resource,
       };
     });
+
+    await this.cacheManager.set(cacheKey, result, 60000); // 1 min
+    return result;
   }
 
   async getClientHealthScore(tenantId: string): Promise<HealthReport> {

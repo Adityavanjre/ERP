@@ -5,7 +5,10 @@ import {
   Req,
   Query,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SystemAuditService } from './services/system-audit.service';
@@ -28,12 +31,17 @@ export class SystemController {
     private readonly saas: SaasAnalyticsService,
     private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
   @Get('stats')
   @Roles(Role.Owner, Role.Manager, Role.Accountant)
   async getSystemStats(@Req() req: any) {
     const tenantId = req.user.tenantId;
+    const cacheKey = `nexus:system:stats:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     const [products, customers, invoices, transactions] = await Promise.all([
       this.prisma.product.count({ where: { tenantId } }),
       this.prisma.customer.count({ where: { tenantId } }),
@@ -41,13 +49,16 @@ export class SystemController {
       this.prisma.transaction.count({ where: { tenantId } }),
     ]);
 
-    return {
+    const result = {
       products,
       customers,
       invoices,
       transactions,
       uptime: '99.9%',
     };
+
+    await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
+    return result;
   }
 
   @Get('config')
