@@ -663,11 +663,14 @@ export default function CrmPage() {
                                     )}
                                 </TableBody>
                             </Table>
-                            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/50">
-                                <Button variant="ghost" size="sm" onClick={() => setCustPage(p => Math.max(1, p - 1))} disabled={custPage === 1} className="text-slate-500 hover:bg-white font-bold rounded-xl h-9">Previous</Button>
-                                <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Page {custPage} / {custTotalPages}</span>
-                                <Button variant="ghost" size="sm" onClick={() => setCustPage(p => Math.min(custTotalPages, p + 1))} disabled={custPage === custTotalPages} className="text-slate-500 hover:bg-white font-bold rounded-xl h-9">Next</Button>
-                            </div>
+                            {/* BUG-018 FIX: hide pagination when search is active — search filters client-side */}
+                            {!searchQuery && (
+                                <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/50">
+                                    <Button variant="ghost" size="sm" onClick={() => setCustPage(p => Math.max(1, p - 1))} disabled={custPage === 1} className="text-slate-500 hover:bg-white font-bold rounded-xl h-9">Previous</Button>
+                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Page {custPage} / {custTotalPages}</span>
+                                    <Button variant="ghost" size="sm" onClick={() => setCustPage(p => Math.min(custTotalPages, p + 1))} disabled={custPage === custTotalPages} className="text-slate-500 hover:bg-white font-bold rounded-xl h-9">Next</Button>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>

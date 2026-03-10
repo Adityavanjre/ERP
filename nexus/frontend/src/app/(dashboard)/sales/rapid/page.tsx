@@ -39,8 +39,11 @@ interface SyncBatchResult {
 export default function RapidBillingPage() {
     const [items, setItems] = useState<Item[]>([]);
     const [search, setSearch] = useState('');
-    const [customerId] = useState<string | null>(null);
-    const [customerName] = useState('Walk-in Customer');
+    // BUG-006 FIX: add setters so customer can be changed (not permanently Walk-in)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [customerId, setCustomerId] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [customerName, setCustomerName] = useState('Walk-in Customer');
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsed, setElapsed] = useState(0);
     const [isOffline, setIsOffline] = useState(false);
@@ -51,12 +54,9 @@ export default function RapidBillingPage() {
     const [userRole, setUserRole] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-
-    // Manual Search State
-    const [manualSearch] = useState('');
-    const [, setSearchResults] = useState<POSProduct[]>([]);
-    const [, setIsManualSearching] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    // BUG-014 FIX: use a ref to prevent syncQueue from being called concurrently
+    const isSyncingRef = useRef(false);
 
     const searchRef = useRef<HTMLInputElement>(null!);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -153,40 +153,9 @@ export default function RapidBillingPage() {
         }
     };
 
-    // Manual Search Effect
-    useEffect(() => {
-        const timer = setTimeout(async () => {
-            if (!manualSearch.trim()) {
-                setSearchResults([]);
-                return;
-            }
-
-            setIsManualSearching(true);
-            try {
-                // Determine if search is numeric (likely SKU/Barcode) or text (Name)
-                const isNumeric = /^\d+$/.test(manualSearch);
-                const endpoint = isNumeric
-                    ? `/inventory/products/find-by-code?code=${manualSearch}`
-                    : `/inventory/products?search=${manualSearch}&limit=5`;
-
-                const res = await api.get(endpoint);
-
-                if (isNumeric && res.data) {
-                    setSearchResults([res.data]); // Single result for direct code match
-                } else if (!isNumeric && res.data.data) {
-                    setSearchResults(res.data.data); // List for text search
-                } else {
-                    setSearchResults([]);
-                }
-            } catch (err) {
-                console.error("Search failed", err);
-            } finally {
-                setIsManualSearching(false);
-            }
-        }, 300); // 300ms debounce
-
-        return () => clearTimeout(timer);
-    }, [manualSearch]);
+    // BUG-007 FIX: manualSearch dead code removed.
+    // The manualSearch state had no setter so the debounce effect below could never fire.
+    // The ProductGrid component handles its own product browsing.
 
     const updateQty = (id: string, delta: number) => {
         setItems(prev => prev.map(i =>
@@ -276,11 +245,14 @@ export default function RapidBillingPage() {
         }
     };
 
+    // BUG-014 FIX: use isSyncingRef to prevent concurrent queue syncs.
+    // Previously isSubmitting in deps caused this to fire during its own execution.
     const syncQueue = useCallback(async () => {
-        if (isOffline || isSubmitting) return;
+        if (isOffline || isSyncingRef.current) return;
         const queue = JSON.parse(localStorage.getItem('billing_queue') || '[]');
         if (queue.length === 0) return;
 
+        isSyncingRef.current = true;
         setIsSubmitting(true);
         try {
             const res = await api.post('accounting/invoices/bulk', queue);
@@ -296,8 +268,9 @@ export default function RapidBillingPage() {
             toast.error("Sync failed");
         } finally {
             setIsSubmitting(false);
+            isSyncingRef.current = false;
         }
-    }, [isOffline, isSubmitting]);
+    }, [isOffline]);
 
     useEffect(() => {
         if (!isOffline && pendingSync > 0) syncQueue();

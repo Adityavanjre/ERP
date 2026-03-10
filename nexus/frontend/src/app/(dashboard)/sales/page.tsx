@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -69,6 +70,7 @@ interface ApiError {
 }
 
 export default function SalesPage() {
+    const router = useRouter();
     const { setUILocked } = useUX();
     const [orders, setOrders] = useState<SalesOrder[]>([]);
     const [stats, setStats] = useState<SalesStats>({ totalRevenue: 0, orderCount: 0, pendingOrders: 0 });
@@ -199,10 +201,6 @@ export default function SalesPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-slate-900 tracking-tighter italic">₹{Number(stats.totalRevenue).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <div className="text-[10px] text-emerald-600 font-black mt-4 flex items-center bg-emerald-50 w-fit px-2 py-1 rounded-lg">
-                            <TrendingUp className="h-3 w-3 mr-1.5" />
-                            +12.4% vs Last Month
-                        </div>
                     </CardContent>
                 </Card>
 
@@ -274,7 +272,11 @@ export default function SalesPage() {
                         </TableHeader>
                         <TableBody>
                             {orders.map((order) => (
-                                <TableRow key={order.id} className="border-slate-50 hover:bg-blue-50/30 transition-all group">
+                                <TableRow
+                                    key={order.id}
+                                    className="border-slate-50 hover:bg-blue-50/30 transition-all group cursor-pointer"
+                                    onClick={() => router.push(`/invoice/${order.id}`)}
+                                >
                                     <TableCell className="pl-10 font-black text-[10px] text-blue-600 tracking-widest bg-slate-50/30 group-hover:bg-blue-50/30 transition-all">
                                         #{order.id.slice(0, 8).toUpperCase()}
                                     </TableCell>
@@ -300,6 +302,7 @@ export default function SalesPage() {
                                             variant="outline"
                                             size="sm"
                                             className="h-10 px-6 font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 rounded-2xl transition-all active:scale-95"
+                                            onClick={(e) => { e.stopPropagation(); router.push(`/invoice/${order.id}`); }}
                                         >
                                             View Details
                                         </Button>

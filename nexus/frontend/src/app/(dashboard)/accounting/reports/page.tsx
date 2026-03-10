@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { BarChart2, CheckCircle2, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart2, CheckCircle2, AlertCircle, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface TrialBalanceAccount {
     id: string;
@@ -76,12 +77,18 @@ export default function ReportsPage() {
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
-            <div>
-                <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
-                    <BarChart2 className="mr-4 h-9 w-9 text-violet-600" />
-                    Financial Reports
-                </h2>
-                <p className="text-slate-500 mt-2 font-medium">Core accounting reports for compliance and period-end review.</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+                        <BarChart2 className="mr-4 h-9 w-9 text-violet-600" />
+                        Financial Reports
+                    </h2>
+                    <p className="text-slate-500 mt-2 font-medium">Core accounting reports for compliance and period-end review.</p>
+                </div>
+                <Button variant="outline" onClick={loadReports} disabled={loading} className="shrink-0">
+                    <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                </Button>
             </div>
 
             <Tabs defaultValue="trial-balance" className="space-y-6">

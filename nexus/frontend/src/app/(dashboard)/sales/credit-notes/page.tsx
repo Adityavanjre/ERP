@@ -9,6 +9,7 @@ import { Receipt, Plus, Search, Filter, RefreshCw, FileText } from "lucide-react
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface CreditNote {
     id: string;
@@ -67,7 +68,9 @@ export default function CreditNotesPage() {
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200"
+                        onClick={() => toast.info("Issue Credit Note is not yet available. Please raise a credit note from the invoice detail page.")}
+                    >
                         <Plus className="w-4 h-4 mr-2" />
                         Issue Credit Note
                     </Button>
@@ -87,7 +90,9 @@ export default function CreditNotesPage() {
                             />
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                            <Button variant="ghost" size="sm" className="text-slate-500 font-bold uppercase text-[10px] tracking-widest"
+                                onClick={() => toast.info("Filter panel coming soon.")}
+                            >
                                 <Filter className="w-3 h-3 mr-2" />
                                 Filter
                             </Button>

@@ -114,6 +114,7 @@ export default function DashboardPage() {
     const [activity, setActivity] = useState<ActivityLog[]>([]);
     const [valueChain, setValueChain] = useState<ValueChainStep[]>([]);
     const [loading, setLoading] = useState(true);
+    const [syncDegraded, setSyncDegraded] = useState(false);
 
     const [enabledModules, setEnabledModules] = useState<string[]>([]);
     const [industryConfig, setIndustryConfig] = useState<IndustryConfig | null>(null);
@@ -161,6 +162,10 @@ export default function DashboardPage() {
             if (healthData) setHealthStats(healthData);
             if (actData) setActivity(actData);
             if (vcData) setValueChain(vcData);
+
+            // BUG-012: Mark sync degraded only if ALL data calls failed
+            const anySucceeded = cfgData || sumData || perfData || healthData || actData || vcData;
+            setSyncDegraded(!anySucceeded);
 
         } catch (err) {
             console.error("Data update error:", err);
@@ -228,10 +233,12 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
                         <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">System Status</p>
-                        <p className="text-xs text-emerald-600 font-mono font-black">CONTINUOUS SYNC ACTIVE</p>
+                        <p className={`text-xs font-mono font-black ${syncDegraded ? 'text-amber-500' : 'text-emerald-600'}`}>
+                            {syncDegraded ? 'SYNC DEGRADED' : 'CONTINUOUS SYNC ACTIVE'}
+                        </p>
                     </div>
-                    <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50/50 px-4 py-2 rounded-2xl shadow-sm">
-                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> Live Sync
+                    <Badge variant="outline" className={`px-4 py-2 rounded-2xl shadow-sm ${syncDegraded ? 'border-amber-200 text-amber-600 bg-amber-50/50' : 'border-blue-200 text-blue-600 bg-blue-50/50'}`}>
+                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> {syncDegraded ? 'Degraded' : 'Live Sync'}
                     </Badge>
                 </div>
             </div>
