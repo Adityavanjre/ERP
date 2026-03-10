@@ -41,6 +41,9 @@ interface WorkOrder {
             name: string;
         };
     };
+    producedQuantity?: number;
+    scrapQuantity?: number;
+    machineTimeHours?: number;
 }
 
 export default function WorkOrdersPage() {
@@ -129,7 +132,20 @@ export default function WorkOrdersPage() {
                         <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Avg. Efficiency</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center">
-                        <div className="text-3xl font-black text-slate-900 tracking-tighter">98.2%</div>
+                        <div className="text-3xl font-black text-slate-900 tracking-tighter">
+                            {(() => {
+                                const completedOrders = workOrders.filter(wo => wo.status === 'Completed' && wo.producedQuantity && wo.producedQuantity > 0);
+                                if (completedOrders.length === 0) return "100%";
+                                let totalProduced = 0;
+                                let totalScrap = 0;
+                                completedOrders.forEach(wo => {
+                                    totalProduced += Number(wo.producedQuantity) || 0;
+                                    totalScrap += Number(wo.scrapQuantity) || 0;
+                                });
+                                const efficiency = totalProduced / (totalProduced + totalScrap) * 100;
+                                return `${efficiency.toFixed(1)}%`;
+                            })()}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -192,7 +208,7 @@ export default function WorkOrdersPage() {
                                             {wo.startDate ? new Date(wo.startDate).toLocaleDateString() : 'N/A'}
                                         </div>
                                         <div className="flex items-center text-[9px] text-slate-400 font-medium mt-1 uppercase tracking-tighter">
-                                            <Clock className="h-3 w-3 mr-1" /> Estimated 4h 30m
+                                            <Clock className="h-3 w-3 mr-1" /> {wo.machineTimeHours ? `${wo.machineTimeHours}h Logged` : 'Pending Time'}
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right pr-8">
