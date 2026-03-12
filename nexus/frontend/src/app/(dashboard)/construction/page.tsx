@@ -1,7 +1,7 @@
 
 "use client";
 
-import { HardHat, LayoutGrid, Users, ShieldCheck, ArrowRight, Home, Hammer } from "lucide-react";
+import { LayoutGrid, ShieldCheck, ArrowRight, Home, Hammer } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 

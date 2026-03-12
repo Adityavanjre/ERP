@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 export class AuditService {
   private readonly logger = new Logger(AuditService.name);
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   /**
    * Logs an enterprise-grade audit trail entry.
@@ -49,9 +49,9 @@ export class AuditService {
 
       const entryHash = process.env.AUDIT_HMAC_SECRET
         ? crypto
-          .createHmac('sha256', process.env.AUDIT_HMAC_SECRET)
-          .update(canonicalInput)
-          .digest('hex')
+            .createHmac('sha256', process.env.AUDIT_HMAC_SECRET)
+            .update(canonicalInput)
+            .digest('hex')
         : null;
 
       return await this.prisma.auditLog.create({

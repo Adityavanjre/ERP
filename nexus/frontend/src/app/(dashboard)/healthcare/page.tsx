@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Users, Search, Plus, Filter, MoreHorizontal, FileText, Calendar, Activity } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";

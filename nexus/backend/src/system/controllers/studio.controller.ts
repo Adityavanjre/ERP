@@ -21,7 +21,7 @@ import { AuthenticatedRequest } from '../../common/interfaces/request.interface'
 @Roles(Role.Owner, Role.Manager)
 @Controller('system/studio')
 export class StudioController {
-  constructor(private readonly ormService: OrmService) { }
+  constructor(private readonly ormService: OrmService) {}
 
   @Post('models')
   defineModel(@Body() dto: DefineModelDto, @Req() req: AuthenticatedRequest) {

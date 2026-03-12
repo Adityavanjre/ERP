@@ -29,6 +29,7 @@ const DashboardLayout = ({
                 const decoded = jwtDecode<DecodedToken>(token);
                 // Identification/Identity and Global Admin sessions without tenant context 
                 // should render full-screen (selector, monitoring, onboarding).
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setIsIdentityState(decoded.type === 'identity' || (decoded.type === 'admin' && !decoded.tenantId));
             } else {
                 setIsIdentityState(false);

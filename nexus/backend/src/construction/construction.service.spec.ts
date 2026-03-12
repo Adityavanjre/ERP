@@ -9,7 +9,7 @@ import { TransactionType } from '@prisma/client';
 describe('ConstructionService', () => {
   let service: ConstructionService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     bOQ: {
       create: jest.fn(),
       findUnique: jest.fn(),

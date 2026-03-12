@@ -9,7 +9,8 @@ import { Truck, Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+
+import { IssueDebitNoteDialog } from "@/components/inventory/issue-debit-note-dialog";
 
 interface DebitNote {
     id: string;
@@ -29,13 +30,14 @@ export default function DebitNotesPage() {
     const [notes, setNotes] = useState<DebitNote[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isIssuing, setIsIssuing] = useState(false);
 
     const fetchNotes = React.useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.get("/accounting/debit-notes");
             setNotes(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod
         } finally {
             setLoading(false);
@@ -66,10 +68,15 @@ export default function DebitNotesPage() {
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
-                    <Button onClick={() => toast.info("Debit Note creation module is coming in the next update.")} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200">
+                    <Button onClick={() => setIsIssuing(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200">
                         <Plus className="w-4 h-4 mr-2" />
                         Issue Debit Note
                     </Button>
+                    <IssueDebitNoteDialog
+                        open={isIssuing}
+                        onOpenChange={setIsIssuing}
+                        onSuccess={() => fetchNotes()}
+                    />
                 </div>
             </div>
 

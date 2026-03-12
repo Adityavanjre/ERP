@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CreateBOMDialog } from "@/components/manufacturing/create-bom-dialog";
-import { BOMDetailsDialog } from "@/components/manufacturing/bom-details-dialog";
+
 
 interface BOMItem {
     id: string;
@@ -67,7 +67,7 @@ export default function BOMPage() {
             if (showLoading) setLoading(true);
             const res = await api.get("manufacturing/boms");
             setBoms(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Logic Struct sync failed silently
         } finally {
             setLoading(false);
@@ -83,7 +83,7 @@ export default function BOMPage() {
             ]);
             setSelectedBom(bomRes.data);
             setCostAnalysis(costRes.data);
-        } catch (err) {
+        } catch {
             // Error handled by showing empty state
         } finally {
             setDetailsLoading(false);

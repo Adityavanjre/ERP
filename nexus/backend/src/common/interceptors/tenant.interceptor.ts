@@ -9,7 +9,7 @@ import { TenantContextService } from '../../prisma/tenant-context.service';
 
 @Injectable()
 export class TenantInterceptor implements NestInterceptor {
-  constructor(private readonly tenantContext: TenantContextService) { }
+  constructor(private readonly tenantContext: TenantContextService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -18,13 +18,20 @@ export class TenantInterceptor implements NestInterceptor {
     const userId = user?.sub || user?.id; // Allow JWT sub or explicit user object ID
     const role = user?.role;
     const userType = user?.type;
-    const isRegistrationFlow = !tenantId && !userId && request.url.includes('/auth/register');
+    const isRegistrationFlow =
+      !tenantId && !userId && request.url.includes('/auth/register');
 
     if (tenantId || isRegistrationFlow) {
       return new Observable((observer) => {
-        this.tenantContext.run(tenantId || 'SYSTEM_INIT', userId, role, userType, () => {
-          next.handle().subscribe(observer);
-        });
+        this.tenantContext.run(
+          tenantId || 'SYSTEM_INIT',
+          userId,
+          role,
+          userType,
+          () => {
+            next.handle().subscribe(observer);
+          },
+        );
       });
     }
 

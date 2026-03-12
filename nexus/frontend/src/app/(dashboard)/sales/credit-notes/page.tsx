@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { IssueCreditNoteDialog } from "@/components/inventory/issue-credit-note-dialog";
 
 interface CreditNote {
     id: string;
@@ -30,13 +31,14 @@ export default function CreditNotesPage() {
     const [notes, setNotes] = useState<CreditNote[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [isIssuing, setIsIssuing] = useState(false);
 
     const fetchNotes = React.useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.get("/accounting/credit-notes");
             setNotes(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod
         } finally {
             setLoading(false);
@@ -69,11 +71,16 @@ export default function CreditNotesPage() {
                         Refresh
                     </Button>
                     <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200"
-                        onClick={() => toast.info("Issue Credit Note is not yet available. Please raise a credit note from the invoice detail page.")}
+                        onClick={() => setIsIssuing(true)}
                     >
                         <Plus className="w-4 h-4 mr-2" />
                         Issue Credit Note
                     </Button>
+                    <IssueCreditNoteDialog
+                        open={isIssuing}
+                        onOpenChange={setIsIssuing}
+                        onSuccess={() => fetchNotes()}
+                    />
                 </div>
             </div>
 

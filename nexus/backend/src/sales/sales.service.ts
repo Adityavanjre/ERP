@@ -13,10 +13,17 @@ export class SalesService {
     private prisma: PrismaService,
     private accountingService: AccountingService,
     private audit: AuditService,
-  ) { }
+  ) {}
 
   async createOrder(tenantId: string, data: any, user?: any) {
-    const { items, customerId, idempotencyKey, orderDate, issueDate, ...orderData } = data;
+    const {
+      items,
+      customerId,
+      idempotencyKey,
+      orderDate,
+      issueDate,
+      ...orderData
+    } = data;
     const channel = user?.channel || 'WEB';
     const role = user?.role;
 
@@ -88,8 +95,7 @@ export class SalesService {
             invoiceNumber: `INV-${order.id.split('-')[0].toUpperCase()}`,
             issueDate: data.orderDate || data.issueDate || new Date(),
             dueDate:
-              data.dueDate ||
-              new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             items: items.map((i: any) => ({
               productId: i.productId,
               quantity: new Decimal(i.quantity),
@@ -151,11 +157,15 @@ export class SalesService {
     if (!order) throw new BadRequestException('Order not found');
 
     // BUG-007 FIX: Security Guard: Prevent modifying old orders in locked periods
-    // By checking 'order.createdAt' instead of 'new Date()', we strictly 
+    // By checking 'order.createdAt' instead of 'new Date()', we strictly
     // prevent modification of historical orders that belong to a closed period.
     return this.prisma.$transaction(async (tx) => {
       // BUG-FIN-013 FIX: Secure Period Lock Validation natively within transaction
-      await this.accountingService.checkPeriodLock(tenantId, order.createdAt, tx);
+      await this.accountingService.checkPeriodLock(
+        tenantId,
+        order.createdAt,
+        tx,
+      );
 
       return tx.order.update({
         where: { id },

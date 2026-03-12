@@ -16,15 +16,15 @@ const eslintConfig = defineConfig([
   // Project-level rule overrides: demote to warnings while debt is being paid down.
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
-      "@typescript-eslint/no-empty-object-type": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "react/no-unescaped-entities": "warn",
-      "@next/next/no-img-element": "warn",
-      "prefer-const": "warn",
-      "no-empty": "warn",
-      "react-hooks/set-state-in-effect": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-empty-object-type": "error",
+      "react-hooks/exhaustive-deps": "error",
+      "react/no-unescaped-entities": "error",
+      "@next/next/no-img-element": "error",
+      "prefer-const": "error",
+      "no-empty": "error",
+      "react-hooks/set-state-in-effect": "error",
     },
   },
 ]);

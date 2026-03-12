@@ -47,4 +47,4 @@ export const QUEUE_WEBHOOK_DLQ = 'webhook-dlq';
   ],
   exports: [BullModule],
 })
-export class QueueModule { }
+export class QueueModule {}

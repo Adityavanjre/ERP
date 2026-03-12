@@ -45,8 +45,8 @@ export default function WorkflowBuilder() {
             if (showLoading) setLoading(true);
             const res = await api.get(`/system/workflows/${modelName}`);
             setWorkflows(res.data);
-        } catch (err) {
-            // Suppressed in prod: Workflows sync failed silently
+        } catch {
+            // silent
         } finally {
             setLoading(false);
         }

@@ -56,7 +56,7 @@ export default function WorkOrdersPage() {
             if (showLoading) setLoading(true);
             const res = await api.get("manufacturing/work-orders");
             setWorkOrders(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Execution Queue sync failed silently
         } finally {
             setLoading(false);

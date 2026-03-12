@@ -17,6 +17,7 @@ describe('LedgerService (Financial Integrity)', () => {
     account: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
       updateMany: jest.fn(),
     },
     journalEntry: {
@@ -27,7 +28,7 @@ describe('LedgerService (Financial Integrity)', () => {
       createMany: jest.fn(),
     },
     $transaction: jest.fn((cb) => cb(mockPrisma)),
-  };
+  } as any;
 
   const mockTrace = {
     getCorrelationId: jest.fn().mockReturnValue('test-trace-id'),
@@ -93,7 +94,7 @@ describe('LedgerService (Financial Integrity)', () => {
         { id: 'a1', type: 'Asset' },
         { id: 'a2', type: 'Liability' },
       ]);
-      mockPrisma.account.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.account.update.mockResolvedValue({ count: 1 });
       mockPrisma.periodLock.findUnique.mockResolvedValue(null); // Not locked
 
       const result = await service.createJournalEntry(

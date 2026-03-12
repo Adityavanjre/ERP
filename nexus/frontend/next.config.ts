@@ -40,6 +40,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+    // Enable standalone output for Docker/Render deployments
+    output: 'standalone',
     // Monorepo support: Transpile shared package for both client and server runtime
     transpilePackages: ['@nexus/shared'],
     // Point Next.js file tracing to the monorepo root to silence

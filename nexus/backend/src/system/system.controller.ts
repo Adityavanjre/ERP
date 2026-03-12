@@ -32,7 +32,7 @@ export class SystemController {
     private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) { }
+  ) {}
 
   @Get('stats')
   @Roles(Role.Owner, Role.Manager, Role.Accountant)
@@ -72,8 +72,19 @@ export class SystemController {
       'General';
     const config = getIndustryConfig(industry);
 
+    // Extract any Super Admin module overrides
+    const extraModulesStr =
+      (req.user.tenant?.businessType || '').split('|')[1] || '';
+    const extraModules = extraModulesStr ? extraModulesStr.split(',') : [];
+
+    // Merge standard industry modules with overridden extra modules
+    const mergedModules = [
+      ...new Set([...(config.enabledModules || []), ...extraModules]),
+    ];
+
     return {
       ...config,
+      enabledModules: mergedModules,
       industry: industry,
     };
   }

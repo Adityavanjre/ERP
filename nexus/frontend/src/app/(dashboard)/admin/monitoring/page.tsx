@@ -64,7 +64,7 @@ export default function FounderMonitoring() {
             if (showLoading) setLoading(true);
             const res = await api.get("system/founder-dashboard");
             setData(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Dashboard sync failed silently
         } finally {
             setLoading(false);
@@ -208,7 +208,7 @@ export default function FounderMonitoring() {
                                                 const res = await api.post('auth/select-tenant', { tenantId: tenant.tenantId });
                                                 localStorage.setItem('k_token', res.data.accessToken);
                                                 router.push('/portal/dashboard');
-                                            } catch (err) {
+                                            } catch {
                                                 toast.error("Shadow Access Failed: Infrastructure bypass rejected.");
                                             }
                                         }}

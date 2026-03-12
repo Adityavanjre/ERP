@@ -53,6 +53,11 @@ interface InventoryStats {
     totalValue: number;
 }
 
+interface Warehouse {
+    id: string;
+    name: string;
+}
+
 interface ForecastRecommendation {
     sku: string;
     name: string;
@@ -89,7 +94,7 @@ export default function InventoryPage() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("ALL");
-    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [obProduct, setObProduct] = useState<Product | null>(null);
     const [mounted, setMounted] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);

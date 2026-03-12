@@ -605,8 +605,8 @@ export class AccountingService {
     });
 
     // Invalidate Cache for this specific period in LedgerService
-    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
-    await (this.ledger as any).cacheManager.delete(cacheKey);
+    const cacheKey = `nexus:period_lock:${tenantId}:${month}:${year}`;
+    await (this.ledger as any).cacheManager.del(cacheKey);
 
     return lock;
   }
@@ -637,8 +637,8 @@ export class AccountingService {
     });
 
     // Invalidate Cache
-    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
-    await (this.ledger as any).cacheManager.delete(cacheKey);
+    const cacheKey = `nexus:period_lock:${tenantId}:${month}:${year}`;
+    await (this.ledger as any).cacheManager.del(cacheKey);
 
     return lock;
   }

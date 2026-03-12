@@ -16,7 +16,7 @@ export class LedgerService {
     @Inject(CACHE_MANAGER) private cacheManager: any,
     private readonly traceService: TraceService,
     private billing: BillingService,
-  ) { }
+  ) {}
 
   round2(val: number | string | Decimal): Decimal {
     if (val instanceof Decimal) {

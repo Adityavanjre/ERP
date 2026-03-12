@@ -59,7 +59,7 @@ export default function AuditorDashboard() {
             if (showLoading) setLoading(true);
             const res = await api.get(`accounting/auditor/dashboard?month=${month}&year=${year}`);
             setData(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Auditor sync failed silently
         } finally {
             setLoading(false);
@@ -94,7 +94,7 @@ export default function AuditorDashboard() {
             setIsReopening(false);
             setReopenReason("");
             syncAuditorData(true);
-        } catch (err) {
+        } catch {
             // Suppressed in prod
             toast.error("Failed to reopen period");
         }
@@ -127,7 +127,7 @@ export default function AuditorDashboard() {
             link.click();
             link.remove();
             toast.success("Vouchers exported successfully");
-        } catch (err) {
+        } catch {
             // Suppressed in prod
             toast.error("Failed to generate Tally Export");
         }
@@ -147,7 +147,7 @@ export default function AuditorDashboard() {
             link.click();
             link.remove();
             toast.success("Masters exported successfully");
-        } catch (err) {
+        } catch {
             // Suppressed in prod
             toast.error("Failed to generate Tally Masters");
         }

@@ -15,7 +15,7 @@ export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private logging: LoggingService,
-  ) { }
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -42,7 +42,11 @@ export class RolesGuard implements CanActivate {
     // 🔴 DEEP FIX: Global Token Rejection
     // Identity or Admin tokens (no tenantId/role) MUST NOT access generic endpoints
     // unless explicitly tagged with @AllowIdentity()
-    if (user.type === 'identity' || user.type === 'admin' || user.type === 'mfa_setup_pending') {
+    if (
+      user.type === 'identity' ||
+      user.type === 'admin' ||
+      user.type === 'mfa_setup_pending'
+    ) {
       const allowIdentity = this.reflector.getAllAndOverride<boolean>(
         ALLOW_IDENTITY_KEY,
         [context.getHandler(), context.getClass()],
@@ -95,13 +99,15 @@ export class RolesGuard implements CanActivate {
         this.logging
           .log({
             userId: user.sub,
-            action: isHighPrivilege ? 'SECURITY_WARNING_MISSING_RBAC' : 'SECURITY_VIOLATION_MISSING_RBAC',
+            action: isHighPrivilege
+              ? 'SECURITY_WARNING_MISSING_RBAC'
+              : 'SECURITY_VIOLATION_MISSING_RBAC',
             resource: context.getClass().name,
             details: {
               handler: context.getHandler().name,
               reason: 'Mutation endpoint is missing @Roles() decorator',
               status: isHighPrivilege ? 'ALLOWED_BY_FALLBACK' : 'BLOCKED',
-              userRole: user.role
+              userRole: user.role,
             },
             ipAddress: request.ip,
           })
@@ -112,7 +118,7 @@ export class RolesGuard implements CanActivate {
         if (!isHighPrivilege) {
           throw new ForbiddenException(
             `Strict RBAC Enforcement: This mutation (${request.method} ${request.url}) is missing an explicit @Roles() assignment. ` +
-            `Access has been blocked for non-admin role: ${user.role}. Please contact support or use a high-privilege account.`,
+              `Access has been blocked for non-admin role: ${user.role}. Please contact support or use a high-privilege account.`,
           );
         }
       }

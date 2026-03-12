@@ -27,6 +27,7 @@ interface MinimalWorkOrder {
     id: string;
     orderNumber: string;
     quantity: number;
+    machineId?: string;
     bom?: {
         product?: {
             name: string;
@@ -35,6 +36,11 @@ interface MinimalWorkOrder {
 }
 
 interface Machine {
+    id: string;
+    name: string;
+}
+
+interface Warehouse {
     id: string;
     name: string;
 }
@@ -62,25 +68,34 @@ export function CompleteWorkOrderDialog({
     // Real-world defaults
     const [producedQuantity, setProducedQuantity] = useState(workOrder.quantity.toString());
     const [scrapQuantity, setScrapQuantity] = useState("0");
-    const [machineId, setMachineId] = useState("");
+    const [machineId, setMachineId] = useState(workOrder.machineId || "");
     const [machineTimeHours, setMachineTimeHours] = useState("0");
     const [operatorName, setOperatorName] = useState("");
+    const [warehouseId, setWarehouseId] = useState("");
     const [machines, setMachines] = useState<Machine[]>([]);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
-    const fetchMachines = useCallback(async () => {
+    const fetchMachinesAndWarehouses = useCallback(async () => {
         try {
-            const res = await api.get("manufacturing/machines");
-            setMachines(res.data || []);
+            const [mRes, wRes] = await Promise.all([
+                api.get("manufacturing/machines"),
+                api.get("inventory/warehouses")
+            ]);
+            setMachines(mRes.data || []);
+            setWarehouses(wRes.data || []);
+            if (wRes.data && wRes.data.length > 0) {
+                setWarehouseId(wRes.data[0].id);
+            }
         } catch {
-            // Ignore fetch errors for machines
+            // Ignore fetch errors
         }
     }, []);
 
     useEffect(() => {
         if (open) {
-            fetchMachines();
+            fetchMachinesAndWarehouses();
         }
-    }, [open, fetchMachines]);
+    }, [open, fetchMachinesAndWarehouses]);
 
     const handleComplete = useCallback(async () => {
         try {
@@ -103,7 +118,9 @@ export function CompleteWorkOrderDialog({
                 scrapQuantity: scrQty,
                 machineId: machineId || undefined,
                 machineTimeHours: Number(machineTimeHours),
-                operatorName: operatorName
+                operatorName: operatorName,
+                warehouseId: warehouseId || undefined,
+                idempotencyKey: `wo-comp-${workOrder.id}-${Date.now()}`
             });
 
             toast.success("Work order completed successfully.");
@@ -115,7 +132,7 @@ export function CompleteWorkOrderDialog({
         } finally {
             setLoading(false);
         }
-    }, [producedQuantity, scrapQuantity, machineId, machineTimeHours, operatorName, workOrder.id, refreshData]);
+    }, [producedQuantity, scrapQuantity, machineId, machineTimeHours, operatorName, warehouseId, workOrder.id, refreshData]);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -191,6 +208,21 @@ export function CompleteWorkOrderDialog({
                                 onChange={(e) => setMachineTimeHours(e.target.value)}
                             />
                         </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label className="text-slate-700 font-bold">Target Warehouse</Label>
+                        <Select value={warehouseId} onValueChange={setWarehouseId}>
+                            <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select warehouse" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {warehouses.map((w) => (
+                                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-slate-500 mt-1">Finished goods will be added to this inventory location.</p>
                     </div>
 
                     <div className="grid gap-2">

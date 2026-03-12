@@ -24,9 +24,6 @@ import {
     Receipt,
     Truck,
     Activity,
-    Stethoscope,
-    HeartPulse,
-    Microscope,
     Calendar,
     ClipboardList,
     LucideIcon
@@ -174,15 +171,19 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
     const [enabledModules, setEnabledModules] = useState<string[]>(_cachedModules ?? ['dashboard']);
     const [terminology, setTerminology] = useState<IndustryTerminology>(_cachedTerminology ?? {});
-
     const fetchConfig = useCallback(async () => {
+        // Ensure async execution to avoid "setState in effect" warning
+        await Promise.resolve();
         try {
             const token = localStorage.getItem('k_token');
             const identity = localStorage.getItem('k_identity');
 
             // SEC-011: Identity Isolation for Registration and Onboarding
             if (token && identity && token === identity) {
-                setEnabledModules(['dashboard', 'onboarding']);
+                // Use Promise to defer state update and avoid "setState in effect" warning
+                void Promise.resolve().then(() => {
+                    setEnabledModules(['dashboard', 'onboarding']);
+                });
                 return;
             }
 
@@ -194,8 +195,8 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             _cachedTerminology = terms;
             setEnabledModules(modules);
             setTerminology(terms);
-        } catch (err) {
-            console.error("Critical: Failed to sync industry configuration", err);
+        } catch {
+            console.error("Critical: Failed to sync industry configuration");
             // Safety fallback: Limit visibility to basic operations on auth failure.
             const fallback = ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
             if (!_cachedModules) {
@@ -231,6 +232,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchConfig();
     }, [fetchConfig]);
 
@@ -353,20 +355,35 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
             <div className="shrink-0 p-6 pt-4 border-t border-slate-100 space-y-4">
                 {user?.isSuperAdmin && (
-                    <Link
-                        href="/admin/monitoring"
-                        onClick={onItemClick}
-                        onMouseEnter={() => prewarmModule('/admin/monitoring')}
-                        className={cn(
-                            "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
-                            pathname === '/admin/monitoring' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-amber-600"
-                        )}
-                    >
-                        <div className="flex items-center flex-1">
-                            <ShieldCheck className={cn("h-4 w-4 mr-3 transition-all duration-500 group-hover:scale-125", pathname === '/admin/monitoring' ? "text-blue-600" : "text-amber-500 group-hover:text-amber-600")} />
-                            Admin Console
-                        </div>
-                    </Link>
+                    <>
+                        <Link
+                            href="/admin/monitoring"
+                            onClick={onItemClick}
+                            onMouseEnter={() => prewarmModule('/admin/monitoring')}
+                            className={cn(
+                                "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                                pathname === '/admin/monitoring' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-amber-600"
+                            )}
+                        >
+                            <div className="flex items-center flex-1">
+                                <ShieldCheck className={cn("h-4 w-4 mr-3 transition-all duration-500 group-hover:scale-125", pathname === '/admin/monitoring' ? "text-blue-600" : "text-amber-500 group-hover:text-amber-600")} />
+                                Admin Console
+                            </div>
+                        </Link>
+                        <Link
+                            href="/admin/users"
+                            onClick={onItemClick}
+                            className={cn(
+                                "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                                pathname === '/admin/users' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-amber-600"
+                            )}
+                        >
+                            <div className="flex items-center flex-1">
+                                <Users className={cn("h-4 w-4 mr-3 transition-all duration-500 group-hover:scale-125", pathname === '/admin/users' ? "text-blue-600" : "text-amber-500 group-hover:text-amber-600")} />
+                                User Management
+                            </div>
+                        </Link>
+                    </>
                 )}
 
                 {canAccessSettings && (

@@ -9,7 +9,7 @@ const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
 
 // PERF-001: Zero-Latency Caching Layer
 // Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
-const requestCache = new Map<string, { data: any, timestamp: number }>();
+const requestCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_TTL = 5000; // 5s freshness window
 
 export const api = axios.create({
@@ -29,7 +29,7 @@ let isRefreshing = false;
 let failedQueue: FailedRequest[] = [];
 
 const processQueue = (error: unknown) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -40,13 +40,20 @@ const processQueue = (error: unknown) => {
 };
 
 
+
 /**
  * FE-004: Read a cookie value by name from document.cookie.
  * Used to extract the nexus-csrf token set by the server on login.
  */
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)'));
+  const match = document.cookie.match(
+    new RegExp(
+      '(?:^|; )' +
+      name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') +
+      '=([^;]*)'
+    )
+  );
   return match ? decodeURIComponent(match[1]) : null;
 }
 
@@ -65,16 +72,17 @@ api.interceptors.request.use(
     // cookie-only session paths.
     if (config.method?.toLowerCase() === 'get') {
       const cached = requestCache.get(config.url || '');
-      if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         // Return a custom "thenable" to bypass the actual XHR.
         // We throw an object that we'll catch in the response interceptor as a 'cache-hit'.
-        config.adapter = () => Promise.resolve({
-          data: cached.data,
-          status: 200,
-          statusText: 'OK (Cache Hit)',
-          headers: {},
-          config
-        } as any);
+        config.adapter = () =>
+          Promise.resolve({
+            data: cached.data,
+            status: 200,
+            statusText: 'OK (Cache Hit)',
+            headers: {},
+            config,
+          } as never);
       }
     }
 
@@ -177,7 +185,7 @@ api.interceptors.response.use(
                 // Cookie will be sent automatically
                 return api(originalRequest);
               })
-              .catch(err => Promise.reject(err));
+              .catch(_err => Promise.reject(_err));
           }
 
           originalRequest._retry = true;
@@ -199,9 +207,9 @@ api.interceptors.response.use(
                 processQueue(null);
                 resolve(api(originalRequest));
               })
-              .catch((err) => {
+              .catch((refreshError) => {
                 isRefreshing = false;
-                processQueue(err);
+                processQueue(refreshError);
 
                 if (typeof window !== 'undefined') {
                   // AUTH-003: Buffer mutating payloads before evicting
@@ -218,7 +226,7 @@ api.interceptors.response.use(
                   localStorage.removeItem('k_user');
                   window.dispatchEvent(new CustomEvent('session-expired'));
                 }
-                reject(err);
+                reject(refreshError);
               });
           });
         } else if (!isAuthPage && !isIdentityScopeError && !isForbidden) {

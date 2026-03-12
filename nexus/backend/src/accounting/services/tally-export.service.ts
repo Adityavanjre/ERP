@@ -14,7 +14,7 @@ export class TallyService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) { }
+  ) {}
 
   private escapeXml(unsafe: string): string {
     if (!unsafe) return '';
@@ -180,8 +180,8 @@ export class TallyService {
       confidenceScore: Math.max(
         0,
         100 -
-        errors.length * 15 -
-        riskFlags.filter((f) => f.severity === 'BLOCKER').length * 25,
+          errors.length * 15 -
+          riskFlags.filter((f) => f.severity === 'BLOCKER').length * 25,
       ),
     };
   }
@@ -511,12 +511,12 @@ export class TallyService {
         const dateStr = pay.date.toISOString().split('T')[0].replace(/-/g, '');
         const partyName = isReceipt
           ? this.escapeXml(
-            pay.customer?.company || pay.customer?.firstName || 'Customer',
-          )
+              pay.customer?.company || pay.customer?.firstName || 'Customer',
+            )
           : this.escapeXml(pay.supplier?.name || 'Supplier');
         const refNo = this.escapeXml(
           pay.reference ||
-          (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8),
+            (isReceipt ? 'RECT-' : 'PAY-') + pay.id.substring(0, 8),
         );
         const vchType = isReceipt ? 'Receipt' : 'Payment';
 
@@ -877,7 +877,7 @@ export class TallyService {
     action: 'LOCK' | 'UNLOCK',
     reason?: string,
   ) {
-    const cacheKey = `period_lock_${tenantId}_${month}_${year}`;
+    const cacheKey = `nexus:period_lock:${tenantId}:${month}:${year}`;
 
     if (action === 'LOCK') {
       const validation = await this.validateTallyData(tenantId, month, year);

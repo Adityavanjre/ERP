@@ -79,7 +79,7 @@ export class BulkImportProcessor extends WorkerHost {
           // Robust CSV Split (handles quotes)
           const parseCSV = (content: string) => {
             const lines = content.trim().split('\n');
-            return lines.map(line => {
+            return lines.map((line) => {
               const result = [];
               let cell = '';
               let inQuotes = false;
@@ -97,7 +97,7 @@ export class BulkImportProcessor extends WorkerHost {
           };
 
           const allRows = parseCSV(csvContent);
-          const headers = allRows[0].map(h => h.toLowerCase());
+          const headers = allRows[0].map((h) => h.toLowerCase());
           const dataRows = allRows.slice(1);
 
           let processedCount = 0;
@@ -116,7 +116,9 @@ export class BulkImportProcessor extends WorkerHost {
             // Delegate to specific logic based on type
             if (type === 'products') {
               await this.prisma.product.upsert({
-                where: { tenantId_sku: { tenantId, sku: rowData.sku || rowData.code } },
+                where: {
+                  tenantId_sku: { tenantId, sku: rowData.sku || rowData.code },
+                },
                 update: {
                   name: rowData.name,
                   description: rowData.description,
@@ -142,8 +144,13 @@ export class BulkImportProcessor extends WorkerHost {
                 await this.prisma.customer.update({
                   where: { id: existing.id },
                   data: {
-                    firstName: rowData.firstname || rowData.name?.split(' ')[0] || 'Unknown',
-                    lastName: rowData.lastname || rowData.name?.split(' ').slice(1).join(' '),
+                    firstName:
+                      rowData.firstname ||
+                      rowData.name?.split(' ')[0] ||
+                      'Unknown',
+                    lastName:
+                      rowData.lastname ||
+                      rowData.name?.split(' ').slice(1).join(' '),
                     phone: rowData.phone,
                   },
                 });
@@ -152,8 +159,13 @@ export class BulkImportProcessor extends WorkerHost {
                   data: {
                     tenantId,
                     email: rowData.email,
-                    firstName: rowData.firstname || rowData.name?.split(' ')[0] || 'Unknown',
-                    lastName: rowData.lastname || rowData.name?.split(' ').slice(1).join(' '),
+                    firstName:
+                      rowData.firstname ||
+                      rowData.name?.split(' ')[0] ||
+                      'Unknown',
+                    lastName:
+                      rowData.lastname ||
+                      rowData.name?.split(' ').slice(1).join(' '),
                     phone: rowData.phone,
                     status: 'Customer',
                   },
@@ -214,7 +226,7 @@ export class BulkImportProcessor extends WorkerHost {
             `[JOB:${job.id}] Bulk import complete. Rows: ${processedCount}`,
           );
           return { processedCount };
-        } // end tenantContext.run
+        }, // end tenantContext.run
       );
     } catch (err: any) {
       await (this.prisma as any).backgroundJob.update({

@@ -24,6 +24,7 @@ interface DecodedToken {
     role?: string;
     type?: string;
     isOnboarded?: boolean;
+    tenantId?: string;
 }
 
 function isRouteAllowed(pathname: string, role: string): boolean {
@@ -50,7 +51,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const handleSessionExpired = () => {
-            console.log("[AuthGuard] Event 'session-expired' received, redirecting to /login");
             setAuthorized(false);
             router.push("/login");
         };
@@ -59,9 +59,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         const checkAuth = () => {
             const token = localStorage.getItem("k_token");
-            console.log("[AuthGuard] checkAuth initiated. Token exists?", !!token);
             if (!token) {
-                console.log("[AuthGuard] No token found in localStorage, redirecting to /login");
                 router.push("/login");
                 return;
             }
@@ -71,8 +69,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 const role = decoded.role;
                 const type = decoded.type;
                 const isOnboarded = decoded.isOnboarded;
-
-                const tenantId = (decoded as any).tenantId;
+                const tenantId = decoded.tenantId;
 
                 // 1. Identity/Admin Token handling (No specific tenant scoped yet)
                 // If it's an admin with a tenantId, it's a Shadow Mode session and should be treated as Scoped.
@@ -89,7 +86,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
                 // 2. Tenant Scoped handling
                 if (!role) {
-                    console.log("[AuthGuard] Token decoded but no role found. Redirecting to /login. Decoded payload:", decoded);
                     router.push("/login");
                     return;
                 }
@@ -113,8 +109,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 }
 
                 setAuthorized(true);
-            } catch (err) {
-                console.error("[AuthGuard] Auth check failed or token invalid", err);
+            } catch {
                 router.push("/login");
             }
         };
@@ -123,7 +118,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         const handleStorageEvent = (e: StorageEvent) => {
             if (e.key === 'k_token' || e.key === 'k_user') {
-                console.log("[AuthGuard] Cross-tab identity change detected (k_token/k_user changed). Re-evaluating access...");
                 checkAuth();
             }
         };

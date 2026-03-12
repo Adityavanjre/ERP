@@ -127,7 +127,7 @@ export default function CrmPage() {
 
             setStats(statsRes.data || { totalCustomers: 0, leads: 0, pipelineValue: 0, openDeals: 0 });
             setOpportunities(oppRes.data || []);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Relations sync failed silently
         } finally {
             setLoading(false);

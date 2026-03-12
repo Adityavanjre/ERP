@@ -70,7 +70,7 @@ export default function ProjectPage() {
             ]);
             setProjects(projRes.data);
             setStats(statsRes.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Projects load failed
             toast.error("Failed to load projects. Please refresh.");
         } finally {

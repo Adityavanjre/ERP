@@ -42,7 +42,7 @@ interface Warehouse {
 interface TransferStockDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    sourceWarehouse: Warehouse;
+    sourceWarehouse: Warehouse | null;
     onSuccess: () => void;
 }
 
@@ -82,6 +82,8 @@ export function TransferStockDialog({
     }, [open, fetchWarehouses]);
 
     const handleTransfer = useCallback(async () => {
+        if (!sourceWarehouse) return;
+
         if (!selectedProduct || !destinationWarehouseId || !quantity) {
             toast.error("Please fill all fields");
             return;
@@ -89,9 +91,9 @@ export function TransferStockDialog({
 
         setLoading(true);
         try {
-            await api.post("inventory/transfer", {
+            await api.post("inventory/transfers", {
                 productId: selectedProduct,
-                sourceWarehouseId: sourceWarehouse.id,
+                fromWarehouseId: sourceWarehouse.id,
                 destinationWarehouseId,
                 quantity: Number(quantity),
             });
@@ -108,7 +110,9 @@ export function TransferStockDialog({
         } finally {
             setLoading(false);
         }
-    }, [selectedProduct, destinationWarehouseId, quantity, sourceWarehouse.id, onSuccess, onOpenChange]);
+    }, [selectedProduct, destinationWarehouseId, quantity, sourceWarehouse?.id, onSuccess, onOpenChange]);
+
+    if (!sourceWarehouse) return null;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

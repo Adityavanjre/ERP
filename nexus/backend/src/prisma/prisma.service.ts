@@ -5,7 +5,8 @@ import { TenantContextService } from './tenant-context.service';
 @Injectable()
 export class PrismaService
   extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy {
+  implements OnModuleInit, OnModuleDestroy
+{
   private _isolatedClient: any;
   private _modelCache = new Map<string, boolean>();
   private static readonly GLOBAL_MODELS = new Set([
@@ -65,28 +66,54 @@ export class PrismaService
                                 typeof modelTarget[op] === 'function'
                               ) {
                                 return async (queryArgs: any = {}) => {
-                                  const isGlobal = PrismaService.GLOBAL_MODELS.has(txProp.toLowerCase());
+                                  const isGlobal =
+                                    PrismaService.GLOBAL_MODELS.has(
+                                      txProp.toLowerCase(),
+                                    );
 
                                   // SECURITY (SYS-010): Admin & System Bypass.
                                   // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
-                                  const isSystemAction = tenantId === 'SYSTEM_INIT';
+                                  const isSystemAction =
+                                    tenantId === 'SYSTEM_INIT';
 
                                   if (
-                                    (!tenantId && userType !== 'admin' && !isGlobal) ||
+                                    (!tenantId &&
+                                      userType !== 'admin' &&
+                                      !isGlobal) ||
                                     isGlobal ||
                                     isSystemAction
                                   ) {
-                                    if (isGlobal || userType === 'admin' || isSystemAction) return modelTarget[op](queryArgs);
+                                    if (
+                                      isGlobal ||
+                                      userType === 'admin' ||
+                                      isSystemAction
+                                    )
+                                      return modelTarget[op](queryArgs);
                                   }
 
                                   const enforceIsolation = (obj: any) => {
-                                    if (!obj || !tenantId || isSystemAction) return;
+                                    if (!obj || !tenantId || isSystemAction)
+                                      return;
+                                    if (
+                                      obj.tenantId &&
+                                      obj.tenantId !== tenantId
+                                    ) {
+                                      throw new Error(
+                                        `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected! Transaction attempted to access tenant '${obj.tenantId}' while in context of '${tenantId}'. Access blocked.`,
+                                      );
+                                    }
                                     obj.tenantId = tenantId;
                                   };
 
-                                  if (['create', 'createMany'].includes(op as string)) {
+                                  if (
+                                    ['create', 'createMany'].includes(
+                                      op as string,
+                                    )
+                                  ) {
                                     if (Array.isArray(queryArgs.data)) {
-                                      queryArgs.data.forEach((d: any) => enforceIsolation(d));
+                                      queryArgs.data.forEach((d: any) =>
+                                        enforceIsolation(d),
+                                      );
                                     } else {
                                       enforceIsolation(queryArgs.data);
                                     }
@@ -95,23 +122,48 @@ export class PrismaService
                                     enforceIsolation(queryArgs.update);
                                     enforceIsolation(queryArgs.where);
 
-                                    const userId = this.tenantContext.getUserId();
-                                    const userRole = this.tenantContext.getRole();
-                                    if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                                    const userId =
+                                      this.tenantContext.getUserId();
+                                    const userRole =
+                                      this.tenantContext.getRole();
+                                    if (
+                                      userId &&
+                                      !['Owner', 'Manager', 'CA'].includes(
+                                        userRole || '',
+                                      )
+                                    ) {
                                       if (this.hasCreatedById(txProp)) {
                                         queryArgs.where.createdById = userId;
                                       }
                                     }
-                                  } else if (['update', 'updateMany', 'delete', 'deleteMany'].includes(op as string)) {
+                                  } else if (
+                                    [
+                                      'update',
+                                      'updateMany',
+                                      'delete',
+                                      'deleteMany',
+                                    ].includes(op as string)
+                                  ) {
                                     queryArgs.where = queryArgs.where || {};
                                     enforceIsolation(queryArgs.where);
-                                    if (['update', 'updateMany'].includes(op as string)) {
+                                    if (
+                                      ['update', 'updateMany'].includes(
+                                        op as string,
+                                      )
+                                    ) {
                                       enforceIsolation(queryArgs.data);
                                     }
 
-                                    const userId = this.tenantContext.getUserId();
-                                    const userRole = this.tenantContext.getRole();
-                                    if (userId && !['Owner', 'Manager', 'CA'].includes(userRole || '')) {
+                                    const userId =
+                                      this.tenantContext.getUserId();
+                                    const userRole =
+                                      this.tenantContext.getRole();
+                                    if (
+                                      userId &&
+                                      !['Owner', 'Manager', 'CA'].includes(
+                                        userRole || '',
+                                      )
+                                    ) {
                                       if (this.hasCreatedById(txProp)) {
                                         queryArgs.where.createdById = userId;
                                       }
@@ -164,7 +216,9 @@ export class PrismaService
     const dmmfModel = Prisma.dmmf.datamodel.models.find(
       (m: any) => m.name.toLowerCase() === modelName.toLowerCase(),
     );
-    const hasField = !!dmmfModel?.fields.some((f: any) => f.name === 'createdById');
+    const hasField = !!dmmfModel?.fields.some(
+      (f: any) => f.name === 'createdById',
+    );
     this._modelCache.set(modelName, hasField);
     return hasField;
   }
@@ -177,7 +231,9 @@ export class PrismaService
         break;
       } catch (err) {
         retries--;
-        console.error(`[PrismaService] Connection failed. Retries left: ${retries}`);
+        console.error(
+          `[PrismaService] Connection failed. Retries left: ${retries}`,
+        );
         if (retries === 0) throw err;
         // ARCH-001: Faster failure for build-time audits
         const delay = process.env.NODE_ENV === 'production' ? 5000 : 1000;
@@ -200,22 +256,35 @@ export class PrismaService
             const tenantId = context.getTenantId();
             const userType = context.getUserType();
 
-            const isGlobal = PrismaService.GLOBAL_MODELS.has(model.toLowerCase());
+            const isGlobal = PrismaService.GLOBAL_MODELS.has(
+              model.toLowerCase(),
+            );
             const isSystemAction = tenantId === 'SYSTEM_INIT';
 
             // SECURITY (SYS-010): Admin & System Bypass.
             // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
             // IMPORTANT: If tenantId is present (Shadow Mode), we DO NOT bypass isolation.
-            if (isGlobal || (userType === 'admin' && !tenantId) || isSystemAction) {
+            if (
+              isGlobal ||
+              (userType === 'admin' && !tenantId) ||
+              isSystemAction
+            ) {
               return query(args);
             }
 
             if (!tenantId) {
-              throw new Error(`SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context.`);
+              throw new Error(
+                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context.`,
+              );
             }
 
             const enforceIsolation = (obj: any) => {
               if (!obj) return;
+              if (obj.tenantId && obj.tenantId !== tenantId) {
+                throw new Error(
+                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected! User attempted to access tenant '${obj.tenantId}' while in context of '${tenantId}'. Access blocked.`,
+                );
+              }
               obj.tenantId = tenantId;
             };
 
@@ -229,7 +298,11 @@ export class PrismaService
               enforceIsolation(args.create);
               enforceIsolation(args.update);
               enforceIsolation(args.where);
-            } else if (['update', 'updateMany', 'delete', 'deleteMany'].includes(operation)) {
+            } else if (
+              ['update', 'updateMany', 'delete', 'deleteMany'].includes(
+                operation,
+              )
+            ) {
               args.where = args.where || {};
               enforceIsolation(args.where);
               if (['update', 'updateMany'].includes(operation)) {
@@ -240,7 +313,7 @@ export class PrismaService
               enforceIsolation(args.where);
               // Handle findUnique isolation - Prisma doesn't allow extra fields in findUnique
               if (operation === 'findUnique') {
-                return (this._isolatedClient[model] as any).findFirst(args);
+                return this._isolatedClient[model].findFirst(args);
               }
             }
 

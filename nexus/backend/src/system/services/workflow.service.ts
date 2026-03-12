@@ -5,9 +5,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class WorkflowService {
   private readonly logger = new Logger(WorkflowService.name);
 
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async createWorkflow(tenantId: string, data: { name: string; modelName: string }) {
+  async createWorkflow(
+    tenantId: string,
+    data: { name: string; modelName: string },
+  ) {
     return this.prisma.workflowDefinition.create({
       data: {
         tenantId,

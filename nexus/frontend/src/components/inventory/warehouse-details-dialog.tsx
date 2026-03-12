@@ -94,7 +94,7 @@ export function WarehouseDetailsDialog({
                                     <TableRow className="border-slate-100 hover:bg-transparent">
                                         <TableHead className="text-slate-500 font-bold uppercase text-[9px] tracking-widest pl-6">Product</TableHead>
                                         <TableHead className="text-slate-500 font-bold uppercase text-[9px] tracking-widest">SKU</TableHead>
-                                        <TableHead className="text-slate-500 font-bold uppercase text-[9px] tracking-widest text-right pr-6">Initial Balance</TableHead>
+                                        <TableHead className="text-slate-500 font-bold uppercase text-[9px] tracking-widest text-right pr-6">In-Hand Stock</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

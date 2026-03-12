@@ -23,7 +23,7 @@ export class ManufacturingService {
     private accounting: AccountingService,
     private traceService: TraceService,
     private inventoryService: InventoryService,
-  ) { }
+  ) {}
 
   /**
    * Explodes a Bill of Materials recursively to find total raw material requirements.
@@ -174,6 +174,15 @@ export class ManufacturingService {
 
   // BOM Management
   async createBOM(tenantId: string, data: any) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: data.productId, tenantId },
+    });
+    if (!product) {
+      throw new NotFoundException(
+        'Product not found or access denied in your workspace.',
+      );
+    }
+
     return (this.prisma as any).billOfMaterial.create({
       data: {
         ...data,
@@ -278,27 +287,38 @@ export class ManufacturingService {
           where: { tenantId, productId: finishProd.id, status: 'Active' },
         });
 
-        if (bom) {
-          const existingItem = await this.prisma.bOMItem.findFirst({
-            where: { bomId: (bom as any).id, productId: ingredient.id },
+        let targetBom: any = bom;
+        if (!targetBom) {
+          targetBom = await (this.prisma as any).billOfMaterial.create({
+            data: {
+              tenantId,
+              productId: finishProd.id,
+              name: `Imported BOM - ${finishProd.name}`,
+              status: 'Active',
+              overheadRate: new Decimal(0),
+            },
           });
+        }
 
-          if (existingItem) {
-            await this.prisma.bOMItem.update({
-              where: { id: existingItem.id },
-              data: { quantity: new Decimal(qty) },
-            });
-          } else {
-            await (this.prisma as any).bOMItem.create({
-              data: {
-                tenantId,
-                bomId: (bom as any).id,
-                productId: ingredient.id,
-                quantity: new Decimal(qty),
-                unit: data.unit || 'Unit',
-              },
-            });
-          }
+        const existingItem = await this.prisma.bOMItem.findFirst({
+          where: { bomId: targetBom.id, productId: ingredient.id },
+        });
+
+        if (existingItem) {
+          await this.prisma.bOMItem.update({
+            where: { id: existingItem.id },
+            data: { quantity: new Decimal(qty) },
+          });
+        } else {
+          await (this.prisma as any).bOMItem.create({
+            data: {
+              tenantId,
+              bomId: targetBom.id,
+              productId: ingredient.id,
+              quantity: new Decimal(qty),
+              unit: data.unit || 'Unit',
+            },
+          });
         }
         results.imported++;
       } catch (e: any) {
@@ -412,6 +432,7 @@ export class ManufacturingService {
     tenantId: string,
     woId: string,
     warehouseId?: string,
+    machineId?: string,
     idempotencyKey?: string,
   ) {
     const wo = await this.prisma.workOrder.findFirst({
@@ -460,29 +481,21 @@ export class ManufacturingService {
         throw new Error('No valid warehouse found for production storage.');
 
       for (const req of requirements) {
-        const loc = await (tx.stockLocation as any).findUnique({
-          where: {
-            tenantId_productId_warehouseId_notes: {
-              tenantId,
-              productId: req.productId,
-              warehouseId: targetWarehouse,
-              notes: '',
-            },
+        // INV-008: Atomic Stock Movement to WIP
+        await this.inventoryService.deductStock(
+          tx,
+          req.productId,
+          targetWarehouse,
+          req.quantity,
+          '', // From main stock
+          {
+            tenantId,
+            reference: wo.orderNumber,
+            correlationId: (this.traceService as any).getCorrelationId(),
           },
-        });
+        );
 
-        if (!loc || loc.quantity.lessThan(req.quantity)) {
-          throw new BadRequestException(
-            `Insufficient stock for ${req.productName}. Required: ${req.quantity}, Available: ${loc?.quantity || 0}`,
-          );
-        }
-
-        // Move from RM/Normal to WIP
-        await tx.stockLocation.update({
-          where: { id: loc.id },
-          data: { quantity: { decrement: new Decimal(req.quantity) } },
-        });
-
+        // Record WIP Receipt in StockLocation
         const wipLoc = await (tx.stockLocation as any).findUnique({
           where: {
             tenantId_productId_warehouseId_notes: {
@@ -510,19 +523,6 @@ export class ManufacturingService {
             },
           });
         }
-
-        await (tx.stockMovement as any).create({
-          data: {
-            tenantId,
-            productId: req.productId,
-            warehouseId: targetWarehouse,
-            quantity: new Decimal(req.quantity),
-            type: 'OUT',
-            reference: wo.orderNumber,
-            notes: `WIP Issue: Production Start`,
-            correlationId: (this.traceService as any).getCorrelationId(), // Trace Link
-          },
-        });
 
         await (tx.stockMovement as any).create({
           data: {
@@ -581,9 +581,27 @@ export class ManufacturingService {
         }
       }
 
+      if (machineId) {
+        const machine = await (tx as any).machine.findUnique({
+          where: { id: machineId, tenantId },
+        });
+        if (!machine)
+          throw new NotFoundException(
+            'Machine not found or access denied in your workspace.',
+          );
+        await tx.machine.update({
+          where: { id: machineId },
+          data: { status: 'Running' },
+        });
+      }
+
       await tx.workOrder.update({
         where: { id: woId },
-        data: { status: 'InProgress', startDate: new Date() },
+        data: {
+          status: 'InProgress',
+          startDate: new Date(),
+          machineId: machineId || undefined,
+        },
       });
 
       await tx.auditLog.create({
@@ -594,11 +612,12 @@ export class ManufacturingService {
           details: {
             orderNumber: wo.orderNumber,
             warehouseId: warehouse.id,
+            machineId: machineId || null,
           } as any,
         },
       });
 
-      return { success: true, orderNumber: wo.orderNumber };
+      return { success: true, orderNumber: wo.orderNumber, machineId };
     });
   }
 
@@ -748,7 +767,7 @@ export class ManufacturingService {
       );
 
       return await this.prisma.$transaction(async (tx) => {
-        // BUG-002 FIX: Period lock check MUST occur inside the transaction 
+        // BUG-002 FIX: Period lock check MUST occur inside the transaction
         // to prevent race conditions where a period is locked immediately after the check.
         await this.accounting.checkPeriodLock(tenantId, new Date(), tx);
 
@@ -874,7 +893,9 @@ export class ManufacturingService {
             });
 
             if (previousIssue && previousIssue.transactions.length > 0) {
-              const issueValue = new Decimal(previousIssue.transactions[0].amount);
+              const issueValue = new Decimal(
+                previousIssue.transactions[0].amount,
+              );
               // If we are consuming exactly what was planned, use the exact recorded value to clear the account.
               // This prevents residuals if the Product costPrice was changed during production.
               if (new Decimal(wo.quantity).equals(totalConsumedQty)) {
@@ -955,8 +976,8 @@ export class ManufacturingService {
             // rather than posting an inaccurate fixed value to the ledger.
             const machineForLabor = machineId
               ? await (tx as any).machine.findFirst({
-                where: { id: machineId, tenantId },
-              })
+                  where: { id: machineId, tenantId },
+                })
               : null;
             const effectiveLaborRate = machineForLabor?.hourlyRate
               ? new Decimal(machineForLabor.hourlyRate)
@@ -1039,10 +1060,14 @@ export class ManufacturingService {
           },
         });
 
-        // Set machine to Idle if it was Running
-        if (machineId) {
-          await tx.machine.update({
-            where: { id: machineId },
+        // Set machines to Idle (the one used for this WO)
+        const machinesToRelease = new Set<string>();
+        if (wo.machineId) machinesToRelease.add(wo.machineId);
+        if (machineId) machinesToRelease.add(machineId);
+
+        for (const mid of machinesToRelease) {
+          await tx.machine.updateMany({
+            where: { id: mid, tenantId },
             data: { status: 'Idle' },
           });
         }

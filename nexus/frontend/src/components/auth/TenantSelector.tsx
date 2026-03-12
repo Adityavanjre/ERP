@@ -107,12 +107,11 @@ export function TenantSelector() {
         } catch (err: unknown) {
             if (!isMounted.current) return;
             const error = err as WakeupError & HttpError;
-            const status = error?.status;
             if (error?.isWakeup) {
                 toast.error("Klypso is starting up. Please wait a moment and try again.");
                 console.warn("[TenantSelector] Backend is waking up on Render, retrying in 5s...");
                 setShouldRetry(true);
-            } else if (status === 401 || status === 403) {
+            } else if ((error as HttpError)?.status === 401 || (error as HttpError)?.status === 403) {
                 toast.error("Session expired. Please log in again.");
                 handleLogout();
             } else {

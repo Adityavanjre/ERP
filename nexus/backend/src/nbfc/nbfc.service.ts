@@ -10,7 +10,7 @@ export class NbfcService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     private traceService: TraceService,
-  ) { }
+  ) {}
 
   // --- Loan Management System ---
   async addInterestSlabs(
@@ -105,8 +105,13 @@ export class NbfcService {
       if (baseMonthlyRate.equals(0)) {
         emiAmount = loanAmount.div(tenureMonths);
       } else {
-        const onePlusRToN = new Decimal(1).add(baseMonthlyRate).pow(tenureMonths.toNumber());
-        emiAmount = loanAmount.mul(baseMonthlyRate).mul(onePlusRToN).div(onePlusRToN.sub(1));
+        const onePlusRToN = new Decimal(1)
+          .add(baseMonthlyRate)
+          .pow(tenureMonths.toNumber());
+        emiAmount = loanAmount
+          .mul(baseMonthlyRate)
+          .mul(onePlusRToN)
+          .div(onePlusRToN.sub(1));
       }
 
       const emiPromises = [];
@@ -179,7 +184,10 @@ export class NbfcService {
     });
 
     if (existingRun) {
-      return { accrued: 0, message: 'Daily interest accrual already completed for today.' };
+      return {
+        accrued: 0,
+        message: 'Daily interest accrual already completed for today.',
+      };
     }
 
     const today = new Date().toISOString();
@@ -214,7 +222,9 @@ export class NbfcService {
         (sum, emi) => sum.add(new Decimal(emi.principalPart as any)),
         new Decimal(0),
       );
-      const currentPrincipal = new Decimal(loan.loanAmount as any).sub(paidPrincipal);
+      const currentPrincipal = new Decimal(loan.loanAmount as any).sub(
+        paidPrincipal,
+      );
 
       const dailyInterest = currentPrincipal
         .mul(new Decimal(loan.interestRate as any))
@@ -338,7 +348,10 @@ export class NbfcService {
         newEmiAmount = remainingPrincipal.div(count);
       } else {
         const onePlusRToN = new Decimal(1).add(monthlyInterestRate).pow(count);
-        newEmiAmount = remainingPrincipal.mul(monthlyInterestRate).mul(onePlusRToN).div(onePlusRToN.sub(1));
+        newEmiAmount = remainingPrincipal
+          .mul(monthlyInterestRate)
+          .mul(onePlusRToN)
+          .div(onePlusRToN.sub(1));
       }
 
       for (let i = 0; i < count; i++) {

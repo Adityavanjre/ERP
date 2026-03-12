@@ -19,7 +19,7 @@ export class SaasAnalyticsService {
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private forecasting: ForecastingService,
-  ) { }
+  ) {}
 
   async getCashflowProjections(tenantId: string) {
     return this.forecasting.getCashflowForecast(tenantId);
@@ -167,8 +167,8 @@ export class SaasAnalyticsService {
     const avgLag =
       lags.length > 0
         ? Math.floor(
-          lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
-        )
+            lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
+          )
         : 0;
 
     // Behavioral Risk Formula (Score 0-100)
@@ -393,7 +393,7 @@ export class SaasAnalyticsService {
       lastTransaction: Number(c.invoices[0]?.totalAmount || 0),
       daysSilent: Math.floor(
         (Date.now() - c.invoices[0]?.issueDate.getTime()) /
-        (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
       ),
     }));
 
@@ -502,9 +502,9 @@ export class SaasAnalyticsService {
       systemHealth:
         reports.length > 0
           ? Math.round(
-            reports.reduce((sum, r) => sum + r.healthScore, 0) /
-            reports.length,
-          )
+              reports.reduce((sum, r) => sum + r.healthScore, 0) /
+                reports.length,
+            )
           : 0,
       topAtRisk,
       allReports: reports,

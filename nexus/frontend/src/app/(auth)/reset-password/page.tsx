@@ -21,6 +21,7 @@ function ResetPasswordForm() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const token = searchParams.get("token")
+    const email = searchParams.get("email")
     const [newPassword, setNewPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
@@ -42,7 +43,11 @@ function ResetPasswordForm() {
         setError("")
 
         try {
-            await api.post("auth/reset-password", { token, newPassword })
+            await api.post("auth/reset-password", {
+                token,
+                email,
+                newPassword
+            })
             toast.success("Password reset successful!")
             router.push("/login")
         } catch (err: unknown) {

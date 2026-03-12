@@ -9,7 +9,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 describe('NbfcService', () => {
   let service: NbfcService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     loan: {
       findUnique: jest.fn(),
       create: jest.fn(),

@@ -56,7 +56,7 @@ export class AuthService {
     private readonly logging: LoggingService,
     private readonly anomalyAlert: AnomalyAlertService,
     private readonly mfaCrypto: MfaCryptoService,
-  ) { }
+  ) {}
 
   async createWorkspace(userId: string, dto: CreateWorkspaceDto) {
     const user = await this.prisma.user.findUnique({
@@ -89,7 +89,8 @@ export class AuthService {
     // Normalize industry type
     let tenantType: TenantType = TenantType.Retail;
     if (dto.type) {
-      const normalized = dto.type.charAt(0).toUpperCase() + dto.type.slice(1).toLowerCase();
+      const normalized =
+        dto.type.charAt(0).toUpperCase() + dto.type.slice(1).toLowerCase();
       if (Object.values(TenantType).includes(normalized as any)) {
         tenantType = normalized as TenantType;
       } else if (dto.type.toUpperCase() === 'NBFC') {
@@ -98,37 +99,40 @@ export class AuthService {
     }
 
     // 1. Transactional Creation & Accounting Init (Rule: Real money from day 1)
-    const result = await this.prisma.$transaction(async (tx) => {
-      const tenant = await tx.tenant.create({
-        data: {
-          name: dto.name,
-          slug: finalSlug,
-          type: tenantType,
-          industry: dto.type,
-          plan: PlanType.Free,
-          isOnboarded: false,
-        },
-      });
+    const result = await this.prisma.$transaction(
+      async (tx) => {
+        const tenant = await tx.tenant.create({
+          data: {
+            name: dto.name,
+            slug: finalSlug,
+            type: tenantType,
+            industry: dto.type,
+            plan: PlanType.Free,
+            isOnboarded: false,
+          },
+        });
 
-      await tx.tenantUser.create({
-        data: {
-          userId: user.id,
-          tenantId: tenant.id,
-          role: Role.Owner,
-        },
-      });
+        await tx.tenantUser.create({
+          data: {
+            userId: user.id,
+            tenantId: tenant.id,
+            role: Role.Owner,
+          },
+        });
 
-      // Initialize accounts
-      await this.accountingService.initializeTenantAccounts(
-        tenant.id,
-        tx,
-        tenantType as string,
-      );
+        // Initialize accounts
+        await this.accountingService.initializeTenantAccounts(
+          tenant.id,
+          tx,
+          tenantType as string,
+        );
 
-      return tenant;
-    }, {
-      timeout: 30000, // 30s for accounting init
-    });
+        return tenant;
+      },
+      {
+        timeout: 30000, // 30s for accounting init
+      },
+    );
 
     const tenant = result;
 
@@ -203,9 +207,10 @@ export class AuthService {
           // Normalize industry type for enum compatibility
           let tenantType: TenantType = TenantType.Retail;
           if (dto.companyType) {
-            const mappedType = (Object.values(TenantType) as string[]).find(
-              (t) => t.toLowerCase() === dto.companyType?.toLowerCase(),
-            ) as TenantType || TenantType.Retail;
+            const mappedType =
+              ((Object.values(TenantType) as string[]).find(
+                (t) => t.toLowerCase() === dto.companyType?.toLowerCase(),
+              ) as TenantType) || TenantType.Retail;
 
             tenantType = mappedType;
           }
@@ -240,16 +245,19 @@ export class AuthService {
 
           // Telemetry (Phase 4)
           try {
-            await this.logging.log({
-              userId: user.id,
-              action: 'USER_REGISTERED',
-              resource: 'User',
-              details: { tenant: dto.tenantName, industry: tenant.type },
-            }, tx);
+            await this.logging.log(
+              {
+                userId: user.id,
+                action: 'USER_REGISTERED',
+                resource: 'User',
+                details: { tenant: dto.tenantName, industry: tenant.type },
+              },
+              tx,
+            );
           } catch (logErr) {
             this.logger.warn(
               '[AUTH_REGISTER] Telemetry logging failed, continuing anyway: ' +
-              logErr?.message,
+                logErr?.message,
             );
           }
 
@@ -379,20 +387,24 @@ export class AuthService {
     }
 
     // PERF-013: Non-blocking success log to prevent 408 Timeout on auth.
-    // We already have a fail-safe in the logger, but removing await here ensures the 
+    // We already have a fail-safe in the logger, but removing await here ensures the
     // user gets their token immediately even if the audit table is under load.
-    this.logging.log({
-      userId: user.id,
-      action: 'USER_LOGIN_SUCCESS',
-      resource: 'Identity',
-      details: {
-        method: 'Email',
-        memberships: user.memberships.length,
-        role: hasSensitiveRole ? 'Administrative' : 'Standard',
-        channel,
-      },
-      ipAddress,
-    }).catch(err => this.logger.error(`[AUDIT_FAIL] Success log dropped: ${err.message}`));
+    this.logging
+      .log({
+        userId: user.id,
+        action: 'USER_LOGIN_SUCCESS',
+        resource: 'Identity',
+        details: {
+          method: 'Email',
+          memberships: user.memberships.length,
+          role: hasSensitiveRole ? 'Administrative' : 'Standard',
+          channel,
+        },
+        ipAddress,
+      })
+      .catch((err) =>
+        this.logger.error(`[AUDIT_FAIL] Success log dropped: ${err.message}`),
+      );
 
     return this.generateAuthResponse(user, false, channel);
   }
@@ -475,12 +487,18 @@ export class AuthService {
     }
 
     // PERF-014: Non-blocking admin success log.
-    this.logging.log({
-      userId: user.id,
-      action: 'ADMIN_LOGIN_SUCCESS',
-      resource: 'Identity',
-      ipAddress,
-    }).catch(err => this.logger.error(`[AUDIT_ADMIN_FAIL] Success log dropped: ${err.message}`));
+    this.logging
+      .log({
+        userId: user.id,
+        action: 'ADMIN_LOGIN_SUCCESS',
+        resource: 'Identity',
+        ipAddress,
+      })
+      .catch((err) =>
+        this.logger.error(
+          `[AUDIT_ADMIN_FAIL] Success log dropped: ${err.message}`,
+        ),
+      );
 
     return this.generateAuthResponse(user, true, 'WEB', true);
   }
@@ -500,6 +518,7 @@ export class AuthService {
     const isNewUser = !user;
 
     if (user) {
+      await this.checkBruteForce(user as User);
       // Identity Safety Check (Rule E)
       if (user.authProvider === AuthProvider.Email) {
         throw new ConflictException(
@@ -924,13 +943,17 @@ export class AuthService {
     const tenant = transactionResult;
 
     // Async log without blocking (failsafe in Service)
-    this.logging.log({
-      userId,
-      tenantId: dto.tenantId,
-      action: 'ONBOARDING_COMPLETED',
-      resource: 'Tenant',
-      details: { industry: dto.industry, businessType: dto.businessType },
-    }).catch(err => this.logger.warn(`Failed to log onboarding event: ${err.message}`));
+    this.logging
+      .log({
+        userId,
+        tenantId: dto.tenantId,
+        action: 'ONBOARDING_COMPLETED',
+        resource: 'Tenant',
+        details: { industry: dto.industry, businessType: dto.businessType },
+      })
+      .catch((err) =>
+        this.logger.warn(`Failed to log onboarding event: ${err.message}`),
+      );
 
     return {
       success: true,
@@ -1034,8 +1057,8 @@ export class AuthService {
       const hasResendKey = !!process.env.RESEND_API_KEY;
       console.error(
         `[MAIL_DELIVERY_FAILURE] Failed to send reset link to ${user.email}. ` +
-        `RESEND_API_KEY present: ${hasResendKey}. ` +
-        `Reason: ${mailErr.message}`,
+          `RESEND_API_KEY present: ${hasResendKey}. ` +
+          `Reason: ${mailErr.message}`,
       );
       this.logging.log({
         action: 'PASSWORD_RESET_EMAIL_FAILED',
@@ -1317,6 +1340,14 @@ export class AuthService {
       const minutesLeft = Math.ceil(
         (new Date(user.lockoutUntil).getTime() - Date.now()) / 60000,
       );
+
+      if (minutesLeft > 500000) {
+        // Approx 1 year
+        throw new UnauthorizedException(
+          'Account access has been restricted by an administrator. Please contact our support team for assistance.',
+        );
+      }
+
       throw new UnauthorizedException(
         `Account locked. Try again in ${minutesLeft} minutes.`,
       );

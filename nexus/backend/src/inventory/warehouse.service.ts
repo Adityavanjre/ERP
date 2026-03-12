@@ -21,7 +21,7 @@ export class WarehouseService {
     @Inject(forwardRef(() => AccountingService))
     private accounting: AccountingService,
     private readonly traceService: TraceService,
-  ) { }
+  ) {}
 
   async createWarehouse(tenantId: string, data: any) {
     return this.prisma.warehouse.create({

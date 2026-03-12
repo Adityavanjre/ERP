@@ -105,7 +105,7 @@ export default function SalesPage() {
             setStats(statsRes.data);
             setProducts(Array.isArray(prodRes.data) ? prodRes.data : (prodRes.data.data || []));
             setCustomers(Array.isArray(custRes.data) ? custRes.data : (custRes.data.data || []));
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Sales sync failed silently
         } finally {
             setLoading(false);

@@ -2,11 +2,11 @@
 "use client";
 
 import React from 'react';
-import { FileText, Search, Plus, Filter, Download, MoreHorizontal, Shield, Lock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { FileText, Search, Plus, Download, MoreHorizontal, Shield, Lock } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+
 
 const records = [
     { id: 'REC-201', patient: 'John Doe', type: 'Lab Report', date: '2023-12-10', doctor: 'Dr. Sarah Smith', status: 'Final' },

@@ -8,34 +8,20 @@ import {
     Package,
     Settings,
     CheckCircle2,
-    AlertCircle,
     Plus,
     ArrowRight,
     TrendingUp,
     Boxes,
-    Cpu
+    Cpu,
+    Play
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { CompleteWorkOrderDialog } from "@/components/manufacturing/complete-work-order-dialog";
+import { StartProductionDialog } from "@/components/manufacturing/start-production-dialog";
+
 
 interface BOMItem {
     id: string;
@@ -58,112 +44,30 @@ interface WorkOrder {
     bom?: BOM;
 }
 
-interface Warehouse {
-    id: string;
-    name: string;
-}
 
-interface Machine {
-    id: string;
-    name: string;
-    code: string;
-}
-
-interface CompletionData {
-    producedQty: number;
-    scrapQty: number;
-    warehouseId: string;
-    machineId: string;
-    machineTimeHours: number;
-    operatorName: string;
-    idempotencyKey: string;
-}
-
-interface ApiError {
-    response?: {
-        data?: {
-            message?: string;
-        };
-    };
-}
 
 export default function ManufacturingDashboard() {
     const [boms, setBoms] = useState<BOM[]>([]);
     const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
     const [loading, setLoading] = useState(true);
+    const [startingWo, setStartingWo] = useState<WorkOrder | null>(null);
     const router = useRouter();
-
-    const [showCompleteModal, setShowCompleteModal] = useState(false);
-    const [selectedWO, setSelectedWO] = useState<WorkOrder | null>(null);
-    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-    const [machines, setMachines] = useState<Machine[]>([]);
-    const [completionData, setCompletionData] = useState<CompletionData>({
-        producedQty: 0,
-        scrapQty: 0,
-        warehouseId: "",
-        machineId: "",
-        machineTimeHours: 0,
-        operatorName: "",
-        idempotencyKey: "",
-    });
 
     const syncManufacturingData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const [b, w, wh, m] = await Promise.all([
+            const [b, w] = await Promise.all([
                 api.get("manufacturing/boms"),
-                api.get("manufacturing/work-orders"),
-                api.get("inventory/warehouses"),
-                api.get("manufacturing/machines"),
+                api.get("manufacturing/work-orders")
             ]);
             setBoms(b.data);
             setWorkOrders(w.data);
-            setWarehouses(wh.data || []);
-            setMachines(m.data || []);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Manufacturing sync failed silently
         } finally {
             setLoading(false);
         }
     }, []);
-
-    const handleOpenComplete = (wo: WorkOrder) => {
-        setSelectedWO(wo);
-        setCompletionData({
-            producedQty: wo.quantity,
-            scrapQty: 0,
-            warehouseId: "",
-            machineId: "",
-            machineTimeHours: 0,
-            operatorName: "",
-            idempotencyKey: `wo-comp-${wo.id}-${Date.now()}`,
-        });
-        setShowCompleteModal(true);
-    };
-
-    const submitCompletion = async () => {
-        if (!completionData.warehouseId || !selectedWO) {
-            toast.error("Please select a target warehouse");
-            return;
-        }
-        try {
-            await api.post(`/manufacturing/work-orders/${selectedWO.id}/complete`, {
-                producedQuantity: Number(completionData.producedQty),
-                scrapQuantity: Number(completionData.scrapQty),
-                machineId: completionData.machineId,
-                machineTimeHours: Number(completionData.machineTimeHours),
-                operatorName: completionData.operatorName,
-                warehouseId: completionData.warehouseId,
-                idempotencyKey: completionData.idempotencyKey,
-            });
-            toast.success("Production Completed! Inventory Updated.");
-            setShowCompleteModal(false);
-            syncManufacturingData();
-        } catch (err: unknown) {
-            const error = err as ApiError;
-            toast.error(error.response?.data?.message || "Production failed. Check raw materials.");
-        }
-    };
 
     useEffect(() => {
         syncManufacturingData(true);
@@ -273,19 +177,28 @@ export default function ManufacturingDashboard() {
                                         <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{wo.bom?.items?.length || 0} Materials Used</span>
                                     </div>
 
-                                    {wo.status !== 'Completed' ? (
-                                        <button
-                                            onClick={() => handleOpenComplete(wo)}
-                                            className="w-full sm:w-auto justify-center px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95"
-                                        >
-                                            Mark Complete
-                                            <ArrowRight className="w-4 h-4" />
-                                        </button>
-                                    ) : (
+                                    {wo.status === 'InProgress' ? (
+                                        <CompleteWorkOrderDialog workOrder={wo} refreshData={() => syncManufacturingData(false)}>
+                                            <button
+                                                className="w-full sm:w-auto justify-center px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95"
+                                            >
+                                                Mark Complete
+                                                <ArrowRight className="w-4 h-4" />
+                                            </button>
+                                        </CompleteWorkOrderDialog>
+                                    ) : wo.status === 'Completed' ? (
                                         <div className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
                                             <CheckCircle2 className="w-4 h-4" />
                                             <span className="text-[9px] font-black uppercase tracking-widest">Production Completed</span>
                                         </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setStartingWo(wo)}
+                                            className="w-full sm:w-auto justify-center px-8 py-3 bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-600 transition-all flex items-center gap-3 shadow-xl shadow-amber-500/20 active:scale-95"
+                                        >
+                                            Start Production
+                                            <Play className="w-4 h-4" />
+                                        </button>
                                     )}
                                 </div>
                             </div>
@@ -328,7 +241,11 @@ export default function ManufacturingDashboard() {
                         </div>
                         <div className="space-y-3">
                             {boms.map((bom: BOM) => (
-                                <div key={bom.id} className="bg-white border border-slate-100 p-5 rounded-3xl flex justify-between items-center group hover:bg-slate-50 cursor-pointer transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 shadow-sm">
+                                <div
+                                    key={bom.id}
+                                    onClick={() => router.push(`/manufacturing/bom/${bom.id}`)}
+                                    className="bg-white border border-slate-100 p-5 rounded-3xl flex justify-between items-center group hover:bg-slate-50 cursor-pointer transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 shadow-sm"
+                                >
                                     <div className="flex gap-5 items-center">
                                         <div className="p-2.5 bg-slate-50 rounded-xl group-hover:bg-white group-hover:shadow-inner group-hover:scale-110 transition-all">
                                             <Package className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
@@ -349,115 +266,12 @@ export default function ManufacturingDashboard() {
 
             </div>
 
-            {/* Completion Modal */}
-            <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-                <DialogContent className="max-w-md bg-white border-none rounded-[32px] overflow-hidden p-0 shadow-2xl">
-                    <div className="bg-emerald-600 p-8 text-white">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl font-black tracking-tight">Complete Production</DialogTitle>
-                            <p className="text-emerald-100 font-bold uppercase text-[9px] tracking-widest mt-1 opacity-80">Finalizing WO-{selectedWO?.orderNumber}</p>
-                        </DialogHeader>
-                    </div>
-
-                    <div className="p-8 space-y-6">
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2 text-slate-900">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Produced Quantity</Label>
-                                    <Input
-                                        type="number"
-                                        value={completionData.producedQty}
-                                        onChange={(e) => setCompletionData({ ...completionData, producedQty: Number(e.target.value) })}
-                                        className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg focus:ring-emerald-500/20"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Scrap / Rejects</Label>
-                                    <Input
-                                        type="number"
-                                        value={completionData.scrapQty}
-                                        onChange={(e) => setCompletionData({ ...completionData, scrapQty: Number(e.target.value) })}
-                                        className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg text-rose-600 focus:ring-rose-500/20"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Machine</Label>
-                                    <Select value={completionData.machineId} onValueChange={(val) => setCompletionData({ ...completionData, machineId: val })}>
-                                        <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold">
-                                            <SelectValue placeholder="Select machine" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {machines.map((m: Machine) => (
-                                                <SelectItem key={m.id} value={m.id} className="font-bold">{m.name} ({m.code})</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Machine Hours</Label>
-                                    <Input
-                                        type="number"
-                                        step="0.1"
-                                        placeholder="0.0"
-                                        value={completionData.machineTimeHours}
-                                        onChange={(e) => setCompletionData({ ...completionData, machineTimeHours: Number(e.target.value) })}
-                                        className="h-12 rounded-xl bg-slate-50 border-slate-100 font-black text-lg focus:ring-emerald-500/20"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operator Name</Label>
-                                <Input
-                                    placeholder="John Doe"
-                                    value={completionData.operatorName}
-                                    onChange={(e) => setCompletionData({ ...completionData, operatorName: e.target.value })}
-                                    className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold focus:ring-emerald-500/20"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Target Warehouse</Label>
-                                <Select value={completionData.warehouseId} onValueChange={(val) => setCompletionData({ ...completionData, warehouseId: val })}>
-                                    <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold">
-                                        <SelectValue placeholder="Select destination" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {warehouses.map((wh: Warehouse) => (
-                                            <SelectItem key={wh.id} value={wh.id} className="font-bold">{wh.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="bg-emerald-50 p-4 rounded-xl flex items-center gap-3">
-                            <AlertCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-                            <p className="text-[10px] font-bold text-emerald-900 leading-relaxed uppercase tracking-tight">
-                                Finalizing will consume raw materials and add finished goods to selected warehouse.
-                            </p>
-                        </div>
-                    </div>
-
-                    <DialogFooter className="p-8 pt-0 flex gap-3">
-                        <button
-                            onClick={() => setShowCompleteModal(false)}
-                            className="flex-1 py-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-600 transition-all"
-                        >
-                            Abort
-                        </button>
-                        <button
-                            onClick={submitCompletion}
-                            className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20"
-                        >
-                            Confirm Production
-                        </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <StartProductionDialog
+                open={!!startingWo}
+                onOpenChange={(open) => !open && setStartingWo(null)}
+                workOrder={startingWo}
+                onSuccess={() => syncManufacturingData(false)}
+            />
         </div>
     );
 }

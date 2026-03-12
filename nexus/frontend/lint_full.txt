@@ -1,0 +1,21 @@
+﻿
+D:\code\ERP\nexus\frontend\src\app\(dashboard)\manufacturing\page.tsx
+  47:11  error  'Warehouse' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  52:11  error  'Machine' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  58:11  error  'ApiError' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+
+D:\code\ERP\nexus\frontend\src\app\(dashboard)\nbfc\collections\page.tsx
+  4:10  error  'Landmark' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  4:42  error  'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  4:54  error  'DollarSign' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  6:10  error  'Button' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+
+D:\code\ERP\nexus\frontend\src\app\(dashboard)\nbfc\kyc\page.tsx
+  4:23  error  'Users' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  4:41  error  'Landmark' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  4:51  error  'ArrowRight' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  4:74  error  'AlertOctagon' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  6:10  error  'Button' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+
+Ô£û 12 problems (12 errors, 0 warnings)
+

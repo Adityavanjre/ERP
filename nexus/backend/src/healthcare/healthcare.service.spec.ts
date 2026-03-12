@@ -7,7 +7,7 @@ import { TraceService } from '../common/services/trace.service';
 describe('HealthcareService', () => {
   let service: HealthcareService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     patient: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -23,7 +23,7 @@ describe('HealthcareService', () => {
     medicalRecord: {
       create: jest.fn(),
     },
-    $transaction: jest.fn((cb) => cb(mockPrisma)),
+    $transaction: jest.fn((cb: any) => cb(mockPrisma)),
   };
 
   const mockLedger = {
@@ -49,13 +49,20 @@ describe('HealthcareService', () => {
 
   describe('createMedicalRecord and Triage', () => {
     it('should assign Critical triage status based on lab results', async () => {
+      mockPrisma.patient.findUnique.mockResolvedValue({
+        id: 'p1',
+        tenantId: 't1',
+      });
+
       mockPrisma.governanceProfile.findUnique.mockResolvedValue({
         criticalPotassium: 6.0,
         criticalHemoglobin: 7.0,
         criticalGlucose: 500,
       });
 
-      mockPrisma.medicalRecord.create.mockImplementation((args) => args.data);
+      mockPrisma.medicalRecord.create.mockImplementation(
+        (args: any) => args.data,
+      );
 
       const result = await service.createMedicalRecord('t1', {
         patientId: 'p1',
@@ -67,6 +74,11 @@ describe('HealthcareService', () => {
     });
 
     it('should assign Warning triage status based on lab results', async () => {
+      mockPrisma.patient.findUnique.mockResolvedValue({
+        id: 'p1',
+        tenantId: 't1',
+      });
+
       mockPrisma.governanceProfile.findUnique.mockResolvedValue({
         warningPotassium: 5.2,
         warningHemoglobin: 10.0,
@@ -76,7 +88,9 @@ describe('HealthcareService', () => {
         criticalGlucose: 500,
       });
 
-      mockPrisma.medicalRecord.create.mockImplementation((args) => args.data);
+      mockPrisma.medicalRecord.create.mockImplementation(
+        (args: any) => args.data,
+      );
 
       const result = await service.createMedicalRecord('t1', {
         patientId: 'p1',

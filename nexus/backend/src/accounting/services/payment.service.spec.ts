@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LedgerService } from './ledger.service';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TdsService } from './tds.service';
 import { TraceService } from '../../common/services/trace.service';
@@ -13,7 +13,8 @@ describe('PaymentService (Integrity)', () => {
 
   const mockPrisma = {
     payment: { findFirst: jest.fn(), updateMany: jest.fn() },
-  };
+    $transaction: jest.fn((cb) => cb(mockPrisma)),
+  } as any;
 
   const mockLedger = {
     checkPeriodLock: jest.fn(),

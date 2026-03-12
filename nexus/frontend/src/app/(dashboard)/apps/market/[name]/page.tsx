@@ -47,6 +47,7 @@ export default function AppDetailPage() {
             const found = res.data.find((a: AppManifest) => a.name === appName);
             setApp(found);
         } catch {
+            // silent
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LedgerService } from '../accounting/services/ledger.service';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -12,7 +16,7 @@ export class HealthcareService {
     private prisma: PrismaService,
     private ledger: LedgerService,
     private trace: TraceService,
-  ) { }
+  ) {}
 
   // --- Patient Registry (EMR/EHR) ---
   async registerPatient(tenantId: string, data: any) {
@@ -49,7 +53,9 @@ export class HealthcareService {
         where: { customerId: customer.id },
       });
       if (existingPatient) {
-        throw new BadRequestException('Patient already exists with this email.');
+        throw new BadRequestException(
+          'Patient already exists with this email.',
+        );
       }
 
       // Create Patient profile
@@ -104,7 +110,9 @@ export class HealthcareService {
       where: { id: patientId, tenantId },
     });
     if (!patient) {
-      throw new NotFoundException('Patient not found or access denied in your workspace.');
+      throw new NotFoundException(
+        'Patient not found or access denied in your workspace.',
+      );
     }
 
     // 100x Logic: Clinical Value Triage Engine
@@ -170,7 +178,9 @@ export class HealthcareService {
       where: { id: patientId, tenantId },
     });
     if (!patient) {
-      throw new NotFoundException('Patient not found or access denied in your workspace.');
+      throw new NotFoundException(
+        'Patient not found or access denied in your workspace.',
+      );
     }
 
     // BUG-003 FIX: IDOR Prevention - Verify employee belongs to this tenant
@@ -179,7 +189,9 @@ export class HealthcareService {
         where: { id: employeeId, tenantId },
       });
       if (!employee) {
-        throw new NotFoundException('Consultant/Employee not found or access denied in your workspace.');
+        throw new NotFoundException(
+          'Consultant/Employee not found or access denied in your workspace.',
+        );
       }
     }
 

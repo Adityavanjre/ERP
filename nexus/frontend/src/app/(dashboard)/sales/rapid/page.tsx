@@ -40,10 +40,10 @@ export default function RapidBillingPage() {
     const [items, setItems] = useState<Item[]>([]);
     const [search, setSearch] = useState('');
     // BUG-006 FIX: add setters so customer can be changed (not permanently Walk-in)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [customerId, setCustomerId] = useState<string | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [customerName, setCustomerName] = useState('Walk-in Customer');
+
+    const [customerId] = useState<string | null>(null);
+
+    const [customerName] = useState('Walk-in Customer');
     const [startTime, setStartTime] = useState<number | null>(null);
     const [elapsed, setElapsed] = useState(0);
     const [isOffline, setIsOffline] = useState(false);
@@ -177,16 +177,16 @@ export default function RapidBillingPage() {
     }, 0);
     const total = round2(subtotal + taxTotal);
 
-    const reset = () => {
+    const reset = useCallback(() => {
         setItems([]);
         setStartTime(null);
         setElapsed(0);
         setSearch('');
         setCustomAmountPaid(0);
         if (timerRef.current) clearInterval(timerRef.current);
-    };
+    }, []);
 
-    const completeInvoice = async () => {
+    const completeInvoice = useCallback(async () => {
         if (items.length === 0 || isSubmitting) return;
 
         setIsSubmitting(true);
@@ -232,18 +232,18 @@ export default function RapidBillingPage() {
         } finally {
             setIsSubmitting(false);
         }
-    };
+    }, [items, isSubmitting, total, customAmountPaid, paymentMode, customerId, elapsed, isOffline, reset]);
 
-    const handleCompletePress = () => {
+    const handleCompletePress = useCallback(() => {
         if (items.length === 0 || isSubmitting) return;
 
         // Show confirmation for large amounts
         if (total > 100000) {
             setShowConfirm(true);
         } else {
-            completeInvoice();
+            void completeInvoice();
         }
-    };
+    }, [items.length, isSubmitting, total, completeInvoice]);
 
     // BUG-014 FIX: use isSyncingRef to prevent concurrent queue syncs.
     // Previously isSubmitting in deps caused this to fire during its own execution.
@@ -273,7 +273,7 @@ export default function RapidBillingPage() {
     }, [isOffline]);
 
     useEffect(() => {
-        if (!isOffline && pendingSync > 0) syncQueue();
+        if (!isOffline && pendingSync > 0) void syncQueue();
     }, [isOffline, pendingSync, syncQueue]);
 
     useEffect(() => {
@@ -290,8 +290,8 @@ export default function RapidBillingPage() {
         };
         window.addEventListener('keydown', handleKeys);
         return () => window.removeEventListener('keydown', handleKeys);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items, isOffline, elapsed, paymentMode, isSubmitting, total]);
+
+    }, [handleCompletePress, paymentMode, reset]);
 
     return (
         <div className="h-[calc(100vh-64px)] bg-slate-50 flex flex-col overflow-hidden font-sans antialiased text-slate-900">

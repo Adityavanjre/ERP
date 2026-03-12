@@ -44,8 +44,8 @@ export class AuditVerificationService implements OnModuleInit {
 
     this.logger.log('Verifying Audit Log Hash Chain integrity...');
 
-    // ARCH-001: Expanded scan window logic. 
-    // Perform a deep verify of ALL historical chunks on Mondays, 
+    // ARCH-001: Expanded scan window logic.
+    // Perform a deep verify of ALL historical chunks on Mondays,
     // and a quick-audit (last 48h) on other days to ensure continuity.
     const isDeepScanDay = new Date().getDay() === 1; // 1 = Monday
     const scanWindow = new Date();

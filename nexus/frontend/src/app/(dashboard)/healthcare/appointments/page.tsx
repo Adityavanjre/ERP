@@ -1,9 +1,8 @@
-
 "use client";
 
 import React from 'react';
-import { Calendar, Clock, Plus, Search, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Calendar, Clock, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -40,7 +39,7 @@ export default function AppointmentsPage() {
                 <Card className="rounded-[2.5rem] border-slate-100 shadow-sm border-none bg-white p-2">
                     <CardHeader className="px-8 pt-8">
                         <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg font-black uppercase tracking-widest">Today's Schedule</CardTitle>
+                            <CardTitle className="text-lg font-black uppercase tracking-widest">Today&apos;s Schedule</CardTitle>
                             <Badge className="bg-blue-50 text-blue-700 border-none font-black px-3 py-1">12 Slots Left</Badge>
                         </div>
                     </CardHeader>

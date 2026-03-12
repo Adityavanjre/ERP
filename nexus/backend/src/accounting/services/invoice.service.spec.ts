@@ -12,7 +12,7 @@ describe('InvoiceService (Compliance)', () => {
   let service: InvoiceService;
   let prisma: PrismaService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     tenant: { findUnique: jest.fn() },
     customer: { findFirst: jest.fn() },
     product: { findFirst: jest.fn() },

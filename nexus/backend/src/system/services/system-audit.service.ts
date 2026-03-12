@@ -6,7 +6,7 @@ import { StandardAccounts } from '../../accounting/constants/account-names';
 
 @Injectable()
 export class SystemAuditService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async verifyFinancialIntegrity(tenantId: string) {
     // 1. Trial Balance Audit (Global Dr == Cr)
@@ -26,7 +26,9 @@ export class SystemAuditService {
 
     // 1b. Account-Ledger Consistency Audit (Account.balance == SUM(Transactions))
     // BUG-FIN-012: Detects out-of-band DB mutations that bypass LedgerService
-    const accounts = await this.prisma.account.findMany({ where: { tenantId } });
+    const accounts = await this.prisma.account.findMany({
+      where: { tenantId },
+    });
     const desyncedAccounts = [];
 
     // Group transactions by account
@@ -44,7 +46,7 @@ export class SystemAuditService {
       const txSum = txByAccount.get(acc.id) || new Decimal(0);
       const cachedBalance = new Decimal(acc.balance);
 
-      // Account Balance logic: 
+      // Account Balance logic:
       // Assets/Expenses: Balance = Dr - Cr
       // Liability/Equity/Revenue: Balance = Cr - Dr
       const isAssetOrExpense = ['Asset', 'Expense'].includes(acc.type);
@@ -159,7 +161,10 @@ export class SystemAuditService {
         },
         financials: {
           tbDrift: totalDebit.sub(totalCredit).toNumber(),
-          ledgerDriftTotal: desyncedAccounts.reduce((s, a) => s + Math.abs(a.diff), 0),
+          ledgerDriftTotal: desyncedAccounts.reduce(
+            (s, a) => s + Math.abs(a.diff),
+            0,
+          ),
           inventoryDrift: physicalStockValue.sub(ledgerStockValue).toNumber(),
           mutationsDetected: mutationCount,
         },
@@ -275,7 +280,13 @@ export class SystemAuditService {
     anomalies: number,
   ): number {
     // High weights for Dr!=Cr or cached balance != tx sum (corruption indicators)
-    return unbalanced * 100 + desynced * 150 + orphans * 50 + gaps * 10 + anomalies * 25;
+    return (
+      unbalanced * 100 +
+      desynced * 150 +
+      orphans * 50 +
+      gaps * 10 +
+      anomalies * 25
+    );
   }
 
   private generateForensicRecommendations(

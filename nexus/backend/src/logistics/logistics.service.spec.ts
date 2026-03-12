@@ -8,7 +8,7 @@ import { BadRequestException } from '@nestjs/common';
 describe('LogisticsService', () => {
   let service: LogisticsService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     tenant: {
       findUnique: jest.fn(),
     },

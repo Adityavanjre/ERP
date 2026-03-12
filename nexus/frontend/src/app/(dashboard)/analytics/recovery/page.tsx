@@ -58,7 +58,7 @@ export default function RecoveryMemoryDashboard() {
             if (showLoading) setLoading(true);
             const res = await api.get("accounting/recovery-memory");
             setData(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Recovery sync failed silently
         } finally {
             setLoading(false);

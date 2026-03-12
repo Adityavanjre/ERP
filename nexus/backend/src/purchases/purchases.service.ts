@@ -20,7 +20,7 @@ export class PurchasesService {
     private ledger: LedgerService,
     private tds: TdsService,
     private readonly traceService: TraceService,
-  ) { }
+  ) {}
 
   // --- Suppliers ---
   async createSupplier(tenantId: string, data: any) {
@@ -118,7 +118,7 @@ export class PurchasesService {
       errors: [] as string[],
     };
 
-    // BUG-006 FIX: Ledger integrity requires writing the Journal Entry 
+    // BUG-006 FIX: Ledger integrity requires writing the Journal Entry
     // INSIDE the isolated transaction for every single supplier.
     const apAcc = await this.prisma.account.findFirst({
       where: { tenantId, name: StandardAccounts.ACCOUNTS_PAYABLE },
@@ -190,26 +190,30 @@ export class PurchasesService {
 
               // BUG-006 FIX: Post to GL securely within the `tx` bounds
               if (apAcc && obAcc) {
-                await this.ledger.createJournalEntry(tenantId, {
-                  date: new Date().toISOString(),
-                  description: `Bulk Import Opening Balance: ${name}`,
-                  reference: `IMP-OB-${obRecord.id.slice(0, 8)}`,
-                  transactions: [
-                    {
-                      accountId: obAcc.id,
-                      type: 'Debit',
-                      amount: Math.abs(ob),
-                      description: 'Imported Supplier OB',
-                    },
-                    {
-                      accountId: apAcc.id,
-                      type: 'Credit',
-                      amount: Math.abs(ob),
-                      description: 'Imported Supplier OB',
-                    },
-                  ],
-                  correlationId: this.traceService.getCorrelationId(),
-                }, tx);
+                await this.ledger.createJournalEntry(
+                  tenantId,
+                  {
+                    date: new Date().toISOString(),
+                    description: `Bulk Import Opening Balance: ${name}`,
+                    reference: `IMP-OB-${obRecord.id.slice(0, 8)}`,
+                    transactions: [
+                      {
+                        accountId: obAcc.id,
+                        type: 'Debit',
+                        amount: Math.abs(ob),
+                        description: 'Imported Supplier OB',
+                      },
+                      {
+                        accountId: apAcc.id,
+                        type: 'Credit',
+                        amount: Math.abs(ob),
+                        description: 'Imported Supplier OB',
+                      },
+                    ],
+                    correlationId: this.traceService.getCorrelationId(),
+                  },
+                  tx,
+                );
               }
             }
           }
@@ -430,9 +434,9 @@ export class PurchasesService {
                 OR: warehouseId
                   ? undefined
                   : [
-                    { name: 'Main Warehouse' },
-                    {}, // Fallback to any warehouse if no ID provides
-                  ],
+                      { name: 'Main Warehouse' },
+                      {}, // Fallback to any warehouse if no ID provides
+                    ],
               },
             });
 

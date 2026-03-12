@@ -96,7 +96,7 @@ export default function PurchasesPage() {
             const rawOrders = poRes.data?.data ?? poRes.data;
             setPurchaseOrders(Array.isArray(rawOrders) ? rawOrders : []);
             setStats(statsRes.data || { totalSpent: 0, pendingPOs: 0 });
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Procurement sync failed silently
             setSuppliers([]);
             setProducts([]);

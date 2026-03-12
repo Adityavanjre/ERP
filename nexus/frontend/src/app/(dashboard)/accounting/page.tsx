@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -124,10 +124,14 @@ export default function AccountingPage() {
     const [showCreateAccount, setShowCreateAccount] = useState(false);
     const [showCreateJournalEntry, setShowCreateJournalEntry] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
+    const isSyncingRef = useRef(false);
 
     const syncLedgers = useCallback(async (silent = false) => {
         try {
-            if (!silent && !isSyncing) setIsSyncing(true);
+            if (!silent && !isSyncingRef.current) {
+                isSyncingRef.current = true;
+                setIsSyncing(true);
+            }
 
             const hasFullAccess = ['Owner', 'Manager', 'Accountant', 'CA'].includes(user?.role || '') || user?.isSuperAdmin;
             const isOwner = user?.role === 'Owner' || user?.isSuperAdmin;
@@ -167,10 +171,11 @@ export default function AccountingPage() {
                 setLastSyncTime(Date.now());
             });
 
-        } catch (err) {
-            // Suppressed in prod: Ledger sync failed silently
+        } catch {
+            // silent
             if (!silent) toast.error("Failed to load accounting data. Please refresh.");
         } finally {
+            isSyncingRef.current = false;
             setIsSyncing(false);
         }
     }, [invoicePage, user?.role, user?.isSuperAdmin]);

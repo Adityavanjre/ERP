@@ -32,7 +32,7 @@ export class LoggingService {
     if (!this.hmacSecret) {
       this.logger.warn(
         'AUDIT_HMAC_SECRET is not set. Audit log hash chain is DISABLED. ' +
-        'Add AUDIT_HMAC_SECRET to environment variables to enable tamper detection.',
+          'Add AUDIT_HMAC_SECRET to environment variables to enable tamper detection.',
       );
     }
   }
@@ -103,24 +103,27 @@ export class LoggingService {
       .digest('hex');
   }
 
-  async log(data: {
-    userId?: string;
-    tenantId?: string;
-    action: string;
-    resource: string;
-    details?: any;
-    channel?: string;
-    ipAddress?: string;
-    correlationId?: string;
-    responseTimeMs?: number;
-  }, txOverride?: any) {
+  async log(
+    data: {
+      userId?: string;
+      tenantId?: string;
+      action: string;
+      resource: string;
+      details?: any;
+      channel?: string;
+      ipAddress?: string;
+      correlationId?: string;
+      responseTimeMs?: number;
+    },
+    txOverride?: any,
+  ) {
     const correlationId =
       data.correlationId || this.traceService.getCorrelationId();
 
     const client = txOverride || this.prisma;
 
     try {
-      // PERF-011: Removed Serializable isolation level. 
+      // PERF-011: Removed Serializable isolation level.
       // It caused massive contention and P2028 timeouts on Render during concurrent ops.
       // We now accept an optional txOverride to participate in existing business transactions.
       const createdAt = new Date();

@@ -249,9 +249,9 @@ async function bootstrap() {
 
   console.log(
     '[BOOT] CORS origins: ' +
-    allowedOrigins
-      .map((o) => (o instanceof RegExp ? o.source : o))
-      .join(' | '),
+      allowedOrigins
+        .map((o) => (o instanceof RegExp ? o.source : o))
+        .join(' | '),
   );
 
   app.enableCors({

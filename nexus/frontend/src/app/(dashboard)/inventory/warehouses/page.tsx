@@ -20,24 +20,32 @@ import { CreateWarehouseDialog } from '@/components/inventory/create-warehouse-d
 import { EditWarehouseDialog } from '@/components/inventory/edit-warehouse-dialog';
 import { TransferStockDialog } from '@/components/inventory/transfer-stock-dialog';
 import { WarehouseDetailsDialog } from '@/components/inventory/warehouse-details-dialog';
+
+interface Warehouse {
+    id: string;
+    name: string;
+    location?: string;
+    manager?: string;
+    stocks?: { id: string; quantity: number; product: { id: string; name: string; sku: string; category?: string } }[];
+}
 export default function WarehousesPage() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [warehouses, setWarehouses] = useState<any[]>([]);
+
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [editingWarehouse, setEditingWarehouse] = useState<any>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [transferringWarehouse, setTransferringWarehouse] = useState<any>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [detailsWarehouse, setDetailsWarehouse] = useState<any>(null);
+
+    const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
+
+    const [transferringWarehouse, setTransferringWarehouse] = useState<Warehouse | null>(null);
+
+    const [detailsWarehouse, setDetailsWarehouse] = useState<Warehouse | null>(null);
 
     const syncWarehouses = async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
             const res = await api.get('inventory/warehouses');
             setWarehouses(res.data);
-        } catch (err) {
+        } catch {
             // Suppressed in prod: Warehouse sync failed silently
         } finally {
             setLoading(false);

@@ -59,11 +59,13 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           break;
         case 'P2024':
           status = HttpStatus.SERVICE_UNAVAILABLE;
-          message = 'Database connection timeout. The server is currently overloaded. Please try again in a few seconds.';
+          message =
+            'Database connection timeout. The server is currently overloaded. Please try again in a few seconds.';
           break;
         case 'P2028':
           status = HttpStatus.REQUEST_TIMEOUT;
-          message = 'Database transaction timeout. The operation took too long to complete.';
+          message =
+            'Database transaction timeout. The operation took too long to complete.';
           break;
         case 'P2022':
           status = HttpStatus.INTERNAL_SERVER_ERROR;

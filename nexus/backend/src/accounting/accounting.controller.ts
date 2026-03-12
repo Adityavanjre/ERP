@@ -414,6 +414,44 @@ export class AccountingController {
     );
   }
 
+  @Post('auditor/lock')
+  @Roles(Role.Owner, Role.CA)
+  @Permissions(Permission.LOCK_MONTH)
+  @MfaRequired()
+  lockAuditor(
+    @Req() req: AuthenticatedRequest,
+    @Body('month') month: number,
+    @Body('year') year: number,
+  ) {
+    return this.accountingService.togglePeriodLock(
+      req.user.tenantId as string,
+      Number(month),
+      Number(year),
+      req.user.sub,
+      'LOCK',
+    );
+  }
+
+  @Post('auditor/unlock')
+  @Roles(Role.Owner, Role.CA)
+  @Permissions(Permission.LOCK_MONTH)
+  @MfaRequired()
+  unlockAuditor(
+    @Req() req: AuthenticatedRequest,
+    @Body('month') month: number,
+    @Body('year') year: number,
+    @Body('reason') reason?: string,
+  ) {
+    return this.accountingService.togglePeriodLock(
+      req.user.tenantId as string,
+      Number(month),
+      Number(year),
+      req.user.sub,
+      'UNLOCK',
+      reason,
+    );
+  }
+
   @Post('setup/coa')
   @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_ACCOUNTS)

@@ -24,7 +24,7 @@ export class PaymentService {
     private ledger: LedgerService,
     private tds: TdsService,
     private readonly traceService: TraceService,
-  ) { }
+  ) {}
 
   async createPayment(tenantId: string, data: CreatePaymentDto) {
     if (!data.customerId && !data.supplierId) {

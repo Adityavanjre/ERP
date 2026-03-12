@@ -32,6 +32,8 @@ import { WorkflowService } from './services/workflow.service';
 import { WorkflowController } from './controllers/workflow.controller';
 import { ConfigModule } from '@nestjs/config';
 import { WebhookSecretRotationService } from './services/webhook-secret-rotation.service';
+import { SuperAdminController } from './controllers/super-admin.controller';
+import { SuperAdminService } from './services/super-admin.service';
 
 import { JwtModule } from '@nestjs/jwt';
 import { CollaborationGateway } from './gateways/collaboration.gateway';
@@ -70,6 +72,7 @@ import {
     WebhookController,
     StudioController,
     WorkflowController,
+    SuperAdminController,
   ],
   providers: [
     RegistryService,
@@ -92,6 +95,7 @@ import {
     OrmService,
     WorkflowService,
     WebhookSecretRotationService,
+    SuperAdminService,
   ],
   exports: [
     RegistryService,

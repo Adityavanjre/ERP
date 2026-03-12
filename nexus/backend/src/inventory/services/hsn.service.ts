@@ -4,7 +4,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class HsnService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async getGstRate(
     tenantId: string,

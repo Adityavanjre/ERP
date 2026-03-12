@@ -11,7 +11,7 @@ export class AnalyticsService {
     private prisma: PrismaService,
     private saas: SaasAnalyticsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) { }
+  ) {}
 
   async getExecutiveSummary(tenantId: string) {
     const cacheKey = `nexus:analytics:exec_summary:${tenantId}`;
@@ -67,12 +67,28 @@ export class AnalyticsService {
       select: { totalAmount: true, issueDate: true },
     });
 
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     const monthlySums = new Array(12).fill(0);
     for (const o of invoices) {
       monthlySums[o.issueDate.getMonth()] += Number(o.totalAmount);
     }
-    const result = months.map((m, i) => ({ month: m, revenue: monthlySums[i] }));
+    const result = months.map((m, i) => ({
+      month: m,
+      revenue: monthlySums[i],
+    }));
 
     await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
     return result;
@@ -97,13 +113,13 @@ export class AnalyticsService {
         health.signals.length > 0
           ? health.signals
           : [
-            summary.expenses > summary.revenue
-              ? 'Negative Cashflow detected'
-              : 'Operating within margin',
-            summary.inventoryCount < 10
-              ? 'Supply chain bottleneck risk'
-              : 'Inventory stable',
-          ],
+              summary.expenses > summary.revenue
+                ? 'Negative Cashflow detected'
+                : 'Operating within margin',
+              summary.inventoryCount < 10
+                ? 'Supply chain bottleneck risk'
+                : 'Inventory stable',
+            ],
     };
   }
 

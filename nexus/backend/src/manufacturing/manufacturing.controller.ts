@@ -68,6 +68,28 @@ export class ManufacturingController {
     return this.mfgService.getBOMs(user.tenantId);
   }
 
+  @Get('boms/:id/shortages')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
+  checkBOMShortages(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Query('quantity') qty: string,
+  ) {
+    return this.mfgService.checkShortages(
+      user.tenantId,
+      id,
+      parseFloat(qty) || 1,
+    );
+  }
+
   @Post('import/boms')
   @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
@@ -179,6 +201,25 @@ export class ManufacturingController {
   )
   checkShortages(@CurrentUser() user: any, @Param('id') id: string) {
     return this.mfgService.checkShortagesFromWO(user.tenantId, id);
+  }
+
+  @Post('work-orders/:id/start')
+  @Roles(Role.Owner, Role.Manager, Role.Biller)
+  @Permissions(Permission.ADJUST_STOCK)
+  startWO(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body('warehouseId') warehouseId?: string,
+    @Body('machineId') machineId?: string,
+    @Body('idempotencyKey') idempotencyKey?: string,
+  ) {
+    return this.mfgService.startWorkOrder(
+      user.tenantId,
+      id,
+      warehouseId,
+      machineId,
+      idempotencyKey,
+    );
   }
 
   @Post('work-orders/:id/complete')

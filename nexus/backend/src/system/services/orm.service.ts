@@ -15,7 +15,7 @@ export class OrmService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
-  ) { }
+  ) {}
 
   /**
    * Define a new model in the system metadata.
@@ -94,7 +94,9 @@ export class OrmService {
     if (!model) return true; // System models without definitions follow default rules
     if ((model as any).accessRights.length === 0) return true; // No specific restrictions
 
-    const access = (model as any).accessRights.find((a: any) => a.role === role);
+    const access = (model as any).accessRights.find(
+      (a: any) => a.role === role,
+    );
     if (!access) return false;
 
     switch (permission) {

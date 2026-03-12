@@ -24,18 +24,17 @@ export function useAuth() {
             const token = localStorage.getItem("k_token");
             if (token) {
                 try {
-                    const decoded = jwtDecode<any>(token);
+                    const decoded = jwtDecode<User>(token);
                     const userData: User = {
                         ...decoded,
-                        id: decoded.id || decoded.sub, // Fallback to 'sub' from JWT
+                        id: decoded.id || decoded.sub || '', // Fallback to 'sub' from JWT
                     };
 
                     // Prevent identity mismatch if token changed in another tab
                     if (!user || user.id !== userData.id || user.tenantId !== userData.tenantId) {
                         setUser(userData);
                     }
-                } catch (err) {
-                    console.error("Failed to decode token", err);
+                } catch {
                     localStorage.removeItem("k_token");
                     setUser(null);
                 }

@@ -22,7 +22,7 @@ export class PluginController {
   constructor(
     private readonly pluginManager: PluginManager,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   @Get()
   async listPlugins() {

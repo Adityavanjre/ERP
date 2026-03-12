@@ -83,9 +83,8 @@ export default function SettingsPage() {
             setBillingInfo(billRes.data || null);
             setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
         } catch (err: unknown) {
-            // Suppressed in prod
-            const error = err as ApiError;
-            setError(error.isWakeup ? (error.message || "Wakeup error") : "Failed to load settings. Please refresh.");
+            const apiError = err as ApiError;
+            setError(apiError.isWakeup ? (apiError.message || "Wakeup error") : "Failed to load settings. Please refresh.");
         } finally {
             setLoading(false);
         }
@@ -93,7 +92,7 @@ export default function SettingsPage() {
 
     useEffect(() => {
         setMounted(true);
-        fetchSettings();
+        void fetchSettings();
     }, [fetchSettings]);
 
 
@@ -473,7 +472,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Role</Label>
-                            <Select value={newUser.role} onValueChange={(val: any) => setNewUser({ ...newUser, role: val })}>
+                            <Select value={newUser.role} onValueChange={(val: Role) => setNewUser({ ...newUser, role: val })}>
                                 <SelectTrigger className="bg-slate-50 border-slate-200 h-11 font-bold">
                                     <SelectValue />
                                 </SelectTrigger>

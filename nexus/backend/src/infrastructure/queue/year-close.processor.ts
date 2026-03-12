@@ -123,7 +123,13 @@ export class YearCloseProcessor extends WorkerHost {
     // 5. Execute as a single DB transaction
     return this.prisma.$transaction(async (tx) => {
       // Create the closing journal entry via LedgerService to ensure balances are updated
-      const ledgerService = new (require('../../accounting/services/ledger.service').LedgerService)(this.prisma, null, null, null);
+      const ledgerService =
+        new (require('../../accounting/services/ledger.service').LedgerService)(
+          this.prisma,
+          null,
+          null,
+          null,
+        );
 
       const journalEntry = await ledgerService.createJournalEntry(
         tenantId,
@@ -158,7 +164,11 @@ export class YearCloseProcessor extends WorkerHost {
         `[JOB:${job.id}] Year ${year} close complete. Net Profit: ${netProfit.toFixed(2)}`,
       );
 
-      return { year, netProfit: netProfit.toFixed(2), journalId: journalEntry.id };
+      return {
+        year,
+        netProfit: netProfit.toFixed(2),
+        journalId: journalEntry.id,
+      };
     });
   }
 }

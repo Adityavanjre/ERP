@@ -15,7 +15,10 @@ describe('TallyService (XML & Data Bridge)', () => {
   beforeEach(async () => {
     mockPrisma = {
       tenant: {
-        findUnique: jest.fn().mockResolvedValue({ id: 't1', state: 'MH' }),
+        findUnique: (jest.fn() as any).mockResolvedValue({
+          id: 't1',
+          state: 'MH',
+        }),
       },
       invoice: {
         findMany: jest.fn(),
@@ -35,9 +38,9 @@ describe('TallyService (XML & Data Bridge)', () => {
       product: { findMany: jest.fn(), count: jest.fn() },
       auditLog: { findMany: jest.fn() },
       periodLock: { findUnique: jest.fn() },
-      creditNote: { findMany: jest.fn().mockResolvedValue([]) },
-      debitNote: { findMany: jest.fn().mockResolvedValue([]) },
-      workOrder: { findMany: jest.fn().mockResolvedValue([]) },
+      creditNote: { findMany: (jest.fn() as any).mockResolvedValue([]) },
+      debitNote: { findMany: (jest.fn() as any).mockResolvedValue([]) },
+      workOrder: { findMany: (jest.fn() as any).mockResolvedValue([]) },
     };
 
     mockLedger = {
@@ -50,6 +53,10 @@ describe('TallyService (XML & Data Bridge)', () => {
         TallyService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: LedgerService, useValue: mockLedger },
+        {
+          provide: 'CACHE_MANAGER',
+          useValue: { get: jest.fn(), set: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -60,7 +67,7 @@ describe('TallyService (XML & Data Bridge)', () => {
   describe('XML Protection', () => {
     it('should escape special characters to prevent Tally import errors', () => {
       // @ts-ignore - accessing private method for test
-      const result = service.escapeXml('Sales & Services "Premium"');
+      const result = (service as any).escapeXml('Sales & Services "Premium"');
       expect(result).toBe('Sales &amp; Services &quot;Premium&quot;');
     });
   });
@@ -158,7 +165,7 @@ describe('TallyService (XML & Data Bridge)', () => {
 
       const result = await service.validateTallyData('t1', 1, 2024);
       const backdatedRisk = result.riskFlags.find(
-        (f) => f.type === 'BACKDATED',
+        (f: any) => f.type === 'BACKDATED',
       );
       expect(backdatedRisk).toBeDefined();
     });
@@ -171,9 +178,9 @@ describe('TallyService (XML & Data Bridge)', () => {
 
       const result = await service.validateTallyData('t1', 1, 2024);
       expect(result.confidenceScore).toBeLessThan(100);
-      expect(result.riskFlags.some((f) => f.type === 'NEGATIVE_STOCK')).toBe(
-        true,
-      );
+      expect(
+        result.riskFlags.some((f: any) => f.type === 'NEGATIVE_STOCK'),
+      ).toBe(true);
     });
   });
 });

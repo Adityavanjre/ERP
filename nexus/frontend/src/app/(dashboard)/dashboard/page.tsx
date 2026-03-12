@@ -167,7 +167,7 @@ export default function DashboardPage() {
             const anySucceeded = cfgData || sumData || perfData || healthData || actData || vcData;
             setSyncDegraded(!anySucceeded);
 
-        } catch (err) {
+        } catch {
             // Suppressed in prod: data update error
         } finally {
             if (deadlineTimer) clearTimeout(deadlineTimer);

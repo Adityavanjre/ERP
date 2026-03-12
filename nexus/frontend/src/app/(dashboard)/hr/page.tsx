@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Users, Calendar, Banknote, Building2, Check, X } from "lucide-react";
 import { toast } from "sonner";
+
 import { Badge } from "@/components/ui/badge";
 import {
     Select,
@@ -130,7 +131,7 @@ export default function HrPage() {
             setPayrolls(Array.isArray(payrollRes.data) ? payrollRes.data : []);
             setDepartments(Array.isArray(deptRes.data) ? deptRes.data : []);
             setStats(statsRes.data || { activeEmployees: 0, pendingLeaves: 0, totalPayroll: 0 });
-        } catch (err: unknown) {
+        } catch {
             // Suppressed in prod: HR data load failed
             // const msg = "Failed to load HR data. Please refresh.";
         } finally {
