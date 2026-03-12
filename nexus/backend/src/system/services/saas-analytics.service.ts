@@ -85,6 +85,7 @@ export class SaasAnalyticsService {
       ownerLogin,
       periodLock,
       activeCustomers,
+      tenantData,
     ] = await Promise.all([
       // 1. Efficient Payment Aggregation
       this.prisma.invoice.aggregate({
@@ -133,7 +134,46 @@ export class SaasAnalyticsService {
       this.prisma.customer.count({
         where: { tenantId, isDeleted: false },
       }),
+      // 8. Manufacturing Data (New)
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { industry: true, type: true },
+      }),
     ]);
+
+    const industry = (tenantData as any)?.industry || (tenantData as any)?.type || 'General';
+    const isMfg = industry === 'Manufacturing';
+
+    const [mfgWip, lowStockMaterials] = await Promise.all([
+      isMfg
+        ? this.prisma.workOrder.count({
+            where: { tenantId, status: { in: ['Planned', 'InProgress'] } },
+          })
+        : Promise.resolve(0),
+      isMfg
+        ? this.prisma.product.count({
+            where: {
+              tenantId,
+              isService: false,
+              stock: { lte: this.prisma.product.fields.minStockLevel },
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+    // Behavioral Risk Formula (Score 0-100)
+    let riskScore = 0;
+    const signals = [];
+
+    if (isMfg && mfgWip > 10) {
+      riskScore += 15;
+      signals.push(`PRODUCTION_BOTTLENECK: ${mfgWip} active work orders. Risk of delivery delay.`);
+    }
+
+    if (isMfg && lowStockMaterials > 0) {
+      riskScore += 20;
+      signals.push(`MATERIAL_SHORTAGE: ${lowStockMaterials} raw materials below min stock. Production disruption possible.`);
+    }
 
     // Safety for Zero Data
     if (!invoiceStats || (invoiceStats._count.id === 0 && !lastAction)) {
@@ -170,10 +210,6 @@ export class SaasAnalyticsService {
             lags.reduce((a: number, b: number) => a + b, 0) / lags.length,
           )
         : 0;
-
-    // Behavioral Risk Formula (Score 0-100)
-    let riskScore = 0;
-    const signals = [];
 
     // R1: 48h No Billing Consistency
     if (

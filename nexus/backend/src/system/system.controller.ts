@@ -32,7 +32,7 @@ export class SystemController {
     private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) { }
 
   @Get('stats')
   @Roles(Role.Owner, Role.Manager, Role.Accountant)
@@ -64,17 +64,21 @@ export class SystemController {
   @Get('config')
   // No explicit @Roles means all authenticated tenant users can fetch UI config
   async getModuleConfig(@Req() req: any) {
-    const industry =
-      req.user.tenant?.industry ||
-      req.user.industry ||
-      req.user.tenant?.type ||
-      req.user.tenantType ||
-      'General';
+    let industry = 'General';
+    let businessType = '';
+
+    if (req.user.tenantId) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: req.user.tenantId },
+        select: { industry: true, type: true, businessType: true },
+      });
+      industry = tenant?.industry || tenant?.type || 'General';
+      businessType = tenant?.businessType || '';
+    }
     const config = getIndustryConfig(industry);
 
-    // Extract any Super Admin module overrides
-    const extraModulesStr =
-      (req.user.tenant?.businessType || '').split('|')[1] || '';
+    // Extract any Super Admin module overrides (Format: Role|Module1,Module2)
+    const extraModulesStr = businessType.split('|')[1] || '';
     const extraModules = extraModulesStr ? extraModulesStr.split(',') : [];
 
     // Merge standard industry modules with overridden extra modules

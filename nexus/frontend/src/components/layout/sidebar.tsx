@@ -26,6 +26,7 @@ import {
     Activity,
     Calendar,
     ClipboardList,
+    Cpu,
     LucideIcon
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
@@ -87,6 +88,7 @@ const businessStreams: BusinessStream[] = [
             { label: 'Overview', href: '/manufacturing', icon: Factory, allowedRoles: STOCK_ROLES },
             { label: 'Bill of Materials', href: '/manufacturing/bom', icon: Command, allowedRoles: STOCK_ROLES },
             { label: 'Work Orders', href: '/manufacturing/orders', icon: ClipboardList, allowedRoles: STOCK_ROLES },
+            { label: 'Machines', href: '/manufacturing/machines', icon: Cpu, allowedRoles: STOCK_ROLES },
         ]
     },
     {
@@ -295,7 +297,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
             <div className="px-6 py-10 pb-4 shrink-0">
                 <Link href="/dashboard" onClick={onItemClick} className="flex items-center transition-all hover:opacity-80">
-                    <KlypsoLogo />
+                    <KlypsoLogo name={user?.tenantName || "KLYPSO"} />
                 </Link>
                 {user?.isSuperAdmin && (
                     <div className="mt-4 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">

@@ -13,7 +13,10 @@ import {
     TrendingUp,
     Boxes,
     Cpu,
-    Play
+    Play,
+    AlertTriangle,
+    Activity,
+    History
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -49,6 +52,8 @@ interface WorkOrder {
 export default function ManufacturingDashboard() {
     const [boms, setBoms] = useState<BOM[]>([]);
     const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
+    const [machines, setMachines] = useState<any[]>([]);
+    const [activity, setActivity] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [startingWo, setStartingWo] = useState<WorkOrder | null>(null);
     const router = useRouter();
@@ -56,12 +61,16 @@ export default function ManufacturingDashboard() {
     const syncManufacturingData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const [b, w] = await Promise.all([
+            const [b, w, m, act] = await Promise.all([
                 api.get("manufacturing/boms"),
-                api.get("manufacturing/work-orders")
+                api.get("manufacturing/work-orders"),
+                api.get("manufacturing/machines"),
+                api.get("analytics/activity?limit=5")
             ]);
             setBoms(b.data);
             setWorkOrders(w.data);
+            setMachines(m.data || []);
+            setActivity((act.data || []).filter((a: any) => a.module === 'manufacturing' || a.action.includes('STOCK') || a.action.includes('WO')));
         } catch {
             // Suppressed in prod: Manufacturing sync failed silently
         } finally {
@@ -260,6 +269,43 @@ export default function ManufacturingDashboard() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Machine Load</h2>
+                        <div className="grid grid-cols-2 gap-3">
+                            {machines.map((m: any) => (
+                                <div key={m.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2">
+                                    <div className="flex justify-between items-center">
+                                        <div className={cn(
+                                            "h-2 w-2 rounded-full",
+                                            m.status === 'Running' ? 'bg-emerald-500 animate-pulse' : m.status === 'Idle' ? 'bg-slate-300' : 'bg-rose-500'
+                                        )} />
+                                        <span className="text-[8px] font-black uppercase text-slate-400">{m.status}</span>
+                                    </div>
+                                    <p className="text-[10px] font-black text-slate-800 line-clamp-1">{m.name}</p>
+                                </div>
+                            ))}
+                            {machines.length === 0 && <p className="col-span-2 text-[10px] text-slate-400 italic text-center py-4">No machines registered</p>}
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Recent Activity</h2>
+                        <div className="space-y-2">
+                            {activity.map((a: any, i) => (
+                                <div key={i} className="flex gap-3 items-start p-2 hover:bg-slate-50 rounded-xl transition-all">
+                                    <div className="mt-1 p-1 bg-slate-100 rounded-lg">
+                                        <History className="w-3 h-3 text-slate-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-600 leading-tight">{a.action.replace(/_/g, ' ')}</p>
+                                        <p className="text-[8px] text-slate-400 mt-0.5">{new Date(a.createdAt).toLocaleTimeString()}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {activity.length === 0 && <p className="text-[10px] text-slate-400 text-center py-4">No recent activity</p>}
                         </div>
                     </section>
                 </div>

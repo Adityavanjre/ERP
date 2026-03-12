@@ -20,7 +20,9 @@ import {
     Plus,
     Truck,
     FileText,
-    TrendingUp
+    TrendingUp,
+    Factory,
+    ClipboardList
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -40,6 +42,7 @@ type RoleName = 'Owner' | 'Manager' | 'Biller' | 'Storekeeper' | 'Accountant' | 
 const SALES_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller'];
 const STOCK_ROLES: RoleName[] = ['Owner', 'Manager', 'Storekeeper'];
 const FINANCE_ROLES: RoleName[] = ['Owner', 'Manager', 'Accountant', 'CA'];
+const MANUFACTURING_ROLES: RoleName[] = ['Owner', 'Manager', 'Storekeeper'];
 
 interface HealthStats {
     runRate: number;
@@ -69,10 +72,7 @@ interface ValueChainStep {
 interface IndustryConfig {
     industry: string;
     enabledModules: string[];
-    terminology: {
-        customer?: string;
-        product?: string;
-    };
+    terminology: Record<string, string>;
 }
 
 export default function DashboardPage() {
@@ -99,7 +99,8 @@ export default function DashboardPage() {
         profit: 0,
         orderCount: 0,
         customerCount: 0,
-        inventoryCount: 0
+        inventoryCount: 0,
+        workOrderCount: 0
     });
 
     const [healthStats, setHealthStats] = useState<HealthStats>({
@@ -218,6 +219,17 @@ export default function DashboardPage() {
         }
     ];
 
+    if (enabledModules.includes('manufacturing')) {
+        kpiCards.push({
+            title: term['Work Order'] || "Work Orders",
+            value: biStats.workOrderCount,
+            icon: ClipboardList,
+            color: "text-emerald-500",
+            bg: "bg-emerald-500/10",
+            desc: "Active production jobs",
+        });
+    }
+
     if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing business intelligence...</div>;
 
     return (
@@ -226,9 +238,9 @@ export default function DashboardPage() {
                 <div>
                     <h2 className="text-4xl font-black tracking-tight text-slate-950 flex items-center">
                         <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
-                        {industryConfig?.industry ? `${industryConfig.industry} Console` : 'Klypso Dashboard'}
+                        {user?.tenantName || (industryConfig?.industry ? `${industryConfig.industry} Console` : 'Klypso Dashboard')}
                     </h2>
-                    <p className="text-slate-600 mt-2 font-medium">Live {industryConfig?.industry?.toLowerCase() || 'business'} intelligence and operational metrics.</p>
+                    <p className="text-slate-600 mt-2 font-medium">Business intelligence and operational metrics for {user?.tenantName || 'your business'}.</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
@@ -274,6 +286,7 @@ export default function DashboardPage() {
                     { label: `Add ${term.product || "Product"}`, icon: Plus, color: "bg-blue-100 text-blue-600", href: "/inventory", roles: STOCK_ROLES },
                     { label: term.customer || "Customers", icon: Users, color: "bg-indigo-100 text-indigo-600", href: "/crm", roles: SALES_ROLES },
                     { label: "Purchases", icon: Truck, color: "bg-amber-100 text-amber-600", href: "/purchases", roles: STOCK_ROLES },
+                    { label: term['Work Order'] || "Production", icon: Factory, color: "bg-emerald-100 text-emerald-600", href: "/manufacturing", roles: MANUFACTURING_ROLES },
                     { label: "Accounting", icon: FileText, color: "bg-rose-100 text-rose-600", href: "/accounting", roles: FINANCE_ROLES },
                     { label: "Apps & Modules", icon: LayoutGrid, color: "bg-fuchsia-100 text-fuchsia-600", href: "/apps", roles: ['Owner', 'Manager'] as RoleName[] },
                 ].filter(action => {
@@ -310,7 +323,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Top Level KPIs */}
-            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className={cn(
+                "grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4",
+                kpiCards.length > 4 && "lg:grid-cols-5"
+            )}>
                 {(kpiCards || []).map((kpi, i) => (
                     <Card key={i} className="bg-white border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden rounded-[1.5rem] sm:rounded-3xl">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

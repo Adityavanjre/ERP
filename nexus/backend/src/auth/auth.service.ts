@@ -727,6 +727,7 @@ export class AuthService {
       sub: userId,
       email: userRecord?.email,
       tenantId: membership.tenantId,
+      tenantName: membership.tenant.name,
       role: membership.role,
       jti: crypto.randomBytes(16).toString('hex'),
       tokenVersion: userRecord?.tokenVersion ?? 1,

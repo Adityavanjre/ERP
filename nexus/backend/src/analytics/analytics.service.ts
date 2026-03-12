@@ -34,6 +34,8 @@ export class AnalyticsService {
       this.prisma.customer.count({ where: { tenantId } }),
       // Inventory Total
       this.prisma.product.count({ where: { tenantId } }),
+      // Manufacturing WIP
+      this.prisma.workOrder.count({ where: { tenantId, status: { not: 'Completed' } } }),
     ]);
 
     const salesSum = Number(stats[0]._sum.totalAmount || 0);
@@ -46,6 +48,7 @@ export class AnalyticsService {
       orderCount: stats[0]._count,
       customerCount: stats[2],
       inventoryCount: stats[3],
+      workOrderCount: stats[4],
     };
 
     await this.cacheManager.set(cacheKey, result, 300000); // 5 mins
@@ -186,10 +189,10 @@ export class AnalyticsService {
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { type: true },
+      select: { type: true, industry: true },
     });
 
-    const type = tenant?.type || 'General';
+    const type = tenant?.industry || tenant?.type || 'General';
 
     let result: any[] = [];
 

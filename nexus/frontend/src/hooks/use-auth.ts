@@ -4,12 +4,13 @@
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 
-interface User {
+export interface User {
     id: string;
     sub?: string;
     email: string;
     role: string;
     tenantId: string;
+    tenantName?: string;
     industry?: string;
     type?: string;
     isSuperAdmin?: boolean;
