@@ -165,6 +165,7 @@ model TenantUser {
 
   @@unique([userId, tenantId])
   @@index([tenantId])
+  @@index([userId])
 }
 
 model Product {
@@ -218,6 +219,8 @@ model Product {
   @@unique([tenantId, barcode])
   @@index([tenantId, name])
   @@index([tenantId, category])
+  @@index([tenantId, isDeleted, isService])
+  @@index([tenantId, stock, minStockLevel])
   @@index([tenantId, tags])
   @@index([tenantId, brand])
   @@index([tenantId, skuAlias])

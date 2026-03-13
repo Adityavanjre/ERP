@@ -4,6 +4,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import { AllowIdentity } from '../common/decorators/allow-identity.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('analytics')
@@ -41,9 +43,16 @@ export class AnalyticsController {
   }
 
   @Get('diagnostics')
-  @Roles(Role.Owner)
+  @AllowIdentity() // Allow identifying why tenant context is failing
+  @Roles(Role.Owner, Role.Manager)
   async getDiagnostics(@Req() req: any) {
     return this.analyticsService.runDiagnostics(req.user.tenantId);
+  }
+
+  @Public()
+  @Get('ping')
+  ping() {
+    return { status: 'ok', timestamp: new Date().toISOString(), version: '3.0.1' };
   }
 
   @Get('value-chain')

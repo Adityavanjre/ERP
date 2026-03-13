@@ -23,16 +23,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message: string | object =
       'An internal system error occurred. Please contact support.';
 
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const res = exception.getResponse();
+    const isHttpException = exception instanceof HttpException || (exception && typeof (exception as any).getStatus === 'function');
+    
+    if (isHttpException) {
+      const httpException = exception as HttpException;
+      status = httpException.getStatus();
+      const res = httpException.getResponse();
       message =
         typeof res === 'object' && res !== null
           ? (res as any).message || res
           : res;
-      // The original code incorrectly assumed HttpException could directly have Prisma error codes.
-      // Prisma errors are typically caught by `PrismaClientKnownRequestError` or `PrismaClientValidationError`.
-      // This block should handle generic HttpExceptions.
     } else if (
       exception &&
       (exception as any).constructor?.name === 'PrismaClientKnownRequestError'
@@ -171,6 +171,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const responseBody = {
       statusCode: status,
       message,
+      error: status >= 500 && exception instanceof Error ? exception.constructor.name : undefined,
       path: request.url,
       timestamp: new Date().toISOString(),
       traceId: eventId || trackingId,
