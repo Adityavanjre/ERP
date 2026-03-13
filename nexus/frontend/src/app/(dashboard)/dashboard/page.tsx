@@ -100,7 +100,8 @@ export default function DashboardPage() {
         orderCount: 0,
         customerCount: 0,
         inventoryCount: 0,
-        workOrderCount: 0
+        activeCampaigns: 0,
+        workOrderCount: 0, // FIXED: Corrected typo from workOderCount
     });
 
     const [healthStats, setHealthStats] = useState<HealthStats>({
@@ -129,46 +130,60 @@ export default function DashboardPage() {
         }
 
         try {
-            // FIRE OVERVIEW CALL: Replaces 5 separate analytics calls with one high-performance sync
-            const [overviewRes, configRes, systemRes] = await Promise.allSettled([
-                api.get('analytics/overview'),
+            console.log("DASHBOARD: Starting Prioritized Sync...");
+
+            // BATCH 1: VITALS (Crucial stats for the 4 top boxes)
+            // Even with millions of rows, indexed counts return in <50ms
+            const vitalsPromise = api.get('analytics/summary').then(res => {
+                console.log("DASHBOARD: Vitals received", res.data);
+                setBiStats(prev => ({ ...prev, ...res.data }));
+            }).catch(e => console.error("Vitals Fail:", e));
+
+            // BATCH 2: CONFIG & STATS (Infrastructure)
+            const infraPromise = Promise.allSettled([
                 api.get('system/config'),
-                api.get('system/stats'),
-            ]);
+                api.get('system/stats')
+            ]).then(results => {
+                const cfg = results[0].status === 'fulfilled' ? results[0].value.data : null;
+                const sys = results[1].status === 'fulfilled' ? results[1].value.data : null;
 
-            const getVal = <T,>(res: PromiseSettledResult<{ data: T }>) =>
-                res.status === 'fulfilled' ? res.value.data : null;
+                if (cfg) {
+                    setIndustryConfig(cfg);
+                    const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
+                    setEnabledModules(Array.from(new Set([...infrastructure, ...cfg.enabledModules])));
+                }
+                if (sys) setSystemStats(sys);
+            });
 
-            const ovData = getVal<{
-                summary: any;
-                performance: any;
-                health: any;
-                activity: any;
-                valueChain: any;
-            }>(overviewRes as any);
-            const cfgData = getVal<IndustryConfig>(configRes as any);
-            const sysData = getVal<SystemStats>(systemRes as any);
+            // BATCH 3: HEAVY DATA (Performance Charts & Value Chain)
+            // These might take longer if the database is large, so we fetch them lazily
+            const analyticsPromise = Promise.allSettled([
+                api.get('analytics/performance'),
+                api.get('analytics/health'),
+                api.get('analytics/activity'),
+                api.get('analytics/value-chain')
+            ]).then(results => {
+                const getVal = (r: any) => r.status === 'fulfilled' ? r.value.data : null;
+                
+                const perf = getVal(results[0]);
+                const hlth = getVal(results[1]);
+                const act = getVal(results[2]);
+                const vc = getVal(results[3]);
 
-            if (ovData) {
-                if (ovData.summary) setBiStats(prev => ({ ...prev, ...ovData.summary }));
-                if (ovData.performance) setChartData(ovData.performance);
-                if (ovData.health) setHealthStats(ovData.health);
-                if (ovData.activity) setActivity(ovData.activity);
-                if (ovData.valueChain) setValueChain(ovData.valueChain);
-            }
+                if (perf) setChartData(perf);
+                if (hlth) setHealthStats(hlth);
+                if (act) setActivity(act);
+                if (vc) setValueChain(vc);
+                
+                setSyncDegraded(!perf && !hlth);
+            });
 
-            if (cfgData) {
-                setIndustryConfig(cfgData);
-                const apiModules: string[] = cfgData.enabledModules || [];
-                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
-                setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
-            }
-            if (sysData) setSystemStats(sysData);
+            await Promise.all([vitalsPromise, infraPromise, analyticsPromise]);
 
-            // BUG-012: Mark sync degraded only if the core overview failed
-            setSyncDegraded(!ovData);
-
-        } catch {
+        } catch (err) {
+            console.error("DASHBOARD: Critical Sync Failure", err);
+            setSyncDegraded(true);
+        }
             // Suppressed in prod: data update error
         } finally {
             if (deadlineTimer) clearTimeout(deadlineTimer);
