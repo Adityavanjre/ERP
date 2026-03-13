@@ -33,8 +33,9 @@ export class PrismaService
     // PERF-003: Measure concurrency caps logic preventing pool exhaustion gateway crashes
     super({
       log: ['error', 'warn'],
-      // ARCH-005: Increased connection timeout and pool management for Render free tier.
-      // Prevents P2024 (503) errors when the Dashboard consolidation hits the DB.
+      // ARCH-005: Resilient connectivity for Free Tiers.
+      // We increase the timeout to 20s to allow the dashboard consolidated fetch to 'wait' his turn.
+      // This prevents the immediate 503 Service Unavailable crash by queuing DB requests.
       errorFormat: 'minimal',
     });
 
