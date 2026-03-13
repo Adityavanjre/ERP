@@ -61,15 +61,14 @@ export default function ManufacturingDashboard() {
     const syncManufacturingData = useCallback(async (showLoading = false) => {
         try {
             if (showLoading) setLoading(true);
-            const [b, w, m, act] = await Promise.all([
-                api.get("manufacturing/boms"),
-                api.get("manufacturing/work-orders"),
-                api.get("manufacturing/machines"),
+            const [overview, act] = await Promise.all([
+                api.get("manufacturing/overview"),
                 api.get("analytics/activity?limit=5")
             ]);
-            setBoms(b.data);
-            setWorkOrders(w.data);
-            setMachines(m.data || []);
+            const { boms, workOrders, machines } = overview.data;
+            setBoms(boms);
+            setWorkOrders(workOrders);
+            setMachines(machines);
             setActivity((act.data || []).filter((a: any) => a.module === 'manufacturing' || a.action.includes('STOCK') || a.action.includes('WO')));
         } catch {
             // Suppressed in prod: Manufacturing sync failed silently

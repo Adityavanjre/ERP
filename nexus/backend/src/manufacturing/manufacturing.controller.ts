@@ -37,7 +37,20 @@ export class ManufacturingController {
   constructor(
     private readonly mfgService: ManufacturingService,
     private readonly aiService: AiService,
-  ) {}
+  ) { }
+
+  @Get('overview')
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
+  getOverview(@CurrentUser() user: any) {
+    return this.mfgService.getDashboardOverview(user.tenantId);
+  }
 
   @Get('boms/:id/yield-analysis')
   @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)

@@ -23,7 +23,7 @@ export class HealthController {
     private memory: MemoryHealthIndicator,
     private disk: DiskHealthIndicator,
     private saas: SaasAnalyticsService,
-  ) {}
+  ) { }
 
   @Get('readiness')
   @Public() // DevOps probe
@@ -31,7 +31,7 @@ export class HealthController {
   checkReadiness() {
     return this.health.check([
       () => this.db.pingCheck('database', this.prisma),
-      () => this.memory.checkHeap('memory_heap', 512 * 1024 * 1024), // 512MB Limit
+      () => this.memory.checkHeap('memory_heap', 1024 * 1024 * 1024), // Boost to 1GB for readiness spikes
     ]);
   }
 

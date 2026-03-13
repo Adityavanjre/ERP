@@ -323,6 +323,7 @@ model AuditLog {
   user           User?    @relation(fields: [userId], references: [id])
 
   @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, action, createdAt(sort: Desc)])
   @@index([userId])
   @@index([correlationId])
   @@index([action])
@@ -363,6 +364,8 @@ model BOMItem {
   tenant      Tenant         @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
+  @@index([bomId])
+  @@index([productId])
 }
 
 model WorkOrder {
@@ -392,6 +395,7 @@ model WorkOrder {
   @@unique([tenantId, idempotencyKey])
   @@index([tenantId, orderNumber])
   @@index([tenantId, status, startDate])
+  @@index([tenantId, status, createdAt(sort: Desc)])
   @@index([correlationId])
 }
 

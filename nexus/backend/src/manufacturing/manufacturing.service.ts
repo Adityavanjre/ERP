@@ -1131,4 +1131,27 @@ export class ManufacturingService {
       },
     });
   }
+
+  async getDashboardOverview(tenantId: string) {
+    const [boms, workOrders, machines] = await Promise.all([
+      this.prisma.billOfMaterial.findMany({
+        where: { tenantId },
+        include: { product: true, items: { include: { product: true } } },
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.workOrder.findMany({
+        where: { tenantId },
+        include: { bom: { include: { product: true, items: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      this.prisma.machine.findMany({
+        where: { tenantId },
+        take: 10,
+      }),
+    ]);
+
+    return { boms, workOrders, machines };
+  }
 }
