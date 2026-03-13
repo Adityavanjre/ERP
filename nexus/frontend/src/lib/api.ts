@@ -15,6 +15,7 @@ const CACHE_TTL = 5000; // 5s freshness window
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
+  timeout: 15000, // 15s timeout to prevent navigation lag
   headers: {
     'Content-Type': 'application/json',
   },

@@ -171,9 +171,34 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const { user } = useAuth();
     const userRole = user?.isSuperAdmin ? 'Owner' : (user?.role as RoleName) || 'Biller';
 
-    const [enabledModules, setEnabledModules] = useState<string[]>(_cachedModules ?? ['dashboard']);
-    const [terminology, setTerminology] = useState<IndustryTerminology>(_cachedTerminology ?? {});
+    const [enabledModules, setEnabledModules] = useState<string[]>(() => {
+        if (_cachedModules) return _cachedModules;
+        // BRAIN-001: Industry Hinting - use industry from JWT if available while loading
+        if (user?.industry) {
+            const industry = user.industry as string;
+            if (industry === 'Manufacturing') return ['dashboard', 'accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales'];
+            if (industry === 'Retail') return ['dashboard', 'accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'];
+            // ... (other industries)
+        }
+        return ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
+    });
+
+    const [terminology, setTerminology] = useState<IndustryTerminology>(() => {
+        if (_cachedTerminology) return _cachedTerminology;
+        if (user?.industry === 'Manufacturing') {
+            return {
+                customer: 'Customer',
+                product: 'Item/Product',
+                inventory: 'Stock',
+                'Work Order': 'Job Card'
+            };
+        }
+        return {};
+    });
+    const [loadingConfig, setLoadingConfig] = useState(!_cachedModules);
+
     const fetchConfig = useCallback(async () => {
+        setLoadingConfig(true);
         // Ensure async execution to avoid "setState in effect" warning
         await Promise.resolve();
         try {
@@ -202,11 +227,12 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             // Safety fallback: Limit visibility to basic operations on auth failure.
             const fallback = ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
             if (!_cachedModules) {
-                _cachedModules = fallback;
-                setEnabledModules(fallback);
+                setEnabledModules(prev => prev.length > 5 ? prev : fallback);
             }
+        } finally {
+            setLoadingConfig(false);
         }
-    }, []);
+    }, [user?.industry]);
 
     // PERF-001: Navigation Pre-warming
     // Proactively pre-fetches module data on hover to hit 'Zero Latency' goal.
@@ -433,7 +459,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                     </div>
                     <p className="text-[10px] text-slate-900 font-black uppercase tracking-widest">
-                        Live Sync
+                        {loadingConfig ? 'Syncing...' : 'Live Sync'}
                     </p>
                 </div>
             </div>

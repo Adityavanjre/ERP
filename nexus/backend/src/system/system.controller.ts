@@ -64,17 +64,29 @@ export class SystemController {
   @Get('config')
   // No explicit @Roles means all authenticated tenant users can fetch UI config
   async getModuleConfig(@Req() req: any) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) {
+      return {
+        ...getIndustryConfig('General'),
+        enabledModules: ['dashboard', 'sales', 'inventory', 'accounting', 'crm'],
+        industry: 'General',
+      };
+    }
+
+    const cacheKey = `nexus:system:config:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
     let industry = 'General';
     let businessType = '';
 
-    if (req.user.tenantId) {
-      const tenant = await this.prisma.tenant.findUnique({
-        where: { id: req.user.tenantId },
-        select: { industry: true, type: true, businessType: true },
-      });
-      industry = tenant?.industry || tenant?.type || 'General';
-      businessType = tenant?.businessType || '';
-    }
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { industry: true, type: true, businessType: true },
+    });
+    industry = tenant?.industry || tenant?.type || 'General';
+    businessType = tenant?.businessType || '';
+
     const config = getIndustryConfig(industry);
 
     // Extract any Super Admin module overrides (Format: Role|Module1,Module2)
@@ -86,11 +98,14 @@ export class SystemController {
       ...new Set([...(config.enabledModules || []), ...extraModules]),
     ];
 
-    return {
+    const result = {
       ...config,
       enabledModules: mergedModules,
       industry: industry,
     };
+
+    await this.cacheManager.set(cacheKey, result, 3600000); // 1 hour
+    return result;
   }
 
   @Get('audit')
