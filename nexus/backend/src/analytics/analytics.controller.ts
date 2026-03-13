@@ -40,6 +40,12 @@ export class AnalyticsController {
     return this.analyticsService.getActivityFeed(req.user.tenantId);
   }
 
+  @Get('diagnostics')
+  @Roles(Role.Owner)
+  async getDiagnostics(@Req() req: any) {
+    return this.analyticsService.runDiagnostics(req.user.tenantId);
+  }
+
   @Get('value-chain')
   @Roles(Role.Owner, Role.Manager, Role.Accountant)
   getValueChain(@Req() req: any) {

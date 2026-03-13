@@ -148,7 +148,7 @@ export class SaasAnalyticsService {
       isMfg
         ? this.prisma.workOrder.count({
             where: { tenantId, status: { in: ['Planned', 'InProgress'] } },
-          })
+          }).catch(() => 0)
         : Promise.resolve(0),
       isMfg
         ? this.prisma.$queryRaw<{ count: number }[]>`
@@ -158,7 +158,7 @@ export class SaasAnalyticsService {
               AND "isService" = false 
               AND "stock" <= "minStockLevel"
               AND "isDeleted" = false
-          `.then(res => Number(res[0]?.count || 0))
+          `.then(res => Number(res?.[0]?.count || 0)).catch(() => 0)
         : Promise.resolve(0),
     ]);
 

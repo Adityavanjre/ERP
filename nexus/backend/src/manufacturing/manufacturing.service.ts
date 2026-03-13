@@ -1139,17 +1139,17 @@ export class ManufacturingService {
         include: { product: true, items: { include: { product: true } } },
         take: 10,
         orderBy: { createdAt: 'desc' },
-      }),
+      }).catch(() => []),
       this.prisma.workOrder.findMany({
         where: { tenantId },
         include: { bom: { include: { product: true, items: true } } },
         orderBy: { createdAt: 'desc' },
         take: 10,
-      }),
+      }).catch(() => []),
       this.prisma.machine.findMany({
         where: { tenantId },
         take: 10,
-      }),
+      }).catch(() => []),
     ]);
 
     return { boms, workOrders, machines };
