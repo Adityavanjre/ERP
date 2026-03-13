@@ -77,15 +77,19 @@ export class SystemController {
     const cached = await this.cacheManager.get<any>(cacheKey);
     if (cached) return cached;
 
-    let industry = 'General';
+    let industry = req.user.industry || req.user.tenantType || 'General';
     let businessType = '';
 
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { industry: true, type: true, businessType: true },
-    });
-    industry = tenant?.industry || tenant?.type || 'General';
-    businessType = tenant?.businessType || '';
+    // SYS-PERF: Only hit DB if industry is missing from token (legacy sessions)
+    // or if we need businessType overrides.
+    if (!req.user.industry || industry === 'General') {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { industry: true, type: true, businessType: true },
+      });
+      industry = tenant?.industry || tenant?.type || 'General';
+      businessType = tenant?.businessType || '';
+    }
 
     const config = getIndustryConfig(industry);
 

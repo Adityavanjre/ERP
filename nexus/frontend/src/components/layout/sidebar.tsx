@@ -226,8 +226,11 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             console.error("Critical: Failed to sync industry configuration");
             // Safety fallback: Limit visibility to basic operations on auth failure.
             const fallback = ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
+            if (user?.industry === 'Manufacturing') {
+                fallback.push('manufacturing', 'purchases');
+            }
             if (!_cachedModules) {
-                setEnabledModules(prev => prev.length > 5 ? prev : fallback);
+                setEnabledModules(prev => prev.length > 5 ? prev : [...new Set(fallback)]);
             }
         } finally {
             setLoadingConfig(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -112,6 +112,9 @@ export function CreateWorkOrderDialog({ refreshData, children }: CreateWorkOrder
             <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Create Production Order</DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
+                        Initialize a new job card and check for material availability.
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
