@@ -182,6 +182,32 @@ export class AnalyticsService {
     return this.saas.getGlobalActivity(tenantId);
   }
 
+  async getDashboardOverview(tenantId: string) {
+    const cacheKey = `nexus:analytics:dashboard_overview:${tenantId}`;
+    const cached = await this.cacheManager.get<any>(cacheKey);
+    if (cached) return cached;
+
+    // Fetch everything needed for the dashboard in a single pass
+    const [summary, performance, health, activity, valueChain] = await Promise.all([
+      this.getExecutiveSummary(tenantId),
+      this.getMonthlyPerformance(tenantId),
+      this.getHealthMetrics(tenantId),
+      this.getActivityFeed(tenantId),
+      this.getValueChain(tenantId)
+    ]);
+
+    const result = {
+      summary,
+      performance,
+      health,
+      activity,
+      valueChain
+    };
+
+    await this.cacheManager.set(cacheKey, result, 30000); // 30s for the very front page
+    return result;
+  }
+
   async getValueChain(tenantId: string) {
     const cacheKey = `nexus:analytics:value_chain:${tenantId}`;
     const cached = await this.cacheManager.get<any>(cacheKey);

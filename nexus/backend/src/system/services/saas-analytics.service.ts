@@ -151,13 +151,14 @@ export class SaasAnalyticsService {
           })
         : Promise.resolve(0),
       isMfg
-        ? this.prisma.product.count({
-            where: {
-              tenantId,
-              isService: false,
-              stock: { lte: this.prisma.product.fields.minStockLevel },
-            },
-          })
+        ? this.prisma.$queryRaw<{ count: number }[]>`
+            SELECT COUNT(*)::int as count 
+            FROM "Product" 
+            WHERE "tenantId" = ${tenantId} 
+              AND "isService" = false 
+              AND "stock" <= "minStockLevel"
+              AND "isDeleted" = false
+          `.then(res => Number(res[0]?.count || 0))
         : Promise.resolve(0),
     ]);
 

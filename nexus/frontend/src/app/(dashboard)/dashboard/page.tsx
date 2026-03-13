@@ -129,27 +129,33 @@ export default function DashboardPage() {
         }
 
         try {
-            // Fire ALL calls concurrently. Config + all analytics start at the same time.
-            const [configRes, systemRes, summaryRes, performanceRes, healthRes, activityRes, vcRes] = await Promise.allSettled([
+            // FIRE OVERVIEW CALL: Replaces 5 separate analytics calls with one high-performance sync
+            const [overviewRes, configRes, systemRes] = await Promise.allSettled([
+                api.get('analytics/overview'),
                 api.get('system/config'),
                 api.get('system/stats'),
-                api.get('analytics/summary'),
-                api.get('analytics/performance'),
-                api.get('analytics/health'),
-                api.get('analytics/activity'),
-                api.get('analytics/value-chain')
             ]);
 
             const getVal = <T,>(res: PromiseSettledResult<{ data: T }>) =>
                 res.status === 'fulfilled' ? res.value.data : null;
 
-            const cfgData = getVal<IndustryConfig>(configRes as PromiseSettledResult<{ data: IndustryConfig }>);
-            const sysData = getVal<SystemStats>(systemRes as PromiseSettledResult<{ data: SystemStats }>);
-            const sumData = getVal<Partial<typeof biStats>>(summaryRes as PromiseSettledResult<{ data: Partial<typeof biStats> }>);
-            const perfData = getVal<ChartData[]>(performanceRes as PromiseSettledResult<{ data: ChartData[] }>);
-            const healthData = getVal<HealthStats>(healthRes as PromiseSettledResult<{ data: HealthStats }>);
-            const actData = getVal<ActivityLog[]>(activityRes as PromiseSettledResult<{ data: ActivityLog[] }>);
-            const vcData = getVal<ValueChainStep[]>(vcRes as PromiseSettledResult<{ data: ValueChainStep[] }>);
+            const ovData = getVal<{
+                summary: any;
+                performance: any;
+                health: any;
+                activity: any;
+                valueChain: any;
+            }>(overviewRes as any);
+            const cfgData = getVal<IndustryConfig>(configRes as any);
+            const sysData = getVal<SystemStats>(systemRes as any);
+
+            if (ovData) {
+                if (ovData.summary) setBiStats(prev => ({ ...prev, ...ovData.summary }));
+                if (ovData.performance) setChartData(ovData.performance);
+                if (ovData.health) setHealthStats(ovData.health);
+                if (ovData.activity) setActivity(ovData.activity);
+                if (ovData.valueChain) setValueChain(ovData.valueChain);
+            }
 
             if (cfgData) {
                 setIndustryConfig(cfgData);
@@ -158,15 +164,9 @@ export default function DashboardPage() {
                 setEnabledModules(Array.from(new Set([...infrastructure, ...apiModules])));
             }
             if (sysData) setSystemStats(sysData);
-            if (sumData) setBiStats(prev => ({ ...prev, ...sumData }));
-            if (perfData) setChartData(perfData);
-            if (healthData) setHealthStats(healthData);
-            if (actData) setActivity(actData);
-            if (vcData) setValueChain(vcData);
 
-            // BUG-012: Mark sync degraded only if ALL data calls failed
-            const anySucceeded = cfgData || sumData || perfData || healthData || actData || vcData;
-            setSyncDegraded(!anySucceeded);
+            // BUG-012: Mark sync degraded only if the core overview failed
+            setSyncDegraded(!ovData);
 
         } catch {
             // Suppressed in prod: data update error

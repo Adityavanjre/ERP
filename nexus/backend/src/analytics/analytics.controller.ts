@@ -16,6 +16,12 @@ export class AnalyticsController {
     return this.analyticsService.getExecutiveSummary(req.user.tenantId);
   }
 
+  @Get('overview')
+  @Roles(Role.Owner, Role.Manager, Role.Accountant)
+  getOverview(@Req() req: any) {
+    return this.analyticsService.getDashboardOverview(req.user.tenantId);
+  }
+
   @Get('performance')
   @Roles(Role.Owner, Role.Manager, Role.Accountant)
   getPerformance(@Req() req: any) {
