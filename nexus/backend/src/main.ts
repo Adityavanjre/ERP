@@ -292,7 +292,7 @@ async function bootstrap() {
   // Global Exception Filter
   app.useGlobalFilters(new GlobalExceptionFilter());
 
-  // Global Timeouts (15s limit)
+  // Global Timeouts (60s limit for Free Tier resiliency)
   app.useGlobalInterceptors(new TimeoutInterceptor());
 
   // Swagger Documentation â€” DISABLED IN PRODUCTION

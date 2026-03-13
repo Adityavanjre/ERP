@@ -9,6 +9,13 @@ export class PrismaService
 {
   private _isolatedClient: any;
   private _modelCache = new Map<string, boolean>();
+  
+  // CONCURRENCY-GATING: Prevents 503 Service Unavailable on Free Tiers (Supabase/Render)
+  // By limiting simultaneous DB executions, we force Node.js to queue requests in memory
+  // instead of hitting the database connection limit and crashing.
+  private _activeQueries = 0;
+  private _queryQueue: (() => void)[] = [];
+  private static readonly MAX_CONCURRENT_QUERIES = 2; // Hard limit for Free Tier safety
   private static readonly GLOBAL_MODELS = new Set([
     'tenant',
     'user',
@@ -257,7 +264,14 @@ export class PrismaService
       query: {
         $allModels: {
           $allOperations: async ({ model, operation, args, query }: any) => {
-            const tenantId = context.getTenantId();
+            // -- SEMAPHORE START --
+            if (this._activeQueries >= PrismaService.MAX_CONCURRENT_QUERIES) {
+              await new Promise<void>((resolve) => this._queryQueue.push(resolve));
+            }
+            this._activeQueries++;
+            
+            try {
+              const tenantId = context.getTenantId();
             const userType = context.getUserType();
 
             const isGlobal = PrismaService.GLOBAL_MODELS.has(
@@ -322,9 +336,16 @@ export class PrismaService
             }
 
             return query(args);
-          },
+          } finally {
+            this._activeQueries--;
+            if (this._queryQueue.length > 0) {
+              const next = this._queryQueue.shift();
+              if (next) next();
+            }
+          }
         },
       },
-    });
-  }
+    },
+  });
+}
 }

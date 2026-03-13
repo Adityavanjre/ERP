@@ -15,7 +15,7 @@ const CACHE_TTL = 30000; // 30s freshness window for zero-latency lookups
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  timeout: 15000, // 15s timeout to prevent navigation lag
+  timeout: 60000, // 60s timeout to survive DB queuing on Free Tiers
   headers: {
     'Content-Type': 'application/json',
   },

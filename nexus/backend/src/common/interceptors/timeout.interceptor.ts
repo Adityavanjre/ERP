@@ -12,7 +12,7 @@ import { catchError, timeout } from 'rxjs/operators';
 export class TimeoutInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      timeout(30000), // Reconciled timeout (REF-002) - 30-second cutoff for heavy exports
+      timeout(60000), // 60s cutoff for free tier resilience (REF-002)
       catchError((err) => {
         if (err instanceof TimeoutError) {
           return throwError(
