@@ -345,6 +345,8 @@ model BillOfMaterial {
   tenant          Tenant      @relation(fields: [tenantId], references: [id])
   workOrders      WorkOrder[]
 
+  @@index([tenantId])
+  @@index([productId])
   @@index([correlationId])
 }
 
@@ -405,6 +407,9 @@ model Machine {
   hourlyRate      Decimal?      @default(0.00)
   tenant          Tenant        @relation(fields: [tenantId], references: [id])
   workOrders      WorkOrder[]
+
+  @@index([tenantId])
+  @@index([status])
 }
 
 model Account {
