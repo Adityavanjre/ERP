@@ -171,7 +171,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const responseBody = {
       statusCode: status,
       message,
-      error: status >= 500 && exception instanceof Error ? exception.constructor.name : undefined,
+      error: exception instanceof Error ? exception.constructor.name : 'UnknownError',
       path: request.url,
       timestamp: new Date().toISOString(),
       traceId: eventId || trackingId,

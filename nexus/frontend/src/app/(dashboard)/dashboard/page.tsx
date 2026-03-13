@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -183,8 +183,6 @@ export default function DashboardPage() {
         } catch (err) {
             console.error("DASHBOARD: Critical Sync Failure", err);
             setSyncDegraded(true);
-        }
-            // Suppressed in prod: data update error
         } finally {
             if (deadlineTimer) clearTimeout(deadlineTimer);
             setLoading(false);
@@ -199,51 +197,54 @@ export default function DashboardPage() {
 
     const term = industryConfig?.terminology || {};
 
-    const kpiCards = [
-        {
-            title: "Gross Revenue",
-            value: `₹${biStats.revenue.toLocaleString('en-IN')}`,
-            icon: DollarSign,
-            color: "text-emerald-500",
-            bg: "bg-emerald-500/10",
-            desc: "Total sales income"
-        },
-        {
-            title: "Total Purchases",
-            value: `₹${biStats.expenses.toLocaleString('en-IN')}`,
-            icon: ArrowDownRight,
-            color: "text-rose-500",
-            bg: "bg-rose-500/10",
-            desc: "Total purchase cost"
-        },
-        {
-            title: term.customer || "Customers",
-            value: biStats.customerCount,
-            icon: Users,
-            color: "text-sky-400",
-            bg: "bg-sky-500/10",
-            desc: `Total ${term.customer?.toLowerCase() || 'customers'}`
-        },
-        {
-            title: term.product || "Products",
-            value: biStats.inventoryCount,
-            icon: Package,
-            color: "text-amber-500",
-            bg: "bg-amber-500/10",
-            desc: `Active ${term.product?.toLowerCase() || 'products'}`
-        }
-    ];
+    const kpiCards = useMemo(() => {
+        const cards = [
+            {
+                title: "Gross Revenue",
+                value: `₹${biStats.revenue.toLocaleString('en-IN')}`,
+                icon: DollarSign,
+                color: "text-emerald-500",
+                bg: "bg-emerald-500/10",
+                desc: "Total sales income"
+            },
+            {
+                title: "Total Purchases",
+                value: `₹${biStats.expenses.toLocaleString('en-IN')}`,
+                icon: ArrowDownRight,
+                color: "text-rose-500",
+                bg: "bg-rose-500/10",
+                desc: "Total purchase cost"
+            },
+            {
+                title: term.customer || "Customers",
+                value: biStats.customerCount,
+                icon: Users,
+                color: "text-sky-400",
+                bg: "bg-sky-500/10",
+                desc: `Total ${term.customer?.toLowerCase() || 'customers'}`
+            },
+            {
+                title: term.product || "Products",
+                value: biStats.inventoryCount,
+                icon: Package,
+                color: "text-amber-500",
+                bg: "bg-amber-500/10",
+                desc: `Active ${term.product?.toLowerCase() || 'products'}`
+            }
+        ];
 
-    if (enabledModules.includes('manufacturing')) {
-        kpiCards.push({
-            title: term['Work Order'] || "Work Orders",
-            value: biStats.workOrderCount,
-            icon: ClipboardList,
-            color: "text-emerald-500",
-            bg: "bg-emerald-500/10",
-            desc: "Active production jobs",
-        });
-    }
+        if (enabledModules.includes('manufacturing')) {
+            cards.push({
+                title: term['Work Order'] || "Work Orders",
+                value: biStats.workOrderCount,
+                icon: ClipboardList,
+                color: "text-emerald-500",
+                bg: "bg-emerald-500/10",
+                desc: "Active production jobs",
+            });
+        }
+        return cards;
+    }, [biStats, enabledModules, term]);
 
     if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing business intelligence...</div>;
 
