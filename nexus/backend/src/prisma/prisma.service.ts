@@ -32,7 +32,10 @@ export class PrismaService
   constructor(private tenantContext: TenantContextService) {
     // PERF-003: Measure concurrency caps logic preventing pool exhaustion gateway crashes
     super({
-      log: ['query', 'info', 'warn', 'error'],
+      log: ['error', 'warn'],
+      // ARCH-005: Increased connection timeout and pool management for Render free tier.
+      // Prevents P2024 (503) errors when the Dashboard consolidation hits the DB.
+      errorFormat: 'minimal',
     });
 
     this._isolatedClient = this._createIsolatedClient();
