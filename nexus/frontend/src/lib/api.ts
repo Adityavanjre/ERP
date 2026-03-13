@@ -138,7 +138,18 @@ api.interceptors.response.use(
 
     return response;
   },
-  (error) => {
+  async (error) => {
+    // RES-003: Exponential Backoff for 503 (Server Overload/Warmup)
+    // Retries requests up to 3 times if the server is temporarily unavailable.
+    const config = error.config;
+    if (error.response?.status === 503 && (!config._retryCount || config._retryCount < 3)) {
+      config._retryCount = (config._retryCount || 0) + 1;
+      const delay = Math.pow(2, config._retryCount) * 1000;
+      console.warn(`Resiliency: 503 detected, retrying in ${delay}ms (Attempt ${config._retryCount})`);
+      await new Promise(res => setTimeout(res, delay));
+      return api(config);
+    }
+
     // PERF-001: Trap unhandled offline constraints to gracefully drop to Offline Mode
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
       if (typeof window !== 'undefined') {

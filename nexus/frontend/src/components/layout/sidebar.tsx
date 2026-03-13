@@ -171,31 +171,28 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const { user } = useAuth();
     const userRole = user?.isSuperAdmin ? 'Owner' : (user?.role as RoleName) || 'Biller';
 
-    const [enabledModules, setEnabledModules] = useState<string[]>(() => {
-        if (_cachedModules) return _cachedModules;
-        // BRAIN-001: Industry Hinting - use industry from JWT if available while loading
-        if (user?.industry) {
-            const industry = user.industry as string;
-            if (industry === 'Manufacturing') return ['dashboard', 'accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales'];
-            if (industry === 'Retail') return ['dashboard', 'accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'];
-            // ... (other industries)
-        }
-        return ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
-    });
+    const [enabledModules, setEnabledModules] = useState<string[]>(['dashboard', 'sales', 'inventory', 'accounting', 'crm']);
+    const [terminology, setTerminology] = useState<IndustryTerminology>({});
+    const [loadingConfig, setLoadingConfig] = useState(true);
 
-    const [terminology, setTerminology] = useState<IndustryTerminology>(() => {
-        if (_cachedTerminology) return _cachedTerminology;
-        if (user?.industry === 'Manufacturing') {
-            return {
-                customer: 'Customer',
-                product: 'Item/Product',
-                inventory: 'Stock',
-                'Work Order': 'Job Card'
-            };
+    // BRAIN-001: Aggressive Industry Hinting
+    // Automatically recalculates modules purely from JWT industry if server config fails.
+    useEffect(() => {
+        if (user?.industry && !(_cachedModules && _cachedModules.length > 5)) {
+            const industry = user.industry;
+            if (industry === 'Manufacturing' || industry.toLowerCase().includes('mfg')) {
+                setEnabledModules(['dashboard', 'accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales']);
+                setTerminology({
+                    customer: 'Customer',
+                    product: 'Item/Product',
+                    inventory: 'Stock',
+                    'Work Order': 'Job Card'
+                });
+            } else if (industry === 'Retail') {
+                setEnabledModules(['dashboard', 'accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales']);
+            }
         }
-        return {};
-    });
-    const [loadingConfig, setLoadingConfig] = useState(!_cachedModules);
+    }, [user?.industry]);
 
     const fetchConfig = useCallback(async () => {
         setLoadingConfig(true);
@@ -263,9 +260,15 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     }, []);
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // PERF: Skip API call if we already have a robust cache for this session
+        if (_cachedModules && _cachedModules.length > 5 && !loadingConfig) {
+            setEnabledModules(_cachedModules);
+            setTerminology(_cachedTerminology || {});
+            setLoadingConfig(false);
+            return;
+        }
         fetchConfig();
-    }, [fetchConfig]);
+    }, [fetchConfig, loadingConfig]);
 
     // Filter streams: 
     // 1. Role-based filtering (already present)
