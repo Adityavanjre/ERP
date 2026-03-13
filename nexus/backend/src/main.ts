@@ -1,4 +1,4 @@
-﻿import 'dotenv/config';
+import 'dotenv/config';
 import 'reflect-metadata';
 import { otracing } from './tracing';
 // Force resolution of critical validation packages before NestJS starts
@@ -178,12 +178,17 @@ async function bootstrap() {
       service: 'Nexus Enterprise API',
       version: '2.0.0',
       timestamp: new Date().toISOString(),
-      links: {
-        portal: 'https://klypso.in/portal',
-        erp_login: 'https://klypso.in/portal/login',
-        agency_admin: 'https://klypso.in/login',
-      },
     }),
+  );
+
+  // RED-001: Manual Liveness Probe for Render / Port-scanner
+  // This bypasses NestJS Guards/Interceptors to ensure Render gets a 200 OK
+  // during the critical boot-up window when the router might be slow.
+  expressApp.get('/api/v1/health/liveness', (_req: any, res: any) =>
+    res.status(200).json({ status: 'up', source: 'express-direct' }),
+  );
+  expressApp.get('/api/health/liveness', (_req: any, res: any) =>
+    res.status(200).json({ status: 'up', source: 'express-direct' }),
   );
 
   app.use((req: any, res: any, next: any) => {
