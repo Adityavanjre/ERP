@@ -10,7 +10,7 @@ const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
 // PERF-001: Zero-Latency Caching Layer
 // Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
 const requestCache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_TTL = 5000; // 5s freshness window
+const CACHE_TTL = 30000; // 30s freshness window for zero-latency lookups
 
 export const api = axios.create({
   baseURL: API_URL,
