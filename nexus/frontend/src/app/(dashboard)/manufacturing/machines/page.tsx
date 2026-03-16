@@ -219,7 +219,7 @@ export default function MachinesPage() {
                                 <div className="grid grid-cols-2 gap-4 text-sm mt-2">
                                     <div className="space-y-1">
                                         <p className="text-slate-500 flex items-center"><Clock className="w-3 h-3 mr-1" /> Rate/Hr</p>
-                                        <p className="font-semibold text-slate-200">₹{m.hourlyRate.toFixed(2)}</p>
+                                        <p className="font-semibold text-slate-200">₹{Number(m.hourlyRate || 0).toFixed(2)}</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-slate-500 flex items-center"><Wrench className="w-3 h-3 mr-1" /> Last Maint.</p>
