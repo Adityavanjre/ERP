@@ -23,8 +23,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message: string | object =
       'An internal system error occurred. Please contact support.';
 
-    const isHttpException = exception instanceof HttpException || (exception && typeof (exception as any).getStatus === 'function');
-    
+    const isHttpException =
+      exception instanceof HttpException ||
+      (exception && typeof (exception as any).getStatus === 'function');
+
     if (isHttpException) {
       const httpException = exception as HttpException;
       status = httpException.getStatus();
@@ -171,7 +173,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const responseBody = {
       statusCode: status,
       message,
-      error: exception instanceof Error ? (exception as any).constructor?.name : 'UnknownError',
+      error:
+        exception instanceof Error
+          ? (exception as any).constructor?.name
+          : 'UnknownError',
       path: request.url,
       timestamp: new Date().toISOString(),
       traceId: eventId || trackingId,

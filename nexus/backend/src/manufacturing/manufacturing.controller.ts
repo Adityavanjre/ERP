@@ -37,7 +37,7 @@ export class ManufacturingController {
   constructor(
     private readonly mfgService: ManufacturingService,
     private readonly aiService: AiService,
-  ) { }
+  ) {}
 
   @Get('overview')
   @Roles(

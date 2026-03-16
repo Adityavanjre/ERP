@@ -43,7 +43,9 @@ export class AnalyticsService {
     const result = {
       revenue: Number(stats[0]._sum.totalAmount || 0),
       expenses: Number(stats[1]._sum.totalAmount || 0),
-      profit: Number(stats[0]._sum.totalAmount || 0) - Number(stats[1]._sum.totalAmount || 0),
+      profit:
+        Number(stats[0]._sum.totalAmount || 0) -
+        Number(stats[1]._sum.totalAmount || 0),
       orderCount: stats[0]._count,
       customerCount: stats[2],
       inventoryCount: stats[3],
@@ -70,7 +72,20 @@ export class AnalyticsService {
     });
 
     const monthlySales: Record<string, number> = {};
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     months.forEach((m) => (monthlySales[m] = 0));
 
     invoices.forEach((inv) => {
@@ -113,47 +128,95 @@ export class AnalyticsService {
   async getDashboardOverview(tenantId: string) {
     const cacheKey = `nexus:analytics:dashboard_overview:${tenantId}`;
     try {
-      const cached = await this.cacheManager.get<any>(cacheKey).catch(() => null);
+      const cached = await this.cacheManager
+        .get<any>(cacheKey)
+        .catch(() => null);
       if (cached) return cached;
-    } catch { /* Ignore */ }
+    } catch {
+      /* Ignore */
+    }
 
-    const [summary, performance, health, activity, valueChain] = await Promise.all([
-      this.getExecutiveSummary(tenantId).catch(() => ({ revenue: 0, expenses: 0, profit: 0, orderCount: 0, customerCount: 0, inventoryCount: 0, workOrderCount: 0 })),
-      this.getMonthlyPerformance(tenantId).catch(() => []),
-      this.getHealthMetrics(tenantId).catch(() => ({ runRate: 0, burnRate: 0, growth: 0, healthScore: 100, alerts: [] })),
-      this.getActivityFeed(tenantId).catch(() => []),
-      this.getValueChain(tenantId).catch(() => [])
-    ]);
+    const [summary, performance, health, activity, valueChain] =
+      await Promise.all([
+        this.getExecutiveSummary(tenantId).catch(() => ({
+          revenue: 0,
+          expenses: 0,
+          profit: 0,
+          orderCount: 0,
+          customerCount: 0,
+          inventoryCount: 0,
+          workOrderCount: 0,
+        })),
+        this.getMonthlyPerformance(tenantId).catch(() => []),
+        this.getHealthMetrics(tenantId).catch(() => ({
+          runRate: 0,
+          burnRate: 0,
+          growth: 0,
+          healthScore: 100,
+          alerts: [],
+        })),
+        this.getActivityFeed(tenantId).catch(() => []),
+        this.getValueChain(tenantId).catch(() => []),
+      ]);
 
     const result = { summary, performance, health, activity, valueChain };
     try {
-      await this.cacheManager.set(cacheKey, result, 30000).catch(() => null); 
-    } catch { /* Ignore */ }
+      await this.cacheManager.set(cacheKey, result, 30000).catch(() => null);
+    } catch {
+      /* Ignore */
+    }
     return result;
   }
 
   async getValueChain(tenantId: string) {
     const cacheKey = `nexus:analytics:value_chain:${tenantId}`;
     try {
-      const cached = await this.cacheManager.get<any>(cacheKey).catch(() => null);
+      const cached = await this.cacheManager
+        .get<any>(cacheKey)
+        .catch(() => null);
       if (cached) return cached;
-    } catch { /* Ignore */ }
+    } catch {
+      /* Ignore */
+    }
 
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { type: true, industry: true },
-    }).catch(() => null);
+    const tenant = await this.prisma.tenant
+      .findUnique({
+        where: { id: tenantId },
+        select: { type: true, industry: true },
+      })
+      .catch(() => null);
 
     const type = tenant?.industry || tenant?.type || 'General';
     let result: any[] = [];
 
     if (type === 'Manufacturing') {
-      const [purchases, wos, inventory, receivables, mfgWip, lowStockMaterials] = await Promise.all([
-        this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }).catch(() => 0),
-        this.prisma.workOrder.count({ where: { tenantId, status: { in: ['Planned', 'InProgress'] } } }).catch(() => 0),
-        this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }).catch(() => 0),
-        this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }).catch(() => 0),
-        this.prisma.workOrder.count({ where: { tenantId, status: { in: ['Planned', 'InProgress'] } } }).catch(() => 0),
+      const [
+        purchases,
+        wos,
+        inventory,
+        receivables,
+        mfgWip,
+        lowStockMaterials,
+      ] = await Promise.all([
+        this.prisma.purchaseOrder
+          .count({ where: { tenantId, status: POStatus.Ordered } })
+          .catch(() => 0),
+        this.prisma.workOrder
+          .count({
+            where: { tenantId, status: { in: ['Planned', 'InProgress'] } },
+          })
+          .catch(() => 0),
+        this.prisma.product
+          .count({ where: { tenantId, stock: { gt: 0 } } })
+          .catch(() => 0),
+        this.prisma.invoice
+          .count({ where: { tenantId, status: 'Unpaid' } })
+          .catch(() => 0),
+        this.prisma.workOrder
+          .count({
+            where: { tenantId, status: { in: ['Planned', 'InProgress'] } },
+          })
+          .catch(() => 0),
         this.prisma.$queryRaw<{ count: number }[]>`
             SELECT COUNT(*)::int as count 
             FROM "Product" 
@@ -161,7 +224,9 @@ export class AnalyticsService {
               AND "isService" = false 
               AND "stock" <= "minStockLevel"
               AND "isDeleted" = false
-          `.then(res => Number(res?.[0]?.count || 0)).catch(() => 0),
+          `
+          .then((res) => Number(res?.[0]?.count || 0))
+          .catch(() => 0),
       ]);
       result = [
         { label: 'Procurement', count: purchases, color: 'sky' },
@@ -172,24 +237,32 @@ export class AnalyticsService {
         { label: 'Low Stock', count: lowStockMaterials, color: 'red' },
       ];
     } else {
-        // Simple General fallback
-        const [purchases, inventory, pipeline, receivables] = await Promise.all([
-          this.prisma.purchaseOrder.count({ where: { tenantId, status: POStatus.Ordered } }).catch(() => 0),
-          this.prisma.product.count({ where: { tenantId, stock: { gt: 0 } } }).catch(() => 0),
-          this.prisma.opportunity.count({ where: { tenantId } }).catch(() => 0),
-          this.prisma.invoice.count({ where: { tenantId, status: 'Unpaid' } }).catch(() => 0),
-        ]);
-        result = [
-          { label: 'Procurement', count: purchases, color: 'sky' },
-          { label: 'Inventory', count: inventory, color: 'amber' },
-          { label: 'Sales Pipeline', count: pipeline, color: 'indigo' },
-          { label: 'Receivables', count: receivables, color: 'emerald' },
-        ];
+      // Simple General fallback
+      const [purchases, inventory, pipeline, receivables] = await Promise.all([
+        this.prisma.purchaseOrder
+          .count({ where: { tenantId, status: POStatus.Ordered } })
+          .catch(() => 0),
+        this.prisma.product
+          .count({ where: { tenantId, stock: { gt: 0 } } })
+          .catch(() => 0),
+        this.prisma.opportunity.count({ where: { tenantId } }).catch(() => 0),
+        this.prisma.invoice
+          .count({ where: { tenantId, status: 'Unpaid' } })
+          .catch(() => 0),
+      ]);
+      result = [
+        { label: 'Procurement', count: purchases, color: 'sky' },
+        { label: 'Inventory', count: inventory, color: 'amber' },
+        { label: 'Sales Pipeline', count: pipeline, color: 'indigo' },
+        { label: 'Receivables', count: receivables, color: 'emerald' },
+      ];
     }
 
     try {
       await this.cacheManager.set(cacheKey, result, 300000).catch(() => null);
-    } catch { /* Ignore */ }
+    } catch {
+      /* Ignore */
+    }
     return result;
   }
 
@@ -199,7 +272,7 @@ export class AnalyticsService {
       this.prisma.invoice.count({ where: { tenantId } }).catch(() => -1),
       this.prisma.product.count({ where: { tenantId } }).catch(() => -1),
       this.prisma.customer.count({ where: { tenantId } }).catch(() => -1),
-      this.prisma.workOrder.count({ where: { tenantId } }).catch(() => -1)
+      this.prisma.workOrder.count({ where: { tenantId } }).catch(() => -1),
     ]);
 
     return {
@@ -207,7 +280,12 @@ export class AnalyticsService {
       tenantIdInToken: tenantId,
       tenantIdInContext: contextId,
       match: tenantId === contextId,
-      visibleData: { invoices: invCount, products: prodCount, customers: custCount, workOrders: woCount }
+      visibleData: {
+        invoices: invCount,
+        products: prodCount,
+        customers: custCount,
+        workOrders: woCount,
+      },
     };
   }
 }

@@ -23,7 +23,7 @@ export class HealthController {
     private memory: MemoryHealthIndicator,
     private disk: DiskHealthIndicator,
     private saas: SaasAnalyticsService,
-  ) { }
+  ) {}
 
   @Get('readiness')
   @Public() // DevOps probe

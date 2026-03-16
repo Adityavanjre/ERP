@@ -9,7 +9,7 @@ export class PrismaService
 {
   private _isolatedClient: any;
   private _modelCache = new Map<string, boolean>();
-  
+
   // CONCURRENCY-GATING: Prevents 503 Service Unavailable on Free Tiers (Supabase/Render)
   // By limiting simultaneous DB executions, we force Node.js to queue requests in memory
   // instead of hitting the database connection limit and crashing.
@@ -266,86 +266,88 @@ export class PrismaService
           $allOperations: async ({ model, operation, args, query }: any) => {
             // -- SEMAPHORE START --
             if (this._activeQueries >= PrismaService.MAX_CONCURRENT_QUERIES) {
-              await new Promise<void>((resolve) => this._queryQueue.push(resolve));
-            }
-            this._activeQueries++;
-            
-            try {
-              const tenantId = context.getTenantId();
-            const userType = context.getUserType();
-
-            const isGlobal = PrismaService.GLOBAL_MODELS.has(
-              model.toLowerCase(),
-            );
-            const isSystemAction = tenantId === 'SYSTEM_INIT';
-
-            // SECURITY (SYS-010): Admin & System Bypass.
-            // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
-            // IMPORTANT: If tenantId is present (Shadow Mode), we DO NOT bypass isolation.
-            if (
-              isGlobal ||
-              (userType === 'admin' && !tenantId) ||
-              isSystemAction
-            ) {
-              return query(args);
-            }
-
-            if (!tenantId) {
-              throw new Error(
-                `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context.`,
+              await new Promise<void>((resolve) =>
+                this._queryQueue.push(resolve),
               );
             }
+            this._activeQueries++;
 
-            const enforceIsolation = (obj: any) => {
-              if (!obj) return;
-              if (obj.tenantId && obj.tenantId !== tenantId) {
+            try {
+              const tenantId = context.getTenantId();
+              const userType = context.getUserType();
+
+              const isGlobal = PrismaService.GLOBAL_MODELS.has(
+                model.toLowerCase(),
+              );
+              const isSystemAction = tenantId === 'SYSTEM_INIT';
+
+              // SECURITY (SYS-010): Admin & System Bypass.
+              // Infrastructure administrators and System init flows (Registration) can bypass scoped checks.
+              // IMPORTANT: If tenantId is present (Shadow Mode), we DO NOT bypass isolation.
+              if (
+                isGlobal ||
+                (userType === 'admin' && !tenantId) ||
+                isSystemAction
+              ) {
+                return query(args);
+              }
+
+              if (!tenantId) {
                 throw new Error(
-                  `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected! User attempted to access tenant '${obj.tenantId}' while in context of '${tenantId}'. Access blocked.`,
+                  `SECURITY_LEVEL_CRITICAL: ${operation} on ${model} blocked. Missing Tenant Context.`,
                 );
               }
-              obj.tenantId = tenantId;
-            };
 
-            if (['create', 'createMany'].includes(operation)) {
-              if (Array.isArray(args.data)) {
-                args.data.forEach((d: any) => enforceIsolation(d));
+              const enforceIsolation = (obj: any) => {
+                if (!obj) return;
+                if (obj.tenantId && obj.tenantId !== tenantId) {
+                  throw new Error(
+                    `SECURITY_LEVEL_CRITICAL: Cross-tenant access detected! User attempted to access tenant '${obj.tenantId}' while in context of '${tenantId}'. Access blocked.`,
+                  );
+                }
+                obj.tenantId = tenantId;
+              };
+
+              if (['create', 'createMany'].includes(operation)) {
+                if (Array.isArray(args.data)) {
+                  args.data.forEach((d: any) => enforceIsolation(d));
+                } else {
+                  enforceIsolation(args.data);
+                }
+              } else if (operation === 'upsert') {
+                enforceIsolation(args.create);
+                enforceIsolation(args.update);
+                enforceIsolation(args.where);
+              } else if (
+                ['update', 'updateMany', 'delete', 'deleteMany'].includes(
+                  operation,
+                )
+              ) {
+                args.where = args.where || {};
+                enforceIsolation(args.where);
+                if (['update', 'updateMany'].includes(operation)) {
+                  enforceIsolation(args.data);
+                }
               } else {
-                enforceIsolation(args.data);
+                args.where = args.where || {};
+                enforceIsolation(args.where);
+                // Handle findUnique isolation - Prisma doesn't allow extra fields in findUnique
+                if (operation === 'findUnique') {
+                  return this._isolatedClient[model].findFirst(args);
+                }
               }
-            } else if (operation === 'upsert') {
-              enforceIsolation(args.create);
-              enforceIsolation(args.update);
-              enforceIsolation(args.where);
-            } else if (
-              ['update', 'updateMany', 'delete', 'deleteMany'].includes(
-                operation,
-              )
-            ) {
-              args.where = args.where || {};
-              enforceIsolation(args.where);
-              if (['update', 'updateMany'].includes(operation)) {
-                enforceIsolation(args.data);
-              }
-            } else {
-              args.where = args.where || {};
-              enforceIsolation(args.where);
-              // Handle findUnique isolation - Prisma doesn't allow extra fields in findUnique
-              if (operation === 'findUnique') {
-                return this._isolatedClient[model].findFirst(args);
-              }
-            }
 
-            return query(args);
-          } finally {
-            this._activeQueries--;
-            if (this._queryQueue.length > 0) {
-              const next = this._queryQueue.shift();
-              if (next) next();
+              return query(args);
+            } finally {
+              this._activeQueries--;
+              if (this._queryQueue.length > 0) {
+                const next = this._queryQueue.shift();
+                if (next) next();
+              }
             }
-          }
+          },
         },
       },
-    },
-  });
-}
+    });
+  }
 }

@@ -141,14 +141,17 @@ export class SaasAnalyticsService {
       }),
     ]);
 
-    const industry = (tenantData as any)?.industry || (tenantData as any)?.type || 'General';
+    const industry =
+      (tenantData as any)?.industry || (tenantData as any)?.type || 'General';
     const isMfg = industry === 'Manufacturing';
 
     const [mfgWip, lowStockMaterials] = await Promise.all([
       isMfg
-        ? this.prisma.workOrder.count({
-            where: { tenantId, status: { in: ['Planned', 'InProgress'] } },
-          }).catch(() => 0)
+        ? this.prisma.workOrder
+            .count({
+              where: { tenantId, status: { in: ['Planned', 'InProgress'] } },
+            })
+            .catch(() => 0)
         : Promise.resolve(0),
       isMfg
         ? this.prisma.$queryRaw<{ count: number }[]>`
@@ -158,7 +161,9 @@ export class SaasAnalyticsService {
               AND "isService" = false 
               AND "stock" <= "minStockLevel"
               AND "isDeleted" = false
-          `.then(res => Number(res?.[0]?.count || 0)).catch(() => 0)
+          `
+            .then((res) => Number(res?.[0]?.count || 0))
+            .catch(() => 0)
         : Promise.resolve(0),
     ]);
 
@@ -168,12 +173,16 @@ export class SaasAnalyticsService {
 
     if (isMfg && mfgWip > 10) {
       riskScore += 15;
-      signals.push(`PRODUCTION_BOTTLENECK: ${mfgWip} active work orders. Risk of delivery delay.`);
+      signals.push(
+        `PRODUCTION_BOTTLENECK: ${mfgWip} active work orders. Risk of delivery delay.`,
+      );
     }
 
     if (isMfg && lowStockMaterials > 0) {
       riskScore += 20;
-      signals.push(`MATERIAL_SHORTAGE: ${lowStockMaterials} raw materials below min stock. Production disruption possible.`);
+      signals.push(
+        `MATERIAL_SHORTAGE: ${lowStockMaterials} raw materials below min stock. Production disruption possible.`,
+      );
     }
 
     // Safety for Zero Data

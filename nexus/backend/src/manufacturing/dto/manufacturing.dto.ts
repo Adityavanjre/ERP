@@ -18,6 +18,10 @@ export class CreateMachineDto {
   type: string;
 
   @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @IsString()
   @IsOptional()
   serialNumber?: string;
 
@@ -29,6 +33,11 @@ export class CreateMachineDto {
   @IsString()
   @IsOptional()
   location?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  hourlyRate?: number;
 }
 
 export class CreateWorkOrderDto {

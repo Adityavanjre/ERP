@@ -32,7 +32,7 @@ export class SystemController {
     private readonly audit: SystemAuditService,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) { }
+  ) {}
 
   @Get('stats')
   @Roles(Role.Owner, Role.Manager, Role.Accountant)
@@ -62,13 +62,20 @@ export class SystemController {
   }
 
   @Get('config')
+  @AllowIdentity()
   // No explicit @Roles means all authenticated tenant users can fetch UI config
   async getModuleConfig(@Req() req: any) {
     const tenantId = req.user.tenantId;
     if (!tenantId) {
       return {
         ...getIndustryConfig('General'),
-        enabledModules: ['dashboard', 'sales', 'inventory', 'accounting', 'crm'],
+        enabledModules: [
+          'dashboard',
+          'sales',
+          'inventory',
+          'accounting',
+          'crm',
+        ],
         industry: 'General',
       };
     }
