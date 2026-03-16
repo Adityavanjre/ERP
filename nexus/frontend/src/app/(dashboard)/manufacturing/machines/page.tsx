@@ -105,10 +105,10 @@ export default function MachinesPage() {
         <div className="p-6 space-y-6 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                         Smart Factory Floor
                     </h1>
-                    <p className="text-slate-400 mt-1">Manage and monitor manufacturing assets in real-time.</p>
+                    <p className="text-slate-500 mt-1">Manage and monitor manufacturing assets in real-time.</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export default function MachinesPage() {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
                         <Input
                             placeholder="Search assets..."
-                            className="pl-9 bg-slate-900/50 border-slate-800"
+                            className="pl-9 bg-white border-slate-200"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -129,7 +129,7 @@ export default function MachinesPage() {
                                 Add Machine
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-slate-950 border-slate-800 text-white">
+                        <DialogContent className="bg-white border-slate-200 text-slate-900">
                             <DialogHeader>
                                 <DialogTitle>Register New Asset</DialogTitle>
                                 <DialogDescription>Add a machine to the factory floor tracking system.</DialogDescription>
@@ -140,7 +140,7 @@ export default function MachinesPage() {
                                         <label className="text-sm font-medium">Machine Name</label>
                                         <Input
                                             placeholder="CNC Milling X1"
-                                            className="bg-slate-900 border-slate-800"
+                                            className="bg-white border-slate-200 text-slate-900"
                                             value={newMachine.name}
                                             onChange={e => setNewMachine({ ...newMachine, name: e.target.value })}
                                         />
@@ -149,7 +149,7 @@ export default function MachinesPage() {
                                         <label className="text-sm font-medium">Unique Code</label>
                                         <Input
                                             placeholder="MAC-001"
-                                            className="bg-slate-900 border-slate-800"
+                                            className="bg-white border-slate-200 text-slate-900"
                                             value={newMachine.code}
                                             onChange={e => setNewMachine({ ...newMachine, code: e.target.value })}
                                         />
@@ -159,7 +159,7 @@ export default function MachinesPage() {
                                     <label className="text-sm font-medium">Asset Type</label>
                                     <Input
                                         placeholder="Subtractive Manufacturing"
-                                        className="bg-slate-900 border-slate-800"
+                                        className="bg-white border-slate-200 text-slate-900"
                                         value={newMachine.type}
                                         onChange={e => setNewMachine({ ...newMachine, type: e.target.value })}
                                     />
@@ -169,7 +169,7 @@ export default function MachinesPage() {
                                     <Input
                                         type="number"
                                         placeholder="1200.00"
-                                        className="bg-slate-900 border-slate-800"
+                                        className="bg-white border-slate-200 text-slate-900"
                                         value={newMachine.hourlyRate}
                                         onChange={e => setNewMachine({ ...newMachine, hourlyRate: parseFloat(e.target.value) })}
                                     />
@@ -187,16 +187,16 @@ export default function MachinesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loading ? (
-                    [1, 2, 3].map(i => <div key={i} className="h-48 rounded-xl bg-slate-900/50 animate-pulse border border-slate-800" />)
+                    [1, 2, 3].map(i => <div key={i} className="h-48 rounded-xl bg-white animate-pulse border border-slate-100 shadow-sm" />)
                 ) : filtered.length === 0 ? (
-                    <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-800 rounded-3xl">
-                        <Cpu className="w-12 h-12 mx-auto text-slate-700 mb-4" />
+                    <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white">
+                        <Cpu className="w-12 h-12 mx-auto text-slate-300 mb-4" />
                         <h3 className="text-lg font-medium text-slate-400">No assets found</h3>
-                        <p className="text-slate-500">Click Add Machine to register your first manufacturing asset.</p>
+                        <p className="text-slate-400">Click Add Machine to register your first manufacturing asset.</p>
                     </div>
                 ) : (
                     filtered.map((m) => (
-                        <Card key={m.id} className="bg-slate-900/40 border-slate-800 hover:border-slate-700 transition-all group overflow-hidden relative">
+                        <Card key={m.id} className="bg-white border-slate-200/60 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                 <Cpu className="w-16 h-16" />
                             </div>
@@ -207,10 +207,10 @@ export default function MachinesPage() {
                                             {m.status === "Running" && <Activity className="w-3 h-3 mr-1 animate-pulse" />}
                                             {m.status}
                                         </Badge>
-                                        <CardTitle className="text-xl mt-3">{m.name}</CardTitle>
-                                        <CardDescription>{m.code} • {m.type}</CardDescription>
+                                        <CardTitle className="text-xl mt-3 text-slate-900">{m.name}</CardTitle>
+                                        <CardDescription className="text-slate-500">{m.code} • {m.type}</CardDescription>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="text-slate-500 hover:text-white" onClick={() => toast.info("Asset settings module in development")}>
+                                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600" onClick={() => toast.info("Asset settings module in development")}>
                                         <Settings className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -218,12 +218,12 @@ export default function MachinesPage() {
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4 text-sm mt-2">
                                     <div className="space-y-1">
-                                        <p className="text-slate-500 flex items-center"><Clock className="w-3 h-3 mr-1" /> Rate/Hr</p>
-                                        <p className="font-semibold text-slate-200">₹{Number(m.hourlyRate || 0).toFixed(2)}</p>
+                                        <p className="text-slate-400 flex items-center"><Clock className="w-3 h-3 mr-1" /> Rate/Hr</p>
+                                        <p className="font-semibold text-slate-800">₹{Number(m.hourlyRate || 0).toFixed(2)}</p>
                                     </div>
                                     <div className="space-y-1">
-                                        <p className="text-slate-500 flex items-center"><Wrench className="w-3 h-3 mr-1" /> Last Maint.</p>
-                                        <p className="font-semibold text-slate-200">
+                                        <p className="text-slate-400 flex items-center"><Wrench className="w-3 h-3 mr-1" /> Last Maint.</p>
+                                        <p className="font-semibold text-slate-800">
                                             {m.lastMaintenance ? new Date(m.lastMaintenance).toLocaleDateString() : 'Never'}
                                         </p>
                                     </div>
@@ -232,18 +232,18 @@ export default function MachinesPage() {
                                 <div className="space-y-2 mt-2">
                                     <div className="flex justify-between text-xs">
                                         <span className="text-slate-400">Asset Health</span>
-                                        <span className={m.health && m.health < 85 ? "text-amber-400" : "text-emerald-400"}>
+                                        <span className={m.health && m.health < 85 ? "text-amber-500" : "text-emerald-500"}>
                                             {m.health}%
                                         </span>
                                     </div>
-                                    <Progress value={m.health} className="h-1.5 bg-slate-800" />
+                                    <Progress value={m.health} className="h-1.5 bg-slate-100" />
                                 </div>
 
                                 <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" className="flex-1 bg-slate-900/50 border-slate-800 hover:bg-slate-800 text-xs h-8" onClick={() => toast.info("Real-time diagnostics coming in v2.0")}>
+                                    <Button variant="outline" className="flex-1 bg-slate-50 border-slate-100 hover:bg-slate-100 text-xs h-8 text-slate-700" onClick={() => toast.info("Real-time diagnostics coming in v2.0")}>
                                         Diagnostics
                                     </Button>
-                                    <Button variant="outline" className="flex-1 bg-slate-900/50 border-slate-800 hover:bg-slate-800 text-xs h-8" onClick={() => toast.info("Maintenance history log coming soon")}>
+                                    <Button variant="outline" className="flex-1 bg-slate-50 border-slate-100 hover:bg-slate-100 text-xs h-8 text-slate-700" onClick={() => toast.info("Maintenance history log coming soon")}>
                                         History
                                     </Button>
                                 </div>
