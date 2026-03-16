@@ -32,7 +32,7 @@ export class CreateMachineDto {
 
   @IsString()
   @IsOptional()
-  location?: string;
+  status?: string;
 
   @IsNumber()
   @IsOptional()
