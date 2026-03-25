@@ -98,8 +98,8 @@ Fuel the hardware scaling and research for Project-K. Your support ensures the s
 | :--- | :--- |
 | **GitHub Sponsors** | [Sponsor Adityavanjre](https://github.com/sponsors/Adityavanjre) |
 | **Ko-fi** | [Support on Ko-fi](https://ko-fi.com/adityavanjre) |
-| **Patreon** | [Join on Patreon](https://patreon.com/adityavanjre) |
-| **Open Collective** | [Support Collective](https://opencollective.com/adityavanjre) |
+| **LinkedIn** | [In/aditya-vanjre](https://www.linkedin.com/in/aditya-vanjre) |
+| **X (Twitter)** | [@adityavanjre](https://x.com/adityavanjre) |
 
 ## 🤝 Contribution Protocol
 Interested in hardening the core or adding a vertical? Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting any Pull Requests.
