@@ -14,10 +14,82 @@ This project is protected by the **Klypso Nexus Protection Protocol**.
 - **No Direct Pushes**: The `main` branch is protected. All changes must be routed through independent feature branches and reviewed via Pull Request.
 - **Strict Licensing**: This is a proprietary project. Clones or forks for unauthorized redistribution or personal claims are prohibited. See [LICENSE](./LICENSE) for details.
 
-## 🛠️ Getting Started
-- **User Operations**: See the [Nexus ERP User Manual](./Nexus_ERP_User_Manual.md).
-- **Sales Demo**: Follow the [Sales Demo Walkthrough](./Nexus_Sales_Demo_Walkthrough.md).
-- **System Audit**: Review the [Full System Audit Report](./nexus_full_system_audit.md).
+## 🏗️ Architecture Overview
+
+The Klypso ecosystem is a multi-tier monorepo architecture designed for high-availability and extreme data integrity.
+
+```mermaid
+graph TD
+    User((User)) --> Gateway[Render Gateway Hub]
+    
+    subgraph "Core ERP Ecosystem (Nexus)"
+        Gateway --> NexusFrontend[Nexus Next.js Frontend]
+        NexusFrontend --> NexusBackend[Nexus NestJS Backend]
+        NexusBackend --> PostgresDB[(PostgreSQL)]
+        NexusBackend --> RedisQueue[(Redis / BullMQ)]
+    end
+    
+    subgraph "Agency Intelligence Tier"
+        Gateway --> AgencyClient[Agency React Client]
+        AgencyClient --> AgencyServer[Agency Node Server]
+        AgencyServer --> MongoDB[(MongoDB)]
+    end
+    
+    subgraph "External Integrations"
+        NexusBackend --> Supabase[Supabase Auth/Storage]
+        NexusBackend --> Cloudinary[Cloudinary Media]
+        NexusBackend --> Razorpay[Razorpay Payments]
+        NexusBackend --> Resend[Resend Emails]
+    end
+    
+    subgraph "Mobile Access"
+        User --> MobileApp[Expo / React Native App]
+        MobileApp --> NexusBackend
+    end
+```
+
+## 🛠️ Installation & Setup
+
+Follow these steps to initialize the full sovereign environment locally.
+
+### 1. Prerequisites
+- **Node.js**: v18.0.0+
+- **Database**: PostgreSQL (Prisma), Redis, and MongoDB.
+- **Tools**: `npm` or `yarn`.
+
+### 2. Global Initialization
+```bash
+# Install root dependencies
+npm install
+
+# Build shared packages
+npm run build:shared
+```
+
+### 3. Service Configuration
+#### Nexus Backend
+```bash
+cd nexus/backend
+cp .env.example .env
+# Populate DATABASE_URL, REDIS_HOST, etc.
+npx prisma generate
+npx prisma migrate dev
+```
+
+#### Nexus Frontend
+```bash
+cd nexus/frontend
+cp .env.local.example .env.local
+```
+
+### 4. Launching the Cockpit
+```bash
+# Start everything (Nexus + Agency)
+npm run start:all
+
+# Start only ERP
+npm run start:nexus
+```
 
 ## 💎 Support the Evolution
 Fuel the hardware scaling and research for Project-K. Your support ensures the sovereignty of this engineering partner.
