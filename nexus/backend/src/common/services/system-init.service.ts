@@ -14,9 +14,14 @@ export class SystemInitService implements OnApplicationBootstrap {
   }
 
   private async syncSuperAdmin() {
-    const rawEmail =
-      process.env.ADMIN_EMAIL?.trim() || 'adityavanjre111@gmail.com';
+    const rawEmail = process.env.ADMIN_EMAIL?.trim();
     const rawPassword = process.env.ADMIN_PASSWORD?.trim();
+
+    if (!rawEmail) {
+      throw new Error(
+        'SEC-021: ADMIN_EMAIL must be provided for Super Admin synchronization. No hardcoded fallback allowed.',
+      );
+    }
 
     const adminEmail = rawEmail.toLowerCase();
 

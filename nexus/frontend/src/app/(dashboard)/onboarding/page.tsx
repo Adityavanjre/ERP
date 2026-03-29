@@ -68,7 +68,7 @@ export default function OnboardingPage() {
             try {
                 const { data: refreshData } = await api.post("auth/refresh", {}, { withCredentials: true });
                 if (refreshData?.accessToken) {
-                    localStorage.setItem("k_token", refreshData.accessToken);
+                    // SEC-006: Token stored in HttpOnly cookie by backend
                     if (refreshData.user) {
                         localStorage.setItem("k_user", JSON.stringify(refreshData.user));
                     }

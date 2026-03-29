@@ -7,6 +7,7 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateMachineDto {
   @IsString()
@@ -38,6 +39,41 @@ export class CreateMachineDto {
   @IsOptional()
   @Min(0)
   hourlyRate?: number;
+}
+
+export class UpdateMachineDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  code?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  hourlyRate?: number;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  manufacturer?: string;
+
+  @IsString()
+  @IsOptional()
+  model?: string;
+
+  @IsString()
+  @IsOptional()
+  serialNumber?: string;
 }
 
 export class CreateWorkOrderDto {
@@ -108,5 +144,32 @@ export class CreateBOMDto {
 
   @IsArray()
   @ValidateNested({ each: true })
+  @Type(() => CreateBOMItemDto)
   items: CreateBOMItemDto[];
+}
+
+export class StartWorkOrderDto {
+  @IsString()
+  @IsOptional()
+  warehouseId?: string;
+
+  @IsString()
+  @IsOptional()
+  machineId?: string;
+
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
+}
+
+export class UpdateWOStatusDto {
+  @IsString()
+  @IsNotEmpty()
+  status: string;
+}
+
+export class ImportBomsDto {
+  @IsString()
+  @IsNotEmpty()
+  csv: string;
 }

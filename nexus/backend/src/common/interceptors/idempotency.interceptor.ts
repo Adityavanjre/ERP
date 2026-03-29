@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Observable, of } from 'rxjs';
@@ -17,6 +18,8 @@ import { tap } from 'rxjs/operators';
  */
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(IdempotencyInterceptor.name);
+
   constructor(private prisma: PrismaService) {}
 
   async intercept(
@@ -102,13 +105,24 @@ export class IdempotencyInterceptor implements NestInterceptor {
             },
           });
         },
-        error: async () => {
+        error: async (err) => {
           // 4. Release lock on error to allow retries
-          await (this.prisma as any).idempotencyKey
-            .delete({
+          // FIX CRIT-005: Proper error handling instead of empty catch
+          try {
+            await (this.prisma as any).idempotencyKey.delete({
               where: { tenantId_key: { tenantId, key: idempotencyKey } },
-            })
-            .catch(() => {});
+            });
+            this.logger.log(
+              `Idempotency key released after error: ${idempotencyKey}`,
+            );
+          } catch (deleteErr) {
+            // Log but don't throw - the error from the handler is more important
+            this.logger.warn(
+              `Failed to release idempotency key ${idempotencyKey}: ${
+                deleteErr instanceof Error ? deleteErr.message : 'Unknown error'
+              }`,
+            );
+          }
         },
       }),
     );

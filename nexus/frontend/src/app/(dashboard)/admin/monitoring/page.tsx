@@ -206,7 +206,7 @@ export default function FounderMonitoring() {
                                         onClick={async () => {
                                             try {
                                                 const res = await api.post('auth/select-tenant', { tenantId: tenant.tenantId });
-                                                localStorage.setItem('k_token', res.data.accessToken);
+                                                // SEC-006: Token stored in HttpOnly cookie by backend
                                                 router.push('/portal/dashboard');
                                             } catch {
                                                 toast.error("Shadow Access Failed: Infrastructure bypass rejected.");

@@ -18,8 +18,15 @@ import { Permission } from '../common/constants/permissions';
 import { POStatus } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-
 import { Module } from '../common/decorators/module.decorator';
+import {
+  CreateSupplierDto,
+  UpdateSupplierDto,
+  CreatePurchaseOrderDto,
+  UpdatePOStatusDto,
+  SupplierOpeningBalanceDto,
+  ImportSuppliersDto,
+} from './dto/purchases.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('purchases')
@@ -30,7 +37,7 @@ export class PurchasesController {
   @Post('suppliers')
   @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
-  createSupplier(@Req() req: any, @Body() dto: any) {
+  createSupplier(@Req() req: any, @Body() dto: CreateSupplierDto) {
     return this.purchasesService.createSupplier(req.user.tenantId, dto);
   }
 
@@ -51,14 +58,14 @@ export class PurchasesController {
   @Patch('suppliers/:id')
   @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
-  updateSupplier(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+  updateSupplier(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateSupplierDto) {
     return this.purchasesService.updateSupplier(req.user.tenantId, id, dto);
   }
 
   @Post('import')
   @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
-  importSuppliers(@Req() req: any, @Body() body: any) {
+  importSuppliers(@Req() req: any, @Body() body: ImportSuppliersDto) {
     const csvContent = body.csv || body;
     return this.purchasesService.importSuppliers(
       req.user.tenantId,
@@ -69,7 +76,7 @@ export class PurchasesController {
   @Post('orders')
   @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
-  createPO(@Req() req: any, @Body() dto: any) {
+  createPO(@Req() req: any, @Body() dto: CreatePurchaseOrderDto) {
     return this.purchasesService.createPurchaseOrder(req.user.tenantId, dto);
   }
 
@@ -101,14 +108,13 @@ export class PurchasesController {
   updateStatus(
     @Req() req: any,
     @Param('id') id: string,
-    @Body('status') status: POStatus,
-    @Body('warehouseId') warehouseId?: string,
+    @Body() dto: UpdatePOStatusDto,
   ) {
     return this.purchasesService.updatePOStatus(
       req.user.tenantId,
       id,
-      status,
-      warehouseId,
+      dto.status,
+      dto.warehouseId,
     );
   }
 
@@ -123,7 +129,7 @@ export class PurchasesController {
   @Post('suppliers/opening-balance')
   @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
-  addOpeningBalance(@Req() req: any, @Body() dto: any) {
+  addOpeningBalance(@Req() req: any, @Body() dto: SupplierOpeningBalanceDto) {
     return this.purchasesService.addSupplierOpeningBalance(
       req.user.tenantId,
       dto,

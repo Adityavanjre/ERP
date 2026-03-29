@@ -1,6 +1,7 @@
 
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -12,7 +13,7 @@ async function main() {
   }
 
   const salt = await bcrypt.genSalt();
-  const passwordHash = await bcrypt.hash('password123', salt);
+  const passwordHash = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), salt);
 
   const user = await prisma.user.upsert({
     where: { email: 'biller@woodcraft.com' },

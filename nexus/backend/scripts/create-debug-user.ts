@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
 async function main() {
-    const email = 'test_debug@klypso.in';
-    const password = 'Password@123';
+    const email = process.env.DEBUG_USER_EMAIL || 'test_debug@klypso.in';
+    const password = crypto.randomBytes(16).toString('hex');
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.upsert({

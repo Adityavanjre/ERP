@@ -25,6 +25,9 @@ import {
   CreateWorkOrderDto,
   CreateMachineDto,
   CompleteWorkOrderDto,
+  StartWorkOrderDto,
+  UpdateWOStatusDto,
+  ImportBomsDto,
 } from './dto/manufacturing.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
@@ -106,12 +109,8 @@ export class ManufacturingController {
   @Post('import/boms')
   @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
-  importBoms(@CurrentUser() user: any, @Body() body: any) {
-    const csvContent = body.csv || body;
-    return this.mfgService.importBoms(
-      user.tenantId,
-      typeof csvContent === 'string' ? csvContent : '',
-    );
+  importBoms(@CurrentUser() user: any, @Body() dto: ImportBomsDto) {
+    return this.mfgService.importBoms(user.tenantId, dto.csv);
   }
 
   @Get('boms/:id')
@@ -181,9 +180,9 @@ export class ManufacturingController {
   updateWOStatus(
     @CurrentUser() user: any,
     @Param('id') id: string,
-    @Body('status') status: any,
+    @Body() dto: UpdateWOStatusDto,
   ) {
-    return this.mfgService.updateWorkOrderStatus(user.tenantId, id, status);
+    return this.mfgService.updateWorkOrderStatus(user.tenantId, id, dto.status);
   }
 
   @Post('work-orders/:id/approve')
@@ -222,16 +221,14 @@ export class ManufacturingController {
   startWO(
     @CurrentUser() user: any,
     @Param('id') id: string,
-    @Body('warehouseId') warehouseId?: string,
-    @Body('machineId') machineId?: string,
-    @Body('idempotencyKey') idempotencyKey?: string,
+    @Body() dto: StartWorkOrderDto,
   ) {
     return this.mfgService.startWorkOrder(
       user.tenantId,
       id,
-      warehouseId,
-      machineId,
-      idempotencyKey,
+      dto.warehouseId,
+      dto.machineId,
+      dto.idempotencyKey,
     );
   }
 
@@ -256,25 +253,6 @@ export class ManufacturingController {
     );
   }
 
-  // Machines
-  @Post('machines')
-  @Roles(Role.Owner, Role.Manager)
-  @Permissions(Permission.ADJUST_STOCK)
-  createMachine(@CurrentUser() user: any, @Body() data: CreateMachineDto) {
-    return this.mfgService.createMachine(user.tenantId, data);
-  }
-
-  @Get('machines')
-  @Permissions(Permission.VIEW_PRODUCTS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
-  getMachines(@CurrentUser() user: any) {
-    return this.mfgService.getMachines(user.tenantId);
-  }
+  // Machines — delegated to MachineController at /manufacturing/machines
+  // Removed duplicate routes to prevent NestJS routing conflicts (CRIT-MFG-001)
 }

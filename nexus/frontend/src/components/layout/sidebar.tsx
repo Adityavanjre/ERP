@@ -30,7 +30,7 @@ import {
     LucideIcon
 } from 'lucide-react';
 import { KlypsoLogo } from '../brand/logo';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -439,15 +439,8 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
                 <button
                     onClick={() => {
-                        const identityToken = localStorage.getItem("k_identity");
-                        if (identityToken) {
-                            localStorage.setItem("k_token", identityToken);
-                            // Clear industry config from cache to prevent stale layout
-                            setEnabledModules(['dashboard']);
-                            router.push("/portal/dashboard");
-                        } else {
-                            toast.error("Identity session lost. Please log in again.");
-                        }
+                        // SEC-006: Tokens are in HttpOnly cookies - workspace switching handled via TenantSelector
+                        toast.info("Use the workspace selector to switch between workspaces");
                     }}
                     className="text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest text-slate-500 hover:scale-[1.02] active:scale-[0.98]"
                 >
@@ -472,5 +465,3 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         </div>
     );
 };
-
-

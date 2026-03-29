@@ -1,0 +1,15 @@
+{
+  "name": "@klypso/sync-engine",
+  "version": "1.0.0",
+  "description": "Shared offline-first sync engine for Nexus ERP (Electron + React Native)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

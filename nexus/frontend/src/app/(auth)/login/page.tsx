@@ -48,11 +48,9 @@ export default function LoginPage() {
     const [mfaCode, setMfaCode] = useState("")
 
     const completeLogin = useCallback((data: AuthResponse) => {
-        // SEC-006: Sensitive tokens are now in HttpOnly cookies (nexus_token / nexus_refresh).
-        // We only store the user profile for UI hydration.
+        // SEC-006: Store only user profile in localStorage for UI hydration.
+        // JWT tokens are stored in HttpOnly cookies (nexus_token / nexus_refresh) by the backend.
         localStorage.setItem("k_user", JSON.stringify(data.user))
-        localStorage.setItem("k_token", data.accessToken)
-        localStorage.setItem("k_identity", data.accessToken)
 
         const SAFE_FALLBACK = "/portal/dashboard"
         const returnTo = localStorage.getItem("return_to")

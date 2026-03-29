@@ -5,6 +5,7 @@ import { AuditService } from '../system/services/audit.service';
 import { LedgerService } from '../accounting/services/ledger.service';
 import { AccountType } from '@prisma/client';
 import { objectsToSafeCsv } from '../common/utils/csv-sanitize.util';
+import { StandardAccounts } from '../accounting/constants/account-names';
 
 @Injectable()
 export class CrmService {
@@ -96,7 +97,7 @@ export class CrmService {
   }
 
   /**
-   * Survival Feature: Bulk Import with Accounting Sync
+   * Forensic Bulk Import for Customers
    * Rule: No invisible wealth. Every imported balance must hit the GL.
    */
   async importCustomers(tenantId: string, csvContent: string) {
@@ -110,7 +111,13 @@ export class CrmService {
       errors: [] as string[],
     };
 
-    let aggregateOpeningBalance = 0;
+    // Pre-fetch accounts once (not per row)
+    const arAcc = await this.prisma.account.findFirst({
+      where: { tenantId, name: StandardAccounts.ACCOUNTS_RECEIVABLE },
+    });
+    const obAcc = await this.prisma.account.findFirst({
+      where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+    });
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -170,7 +177,36 @@ export class CrmService {
                   date: new Date(),
                 },
               });
-              aggregateOpeningBalance += ob;
+
+              // FIX (HIGH-CRM-001): Create GL entry INSIDE the per-row transaction.
+              // Previously the aggregate GL entry was created outside any transaction,
+              // so a crash after creating OBs but before the GL entry left books unbalanced.
+              if (arAcc && obAcc) {
+                const isDebit = ob > 0;
+                await this.ledger.createJournalEntry(
+                  tenantId,
+                  {
+                    date: new Date().toISOString(),
+                    description: `Customer OB: ${customerPayload.firstName} ${customerPayload.lastName}`.trim(),
+                    reference: `OB-CUST-${email?.split('@')[0] || customerId.slice(0, 8)}`,
+                    transactions: [
+                      {
+                        accountId: arAcc.id,
+                        type: isDebit ? 'Debit' : 'Credit',
+                        amount: Math.abs(ob),
+                        description: 'Customer Opening Balance',
+                      },
+                      {
+                        accountId: obAcc.id,
+                        type: isDebit ? 'Credit' : 'Debit',
+                        amount: Math.abs(ob),
+                        description: 'Customer Opening Balance',
+                      },
+                    ],
+                  },
+                  tx,
+                );
+              }
             }
           }
         });
@@ -178,38 +214,6 @@ export class CrmService {
       } catch (e: any) {
         results.failed++;
         results.errors.push(`Row ${i}: ${e.message}`);
-      }
-    }
-
-    // Ledger Sync: Restore balance sheet integrity
-    if (aggregateOpeningBalance !== 0) {
-      const arAcc = await this.prisma.account.findFirst({
-        where: { tenantId, name: 'Accounts Receivable' },
-      });
-      const obAcc = await this.prisma.account.findFirst({
-        where: { tenantId, name: 'Opening Balance Equity' },
-      });
-
-      if (arAcc && obAcc) {
-        await this.ledger.createJournalEntry(tenantId, {
-          date: new Date().toISOString(),
-          description: `Bulk Import Sync: ${results.imported} Customers`,
-          reference: 'SYS-IMPORT-CUST',
-          transactions: [
-            {
-              accountId: arAcc.id,
-              type: 'Debit',
-              amount: Math.abs(aggregateOpeningBalance),
-              description: 'Bulk OB',
-            },
-            {
-              accountId: obAcc.id,
-              type: 'Credit',
-              amount: Math.abs(aggregateOpeningBalance),
-              description: 'Bulk OB',
-            },
-          ],
-        });
       }
     }
 

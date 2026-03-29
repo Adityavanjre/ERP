@@ -233,7 +233,7 @@ export class AnalyticsService {
         { label: 'Work Orders', count: wos, color: 'amber' },
         { label: 'Stock Level', count: inventory, color: 'indigo' },
         { label: 'Receivables', count: receivables, color: 'emerald' },
-        { label: 'Mfg WIP', count: mfgWip, color: 'purple' },
+        { label: 'Mfg WIP', count: wos, color: 'purple' },
         { label: 'Low Stock', count: lowStockMaterials, color: 'red' },
       ];
     } else {

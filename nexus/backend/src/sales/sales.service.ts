@@ -193,25 +193,24 @@ export class SalesService {
 
     if (!order) throw new BadRequestException('Order not found');
 
-    // Binary Approval: Pending -> Pending (wait for Web) or Rejected
-    // Actually, Prompt 3 says "Approve / Reject only".
-    // If we "Approve", we mark it Pending? No, Draft -> Pending.
-    // If it's already Pending, Approved?
-    // Let's assume Draft -> Pending (Ready for Web finalization) is the "Approval" from mobile.
+    // SALES-GOV-009: Strict State Machine for Mobile Approval
+    // Draft -> Pending (Ready for Web finalization)
+    // Pending -> Processing (Approved/Finalized)
+    let newStatus: OrderStatus = OrderStatus.Pending;
+    if (order.status === OrderStatus.Pending) {
+      newStatus = OrderStatus.Processing;
+    } else if (order.status !== OrderStatus.Draft) {
+      throw new BadRequestException(
+        `Cannot approve order in ${order.status} state.`,
+      );
+    }
 
-    const newStatus = OrderStatus.Pending;
-
-    const updated = await this.prisma.order.updateMany({
-      where: { id, tenantId },
+    const updated = await this.prisma.order.update({
+      where: { id },
       data: { status: newStatus },
     });
 
-    if (updated.count === 0)
-      throw new BadRequestException(
-        `Order '${id}' not found or update failed.`,
-      );
-
-    await (this.audit as any).log({
+    await this.audit.log({
       tenantId,
       userId: user.id,
       action: 'MOBILE_APPROVAL',
@@ -244,17 +243,12 @@ export class SalesService {
 
     if (!order) throw new BadRequestException('Order not found');
 
-    const updated = await this.prisma.order.updateMany({
-      where: { id, tenantId },
+    const updated = await this.prisma.order.update({
+      where: { id },
       data: { status: OrderStatus.Cancelled },
     });
 
-    if (updated.count === 0)
-      throw new BadRequestException(
-        `Order '${id}' not found or rejection failed.`,
-      );
-
-    await (this.audit as any).log({
+    await this.audit.log({
       tenantId,
       userId: user.id,
       action: 'MOBILE_REJECTION',
@@ -272,22 +266,19 @@ export class SalesService {
   }
 
   async getSalesStats(tenantId: string) {
-    const orders = await this.prisma.order.findMany({
+    const stats = await this.prisma.order.aggregate({
       where: { tenantId },
+      _sum: { total: true },
+      _count: true,
     });
 
-    const totalRevenue = orders.reduce(
-      (sum, order) => sum.add(new Decimal(order.total)),
-      new Decimal(0),
-    );
-    const orderCount = orders.length;
-    const pendingOrders = orders.filter(
-      (o) => o.status === OrderStatus.Pending,
-    ).length;
+    const pendingOrders = await this.prisma.order.count({
+      where: { tenantId, status: OrderStatus.Pending },
+    });
 
     return {
-      totalRevenue,
-      orderCount,
+      totalRevenue: stats._sum.total || new Decimal(0),
+      orderCount: stats._count,
       pendingOrders,
     };
   }

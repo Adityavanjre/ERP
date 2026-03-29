@@ -103,9 +103,8 @@ export default function RegisterPage() {
             const response = await api.post('auth/register', payload);
             const { accessToken } = response.data;
 
-            // Store both keys the same way login does — TenantSelector reads k_identity first
-            localStorage.setItem('k_token', accessToken);
-            localStorage.setItem('k_identity', accessToken);
+            // Store user profile for UI hydration only
+            // JWT tokens are in HttpOnly cookies (set by backend)
             localStorage.setItem('k_user', JSON.stringify(response.data.user));
 
             toast.success('Registration successful!', {
@@ -152,8 +151,8 @@ export default function RegisterPage() {
             }
 
             // Store both keys the same way login does
-            localStorage.setItem('k_token', res.data.accessToken);
-            localStorage.setItem('k_identity', res.data.accessToken);
+            
+            
             localStorage.setItem('k_user', JSON.stringify(res.data.user));
 
             toast.success('Registration successful!', {

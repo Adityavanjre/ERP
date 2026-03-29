@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
 async function main() {
-    const email = 'adityavanjre111@gmail.com';
-    const password = 'Adityavanjre@123';
+    const email = process.env.ADMIN_EMAIL || (() => { throw new Error('ADMIN_EMAIL env var is required'); })();
+    const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
     const passwordHash = await bcrypt.hash(password, 10);
 
     console.log('--- 🛠️ SETTING UP SUPER ADMIN: ADITYA ---');

@@ -11,6 +11,7 @@ import { LedgerService } from '../accounting/services/ledger.service';
 import { StandardAccounts } from '../accounting/constants/account-names';
 import { TdsService } from '../accounting/services/tds.service';
 import { TraceService } from '../common/services/trace.service';
+import { validateGSTIN } from '../common/utils/gst-validation.util';
 
 @Injectable()
 export class PurchasesService {
@@ -24,6 +25,24 @@ export class PurchasesService {
 
   // --- Suppliers ---
   async createSupplier(tenantId: string, data: any) {
+    // Validate GSTIN if provided
+    if (data.gstin && !validateGSTIN(data.gstin)) {
+      throw new BadRequestException(
+        'Invalid GSTIN format. Please provide a valid 15-character GSTIN.',
+      );
+    }
+
+    // Check if tenant requires GSTIN for suppliers
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { gstMandatory: true },
+    });
+    if (tenant?.gstMandatory && !data.gstin) {
+      throw new BadRequestException(
+        'GSTIN is required for suppliers in this organization.',
+      );
+    }
+
     const { openingBalance, ...supplierData } = data;
     const supplier = await this.prisma.supplier.create({
       data: { ...supplierData, tenantId },
@@ -144,6 +163,14 @@ export class PurchasesService {
               'Supplier Name is required for import.',
             );
 
+          // Validate GSTIN if provided in CSV
+          const gstin = data.gstin?.trim() || null;
+          if (gstin && !validateGSTIN(gstin)) {
+            throw new BadRequestException(
+              `Invalid GSTIN "${gstin}" for supplier "${name}".`,
+            );
+          }
+
           const existing = await tx.supplier.findFirst({
             where: { tenantId, name, isDeleted: false },
           });
@@ -155,7 +182,7 @@ export class PurchasesService {
             phone: data.phone || '',
             company: data.company || '',
             address: data.address || '',
-            gstin: data.gstin || null,
+            gstin,
             isDeleted: false,
           };
 

@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LayoutGrid, Download, Trash2, ExternalLink, ShieldCheck, CheckCircle, Package, Zap, Smartphone, QrCode } from "lucide-react";
+import { LayoutGrid, Download, Trash2, ExternalLink, ShieldCheck, CheckCircle, Package, Zap, Smartphone, QrCode, Monitor, HardDrive } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -91,53 +91,104 @@ export default function AppsMarketplace() {
                 </Button>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
+                <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500">
+                    <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+                        <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
+                            <Monitor className="h-5 w-5 text-blue-600" />
+                            Nexus Desktop
+                        </CardTitle>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Windows Application • Build 1.0.0</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
+                        <div className="flex-1 space-y-4">
+                            <p className="text-slate-600 font-medium leading-relaxed">
+                                Full-featured Windows desktop application with offline support.
+                                Auto-syncs when connection is restored.
+                            </p>
+                            <div className="flex gap-4 flex-wrap">
+                                <Button
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-blue-500/20"
+                                    onClick={() => {
+                                        toast.success("Downloading Nexus Desktop...");
+                                        window.open("/nexus-desktop-setup.exe", "_blank");
+                                    }}
+                                >
+                                    <HardDrive className="mr-2 h-5 w-5" /> Download EXE
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl h-12 px-4 font-bold"
+                                    onClick={() => {
+                                        window.open("https://github.com/klypso/nexus/releases", "_blank");
+                                    }}
+                                >
+                                    <ExternalLink className="mr-2 h-4 w-4" /> GitHub
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="hidden md:flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <Monitor className="h-20 w-20 text-slate-200 mb-2" />
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Windows 10+</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-emerald-500">
                     <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-6">
                         <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
                             <Smartphone className="h-5 w-5 text-emerald-600" />
                             Nexus Mobile Gateway
                         </CardTitle>
-                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Direct Enterprise Rollout • Build 1.0.0 (Hardened)</CardDescription>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Android Application • Build 1.0.0</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
                         <div className="flex-1 space-y-4">
                             <p className="text-slate-600 font-medium leading-relaxed">
-                                Access your ERP from the shop floor with the native Android application.
+                                Native Android app for shop floor operations.
                                 Securely anchored to your enterprise identity.
                             </p>
-                            <div className="flex gap-4">
+                            <div className="flex gap-4 flex-wrap">
                                 <Button
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-emerald-500/20"
                                     onClick={() => {
-                                        toast.success("Initializing Secure Download...");
-                                        window.open("/nexus-gateway-v1.apk", "_blank");
+                                        toast.success("Downloading Nexus Mobile APK...");
+                                        window.open("/nexus-gateway.apk", "_blank");
                                     }}
                                 >
                                     <Download className="mr-2 h-5 w-5" /> Download APK
                                 </Button>
+                                <Button
+                                    variant="outline"
+                                    className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl h-12 px-4 font-bold"
+                                    onClick={() => {
+                                        window.open("https://play.google.com/store/apps", "_blank");
+                                    }}
+                                >
+                                    <ExternalLink className="mr-2 h-4 w-4" /> Play Store
+                                </Button>
                             </div>
                         </div>
                         <div className="hidden md:flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <QrCode className="h-24 w-24 text-slate-300 mb-2" />
+                            <QrCode className="h-20 w-20 text-slate-200 mb-2" />
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Scan to Install</span>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500">
-                    <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+                <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-purple-500">
+                    <CardHeader className="bg-purple-50/50 border-b border-purple-100 py-6">
                         <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
-                            <Zap className="h-5 w-5 text-blue-600" />
+                            <Zap className="h-5 w-5 text-purple-600" />
                             Business Blueprints
                         </CardTitle>
-                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Install pre-configured business setups in a single click</CardDescription>
+                        <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Quick Setup Profiles</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-wrap gap-4 pt-8">
                         {["Manufacturing", "Retail", "Wholesale", "Services"].map(type => (
                             <Button
                                 key={type}
-                                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-blue-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
+                                className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-purple-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
                                 variant="outline"
                                 onClick={async () => {
                                     try {
@@ -150,7 +201,7 @@ export default function AppsMarketplace() {
                                     }
                                 }}
                             >
-                                {type} Profile
+                                {type}
                             </Button>
                         ))}
                     </CardContent>

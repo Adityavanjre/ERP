@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // Build the API base URL without any Axios interceptors.
-// Using fetch() directly — the same approach the console test proved works.
+// Using fetch() directly with cookie-based auth (credentials: 'include').
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
 const API_V1 = BASE_URL.endsWith('/') ? `${BASE_URL}v1` : `${BASE_URL}/v1`;
 
@@ -25,12 +25,13 @@ interface HttpError extends Error {
 }
 
 async function authFetch(path: string, options: RequestInit = {}) {
-    const token = typeof window !== 'undefined' ? (localStorage.getItem("k_identity") || localStorage.getItem("k_token")) : null;
+    // SEC-006: Use cookie-based auth (credentials: 'include') instead of Bearer token from localStorage.
+    // HttpOnly cookies are sent automatically — no localStorage token reading needed.
     const res = await fetch(`${API_V1}/${path}`, {
         ...options,
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             ...(options.headers || {}),
         },
     });
@@ -84,6 +85,7 @@ export function TenantSelector() {
         } catch (e) {
             console.error("Backend logout failed", e);
         }
+        // Clean up any stale localStorage entries from old auth flows
         localStorage.removeItem("k_token");
         localStorage.removeItem("k_identity");
         localStorage.removeItem("k_user");
@@ -141,11 +143,12 @@ export function TenantSelector() {
     const handleSelect = useCallback(async (tenantId: string) => {
         setSelecting(tenantId);
         try {
-            const data = await authFetch("auth/select-tenant", {
+            await authFetch("auth/select-tenant", {
                 method: 'POST',
                 body: JSON.stringify({ tenantId }),
             });
-            localStorage.setItem("k_token", data.accessToken);
+            // SEC-006: Token is set as HttpOnly cookie by the backend.
+            // No localStorage write needed — cookie is sent automatically on subsequent requests.
             // Hard reload to reset all React state with the new scoped token
             window.location.href = "/portal/dashboard";
         } catch {

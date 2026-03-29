@@ -22,6 +22,7 @@ import { HealthcareModule } from './healthcare/healthcare.module';
 import { ConstructionModule } from './construction/construction.module';
 import { LogisticsModule } from './logistics/logistics.module';
 import { NbfcModule } from './nbfc/nbfc.module';
+import { SyncModule } from './sync/sync.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
@@ -65,6 +66,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ConstructionModule,
     LogisticsModule,
     NbfcModule,
+    SyncModule,
     CommonModule,
     HealthModule,
     CacheModule.register({ isGlobal: true, ttl: 60 * 1000, max: 1000 }),

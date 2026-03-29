@@ -54,6 +54,7 @@ model Tenant {
   fyStartMonth            Int                      @default(4)
   industry                String?
   isOnboarded             Boolean                  @default(false)
+  gstMandatory            Boolean                  @default(false)
   gracePeriodEndsAt       DateTime?
   planExpiresAt           DateTime?
   subscriptionStatus      SubscriptionStatus       @default(Active)
@@ -115,6 +116,8 @@ model Tenant {
   projects                Project[]
   purchaseOrders          PurchaseOrder[]
   poItems                 PurchaseOrderItem[]
+  purchaseBills           PurchaseBill[]
+  purchaseBillItems       PurchaseBillItem[]
   records                 Record[]
   retentionSchedules      RetentionSchedule[]
   routeBenchmarks         RouteBenchmark[]
@@ -186,6 +189,7 @@ model Product {
   minStockLevel      Decimal             @default(0.00)
   supplierName       String?
   isService          Boolean             @default(false)
+  productType        ProductType         @default(FinishedGood)
   hsnCode            String?
   gstRate            Decimal             @default(0.00)
   createdAt          DateTime            @default(now())
@@ -210,6 +214,7 @@ model Product {
   tenant             Tenant              @relation(fields: [tenantId], references: [id])
   updatedBy          User?               @relation("ProductUpdater", fields: [updatedById], references: [id])
   purchaseOrderItems PurchaseOrderItem[]
+  purchaseBillItems  PurchaseBillItem[]
   siteInventories    SiteInventory[]
   stockLocations     StockLocation[]
   stockMovements     StockMovement[]
@@ -411,12 +416,16 @@ model Machine {
   status          MachineStatus @default(Idle)
   lastMaintenance DateTime?
   createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   hourlyRate      Decimal?      @default(0.00)
+  isDeleted       Boolean       @default(false)
+  deletedAt       DateTime?
   tenant          Tenant        @relation(fields: [tenantId], references: [id])
   workOrders      WorkOrder[]
 
   @@index([tenantId])
   @@index([status])
+  @@index([tenantId, isDeleted])
 }
 
 model Account {
@@ -461,6 +470,7 @@ model JournalEntry {
   loan            Loan?
   tdsTransaction  TdsTransaction?
   transactions    Transaction[]
+  purchaseBill    PurchaseBill?
 
   @@index([tenantId, date])
   @@index([correlationId])
@@ -699,6 +709,7 @@ model Supplier {
   debitNotes        DebitNote[]
   payments          Payment[]
   purchaseOrders    PurchaseOrder[]
+  purchaseBills     PurchaseBill[]
   tenant            Tenant                   @relation(fields: [tenantId], references: [id])
   openingBalances   SupplierOpeningBalance[]
   tdsTransactions   TdsTransaction[]
@@ -744,6 +755,7 @@ model PurchaseOrder {
   supplier       Supplier            @relation(fields: [supplierId], references: [id])
   tenant         Tenant              @relation(fields: [tenantId], references: [id])
   items          PurchaseOrderItem[]
+  purchaseBills  PurchaseBill[]
   tdsTransaction TdsTransaction?
 
   @@unique([tenantId, idempotencyKey])
@@ -772,6 +784,61 @@ model PurchaseOrderItem {
 
   @@index([purchaseOrderId, productId])
   @@index([tenantId])
+}
+
+model PurchaseBill {
+  id              String             @id @default(uuid())
+  tenantId        String
+  supplierId      String
+  billNumber      String
+  billDate        DateTime           @default(now())
+  dueDate         DateTime?
+  totalAmount     Decimal            @default(0.00)
+  totalTaxable    Decimal            @default(0.00)
+  totalGST        Decimal            @default(0.00)
+  totalCGST       Decimal            @default(0.00)
+  totalSGST       Decimal            @default(0.00)
+  totalIGST       Decimal            @default(0.00)
+  status          PurchaseBillStatus @default(Unpaid)
+  documentUrl     String?
+  notes           String?
+  journalEntryId  String?            @unique
+  purchaseOrderId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  supplier      Supplier           @relation(fields: [supplierId], references: [id])
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  journalEntry  JournalEntry?      @relation(fields: [journalEntryId], references: [id])
+  purchaseOrder PurchaseOrder?     @relation(fields: [purchaseOrderId], references: [id])
+  items         PurchaseBillItem[]
+
+  @@unique([tenantId, billNumber])
+  @@index([tenantId, supplierId, billDate])
+  @@index([tenantId, status])
+}
+
+model PurchaseBillItem {
+  id             String  @id @default(uuid())
+  tenantId       String
+  purchaseBillId String
+  productId      String
+  quantity       Decimal
+  unitPrice      Decimal
+  taxableAmount  Decimal
+  gstRate        Decimal @default(0.00)
+  cgstAmount     Decimal @default(0.00)
+  sgstAmount     Decimal @default(0.00)
+  igstAmount     Decimal @default(0.00)
+  totalAmount    Decimal
+  hsnCode        String?
+
+  purchaseBill PurchaseBill @relation(fields: [purchaseBillId], references: [id])
+  product      Product      @relation(fields: [productId], references: [id])
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+
+  @@index([purchaseBillId])
+  @@index([tenantId, productId])
 }
 
 model CreditNote {
@@ -1939,4 +2006,19 @@ enum AssetStatus {
   Active
   Disposed
   FullyDepreciated
+}
+
+enum ProductType {
+  RawMaterial
+  FinishedGood
+  SemiFinished
+  Consumable
+  Service
+}
+
+enum PurchaseBillStatus {
+  Unpaid
+  Partial
+  Paid
+  Cancelled
 }

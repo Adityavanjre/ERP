@@ -231,8 +231,27 @@ export class ManufacturingService {
    * CSV: finishProductSku, ingredientSku, quantity, unit
    */
   async importBoms(tenantId: string, csvContent: string) {
-    const lines = csvContent.split('\n');
-    const headers = lines[0].split(',').map((h) => h.trim());
+    // MFG-031 Robust CSV Parser (handles quoted commas)
+    const lines = csvContent.trim().split(/\r?\n/);
+    if (lines.length < 2) return { total: 0, imported: 0, failed: 0, errors: [] };
+
+    const parseLine = (line: string) => {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') inQuotes = !inQuotes;
+        else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else current += char;
+      }
+      result.push(current.trim());
+      return result;
+    };
+
+    const headers = parseLine(lines[0]);
     const results = {
       total: lines.length - 1,
       imported: 0,
@@ -240,7 +259,6 @@ export class ManufacturingService {
       errors: [] as string[],
     };
 
-    // --- INDUSTRY INVARIANT: MANUFACTURING BLOCK ---
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
     });
@@ -248,40 +266,43 @@ export class ManufacturingService {
 
     if (industry !== 'Manufacturing' && industry !== 'Construction') {
       throw new BadRequestException(
-        'Migration Blocked: BOM imports are reserved for Manufacturing or Construction verticals. Integrity Drift detected.',
+        'Migration Blocked: BOM imports are reserved for Manufacturing or Construction verticals.',
       );
     }
 
+    // Step 1: Collect all SKUs for batch loading
+    const allSkus = new Set<string>();
+    const parsedData: any[] = [];
+
     for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      const cols = lines[i].split(',').map((c) => c.trim());
+      const cols = parseLine(lines[i]);
       const data: any = {};
       headers.forEach((h, idx) => {
         data[h] = cols[idx];
       });
+      parsedData.push(data);
+      if (data.finishProductSku) allSkus.add(data.finishProductSku);
+      if (data.ingredientSku) allSkus.add(data.ingredientSku);
+    }
 
+    // Step 2: Batch Load Products
+    const products = await this.prisma.product.findMany({
+      where: { tenantId, sku: { in: Array.from(allSkus) }, isDeleted: false },
+    });
+    const productMap = new Map(products.map((p) => [p.sku, p]));
+
+    // Step 3: Process Imports
+    for (const [index, data] of parsedData.entries()) {
       try {
-        const finishSku = data.finishProductSku;
-        const ingredientSku = data.ingredientSku;
+        const finishProd = productMap.get(data.finishProductSku);
+        const ingredient = productMap.get(data.ingredientSku);
         const qty = parseFloat(data.quantity) || 0;
 
-        if (!finishSku || !ingredientSku || qty <= 0) {
-          throw new Error('Missing Sku or Quantity');
+        if (!finishProd || !ingredient || qty <= 0) {
+          throw new Error(
+            `SKU mismatch or invalid quantity: ${data.finishProductSku} -> ${data.ingredientSku}`,
+          );
         }
-
-        const [finishProd, ingredient] = await Promise.all([
-          this.prisma.product.findFirst({
-            where: { tenantId, sku: finishSku },
-          }),
-          this.prisma.product.findFirst({
-            where: { tenantId, sku: ingredientSku },
-          }),
-        ]);
-
-        if (!finishProd)
-          throw new Error(`Finish Product SKU ${finishSku} not found`);
-        if (!ingredient)
-          throw new Error(`Ingredient SKU ${ingredientSku} not found`);
 
         const bom = await this.prisma.billOfMaterial.findFirst({
           where: { tenantId, productId: finishProd.id, status: 'Active' },
@@ -323,7 +344,7 @@ export class ManufacturingService {
         results.imported++;
       } catch (e: any) {
         results.failed++;
-        results.errors.push(`Line ${i}: ${e.message}`);
+        results.errors.push(`Line ${index + 2}: ${e.message}`);
       }
     }
     return results;
@@ -698,11 +719,22 @@ export class ManufacturingService {
     );
     const shortages = [];
 
+    // MFG-003 Optimization: Batch load products to prevent N+1 queries during explosion check
+    const products = await this.prisma.product.findMany({
+      where: {
+        id: { in: requirements.map((r) => r.productId) },
+        tenantId,
+        isDeleted: false,
+      },
+      select: { id: true, stock: true },
+    });
+
+    const stockMap = new Map(
+      products.map((p) => [p.id, Number(p.stock || 0)]),
+    );
+
     for (const req of requirements) {
-      const product = await this.prisma.product.findFirst({
-        where: { id: req.productId, tenantId, isDeleted: false },
-      });
-      const currentStock = Number(product?.stock || 0);
+      const currentStock = stockMap.get(req.productId) || 0;
       if (currentStock < req.quantity) {
         shortages.push({
           productId: req.productId,
@@ -1122,17 +1154,39 @@ export class ManufacturingService {
       );
     }
 
-    const count = await this.prisma.workOrder.count({ where: { tenantId } });
-    const orderNumber = `WO-${(count + 1).toString().padStart(4, '0')}`;
+    // FIX CRIT-MFG-003: Use transaction with retry to prevent race condition on order numbering.
+    // Two concurrent requests could get the same count and generate duplicate order numbers.
+    return this.prisma.$transaction(async (tx) => {
+      // Use MAX + 1 inside transaction for atomic numbering
+      const lastWO = await tx.workOrder.findFirst({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        select: { orderNumber: true },
+      });
 
-    return this.prisma.workOrder.create({
-      data: {
-        tenantId,
-        orderNumber,
-        bomId: data.bomId,
-        quantity: data.quantity,
-        status: 'Planned',
-      },
+      let nextNum = 1;
+      if (lastWO?.orderNumber) {
+        const match = lastWO.orderNumber.match(/WO-(\d+)/);
+        if (match) {
+          nextNum = parseInt(match[1], 10) + 1;
+        } else {
+          // Fallback: count existing WOs
+          const count = await tx.workOrder.count({ where: { tenantId } });
+          nextNum = count + 1;
+        }
+      }
+
+      const orderNumber = `WO-${nextNum.toString().padStart(4, '0')}`;
+
+      return tx.workOrder.create({
+        data: {
+          tenantId,
+          orderNumber,
+          bomId: data.bomId,
+          quantity: data.quantity,
+          status: 'Planned',
+        },
+      });
     });
   }
 

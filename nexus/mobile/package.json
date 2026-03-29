@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nexus/shared": "file:../packages/shared",
+    "@nexus/sync-engine": "file:../packages/sync-engine",
     "@react-native-community/netinfo": "^12.0.1",
     "axios": "^1.13.5",
     "expo": "~54.0.33",
@@ -19,6 +20,7 @@
     "expo-linking": "~8.0.11",
     "expo-notifications": "~0.32.16",
     "expo-secure-store": "^15.0.8",
+    "expo-sqlite": "^55.0.11",
     "expo-status-bar": "~3.0.9",
     "lucide-react-native": "^0.575.0",
     "react": "^19.1.0",

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { Toaster as HotToaster } from 'react-hot-toast';
 import { UXProvider } from "@/components/providers/ux-provider";
 import { LoadingBar } from "@/components/ui/loading-bar";
 import { Suspense } from "react";
@@ -146,7 +145,6 @@ export default function RootLayout({
             </Suspense>
             {children}
             <Toaster />
-            <HotToaster position="bottom-right" />
           </UXProvider>
         </ErrorBoundary>
       </body>

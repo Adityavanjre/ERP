@@ -16,7 +16,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { MachineStatus, Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
-import { CreateMachineDto } from './dto/manufacturing.dto';
+import { CreateMachineDto, UpdateMachineDto } from './dto/manufacturing.dto';
 
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
@@ -38,10 +38,25 @@ export class MachineController {
   }
 
   @Get()
-  @Roles(Role.Owner)
+  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   findAll(@Req() req: any) {
     return this.machineService.getMachines(req.user.tenantId);
+  }
+
+  @Patch(':id')
+  @Roles(Role.Owner, Role.Manager)
+  @Permissions(Permission.ADJUST_STOCK)
+  updateMachine(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() data: UpdateMachineDto,
+  ) {
+    return this.machineService.updateMachine(
+      req.user.tenantId,
+      id,
+      data,
+    );
   }
 
   @Patch(':id/status')

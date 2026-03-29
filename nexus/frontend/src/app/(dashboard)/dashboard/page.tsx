@@ -75,16 +75,17 @@ interface IndustryConfig {
     terminology: Record<string, string>;
 }
 
+interface SystemStats {
+    apps: number;
+    installed: number;
+    records: number;
+    uptime: string;
+}
+
 export default function DashboardPage() {
     const router = useRouter();
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller';
-    interface SystemStats {
-        apps: number;
-        installed: number;
-        records: number;
-        uptime: string;
-    }
 
     const [, setSystemStats] = useState<SystemStats>({
         apps: 0,
@@ -135,7 +136,6 @@ export default function DashboardPage() {
             // BATCH 1: VITALS (Crucial stats for the 4 top boxes)
             // Even with millions of rows, indexed counts return in <50ms
             const vitalsPromise = api.get('analytics/summary').then(res => {
-                console.log("DASHBOARD: Vitals received", res.data);
                 setBiStats(prev => ({ ...prev, ...res.data }));
             }).catch(e => console.error("Vitals Fail:", e));
 
@@ -274,8 +274,8 @@ export default function DashboardPage() {
             {/* Process Overview */}
             <div className="bg-white border border-slate-200 rounded-3xl p-1.5 shadow-xl shadow-slate-200/50">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-                    {(valueChain || []).map((step, i) => (
-                        <div key={i} className="relative group overflow-hidden p-6 rounded-2xl bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-200 transition-all cursor-default">
+                    {(valueChain || []).map((step) => (
+                        <div key={step.label} className="relative group overflow-hidden p-6 rounded-2xl bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-200 transition-all cursor-default">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{step.label}</span>
                                 <div className={cn(
@@ -312,16 +312,16 @@ export default function DashboardPage() {
                     const pathParts = action.href.split('/').filter(p => p !== '');
                     const moduleKey = pathParts[0];
 
-                    if (moduleKey && enabledModules.length > 0) {
-                        // CRM is a core platform service, usually mapped to the 'customer' terminology
-                        if (moduleKey === 'crm') return true;
-                        return enabledModules.includes(moduleKey);
-                    }
-                    return true;
-                }).map((action, i) => (
-                    <button
-                        key={i}
-                        onClick={() => router.push(action.href)}
+                        if (moduleKey && enabledModules.length > 0) {
+                            // CRM is a core platform service, usually mapped to the 'customer' terminology
+                            if (moduleKey === 'crm') return true;
+                            return enabledModules.includes(moduleKey);
+                        }
+                        return true;
+                    }).map((action) => (
+                        <button
+                            key={action.label}
+                            onClick={() => router.push(action.href)}
                         onMouseEnter={() => {
                             const moduleKey = action.href.split('/')[1];
                             if (moduleKey === 'sales') api.get('analytics/summary').catch(() => { });
@@ -343,8 +343,8 @@ export default function DashboardPage() {
                 "grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4",
                 kpiCards.length > 4 && "lg:grid-cols-5"
             )}>
-                {(kpiCards || []).map((kpi, i) => (
-                    <Card key={i} className="bg-white border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden rounded-[1.5rem] sm:rounded-3xl">
+                {(kpiCards || []).map((kpi) => (
+                    <Card key={kpi.title} className="bg-white border-slate-200 shadow-sm hover:shadow-xl transition-all group overflow-hidden rounded-[1.5rem] sm:rounded-3xl">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">{kpi.title}</CardTitle>
                             <div className={`p-2.5 rounded-2xl ${kpi.bg}`}>
@@ -376,7 +376,7 @@ export default function DashboardPage() {
                                 <BarChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                                     <XAxis
-                                        dataKey="month"
+                                        dataKey="name"
                                         axisLine={false}
                                         tickLine={false}
                                         tick={{ fill: '#475569', fontSize: 10, fontWeight: '700' }}
@@ -462,8 +462,8 @@ export default function DashboardPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4 pt-6">
-                            {activity.length > 0 ? activity.map((log, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 hover:bg-slate-50 transition-all cursor-default">
+                            {activity.length > 0 ? activity.map((log) => (
+                                <div key={`${log.time}-${log.user}`} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 hover:bg-slate-50 transition-all cursor-default">
                                     <div className="space-y-1 max-w-[70%]">
                                         <p className="text-[11px] font-black text-slate-900 tracking-tight leading-normal">{log.message}</p>
                                         <div className="flex items-center text-[10px] text-slate-600 font-bold uppercase tracking-tight">

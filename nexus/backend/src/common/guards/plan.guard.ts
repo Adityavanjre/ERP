@@ -43,18 +43,20 @@ export class PlanGuard implements CanActivate {
     const isWrite = WRITE_METHODS.has(request.method);
 
     // 1. Enforce subscription status (Suspended / ReadOnly / GracePeriod)
-    //    Fail-open: billing errors never block requests
+    //    Fail-closed: unexpected billing errors block requests to prevent unauthorized access
     try {
       await this.billing.enforceAccess(tenantId, isWrite);
     } catch (err: any) {
       // Re-throw ForbiddenException and GoneException — these are intentional
       if (err.status === 403 || err.status === 410) throw err;
-      // Any other error (DB down etc.) — fail-open
+      // Any other error (DB down etc.) — fail-closed to prevent billing bypass
       this.logger.error(
-        '[PlanGuard] enforceAccess threw unexpectedly — fail-open',
+        '[PlanGuard] enforceAccess threw unexpectedly — fail-closed',
         err,
       );
-      return true;
+      throw new ForbiddenException(
+        'Service temporarily unavailable. Please try again later.',
+      );
     }
 
     // 2. Enforce specific resource quota if @PlanLimit() decorator is present
@@ -69,8 +71,11 @@ export class PlanGuard implements CanActivate {
       } catch (err: any) {
         if (err.status === 403) throw err;
         this.logger.error(
-          '[PlanGuard] checkQuota threw unexpectedly — fail-open',
+          '[PlanGuard] checkQuota threw unexpectedly — fail-closed',
           err,
+        );
+        throw new ForbiddenException(
+          'Service temporarily unavailable. Please try again later.',
         );
       }
     }

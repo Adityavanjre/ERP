@@ -63,7 +63,20 @@ export class MachineService {
     return updated;
   }
 
-  async deleteMachine(tenantId: string, id: string) {
+  async updateMachine(
+    tenantId: string,
+    id: string,
+    data: {
+      name?: string;
+      code?: string;
+      type?: string;
+      hourlyRate?: number;
+      description?: string;
+      manufacturer?: string;
+      model?: string;
+      serialNumber?: string;
+    },
+  ) {
     const machine = await this.prisma.machine.findFirst({
       where: { id, tenantId },
     });
@@ -72,18 +85,58 @@ export class MachineService {
       throw new NotFoundException(`Machine ${id} not found`);
     }
 
-    await this.prisma.machine.updateMany({
-      where: { id, tenantId },
-      data: { status: 'Offline' as MachineStatus },
+    const updated = await this.prisma.machine.update({
+      where: { id },
+      data: { ...data },
     });
 
     await this.audit.log({
       tenantId,
-      action: 'DELETE',
+      action: 'UPDATE',
       resource: 'Machine',
-      details: { id, name: machine.name },
+      details: { id, changes: data },
     });
 
-    return { success: true };
+    return updated;
+  }
+
+  async deleteMachine(tenantId: string, id: string) {
+    const machine = await this.prisma.machine.findFirst({
+      where: { id, tenantId },
+      include: { workOrders: { take: 1 } },
+    });
+
+    if (!machine) {
+      throw new NotFoundException(`Machine ${id} not found`);
+    }
+
+    if (machine.workOrders.length > 0) {
+      // FREEZE: Has associated data, set to Offline (frozen state)
+      await this.prisma.machine.updateMany({
+        where: { id, tenantId },
+        data: { status: 'Offline' as MachineStatus },
+      });
+
+      await this.audit.log({
+        tenantId,
+        action: 'FREEZE',
+        resource: 'Machine',
+        details: { id, name: machine.name, reason: 'Has associated work orders' },
+      });
+
+      return { success: true, action: 'frozen', reason: 'Machine has associated work orders and cannot be deleted' };
+    } else {
+      // DELETE: No associated data, safe to hard-delete
+      await this.prisma.machine.deleteMany({ where: { id, tenantId } });
+
+      await this.audit.log({
+        tenantId,
+        action: 'DELETE',
+        resource: 'Machine',
+        details: { id, name: machine.name },
+      });
+
+      return { success: true, action: 'deleted' };
+    }
   }
 }
