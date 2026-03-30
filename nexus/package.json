@@ -8,7 +8,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build:shared": "npm run build -w @nexus/shared"
+    "build:shared": "npm run build --workspace=@nexus/shared",
+    "build:all": "npm run build:shared && npm run build --workspace=frontend",
+    "dev:all": "concurrently \"npm run start:dev --workspace=backend\" \"npm run dev --workspace=frontend\""
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

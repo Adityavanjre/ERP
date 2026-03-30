@@ -56,6 +56,7 @@ const createAdminSafely = async () => {
             console.log(`System Check: Admin user (${adminEmail}) detected. Monitoring context...`);
             let modified = false;
 
+            const rawPassword = process.env.ADMIN_PASSWORD?.trim();
             if (rawPassword) {
                 userExists.password = rawPassword.trim();
                 modified = true;

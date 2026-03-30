@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from '../auth/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
 import { Theme } from '../constants/theme';
 import { useGovernance, ERPModule } from '../hooks/useGovernance';
-import { NotificationService } from '../services/NotificationService';
+import { useDeepLinking } from '../hooks/useDeepLinking';
 
 // Imported Screens
 import StockOverviewScreen from '@/screens/StockOverviewScreen';
@@ -22,8 +22,23 @@ const RootNavigator = () => {
     const [currentScreen, setCurrentScreen] = useState('dashboard');
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-    // MOB-005: Initialize Deep Linking Listeners
-    NotificationService.setupDeepLinking(null);
+    // MOB-005: Initialize Deep Linking - FIX: Proper hook-based deep link handling
+    const handleDeepLink = useCallback((url: string, path: string, queryParams: Record<string, string | undefined>) => {
+        console.log(`[DEEP_LINK] Received: ${path}`, queryParams);
+        if (path === 'orders' && queryParams?.id) {
+            setSelectedOrderId(queryParams.id);
+            setCurrentScreen('order-detail');
+        } else if (path === 'order-detail' && queryParams?.id) {
+            setSelectedOrderId(queryParams.id);
+            setCurrentScreen('order-detail');
+        } else if (path === 'create-order') {
+            setCurrentScreen('create-order');
+        } else if (path === 'notifications') {
+            setCurrentScreen('notifications');
+        }
+    }, []);
+
+    useDeepLinking({ onDeepLink: handleDeepLink });
 
     if (isLoading) {
         return (

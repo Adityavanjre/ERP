@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "node -e \"process.env.NODE_PATH=require('path').resolve('node_modules'); require('module').Module._initPaths(); require('child_process').execSync('npx eslint src', {stdio:'inherit', env: {...process.env, NODE_PATH: require('path').resolve('node_modules')}})\"",
-    "lint:strict": "npm run lint"
+    "lint:strict": "npm run lint",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && electron-builder --win --publish=never",
+    "electron:build:dir": "npm run build && electron-builder --win --dir --publish=never"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -46,9 +49,55 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.2"
+  },
+  "build": {
+    "appId": "com.klypso.nexusgateway",
+    "productName": "Nexus ERP",
+    "copyright": "Copyright © 2026 Klypso Evolution",
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "public"
+    },
+    "files": [
+      ".next/**/*",
+      "electron/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico",
+      "installerHeaderIcon": "public/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Nexus ERP"
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://klypso.in/releases/"
+    }
   }
 }

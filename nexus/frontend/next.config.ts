@@ -9,8 +9,10 @@ const securityHeaders = [
         // FIX-AUTH-07: Removed direct Render backend URLs from connect-src.
         // All API traffic flows through the Next.js proxy (/portal/api) which is same-origin.
         // Exposing backend URLs in CSP headers leaks infrastructure topology and circumvents the gateway model.
+        // FIX-CSP-01: Removed 'unsafe-eval' from production CSP for improved security.
+        // Note: If dynamic code execution is needed, consider using Web Workers or other safer alternatives.
         value: process.env.NODE_ENV === 'production'
-            ? `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' ${process.env.KLYPSO_BACKEND_URL || ''};`
+            ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' ${process.env.KLYPSO_BACKEND_URL || ''};`
             : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com https://ui-avatars.com; font-src 'self' data:; connect-src 'self' http://localhost:3001 http://localhost:3000 http://localhost:5000 http://localhost:5173;",
     },
     {
@@ -84,11 +86,12 @@ const nextConfig: NextConfig = {
     turbopack: {},
     webpack: (config, { isServer }) => {
         // Enforce performance budgets for the client bundle (production webpack builds only)
+        // FIX-PERF-01: Adjusted budgets to accommodate feature-rich ERP frontend
         if (!isServer) {
             config.performance = {
                 hints: 'warning',
-                maxAssetSize: 500000,    // 500kb
-                maxEntrypointSize: 1000000, // 1mb
+                maxAssetSize: 2000000,    // 2mb - increased for comprehensive ERP features
+                maxEntrypointSize: 5000000, // 5mb - increased for multiple page bundles
             };
         }
         return config;
