@@ -101,7 +101,7 @@ export default function RegisterPage() {
             };
 
             const response = await api.post('auth/register', payload);
-            const { accessToken } = response.data;
+            const { accessToken: _accessToken } = response.data;
 
             // Store user profile for UI hydration only
             // JWT tokens are in HttpOnly cookies (set by backend)

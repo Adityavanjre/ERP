@@ -40,11 +40,7 @@ export default function AppsMarketplace() {
         }
     }, []);
 
-    useEffect(() => {
-        syncAppData(true);
-        const interval = setInterval(() => syncAppData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncAppData]);
+    useEffect(() => {        syncAppData(true);    }, [syncAppData]);
 
     const handleUninstall = useCallback((name: string) => {
         showConfirm({
@@ -111,7 +107,7 @@ export default function AppsMarketplace() {
                                     className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-blue-500/20"
                                     onClick={() => {
                                         toast.success("Downloading Nexus Desktop...");
-                                        window.open("/nexus-desktop-setup.exe", "_blank");
+                                        window.open("/portal/nexus-desktop-setup.exe", "_blank");
                                     }}
                                 >
                                     <HardDrive className="mr-2 h-5 w-5" /> Download EXE

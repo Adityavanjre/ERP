@@ -90,17 +90,9 @@ export default function BOMPage() {
         }
     }, []);
 
-    useEffect(() => {
-        syncLogicStructs(true);
-        const interval = setInterval(() => syncLogicStructs(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncLogicStructs]);
+    useEffect(() => {        syncLogicStructs(true);    }, [syncLogicStructs]);
 
-    useEffect(() => {
-        if (selectedBomId) {
-            fetchDetails(selectedBomId);
-        }
-    }, [selectedBomId, fetchDetails]);
+    useEffect(() => {        if (selectedBomId) {            fetchDetails(selectedBomId);        }    }, [selectedBomId, fetchDetails]);
 
     const filteredBoms = boms.filter(bom =>
         bom.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -110,7 +110,7 @@ export function TransferStockDialog({
         } finally {
             setLoading(false);
         }
-    }, [selectedProduct, destinationWarehouseId, quantity, sourceWarehouse?.id, onSuccess, onOpenChange]);
+    }, [selectedProduct, destinationWarehouseId, quantity, sourceWarehouse, onSuccess, onOpenChange]);
 
     if (!sourceWarehouse) return null;
 

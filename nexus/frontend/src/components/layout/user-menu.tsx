@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { api } from "@/lib/api";
+import { clearDesktopOfflineSession, isDesktopOfflineMode } from "@/lib/desktop-offline";
 
 interface UserData {
     fullName: string;
@@ -33,9 +34,13 @@ export const UserMenu = () => {
         } catch (e) {
             console.error("Logout API failed", e);
         }
-        localStorage.removeItem("k_token");
-        localStorage.removeItem("k_user");
-        localStorage.removeItem("k_identity");
+        if (isDesktopOfflineMode()) {
+            await clearDesktopOfflineSession();
+        } else {
+            localStorage.removeItem("k_token");
+            localStorage.removeItem("k_user");
+            localStorage.removeItem("k_identity");
+        }
         router.push("/login");
     }, [router]);
 

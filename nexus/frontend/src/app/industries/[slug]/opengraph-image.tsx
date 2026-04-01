@@ -43,7 +43,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
                         The Imperial Standard <br /> for {theme.name}
                     </div>
                     <div style={{ fontSize: '28px', color: '#64748b', marginTop: '40px', fontWeight: '500' }}>
-                        nexus.klypso.in/portal
+                        klypso.in/portal
                     </div>
                 </div>
             </div>

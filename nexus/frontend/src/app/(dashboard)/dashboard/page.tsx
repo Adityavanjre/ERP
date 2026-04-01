@@ -82,6 +82,12 @@ interface SystemStats {
     uptime: string;
 }
 
+type ApiResponse<T> = {
+    data: T;
+};
+
+type SettledApiResult<T> = PromiseSettledResult<ApiResponse<T>>;
+
 export default function DashboardPage() {
     const router = useRouter();
     const { user } = useAuth();
@@ -163,7 +169,8 @@ export default function DashboardPage() {
                 api.get('analytics/activity'),
                 api.get('analytics/value-chain')
             ]).then(results => {
-                const getVal = (r: any) => r.status === 'fulfilled' ? r.value.data : null;
+                const getVal = <T,>(result: SettledApiResult<T>): T | null =>
+                    result.status === 'fulfilled' ? result.value.data : null;
                 
                 const perf = getVal(results[0]);
                 const hlth = getVal(results[1]);
@@ -189,13 +196,12 @@ export default function DashboardPage() {
         }
     }, []);
 
-    useEffect(() => {
-        fetchData(true);
-        const syncInterval = setInterval(() => fetchData(false), 30000);
-        return () => clearInterval(syncInterval);
-    }, [fetchData]);
+    useEffect(() => {        fetchData(true);    }, [fetchData]);
 
-    const term = industryConfig?.terminology || {};
+    const term = useMemo<Record<string, string>>(
+        () => industryConfig?.terminology ?? {},
+        [industryConfig]
+    );
 
     const kpiCards = useMemo(() => {
         const cards = [

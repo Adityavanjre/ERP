@@ -52,13 +52,7 @@ export default function WarehousesPage() {
         }
     };
 
-    useEffect(() => {
-        syncWarehouses(true);
-
-        // BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncWarehouses(false), 30000);
-        return () => clearInterval(interval);
-    }, []);
+    useEffect(() => {        syncWarehouses(true);        // BACKGROUND SYNC: 30s interval    }, []);
 
     return (
         <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-slate-50/50 min-h-screen">

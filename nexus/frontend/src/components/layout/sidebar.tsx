@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import {
     LayoutDashboard,
@@ -167,7 +167,6 @@ let _cachedModules: string[] | null = null;
 let _cachedTerminology: IndustryTerminology | null = null;
 export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const pathname = usePathname();
-    const router = useRouter();
     const { user } = useAuth();
     const userRole = user?.isSuperAdmin ? 'Owner' : (user?.role as RoleName) || 'Biller';
 

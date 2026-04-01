@@ -56,11 +56,7 @@ export default function CustomerDetailPage() {
         }
     }, [params.id]);
 
-    useEffect(() => {
-        syncRelationDetail(true);
-        const interval = setInterval(() => syncRelationDetail(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncRelationDetail]);
+    useEffect(() => {        syncRelationDetail(true);    }, [syncRelationDetail]);
 
     if (loading) {
         return <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900 min-h-screen"><Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" /> Initializing Node Pulse...</div>;

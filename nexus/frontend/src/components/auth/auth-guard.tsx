@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
+import { hydrateDesktopOfflineSession } from "@/lib/desktop-offline";
 
 // Route-level access control matrix
 // Maps path prefixes to allowed roles
@@ -50,6 +51,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const [needsTenantSelection, setNeedsTenantSelection] = useState(false);
 
     useEffect(() => {
+        let cancelled = false;
+
         const handleSessionExpired = () => {
             setAuthorized(false);
             router.push("/login");
@@ -57,7 +60,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         window.addEventListener('session-expired', handleSessionExpired);
 
-        const checkAuth = () => {
+        const checkAuth = async () => {
+            await hydrateDesktopOfflineSession();
             const token = localStorage.getItem("k_token");
             if (!token) {
                 router.push("/login");
@@ -70,6 +74,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 const type = decoded.type;
                 const isOnboarded = decoded.isOnboarded;
                 const tenantId = decoded.tenantId;
+                const isDesktopLocal = type === 'desktop-local';
 
                 // 1. Identity/Admin Token handling (No specific tenant scoped yet)
                 // If it's an admin with a tenantId, it's a Shadow Mode session and should be treated as Scoped.
@@ -81,6 +86,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                     }
                     setNeedsTenantSelection(true);
                     setAuthorized(true);
+                    return;
+                }
+
+                if (isDesktopLocal) {
+                    if (!cancelled) {
+                        setNeedsTenantSelection(false);
+                        setAuthorized(true);
+                    }
                     return;
                 }
 
@@ -108,22 +121,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                     return;
                 }
 
-                setAuthorized(true);
+                if (!cancelled) {
+                    setAuthorized(true);
+                }
             } catch {
                 router.push("/login");
             }
         };
 
-        checkAuth();
+        void checkAuth();
 
         const handleStorageEvent = (e: StorageEvent) => {
             if (e.key === 'k_token' || e.key === 'k_user') {
-                checkAuth();
+                void checkAuth();
             }
         };
         window.addEventListener('storage', handleStorageEvent);
 
         return () => {
+            cancelled = true;
             window.removeEventListener('session-expired', handleSessionExpired);
             window.removeEventListener('storage', handleStorageEvent);
         };

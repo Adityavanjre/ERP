@@ -9,6 +9,7 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
 import { DraftRecovery } from "@/components/auth/draft-recovery";
+import { hydrateDesktopOfflineSession } from "@/lib/desktop-offline";
 
 interface DecodedToken {
     type?: string;
@@ -23,20 +24,32 @@ const DashboardLayout = ({
     const [isIdentityState, setIsIdentityState] = useState<boolean | null>(null);
 
     useEffect(() => {
-        try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem("k_token") : null;
-            if (token) {
-                const decoded = jwtDecode<DecodedToken>(token);
-                // Identification/Identity and Global Admin sessions without tenant context 
-                // should render full-screen (selector, monitoring, onboarding).
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setIsIdentityState(decoded.type === 'identity' || (decoded.type === 'admin' && !decoded.tenantId));
-            } else {
-                setIsIdentityState(false);
+        let cancelled = false;
+
+        const bootstrap = async () => {
+            try {
+                await hydrateDesktopOfflineSession();
+                const token = typeof window !== 'undefined' ? localStorage.getItem("k_token") : null;
+                if (token) {
+                    const decoded = jwtDecode<DecodedToken>(token);
+                    if (!cancelled) {
+                        setIsIdentityState(decoded.type === 'identity' || (decoded.type === 'admin' && !decoded.tenantId));
+                    }
+                } else if (!cancelled) {
+                    setIsIdentityState(false);
+                }
+            } catch {
+                if (!cancelled) {
+                    setIsIdentityState(false);
+                }
             }
-        } catch {
-            setIsIdentityState(false);
-        }
+        };
+
+        void bootstrap();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     // Prevent hydration flashes

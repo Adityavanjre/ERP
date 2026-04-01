@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = 'https://nexus.klypso.in/portal';
+    const baseUrl = 'https://klypso.in/portal';
 
     return {
         rules: {

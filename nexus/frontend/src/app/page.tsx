@@ -29,9 +29,9 @@ export default function Home() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "name": "Nexus ERP India",
-    "image": "https://nexus.klypso.in/portal/favicon.svg",
-    "@id": "https://nexus.klypso.in/portal",
-    "url": "https://nexus.klypso.in/portal",
+    "image": "https://klypso.in/portal/favicon.svg",
+    "@id": "https://klypso.in/portal",
+    "url": "https://klypso.in/portal",
     "telephone": "+91-XXXXXXXXXX",
     "address": {
       "@type": "PostalAddress",

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
 
 export default function SalesError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

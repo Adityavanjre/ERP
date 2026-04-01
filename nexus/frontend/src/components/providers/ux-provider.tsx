@@ -13,6 +13,12 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, LogOut } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { isDesktopOfflineMode } from "@/lib/desktop-offline";
+import { jwtDecode } from "jwt-decode";
+
+interface UserToken {
+    isOnboarded?: boolean;
+}
 
 interface UXContextType {
     showConfirm: (options: ConfirmOptions) => void;
@@ -76,6 +82,13 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         // Global listener for custom events if needed
         const handleSessionExpiry = () => {
+            // DESKTOP-OFFLINE: Ignore session expiry in offline mode.
+            // There is no cloud session to expire, and this prevents erroneous 401 triggers 
+            // from interrupting the localized industrial suite.
+            if (isDesktopOfflineMode()) {
+              return;
+            }
+
             // Don't trigger if we are already on auth pages
             const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
             if (authPages.some(page => pathname?.includes(page))) {
@@ -87,16 +100,23 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener("session-expired", handleSessionExpiry);
     }, [pathname]);
 
-    // UI-002: Improve Red-Text mandatory visual highlights directly upon broken Form saves
+    // Desktop-Offline: First-run Onboarding Redirect
     useEffect(() => {
-        const handleInvalidSubmits = (e: SubmitEvent) => {
-            if (e.target instanceof HTMLFormElement) {
-                e.target.classList.add('form-submitted');
+        if (typeof window === "undefined" || !isDesktopOfflineMode()) return;
+
+        const token = localStorage.getItem("k_token");
+        if (!token) return;
+
+        try {
+            const decoded = jwtDecode<UserToken>(token);
+            // If the user isn't onboarded and we aren't already there, go to onboarding
+            if (decoded.isOnboarded === false && !pathname?.startsWith("/onboarding")) {
+                router.push("/onboarding");
             }
-        };
-        document.addEventListener('submit', handleInvalidSubmits, { capture: true });
-        return () => document.removeEventListener('submit', handleInvalidSubmits, { capture: true });
-    }, []);
+        } catch (e) {
+            console.error("Failed to decode token for onboarding check", e);
+        }
+    }, [pathname, router]);
 
     return (
         <UXContext.Provider value={{ showConfirm, triggerSessionExpiry, setUILocked }}>

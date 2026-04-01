@@ -153,14 +153,7 @@ export default function InventoryPage() {
         }
     }, [page]);
 
-    useEffect(() => {
-        setMounted(true);
-        syncInventory(true);
-
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncInventory(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncInventory]);
+    useEffect(() => {        setMounted(true);        syncInventory(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncInventory]);
 
     if (!mounted) return null;
 

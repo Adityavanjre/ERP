@@ -53,11 +53,7 @@ export default function AppDetailPage() {
         }
     }, [appName]);
 
-    useEffect(() => {
-        syncAppData(true);
-        const interval = setInterval(() => syncAppData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncAppData]);
+    useEffect(() => {        syncAppData(true);    }, [syncAppData]);
 
     const handleInstall = useCallback(async () => {
         try {

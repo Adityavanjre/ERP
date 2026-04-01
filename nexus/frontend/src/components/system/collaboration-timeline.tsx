@@ -43,11 +43,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
         }
     }, [resourceType, resourceId]);
 
-    useEffect(() => {
-        syncCommunicationFlux(true);
-        const interval = setInterval(() => syncCommunicationFlux(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncCommunicationFlux]);
+    useEffect(() => {        syncCommunicationFlux(true);    }, [syncCommunicationFlux]);
 
     const addComment = useCallback(async () => {
         if (!newComment.trim()) return;

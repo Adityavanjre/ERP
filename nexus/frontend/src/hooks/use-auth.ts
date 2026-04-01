@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import { hydrateDesktopOfflineSession } from "@/lib/desktop-offline";
 
 export interface User {
     id: string;
@@ -21,7 +22,10 @@ export function useAuth() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const checkToken = () => {
+        let cancelled = false;
+
+        const checkToken = async () => {
+            await hydrateDesktopOfflineSession();
             const token = localStorage.getItem("k_token");
             if (token) {
                 try {
@@ -33,29 +37,40 @@ export function useAuth() {
 
                     // Prevent identity mismatch if token changed in another tab
                     if (!user || user.id !== userData.id || user.tenantId !== userData.tenantId) {
-                        setUser(userData);
+                        if (!cancelled) {
+                            setUser(userData);
+                        }
                     }
                 } catch {
                     localStorage.removeItem("k_token");
-                    setUser(null);
+                    if (!cancelled) {
+                        setUser(null);
+                    }
                 }
             } else {
-                setUser(null);
+                if (!cancelled) {
+                    setUser(null);
+                }
             }
-            setLoading(false);
+            if (!cancelled) {
+                setLoading(false);
+            }
         };
 
-        checkToken();
+        void checkToken();
 
         // AUTH-002: Real-time synchronization of auth tokens across tabs
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === 'k_token') {
-                checkToken();
+                void checkToken();
             }
         };
 
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        return () => {
+            cancelled = true;
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, [user]);
 
     return { user, loading, isAuthenticated: !!user };

@@ -14,8 +14,6 @@ import {
     Boxes,
     Cpu,
     Play,
-    AlertTriangle,
-    Activity,
     History
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -47,13 +45,29 @@ interface WorkOrder {
     bom?: BOM;
 }
 
+interface Machine {
+    id: string;
+    name: string;
+    status: string;
+}
 
+interface ManufacturingActivity {
+    module?: string;
+    action: string;
+    createdAt: string;
+}
+
+interface ManufacturingOverview {
+    boms: BOM[];
+    workOrders: WorkOrder[];
+    machines: Machine[];
+}
 
 export default function ManufacturingDashboard() {
     const [boms, setBoms] = useState<BOM[]>([]);
     const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-    const [machines, setMachines] = useState<any[]>([]);
-    const [activity, setActivity] = useState<any[]>([]);
+    const [machines, setMachines] = useState<Machine[]>([]);
+    const [activity, setActivity] = useState<ManufacturingActivity[]>([]);
     const [loading, setLoading] = useState(true);
     const [startingWo, setStartingWo] = useState<WorkOrder | null>(null);
     const router = useRouter();
@@ -62,14 +76,21 @@ export default function ManufacturingDashboard() {
         try {
             if (showLoading) setLoading(true);
             const [overview, act] = await Promise.all([
-                api.get("manufacturing/overview"),
-                api.get("analytics/activity?limit=5")
+                api.get<ManufacturingOverview>("manufacturing/overview"),
+                api.get<ManufacturingActivity[]>("analytics/activity?limit=5")
             ]);
             const { boms, workOrders, machines } = overview.data;
             setBoms(boms);
             setWorkOrders(workOrders);
             setMachines(machines);
-            setActivity((act.data || []).filter((a: any) => a.module === 'manufacturing' || a.action.includes('STOCK') || a.action.includes('WO')));
+            setActivity(
+                (act.data || []).filter(
+                    (entry: ManufacturingActivity) =>
+                        entry.module === 'manufacturing' ||
+                        entry.action.includes('STOCK') ||
+                        entry.action.includes('WO')
+                )
+            );
         } catch {
             // Suppressed in prod: Manufacturing sync failed silently
         } finally {
@@ -77,13 +98,7 @@ export default function ManufacturingDashboard() {
         }
     }, []);
 
-    useEffect(() => {
-        syncManufacturingData(true);
-
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncManufacturingData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncManufacturingData]);
+    useEffect(() => {        syncManufacturingData(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncManufacturingData]);
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -274,7 +289,7 @@ export default function ManufacturingDashboard() {
                     <section className="space-y-4">
                         <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Machine Load</h2>
                         <div className="grid grid-cols-2 gap-3">
-                            {machines.map((m: any) => (
+                            {machines.map((m) => (
                                 <div key={m.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2">
                                     <div className="flex justify-between items-center">
                                         <div className={cn(
@@ -293,7 +308,7 @@ export default function ManufacturingDashboard() {
                     <section className="space-y-4">
                         <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Recent Activity</h2>
                         <div className="space-y-2">
-                            {activity.map((a: any, i) => (
+                            {activity.map((a, i) => (
                                 <div key={i} className="flex gap-3 items-start p-2 hover:bg-slate-50 rounded-xl transition-all">
                                     <div className="mt-1 p-1 bg-slate-100 rounded-lg">
                                         <History className="w-3 h-3 text-slate-400" />

@@ -112,12 +112,7 @@ export default function SalesPage() {
         }
     }, []);
 
-    useEffect(() => {
-        syncSalesData(true);
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncSalesData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncSalesData]);
+    useEffect(() => {        syncSalesData(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncSalesData]);
 
     const submitOrder = useCallback(async () => {
         try {

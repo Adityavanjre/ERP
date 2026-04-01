@@ -139,14 +139,7 @@ export default function HrPage() {
         }
     }, []);
 
-    useEffect(() => {
-        setMounted(true);
-        syncEmployeeData(true);
-
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncEmployeeData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncEmployeeData]);
+    useEffect(() => {        setMounted(true);        syncEmployeeData(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncEmployeeData]);
 
     const handleAddEmployee = async () => {
         if (!empForm.firstName || !empForm.lastName || !empForm.employeeId) {

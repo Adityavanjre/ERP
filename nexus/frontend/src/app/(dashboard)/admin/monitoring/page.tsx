@@ -71,11 +71,7 @@ export default function FounderMonitoring() {
         }
     }, []);
 
-    useEffect(() => {
-        syncDashboardStats(true);
-        const interval = setInterval(() => syncDashboardStats(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncDashboardStats]);
+    useEffect(() => {        syncDashboardStats(true);    }, [syncDashboardStats]);
 
     if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">Loading System Overview...</div>;
     if (!data) return null;
@@ -205,7 +201,7 @@ export default function FounderMonitoring() {
                                     <button
                                         onClick={async () => {
                                             try {
-                                                const res = await api.post('auth/select-tenant', { tenantId: tenant.tenantId });
+                                                await api.post('auth/select-tenant', { tenantId: tenant.tenantId });
                                                 // SEC-006: Token stored in HttpOnly cookie by backend
                                                 router.push('/portal/dashboard');
                                             } catch {

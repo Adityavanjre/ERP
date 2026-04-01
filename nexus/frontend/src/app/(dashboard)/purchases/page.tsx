@@ -106,13 +106,7 @@ export default function PurchasesPage() {
         }
     }, []);
 
-    useEffect(() => {
-        syncProcurement(true);
-
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncProcurement(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncProcurement]);
+    useEffect(() => {        syncProcurement(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncProcurement]);
 
     const handleConfirmSubmit = () => {
         if (!newPO.supplierId || !newPO.productId || newPO.quantity <= 0) {

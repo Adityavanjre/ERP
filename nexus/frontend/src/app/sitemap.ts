@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { industryThemes } from '@/constants/industries';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://nexus.klypso.in/portal';
+    const baseUrl = 'https://klypso.in/portal';
 
     // Static routes
     const staticRoutes = [

@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             `जीएसटी सॉफ्टवेयर ${theme.name}` // Hindi: GST Software Industry
         ],
         alternates: {
-            canonical: `https://nexus.klypso.in/portal/industries/${slug.toLowerCase()}`,
+            canonical: `https://klypso.in/portal/industries/${slug.toLowerCase()}`,
         },
         openGraph: {
             title: theme.title,
@@ -105,19 +105,19 @@ export default async function IndustryLandingPage({ params }: Props) {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Nexus ERP",
-                "item": "https://nexus.klypso.in/portal"
+                "item": "https://klypso.in/portal"
             },
             {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Solutions",
-                "item": "https://nexus.klypso.in/portal#solutions"
+                "item": "https://klypso.in/portal#solutions"
             },
             {
                 "@type": "ListItem",
                 "position": 3,
                 "name": theme.name,
-                "item": `https://nexus.klypso.in/portal/industries/${slug}`
+                "item": `https://klypso.in/portal/industries/${slug}`
             }
         ]
     };
@@ -151,7 +151,7 @@ export default async function IndustryLandingPage({ params }: Props) {
             "@type": "SpeakableSpecification",
             "cssSelector": [".industry-desc", ".industry-title"]
         },
-        "url": `https://nexus.klypso.in/portal/industries/${slug}`
+        "url": `https://klypso.in/portal/industries/${slug}`
     };
 
     const videoJsonLd = {
@@ -159,11 +159,11 @@ export default async function IndustryLandingPage({ params }: Props) {
         "@type": "VideoObject",
         "name": `Nexus ERP for ${theme.name} Demo`,
         "description": `Watch how Nexus ERP transforms ${theme.name} businesses in India with automated BOM and GST compliance.`,
-        "thumbnailUrl": "https://nexus.klypso.in/portal/og-image.png",
+        "thumbnailUrl": "https://klypso.in/portal/og-image.png",
         "uploadDate": "2024-01-01T08:00:00+08:00",
         "duration": "PT2M30S",
-        "contentUrl": `https://nexus.klypso.in/portal/videos/${slug}-demo.mp4`,
-        "embedUrl": `https://nexus.klypso.in/portal/embed/${slug}`,
+        "contentUrl": `https://klypso.in/portal/videos/${slug}-demo.mp4`,
+        "embedUrl": `https://klypso.in/portal/embed/${slug}`,
         "interactionStatistic": {
             "@type": "InteractionCounter",
             "interactionType": { "@type": "WatchAction" },

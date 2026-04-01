@@ -1,5 +1,5 @@
-
 import axios from 'axios';
+import { handleDesktopOfflineRequest, shouldHandleDesktopOfflineRequest } from './desktop-offline';
 
 // Ensure we always target the v1 API
 // PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
@@ -40,7 +40,14 @@ const processQueue = (error: unknown) => {
   failedQueue = [];
 };
 
-
+/**
+ * DESKTOP-SHELL: Detect if the app is running inside the Electron container.
+ */
+function isDesktopShell(): boolean {
+  if (typeof window === 'undefined') return false;
+  // Look for the nexusDesktop bridge injected by the Electron preload
+  return Boolean((window as any).nexusDesktop && (window as any).nexusDesktop.shell?.isDesktop);
+}
 
 /**
  * FE-004: Read a cookie value by name from document.cookie.
@@ -62,20 +69,31 @@ const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 
 api.interceptors.request.use(
   (config) => {
+    // DESKTOP-OFFLINE: Zero-Auth Local Bridge Interceptor
+    // If the application is in desktop-offline mode, we trap the request
+    // and route it to the local SQLite/state engine instead of the cloud.
+    if (shouldHandleDesktopOfflineRequest(config)) {
+      config.adapter = async () => handleDesktopOfflineRequest(config);
+    } 
+    // DESKTOP-SHELL PROTECTION: If this is the desktop shell and we are NOT in a cloud session,
+    // we must ABORT any request that isn't handled by the bridge above.
+    // This prevents "cloud leakage" that creates unintended usage on Render and triggers 429s.
+    else if (isDesktopShell() && !localStorage.getItem('k_cloud_sync_active')) {
+      // Abort the request as "Forbidden Local Only"
+      const controller = new AbortController();
+      config.signal = controller.signal;
+      controller.abort("Zenith Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.");
+    }
+
     // SEC-006: Authorization header injection from localStorage removed.
     // The backend now relies on HttpOnly cookies (nexus_token) sent via withCredentials: true.
     // This dramatically reduces XSS risk by keeping tokens out of reach of client-side JS.
 
     // FE-004: Attach the CSRF token on mutating requests so the backend CsrfGuard
     // double-submit cookie check can pass for web-channel cookie-based sessions.
-    // Bearer-token requests are already CSRF-immune (CsrfGuard skips them), but
-    // sending the header is harmless and activates protection for any future
-    // cookie-only session paths.
     if (config.method?.toLowerCase() === 'get') {
       const cached = requestCache.get(config.url || '');
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        // Return a custom "thenable" to bypass the actual XHR.
-        // We throw an object that we'll catch in the response interceptor as a 'cache-hit'.
         config.adapter = () =>
           Promise.resolve({
             data: cached.data,
@@ -140,7 +158,6 @@ api.interceptors.response.use(
   },
   async (error) => {
     // RES-003: Exponential Backoff for 503 (Server Overload/Warmup)
-    // Retries requests up to 3 times if the server is temporarily unavailable.
     const config = error.config;
     if (error.response?.status === 503 && (!config._retryCount || config._retryCount < 3)) {
       config._retryCount = (config._retryCount || 0) + 1;
@@ -164,17 +181,10 @@ api.interceptors.response.use(
     const originalRequest = error.config || {};
 
     if (error.response?.status === 401) {
-      // Exempt identity-token-only routes from triggering a forced logout.
-      // /auth/tenants and /auth/select-tenant are valid with an identity token;
-      // errors there should NOT be treated as a global session expiry.
       const isLoginRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
       const isIdentityFlowRequest = originalRequest.url?.includes('/auth/tenants') || originalRequest.url?.includes('/auth/select-tenant');
 
-      // SEC-INTERCEPT-01: _retry guard prevents infinite loops.
-      // Any request that has already been retried after a token refresh must not
-      // re-enter the refresh cycle even if it receives another 401.
       if (typeof window !== 'undefined' && !isLoginRequest && !isIdentityFlowRequest && !originalRequest._retry) {
-
         const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
         const isAuthPage = authPages.some(page => window.location.pathname.includes(page));
 
@@ -182,19 +192,13 @@ api.interceptors.response.use(
         const isIdentityScopeError = error.response?.data?.message?.includes("A tenant-scoped token is required");
         const isForbidden = error.response?.status === 403;
 
-        // Start Token Refresh Flow
         if (isTokenExpired && !isAuthPage && !isIdentityScopeError && !isForbidden) {
           if (isRefreshing) {
-            // SEC-INTERCEPT-02: Concurrent refresh storm prevention.
-            // A refresh is already in flight. Queue this request and mark it _retry
-            // so that when the queued promise resolves with the new token and replays
-            // the request, a subsequent 401 does NOT re-enter the refresh cycle.
             return new Promise((resolve, reject) => {
               failedQueue.push({ resolve, reject });
             })
               .then(() => {
                 originalRequest._retry = true;
-                // Cookie will be sent automatically
                 return api(originalRequest);
               })
               .catch(_err => Promise.reject(_err));
@@ -204,17 +208,11 @@ api.interceptors.response.use(
           isRefreshing = true;
 
           return new Promise((resolve, reject) => {
-            // Attempt to refresh token
-            // Note: withCredentials is vital here because we rely on the HttpOnly nexus_refresh cookie.
             axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true })
               .then(({ data }) => {
-                // SEC-006: Backend auto-updates cookies upon successful refresh.
-                // We no longer manually update localStorage with tokens.
                 if (typeof window !== 'undefined' && data.user) {
                   localStorage.setItem('k_user', JSON.stringify(data.user));
                 }
-
-                // SEC-INTERCEPT-04: Reset isRefreshing BEFORE draining the queue.
                 isRefreshing = false;
                 processQueue(null);
                 resolve(api(originalRequest));
@@ -222,19 +220,7 @@ api.interceptors.response.use(
               .catch((refreshError) => {
                 isRefreshing = false;
                 processQueue(refreshError);
-
                 if (typeof window !== 'undefined') {
-                  // AUTH-003: Buffer mutating payloads before evicting
-                  if (MUTATING_METHODS.has(originalRequest.method?.toLowerCase()) && originalRequest.data) {
-                    try {
-                      localStorage.setItem(`k_draft_recovery`, JSON.stringify({
-                        url: originalRequest.url,
-                        method: originalRequest.method,
-                        data: typeof originalRequest.data === 'string' ? JSON.parse(originalRequest.data) : originalRequest.data,
-                        timestamp: Date.now()
-                      }));
-                    } catch { console.error("Draft buffer overflow"); }
-                  }
                   localStorage.removeItem('k_user');
                   window.dispatchEvent(new CustomEvent('session-expired'));
                 }
@@ -242,22 +228,7 @@ api.interceptors.response.use(
               });
           });
         } else if (!isAuthPage && !isIdentityScopeError && !isForbidden) {
-          // Hard 401: It's NOT a token expiry, meaning it's an invalid signature,
-          // revoked token, or tampered token. The user MUST log in again immediately.
           if (typeof window !== 'undefined') {
-            if (MUTATING_METHODS.has(originalRequest.method?.toLowerCase()) && originalRequest.data) {
-              // AUTH-003: Buffer even if it wasn't a refreshable token expiring (e.g. hard 401)
-              try {
-                localStorage.setItem(`k_draft_recovery`, JSON.stringify({
-                  url: originalRequest.url,
-                  method: originalRequest.method,
-                  data: typeof originalRequest.data === 'string' ? JSON.parse(originalRequest.data) : originalRequest.data,
-                  timestamp: Date.now()
-                }));
-              } catch {
-                console.error("Draft buffer overflow: localStorage is full");
-              }
-            }
             localStorage.removeItem('k_user');
             window.dispatchEvent(new CustomEvent('session-expired'));
           }

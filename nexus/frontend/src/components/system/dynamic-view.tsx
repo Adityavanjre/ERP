@@ -44,11 +44,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
         }
     }, [modelName]);
 
-    useEffect(() => {
-        syncNodeData(true);
-        const interval = setInterval(() => syncNodeData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncNodeData]);
+    useEffect(() => {        syncNodeData(true);            }, [syncNodeData]);
 
     const formattedModelName = modelName
         .split('.')

@@ -66,11 +66,7 @@ export default function AuditorDashboard() {
         }
     }, [month, year]);
 
-    useEffect(() => {
-        syncAuditorData(true);
-        const interval = setInterval(() => syncAuditorData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncAuditorData]);
+    useEffect(() => {        syncAuditorData(true);    }, [syncAuditorData]);
 
     const handleLock = async () => {
         try {

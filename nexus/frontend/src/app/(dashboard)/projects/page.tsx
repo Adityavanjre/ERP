@@ -78,11 +78,7 @@ export default function ProjectPage() {
         }
     }, []);
 
-    useEffect(() => {
-        syncProjectData(true);
-        const interval = setInterval(() => syncProjectData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncProjectData]);
+    useEffect(() => {        syncProjectData(true);    }, [syncProjectData]);
 
     const fetchTasks = async (projectId: string) => {
         try {

@@ -65,11 +65,7 @@ export default function RecoveryMemoryDashboard() {
         }
     }, []);
 
-    useEffect(() => {
-        syncRecoveryData(true);
-        const interval = setInterval(() => syncRecoveryData(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncRecoveryData]);
+    useEffect(() => {        syncRecoveryData(true);    }, [syncRecoveryData]);
 
     if (loading) return <div className="p-8 text-zinc-400">Loading Profit Insights...</div>;
     if (!data) return null;

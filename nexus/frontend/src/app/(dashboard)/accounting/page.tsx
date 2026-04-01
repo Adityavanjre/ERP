@@ -180,19 +180,7 @@ export default function AccountingPage() {
         }
     }, [invoicePage, user?.role, user?.isSuperAdmin]);
 
-    useEffect(() => {
-        const draft = localStorage.getItem("invoice_draft");
-        if (draft) {
-            try {
-                const parsed = JSON.parse(draft);
-                if (parsed.items?.length > 0 && parsed.items[0].productId) {
-                    setPendingDraft(parsed);
-                }
-            } catch {
-                // Silently ignore malformed drafts
-            }
-        }
-    }, [showCreateInvoice]);
+    useEffect(() => {        const draft = localStorage.getItem("invoice_draft");        if (draft) {            try {                const parsed = JSON.parse(draft);                if (parsed.items?.length > 0 && parsed.items[0].productId) {                    setPendingDraft(parsed);                }            } catch {                // Silently ignore malformed drafts            }        }    }, [showCreateInvoice]);
 
     const proceedWithCancellation = useCallback((id: string) => {
         showConfirm({
@@ -233,11 +221,7 @@ export default function AccountingPage() {
         });
     }, [invoices, searchQuery]);
 
-    useEffect(() => {
-        syncLedgers();
-        const interval = setInterval(() => syncLedgers(true), 30000);
-        return () => clearInterval(interval);
-    }, [syncLedgers]);
+    useEffect(() => {        syncLedgers();    }, [syncLedgers]);
 
     if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><RefreshCw className="h-8 w-8 animate-spin text-amber-500" /></div>;
 

@@ -134,12 +134,7 @@ export default function CrmPage() {
         }
     }, [custPage]);
 
-    useEffect(() => {
-        syncRelations(true);
-        // CONTINUOUS BACKGROUND SYNC: 30s interval
-        const interval = setInterval(() => syncRelations(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncRelations]);
+    useEffect(() => {        syncRelations(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncRelations]);
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

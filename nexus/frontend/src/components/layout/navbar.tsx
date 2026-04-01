@@ -1,10 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { UserMenu } from "@/components/layout/user-menu";
-import { Search, Command } from "lucide-react";
+import { Search, Command, HardDrive } from "lucide-react";
 import { MobileSidebar } from "./mobile-sidebar";
+import { isDesktopOfflineMode } from "@/lib/desktop-offline";
 
 export const Navbar = () => {
+    const [offlineMode, setOfflineMode] = useState(false);
+
+    useEffect(() => {
+        setOfflineMode(isDesktopOfflineMode());
+    }, []);
+
     return (
         <div className="flex items-center p-4 md:p-6 border-b border-slate-200 bg-white/80 backdrop-blur-xl sticky top-0 z-[60]">
             <MobileSidebar />
@@ -19,6 +27,32 @@ export const Navbar = () => {
                 </div>
             </div>
             <div className="flex items-center gap-4">
+                {offlineMode && (
+                    <div 
+                        onClick={async () => {
+                            if ((window as any).nexusDesktop?.sync?.execute) {
+                                try {
+                                    const result = await (window as any).nexusDesktop.sync.execute();
+                                    if (result.error) {
+                                        alert("Sync failed: " + result.error);
+                                    } else {
+                                        alert(`Sync complete! Pushed: ${result.pushedCount}, Pulled: ${result.pulledCount}, Conflicts: ${result.conflictCount}`);
+                                        if (result.pulledCount > 0) window.location.reload();
+                                    }
+                                } catch (e: any) {
+                                    alert("Sync error: " + e.message);
+                                }
+                            }
+                        }}
+                        className="hidden lg:flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-blue-700 cursor-pointer hover:bg-blue-100 transition-colors"
+                        title="Click to sync offline changes with the server"
+                    >
+                        <HardDrive className="h-3.5 w-3.5" />
+                        <span>Local Workspace</span>
+                        <span className="mx-1 opacity-50">|</span>
+                        <span>Sync Now</span>
+                    </div>
+                )}
                 <UserMenu />
             </div>
         </div>

@@ -63,11 +63,7 @@ export default function WorkOrdersPage() {
         }
     }, []);
 
-    useEffect(() => {
-        syncExecutionQueues(true);
-        const interval = setInterval(() => syncExecutionQueues(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncExecutionQueues]);
+    useEffect(() => {        syncExecutionQueues(true);    }, [syncExecutionQueues]);
 
     const getStatusBadge = (status: string) => {
         switch (status) {

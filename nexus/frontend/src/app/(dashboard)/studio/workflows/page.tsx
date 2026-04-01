@@ -52,11 +52,7 @@ export default function WorkflowBuilder() {
         }
     }, [modelName]);
 
-    useEffect(() => {
-        syncWorkflows(true);
-        const interval = setInterval(() => syncWorkflows(false), 30000);
-        return () => clearInterval(interval);
-    }, [syncWorkflows]);
+    useEffect(() => {        syncWorkflows(true);    }, [syncWorkflows]);
 
     const handleCreateWorkflow = async () => {
         try {
