@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    ignore_paths:
+      - "**/node_modules/**"
+      - "**/dist/**"
+      - "**/out/**"
+      - "**/build/**"
+      - "**.exe"
+      - "**.blockmap"
+      - "nexus/frontend/public/**"
+  path_instructions:
+    - path: "nexus/backend/**"
+      instructions: "Ensure all API endpoints follow REST best practices and have proper error handling."
+    - path: "nexus/frontend/src/**"
+      instructions: "Focus on UI consistency, accessibility, and efficient state management."
+    - path: "nexus/desktop/**"
+      instructions: "Verify offline-first logic and electron-bridge security."
+chat:
+  auto_reply: true
