@@ -61,9 +61,22 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         window.addEventListener('session-expired', handleSessionExpired);
 
         const checkAuth = async () => {
+            const isShell = typeof window !== 'undefined' && Boolean(window.nexusDesktop);
             await hydrateDesktopOfflineSession();
             const token = localStorage.getItem("k_token");
+            
             if (!token) {
+                // In desktop shell, we might have just hydrated or be waiting for the bridge.
+                // If hydration happened but no token is found, THEN redirect.
+                if (isShell) {
+                    // Small delay to ensure localStorage is consistent after hydration
+                    await new Promise(r => setTimeout(r, 100));
+                    const retryToken = localStorage.getItem("k_token");
+                    if (retryToken) {
+                        void checkAuth();
+                        return;
+                    }
+                }
                 router.push("/login");
                 return;
             }

@@ -42,3 +42,14 @@ scripts_backup/
 
 # Added by ggshield
 .cache_ggshield
+
+# Desktop App Build Artifacts
+nexus/desktop/release/
+nexus/desktop/bundled-frontend/
+nexus/desktop/win-unpacked/
+nexus/desktop/*.exe
+nexus/desktop/*.blockmap
+nexus/desktop/dist/
+nexus/desktop/build/
+nexus/desktop/main.js
+nexus/desktop/preload.js

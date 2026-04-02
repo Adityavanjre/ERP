@@ -67,26 +67,15 @@ export default function LoginPage() {
     useEffect(() => {
         const isShell = isDesktopShell();
         setIsDesktopApp(isShell);
+    }, []);
 
-        // Desktop-Offline Zero-Auth: Automatically bypass login and enter local workspace.
-        if (isShell) {
-            const hasCloudSync = localStorage.getItem("k_cloud_sync_active") === "true";
-            const user = localStorage.getItem("k_user");
-            
-            // SESSION-GUARD: Only attempt silent launch once per page load to prevent infinite loops.
-            // This is critical if the dashboard redirects back to login due to an uninitialized bridge.
-            const hasAttemptedLaunch = sessionStorage.getItem("k_silent_launch_attempted") === "true";
-
-            if (!hasCloudSync && !user && !hasAttemptedLaunch) {
-                // Mark as attempted before calling
-                sessionStorage.setItem("k_silent_launch_attempted", "true");
-                handleOfflineOpen();
-            }
-        }
-    }, [handleOfflineOpen]);
-
-    const completeLogin = useCallback((data: AuthResponse) => {
+    const completeLogin = useCallback(async (data: AuthResponse) => {
         localStorage.setItem("k_user", JSON.stringify(data.user))
+        
+        // SESSION-LOCK: Mark this session as cloud-active for the UI and Sync Bridge
+        if (isDesktopApp && !data.isAdminFlow) {
+            localStorage.setItem('k_cloud_sync_active', '1');
+        }
 
         const SAFE_FALLBACK = "/portal/dashboard"
         const returnTo = localStorage.getItem("return_to")
@@ -95,6 +84,26 @@ export default function LoginPage() {
         if (data.user?.isSuperAdmin) {
             window.location.href = "/portal/admin/monitoring";
             return;
+        }
+        
+        // Push token and sync immediately for Desktop app
+        if (isDesktopApp && (window as any).nexusDesktop) {
+            try {
+                setError("");
+                // Give Electron a moment to process the flag before token propagation
+                await new Promise(r => setTimeout(r, 100));
+                await (window as any).nexusDesktop.auth.setToken(data.accessToken);
+                // PHASE 1: MICRO-SYNC Bootstrap (UI Layout, Permissions, Sidebar)
+                // This makes the first load instant and hydrates the shell.
+                await (window as any).nexusDesktop.sync.bootstrap();
+                
+                // PHASE 2: FULL-SYNC Data Restoration (Products, Customers, etc.)
+                // We fire this and DO NOT await it to keep the UI responsive,
+                // allowing logs to populate in the background.
+                (window as any).nexusDesktop.sync.execute().catch(console.error);
+            } catch (err: any) {
+                console.error("Data restoration failed:", err);
+            }
         }
 
         const safeRedirect = (raw: string | null): string => {
@@ -112,10 +121,11 @@ export default function LoginPage() {
         }
 
         window.location.href = safeRedirect(returnTo)
-    }, []);
+    }, [isDesktopApp]);
 
     const handleLogin = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
+
         setLoading(true)
         setError("")
 
@@ -130,8 +140,22 @@ export default function LoginPage() {
                     return;
                 }
 
-                const endpoint = isAdmin ? "auth/login/admin" : "auth/login/web";
-                const res = await api.post(endpoint, { email: finalEmail, password: finalPassword })
+                let res;
+                if (isDesktopApp) {
+                    // SOVEREIGN-BRIDGE: Use the main process to bypass browser CORS/Security
+                    const desktopRes = await (window as any).nexusDesktop.auth.login({
+                        email: finalEmail,
+                        password: finalPassword,
+                        isAdmin
+                    });
+                    if (desktopRes.error) {
+                        throw desktopRes;
+                    }
+                    res = desktopRes;
+                } else {
+                    const endpoint = isAdmin ? "auth/login/admin" : "auth/login/web";
+                    res = await api.post(endpoint, { email: finalEmail, password: finalPassword });
+                }
 
                 if (res.data.requiresMfa) {
                     setTempToken(res.data.tempToken);
@@ -140,27 +164,48 @@ export default function LoginPage() {
                     return;
                 }
 
-                completeLogin(res.data as AuthResponse);
+                await completeLogin(res.data as AuthResponse);
             } else {
                 // MFA Step
-                const res = await api.post("auth/mfa/verify-login", {
-                    tempToken,
-                    totpCode: mfaCode
-                });
-                completeLogin(res.data as AuthResponse);
+                let res;
+                if (isDesktopApp) {
+                    const desktopRes = await (window as any).nexusDesktop.auth.verifyMfa({
+                        tempToken,
+                        totpCode: mfaCode
+                    });
+                    if (desktopRes.error) {
+                        throw desktopRes;
+                    }
+                    res = desktopRes;
+                } else {
+                    res = await api.post("auth/mfa/verify-login", {
+                        tempToken,
+                        totpCode: mfaCode
+                    });
+                }
+                await completeLogin(res.data as AuthResponse);
             }
-        } catch (error: unknown) {
-            const err = error as { response?: { data?: { message?: string } } };
-            console.error(err);
-            if (!err.response) {
-                setError("Network Error: Unable to reach the server.");
+        } catch (error: any) {
+            console.error("[AUTH ERROR]", error);
+            
+            if (isDesktopApp) {
+                if (error.code === 'ECONNREFUSED' || error.status === 503 || error.status === 504) {
+                    setError("Klypso Cloud is waking up. Please wait 30 seconds and try again.");
+                } else {
+                    setError(error.message || "Authentication Failed. Check your internet connection.");
+                }
             } else {
-                setError(err.response?.data?.message || "Authentication Failed");
+                const err = error as { response?: { data?: { message?: string }, status?: number } };
+                if (!err.response || err.response.status === 503 || err.response.status === 504) {
+                    setError("Network Error: Unable to reach the server.");
+                } else {
+                    setError(err.response?.data?.message || "Authentication Failed");
+                }
             }
         } finally {
             setLoading(false)
         }
-    }, [step, email, password, isAdmin, tempToken, mfaCode, completeLogin]);
+    }, [step, email, password, isAdmin, tempToken, mfaCode, completeLogin, isDesktopApp, handleOfflineOpen]);
 
     const handleGoogleLogin = useCallback(async () => {
         setLoading(true);
@@ -182,7 +227,7 @@ export default function LoginPage() {
                 return;
             }
 
-            completeLogin(res.data as AuthResponse);
+            await completeLogin(res.data as AuthResponse);
         } catch (error: unknown) {
             const err = error as { response?: { data?: { message?: string } } };
             setError(err.response?.data?.message || "Google Authentication Failed");
@@ -208,7 +253,7 @@ export default function LoginPage() {
         <div className="flex items-center justify-center min-h-screen bg-slate-50 selection:bg-blue-500/10">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent)] pointer-events-none" />
 
-            <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-10 rounded-[2.5rem] p-4">
+            <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-50 rounded-[2.5rem] p-4">
                 <form onSubmit={handleLogin}>
                     <CardHeader className="space-y-1 pb-8">
                         <div className="flex justify-center mb-6">
@@ -238,31 +283,6 @@ export default function LoginPage() {
 
                         {step === "identity" ? (
                             <>
-                                {isDesktopApp && !isAdmin && (
-                                    <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
-                                        <div className="flex items-start gap-3">
-                                            <div className="mt-0.5 rounded-xl bg-white p-2 text-blue-600 shadow-sm">
-                                                <HardDrive size={16} />
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <p className="text-xs font-black uppercase tracking-widest text-blue-700">Desktop Offline Mode</p>
-                                                    <p className="mt-1 text-sm text-slate-600">
-                                                        This device can run locally without the website. Cloud login is only needed later for sync and team workspace sharing.
-                                                    </p>
-                                                </div>
-                                                <Button
-                                                    type="button"
-                                                    onClick={handleOfflineOpen}
-                                                    disabled={offlineOpening || loading}
-                                                    className="bg-slate-900 hover:bg-slate-950 text-white font-black h-11 rounded-xl uppercase tracking-widest text-xs"
-                                                >
-                                                    {offlineOpening ? "Opening Workspace..." : "Continue Offline On This Device"}
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
 
                                 <div className="space-y-2">
                                     <Label htmlFor="email" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest ml-1">Email</Label>
@@ -270,6 +290,7 @@ export default function LoginPage() {
                                         id="email"
                                         type="email"
                                         name="email"
+                                        autoFocus
                                         autoComplete="username"
                                         placeholder="name@company.com"
                                         className="bg-slate-50 border-slate-200 text-slate-900 h-12 rounded-xl font-medium px-4"
@@ -322,9 +343,24 @@ export default function LoginPage() {
                         )}
                     </CardContent>
                     <CardFooter className="flex flex-col gap-4 pb-8">
-                        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl uppercase tracking-widest text-xs" disabled={loading}>
-                            {loading ? <Loader2 className="animate-spin" /> : (step === "identity" ? (isDesktopApp ? "Cloud Sign In" : "Sign In") : "Unlock Identity")}
+                        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl uppercase tracking-widest text-xs" disabled={loading || offlineOpening}>
+                            {loading || offlineOpening ? <Loader2 className="animate-spin" /> : (step === "identity" ? "Sign In" : "Unlock Identity")}
                         </Button>
+                        
+                        {isDesktopApp && !isAdmin && (
+                            <Button 
+                                type="button" 
+                                onClick={handleOfflineOpen} 
+                                variant="secondary" 
+                                className="w-full h-12 rounded-xl font-black bg-slate-900 text-white hover:bg-slate-800 uppercase tracking-widest text-xs"
+                                disabled={loading || offlineOpening}
+                            >
+                                {offlineOpening ? <Loader2 className="animate-spin" /> : <>
+                                    <HardDrive className="mr-2 h-4 w-4" /> Open Local Workspace
+                                </>}
+                            </Button>
+                        )}
+                        
                         <Button type="button" onClick={handleGoogleLogin} variant="outline" className="w-full h-12 rounded-xl font-bold border-slate-200">Sign in with Google</Button>
                         <div className="text-[10px] text-center text-slate-400 font-bold uppercase">
                             New here? <Link href="/register" className="text-blue-600">Create an account</Link>

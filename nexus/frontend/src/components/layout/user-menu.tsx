@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -16,6 +15,8 @@ export const UserMenu = () => {
     const router = useRouter();
     const [user, setUser] = useState<UserData | null>(null);
 
+    const [cloudSyncActive, setCloudSyncActive] = useState(false);
+
     useEffect(() => {
         const userStr = localStorage.getItem("k_user");
         if (userStr) {
@@ -26,6 +27,7 @@ export const UserMenu = () => {
                 console.error("Failed to parse user data from localStorage", e);
             }
         }
+        setCloudSyncActive(localStorage.getItem("k_cloud_sync_active") === "1");
     }, []);
 
     const handleLogout = useCallback(async () => {
@@ -45,14 +47,19 @@ export const UserMenu = () => {
     }, [router]);
 
     return (
-        <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 p-1.5 pl-4 rounded-2xl shadow-sm">
-            <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0" />
-                <span className="truncate max-w-[80px] sm:max-w-[200px]">
-                    {user?.fullName || "Operator"}
-                </span>
+        <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 p-1.5 pl-4 rounded-2xl shadow-sm relative group">
+            <div className="flex flex-col items-start pr-2">
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-0.5">
+                    {cloudSyncActive ? "Cloud Session" : "Local Workspace"}
+                </div>
+                <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                    <div className={`h-2 w-2 rounded-full ${cloudSyncActive ? "bg-emerald-500 animate-pulse" : "bg-amber-400"} shadow-sm shrink-0`} />
+                    <span className="truncate max-w-[80px] sm:max-w-[200px]">
+                        {user?.fullName || "Operator"}
+                    </span>
+                </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all">
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border-l border-slate-200 pl-4 ml-2">
                 <LogOut className="h-4 w-4" />
             </Button>
         </div>

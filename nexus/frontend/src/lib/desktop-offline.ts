@@ -330,6 +330,7 @@ const DEFAULT_ENABLED_MODULES = [
   "inventory",
   "sales",
   "purchases",
+  "manufacturing",
 ];
 
 const MARKETPLACE_APPS = [
@@ -996,10 +997,12 @@ export async function hydrateDesktopOfflineSession(): Promise<boolean> {
     state.workspace.name !== "Local Workspace"
   );
 
-  // If we already have a session in the bridge, use it
-  const persisted = bridge?.session?.get ? await bridge.session.get() : null;
-  if (persisted && (persisted as DesktopOfflineSession).mode === "offline") {
-    persistBrowserSession(persisted as DesktopOfflineSession, isOnboarded);
+  // [FIX-IDENTITY-01] Global Identity Lock: If we already have a real user session (Cloud or Local),
+  // do NOT overwrite it with a guest account. This prevents "Local Administrator" from popping up
+  // after a successful cloud login.
+  const hasUser = Boolean(localStorage.getItem('k_user') || localStorage.getItem('k_token'));
+  if (hasUser) {
+    console.log('[SHELL] Real Identity detected. Bypassing Guest Fallback.');
     return true;
   }
 
@@ -1179,7 +1182,21 @@ function profileFromState(state: DesktopLocalState) {
 }
 
 export function shouldHandleDesktopOfflineRequest(config: InternalAxiosRequestConfig): boolean {
-  return isDesktopOfflineMode() && Boolean(config.url);
+  if (!isDesktopOfflineMode() || !config.url) return false;
+  
+  // Do NOT intercept authentication, registration, or tenant selection
+  // These must always be handled by the cloud backend to enable sync.
+  const url = config.url.toLowerCase();
+  if (url.includes('auth/login') || 
+      url.includes('auth/register') || 
+      url.includes('auth/refresh') || 
+      url.includes('auth/onboarding') ||
+      url.includes('auth/tenants') ||
+      url.includes('auth/select-tenant')) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function handleDesktopOfflineRequest(config: InternalAxiosRequestConfig): Promise<AxiosResponse> {
@@ -2109,5 +2126,11 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, wo, 201);
   }
 
-  return buildOfflineError(config, "This industry module is initialized but has no local data yet.");
+  // Fallback for industrial modules that are initialized but have no local data yet.
+  // Instead of erroring, we allow GET requests to return empty arrays so the UI can load and then sync.
+  if (method === "get") {
+    return buildResponse(config, []);
+  }
+
+  return buildOfflineError(config, "This industry module is initialized but has no local data yet. Please click 'Sync' to pull your cloud data.");
 }
