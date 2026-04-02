@@ -16,6 +16,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('sync')
+@Module('sync')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class SyncController {
   constructor(private readonly syncService: SyncService) {}
