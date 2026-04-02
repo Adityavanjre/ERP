@@ -40,7 +40,7 @@ export class ModuleGuard implements CanActivate {
     // Core modules (auth, system, health) are always accessible with a valid token.
     // Do NOT gate these on channel presence — identity tokens for auth/tenants
     // must never be blocked by a missing channel field.
-    const CORE_MODULES = ['auth', 'system', 'health'];
+    const CORE_MODULES = ['auth', 'system', 'health', 'sync'];
     const isCoreModule = CORE_MODULES.includes(moduleName || '');
 
     if (isCoreModule) {

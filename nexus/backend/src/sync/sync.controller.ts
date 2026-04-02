@@ -8,6 +8,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
 
 @Controller('sync')
+@Module('sync')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 @Module('sync')
 export class SyncController {
