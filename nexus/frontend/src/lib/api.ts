@@ -160,6 +160,14 @@ api.interceptors.response.use(
       }
     }
 
+    // DESKTOP-SYNC BRIDGE: Automatically trap any accessToken from JSON responses (login, switch-tenant, refresh) 
+    // and sync it to the Desktop Shell's native sync engine. This ensures the background sync uses the correct tenant-scoped token.
+    if (response.data && typeof response.data === 'object' && response.data.accessToken) {
+      if (typeof window !== 'undefined' && (window as any).klypso?.setToken) {
+        (window as any).klypso.setToken(response.data.accessToken).catch(console.error);
+      }
+    }
+
     // Cache successful GET requests
     if (response.config.method?.toLowerCase() === 'get' && response.config.url) {
       requestCache.set(response.config.url, {
