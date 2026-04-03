@@ -196,7 +196,7 @@ export default function DashboardPage() {
         }
     }, []);
 
-    useEffect(() => {        fetchData(true);    }, [fetchData]);
+    useEffect(() => { fetchData(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const term = useMemo<Record<string, string>>(
         () => industryConfig?.terminology ?? {},
@@ -494,3 +494,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+
