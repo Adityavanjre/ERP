@@ -50,7 +50,6 @@ export class AuthController {
   ) {}
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Public()
   @Post('login/web')
   async loginWeb(
@@ -71,7 +70,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+
   @Public()
   @Post('login/mobile')
   async loginMobile(@Req() req: ExpressRequest, @Body() loginDto: LoginDto) {
@@ -103,7 +102,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+
   @Public()
   @Post('google-login/web')
   async googleLoginWeb(
@@ -119,7 +118,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+
   @Public()
   @Post('google-login/mobile')
   async googleLoginMobile(@Body() googleLoginDto: GoogleLoginDto) {
@@ -232,7 +231,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+
   @Public()
   @Post('register')
   async register(
@@ -281,7 +280,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+
   @Public()
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
@@ -289,7 +288,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+
   @Public()
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
@@ -334,7 +333,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+
   @Public()
   @Post('mfa/verify-login')
   async verifyMfaLogin(
@@ -454,3 +453,4 @@ export class AuthController {
     });
   }
 }
+
