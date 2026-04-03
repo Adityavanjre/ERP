@@ -238,6 +238,8 @@ async function bootstrap() {
     /\.klypso\.in$/, // Trust all klypso.in subdomains
     'http://localhost:3000',
     'http://localhost:5173', // Vite dev server
+    /^http:\/\/localhost:\d+$/, // Desktop app dynamic ports
+    /^http:\/\/127\.0\.0\.1:\d+$/, // Desktop app dynamic ports
   ];
 
   // BUG-FIX: Previously only KLYPSO_FRONTEND_URL was added.
