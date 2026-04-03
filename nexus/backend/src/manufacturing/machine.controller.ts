@@ -38,7 +38,14 @@ export class MachineController {
   }
 
   @Get()
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.Storekeeper, Role.Accountant, Role.CA)
+  @Roles(
+    Role.Owner,
+    Role.Manager,
+    Role.Biller,
+    Role.Storekeeper,
+    Role.Accountant,
+    Role.CA,
+  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findAll(@Req() req: any) {
     return this.machineService.getMachines(req.user.tenantId);
@@ -52,11 +59,7 @@ export class MachineController {
     @Param('id') id: string,
     @Body() data: UpdateMachineDto,
   ) {
-    return this.machineService.updateMachine(
-      req.user.tenantId,
-      id,
-      data,
-    );
+    return this.machineService.updateMachine(req.user.tenantId, id, data);
   }
 
   @Patch(':id/status')

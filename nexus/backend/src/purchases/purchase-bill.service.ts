@@ -18,22 +18,25 @@ export class PurchaseBillService {
     private readonly traceService: TraceService,
   ) {}
 
-  async create(tenantId: string, data: {
-    supplierId: string;
-    billNumber: string;
-    billDate: string;
-    dueDate?: string;
-    purchaseOrderId?: string;
-    documentUrl?: string;
-    notes?: string;
-    items: Array<{
-      productId: string;
-      quantity: number;
-      unitPrice: number;
-      gstRate?: number;
-      hsnCode?: string;
-    }>;
-  }) {
+  async create(
+    tenantId: string,
+    data: {
+      supplierId: string;
+      billNumber: string;
+      billDate: string;
+      dueDate?: string;
+      purchaseOrderId?: string;
+      documentUrl?: string;
+      notes?: string;
+      items: Array<{
+        productId: string;
+        quantity: number;
+        unitPrice: number;
+        gstRate?: number;
+        hsnCode?: string;
+      }>;
+    },
+  ) {
     return this.prisma.$transaction(async (tx) => {
       await this.ledger.checkPeriodLock(tenantId, data.billDate, tx);
 
@@ -236,7 +239,11 @@ export class PurchaseBillService {
         where,
         include: {
           supplier: { select: { id: true, name: true, gstin: true } },
-          items: { include: { product: { select: { id: true, name: true, sku: true } } } },
+          items: {
+            include: {
+              product: { select: { id: true, name: true, sku: true } },
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -245,17 +252,27 @@ export class PurchaseBillService {
       (this.prisma as any).purchaseBill.count({ where }),
     ]);
 
-    return { data: bills, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return {
+      data: bills,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(tenantId: string, id: string) {
     const bill = await (this.prisma as any).purchaseBill.findFirst({
       where: { id, tenantId },
       include: {
-        supplier: { select: { id: true, name: true, gstin: true, state: true } },
+        supplier: {
+          select: { id: true, name: true, gstin: true, state: true },
+        },
         items: {
           include: {
-            product: { select: { id: true, name: true, sku: true, hsnCode: true } },
+            product: {
+              select: { id: true, name: true, sku: true, hsnCode: true },
+            },
           },
         },
         journalEntry: {

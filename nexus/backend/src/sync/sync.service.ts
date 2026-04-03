@@ -46,19 +46,26 @@ export class SyncService {
     return results;
   }
 
-  private async applyChange(tenantId: string, change: PushChange): Promise<PushResult> {
+  private async applyChange(
+    tenantId: string,
+    change: PushChange,
+  ): Promise<PushResult> {
     const { table, id, operation, data, clientTimestamp } = change;
     const model = this.TABLE_MAP[table];
-    if (!model) return { id, status: 'error', error: `Unknown table: ${table}` };
+    if (!model)
+      return { id, status: 'error', error: `Unknown table: ${table}` };
 
     const prismaModel = (this.prisma as any)[model];
-    if (!prismaModel) return { id, status: 'error', error: `Model not found: ${model}` };
+    if (!prismaModel)
+      return { id, status: 'error', error: `Model not found: ${model}` };
 
     if (operation === 'INSERT' || operation === 'UPDATE') {
       const existing = await prismaModel.findFirst({ where: { id, tenantId } });
 
       if (existing) {
-        const serverModified = new Date(existing.updatedAt || existing.createdAt);
+        const serverModified = new Date(
+          existing.updatedAt || existing.createdAt,
+        );
         const clientModified = new Date(clientTimestamp);
 
         if (clientModified < serverModified) {
@@ -101,7 +108,7 @@ export class SyncService {
   async pull(
     tenantId: string,
     since: string,
-    tables: string[]
+    tables: string[],
   ): Promise<Record<string, Record<string, unknown>[]>> {
     const result: Record<string, Record<string, unknown>[]> = {};
     const sinceDate = new Date(since);
@@ -150,7 +157,7 @@ export class SyncService {
       metadata?: Record<string, unknown>;
       sessionId?: string;
       platform?: string;
-    }
+    },
   ): Promise<void> {
     try {
       await this.prisma.billingEvent.create({
@@ -172,7 +179,10 @@ export class SyncService {
     }
   }
 
-  private prepareCreateData(data: Record<string, unknown>, tenantId: string): Record<string, unknown> {
+  private prepareCreateData(
+    data: Record<string, unknown>,
+    tenantId: string,
+  ): Record<string, unknown> {
     const result: Record<string, unknown> = { tenantId };
     for (const [key, value] of Object.entries(data)) {
       if (key.startsWith('_')) continue;
@@ -182,7 +192,10 @@ export class SyncService {
     return result;
   }
 
-  private prepareUpdateData(data: Record<string, unknown>, tenantId: string): Record<string, unknown> {
+  private prepareUpdateData(
+    data: Record<string, unknown>,
+    tenantId: string,
+  ): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
       if (key.startsWith('_')) continue;

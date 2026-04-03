@@ -28,7 +28,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
     const theme = industryThemes[slug.toLowerCase()];
-    if (!theme) return { title: "Nexus ERP" };
+    if (!theme) return { title: "Klypso ERP" };
 
     return {
         title: theme.title,
@@ -72,7 +72,7 @@ export default async function IndustryLandingPage({ params }: Props) {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": `Nexus ERP for ${theme.name}`,
+        "name": `Klypso ERP for ${theme.name}`,
         "description": theme.desc,
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",
@@ -104,7 +104,7 @@ export default async function IndustryLandingPage({ params }: Props) {
             {
                 "@type": "ListItem",
                 "position": 1,
-                "name": "Nexus ERP",
+                "name": "Klypso ERP",
                 "item": "https://klypso.in/portal"
             },
             {
@@ -128,7 +128,7 @@ export default async function IndustryLandingPage({ params }: Props) {
         "serviceType": "Enterprise Resource Planning",
         "provider": {
             "@type": "Organization",
-            "name": "Nexus ERP India"
+            "name": "Klypso ERP India"
         },
         "areaServed": "IN",
         "description": theme.desc,
@@ -174,14 +174,14 @@ export default async function IndustryLandingPage({ params }: Props) {
     const sourceCodeJsonLd = {
         "@context": "https://schema.org",
         "@type": "SoftwareSourceCode",
-        "name": "Nexus ERP Core Engine",
+        "name": "Klypso ERP Core Engine",
         "description": "High-performance business OS built with Next.js, Prisma, and PostgreSQL.",
         "programmingLanguage": "TypeScript",
         "runtimePlatform": "Node.js",
         "codeRepository": "https://github.com/adityavanjre/ERP",
         "author": {
             "@type": "Organization",
-            "name": "Nexus Ecosystems"
+            "name": "Klypso Ecosystems"
         }
     };
 
@@ -204,7 +204,7 @@ export default async function IndustryLandingPage({ params }: Props) {
                     <nav className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
                         <Link href="/" className="flex items-center gap-1 hover:text-blue-600 transition-colors">
                             <Home className="h-4 w-4" />
-                            <span>Nexus</span>
+                            <span>Klypso</span>
                         </Link>
                         <span className="text-slate-300">/</span>
                         <span className="text-slate-300">Solutions</span>
@@ -226,7 +226,7 @@ export default async function IndustryLandingPage({ params }: Props) {
                     </div>
 
                     <h1 className="industry-title text-4xl md:text-7xl font-black tracking-tight text-slate-900 leading-[1.1]">
-                        Nexus ERP for <br />
+                        Klypso ERP for <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">{theme.name}</span>
                     </h1>
 

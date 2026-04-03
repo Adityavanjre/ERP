@@ -51,7 +51,7 @@ describe('PurchasesService (Supplier & PO)', () => {
     checkPeriodLock: jest.fn(),
   };
   const mockTds = { calculateTds: jest.fn() };
-  const mockTrace = { getCorrelationId: jest.fn().returns('trace-id') };
+  const mockTrace = { getCorrelationId: jest.fn().mockReturnValue('trace-id') };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -72,7 +72,7 @@ describe('PurchasesService (Supplier & PO)', () => {
 
   describe('GSTIN Validation', () => {
     it('should accept valid GSTIN', () => {
-      expect(validateGSTIN('29ABCDE1234F1Z5')).toBe(true);
+      expect(validateGSTIN('29ABCDE1234F1ZW')).toBe(true);
     });
 
     it('should reject GSTIN with wrong length', () => {

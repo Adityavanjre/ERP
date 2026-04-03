@@ -58,7 +58,11 @@ export class PurchasesController {
   @Patch('suppliers/:id')
   @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
-  updateSupplier(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateSupplierDto) {
+  updateSupplier(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: UpdateSupplierDto,
+  ) {
     return this.purchasesService.updateSupplier(req.user.tenantId, id, dto);
   }
 

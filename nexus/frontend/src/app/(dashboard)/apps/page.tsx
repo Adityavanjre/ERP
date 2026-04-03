@@ -92,7 +92,7 @@ export default function AppsMarketplace() {
                     <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
                         <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
                             <Monitor className="h-5 w-5 text-blue-600" />
-                            Nexus Desktop
+                            Klypso Desktop
                         </CardTitle>
                         <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Windows Application • Build 1.0.0</CardDescription>
                     </CardHeader>
@@ -106,8 +106,8 @@ export default function AppsMarketplace() {
                                 <Button
                                     className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-blue-500/20"
                                     onClick={() => {
-                                        toast.success("Downloading Nexus Desktop...");
-                                        window.open("/portal/nexus-desktop-setup.exe", "_blank");
+                                        toast.success("Downloading Klypso Desktop...");
+                                        window.open("/portal/Klypso-ERP-setup.exe", "_blank");
                                     }}
                                 >
                                     <HardDrive className="mr-2 h-5 w-5" /> Download EXE
@@ -134,7 +134,7 @@ export default function AppsMarketplace() {
                     <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-6">
                         <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
                             <Smartphone className="h-5 w-5 text-emerald-600" />
-                            Nexus Mobile Gateway
+                            Klypso Mobile Gateway
                         </CardTitle>
                         <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Android Application • Build 1.0.0</CardDescription>
                     </CardHeader>

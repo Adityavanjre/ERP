@@ -251,7 +251,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   _conflict TEXT
 );
 
--- Machines
+// Machines
 CREATE TABLE IF NOT EXISTS machines (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL,
@@ -263,6 +263,158 @@ CREATE TABLE IF NOT EXISTS machines (
   is_deleted INTEGER DEFAULT 0,
   created_at TEXT,
   updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Manufacturing BOM
+CREATE TABLE IF NOT EXISTS manufacturing_bom (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  components TEXT, -- JSON string
+  overhead_rate REAL DEFAULT 0,
+  is_overhead_fixed INTEGER DEFAULT 0,
+  quantity REAL DEFAULT 1,
+  is_deleted INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Manufacturing Orders
+CREATE TABLE IF NOT EXISTS manufacturing_orders (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  bom_id TEXT NOT NULL,
+  quantity REAL NOT NULL,
+  produced_quantity REAL DEFAULT 0,
+  scrap_quantity REAL DEFAULT 0,
+  status TEXT DEFAULT 'Draft',
+  start_date TEXT,
+  end_date TEXT,
+  machine_id TEXT,
+  machine_time_hours REAL DEFAULT 0,
+  operator_name TEXT,
+  warehouse_id TEXT,
+  is_deleted INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- CRM Opportunities
+CREATE TABLE IF NOT EXISTS crm_opportunities (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  customer_id TEXT,
+  title TEXT NOT NULL,
+  value REAL DEFAULT 0,
+  stage TEXT DEFAULT 'Discovery',
+  probability REAL DEFAULT 0,
+  expected_close_date TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Employees
+CREATE TABLE IF NOT EXISTS employees (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT,
+  department_id TEXT,
+  designation TEXT,
+  joining_date TEXT,
+  salary REAL DEFAULT 0,
+  status TEXT DEFAULT 'Active',
+  is_deleted INTEGER DEFAULT 0,
+  created_at TEXT,
+  updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Leaves
+CREATE TABLE IF NOT EXISTS leaves (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  employee_id TEXT NOT NULL,
+  leave_type TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  end_date TEXT NOT NULL,
+  status TEXT DEFAULT 'Pending',
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Healthcare Patients
+CREATE TABLE IF NOT EXISTS healthcare_patients (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT,
+  gender TEXT,
+  phone TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Logistics Shipments
+CREATE TABLE IF NOT EXISTS logistics_shipments (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  consignment_number TEXT NOT NULL,
+  origin TEXT,
+  destination TEXT,
+  status TEXT DEFAULT 'Scheduled',
+  estimated_delivery TEXT,
+  created_at TEXT,
+  updated_at TEXT,
+  _sync_version INTEGER DEFAULT 1,
+  _dirty INTEGER DEFAULT 0,
+  _deleted INTEGER DEFAULT 0,
+  _last_modified TEXT,
+  _conflict TEXT
+);
+
+-- Loans
+CREATE TABLE IF NOT EXISTS loans (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  loan_amount REAL DEFAULT 0,
+  interest_rate REAL DEFAULT 0,
+  tenure_months INTEGER DEFAULT 12,
+  status TEXT DEFAULT 'Draft',
   _sync_version INTEGER DEFAULT 1,
   _dirty INTEGER DEFAULT 0,
   _deleted INTEGER DEFAULT 0,

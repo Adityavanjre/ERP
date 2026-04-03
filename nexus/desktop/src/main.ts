@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain, net as electronNet, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, net as electronNet, shell, dialog, session } from 'electron';
+import axios from 'axios';
 import * as path from 'path';
 import { initDatabase, getDb, createDbAdapter } from './db/database';
 import { DesktopSyncEngine } from './sync/desktop-sync-engine';
@@ -45,7 +46,7 @@ async function createWindow() {
     height: 900,
     minWidth: 1024,
     minHeight: 700,
-    title: 'Klypso Nexus ERP',
+    title: 'Klypso ERP',
     icon: resolveWindowIconPath(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -63,14 +64,30 @@ async function createWindow() {
     return { action: 'deny' };
   });
 
+  mainWindow.webContents.on('will-prevent-unload', (event) => {
+    const choice = dialog.showMessageBoxSync(mainWindow!, {
+      type: 'question',
+      buttons: ['Leave and Lose Changes', 'Stay'],
+      title: 'Unsaved Changes',
+      message: 'There are unsaved forms on your screen. Are you sure you want to close Klypso? Changes will be lost.',
+      defaultId: 0,
+      cancelId: 1
+    });
+    if (choice === 0) {
+      event.preventDefault(); // Prevents the block, allowing the window to close
+    }
+  });
+
   mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
-    if (new URL(navigationUrl).origin !== allowedOrigin) {
+    const url = new URL(navigationUrl);
+    if (url.origin !== allowedOrigin) {
       event.preventDefault();
       void shell.openExternal(navigationUrl);
     }
   });
 
-  await mainWindow.loadURL(`${frontendBaseUrl}/login`);
+  const initialUrl = await getInitialUrl(frontendBaseUrl);
+  await mainWindow.loadURL(initialUrl);
 
   configureRenderer(mainWindow, [allowedOrigin]);
 
@@ -85,23 +102,12 @@ async function createWindow() {
 
 ipcMain.handle('sync:execute', async () => {
   if (!syncEngine) return { error: 'Sync engine not initialized' };
-  analytics?.trackEvent('sync', 'manual_sync_start', {});
-  const result = await syncEngine.sync();
-  analytics?.trackEvent('sync', 'manual_sync_complete', {
-    phase: result.phase,
-    pushed: result.pushedCount,
-    pulled: result.pulledCount,
-    conflicts: result.conflictCount,
-  });
+  return syncEngine.sync();
+});
 
-  // Pull new data from SQLite back into the UI state
-  if (localDataStore && result.pulledCount && result.pulledCount > 0) {
-    const currentState = localDataStore.get();
-    const updatedState = await JsonSqliteBridge.syncSqliteToJson(currentState);
-    localDataStore.set(updatedState);
-  }
-
-  return result;
+ipcMain.handle('sync:bootstrap', async () => {
+  if (!syncEngine) return { error: 'Sync engine not initialized' };
+  return syncEngine.bootstrapSync();
 });
 
 ipcMain.handle('sync:status', async () => {
@@ -122,11 +128,98 @@ ipcMain.handle('auth:getToken', async () => {
 ipcMain.handle('auth:setToken', async (_event, token) => {
   if (!authStore) return;
   authStore.setToken(token);
+  if (syncEngine && token) {
+    syncEngine.setToken(token);
+  }
 });
 
 ipcMain.handle('auth:clearToken', async () => {
   if (!authStore) return;
   authStore.clearToken();
+});
+
+ipcMain.handle('auth:login', async (_event, credentials) => {
+  const { email, password, isAdmin } = credentials;
+  const endpoint = isAdmin ? 'auth/login/admin' : 'auth/login/web';
+  const url = `https://klypso.in/portal/api/v1/${endpoint}`;
+
+  try {
+    const response = await axios.post(url, { email, password }, {
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true
+    });
+
+    // MASQUERADE-003: Core-Level Cookie Injection
+    // Node.js got the cookies, but the Renderer doesn't know yet.
+    // We manually push these into the Electron session memory.
+    const cookies = response.headers['set-cookie'];
+    if (cookies && mainWindow) {
+      for (const cookieStr of cookies) {
+        const parts = cookieStr.split(';')[0].split('=');
+        const name = parts[0].trim();
+        const value = parts[1].trim();
+        await session.defaultSession.cookies.set({
+          url: 'https://klypso.in',
+          name,
+          value,
+          domain: 'klypso.in',
+          path: '/',
+          secure: true,
+          httpOnly: cookieStr.includes('HttpOnly'),
+          sameSite: 'lax'
+        });
+      }
+    }
+
+    return { data: response.data, status: response.status };
+  } catch (error: any) {
+    console.error('[CORE AUTH ERROR]', error.response?.data || error.message);
+    return { 
+      error: true, 
+      status: error.response?.status, 
+      message: error.response?.data?.message || error.message,
+      code: error.code
+    };
+  }
+});
+
+ipcMain.handle('auth:verifyMfa', async (_event, data) => {
+  const { tempToken, totpCode } = data;
+  const url = `https://klypso.in/portal/api/v1/auth/mfa/verify-login`;
+
+  try {
+    const response = await axios.post(url, { tempToken, totpCode }, {
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true
+    });
+
+    const cookies = response.headers['set-cookie'];
+    if (cookies && mainWindow) {
+      for (const cookieStr of cookies) {
+        const parts = cookieStr.split(';')[0].split('=');
+        const name = parts[0].trim();
+        const value = parts[1].trim();
+        await session.defaultSession.cookies.set({
+          url: 'https://klypso.in',
+          name,
+          value,
+          domain: 'klypso.in',
+          path: '/',
+          secure: true,
+          httpOnly: cookieStr.includes('HttpOnly'),
+          sameSite: 'lax'
+        });
+      }
+    }
+
+    return { data: response.data, status: response.status };
+  } catch (error: any) {
+    return { 
+      error: true, 
+      status: error.response?.status, 
+      message: error.response?.data?.message || error.message 
+    };
+  }
 });
 
 ipcMain.handle('session:get', async () => {
@@ -172,6 +265,7 @@ ipcMain.handle('local-data:set', async (_event, state: LocalDataState) => {
   
   // Push changed JSON arrays down to SQLite so Sync Engine sees them
   await JsonSqliteBridge.syncJsonToSqlite(oldState, nextState);
+  
   return nextState;
 });
 
@@ -240,6 +334,17 @@ async function resolveFrontendBaseUrl(): Promise<string> {
   }
 
   return localFrontendServer.start();
+}
+
+async function getInitialUrl(baseUrl: string): Promise<string> {
+  const session = localSessionStore?.get();
+  // Ensure the base URL ends with /portal if it's the dev server or root-mapped
+  const normalizedBase = baseUrl.endsWith('/portal') ? baseUrl : `${baseUrl}/portal`;
+  
+  if (session) {
+    return `${normalizedBase}/dashboard`;
+  }
+  return `${normalizedBase}/login`;
 }
 
 function resolveWindowIconPath(): string {

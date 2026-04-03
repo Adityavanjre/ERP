@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import NetInfo from '@react-native-community/netinfo';
 
 // API URL
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://nexus.klypso.in';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://klypso.in/portal/api';
 
 // Network Status Interface
 interface NetworkStatus {

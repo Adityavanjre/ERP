@@ -9,7 +9,7 @@ export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Nexus ERP",
+    "name": "Klypso ERP",
     "operatingSystem": "Web",
     "applicationCategory": "BusinessApplication",
     "description": "Advanced ERP for Manufacturing and GST Compliance. Features Tally Prime sync, BOM management, and automated accounting.",
@@ -28,14 +28,14 @@ export default function Home() {
   const businessJsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Nexus ERP India",
+    "name": "Klypso ERP India",
     "image": "https://klypso.in/portal/favicon.svg",
     "@id": "https://klypso.in/portal",
     "url": "https://klypso.in/portal",
     "telephone": "+91-XXXXXXXXXX",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Nexus Tech Center, Sector 62",
+      "streetAddress": "Klypso Tech Center, Sector 62",
       "addressLocality": "Noida",
       "addressRegion": "UP",
       "postalCode": "201301",
@@ -176,7 +176,7 @@ export default function Home() {
                 Designed for Your <span className="text-blue-600">Specific Industry.</span>
               </h2>
               <p className="max-w-[800px] text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed font-medium">
-                Nexus isn&apos;t just a generic ERP. We&apos;ve built industry-specific architectures to handle the unique complexities of your business.
+                Klypso isn&apos;t just a generic ERP. We&apos;ve built industry-specific architectures to handle the unique complexities of your business.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -222,14 +222,14 @@ export default function Home() {
               <div className="flex-1 text-center lg:text-left space-y-8">
                 <div className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm font-bold text-blue-400 shadow-sm">
                   <Smartphone className="mr-2 h-4 w-4" />
-                  Nexus Mobile Gateway
+                  Klypso Mobile Gateway
                 </div>
                 <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-tight">
                   Take the shop floor <br />
                   <span className="text-blue-500">In Your Pocket.</span>
                 </h2>
                 <p className="max-w-[600px] text-slate-400 text-lg font-medium">
-                  The native companion for Nexus ERP. Securely view inventory, track production, and manage sales drafts while on the move.
+                  The native companion for Klypso ERP. Securely view inventory, track production, and manage sales drafts while on the move.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <Link href="/nexus-gateway-v1.apk" target="_blank">
@@ -308,7 +308,7 @@ export default function Home() {
           </div>
           <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest italic">
-              © 2026 Nexus Ecosystems. All Rights Reserved.
+              © 2026 Klypso Ecosystems. All Rights Reserved.
             </p>
           </div>
         </div>

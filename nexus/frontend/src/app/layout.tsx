@@ -8,20 +8,17 @@ import { Suspense } from "react";
 import { PerformanceMonitor } from "@/components/seo/performance-monitor";
 import Script from "next/script";
 
-const geistSans = Inter({
+// Mocking Google Fonts to resolve fetch errors during build in local/restricted environments
+const geistSans = {
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: 'swap',
-});
+};
 
-const geistMono = Roboto_Mono({
+const geistMono = {
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: 'swap',
-});
+};
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://klypso.in/portal'), title: "Nexus ERP | Advanced Business OS for Manufacturing & GST Compliance",
+  metadataBase: new URL('https://klypso.in/portal'), title: "Klypso ERP | Advanced Business OS for Manufacturing & GST Compliance",
   description: "The imperial standard for SME management. Professional ERP with Tally Prime sync, automated GST GSTR-1 compliance, manufacturing BOM/WIP tracking, and double-entry accounting.",
   alternates: {
     canonical: 'https://klypso.in/portal',
@@ -39,8 +36,8 @@ export const metadata: Metadata = {
     "Work Order Management ERP"
   ],
   authors: [{ name: "Klypso Engineering", url: "https://klypso.agency" }],
-  creator: "Nexus Ecosystems",
-  publisher: "Nexus Ecosystems",
+  creator: "Klypso Ecosystems",
+  publisher: "Klypso Ecosystems",
   robots: {
     index: true,
     follow: true,
@@ -53,16 +50,16 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Nexus ERP | The OS for Modern Indian Business",
+    title: "Klypso ERP | The OS for Modern Indian Business",
     description: "Scale your factory or retail business with elite-grade accounting and inventory.",
     url: "https://klypso.in",
-    siteName: "Nexus ERP",
+    siteName: "Klypso ERP",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Nexus ERP Dashboard",
+        alt: "Klypso ERP Dashboard",
       },
     ],
     locale: "en_IN",
@@ -70,7 +67,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nexus ERP | Manufacturing & Accounting Refined",
+    title: "Klypso ERP | Manufacturing & Accounting Refined",
     description: "Built for Tally users, loved by manufacturers. The most powerful ERP for Indian SMEs.",
     creator: "@klypso",
     images: ["/og-image.png"],
@@ -89,8 +86,8 @@ export const viewport: Viewport = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Nexus ERP",
-  "alternateName": "Klypso Nexus",
+  "name": "Klypso ERP",
+  "alternateName": "Klypso",
   "url": "https://klypso.in/portal",
   "logo": "https://klypso.in/portal/favicon.svg",
   "contactPoint": {

@@ -42,3 +42,12 @@ scripts_backup/
 
 # Added by ggshield
 .cache_ggshield
+
+# Desktop Builds
+nexus/desktop/release/
+nexus/desktop/release-main-domain/
+nexus/desktop/builder-effective-config.yaml
+nexus/frontend/public/nexus-desktop-setup.exe
+nexus/frontend/public/nexus-desktop-setup.exe.blockmap
+*.exe
+nul

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Factory, 
@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import axios from "axios";
+import { api } from "@/lib/api";
 
 const INDUSTRIES = [
   {
@@ -81,6 +81,14 @@ export default function OnboardingPage() {
     industry: "",
   });
 
+  useEffect(() => {
+    import("@/lib/desktop-offline").then((m) => {
+      if (m.isDesktopShell()) {
+        m.hydrateDesktopOfflineSession().catch(console.error);
+      }
+    });
+  }, []);
+
   const nextStep = () => {
     if (step === 1 && !formData.companyName) {
       toast.error("Please enter your business name.");
@@ -100,7 +108,7 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       // In Desktop Offline, this is intercepted by desktop-offline.ts
-      await axios.post("/api/v1/auth/onboarding", formData);
+      await api.post("auth/onboarding", formData);
       toast.success("Workspace initialized!");
       
       // Delay slightly for effect
@@ -116,7 +124,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-[#020617] p-6 font-sans">
-      {/* Background Zenith Visuals */}
+      {/* Background Klypso Visuals */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 blur-[120px] rounded-full delay-1000" />
@@ -140,7 +148,7 @@ export default function OnboardingPage() {
               <Zap className="text-white w-8 h-8 fill-white" />
             </motion.div>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
-              Ignite Your <span className="text-blue-400">Zenith</span>
+              Ignite Your <span className="text-blue-400">Klypso</span>
             </h1>
             <p className="text-slate-400 text-lg max-w-lg">
               {step === 1 
@@ -163,7 +171,7 @@ export default function OnboardingPage() {
                     <Label htmlFor="companyName" className="text-slate-300 ml-1">Business Name</Label>
                     <Input 
                       id="companyName"
-                      placeholder="e.g. Nexus Industrial Systems"
+                      placeholder="e.g. Klypso Industrial Systems"
                       className="h-14 bg-white/5 border-white/10 text-white rounded-xl focus:ring-blue-500/50 outline-none transition-all placeholder:text-slate-600"
                       value={formData.companyName}
                       onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}

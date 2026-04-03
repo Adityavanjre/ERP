@@ -86,7 +86,7 @@ async function runVerification() {
   // --- CRM-04: CSV Import ---
   console.log('\n--- Verifying CRM-04: CSV Import ---');
   const csvData = `firstName,email,gstin`; // Missing state
-  const csvContent = `${csvData}\nValid Name,valid-${Date.now()}@test.com,29ABCDE1234F1Z5`;
+  const csvContent = `${csvData}\nValid Name,valid-${Date.now()}@test.com,29ABCDE1234F1ZW`;
   
   const result = await crm.importCustomers(tenantId, csvContent);
   // Check validation warning logic?

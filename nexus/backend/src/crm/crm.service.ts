@@ -187,7 +187,8 @@ export class CrmService {
                   tenantId,
                   {
                     date: new Date().toISOString(),
-                    description: `Customer OB: ${customerPayload.firstName} ${customerPayload.lastName}`.trim(),
+                    description:
+                      `Customer OB: ${customerPayload.firstName} ${customerPayload.lastName}`.trim(),
                     reference: `OB-CUST-${email?.split('@')[0] || customerId.slice(0, 8)}`,
                     transactions: [
                       {

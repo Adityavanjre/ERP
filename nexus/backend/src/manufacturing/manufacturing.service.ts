@@ -233,7 +233,8 @@ export class ManufacturingService {
   async importBoms(tenantId: string, csvContent: string) {
     // MFG-031 Robust CSV Parser (handles quoted commas)
     const lines = csvContent.trim().split(/\r?\n/);
-    if (lines.length < 2) return { total: 0, imported: 0, failed: 0, errors: [] };
+    if (lines.length < 2)
+      return { total: 0, imported: 0, failed: 0, errors: [] };
 
     const parseLine = (line: string) => {
       const result = [];
@@ -729,9 +730,7 @@ export class ManufacturingService {
       select: { id: true, stock: true },
     });
 
-    const stockMap = new Map(
-      products.map((p) => [p.id, Number(p.stock || 0)]),
-    );
+    const stockMap = new Map(products.map((p) => [p.id, Number(p.stock || 0)]));
 
     for (const req of requirements) {
       const currentStock = stockMap.get(req.productId) || 0;

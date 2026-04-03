@@ -260,7 +260,7 @@ export function TenantSelector() {
                 </Card>
 
                 <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-8">
-                    Secure Enterprise Managed Access • Nexus ERP
+                    Secure Enterprise Managed Access • Klypso ERP
                 </p>
             </div>
         </div>

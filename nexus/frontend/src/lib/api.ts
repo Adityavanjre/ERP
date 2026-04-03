@@ -5,7 +5,11 @@ import { handleDesktopOfflineRequest, shouldHandleDesktopOfflineRequest } from '
 // PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
 // This eliminates CORS delays and masks the internal backend URL.
 const baseURL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
-const API_URL = baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`;
+// DESKTOP-DIRECT: Force cloud backend for desktop shell to match the web browser gateway
+const CLOUD_BACKEND_URL = 'https://klypso.in/portal/api';
+const API_URL = isDesktopShell() 
+  ? `${CLOUD_BACKEND_URL}/v1` 
+  : (baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`);
 
 // PERF-001: Zero-Latency Caching Layer
 // Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
@@ -79,10 +83,20 @@ api.interceptors.request.use(
     // we must ABORT any request that isn't handled by the bridge above.
     // This prevents "cloud leakage" that creates unintended usage on Render and triggers 429s.
     else if (isDesktopShell() && !localStorage.getItem('k_cloud_sync_active')) {
-      // Abort the request as "Forbidden Local Only"
-      const controller = new AbortController();
-      config.signal = controller.signal;
-      controller.abort("Zenith Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.");
+      const isAuthRoute = 
+        config.url?.includes('auth/login') || 
+        config.url?.includes('auth/register') || 
+        config.url?.includes('auth/mfa') || 
+        config.url?.includes('auth/google') ||
+        config.url?.includes('auth/tenants') ||
+        config.url?.includes('auth/select-tenant') ||
+        config.url?.includes('auth/onboarding');
+      if (!isAuthRoute) {
+        // Abort the request as "Forbidden Local Only"
+        const controller = new AbortController();
+        config.signal = controller.signal;
+        controller.abort("Klypso Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.");
+      }
     }
 
     // SEC-006: Authorization header injection from localStorage removed.
@@ -157,14 +171,14 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // RES-003: Exponential Backoff for 503 (Server Overload/Warmup)
-    const config = error.config;
-    if (error.response?.status === 503 && (!config._retryCount || config._retryCount < 3)) {
-      config._retryCount = (config._retryCount || 0) + 1;
-      const delay = Math.pow(2, config._retryCount) * 1000;
-      console.warn(`Resiliency: 503 detected, retrying in ${delay}ms (Attempt ${config._retryCount})`);
-      await new Promise(res => setTimeout(res, delay));
-      return api(config);
+    // RES-003: 503 (Server Overload/Warmup) - No automatic retry per user request
+    if (error.response?.status === 503 || error.response?.status === 502 || error.response?.status === 504) {
+      if (typeof window !== 'undefined') {
+        return Promise.reject({
+          message: 'Klypso Cloud is waking up. Please wait 60 seconds and try again.',
+          isWakeup: true
+        });
+      }
     }
 
     // PERF-001: Trap unhandled offline constraints to gracefully drop to Offline Mode

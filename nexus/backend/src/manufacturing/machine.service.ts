@@ -30,7 +30,7 @@ export class MachineService {
 
   async getMachines(tenantId: string) {
     return this.prisma.machine.findMany({
-      where: { tenantId },
+      where: { tenantId, isDeleted: false },
       orderBy: { name: 'asc' },
     });
   }
@@ -110,7 +110,7 @@ export class MachineService {
       throw new NotFoundException(`Machine ${id} not found`);
     }
 
-    if (machine.workOrders.length > 0) {
+    if ((machine.workOrders?.length ?? 0) > 0) {
       // FREEZE: Has associated data, set to Offline (frozen state)
       await this.prisma.machine.updateMany({
         where: { id, tenantId },
@@ -121,13 +121,24 @@ export class MachineService {
         tenantId,
         action: 'FREEZE',
         resource: 'Machine',
-        details: { id, name: machine.name, reason: 'Has associated work orders' },
+        details: {
+          id,
+          name: machine.name,
+          reason: 'Has associated work orders',
+        },
       });
 
-      return { success: true, action: 'frozen', reason: 'Machine has associated work orders and cannot be deleted' };
+      return {
+        success: true,
+        action: 'frozen',
+        reason: 'Machine has associated work orders and cannot be deleted',
+      };
     } else {
-      // DELETE: No associated data, safe to hard-delete
-      await this.prisma.machine.deleteMany({ where: { id, tenantId } });
+      // SOFT DELETE: Preserve auditability while hiding the machine from active views
+      await this.prisma.machine.updateMany({
+        where: { id, tenantId },
+        data: { isDeleted: true, deletedAt: new Date() },
+      });
 
       await this.audit.log({
         tenantId,

@@ -318,8 +318,14 @@ export class AuthService {
     }
 
     // Fail-safe (SYS-011): Sync SuperAdmin status if config admin logs in via standard flow
-    const configAdminEmail = this.config.get<string>('ADMIN_EMAIL')?.toLowerCase();
-    if (configAdminEmail && user.email.toLowerCase() === configAdminEmail && !user.isSuperAdmin) {
+    const configAdminEmail = this.config
+      .get<string>('ADMIN_EMAIL')
+      ?.toLowerCase();
+    if (
+      configAdminEmail &&
+      user.email.toLowerCase() === configAdminEmail &&
+      !user.isSuperAdmin
+    ) {
       await this.prisma.user.update({
         where: { id: user.id },
         data: { isSuperAdmin: true },
@@ -420,7 +426,9 @@ export class AuthService {
       },
     });
 
-    const configAdminEmail = this.config.get<string>('ADMIN_EMAIL')?.toLowerCase();
+    const configAdminEmail = this.config
+      .get<string>('ADMIN_EMAIL')
+      ?.toLowerCase();
     const isConfigAdmin = configAdminEmail && email === configAdminEmail;
 
     if (!user) {
@@ -545,7 +553,9 @@ export class AuthService {
     const finalUser = user! as any;
 
     // Fail-safe (SYS-011): Sync SuperAdmin status if config admin logs in via social flow
-    const configAdminEmail = this.config.get<string>('ADMIN_EMAIL')?.toLowerCase();
+    const configAdminEmail = this.config
+      .get<string>('ADMIN_EMAIL')
+      ?.toLowerCase();
 
     if (
       configAdminEmail &&

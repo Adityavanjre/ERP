@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ManufacturingService } from './manufacturing.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { LedgerService } from '../accounting/services/ledger.service';
-import { AuditService } from '../system/services/audit.service';
+import { AccountingService } from '../accounting/accounting.service';
+import { TraceService } from '../common/services/trace.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('ManufacturingService (Work Order Numbering)', () => {
@@ -42,14 +43,20 @@ describe('ManufacturingService (Work Order Numbering)', () => {
     $transaction: jest.fn((cb) => cb(mockPrisma)),
   };
 
-  const mockLedger = {
-    round2: jest.fn((v: number) => Math.round(v * 100) / 100),
-    createJournalEntry: jest.fn(),
+  const mockAccounting = {
     checkPeriodLock: jest.fn(),
+    ledger: {
+      checkPeriodLock: jest.fn(),
+      createJournalEntry: jest.fn(),
+    },
   };
 
-  const mockAudit = {
-    log: jest.fn(),
+  const mockTrace = {
+    getCorrelationId: jest.fn().mockReturnValue('trace-id'),
+  };
+
+  const mockInventory = {
+    deductStock: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -59,8 +66,9 @@ describe('ManufacturingService (Work Order Numbering)', () => {
       providers: [
         ManufacturingService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: LedgerService, useValue: mockLedger },
-        { provide: AuditService, useValue: mockAudit },
+        { provide: AccountingService, useValue: mockAccounting },
+        { provide: TraceService, useValue: mockTrace },
+        { provide: InventoryService, useValue: mockInventory },
       ],
     }).compile();
 

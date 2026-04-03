@@ -1,0 +1,77 @@
+{
+  "name": "nexus-desktop",
+  "version": "1.0.0",
+  "description": "Klypso ERP Desktop Application",
+  "author": "Klypso Technologies",
+  "main": "dist/main.js",
+  "scripts": {
+    "build:frontend": "npm --prefix .. run build -w frontend",
+    "bundle:frontend": "node scripts/bundle-frontend.mjs",
+    "compile": "tsc -p tsconfig.json",
+    "postinstall": "electron-builder install-app-deps",
+    "start": "npm run bundle:frontend && npm run compile && electron .",
+    "dev": "npm run bundle:frontend && npm run compile && electron . --dev",
+    "build": "npm run build:frontend && npm run bundle:frontend && npm run compile && electron-builder --win --x64",
+    "build:dir": "npm run build:frontend && npm run bundle:frontend && npm run compile && electron-builder --win --x64 --dir"
+  },
+  "devDependencies": {
+    "@electron/packager": "^19.1.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^6.0.2"
+  },
+  "build": {
+    "appId": "in.klypso.nexus",
+    "productName": "Klypso ERP",
+    "artifactName": "Klypso-ERP-setup.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "compression": "store",
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "bundled-frontend",
+        "to": "frontend"
+      },
+      {
+        "from": "build/icon.ico",
+        "to": "build/icon.ico"
+      }
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "allowElevation": true,
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "dependencies": {
+    "@nexus/sync-engine": "file:vendor/sync-engine",
+    "axios": "^1.14.0",
+    "better-sqlite3": "^12.8.0"
+  }
+}
