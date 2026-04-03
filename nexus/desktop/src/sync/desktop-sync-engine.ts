@@ -42,7 +42,11 @@ class DesktopApiClient implements ApiClient {
   }
 
   private async request<T>(method: string, path: string, body?: unknown, retryCount = 0): Promise<T> {
-    let url = `${this.baseUrl}${path}`;
+    let rawPath = path.startsWith('/') ? path : `/${path}`;
+    if (rawPath.startsWith('/api/v1')) {
+      rawPath = rawPath.replace('/api/v1', '');
+    }
+    let url = `${this.baseUrl}${rawPath}`;
 
     // MICRO-SYNC: If in priority mode during a pull, restrict the tables to UI-critical ones
     if (this.priorityOnly && method === 'GET' && path.includes('/sync/pull')) {
