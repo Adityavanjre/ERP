@@ -43,7 +43,7 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
         }
     }, [resourceType, resourceId]);
 
-    useEffect(() => {        syncCommunicationFlux(true);    }, [syncCommunicationFlux]);
+    useEffect(() => { syncCommunicationFlux(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const addComment = useCallback(async () => {
         if (!newComment.trim()) return;
@@ -187,3 +187,4 @@ export function CollaborationTimeline({ resourceType, resourceId }: Collaboratio
         </Card>
     );
 }
+

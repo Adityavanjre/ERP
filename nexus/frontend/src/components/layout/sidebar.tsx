@@ -233,41 +233,23 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         }
     }, [user?.industry]);
 
-    // PERF-001: Navigation Pre-warming
-    // Proactively pre-fetches module data on hover to hit 'Zero Latency' goal.
-    const prewarmModule = useCallback((modulePath: string) => {
-        // Only pre-warm specific heavy-weight dashboard routes if needed
-        // The api cache handles the actual caching logic.
-        if (modulePath.includes('/dashboard')) {
-            api.get('system/stats').catch(() => { });
-        }
-        if (modulePath.includes('/admin/monitoring')) {
-            api.get('system/founder-dashboard').catch(() => { });
-        }
-        if (modulePath.includes('/sales')) {
-            api.get('analytics/summary').catch(() => { });
-        }
-        if (modulePath.includes('/accounting')) {
-            api.get('analytics/performance').catch(() => { });
-        }
-        if (modulePath.includes('/inventory')) {
-            api.get('system/stats').catch(() => { });
-        }
-        if (modulePath.includes('/crm')) {
-            api.get('analytics/activity').catch(() => { });
-        }
-    }, []);
+    // PERF-001: Navigation Pre-warming REMOVED.
+    // Hover-triggered prefetch was sending automatic requests to the server
+    // on every mouse movement. All API calls are now manual (click-only).
 
     useEffect(() => {
-        // PERF: Skip API call if we already have a robust cache for this session
-        if (_cachedModules && _cachedModules.length > 5 && !loadingConfig) {
+        // MANUAL-ONLY: Only fetch config once per session, never re-fetch automatically.
+        // If cache already populated from a previous page, skip entirely.
+        if (_cachedModules && _cachedModules.length > 0) {
             setEnabledModules(_cachedModules);
             setTerminology(_cachedTerminology || {});
             setLoadingConfig(false);
             return;
         }
+        // First load only — one single request for the entire session.
         fetchConfig();
-    }, [fetchConfig, loadingConfig]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);  // Empty dep array = runs exactly ONCE on first sidebar mount
 
     // Filter streams: 
     // 1. Role-based filtering (already present)
@@ -343,7 +325,6 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                     <Link
                         href="/dashboard"
                         onClick={onItemClick}
-                        onMouseEnter={() => prewarmModule('/dashboard')}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                             pathname === '/dashboard' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
@@ -367,9 +348,8 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    prefetch={true}
+                                    prefetch={false}
                                     onClick={onItemClick}
-                                    onMouseEnter={() => prewarmModule(item.href)}
                                     className={cn(
                                         "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                                         isActive ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"
@@ -392,7 +372,6 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                         <Link
                             href="/admin/monitoring"
                             onClick={onItemClick}
-                            onMouseEnter={() => prewarmModule('/admin/monitoring')}
                             className={cn(
                                 "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                                 pathname === '/admin/monitoring' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-amber-600"
@@ -423,7 +402,6 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                     <Link
                         href="/settings"
                         onClick={onItemClick}
-                        onMouseEnter={() => prewarmModule('/settings')}
                         className={cn(
                             "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
                             pathname === '/settings' ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5" : "text-slate-500"

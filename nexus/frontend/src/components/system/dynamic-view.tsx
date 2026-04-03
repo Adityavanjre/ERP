@@ -44,7 +44,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
         }
     }, [modelName]);
 
-    useEffect(() => {        syncNodeData(true);            }, [syncNodeData]);
+    useEffect(() => { syncNodeData(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const formattedModelName = modelName
         .split('.')
