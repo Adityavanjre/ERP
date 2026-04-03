@@ -983,6 +983,8 @@ export async function createDesktopOfflineSession(input?: {
 }
 
 export async function hydrateDesktopOfflineSession(): Promise<boolean> {
+  if (!isDesktopShell()) return false;
+  
   const bridge = getDesktopBridge();
   if (typeof window === "undefined") return false;
 

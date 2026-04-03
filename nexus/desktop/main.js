@@ -47,6 +47,10 @@ function createWindow() {
 
   const productionUrl = isDev ? FRONTEND_URL : PRODUCTION_URL;
 
+  // CLOUDFLARE BLOCK FIX: Cloudflare Bot Fight Mode blocks explicit "Electron" user agents.
+  // We mock a standard Chrome Windows user agent to allow the XHR requests through.
+  mainWindow.webContents.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
   mainWindow.loadURL(productionUrl);
 
   // Show window when ready
