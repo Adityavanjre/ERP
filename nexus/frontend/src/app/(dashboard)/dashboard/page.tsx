@@ -328,14 +328,8 @@ export default function DashboardPage() {
                         <button
                             key={action.label}
                             onClick={() => router.push(action.href)}
-                        onMouseEnter={() => {
-                            const moduleKey = action.href.split('/')[1];
-                            if (moduleKey === 'sales') api.get('analytics/summary').catch(() => { });
-                            if (moduleKey === 'inventory') api.get('system/stats').catch(() => { });
-                            if (moduleKey === 'accounting') api.get('analytics/performance').catch(() => { });
-                        }}
-                        className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
-                    >
+                            className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
+                        >
                         <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}>
                             <action.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                         </div>
