@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+
+export const dynamic = 'force-dynamic';
+
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { UXProvider } from "@/components/providers/ux-provider";

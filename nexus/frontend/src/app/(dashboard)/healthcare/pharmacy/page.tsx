@@ -1,6 +1,8 @@
 
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React from 'react';
 import { Package, Search, Plus, Filter, AlertTriangle, TrendingUp, Info } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +18,18 @@ const stock = [
 ];
 
 export default function PharmacyPage() {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return (
+        <div className="h-full w-full flex items-center justify-center bg-slate-50/50">
+            <div className="w-8 h-8 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+        </div>
+    );
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

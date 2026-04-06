@@ -1,6 +1,8 @@
 
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
@@ -131,9 +133,14 @@ function getCachedDashboard(): DashboardCache | null {
 }
 
 export default function DashboardPage() {
+    const [mounted, setMounted] = useState(false);
     const router = useRouter();
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller';
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const cache = getCachedDashboard();
 
@@ -330,7 +337,7 @@ export default function DashboardPage() {
         return cards;
     }, [biStats, enabledModules, term]);
 
-    if (loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing business intelligence...</div>;
+    if (!mounted || loading) return <div className="p-8 text-center text-slate-500 font-bold">Synchronizing business intelligence...</div>;
 
     return (
         <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">

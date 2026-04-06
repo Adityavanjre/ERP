@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,10 +30,15 @@ interface CreditNote {
 }
 
 export default function CreditNotesPage() {
+    const [mounted, setMounted] = useState(false);
     const [notes, setNotes] = useState<CreditNote[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [isIssuing, setIsIssuing] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const fetchNotes = React.useCallback(async () => {
         setLoading(true);
@@ -46,14 +53,24 @@ export default function CreditNotesPage() {
     }, []);
 
     useEffect(() => {
-        fetchNotes();
-    }, [fetchNotes]);
+        if (mounted) {
+            fetchNotes();
+        }
+    }, [fetchNotes, mounted]);
 
     const filteredNotes = notes.filter(n =>
         n.noteNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         n.customer?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         n.customer?.company?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (!mounted) {
+        return (
+            <div className="h-full w-full flex items-center justify-center bg-slate-50/50 min-h-screen">
+                <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 space-y-6 bg-slate-50/50 min-h-screen">

@@ -182,7 +182,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         }
     }, []);
 
-    useEffect(() => {
+    useEffect(() => { 
         fetchConfig();
     }, [fetchConfig]);
 

@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Search, Command, HardDrive } from "lucide-react";
 import { MobileSidebar } from "./mobile-sidebar";
 import { isDesktopOfflineMode } from "@/lib/desktop-offline";
 
 export const Navbar = () => {
-    const [offlineMode, setOfflineMode] = useState(false);
-
-    useEffect(() => {
-        const mode = isDesktopOfflineMode();
-        setOfflineMode(prev => prev !== mode ? mode : prev);
-    }, []);
+    const [offlineMode] = useState(() => {
+        if (typeof window === "undefined") return false;
+        return isDesktopOfflineMode();
+    });
 
     return (
         <div className="flex items-center p-4 md:p-6 border-b border-slate-200 bg-white/80 backdrop-blur-xl sticky top-0 z-[60]">

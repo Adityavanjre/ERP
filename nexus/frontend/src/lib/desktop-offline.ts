@@ -1,5 +1,5 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
-import { INDUSTRY_CONFIGS, Industry } from "@nexus/shared";
+import { INDUSTRY_CONFIGS, Industry, type IndustryModuleConfig } from "@nexus/shared";
 
 type HttpMethod = "get" | "post" | "patch" | "put" | "delete";
 
@@ -7,7 +7,7 @@ type HttpMethod = "get" | "post" | "patch" | "put" | "delete";
  * LINT-001: Common Generic Entity for Desktop Bridge
  * Used to avoid 'any' while satisfying dynamic access in the offline engine.
  */
-type DesktopEntity = Record<string, any>; // Permissive for local engine, satisfying rule by name
+// LINT-001: Suppressing any for the dynamic bridge engine 
 
 interface DesktopOfflineSession {
   mode: "offline";
@@ -150,6 +150,7 @@ interface LocalBOMComponent {
   quantity: number;
   productName?: string;
   unit?: string;
+  isByproduct?: boolean;
 }
 
 interface LocalBOM {
@@ -160,6 +161,8 @@ interface LocalBOM {
   components: LocalBOMComponent[];
   createdAt: string;
   updatedAt: string;
+  isOverheadFixed?: boolean;
+  overheadRate?: number;
   product?: {
     name: string;
   };
@@ -178,9 +181,9 @@ interface LocalWorkOrder {
   bom?: LocalBOM;
   machineId?: string;
   operatorName?: string;
+  machineTimeHours?: number;
   producedQuantity?: number;
   scrapQuantity?: number;
-  machineTimeHours?: number;
 }
 
 interface LocalMachine {
@@ -489,7 +492,7 @@ function recordProductionMovement(state: DesktopLocalState, params: {
   }
 
   // 3. Update Product Total Stock
-  const product = state.products.find(p => p.id === productId) as DesktopEntity;
+  const product = state.products.find(p => p.id === productId); 
   if (product) {
     product.stock = type === "IN" ? Number(product.stock || 0) + quantity : Number(product.stock || 0) - quantity;
   }
@@ -1064,13 +1067,13 @@ export async function clearDesktopOfflineSession(): Promise<void> {
 
 function applyInvoiceToState(
   state: DesktopLocalState,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>, 
 ): LocalInvoice {
   const issueDate = String(payload.issueDate || nowIso());
   const dueDate = String(payload.dueDate || issueDate);
   const amountPaid = Number(payload.amountPaid || 0);
   const paymentMode = String(payload.paymentMode || "Cash");
-  const itemsPayload = Array.isArray(payload.items) ? payload.items as Array<Record<string, unknown>> : [];
+  const itemsPayload = Array.isArray(payload.items) ? payload.items as Array<Record<string, unknown>> : []; 
   const customerId = String(payload.customerId || "walk-in-customer");
 
   let customer = state.customers.find((entry) => entry.id === customerId);
@@ -1166,7 +1169,7 @@ function applyInvoiceToState(
   return invoice;
 }
 
-function recordPaymentInState(state: DesktopLocalState, payload: Record<string, unknown>) {
+function recordPaymentInState(state: DesktopLocalState, payload: Record<string, unknown>) { 
   const invoiceId = String(payload.invoiceId || "");
   const invoice = state.invoices.find((entry) => entry.id === invoiceId);
   if (!invoice) {
@@ -1228,14 +1231,14 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     const industryKey = state.workspace.industry || Industry.General;
     
     // 2. Fetch the corresponding industry configuration from the unified registry
-    const config = (INDUSTRY_CONFIGS as any)[industryKey] || INDUSTRY_CONFIGS[Industry.General];
+    const industryConfig = (INDUSTRY_CONFIGS as unknown as Record<string, unknown>)[industryKey] || INDUSTRY_CONFIGS[Industry.General]; 
     
     return buildResponse(config, {
-      industry: config.industry,
+      industry: String((industryConfig as Record<string, unknown>).industry || "General"),
       // 3. Merge base infrastructure modules with industry-specific modules
-      enabledModules: Array.from(new Set([...DEFAULT_ENABLED_MODULES, ...config.enabledModules])),
+      enabledModules: Array.from(new Set([...DEFAULT_ENABLED_MODULES, ...((industryConfig as Record<string, unknown>).enabledModules as string[] || [])])),
       // 4. Inject the unified terminology map
-      terminology: config.terminology || {},
+      terminology: ((industryConfig as Record<string, unknown>).terminology as Record<string, string>) || {},
     });
   }
 
@@ -1368,7 +1371,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "inventory/products") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const product: LocalProduct = {
       id: makeId("product"),
       name: String(payload.name || "Unnamed Product"),
@@ -1401,7 +1404,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("inventory/products/")) {
     const productId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const product = state.products.find((entry) => entry.id === productId);
     if (!product) {
       buildOfflineError(config, "Product not found in the local workspace.");
@@ -1444,7 +1447,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "inventory/warehouses") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const warehouse: LocalWarehouse = {
       id: makeId("warehouse"),
       name: String(payload.name || "New Warehouse"),
@@ -1459,7 +1462,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("inventory/warehouses/")) {
     const warehouseId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const warehouse = state.warehouses.find((entry) => entry.id === warehouseId);
     if (!warehouse) {
       buildOfflineError(config, "Warehouse not found in the local workspace.");
@@ -1481,7 +1484,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "crm/customers") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const customer: LocalCustomer = {
       id: makeId("customer"),
       firstName: String(payload.firstName || ""),
@@ -1505,7 +1508,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("crm/customers/")) {
     const customerId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const customer = state.customers.find((entry) => entry.id === customerId);
     if (!customer) {
       buildOfflineError(config, "Customer not found in the local workspace.");
@@ -1539,7 +1542,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "crm/opportunities") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const customer = state.customers.find((entry) => entry.id === String(payload.customerId || ""));
     const opportunity: LocalOpportunity = {
       id: makeId("opportunity"),
@@ -1557,7 +1560,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "post" && path.startsWith("crm/opportunities/")) {
     const opportunityId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const opportunity = state.opportunities.find((entry) => entry.id === opportunityId);
     if (!opportunity) {
       buildOfflineError(config, "Opportunity not found in the local workspace.");
@@ -1575,7 +1578,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/accounts") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const account: LocalAccount = {
       id: makeId("account"),
       code: String(payload.code || `A-${Date.now().toString().slice(-4)}`),
@@ -1602,14 +1605,14 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/invoices") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const invoice = applyInvoiceToState(state, payload);
     await saveLocalState(state);
     return buildResponse(config, invoice, 201);
   }
 
   if (method === "post" && path === "accounting/invoices/bulk") {
-    const payload = parseBody<Array<Record<string, unknown>>>(config);
+    const payload = parseBody<Array<Record<string, unknown>>> (config);
     const results = (Array.isArray(payload) ? payload : []).map((entry) => {
       const invoice = applyInvoiceToState(state, entry);
       return {
@@ -1636,7 +1639,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/payments") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const invoice = recordPaymentInState(state, payload);
     await saveLocalState(state);
     return buildResponse(config, invoice);
@@ -1686,7 +1689,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "users") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const member: LocalUser = {
       id: makeId("user"),
       fullName: String(payload.fullName || "Team Member"),
@@ -1704,7 +1707,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("users/") && path.endsWith("/role")) {
     const userId = path.split("/")[1];
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const member = state.users.find((entry) => entry.id === userId);
     if (!member) {
       buildOfflineError(config, "Team member not found in the local workspace.");
@@ -1756,7 +1759,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "sales/orders") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const invoice = applyInvoiceToState(state, payload);
     await saveLocalState(state);
     return buildResponse(config, invoice, 201);
@@ -1767,7 +1770,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/fixed-assets") {
-    const payload = parseBody<Record<string, unknown>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const asset: LocalFixedAsset = {
       id: makeId("fa"),
       name: String(payload.name || "Untitled Asset"),
@@ -1919,19 +1922,19 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "manufacturing/bom") {
-    const payload = parseBody<Record<string, any>>(config);
-    const bom: any = {
+    const payload = parseBody<Record<string, unknown>>(config); 
+    const bom: LocalBOM = { 
       id: makeId("bom"),
-      productId: payload.productId,
-      name: payload.name || "Standard BOM",
+      productId: String(payload.productId || ""),
+      name: String(payload.name || "Standard BOM"),
       quantity: Number(payload.quantity || 1),
       overheadRate: Number(payload.overheadRate || 0),
       isOverheadFixed: Boolean(payload.isOverheadFixed),
-      components: Array.isArray(payload.components) ? payload.components : [],
+      components: Array.isArray(payload.components) ? payload.components as LocalBOMComponent[] : [],
       createdAt: nowIso(),
       updatedAt: nowIso()
     };
-    state.boms.unshift(bom);
+    state.boms.unshift(bom); 
     queueForSync(state, "POST", "manufacturing/boms", payload);
     pushActivity(state, `Created Bill of Materials for ${bom.name}`);
     await saveLocalState(state);
@@ -1940,13 +1943,13 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path.startsWith("manufacturing/boms/") && path.endsWith("/cost")) {
     const bomId = path.split("/")[2];
-    const bom = state.boms.find(b => b.id === bomId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const bom = state.boms.find(b => b.id === bomId); 
     if (!bom) return buildOfflineError(config, "BOM not found locally.");
 
     const requirements = explodeBOMRecursive(state, bomId, 1);
     let materialCost = 0;
     for (const req of requirements) {
-      const product = state.products.find(p => p.id === req.productId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const product = state.products.find(p => p.id === req.productId); 
       materialCost += (Number(product?.costPrice || 0) * req.quantity);
     }
 
@@ -1964,14 +1967,14 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path.startsWith("manufacturing/work-orders/") && path.endsWith("/shortages")) {
     const woId = path.split("/")[2];
-    const wo = state.manufacturingOrders.find(o => (o as any).id === woId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const wo = state.manufacturingOrders.find(o => o.id === woId); 
     if (!wo) return buildOfflineError(config, "Work order not found.");
 
     const requirements = explodeBOMRecursive(state, wo.bomId, Number(wo.quantity));
     const shortages = [];
 
     for (const req of requirements) {
-      const product = state.products.find(p => p.id === req.productId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const product = state.products.find(p => p.id === req.productId); 
       const currentStock = Number(product?.stock || 0);
       if (currentStock < req.quantity) {
         shortages.push({
@@ -1988,8 +1991,8 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "post" && path.startsWith("manufacturing/work-orders/") && path.endsWith("/start")) {
     const woId = path.split("/")[2];
-    const payload = parseBody<Record<string, any>>(config);
-    const wo = state.manufacturingOrders.find(o => (o as any).id === woId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const payload = parseBody<Record<string, unknown>>(config); 
+    const wo = state.manufacturingOrders.find(o => o.id === woId); 
     if (!wo) return buildOfflineError(config, "Work order not found.");
 
     const correlationId = makeCorrelationId();
@@ -1998,7 +2001,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     for (const req of requirements) {
       recordProductionMovement(state, {
         productId: req.productId,
-        warehouseId: payload.warehouseId || "warehouse-main",
+        warehouseId: String(payload.warehouseId || "warehouse-main"),
         quantity: req.quantity,
         type: "OUT",
         reference: woId.slice(-6),
@@ -2010,7 +2013,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
       recordProductionMovement(state, {
         productId: req.productId,
-        warehouseId: payload.warehouseId || "warehouse-main",
+        warehouseId: String(payload.warehouseId || "warehouse-main"),
         quantity: req.quantity,
         type: "IN",
         reference: woId.slice(-6),
@@ -2021,10 +2024,10 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
     wo.status = "InProgress";
     wo.startDate = nowIso();
-    wo.machineId = payload.machineId;
+    wo.machineId = String(payload.machineId || "");
     
     if (payload.machineId) {
-      const machine = state.machines.find(m => (m as any).id === payload.machineId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const machine = state.machines.find(m => m.id === String(payload.machineId)); 
       if (machine) machine.status = "Running";
     }
 
@@ -2036,12 +2039,12 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "post" && path.startsWith("manufacturing/work-orders/") && path.endsWith("/complete")) {
     const woId = path.split("/")[2];
-    const payload = parseBody<Record<string, any>>(config);
-    const wo = state.manufacturingOrders.find(o => (o as any).id === woId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const payload = parseBody<Record<string, unknown>>(config); 
+    const wo = state.manufacturingOrders.find(o => o.id === woId); 
     if (!wo) return buildOfflineError(config, "Work order not found.");
 
     const correlationId = makeCorrelationId();
-    const bom = state.boms.find(b => b.id === wo.bomId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const bom = state.boms.find(b => b.id === wo.bomId); 
     const finishedProductId = bom?.productId;
     const producedQty = Number(payload.producedQuantity || wo.quantity);
     const scrapQty = Number(payload.scrapQuantity || 0);
@@ -2052,7 +2055,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     for (const req of requirements) {
       recordProductionMovement(state, {
         productId: req.productId,
-        warehouseId: payload.warehouseId || "warehouse-main",
+        warehouseId: String(payload.warehouseId || "warehouse-main"),
         quantity: req.quantity,
         type: "OUT",
         reference: woId.slice(-6),
@@ -2064,7 +2067,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     if (finishedProductId) {
       recordProductionMovement(state, {
         productId: finishedProductId,
-        warehouseId: payload.warehouseId || "warehouse-main",
+        warehouseId: String(payload.warehouseId || "warehouse-main"),
         quantity: producedQty,
         type: "IN",
         reference: woId.slice(-6),
@@ -2074,13 +2077,13 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         contraAccountId: "acc-wip"
       });
       
-      const components = (bom.components as any[]) || [];
+      const components = bom?.components || []; 
       const byproducts = components.filter(c => c.isByproduct);
       for (const bp of byproducts) {
         recordProductionMovement(state, {
           productId: bp.productId,
-          warehouseId: payload.warehouseId || "warehouse-main",
-          quantity: bp.quantity * (producedQty / (bom.quantity || 1)),
+          warehouseId: String(payload.warehouseId || "warehouse-main"),
+          quantity: bp.quantity * (producedQty / (bom?.quantity || 1)),
           type: "IN",
           reference: woId.slice(-6),
           notes: `By-product from ${woId.slice(-6)}`,
@@ -2093,11 +2096,11 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     wo.endDate = nowIso();
     wo.producedQuantity = producedQty;
     wo.scrapQuantity = scrapQty;
-    wo.machineTimeHours = payload.machineTimeHours;
-    wo.operatorName = payload.operatorName;
+    wo.machineTimeHours = Number(payload.machineTimeHours || 0);
+    wo.operatorName = String(payload.operatorName || "");
 
     if (wo.machineId) {
-      const machine = state.machines.find(m => (m as any).id === wo.machineId) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const machine = state.machines.find(m => m.id === wo.machineId); 
       if (machine) machine.status = "Idle";
     }
 
@@ -2112,12 +2115,12 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "manufacturing/machines") {
-    const payload = parseBody<Record<string, any>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const machine: LocalMachine = {
       id: makeId("mac"),
-      name: payload.name || "New Machine",
-      code: payload.code || `M-${Date.now().toString().slice(-4)}`,
-      type: payload.type || "Generic",
+      name: String(payload.name || "New Machine"),
+      code: String(payload.code || `M-${Date.now().toString().slice(-4)}`),
+      type: String(payload.type || "Generic"),
       status: "Idle",
       hourlyRate: Number(payload.hourlyRate || 0)
     };
@@ -2128,10 +2131,10 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "manufacturing/work-orders") {
-    const payload = parseBody<Record<string, any>>(config);
+    const payload = parseBody<Record<string, unknown>> (config); 
     const wo: LocalWorkOrder = {
       id: makeId("wo"),
-      bomId: payload.bomId,
+      bomId: String(payload.bomId || ""),
       orderNumber: `WO-${Date.now().toString().slice(-6)}`,
       quantity: Number(payload.quantity || 1),
       status: "Planned",
