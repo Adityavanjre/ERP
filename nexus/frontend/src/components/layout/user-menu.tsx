@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { api } from "@/lib/api";
 import { clearDesktopOfflineSession, isDesktopOfflineMode } from "@/lib/desktop-offline";
+import { revokeNetworkConsent } from "@/lib/network-consent";
 
 interface UserData {
     fullName: string;
@@ -41,6 +42,7 @@ export const UserMenu = () => {
             localStorage.removeItem("k_user");
             localStorage.removeItem("k_identity");
         }
+        revokeNetworkConsent();
         router.push("/login");
     }, [router]);
 

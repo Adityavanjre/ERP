@@ -1,5 +1,11 @@
-import axios from 'axios';
+import axios, { type AxiosAdapter, type AxiosResponse } from 'axios';
 import { handleDesktopOfflineRequest, shouldHandleDesktopOfflineRequest } from './desktop-offline';
+import {
+  ensureNetworkConsent,
+  ensureRecentUserInteraction,
+  isNetworkConsentError,
+  isNetworkInteractionError,
+} from './network-consent';
 
 // Ensure we always target the v1 API
 // PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
@@ -14,9 +20,12 @@ const API_URL = isDesktopShell()
 // PERF-001: Zero-Latency Caching Layer
 // Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
 const requestCache = new Map<string, { data: unknown; timestamp: number }>();
-const pendingRequests = new Map<string, Promise<any>>();
+const pendingRequests = new Map<string, Promise<AxiosResponse>>();
 const CACHE_TTL = 30000; // 30s freshness window for zero-latency lookups
 const THROTTLE_WINDOW = 500; // 500ms window to prevent sub-second duplicate bursts
+const REQUEST_GAP_MS = 350; // Pace outbound traffic so dashboards don't burst the gateway
+let lastScheduledRequestAt = 0;
+let networkQueue: Promise<void> = Promise.resolve();
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -46,13 +55,37 @@ const processQueue = (error: unknown) => {
   failedQueue = [];
 };
 
+async function scheduleNetworkRequest<T>(task: () => Promise<T>): Promise<T> {
+  const previousTask = networkQueue;
+  let releaseQueue!: () => void;
+
+  networkQueue = new Promise<void>((resolve) => {
+    releaseQueue = resolve;
+  });
+
+  await previousTask;
+
+  const gapRemaining = REQUEST_GAP_MS - (Date.now() - lastScheduledRequestAt);
+  if (gapRemaining > 0) {
+    await new Promise((resolve) => setTimeout(resolve, gapRemaining));
+  }
+
+  lastScheduledRequestAt = Date.now();
+
+  try {
+    return await task();
+  } finally {
+    releaseQueue();
+  }
+}
+
 /**
  * DESKTOP-SHELL: Detect if the app is running inside the Electron container.
  */
 function isDesktopShell(): boolean {
   if (typeof window === 'undefined') return false;
   // Look for the nexusDesktop bridge injected by the Electron preload
-  return Boolean((window as any).nexusDesktop && (window as any).nexusDesktop.shell?.isDesktop);
+  return Boolean(window.nexusDesktop?.shell?.isDesktop);
 }
 
 /**
@@ -74,11 +107,12 @@ function getCookie(name: string): string | null {
 const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
 
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     // DESKTOP-OFFLINE: Zero-Auth Local Bridge Interceptor
     // If the application is in desktop-offline mode, we trap the request
     // and route it to the local SQLite/state engine instead of the cloud.
-    if (shouldHandleDesktopOfflineRequest(config)) {
+    const handledOfflineRequest = shouldHandleDesktopOfflineRequest(config);
+    if (handledOfflineRequest) {
       config.adapter = async () => handleDesktopOfflineRequest(config);
     } 
     // DESKTOP-SHELL PROTECTION: If this is the desktop shell and we are NOT in a cloud session,
@@ -98,7 +132,13 @@ api.interceptors.request.use(
         const controller = new AbortController();
         config.signal = controller.signal;
         controller.abort("Klypso Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.");
+        return config;
       }
+    }
+
+    if (!handledOfflineRequest) {
+      await ensureNetworkConsent();
+      await ensureRecentUserInteraction();
     }
 
     // SEC-006: Authorization header injection from localStorage removed.
@@ -150,11 +190,11 @@ api.interceptors.request.use(
 
 // DEDUPLICATION ADAPTER: Intercepts the low-level adapter call to prevent thundering herds.
 // We cast to any to bypass the complex AxiosAdapter constituent types which can be string|[] in some versions.
-const originalAdapter: any = api.defaults.adapter;
+const originalAdapter = api.defaults.adapter as AxiosAdapter;
 
 api.defaults.adapter = async (config) => {
   if (config.method?.toLowerCase() !== 'get' || !config.url) {
-    return originalAdapter(config);
+    return scheduleNetworkRequest(() => originalAdapter(config));
   }
 
   const cacheKey = axios.getUri(config);
@@ -168,7 +208,7 @@ api.defaults.adapter = async (config) => {
       statusText: 'OK (Cache Hit)',
       headers: {},
       config,
-    } as any;
+    } as AxiosResponse;
   }
 
   // 2. Thundering Herd Deduplication
@@ -179,7 +219,7 @@ api.defaults.adapter = async (config) => {
   }
 
   // 3. Execute and track
-  const requestPromise = originalAdapter(config);
+  const requestPromise = scheduleNetworkRequest(() => originalAdapter(config));
   pendingRequests.set(cacheKey, requestPromise);
 
   try {
@@ -227,15 +267,33 @@ api.interceptors.response.use(
 
     // DESKTOP-SYNC BRIDGE: Automatically trap any accessToken from JSON responses (login, switch-tenant, refresh) 
     // and sync it to the Desktop Shell's native sync engine. This ensures the background sync uses the correct tenant-scoped token.
-    if (response.data && typeof response.data === 'object' && response.data.accessToken) {
-      if (typeof window !== 'undefined' && (window as any).klypso?.setToken) {
-        (window as any).klypso.setToken(response.data.accessToken).catch(console.error);
-      }
+    const accessToken = typeof response.data === 'object' && response.data !== null
+      ? (response.data as { accessToken?: string }).accessToken
+      : undefined;
+
+    if (typeof accessToken === 'string' && typeof window !== 'undefined') {
+      window.nexusDesktop?.auth?.setToken(accessToken).catch(console.error);
     }
 
     return response;
   },
   async (error) => {
+    if (isNetworkConsentError(error)) {
+      return Promise.reject({
+        code: 'NETWORK_CONSENT_REQUIRED',
+        message: error.message,
+        isConsentRequired: true,
+      });
+    }
+
+    if (isNetworkInteractionError(error)) {
+      return Promise.reject({
+        code: 'NETWORK_INTERACTION_REQUIRED',
+        message: error.message,
+        isInteractionRequired: true,
+      });
+    }
+
     // RES-003: 503 (Server Overload/Warmup) - No automatic retry per user request
     if (error.response?.status === 503 || error.response?.status === 502 || error.response?.status === 504) {
       if (typeof window !== 'undefined') {
@@ -259,14 +317,14 @@ api.interceptors.response.use(
 
     const originalRequest = error.config || {};
 
-    // RES-004: Global 429 (Too Many Requests) Resistance
-    // If the server or proxy rate-limits us, don't crash. Wait and try again.
-    if (error.response?.status === 429 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const delay = Math.random() * 2000 + 1000; // Jittered 1-3s delay
-      console.warn(`[API] Rate limited (429). Retrying in ${Math.round(delay)}ms...`);
-      return new Promise(resolve => setTimeout(resolve, delay))
-        .then(() => api(originalRequest));
+    // MANUAL-ONLY: Do not auto-retry when the server rate-limits us.
+    // Each new attempt should come from an explicit user action or approval.
+    if (error.response?.status === 429) {
+      return Promise.reject({
+        message: 'Too many requests. Please approve and retry manually once the server cools down.',
+        status: 429,
+        isRateLimited: true,
+      });
     }
 
     if (error.response?.status === 401) {
@@ -297,7 +355,8 @@ api.interceptors.response.use(
           isRefreshing = true;
 
           return new Promise((resolve, reject) => {
-            axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true })
+            ensureNetworkConsent()
+              .then(() => axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true }))
               .then(({ data }) => {
                 if (typeof window !== 'undefined' && data.user) {
                   localStorage.setItem('k_user', JSON.stringify(data.user));

@@ -10,11 +10,20 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, LogOut } from "lucide-react";
+import { AlertCircle, LogOut, ShieldCheck } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { isDesktopOfflineMode } from "@/lib/desktop-offline";
 import { jwtDecode } from "jwt-decode";
+import {
+    denyNetworkConsent,
+    grantNetworkConsent,
+    hasNetworkConsent,
+    hasPendingNetworkConsentRequest,
+    NETWORK_CONSENT_REQUESTED_EVENT,
+    recordUserInteraction,
+    revokeNetworkConsent,
+} from "@/lib/network-consent";
 
 interface UserToken {
     isOnboarded?: boolean;
@@ -40,6 +49,7 @@ const UXContext = createContext<UXContextType | undefined>(undefined);
 export function UXProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [confirmOptions, setConfirmOptions] = useState<ConfirmOptions | null>(null);
+    const [isNetworkConsentOpen, setIsNetworkConsentOpen] = useState(false);
     const [isSessionExpired, setIsSessionExpired] = useState(false);
     const [isUILocked, setIsUILocked] = useState(false);
 
@@ -64,6 +74,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
 
     const handleLoginRedirect = () => {
         setIsSessionExpired(false);
+        revokeNetworkConsent();
         // Save current path to restore state after login
         if (typeof window !== "undefined") {
             // Stripping the basePath if it exists to avoid double-prefixing on redirect
@@ -94,11 +105,41 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
             if (authPages.some(page => pathname?.includes(page))) {
                 return;
             }
+            revokeNetworkConsent();
             setIsSessionExpired(true);
         };
         window.addEventListener("session-expired", handleSessionExpiry);
         return () => window.removeEventListener("session-expired", handleSessionExpiry);
     }, [pathname]);
+
+    useEffect(() => {
+        const markInteraction = () => {
+            recordUserInteraction();
+        };
+
+        window.addEventListener("pointerdown", markInteraction, { capture: true });
+        window.addEventListener("keydown", markInteraction, { capture: true });
+
+        return () => {
+            window.removeEventListener("pointerdown", markInteraction, { capture: true });
+            window.removeEventListener("keydown", markInteraction, { capture: true });
+        };
+    }, []);
+
+    useEffect(() => {
+        const openNetworkConsent = () => {
+            if (!hasNetworkConsent()) {
+                setIsNetworkConsentOpen(true);
+            }
+        };
+
+        if (hasPendingNetworkConsentRequest()) {
+            openNetworkConsent();
+        }
+
+        window.addEventListener(NETWORK_CONSENT_REQUESTED_EVENT, openNetworkConsent);
+        return () => window.removeEventListener(NETWORK_CONSENT_REQUESTED_EVENT, openNetworkConsent);
+    }, []);
 
     // Desktop-Offline: First-run Onboarding Redirect
     useEffect(() => {
@@ -159,6 +200,50 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
                             onClick={handleConfirm}
                         >
                             {confirmOptions?.confirmText || "Execute"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={isNetworkConsentOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        denyNetworkConsent();
+                        setIsNetworkConsentOpen(false);
+                    }
+                }}
+            >
+                <DialogContent className="bg-white border-slate-200 text-slate-900 sm:max-w-[460px] rounded-[2.5rem] p-8 shadow-2xl">
+                    <DialogHeader className="items-center text-center">
+                        <div className="h-16 w-16 rounded-3xl bg-blue-50 flex items-center justify-center mb-6">
+                            <ShieldCheck className="h-8 w-8 text-blue-600" />
+                        </div>
+                        <DialogTitle className="text-2xl font-black uppercase tracking-tight">Allow Server Access?</DialogTitle>
+                        <DialogDescription className="text-slate-500 font-medium leading-relaxed">
+                            This app is paused before contacting the server. Nothing will be sent until you explicitly approve network access for this session.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-8 gap-3 sm:gap-3">
+                        <Button
+                            variant="ghost"
+                            className="w-full sm:w-auto rounded-xl font-black uppercase tracking-widest text-[10px]"
+                            onClick={() => {
+                                denyNetworkConsent();
+                                setIsNetworkConsentOpen(false);
+                            }}
+                        >
+                            Stay Offline
+                        </Button>
+                        <Button
+                            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-[10px]"
+                            onClick={() => {
+                                recordUserInteraction();
+                                grantNetworkConsent();
+                                setIsNetworkConsentOpen(false);
+                            }}
+                        >
+                            Allow Requests
                         </Button>
                     </DialogFooter>
                 </DialogContent>

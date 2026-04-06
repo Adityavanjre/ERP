@@ -9,6 +9,12 @@ import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+    ensureNetworkConsent,
+    ensureRecentUserInteraction,
+    isNetworkConsentError,
+    revokeNetworkConsent,
+} from "@/lib/network-consent";
 
 // Build the API base URL without any Axios interceptors.
 // Using fetch() directly with cookie-based auth (credentials: 'include').
@@ -25,6 +31,9 @@ interface HttpError extends Error {
 }
 
 async function authFetch(path: string, options: RequestInit = {}) {
+    await ensureNetworkConsent();
+    await ensureRecentUserInteraction();
+
     // SEC-006: Use cookie-based auth (credentials: 'include') instead of Bearer token from localStorage.
     // HttpOnly cookies are sent automatically — no localStorage token reading needed.
     const res = await fetch(`${API_V1}/${path}`, {
@@ -89,6 +98,7 @@ export function TenantSelector() {
         localStorage.removeItem("k_token");
         localStorage.removeItem("k_identity");
         localStorage.removeItem("k_user");
+        revokeNetworkConsent();
         router.push("/login");
     }, [router]);
 
@@ -111,11 +121,15 @@ export function TenantSelector() {
             const error = err as WakeupError & HttpError;
             if (error?.isWakeup) {
                 toast.error("Klypso is starting up. Please wait a moment and try again.");
-                console.warn("[TenantSelector] Backend is waking up on Render, retrying in 5s...");
+                console.warn("[TenantSelector] Backend is waking up on Render. Waiting for manual retry.");
                 setShouldRetry(true);
+                setLoading(false);
             } else if ((error as HttpError)?.status === 401 || (error as HttpError)?.status === 403) {
                 toast.error("Session expired. Please log in again.");
                 handleLogout();
+            } else if (isNetworkConsentError(error)) {
+                toast.message("Server access is still blocked until you approve it.");
+                setLoading(false);
             } else {
                 toast.error("Could not load workspaces. Please try again.");
                 console.error("Failed to fetch tenants", error);
@@ -128,17 +142,6 @@ export function TenantSelector() {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchTenants();
     }, [fetchTenants]);
-
-    useEffect(() => {
-        if (shouldRetry) {
-            const timer = setTimeout(() => {
-                if (isMounted.current) {
-                    fetchTenants();
-                }
-            }, 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [shouldRetry, fetchTenants]);
 
     const handleSelect = useCallback(async (tenantId: string) => {
         setSelecting(tenantId);
@@ -194,6 +197,24 @@ export function TenantSelector() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="p-8 -mt-6 bg-white rounded-t-[2.5rem]">
+                        {shouldRetry && (
+                            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                                <p className="text-xs font-black uppercase tracking-widest text-amber-700">Server Wake-Up Paused</p>
+                                <p className="mt-2 text-sm text-slate-600">
+                                    Automatic retries are disabled. Retry only when you want to contact the server again.
+                                </p>
+                                <Button
+                                    type="button"
+                                    className="mt-4 h-10 rounded-xl bg-amber-500 px-4 text-[10px] font-black uppercase tracking-widest text-white hover:bg-amber-600"
+                                    onClick={() => {
+                                        setLoading(true);
+                                        fetchTenants();
+                                    }}
+                                >
+                                    Retry Manually
+                                </Button>
+                            </div>
+                        )}
                         <div className="space-y-3">
                             {tenants.length > 10 && (
                                 <div className="mb-6 relative">
