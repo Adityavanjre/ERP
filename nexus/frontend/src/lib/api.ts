@@ -23,8 +23,7 @@ const requestCache = new Map<string, { data: unknown; timestamp: number }>();
 const pendingRequests = new Map<string, Promise<AxiosResponse>>();
 const CACHE_TTL = 30000; // 30s freshness window for zero-latency lookups
 const THROTTLE_WINDOW = 500; // 500ms window to prevent sub-second duplicate bursts
-let lastScheduledRequestAt = 0;
-const networkQueue: Promise<void> = Promise.resolve();
+let networkQueue: Promise<void> = Promise.resolve();
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -64,7 +63,7 @@ async function scheduleNetworkRequest<T>(task: () => Promise<T>): Promise<T> {
 
   await previousTask;
 
-  lastScheduledRequestAt = Date.now();
+  // lastScheduledRequestAt was unused by consumers, removed to satisfy ESLint
 
   try {
     return await task();

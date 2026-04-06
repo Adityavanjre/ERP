@@ -36,7 +36,7 @@ interface AuthResponse {
 
 interface NexusDesktop {
     auth: {
-        login: (credentials: any) => Promise<{
+        login: (credentials: Record<string, unknown>) => Promise<{
             error?: boolean;
             message?: string;
             data: {
@@ -49,7 +49,7 @@ interface NexusDesktop {
         bootstrap: () => Promise<{ error?: string; pulledCount: number }>;
     };
     session: {
-        set: (data: any) => Promise<void>;
+        set: (data: Record<string, unknown>) => Promise<void>;
     };
 }
 

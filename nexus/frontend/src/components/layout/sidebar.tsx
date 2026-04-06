@@ -184,7 +184,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
     useEffect(() => {
         fetchConfig();
-    }, []);
+    }, [fetchConfig]);
 
     const visibleStreams = businessStreams
         .filter(stream => !stream.requiredModule || enabledModules.includes(stream.requiredModule))

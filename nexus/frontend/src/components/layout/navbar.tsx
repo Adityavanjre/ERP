@@ -11,8 +11,8 @@ export const Navbar = () => {
 
     useEffect(() => {
         const mode = isDesktopOfflineMode();
-        if (offlineMode !== mode) setOfflineMode(mode);
-    }, [offlineMode]);
+        setOfflineMode(prev => prev !== mode ? mode : prev);
+    }, []);
 
     return (
         <div className="flex items-center p-4 md:p-6 border-b border-slate-200 bg-white/80 backdrop-blur-xl sticky top-0 z-[60]">
