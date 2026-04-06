@@ -1,5 +1,5 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
-import { ThrottlerGuard, ThrottlerOptions } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 
 @Injectable()
@@ -16,11 +16,9 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
   }
 
   protected async handleRequest(
-    context: ExecutionContext,
-    limit: number,
-    ttl: number,
-    throttler: ThrottlerOptions,
+    requestProps: ThrottlerRequest,
   ): Promise<boolean> {
+    const { context, limit, ttl, throttler, blockDuration, getTracker, generateKey } = requestProps;
     const { user } = context.switchToHttp().getRequest();
 
     let adjustedLimit = limit;
@@ -33,6 +31,14 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
       }
     }
 
-    return super.handleRequest(context, adjustedLimit, ttl, throttler);
+    return super.handleRequest({
+      context,
+      limit: adjustedLimit,
+      ttl,
+      throttler,
+      blockDuration,
+      getTracker,
+      generateKey,
+    });
   }
 }
