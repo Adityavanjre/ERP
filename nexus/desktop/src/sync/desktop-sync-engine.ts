@@ -41,7 +41,7 @@ class DesktopApiClient implements ApiClient {
     this.priorityOnly = enabled;
   }
 
-  private async request<T>(method: string, path: string, body?: unknown, retryCount = 0): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     let rawPath = path.startsWith('/') ? path : `/${path}`;
     if (rawPath.startsWith('/api/v1')) {
       rawPath = rawPath.replace('/api/v1', '');
@@ -75,16 +75,14 @@ class DesktopApiClient implements ApiClient {
       };
 
       const proto = urlObj.protocol === 'https:' ? https : http;
-      const executeRequest = (attempt: number) => {
-        const req = proto.request(options, (res) => {
-          let data = '';
-          res.on('data', (chunk) => data += chunk);
-          res.on('end', async () => {
-            // 429 = TOO MANY REQUESTS
-            // Implement simple retry with delay for desktop sync bursts
-            if (res.statusCode === 429 && attempt < 3) {
-              console.warn(`[SYNC] Rate limited (429). Retrying in 3s... (Attempt ${attempt + 1})`);
-              setTimeout(() => executeRequest(attempt + 1), 3000);
+      const req = proto.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => data += chunk);
+        res.on('end', async () => {
+            // MANUAL-ONLY: Do not auto-retry sync requests.
+            // One explicit user click should produce one server attempt.
+            if (res.statusCode === 429) {
+              reject(new Error('Too many requests. Desktop sync is paused until you retry manually.'));
               return;
             }
 
@@ -110,23 +108,20 @@ class DesktopApiClient implements ApiClient {
             } catch {
               reject(new Error(`Invalid JSON response: ${data.slice(0, 200)}`));
             }
-          });
         });
+      });
 
-        req.on('timeout', () => {
-          req.destroy();
-          reject(new Error('Klypso Cloud timed out. The server is waking up — please try again in 30 seconds.'));
-        });
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error('Klypso Cloud timed out. The server is waking up — please try again in 30 seconds.'));
+      });
 
-        req.on('error', reject);
+      req.on('error', reject);
 
-        if (body) {
-          req.write(JSON.stringify(body));
-        }
-        req.end();
-      };
-
-      executeRequest(0);
+      if (body) {
+        req.write(JSON.stringify(body));
+      }
+      req.end();
     });
   }
 
