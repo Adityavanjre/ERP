@@ -20,8 +20,6 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
     limit: number,
     ttl: number,
     throttler: ThrottlerOptions,
-    tracker: string,
-    generateKey: (context: ExecutionContext, tracker: string, throttler: ThrottlerOptions) => string,
   ): Promise<boolean> {
     const { user } = context.switchToHttp().getRequest();
 
@@ -35,6 +33,6 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
       }
     }
 
-    return super.handleRequest(context, adjustedLimit, ttl, throttler, tracker, generateKey);
+    return super.handleRequest(context, adjustedLimit, ttl, throttler);
   }
 }

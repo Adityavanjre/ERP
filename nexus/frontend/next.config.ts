@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 import path from "path";
-import crypto from "crypto";
 
 const KLYPSO_BACKEND_URL = process.env.KLYPSO_BACKEND_URL;
 
@@ -104,11 +103,7 @@ const nextConfig: NextConfig = {
                     },
                     lib: {
                         test: /[\\/]node_modules[\\/]/,
-                        name(module: any) {
-                          const hash = crypto.createHash('sha1');
-                          hash.update(module.identifier());
-                          return `lib-${hash.digest('hex').substring(0, 8)}`;
-                        },
+                        name: 'vendors',
                         priority: 30,
                         minChunks: 1,
                         reuseExistingChunk: true,
