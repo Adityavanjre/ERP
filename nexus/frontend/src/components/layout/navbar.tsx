@@ -28,31 +28,55 @@ export const Navbar = () => {
             </div>
             <div className="flex items-center gap-4">
                 {offlineMode && (
-                    <div 
-                        onClick={async () => {
-                            const bridge = (window as unknown as { nexusDesktop?: { sync: { execute: () => Promise<{ error?: string; pushedCount: number; pulledCount: number; conflictCount: number }> } } }).nexusDesktop;
-                            if (bridge?.sync?.execute) {
-                                try {
-                                    const result = await bridge.sync.execute();
-                                    if (result.error) {
-                                        alert("Sync failed: " + result.error);
-                                    } else {
-                                        alert(`Sync complete! Pushed: ${result.pushedCount}, Pulled: ${result.pulledCount}, Conflicts: ${result.conflictCount}`);
-                                        if (result.pulledCount > 0) window.location.reload();
+                    <div className="hidden lg:flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm">
+                        <div 
+                            onClick={async () => {
+                                const bridge = (window as unknown as { nexusDesktop?: { sync: { execute: () => Promise<{ error?: string; pushedCount: number; pulledCount: number; conflictCount: number }> } } }).nexusDesktop;
+                                if (bridge?.sync?.execute) {
+                                    try {
+                                        const result = await bridge.sync.execute();
+                                        if (result.error) {
+                                            alert("Sync failed: " + result.error);
+                                        } else {
+                                            alert(`Sync complete! Pushed: ${result.pushedCount}, Pulled: ${result.pulledCount}, Conflicts: ${result.conflictCount}`);
+                                            if (result.pulledCount > 0) window.location.reload();
+                                        }
+                                    } catch (err: unknown) {
+                                        const error = err as { message?: string };
+                                        alert("Sync error: " + (error.message || "Unknown error"));
                                     }
-                                } catch (err: unknown) {
-                                    const error = err as { message?: string };
-                                    alert("Sync error: " + (error.message || "Unknown error"));
                                 }
-                            }
-                        }}
-                        className="hidden lg:flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-blue-700 cursor-pointer hover:bg-blue-100 transition-colors"
-                        title="Click to sync offline changes with the server"
-                    >
-                        <HardDrive className="h-3.5 w-3.5" />
-                        <span>Local Workspace</span>
-                        <span className="mx-1 opacity-50">|</span>
-                        <span>Sync Now</span>
+                            }}
+                            className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-blue-700 cursor-pointer hover:bg-blue-100 transition-colors"
+                            title="Incremental sync"
+                        >
+                            <HardDrive className="h-3.5 w-3.5" />
+                            <span>Sync Now</span>
+                        </div>
+                        <div 
+                            onClick={async () => {
+                                if (!confirm("FULL RESTORE: This will pull all data from the cloud and overwrite local records. Recent offline changes may be merged or overwritten. Proceed?")) return;
+                                const bridge = (window as unknown as { nexusDesktop?: { sync: { bootstrap: () => Promise<{ error?: string; pulledCount: number }> } } }).nexusDesktop;
+                                if (bridge?.sync?.bootstrap) {
+                                    try {
+                                        const result = await bridge.sync.bootstrap();
+                                        if (result.error) {
+                                            alert("Restore failed: " + result.error);
+                                        } else {
+                                            alert(`Full Restore Successful! Pulled ${result.pulledCount} critical records.`);
+                                            window.location.reload();
+                                        }
+                                    } catch (err: unknown) {
+                                        const error = err as { message?: string };
+                                        alert("Restore error: " + (error.message || "Unknown error"));
+                                    }
+                                }
+                            }}
+                            className="px-2 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 cursor-pointer transition-colors"
+                            title="Full cloud recovery"
+                        >
+                            <span>Restore</span>
+                        </div>
                     </div>
                 )}
                 <UserMenu />

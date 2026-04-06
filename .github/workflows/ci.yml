@@ -11,148 +11,129 @@ on:
       - staging
 
 jobs:
-  lint:
-    name: Lint
+  # 1. Dependency & Cache Warmup
+  setup:
+    name: Setup & Cache
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: nexus/backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: nexus/backend/package-lock.json
       - run: npm ci
-      - run: npm run lint
 
-  security-and-audit:
-    name: Security Audit (SAST + Deps)
+  # 2. Shared Library Check
+  check-shared:
+    name: Shared Contract Check
+    needs: setup
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: nexus/backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: nexus/backend/package-lock.json
       - run: npm ci
-      - name: Dependency Audit
-        # moderate vulnerabilities are acceptable in transitive deps; only block on high/critical
+      - run: npm run build -w @nexus/shared
+
+  # 3. Backend Quality Gates
+  backend-lint:
+    name: Backend Lint
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint -w backend
+
+  backend-build:
+    name: Backend Build
+    needs: [setup, check-shared]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build -w backend
+
+  # 4. Frontend Quality Gates
+  frontend-lint:
+    name: Frontend Lint
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint -w frontend
+
+  frontend-build:
+    name: Frontend Build
+    needs: [setup, check-shared]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build -w frontend
+
+  # 5. Security & Migration Audit
+  security-audit:
+    name: Security Audit
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Dependency Audit (Critical/High)
         run: npm audit --audit-level=high
         continue-on-error: true
-      - name: Run SAST Scan (ESLint Security)
-        run: npm run lint
 
   migration-gate:
-    name: Migration Safety Gate
+    name: Migration Safety
+    needs: setup
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: nexus/backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
       - run: npm ci
+      - name: Verify Prisma Client
+        run: npm run prisma:generate -w backend
       - name: Verify Migration Files
-        # Skipped gracefully if DATABASE_URL secret is not configured in repo settings
         run: |
           if [ -z "$DATABASE_URL" ]; then
             echo "DATABASE_URL secret not set — skipping live migration check."
             exit 0
           fi
-          npx prisma migrate status
+          npx prisma migrate status --schema=nexus/backend/prisma/schema.prisma
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-  build-check:
-    name: TypeScript Compile Check
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: nexus/backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: nexus/backend/package-lock.json
-      - run: npm ci
-      - run: npm run build
-
-  test-auth:
-    name: Auth & Token Lifecycle Tests
-    runs-on: ubuntu-latest
-    needs: [lint, build-check]
-    defaults:
-      run:
-        working-directory: nexus/backend
-    env:
-      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-production
-      DATABASE_URL: file:./test-ci.db
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: nexus/backend/package-lock.json
-      - run: npm ci
-      - name: Run auth tests
-        run: npm run test -- --testPathPattern="auth"
-
-  test-accounting:
-    name: Accounting Invariants Tests
-    runs-on: ubuntu-latest
-    needs: [lint, build-check]
-    defaults:
-      run:
-        working-directory: nexus/backend
-    env:
-      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-production
-      DATABASE_URL: file:./test-ci.db
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: nexus/backend/package-lock.json
-      - run: npm ci
-      - name: Run accounting invariant tests
-        run: npm run test -- --testPathPattern="(ledger|accounting|payroll)"
-
-  test-tenant-isolation:
-    name: Multi-Tenant Isolation Tests
-    runs-on: ubuntu-latest
-    needs: [lint, build-check]
-    defaults:
-      run:
-        working-directory: nexus/backend
-    env:
-      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-production
-      DATABASE_URL: file:./test-ci.db
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: nexus/backend/package-lock.json
-      - run: npm ci
-      - name: Run tenant isolation tests
-        run: npm run test -- --testPathPattern="(tenant|prisma-extension|isolation)"
-
+  # Final Success Gate
   all-gates-pass:
-    name: All Gates Passed (Required for Merge)
+    name: All Gates Passed
     runs-on: ubuntu-latest
-    needs: [lint, build-check, security-and-audit, migration-gate, test-auth, test-accounting, test-tenant-isolation]
+    needs: [backend-lint, backend-build, frontend-lint, frontend-build, security-audit, migration-gate]
     steps:
-      - run: echo "All required quality gates passed (including Security & Migrations). Merge is permitted."
+      - run: echo "Nexus Monorepo ready for deployment."

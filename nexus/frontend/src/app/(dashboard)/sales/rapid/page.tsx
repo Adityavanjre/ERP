@@ -272,9 +272,10 @@ export default function RapidBillingPage() {
         }
     }, [isOffline]);
 
-    useEffect(() => {
-        if (!isOffline && pendingSync > 0) void syncQueue();
-    }, [isOffline, pendingSync, syncQueue]);
+    // MANUAL-ONLY: Auto-sync on reconnect is disabled per strict request policy.
+    // useEffect(() => {
+    //     if (!isOffline && pendingSync > 0) void syncQueue();
+    // }, [isOffline, pendingSync, syncQueue]);
 
     useEffect(() => {
         const handleKeys = (e: KeyboardEvent) => {
@@ -303,9 +304,21 @@ export default function RapidBillingPage() {
                     <span className="text-xl font-black tracking-tighter uppercase">Rapid <span className="text-blue-600">Commerce</span></span>
                 </div>
 
-                <div className="flex gap-4 items-center bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
-                    {isOffline ? <WifiOff className="w-4 h-4 text-amber-500" /> : <Wifi className="w-4 h-4 text-emerald-500" />}
-                    <span className="text-[10px] font-black uppercase tracking-widest">{isOffline ? 'Offline Mode' : 'Online System'}</span>
+                <div className="flex gap-3 items-center">
+                    {pendingSync > 0 && !isOffline && (
+                        <button 
+                            onClick={() => void syncQueue()}
+                            disabled={isSubmitting}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
+                        >
+                            <Zap className="w-3.5 h-3.5" />
+                            <span>Sync {pendingSync} Records</span>
+                        </button>
+                    )}
+                    <div className="flex gap-4 items-center bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+                        {isOffline ? <WifiOff className="w-4 h-4 text-amber-500" /> : <Wifi className="w-4 h-4 text-emerald-500" />}
+                        <span className="text-[10px] font-black uppercase tracking-widest">{isOffline ? 'Offline Mode' : 'Online System'}</span>
+                    </div>
                 </div>
             </header>
 

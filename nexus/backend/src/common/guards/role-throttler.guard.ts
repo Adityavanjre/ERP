@@ -1,6 +1,7 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
+import { RATE_LIMIT_MULTIPLIER } from '@nexus/shared';
 
 @Injectable()
 export class RoleThrottlerGuard extends ThrottlerGuard {
@@ -33,9 +34,9 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
 
     if (user && user.role) {
       if (user.role === Role.Owner) {
-        adjustedLimit = limit * 10; // Owners get 10x leeway for heavy exports/syncs
+        adjustedLimit = limit * RATE_LIMIT_MULTIPLIER.OWNER;
       } else if (user.role === Role.CA) {
-        adjustedLimit = limit * 5; // Accountants get 5x leeway
+        adjustedLimit = limit * RATE_LIMIT_MULTIPLIER.ACCOUNTANT;
       }
     }
 

@@ -82,7 +82,8 @@ class DesktopApiClient implements ApiClient {
             // MANUAL-ONLY: Do not auto-retry sync requests.
             // One explicit user click should produce one server attempt.
             if (res.statusCode === 429) {
-              reject(new Error('Too many requests. Desktop sync is paused until you retry manually.'));
+              console.warn(`[SYNC 429] Rate limited on path: ${path}`);
+              reject(new Error('Klypso Cloud is temporarily limiting requests. Sync is paused — please try again in 1 minute.'));
               return;
             }
 

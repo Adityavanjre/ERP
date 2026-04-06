@@ -158,11 +158,13 @@ ipcMain.handle('auth:login', async (_event, credentials) => {
         const parts = cookieStr.split(';')[0].split('=');
         const name = parts[0].trim();
         const value = parts[1].trim();
+        
+        // RECOVERY-01: Ensure cookies are pinned to the top-level domain for reliable sync session reuse
         await session.defaultSession.cookies.set({
           url: 'https://klypso.in',
           name,
           value,
-          domain: 'klypso.in',
+          domain: '.klypso.in', // Using wildcard domain for cross-subdomain API access
           path: '/',
           secure: true,
           httpOnly: cookieStr.includes('HttpOnly'),
@@ -177,11 +179,16 @@ ipcMain.handle('auth:login', async (_event, credentials) => {
 
     return { data: response.data, status: response.status };
   } catch (error: any) {
+    if (error.response?.status === 429) {
+      console.warn('[429 RATE LIMIT] Cloud login blocked due to high frequency. Advise user to use Offline Mode.');
+    }
     console.error('[CORE AUTH ERROR]', error.response?.data || error.message);
     return { 
       error: true, 
       status: error.response?.status, 
-      message: error.response?.data?.message || error.message,
+      message: error.response?.status === 429 
+        ? "Klypso Cloud is temporarily limiting your requests. Please try 'Continue Offline' instead."
+        : (error.response?.data?.message || error.message),
       code: error.code
     };
   }
