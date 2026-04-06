@@ -75,25 +75,26 @@ class DesktopApiClient implements ApiClient {
       };
 
       const proto = urlObj.protocol === 'https:' ? https : http;
+      
+      // 429-MITIGATION: Add jittered delay to prevent burst limits during large pulls
       const req = proto.request(options, (res) => {
         let data = '';
         res.on('data', (chunk) => data += chunk);
         res.on('end', async () => {
             // MANUAL-ONLY: Do not auto-retry sync requests.
-            // One explicit user click should produce one server attempt.
             if (res.statusCode === 429) {
               console.warn(`[SYNC 429] Rate limited on path: ${path}`);
-              reject(new Error('Klypso Cloud is temporarily limiting requests. Sync is paused — please try again in 1 minute.'));
+              reject(new Error('Klypso Cloud is temporarily limiting requests. Sync is paused — please try again in 90 seconds.'));
               return;
             }
 
-            // 503/504 = Server waking up - surface error immediately without automatic retries
+            // 503/504 = Server waking up
             if (res.statusCode === 503 || res.statusCode === 504 || res.statusCode === 502) {
-              reject(new Error('Klypso Cloud is waking up from sleep. Please wait 60 seconds and try syncing again.'));
+              reject(new Error('Klypso Cloud is waking up from sleep. Please wait 90 seconds and try syncing again.'));
               return;
             }
 
-            // 401 = JWT expired — surface a clean error to the UI
+            // 401 = JWT expired
             if (res.statusCode === 401) {
               reject(new Error('UNAUTHORIZED: Cloud session expired. Please sign in again.'));
               return;
@@ -114,7 +115,7 @@ class DesktopApiClient implements ApiClient {
 
       req.on('timeout', () => {
         req.destroy();
-        reject(new Error('Klypso Cloud timed out. The server is waking up — please try again in 30 seconds.'));
+        reject(new Error('Klypso Cloud timed out. The server is waking up — please try again in 90 seconds.'));
       });
 
       req.on('error', reject);

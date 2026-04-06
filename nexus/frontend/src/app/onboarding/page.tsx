@@ -14,7 +14,11 @@ import {
   Building2,
   Globe,
   ShieldCheck,
-  Zap
+  Zap,
+  CreditCard,
+  Briefcase,
+  Car,
+  ShoppingBag
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -58,6 +62,34 @@ const INDUSTRIES = [
     description: "Project sites, resource allocation, and material requisition.",
     icon: HardHat,
     color: "from-slate-600 to-slate-800",
+  },
+  {
+    id: "NBFC",
+    title: "NBFC / Finance",
+    description: "Loan lifecycle, KYC compliance, EMI tracking and recovery.",
+    icon: CreditCard,
+    color: "from-purple-500 to-violet-600",
+  },
+  {
+    id: "Service",
+    title: "Service / Agency",
+    description: "Project management, timesheets, and professional billing.",
+    icon: Briefcase,
+    color: "from-sky-500 to-blue-600",
+  },
+  {
+    id: "Automotive",
+    title: "Automotive",
+    description: "Workshop management, parts catalog, and vehicle sales.",
+    icon: Car,
+    color: "from-red-500 to-rose-600",
+  },
+  {
+    id: "Ecommerce",
+    title: "E-commerce",
+    description: "Multi-channel fulfillment, marketplace sync, and D2C sales.",
+    icon: ShoppingBag,
+    color: "from-fuchsia-500 to-purple-600",
   },
 ];
 

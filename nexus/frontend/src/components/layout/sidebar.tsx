@@ -54,7 +54,7 @@ interface BusinessStream {
 
 // const ALL_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller', 'Storekeeper', 'Accountant', 'CA'];
 const SALES_ROLES: RoleName[] = ['Owner', 'Manager', 'Biller'];
-const STOCK_ROLES: RoleName[] = ['Owner', 'Manager', 'Storekeeper'];
+const STOCK_ROLES: RoleName[] = ['Owner', 'Manager', 'Storekeeper', 'Accountant'];
 const FINANCE_ROLES: RoleName[] = ['Owner', 'Manager', 'Accountant', 'CA'];
 const INVOICE_VIEWERS: RoleName[] = ['Owner', 'Manager', 'Biller', 'Accountant', 'CA'];
 
@@ -62,6 +62,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Sales',
         icon: ShoppingCart,
+        requiredModule: 'sales',
         items: [
             { label: 'Quick Sale', href: '/sales/rapid', icon: Zap, allowedRoles: SALES_ROLES },
             { label: 'CRM', href: '/crm', icon: Users, allowedRoles: SALES_ROLES },
@@ -72,6 +73,7 @@ const businessStreams: BusinessStream[] = [
     {
         label: 'Inventory & Purchasing',
         icon: Package,
+        requiredModule: 'inventory',
         items: [
             { label: 'Products', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
             { label: 'Purchases', href: '/purchases', icon: ShoppingBag, allowedRoles: STOCK_ROLES },
@@ -86,14 +88,18 @@ const businessStreams: BusinessStream[] = [
         requiredModule: 'manufacturing',
         items: [
             { label: 'Overview', href: '/manufacturing', icon: Factory, allowedRoles: STOCK_ROLES },
-            { label: 'Bill of Materials', href: '/manufacturing/bom', icon: Command, allowedRoles: STOCK_ROLES },
             { label: 'Work Orders', href: '/manufacturing/orders', icon: ClipboardList, allowedRoles: STOCK_ROLES },
-            { label: 'Machines', href: '/manufacturing/machines', icon: Cpu, allowedRoles: STOCK_ROLES },
+            { label: 'Bill of Materials', href: '/manufacturing/bom', icon: Command, allowedRoles: STOCK_ROLES },
+            { label: 'Production Intelligence', href: '/manufacturing/intelligence', icon: BarChart2, allowedRoles: STOCK_ROLES },
+            { label: 'Machine Registry', href: '/manufacturing/machines', icon: Cpu, allowedRoles: STOCK_ROLES },
+            { label: 'Shortage Monitor', href: '/manufacturing/shortages', icon: Activity, allowedRoles: STOCK_ROLES },
+            { label: 'Maintenance Hub', href: '/manufacturing/maintenance', icon: Settings, allowedRoles: STOCK_ROLES },
         ]
     },
     {
         label: 'Accounting',
         icon: Landmark,
+        requiredModule: 'accounting',
         items: [
             { label: 'Accounts', href: '/accounting', icon: Landmark, allowedRoles: FINANCE_ROLES },
             { label: 'Auditor', href: '/accounting/auditor', icon: ShieldCheck, allowedRoles: FINANCE_ROLES },
@@ -138,173 +144,102 @@ const businessStreams: BusinessStream[] = [
         items: [
             { label: 'Project Sites', href: '/construction', icon: LayoutGrid, allowedRoles: SALES_ROLES },
             { label: 'Task Console', href: '/projects', icon: ClipboardList, allowedRoles: SALES_ROLES },
-            { label: 'Material at Site', href: '/inventory', icon: Package, allowedRoles: STOCK_ROLES },
-            { label: 'Sub-contractors', href: '/construction/subs', icon: Users, allowedRoles: SALES_ROLES },
         ]
     },
     {
-        label: 'Projects & Tasks',
-        icon: ClipboardList,
+        label: 'Project Management',
+        icon: Briefcase,
         requiredModule: 'projects',
         items: [
-            { label: 'Project Console', href: '/projects', icon: LayoutDashboard, allowedRoles: SALES_ROLES },
+            { label: 'Active Engagements', href: '/projects', icon: Briefcase, allowedRoles: SALES_ROLES },
+            { label: 'Resource Planning', href: '/projects/resources', icon: Users, allowedRoles: STOCK_ROLES },
         ]
     }
 ];
 
-interface IndustryTerminology {
-    customer?: string;
-    product?: string;
-    inventory?: string;
-    department?: string;
-    [key: string]: string | undefined;
-}
-
-
-// Module-level config cache: persists across Sidebar remounts within the same
-// browser session. Eliminates blank sidebar flash when navigating between pages.
-let _cachedModules: string[] | null = null;
-let _cachedTerminology: IndustryTerminology | null = null;
 export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
     const pathname = usePathname();
     const { user } = useAuth();
-    const userRole = user?.isSuperAdmin ? 'Owner' : (user?.role as RoleName) || 'Biller';
+    const userRole = (user?.role as RoleName) || 'Biller';
 
-    const [enabledModules, setEnabledModules] = useState<string[]>(['dashboard', 'sales', 'inventory', 'accounting', 'crm']);
-    const [terminology, setTerminology] = useState<IndustryTerminology>({});
+    const [enabledModules, setEnabledModules] = useState<string[]>([]);
+    const [terminology, setTerminology] = useState<Record<string, string>>({});
     const [loadingConfig, setLoadingConfig] = useState(true);
 
-    // BRAIN-001: Aggressive Industry Hinting
-    // Automatically recalculates modules purely from JWT industry if server config fails.
-    useEffect(() => {
-        if (user?.industry && !(_cachedModules && _cachedModules.length > 5)) {
-            const industry = user.industry;
-            if (industry === 'Manufacturing' || industry.toLowerCase().includes('mfg')) {
-                setEnabledModules(['dashboard', 'accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales']);
-                setTerminology({
-                    customer: 'Customer',
-                    product: 'Item/Product',
-                    inventory: 'Stock',
-                    'Work Order': 'Job Card'
-                });
-            } else if (industry === 'Retail') {
-                setEnabledModules(['dashboard', 'accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales']);
-            }
-        }
-    }, [user?.industry]);
-
     const fetchConfig = useCallback(async () => {
-        setLoadingConfig(true);
-        // Ensure async execution to avoid "setState in effect" warning
-        await Promise.resolve();
         try {
-            const token = localStorage.getItem('k_token');
-            const identity = localStorage.getItem('k_identity');
-
-            // SEC-011: Identity Isolation for Registration and Onboarding
-            if (token && identity && token === identity) {
-                // Use Promise to defer state update and avoid "setState in effect" warning
-                void Promise.resolve().then(() => {
-                    setEnabledModules(['dashboard', 'onboarding']);
-                });
-                return;
+            setLoadingConfig(true);
+            const { data } = await api.get('system/config');
+            if (data) {
+                const infrastructure = ['dashboard', 'crm', 'settings', 'apps', 'accounting'];
+                setEnabledModules(Array.from(new Set([...infrastructure, ...data.enabledModules])));
+                setTerminology(data.terminology || {});
             }
-
-            const res = await api.get('system/config');
-            const config = res.data || {};
-            const modules = config.enabledModules || [];
-            const terms = config.terminology || {};
-            _cachedModules = modules;
-            _cachedTerminology = terms;
-            setEnabledModules(modules);
-            setTerminology(terms);
-        } catch {
-            console.error("Critical: Failed to sync industry configuration");
-            // Safety fallback: Limit visibility to basic operations on auth failure.
-            const fallback = ['dashboard', 'sales', 'inventory', 'accounting', 'crm'];
-            if (user?.industry === 'Manufacturing') {
-                fallback.push('manufacturing', 'purchases');
-            }
-            if (!_cachedModules) {
-                setEnabledModules(prev => prev.length > 5 ? prev : [...new Set(fallback)]);
-            }
+        } catch (err) {
+            console.error("SIDEBAR: Failed to fetch industry config", err);
         } finally {
             setLoadingConfig(false);
         }
-    }, [user?.industry]);
-
-    // PERF-001: Navigation Pre-warming REMOVED.
-    // Hover-triggered prefetch was sending automatic requests to the server
-    // on every mouse movement. All API calls are now manual (click-only).
+    }, []);
 
     useEffect(() => {
-        // MANUAL-ONLY: Only fetch config once per session, never re-fetch automatically.
-        // If cache already populated from a previous page, skip entirely.
-        if (_cachedModules && _cachedModules.length > 0) {
-            setEnabledModules(_cachedModules);
-            setTerminology(_cachedTerminology || {});
-            setLoadingConfig(false);
-            return;
-        }
-        // First load only — one single request for the entire session.
         fetchConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);  // Empty dep array = runs exactly ONCE on first sidebar mount
+    }, []);
 
-    // Filter streams: 
-    // 1. Role-based filtering (already present)
-    // 2. Industry-based filtering (new)
     const visibleStreams = businessStreams
         .filter(stream => !stream.requiredModule || enabledModules.includes(stream.requiredModule))
-        .map(stream => ({
-            ...stream,
-            items: stream.items
-                .filter(item => {
-                    // UI-GOV-001: SuperAdmin Role Bypass
-                    // Super Admin can bypass role restrictions within enabled modules.
-                    const roleAllowed = user?.isSuperAdmin || (item.allowedRoles as RoleName[]).includes(userRole);
-                    if (!roleAllowed) return false;
+        .map(stream => {
+            // Apply terminology to the stream label if it matches a project/site or similar concept
+            let translatedStreamLabel = stream.label;
+            if (stream.label === 'Sales' && terminology['Sales']) translatedStreamLabel = terminology['Sales'];
+            if (stream.label === 'Construction' && terminology['Project']) translatedStreamLabel = terminology['Project'];
+            if (stream.label === 'Healthcare' && terminology['Clinic']) translatedStreamLabel = terminology['Clinic'];
 
-                    // Check Industry/Module Status
-                    const pathParts = item.href.split('/').filter(p => p !== '');
-                    const moduleKey = pathParts[0];
+            return {
+                ...stream,
+                label: translatedStreamLabel,
+                items: stream.items
+                    .filter(item => {
+                        const roleAllowed = user?.isSuperAdmin || (item.allowedRoles as RoleName[]).includes(userRole);
+                        if (!roleAllowed) return false;
 
-                    if (moduleKey) {
-                        // Core modules are platform-wide
-                        if (moduleKey === 'crm' || moduleKey === 'dashboard' || moduleKey === 'settings') return true;
+                        const pathParts = item.href.split('/').filter(p => p !== '');
+                        const moduleKey = pathParts[0];
 
-                        // Check if module is enabled for this industry
-                        if (!enabledModules.includes(moduleKey)) return false;
-
+                        if (moduleKey) {
+                            if (moduleKey === 'crm' || moduleKey === 'dashboard' || moduleKey === 'settings') return true;
+                            if (!enabledModules.includes(moduleKey)) return false;
+                            return true;
+                        }
                         return true;
-                    }
-                    return true;
-                })
-                .map(item => {
-                    // Apply Dynamic Terminology
-                    let translatedLabel = item.label;
+                    })
+                    .map(item => {
+                        let translatedLabel = item.label;
+                        
+                        // Map specific UI labels to terminology keys
+                        const labelToKey: Record<string, string> = {
+                            'CRM': 'Customer',
+                            'Products': 'Product',
+                            'Warehouses': 'Inventory',
+                            'Work Orders': 'WorkOrder',
+                            'Project Sites': 'Project',
+                            'Patients': 'Customer',
+                            'Sales Orders': 'Invoice',
+                            'Active Engagements': 'Project'
+                        };
 
-                    // Direct Mapping Matrix
-                    const labelToKey: Record<string, string> = {
-                        'CRM': 'customer',
-                        'Products': 'product',
-                        'Warehouses': 'inventory',
-                        'Work Orders': 'Work Order',
-                        'Material at Site': 'inventory',
-                        'Patients': 'customer' // Special case for healthcare stream template
-                    };
+                        const termKey = labelToKey[item.label];
+                        if (termKey && terminology[termKey]) {
+                            translatedLabel = terminology[termKey];
+                        }
 
-                    const termKey = labelToKey[item.label];
-                    if (termKey && terminology[termKey]) {
-                        translatedLabel = terminology[termKey] as string;
-                    }
-
-                    return { ...item, label: translatedLabel };
-                })
-        }))
+                        return { ...item, label: translatedLabel };
+                    })
+            };
+        })
         .filter(stream => stream.items.length > 0);
 
-    const canAccessSettings = userRole === 'Owner';
+    const canAccessSettings = userRole === 'Owner' || user?.isSuperAdmin;
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
@@ -416,7 +351,6 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
                 <button
                     onClick={() => {
-                        // SEC-006: Tokens are in HttpOnly cookies - workspace switching handled via TenantSelector
                         toast.info("Use the workspace selector to switch between workspaces");
                     }}
                     className="text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest text-slate-500 hover:scale-[1.02] active:scale-[0.98]"

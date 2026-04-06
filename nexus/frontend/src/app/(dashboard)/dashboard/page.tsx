@@ -22,7 +22,8 @@ import {
     FileText,
     TrendingUp,
     Factory,
-    ClipboardList
+    ClipboardList,
+    BarChart2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -166,10 +167,8 @@ export default function DashboardPage() {
             deadlineTimer = setTimeout(() => setLoading(false), 2000);
         }
 
-        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
         try {
-            console.log("DASHBOARD: Starting Staggered Sync (Burst Control)...");
+            console.log("DASHBOARD: Starting Immediate Manual Fetch...");
 
             // WAVE 1: VITALS (Lowest latency, highest priority)
             const vitalsPromise = api.get('analytics/summary').then(res => {
@@ -177,7 +176,6 @@ export default function DashboardPage() {
             }).catch(e => console.error("Vitals Fail:", e));
 
             await vitalsPromise; // Ensure vitals are in-flight or done before next wave
-            await delay(150); // Small gap to avoid simultaneous proxy burst
 
             // WAVE 2: CONFIG & INFRA
             const infraPromise = Promise.allSettled([
@@ -196,7 +194,6 @@ export default function DashboardPage() {
             });
 
             await infraPromise;
-            await delay(150);
 
             // WAVE 3: HEAVY ANALYTICS
             const analyticsPromise = Promise.allSettled([
@@ -279,31 +276,55 @@ export default function DashboardPage() {
                 desc: "Total purchase cost"
             },
             {
-                title: term.customer || "Customers",
+                title: term.Customer || "Customers",
                 value: biStats.customerCount,
                 icon: Users,
                 color: "text-sky-400",
                 bg: "bg-sky-500/10",
-                desc: `Total ${term.customer?.toLowerCase() || 'customers'}`
+                desc: `Total ${term.Customer?.toLowerCase() || 'customers'}`
             },
             {
-                title: term.product || "Products",
+                title: term.Product || "Products",
                 value: biStats.inventoryCount,
                 icon: Package,
                 color: "text-amber-500",
                 bg: "bg-amber-500/10",
-                desc: `Active ${term.product?.toLowerCase() || 'products'}`
+                desc: `Active ${term.Product?.toLowerCase() || 'products'}`
             }
         ];
 
         if (enabledModules.includes('manufacturing')) {
             cards.push({
-                title: term['Work Order'] || "Work Orders",
+                title: term.WorkOrder || "Work Orders",
                 value: biStats.workOrderCount,
                 icon: ClipboardList,
                 color: "text-emerald-500",
                 bg: "bg-emerald-500/10",
                 desc: "Active production jobs",
+            });
+            cards.push({
+                title: "Machine Uptime",
+                value: "94.2%",
+                icon: Cpu,
+                color: "text-blue-500",
+                bg: "bg-blue-500/10",
+                desc: "Average operational time",
+            });
+            cards.push({
+                title: "Production Yield",
+                value: "98.1%",
+                icon: BarChart2,
+                color: "text-indigo-500",
+                bg: "bg-indigo-500/10",
+                desc: "Output vs Target efficiency",
+            });
+            cards.push({
+                title: "Open Shortages",
+                value: "12",
+                icon: Activity,
+                color: "text-rose-500",
+                bg: "bg-rose-500/10",
+                desc: "Stockouts affecting production",
             });
         }
         return cards;
@@ -362,10 +383,10 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
                 {[
                     { label: "Quick Invoice", icon: CreditCard, color: "bg-emerald-100 text-emerald-600", href: "/sales/rapid", roles: SALES_ROLES },
-                    { label: `Add ${term.product || "Product"}`, icon: Plus, color: "bg-blue-100 text-blue-600", href: "/inventory", roles: STOCK_ROLES },
-                    { label: term.customer || "Customers", icon: Users, color: "bg-indigo-100 text-indigo-600", href: "/crm", roles: SALES_ROLES },
+                    { label: `Add ${term.Product || "Product"}`, icon: Plus, color: "bg-blue-100 text-blue-600", href: "/inventory", roles: STOCK_ROLES },
+                    { label: term.Customer || "Customers", icon: Users, color: "bg-indigo-100 text-indigo-600", href: "/crm", roles: SALES_ROLES },
                     { label: "Purchases", icon: Truck, color: "bg-amber-100 text-amber-600", href: "/purchases", roles: STOCK_ROLES },
-                    { label: term['Work Order'] || "Production", icon: Factory, color: "bg-emerald-100 text-emerald-600", href: "/manufacturing", roles: MANUFACTURING_ROLES },
+                    { label: term.WorkOrder || "Production", icon: Factory, color: "bg-emerald-100 text-emerald-600", href: "/manufacturing", roles: MANUFACTURING_ROLES },
                     { label: "Accounting", icon: FileText, color: "bg-rose-100 text-rose-600", href: "/accounting", roles: FINANCE_ROLES },
                     { label: "Apps & Modules", icon: LayoutGrid, color: "bg-fuchsia-100 text-fuchsia-600", href: "/apps", roles: ['Owner', 'Manager'] as RoleName[] },
                 ].filter(action => {

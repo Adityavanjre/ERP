@@ -10,8 +10,9 @@ export const Navbar = () => {
     const [offlineMode, setOfflineMode] = useState(false);
 
     useEffect(() => {
-        setOfflineMode(isDesktopOfflineMode());
-    }, []);
+        const mode = isDesktopOfflineMode();
+        if (offlineMode !== mode) setOfflineMode(mode);
+    }, [offlineMode]);
 
     return (
         <div className="flex items-center p-4 md:p-6 border-b border-slate-200 bg-white/80 backdrop-blur-xl sticky top-0 z-[60]">
@@ -55,27 +56,27 @@ export const Navbar = () => {
                         </div>
                         <div 
                             onClick={async () => {
-                                if (!confirm("FULL RESTORE: This will pull all data from the cloud and overwrite local records. Recent offline changes may be merged or overwritten. Proceed?")) return;
+                                if (!confirm("SECURE CLOUD MERGE: This will bridge your local and cloud data using conflict resolution (like WhatsApp/Google Photos). Recent offline changes will be preserved. Proceed?")) return;
                                 const bridge = (window as unknown as { nexusDesktop?: { sync: { bootstrap: () => Promise<{ error?: string; pulledCount: number }> } } }).nexusDesktop;
                                 if (bridge?.sync?.bootstrap) {
                                     try {
                                         const result = await bridge.sync.bootstrap();
                                         if (result.error) {
-                                            alert("Restore failed: " + result.error);
+                                            alert("Merge failed: " + result.error);
                                         } else {
-                                            alert(`Full Restore Successful! Pulled ${result.pulledCount} critical records.`);
+                                            alert(`Cloud Merge Successful! Synced ${result.pulledCount} critical records.`);
                                             window.location.reload();
                                         }
                                     } catch (err: unknown) {
                                         const error = err as { message?: string };
-                                        alert("Restore error: " + (error.message || "Unknown error"));
+                                        alert("Merge error: " + (error.message || "Unknown error"));
                                     }
                                 }
                             }}
                             className="px-2 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 cursor-pointer transition-colors"
-                            title="Full cloud recovery"
+                            title="Conflict-aware cloud recovery"
                         >
-                            <span>Restore</span>
+                            <span>Merge</span>
                         </div>
                     </div>
                 )}

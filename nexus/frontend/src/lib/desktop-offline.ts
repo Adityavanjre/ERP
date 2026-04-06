@@ -1,4 +1,5 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { INDUSTRY_CONFIGS, Industry } from "@nexus/shared";
 
 type HttpMethod = "get" | "post" | "patch" | "put" | "delete";
 
@@ -142,12 +143,14 @@ interface LocalBOMComponent {
   productId: string;
   quantity: number;
   productName?: string;
+  unit?: string;
 }
 
 interface LocalBOM {
   id: string;
   productId: string;
   name: string;
+  quantity: number;
   components: LocalBOMComponent[];
   createdAt: string;
   updatedAt: string;
@@ -286,6 +289,28 @@ interface LocalFixedAsset {
   }>;
 }
 
+interface StockMovement {
+  id: string;
+  productId: string;
+  warehouseId: string;
+  quantity: number;
+  type: "IN" | "OUT";
+  reference?: string;
+  notes?: string;
+  correlationId?: string;
+  accountId?: string;
+  contraAccountId?: string;
+  createdAt: string;
+}
+
+interface StockLocation {
+  id: string;
+  productId: string;
+  warehouseId: string;
+  quantity: number;
+  notes?: string;
+}
+
 interface DesktopLocalState {
   version: 1;
   workspace: LocalWorkspace;
@@ -309,8 +334,8 @@ interface DesktopLocalState {
   machines: LocalMachine[];
   boms: LocalBOM[];
   manufacturingOrders: LocalWorkOrder[];
-  stockMovements: Array<Record<string, any>>;
-  stockLocations: Array<Record<string, any>>;
+  stockMovements: StockMovement[];
+  stockLocations: StockLocation[];
   installedApps: string[];
 }
 
@@ -399,31 +424,20 @@ function round2(num: number): number {
   return Math.round(num * 100) / 100;
 }
 
-function convertUnit(quantity: number, fromUnit: string, toUnit: string): number {
-  const f = (fromUnit || "pcs").toLowerCase();
-  const t = (toUnit || "pcs").toLowerCase();
-  if (f === t) return quantity;
-  if (f === "kg" && t === "g") return quantity * 1000;
-  if (f === "g" && t === "kg") return quantity / 1000;
-  if (f === "l" && t === "ml") return quantity * 1000;
-  if (f === "ml" && t === "l") return quantity / 1000;
-  return quantity;
-}
-
 function getBOMById(state: DesktopLocalState, id: string) {
   return state.boms.find(b => b.id === id);
 }
 
 function explodeBOMRecursive(state: DesktopLocalState, bomId: string, multiplier: number, depth = 0): Array<{ productId: string, quantity: number, unit: string }> {
   if (depth > 10) return [];
-  const bom = getBOMById(state, bomId) as any;
+  const bom = getBOMById(state, bomId);
   if (!bom) return [];
 
   let result: Array<{ productId: string, quantity: number, unit: string }> = [];
-  const components = (bom.components as any[]) || [];
+  const components = bom.components || [];
 
   for (const comp of components) {
-    const subBom = state.boms.find(b => (b as any).productId === comp.productId) as any;
+    const subBom = state.boms.find(b => b.productId === comp.productId);
     const itemQty = comp.quantity * multiplier;
 
     if (subBom) {
@@ -439,9 +453,11 @@ function explodeBOMRecursive(state: DesktopLocalState, bomId: string, multiplier
   return result;
 }
 
-function recordProductionMovement(state: DesktopLocalState, {
-  productId, warehouseId, quantity, type, reference, notes, correlationId, accountId, contraAccountId
-}: any) {
+function recordProductionMovement(state: DesktopLocalState, params: {
+  productId: string, warehouseId: string, quantity: number, type: "IN" | "OUT", 
+  reference?: string, notes?: string, correlationId?: string, accountId?: string, contraAccountId?: string
+}) {
+  const { productId, warehouseId, quantity, type, reference, notes, correlationId, accountId, contraAccountId } = params;
   // 1. Log Movement
   state.stockMovements.push({
     id: makeId("sm"),
@@ -461,7 +477,10 @@ function recordProductionMovement(state: DesktopLocalState, {
     loc = { id: makeId("sl"), productId, warehouseId, quantity: 0, notes };
     state.stockLocations.push(loc);
   }
-  loc.quantity = type === "IN" ? Number(loc.quantity || 0) + quantity : Number(loc.quantity || 0) - quantity;
+  
+  if (loc) {
+    loc.quantity = type === "IN" ? Number(loc.quantity || 0) + quantity : Number(loc.quantity || 0) - quantity;
+  }
 
   // 3. Update Product Total Stock
   const product = state.products.find(p => p.id === productId) as any;
@@ -476,9 +495,9 @@ function recordProductionMovement(state: DesktopLocalState, {
       state.transactions.push({
         id: makeId("txn"),
         date: nowIso(),
-        description: notes,
-        reference,
-        correlationId,
+        description: notes || "Production Adjustment",
+        reference: reference || "INTERNAL",
+        correlationId: correlationId || "none",
         transactions: [
           { accountId, type: type === "IN" ? "Debit" : "Credit", amount: value },
           { accountId: contraAccountId, type: type === "IN" ? "Credit" : "Debit", amount: value }
@@ -1199,10 +1218,18 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "get" && path === "system/config") {
+    // 1. Get industry from local workspace state (Defaults to General if not set)
+    const industryKey = state.workspace.industry || Industry.General;
+    
+    // 2. Fetch the corresponding industry configuration from the unified registry
+    const config = (INDUSTRY_CONFIGS as any)[industryKey] || INDUSTRY_CONFIGS[Industry.General];
+    
     return buildResponse(config, {
-      industry: state.workspace.industry,
-      enabledModules: DEFAULT_ENABLED_MODULES,
-      terminology: {},
+      industry: config.industry,
+      // 3. Merge base infrastructure modules with industry-specific modules
+      enabledModules: Array.from(new Set([...DEFAULT_ENABLED_MODULES, ...config.enabledModules])),
+      // 4. Inject the unified terminology map
+      terminology: config.terminology || {},
     });
   }
 

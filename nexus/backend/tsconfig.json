@@ -15,7 +15,7 @@
     "baseUrl": "./",
     "paths": {
       "@nexus/shared": [
-        "../packages/shared/src/index"
+        "../../packages/shared/src/index"
       ]
     },
     "incremental": true,
@@ -32,7 +32,7 @@
   },
   "include": [
     "src/**/*",
-    "../packages/shared/src/**/*"
+    "../../packages/shared/src/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -23,9 +23,8 @@ const requestCache = new Map<string, { data: unknown; timestamp: number }>();
 const pendingRequests = new Map<string, Promise<AxiosResponse>>();
 const CACHE_TTL = 30000; // 30s freshness window for zero-latency lookups
 const THROTTLE_WINDOW = 500; // 500ms window to prevent sub-second duplicate bursts
-const REQUEST_GAP_MS = 350; // Pace outbound traffic so dashboards don't burst the gateway
 let lastScheduledRequestAt = 0;
-let networkQueue: Promise<void> = Promise.resolve();
+const networkQueue: Promise<void> = Promise.resolve();
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -64,11 +63,6 @@ async function scheduleNetworkRequest<T>(task: () => Promise<T>): Promise<T> {
   });
 
   await previousTask;
-
-  const gapRemaining = REQUEST_GAP_MS - (Date.now() - lastScheduledRequestAt);
-  if (gapRemaining > 0) {
-    await new Promise((resolve) => setTimeout(resolve, gapRemaining));
-  }
 
   lastScheduledRequestAt = Date.now();
 
@@ -298,7 +292,7 @@ api.interceptors.response.use(
     if (error.response?.status === 503 || error.response?.status === 502 || error.response?.status === 504) {
       if (typeof window !== 'undefined') {
         return Promise.reject({
-          message: 'Klypso Cloud is waking up. Please wait 60 seconds and try again.',
+          message: 'Klypso Cloud is waking up. Please wait 90 seconds and try again.',
           isWakeup: true
         });
       }
@@ -321,7 +315,7 @@ api.interceptors.response.use(
     // Each new attempt should come from an explicit user action or approval.
     if (error.response?.status === 429) {
       return Promise.reject({
-        message: 'Too many requests. Please approve and retry manually once the server cools down.',
+        message: 'Too many requests. Please wait 90 seconds and retry manually once the server cools down.',
         status: 429,
         isRateLimited: true,
       });

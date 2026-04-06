@@ -34,6 +34,25 @@ interface AuthResponse {
     tenants?: Array<{ id: string; name: string }>;
 }
 
+interface NexusDesktop {
+    auth: {
+        login: (credentials: any) => Promise<{
+            error?: boolean;
+            message?: string;
+            data: {
+                user: AuthUser;
+                accessToken: string;
+            };
+        }>;
+    };
+    sync: {
+        bootstrap: () => Promise<{ error?: string; pulledCount: number }>;
+    };
+    session: {
+        set: (data: any) => Promise<void>;
+    };
+}
+
 export default function LoginPage() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -116,10 +135,9 @@ export default function LoginPage() {
 
                 const endpoint = isAdmin ? "auth/login/admin" : "auth/login/web";
                 
-                // DESKTOP-SHELL: If running in the Electron container, we route the login through the native bridge
                 if (isDesktopApp) {
                     try {
-                        const nexusDesktop = (window as any).nexusDesktop;
+                        const nexusDesktop = (window as unknown as { nexusDesktop: NexusDesktop }).nexusDesktop;
                         const desktopRes = await nexusDesktop.auth.login({
                             email: finalEmail,
                             password: finalPassword,

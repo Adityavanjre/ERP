@@ -50,6 +50,7 @@ export class AuthController {
   ) {}
 
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Public()
   @Post('login/web')
   async loginWeb(
