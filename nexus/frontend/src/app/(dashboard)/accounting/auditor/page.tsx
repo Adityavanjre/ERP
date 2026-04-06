@@ -1,6 +1,8 @@
 
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import React, { useState, useEffect, useCallback } from "react";
 import {
     ShieldCheck,
@@ -47,7 +49,12 @@ interface AuditorData {
 }
 
 export default function AuditorDashboard() {
+    const [mounted, setMounted] = useState(false);
     const [data, setData] = useState<AuditorData | null>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     const [loading, setLoading] = useState(true);
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
@@ -153,6 +160,8 @@ export default function AuditorDashboard() {
     };
 
     if (loading && !data) return <div className="p-8">Loading Auditor...</div>;
+
+    if (!mounted) return null;
 
     return (
         <div className="p-4 md:p-8 pb-24 md:pb-20 space-y-6 md:space-y-8 bg-slate-50 text-slate-900 min-h-screen">

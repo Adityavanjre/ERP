@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PassportModule } from '@nestjs/passport';
@@ -16,9 +16,11 @@ import { MfaCryptoService } from './mfa-crypto.service';
   imports: [
     PrismaModule,
     PassportModule,
+    ConfigModule,
     forwardRef(() => AccountingModule),
     forwardRef(() => SystemModule),
     JwtModule.registerAsync({
+      imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const jwtSecret = configService.get<string>('JWT_SECRET');
         if (!jwtSecret) {

@@ -1,5 +1,5 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
-import { INDUSTRY_CONFIGS, Industry, type IndustryModuleConfig } from "@nexus/shared";
+import { INDUSTRY_CONFIGS, Industry } from "@nexus/shared";
 
 type HttpMethod = "get" | "post" | "patch" | "put" | "delete";
 

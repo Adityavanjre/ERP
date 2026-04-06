@@ -74,7 +74,6 @@ export function useAuth() {
             cancelled = true;
             window.removeEventListener('storage', handleStorageChange);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount. Storage event handles cross-tab sync.
 
     return { user, loading, isAuthenticated: !!user };
