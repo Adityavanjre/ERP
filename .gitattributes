@@ -1,0 +1,17 @@
+# Enforce LF line endings for all text files across all platforms.
+# This prevents the CRLF/LF mismatch that causes prettier/eslint failures
+# when pushing from Windows to a Linux CI runner (GitHub Actions on ubuntu-latest).
+* text=auto eol=lf
+
+# Explicitly declare binary files to prevent corruption
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.svg binary
+*.exe binary
+*.zip binary
+*.db binary

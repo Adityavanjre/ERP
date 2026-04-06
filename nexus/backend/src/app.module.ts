@@ -74,7 +74,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       {
         name: 'default',
         ttl: 60000, // 1 minute in milliseconds (v6+)
-        limit: 30000, 
+        limit: 30000,
       },
     ]),
     ServeStaticModule.forRoot({
