@@ -18,6 +18,7 @@ import {
 import { Plus, Wallet, ArrowUpRight, ArrowDownRight, Landmark, Receipt, Printer, Search, RefreshCw, ShoppingCart, MessageCircle, Ban, Activity, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { RecordPaymentModal, type Invoice as PaymentInvoice } from "@/components/accounting/record-payment-modal";
 import { CreateInvoiceDialog } from "@/components/accounting/create-invoice-dialog";
 import { CreateAccountDialog } from "@/components/accounting/create-account-dialog";
@@ -102,32 +103,60 @@ interface AccountingDraft {
     }>;
 }
 
+// ACC-001: Persistent Session Cache
+// Prevents 8 parallel API calls on every navigation between dashboard tabs.
+let _accountingCache: {
+    data: {
+        accounts: any[];
+        transactions: any[];
+        invoices: any[];
+        stats: any;
+        healthScore: any;
+        leaderboard: any[];
+        recoveryMemory: any;
+        totalPages: number;
+    };
+    timestamp: number;
+} | null = null;
+const CACHE_TTL = 300000; // 5 minutes
+
 export default function AccountingPage() {
     const { user } = useAuth();
     const { setUILocked, showConfirm } = useUX();
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [invoices, setInvoices] = useState<AccountingInvoice[]>([]);
-    const [stats, setStats] = useState<AccountingStats>({ receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
-    const [loading, setLoading] = useState(true);
+
+    // Rehydrate from cache if available and fresh
+    const initialData = (_accountingCache && (Date.now() - _accountingCache.timestamp < CACHE_TTL)) 
+        ? _accountingCache.data 
+        : null;
+
+    const [accounts, setAccounts] = useState<Account[]>(initialData?.accounts || []);
+    const [transactions, setTransactions] = useState<Transaction[]>(initialData?.transactions || []);
+    const [invoices, setInvoices] = useState<AccountingInvoice[]>(initialData?.invoices || []);
+    const [stats, setStats] = useState<AccountingStats>(initialData?.stats || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
+    const [loading, setLoading] = useState(!initialData);
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<AccountingInvoice | null>(null);
     const [showCreateInvoice, setShowCreateInvoice] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
     const [invoicePage, setInvoicePage] = useState(1);
-    const [invoiceTotalPages, setInvoiceTotalPages] = useState(1);
+    const [invoiceTotalPages, setInvoiceTotalPages] = useState(initialData?.totalPages || 1);
     const [pendingDraft, setPendingDraft] = useState<AccountingDraft | null>(null);
-    const [healthScore, setHealthScore] = useState<HealthScore | null>(null);
-    const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
-    const [recoveryMemory, setRecoveryMemory] = useState<RecoveryMemory | null>(null);
+    const [healthScore, setHealthScore] = useState<HealthScore | null>(initialData?.healthScore || null);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(initialData?.leaderboard || []);
+    const [recoveryMemory, setRecoveryMemory] = useState<RecoveryMemory | null>(initialData?.recoveryMemory || null);
     const [showCreateAccount, setShowCreateAccount] = useState(false);
     const [showCreateJournalEntry, setShowCreateJournalEntry] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
     const isSyncingRef = useRef(false);
 
-    const syncLedgers = useCallback(async (silent = false) => {
+    const syncLedgers = useCallback(async (silent = false, force = false) => {
         try {
+            // Check cache unless forcing refresh
+            if (!force && _accountingCache && (Date.now() - _accountingCache.timestamp < CACHE_TTL) && accounts.length > 0) {
+              return;
+            }
+
             if (!silent && !isSyncingRef.current) {
                 isSyncingRef.current = true;
                 setIsSyncing(true);
@@ -164,11 +193,31 @@ export default function AccountingPage() {
                 hasFullAccess ? api.get("accounting/leaderboard").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
                 hasFullAccess ? api.get("accounting/recovery-memory").catch(() => ({ data: null })) : Promise.resolve({ data: null })
             ]).then(([statsRes, , healthRes, leaderRes, recoveryRes]) => {
-                setStats(statsRes.data || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] });
-                setHealthScore(healthRes.data);
-                setLeaderboard(leaderRes.data || []);
-                setRecoveryMemory(recoveryRes.data);
+                const s = statsRes.data || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] };
+                const h = healthRes.data;
+                const l = leaderRes.data || [];
+                const r = recoveryRes.data;
+                
+                setStats(s);
+                setHealthScore(h);
+                setLeaderboard(l);
+                setRecoveryMemory(r);
                 setLastSyncTime(Date.now());
+
+                // Update global session cache
+                _accountingCache = {
+                    data: {
+                        accounts: accRes.data || [],
+                        transactions: txRes.data?.data || txRes.data || [],
+                        invoices: invRes.data?.data || invRes.data || [],
+                        stats: s,
+                        healthScore: h,
+                        leaderboard: l,
+                        recoveryMemory: r,
+                        totalPages: invRes.data?.meta?.totalPages || 1
+                    },
+                    timestamp: Date.now()
+                };
             });
 
         } catch {
@@ -254,9 +303,17 @@ export default function AccountingPage() {
                         <Button
                             variant="ghost"
                             className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9 flex-1 sm:flex-none"
+                            onClick={() => syncLedgers(false, true)}
+                            disabled={isSyncing}
+                        >
+                            <RefreshCw className={cn("mr-2 h-4 w-4 text-blue-500", isSyncing && "animate-spin")} /> Force Sync
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            className="text-slate-500 hover:text-slate-900 hover:bg-white hover:shadow-sm rounded-xl px-4 py-2 font-bold transition-all h-9 flex-1 sm:flex-none"
                             onClick={() => setShowCreateAccount(true)}
                         >
-                            <RefreshCw className="mr-2 h-4 w-4 text-blue-500" /> All Accounts
+                            <Plus className="mr-2 h-4 w-4 text-emerald-500" /> New Account
                         </Button>
                         <Button
                             variant="ghost"

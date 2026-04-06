@@ -14,7 +14,9 @@ const API_URL = isDesktopShell()
 // PERF-001: Zero-Latency Caching Layer
 // Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
 const requestCache = new Map<string, { data: unknown; timestamp: number }>();
+const pendingRequests = new Map<string, Promise<any>>();
 const CACHE_TTL = 30000; // 30s freshness window for zero-latency lookups
+const THROTTLE_WINDOW = 500; // 500ms window to prevent sub-second duplicate bursts
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -106,7 +108,10 @@ api.interceptors.request.use(
     // FE-004: Attach the CSRF token on mutating requests so the backend CsrfGuard
     // double-submit cookie check can pass for web-channel cookie-based sessions.
     if (config.method?.toLowerCase() === 'get') {
-      const cached = requestCache.get(config.url || '');
+      const cacheKey = axios.getUri(config);
+      
+      // 1. Check persistent cache
+      const cached = requestCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
         config.adapter = () =>
           Promise.resolve({
@@ -116,9 +121,19 @@ api.interceptors.request.use(
             headers: {},
             config,
           } as never);
+        return config;
+      }
+
+      // 2. Thundering Herd Deduplication
+      // If a request for this exact URL is already in-flight, reuse it
+      const pending = pendingRequests.get(cacheKey);
+      if (pending) {
+        config.adapter = () => pending;
+        return config;
       }
     }
 
+    // Attach the CSRF token on mutating requests
     if (config.method && MUTATING_METHODS.has(config.method.toLowerCase())) {
       // Flush cache on mutations to ensure freshness
       requestCache.clear();
@@ -132,6 +147,56 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+// DEDUPLICATION ADAPTER: Intercepts the low-level adapter call to prevent thundering herds.
+// We cast to any to bypass the complex AxiosAdapter constituent types which can be string|[] in some versions.
+const originalAdapter: any = api.defaults.adapter;
+
+api.defaults.adapter = async (config) => {
+  if (config.method?.toLowerCase() !== 'get' || !config.url) {
+    return originalAdapter(config);
+  }
+
+  const cacheKey = axios.getUri(config);
+
+  // 1. Check Persistent Cache (30s)
+  const cached = requestCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return {
+      data: cached.data,
+      status: 200,
+      statusText: 'OK (Cache Hit)',
+      headers: {},
+      config,
+    } as any;
+  }
+
+  // 2. Thundering Herd Deduplication
+  // If identical GET is in-flight, return its promise
+  const inFlight = pendingRequests.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  // 3. Execute and track
+  const requestPromise = originalAdapter(config);
+  pendingRequests.set(cacheKey, requestPromise);
+
+  try {
+    const response = await requestPromise;
+    // Cache the result for zero-latency lookups
+    requestCache.set(cacheKey, {
+      data: response.data,
+      timestamp: Date.now(),
+    });
+    return response;
+  } finally {
+    // Keep in pending for a tiny bit longer (THROTTLE_WINDOW) to catch micro-bursts
+    setTimeout(() => {
+      pendingRequests.delete(cacheKey);
+    }, THROTTLE_WINDOW);
+  }
+};
 
 api.interceptors.response.use(
   (response) => {
@@ -166,14 +231,6 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined' && (window as any).klypso?.setToken) {
         (window as any).klypso.setToken(response.data.accessToken).catch(console.error);
       }
-    }
-
-    // Cache successful GET requests
-    if (response.config.method?.toLowerCase() === 'get' && response.config.url) {
-      requestCache.set(response.config.url, {
-        data: response.data,
-        timestamp: Date.now()
-      });
     }
 
     return response;

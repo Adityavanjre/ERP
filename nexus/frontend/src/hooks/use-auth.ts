@@ -36,10 +36,13 @@ export function useAuth() {
                     };
 
                     // Prevent identity mismatch if token changed in another tab
-                    if (!user || user.id !== userData.id || user.tenantId !== userData.tenantId) {
-                        if (!cancelled) {
-                            setUser(userData);
-                        }
+                    if (!cancelled) {
+                        setUser(prev => {
+                            if (!prev || prev.id !== userData.id || prev.tenantId !== userData.tenantId) {
+                                return userData;
+                            }
+                            return prev;
+                        });
                     }
                 } catch {
                     localStorage.removeItem("k_token");

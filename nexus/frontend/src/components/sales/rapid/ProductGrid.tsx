@@ -34,7 +34,10 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
         }
     }, []);
 
+    const hasLoadedRef = React.useRef(false);
     useEffect(() => {
+        if (hasLoadedRef.current) return;
+        hasLoadedRef.current = true;
         fetchProducts();
     }, [fetchProducts]);
 
