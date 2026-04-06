@@ -171,6 +171,10 @@ ipcMain.handle('auth:login', async (_event, credentials) => {
       }
     }
 
+    if (response.data.accessToken && syncEngine) {
+      syncEngine.setToken(response.data.accessToken);
+    }
+
     return { data: response.data, status: response.status };
   } catch (error: any) {
     console.error('[CORE AUTH ERROR]', error.response?.data || error.message);

@@ -29,9 +29,9 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
 
     if (user && user.role) {
       if (user.role === Role.Owner) {
-        adjustedLimit = limit * 2; // Owners get more leeway
+        adjustedLimit = limit * 10; // Owners get 10x leeway for heavy exports/syncs
       } else if (user.role === Role.CA) {
-        adjustedLimit = limit * 1.5;
+        adjustedLimit = limit * 5; // Accountants get 5x leeway
       }
     }
 

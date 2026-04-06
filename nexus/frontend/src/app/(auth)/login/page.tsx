@@ -40,6 +40,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const [syncing, setSyncing] = useState(false)
 
     const [step, setStep] = useState<"identity" | "mfa">("identity")
     const [isAdmin, setIsAdmin] = useState(false)
@@ -115,6 +116,42 @@ export default function LoginPage() {
                 }
 
                 const endpoint = isAdmin ? "auth/login/admin" : "auth/login/web";
+                
+                // DESKTOP-SHELL: If running in the Electron container, we route the login through the native bridge
+                if (isDesktopApp) {
+                    try {
+                        const desktopRes = await (window as any).nexusDesktop.auth.login({
+                            email: finalEmail,
+                            password: finalPassword,
+                            isAdmin: isAdmin
+                        });
+
+                        if (desktopRes.error) {
+                            setError(desktopRes.message || "Desktop authentication failed");
+                            setLoading(false);
+                            return;
+                        }
+
+                        localStorage.setItem("k_user", JSON.stringify(desktopRes.data.user));
+                        localStorage.setItem("k_cloud_sync_active", "true");
+                        
+                        setSyncing(true);
+                        try {
+                            await (window as any).nexusDesktop.session.set(desktopRes.data);
+                            await (window as any).nexusDesktop.sync.bootstrap();
+                            window.location.href = "/portal/dashboard";
+                        } catch (syncErr: any) {
+                            console.error("[DESKTOP_SYNC_FAIL]", syncErr);
+                            window.location.href = "/portal/dashboard";
+                        }
+                        return;
+                    } catch (err: any) {
+                        setError("Bridge Communication Error: " + (err.message || "Unknown error"));
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 const res = await api.post(endpoint, { email: finalEmail, password: finalPassword })
 
                 if (res.data.requiresMfa) {
@@ -144,7 +181,7 @@ export default function LoginPage() {
         } finally {
             setLoading(false)
         }
-    }, [step, email, password, isAdmin, tempToken, mfaCode, completeLogin]);
+    }, [step, email, password, isAdmin, tempToken, mfaCode, completeLogin, isDesktopApp]);
 
     const handleGoogleLogin = useCallback(async () => {
         setLoading(true);

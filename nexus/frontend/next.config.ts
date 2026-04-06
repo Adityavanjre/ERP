@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import crypto from "crypto";
 
 const KLYPSO_BACKEND_URL = process.env.KLYPSO_BACKEND_URL;
 
@@ -83,12 +84,45 @@ const nextConfig: NextConfig = {
     // Production builds still use webpack so we keep the webpack config below.
     turbopack: {},
     webpack: (config, { isServer }) => {
-        // Enforce performance budgets for the client bundle (production webpack builds only)
+        // PERF-001: Optimize Chunk Splitting to reduce the number of initial HTTP requests.
+        // Merging small chunks (under 30kb) prevents the "Thundering Herd" effect that triggers 
+        // infrastructure-level rate limiting (429) on high-latency or restricted networks.
+        if (!isServer) {
+            config.optimization.splitChunks = {
+                chunks: 'all',
+                minSize: 30000, // 30kb - smaller files are merged
+                maxSize: 500000, // 500kb - larger files are split
+                cacheGroups: {
+                    default: false,
+                    vendors: false,
+                    framework: {
+                        name: 'framework',
+                        chunks: 'all',
+                        test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+                        priority: 40,
+                        enforce: true,
+                    },
+                    lib: {
+                        test: /[\\/]node_modules[\\/]/,
+                        name(module: any) {
+                          const hash = crypto.createHash('sha1');
+                          hash.update(module.identifier());
+                          return `lib-${hash.digest('hex').substring(0, 8)}`;
+                        },
+                        priority: 30,
+                        minChunks: 1,
+                        reuseExistingChunk: true,
+                    },
+                },
+            };
+        }
+
+        // Performance budgets
         if (!isServer) {
             config.performance = {
                 hints: 'warning',
-                maxAssetSize: 500000,    // 500kb
-                maxEntrypointSize: 1000000, // 1mb
+                maxAssetSize: 500000,
+                maxEntrypointSize: 1000000,
             };
         }
         return config;
