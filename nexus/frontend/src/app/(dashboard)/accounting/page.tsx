@@ -107,13 +107,13 @@ interface AccountingDraft {
 // Prevents 8 parallel API calls on every navigation between dashboard tabs.
 let _accountingCache: {
     data: {
-        accounts: any[];
-        transactions: any[];
-        invoices: any[];
-        stats: any;
-        healthScore: any;
-        leaderboard: any[];
-        recoveryMemory: any;
+        accounts: Account[];
+        transactions: Transaction[];
+        invoices: AccountingInvoice[];
+        stats: AccountingStats;
+        healthScore: HealthScore | null;
+        leaderboard: LeaderboardUser[];
+        recoveryMemory: RecoveryMemory | null;
         totalPages: number;
     };
     timestamp: number;
@@ -227,7 +227,7 @@ export default function AccountingPage() {
             isSyncingRef.current = false;
             setIsSyncing(false);
         }
-    }, [invoicePage, user?.role, user?.isSuperAdmin]);
+    }, [invoicePage, user?.role, user?.isSuperAdmin, accounts.length]);
 
     useEffect(() => {        const draft = localStorage.getItem("invoice_draft");        if (draft) {            try {                const parsed = JSON.parse(draft);                if (parsed.items?.length > 0 && parsed.items[0].productId) {                    setPendingDraft(parsed);                }            } catch {                // Silently ignore malformed drafts            }        }    }, [showCreateInvoice]);
 

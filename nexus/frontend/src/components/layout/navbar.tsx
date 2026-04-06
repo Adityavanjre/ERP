@@ -30,17 +30,19 @@ export const Navbar = () => {
                 {offlineMode && (
                     <div 
                         onClick={async () => {
-                            if ((window as any).nexusDesktop?.sync?.execute) {
+                            const bridge = (window as unknown as { nexusDesktop?: { sync: { execute: () => Promise<{ error?: string; pushedCount: number; pulledCount: number; conflictCount: number }> } } }).nexusDesktop;
+                            if (bridge?.sync?.execute) {
                                 try {
-                                    const result = await (window as any).nexusDesktop.sync.execute();
+                                    const result = await bridge.sync.execute();
                                     if (result.error) {
                                         alert("Sync failed: " + result.error);
                                     } else {
                                         alert(`Sync complete! Pushed: ${result.pushedCount}, Pulled: ${result.pulledCount}, Conflicts: ${result.conflictCount}`);
                                         if (result.pulledCount > 0) window.location.reload();
                                     }
-                                } catch (e: any) {
-                                    alert("Sync error: " + e.message);
+                                } catch (err: unknown) {
+                                    const error = err as { message?: string };
+                                    alert("Sync error: " + (error.message || "Unknown error"));
                                 }
                             }
                         }}

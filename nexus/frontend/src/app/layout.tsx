@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { UXProvider } from "@/components/providers/ux-provider";

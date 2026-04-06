@@ -40,7 +40,6 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
-    const [syncing, setSyncing] = useState(false)
 
     const [step, setStep] = useState<"identity" | "mfa">("identity")
     const [isAdmin, setIsAdmin] = useState(false)
@@ -106,8 +105,8 @@ export default function LoginPage() {
 
         try {
             if (step === "identity") {
-                let finalEmail = email.trim();
-                let finalPassword = password.trim();
+                const finalEmail = email.trim();
+                const finalPassword = password.trim();
 
                 if (!finalEmail || !finalPassword) {
                     setError("Credentials required.");
@@ -120,7 +119,8 @@ export default function LoginPage() {
                 // DESKTOP-SHELL: If running in the Electron container, we route the login through the native bridge
                 if (isDesktopApp) {
                     try {
-                        const desktopRes = await (window as any).nexusDesktop.auth.login({
+                        const nexusDesktop = (window as any).nexusDesktop;
+                        const desktopRes = await nexusDesktop.auth.login({
                             email: finalEmail,
                             password: finalPassword,
                             isAdmin: isAdmin
@@ -135,18 +135,19 @@ export default function LoginPage() {
                         localStorage.setItem("k_user", JSON.stringify(desktopRes.data.user));
                         localStorage.setItem("k_cloud_sync_active", "true");
                         
-                        setSyncing(true);
                         try {
-                            await (window as any).nexusDesktop.session.set(desktopRes.data);
-                            await (window as any).nexusDesktop.sync.bootstrap();
+                            await nexusDesktop.session.set(desktopRes.data);
+                            await nexusDesktop.sync.bootstrap();
                             window.location.href = "/portal/dashboard";
-                        } catch (syncErr: any) {
-                            console.error("[DESKTOP_SYNC_FAIL]", syncErr);
+                        } catch (syncErr: unknown) {
+                            const err = syncErr as { message?: string };
+                            console.error("[DESKTOP_SYNC_FAIL]", err);
                             window.location.href = "/portal/dashboard";
                         }
                         return;
-                    } catch (err: any) {
-                        setError("Bridge Communication Error: " + (err.message || "Unknown error"));
+                    } catch (err: unknown) {
+                        const error = err as { message?: string };
+                        setError("Bridge Communication Error: " + (error.message || "Unknown error"));
                         setLoading(false);
                         return;
                     }

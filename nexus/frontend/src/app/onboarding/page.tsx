@@ -13,7 +13,6 @@ import {
   CheckCircle2, 
   Building2,
   Globe,
-  Settings,
   ShieldCheck,
   Zap
 } from "lucide-react";
