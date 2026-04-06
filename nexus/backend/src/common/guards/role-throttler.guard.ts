@@ -18,7 +18,15 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
   protected async handleRequest(
     requestProps: ThrottlerRequest,
   ): Promise<boolean> {
-    const { context, limit, ttl, throttler, blockDuration, getTracker, generateKey } = requestProps;
+    const {
+      context,
+      limit,
+      ttl,
+      throttler,
+      blockDuration,
+      getTracker,
+      generateKey,
+    } = requestProps;
     const { user } = context.switchToHttp().getRequest();
 
     let adjustedLimit = limit;
