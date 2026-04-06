@@ -166,15 +166,20 @@ export default function DashboardPage() {
             deadlineTimer = setTimeout(() => setLoading(false), 2000);
         }
 
-        try {
-            console.log("DASHBOARD: Starting Prioritized Sync...");
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-            // BATCH 1: VITALS
+        try {
+            console.log("DASHBOARD: Starting Staggered Sync (Burst Control)...");
+
+            // WAVE 1: VITALS (Lowest latency, highest priority)
             const vitalsPromise = api.get('analytics/summary').then(res => {
                 setBiStats(prev => ({ ...prev, ...res.data }));
             }).catch(e => console.error("Vitals Fail:", e));
 
-            // BATCH 2: CONFIG & STATS
+            await vitalsPromise; // Ensure vitals are in-flight or done before next wave
+            await delay(150); // Small gap to avoid simultaneous proxy burst
+
+            // WAVE 2: CONFIG & INFRA
             const infraPromise = Promise.allSettled([
                 api.get('system/config'),
                 api.get('system/stats')
@@ -190,7 +195,10 @@ export default function DashboardPage() {
                 if (sys) setSystemStats(sys);
             });
 
-            // BATCH 3: HEAVY DATA
+            await infraPromise;
+            await delay(150);
+
+            // WAVE 3: HEAVY ANALYTICS
             const analyticsPromise = Promise.allSettled([
                 api.get('analytics/performance'),
                 api.get('analytics/health'),
@@ -225,7 +233,7 @@ export default function DashboardPage() {
                 };
             });
 
-            await Promise.all([vitalsPromise, infraPromise, analyticsPromise]);
+            await analyticsPromise;
 
         } catch (err) {
             console.error("DASHBOARD: Critical Sync Failure", err);

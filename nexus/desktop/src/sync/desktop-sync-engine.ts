@@ -75,46 +75,58 @@ class DesktopApiClient implements ApiClient {
       };
 
       const proto = urlObj.protocol === 'https:' ? https : http;
-      const req = proto.request(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => data += chunk);
-        res.on('end', async () => {
-          // 503/504 = Server waking up - surface error immediately without automatic retries
-          if (res.statusCode === 503 || res.statusCode === 504 || res.statusCode === 502) {
-            reject(new Error('Klypso Cloud is waking up from sleep. Please wait 60 seconds and try syncing again.'));
-            return;
-          }
+      const executeRequest = (attempt: number) => {
+        const req = proto.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => data += chunk);
+          res.on('end', async () => {
+            // 429 = TOO MANY REQUESTS
+            // Implement simple retry with delay for desktop sync bursts
+            if (res.statusCode === 429 && attempt < 3) {
+              console.warn(`[SYNC] Rate limited (429). Retrying in 3s... (Attempt ${attempt + 1})`);
+              setTimeout(() => executeRequest(attempt + 1), 3000);
+              return;
+            }
 
-          // 401 = JWT expired — surface a clean error to the UI
-          if (res.statusCode === 401) {
-            reject(new Error('UNAUTHORIZED: Cloud session expired. Please sign in again.'));
-            return;
-          }
+            // 503/504 = Server waking up - surface error immediately without automatic retries
+            if (res.statusCode === 503 || res.statusCode === 504 || res.statusCode === 502) {
+              reject(new Error('Klypso Cloud is waking up from sleep. Please wait 60 seconds and try syncing again.'));
+              return;
+            }
 
-          if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
-            reject(new Error(`Request failed with status ${res.statusCode ?? 'unknown'}: ${data.slice(0, 300)}`));
-            return;
-          }
+            // 401 = JWT expired — surface a clean error to the UI
+            if (res.statusCode === 401) {
+              reject(new Error('UNAUTHORIZED: Cloud session expired. Please sign in again.'));
+              return;
+            }
 
-          try {
-            resolve(JSON.parse(data));
-          } catch {
-            reject(new Error(`Invalid JSON response: ${data.slice(0, 200)}`));
-          }
+            if (!res.statusCode || res.statusCode < 200 || res.statusCode >= 300) {
+              reject(new Error(`Request failed with status ${res.statusCode ?? 'unknown'}: ${data.slice(0, 300)}`));
+              return;
+            }
+
+            try {
+              resolve(JSON.parse(data));
+            } catch {
+              reject(new Error(`Invalid JSON response: ${data.slice(0, 200)}`));
+            }
+          });
         });
-      });
 
-      req.on('timeout', () => {
-        req.destroy();
-        reject(new Error('Klypso Cloud timed out. The server is waking up — please try again in 30 seconds.'));
-      });
+        req.on('timeout', () => {
+          req.destroy();
+          reject(new Error('Klypso Cloud timed out. The server is waking up — please try again in 30 seconds.'));
+        });
 
-      req.on('error', reject);
+        req.on('error', reject);
 
-      if (body) {
-        req.write(JSON.stringify(body));
-      }
-      req.end();
+        if (body) {
+          req.write(JSON.stringify(body));
+        }
+        req.end();
+      };
+
+      executeRequest(0);
     });
   }
 

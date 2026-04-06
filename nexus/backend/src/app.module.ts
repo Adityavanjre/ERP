@@ -72,10 +72,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     CacheModule.register({ isGlobal: true, ttl: 60 * 1000, max: 1000 }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
-        // PROXY-HOTFIX: Next.js acts as an API proxy for *all* traffic (both Web and Desktop).
-        // If trust proxy chains are misaligned, NestJS sees all requests coming from a single IP.
-        // Bumping limit to 30000 to prevent global proxy-level rate limits during desktop deployment.
+        name: 'default',
+        ttl: 60000, // 1 minute in milliseconds (v6+)
         limit: 30000, 
       },
     ]),

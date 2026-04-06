@@ -259,6 +259,16 @@ api.interceptors.response.use(
 
     const originalRequest = error.config || {};
 
+    // RES-004: Global 429 (Too Many Requests) Resistance
+    // If the server or proxy rate-limits us, don't crash. Wait and try again.
+    if (error.response?.status === 429 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const delay = Math.random() * 2000 + 1000; // Jittered 1-3s delay
+      console.warn(`[API] Rate limited (429). Retrying in ${Math.round(delay)}ms...`);
+      return new Promise(resolve => setTimeout(resolve, delay))
+        .then(() => api(originalRequest));
+    }
+
     if (error.response?.status === 401) {
       const isLoginRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
       const isIdentityFlowRequest = originalRequest.url?.includes('/auth/tenants') || originalRequest.url?.includes('/auth/select-tenant');
