@@ -65,7 +65,7 @@ export default function RecoveryMemoryDashboard() {
         }
     }, []);
 
-    useEffect(() => {        syncRecoveryData(true);    }, [syncRecoveryData]);
+    useEffect(() => {        syncRecoveryData(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, []); // Fire once on mount.
 
     if (loading) return <div className="p-8 text-zinc-400">Loading Profit Insights...</div>;
     if (!data) return null;

@@ -90,7 +90,7 @@ export default function BOMPage() {
         }
     }, []);
 
-    useEffect(() => {        syncLogicStructs(true);    }, [syncLogicStructs]);
+    useEffect(() => {        syncLogicStructs(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, []); // Fire once on mount.
 
     useEffect(() => {        if (selectedBomId) {            fetchDetails(selectedBomId);        }    }, [selectedBomId, fetchDetails]);
 

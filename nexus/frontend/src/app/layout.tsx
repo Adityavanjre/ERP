@@ -121,8 +121,6 @@ export default function RootLayout({
       <head>
         <meta name="ai-content" content="index, follow" />
         <meta name="discovery" content="https://klypso.in/portal/sitemap.xml" />
-        <link rel="dns-prefetch" href="https://klypso-backend.onrender.com" />
-        <link rel="preconnect" href="https://klypso-backend.onrender.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://images.unsplash.com" />
       </head>

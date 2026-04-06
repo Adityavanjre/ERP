@@ -71,7 +71,7 @@ export default function FounderMonitoring() {
         }
     }, []);
 
-    useEffect(() => {        syncDashboardStats(true);    }, [syncDashboardStats]);
+    useEffect(() => {        syncDashboardStats(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, []); // Fire once on mount.
 
     if (loading) return <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">Loading System Overview...</div>;
     if (!data) return null;

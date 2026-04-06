@@ -88,10 +88,53 @@ type ApiResponse<T> = {
 
 type SettledApiResult<T> = PromiseSettledResult<ApiResponse<T>>;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION-LEVEL CACHE
+// Prevents re-fetching all 7 analytics endpoints every time the user navigates
+// back to the dashboard within the same browser session.
+// Cache is invalidated after 5 minutes to keep data reasonably fresh.
+// ─────────────────────────────────────────────────────────────────────────────
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const EMPTY_BI_STATS = {
+    revenue: 0,
+    expenses: 0,
+    profit: 0,
+    orderCount: 0,
+    customerCount: 0,
+    inventoryCount: 0,
+    activeCampaigns: 0,
+    workOrderCount: 0,
+};
+
+interface DashboardCache {
+    biStats: typeof EMPTY_BI_STATS;
+    healthStats: HealthStats;
+    chartData: ChartData[];
+    activity: ActivityLog[];
+    valueChain: ValueChainStep[];
+    enabledModules: string[];
+    industryConfig: IndustryConfig | null;
+    fetchedAt: number;
+}
+
+let _dashboardCache: DashboardCache | null = null;
+
+function getCachedDashboard(): DashboardCache | null {
+    if (!_dashboardCache) return null;
+    if (Date.now() - _dashboardCache.fetchedAt > CACHE_TTL_MS) {
+        _dashboardCache = null;
+        return null;
+    }
+    return _dashboardCache;
+}
+
 export default function DashboardPage() {
     const router = useRouter();
     const { user } = useAuth();
     const userRole = (user?.role as RoleName) || 'Biller';
+
+    const cache = getCachedDashboard();
 
     const [, setSystemStats] = useState<SystemStats>({
         apps: 0,
@@ -100,37 +143,24 @@ export default function DashboardPage() {
         uptime: '99.9%'
     });
 
-    const [biStats, setBiStats] = useState({
-        revenue: 0,
-        expenses: 0,
-        profit: 0,
-        orderCount: 0,
-        customerCount: 0,
-        inventoryCount: 0,
-        activeCampaigns: 0,
-        workOrderCount: 0, // FIXED: Corrected typo from workOderCount
-    });
-
-    const [healthStats, setHealthStats] = useState<HealthStats>({
+    const [biStats, setBiStats] = useState(cache?.biStats ?? EMPTY_BI_STATS);
+    const [healthStats, setHealthStats] = useState<HealthStats>(cache?.healthStats ?? {
         runRate: 0,
         burnRate: 0,
         growth: 0,
         healthScore: 100,
         alerts: []
     });
-
-    const [chartData, setChartData] = useState<ChartData[]>([]);
-    const [activity, setActivity] = useState<ActivityLog[]>([]);
-    const [valueChain, setValueChain] = useState<ValueChainStep[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [chartData, setChartData] = useState<ChartData[]>(cache?.chartData ?? []);
+    const [activity, setActivity] = useState<ActivityLog[]>(cache?.activity ?? []);
+    const [valueChain, setValueChain] = useState<ValueChainStep[]>(cache?.valueChain ?? []);
+    const [loading, setLoading] = useState(!cache); // Skip loading spinner if cache hit
     const [syncDegraded, setSyncDegraded] = useState(false);
-
-    const [enabledModules, setEnabledModules] = useState<string[]>([]);
-    const [industryConfig, setIndustryConfig] = useState<IndustryConfig | null>(null);
+    const [enabledModules, setEnabledModules] = useState<string[]>(cache?.enabledModules ?? []);
+    const [industryConfig, setIndustryConfig] = useState<IndustryConfig | null>(cache?.industryConfig ?? null);
 
     const fetchData = useCallback(async (isInitial = false) => {
         // DEADLINE TIMER: If initial load, force-unblock the loading spinner after 2s
-        // no matter what. API data will fill in progressively as calls resolve.
         let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
         if (isInitial) {
             deadlineTimer = setTimeout(() => setLoading(false), 2000);
@@ -139,13 +169,12 @@ export default function DashboardPage() {
         try {
             console.log("DASHBOARD: Starting Prioritized Sync...");
 
-            // BATCH 1: VITALS (Crucial stats for the 4 top boxes)
-            // Even with millions of rows, indexed counts return in <50ms
+            // BATCH 1: VITALS
             const vitalsPromise = api.get('analytics/summary').then(res => {
                 setBiStats(prev => ({ ...prev, ...res.data }));
             }).catch(e => console.error("Vitals Fail:", e));
 
-            // BATCH 2: CONFIG & STATS (Infrastructure)
+            // BATCH 2: CONFIG & STATS
             const infraPromise = Promise.allSettled([
                 api.get('system/config'),
                 api.get('system/stats')
@@ -161,8 +190,7 @@ export default function DashboardPage() {
                 if (sys) setSystemStats(sys);
             });
 
-            // BATCH 3: HEAVY DATA (Performance Charts & Value Chain)
-            // These might take longer if the database is large, so we fetch them lazily
+            // BATCH 3: HEAVY DATA
             const analyticsPromise = Promise.allSettled([
                 api.get('analytics/performance'),
                 api.get('analytics/health'),
@@ -171,7 +199,7 @@ export default function DashboardPage() {
             ]).then(results => {
                 const getVal = <T,>(result: SettledApiResult<T>): T | null =>
                     result.status === 'fulfilled' ? result.value.data : null;
-                
+
                 const perf = getVal(results[0]);
                 const hlth = getVal(results[1]);
                 const act = getVal(results[2]);
@@ -181,8 +209,20 @@ export default function DashboardPage() {
                 if (hlth) setHealthStats(hlth);
                 if (act) setActivity(act);
                 if (vc) setValueChain(vc);
-                
+
                 setSyncDegraded(!perf && !hlth);
+
+                // Persist to session cache so back-navigation is instant
+                _dashboardCache = {
+                    biStats: biStats,
+                    healthStats: hlth ?? healthStats,
+                    chartData: perf ?? chartData,
+                    activity: act ?? activity,
+                    valueChain: vc ?? valueChain,
+                    enabledModules: enabledModules,
+                    industryConfig: industryConfig,
+                    fetchedAt: Date.now(),
+                };
             });
 
             await Promise.all([vitalsPromise, infraPromise, analyticsPromise]);
@@ -194,9 +234,18 @@ export default function DashboardPage() {
             if (deadlineTimer) clearTimeout(deadlineTimer);
             setLoading(false);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => { fetchData(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        // Only fetch from server if cache is empty or expired
+        if (getCachedDashboard()) {
+            console.log("DASHBOARD: Cache hit — skipping network requests.");
+            return;
+        }
+        fetchData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const term = useMemo<Record<string, string>>(
         () => industryConfig?.terminology ?? {},
@@ -268,11 +317,11 @@ export default function DashboardPage() {
                     <div className="text-right hidden md:block">
                         <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">System Status</p>
                         <p className={`text-xs font-mono font-black ${syncDegraded ? 'text-amber-500' : 'text-emerald-600'}`}>
-                            {syncDegraded ? 'SYNC DEGRADED' : 'CONTINUOUS SYNC ACTIVE'}
+                            {syncDegraded ? 'SYNC DEGRADED' : 'LIVE DATA'}
                         </p>
                     </div>
                     <Badge variant="outline" className={`px-4 py-2 rounded-2xl shadow-sm ${syncDegraded ? 'border-amber-200 text-amber-600 bg-amber-50/50' : 'border-blue-200 text-blue-600 bg-blue-50/50'}`}>
-                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> {syncDegraded ? 'Degraded' : 'Live Sync'}
+                        <Activity className="h-3 w-3 mr-2 animate-pulse" /> {syncDegraded ? 'Degraded' : 'Live Data'}
                     </Badge>
                 </div>
             </div>
@@ -319,7 +368,6 @@ export default function DashboardPage() {
                     const moduleKey = pathParts[0];
 
                         if (moduleKey && enabledModules.length > 0) {
-                            // CRM is a core platform service, usually mapped to the 'customer' terminology
                             if (moduleKey === 'crm') return true;
                             return enabledModules.includes(moduleKey);
                         }
@@ -488,4 +536,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-

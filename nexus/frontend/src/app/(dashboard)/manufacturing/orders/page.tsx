@@ -63,7 +63,7 @@ export default function WorkOrdersPage() {
         }
     }, []);
 
-    useEffect(() => {        syncExecutionQueues(true);    }, [syncExecutionQueues]);
+    useEffect(() => {        syncExecutionQueues(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, []); // Fire once on mount.
 
     const getStatusBadge = (status: string) => {
         switch (status) {

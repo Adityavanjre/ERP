@@ -134,7 +134,10 @@ export default function CrmPage() {
         }
     }, [custPage]);
 
-    useEffect(() => {        syncRelations(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncRelations]);
+    useEffect(() => {
+        syncRelations(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [custPage]); // Re-fetch when user changes page. Manual refresh after mutations.
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

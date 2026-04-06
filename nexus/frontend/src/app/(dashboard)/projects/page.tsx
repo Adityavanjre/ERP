@@ -78,7 +78,7 @@ export default function ProjectPage() {
         }
     }, []);
 
-    useEffect(() => {        syncProjectData(true);    }, [syncProjectData]);
+    useEffect(() => {        syncProjectData(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, []); // Fire once on mount.
 
     const fetchTasks = async (projectId: string) => {
         try {

@@ -67,23 +67,7 @@ export default function LoginPage() {
     useEffect(() => {
         const isShell = isDesktopShell();
         setIsDesktopApp(isShell);
-
-        // Desktop-Offline Zero-Auth: Automatically bypass login and enter local workspace.
-        if (isShell) {
-            const hasCloudSync = localStorage.getItem("k_cloud_sync_active") === "true";
-            const user = localStorage.getItem("k_user");
-            
-            // SESSION-GUARD: Only attempt silent launch once per page load to prevent infinite loops.
-            // This is critical if the dashboard redirects back to login due to an uninitialized bridge.
-            const hasAttemptedLaunch = sessionStorage.getItem("k_silent_launch_attempted") === "true";
-
-            if (!hasCloudSync && !user && !hasAttemptedLaunch) {
-                // Mark as attempted before calling
-                sessionStorage.setItem("k_silent_launch_attempted", "true");
-                handleOfflineOpen();
-            }
-        }
-    }, [handleOfflineOpen]);
+    }, []); // Run once on mount. isDesktopShell() is environment-only, no deps needed.
 
     const completeLogin = useCallback((data: AuthResponse) => {
         localStorage.setItem("k_user", JSON.stringify(data.user))

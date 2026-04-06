@@ -66,7 +66,10 @@ export default function AuditorDashboard() {
         }
     }, [month, year]);
 
-    useEffect(() => {        syncAuditorData(true);    }, [syncAuditorData]);
+    useEffect(() => {
+        syncAuditorData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [month, year]); // Re-fetch when audit period changes. Manual trigger otherwise.
 
     const handleLock = async () => {
         try {

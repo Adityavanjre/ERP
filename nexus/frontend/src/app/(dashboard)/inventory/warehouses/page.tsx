@@ -52,7 +52,9 @@ export default function WarehousesPage() {
         }
     };
 
-    useEffect(() => {        syncWarehouses(true);        // BACKGROUND SYNC: 30s interval    }, []);
+    useEffect(() => {
+        syncWarehouses(true);
+    }, []); // Fire once on mount. Refresh triggered after mutations via onSuccess callback.
 
     return (
         <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-slate-50/50 min-h-screen">

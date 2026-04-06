@@ -153,7 +153,11 @@ export default function InventoryPage() {
         }
     }, [page]);
 
-    useEffect(() => {        setMounted(true);        syncInventory(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncInventory]);
+    useEffect(() => {
+        setMounted(true);
+        syncInventory(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]); // Re-fetch when page changes. Manual refresh after mutations.
 
     if (!mounted) return null;
 

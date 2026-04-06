@@ -1,11 +1,12 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, Calendar, AlertCircle, Clock, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { motion } from 'framer-motion';
 
@@ -28,9 +29,12 @@ export function ForecastingWidget() {
     const [data, setData] = useState<ForecastData | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const [hasFetched, setHasFetched] = useState(false);
+
     const fetchForecast = useCallback(async () => {
         try {
             setLoading(true);
+            setHasFetched(true);
             const resp = await api.get('system/health/forecast');
             setData(resp.data);
         } catch (err) {
@@ -40,10 +44,20 @@ export function ForecastingWidget() {
         }
     }, []);
 
-    useEffect(() => {
-        fetchForecast();
-    }, [fetchForecast]);
+    // No auto-fetch on mount. User must manually request this data.
 
+    if (!hasFetched) return (
+        <Card className="border-amber-200/50 bg-amber-50/10 backdrop-blur-sm">
+            <CardContent className="h-[200px] flex flex-col items-center justify-center gap-4">
+                <TrendingUp className="w-8 h-8 text-amber-400" />
+                <p className="text-sm text-slate-500 font-medium">Cashflow forecast is not loaded automatically.</p>
+                <Button variant="outline" size="sm" onClick={fetchForecast} className="gap-2">
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Load Forecast
+                </Button>
+            </CardContent>
+        </Card>
+    );
     if (loading) return <div className="h-[300px] flex items-center justify-center animate-pulse text-muted-foreground">Analyzing patterns...</div>;
     if (!data) return null;
 

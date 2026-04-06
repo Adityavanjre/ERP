@@ -52,7 +52,7 @@ export default function WorkflowBuilder() {
         }
     }, [modelName]);
 
-    useEffect(() => {        syncWorkflows(true);    }, [syncWorkflows]);
+    useEffect(() => {        syncWorkflows(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, [modelName]); // Re-fetch when model changes.
 
     const handleCreateWorkflow = async () => {
         try {

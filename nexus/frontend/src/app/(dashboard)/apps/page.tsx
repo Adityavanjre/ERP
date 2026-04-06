@@ -40,7 +40,7 @@ export default function AppsMarketplace() {
         }
     }, []);
 
-    useEffect(() => {        syncAppData(true);    }, [syncAppData]);
+    useEffect(() => {        syncAppData(true);    // eslint-disable-next-line react-hooks/exhaustive-deps    }, []); // Fire once on mount.
 
     const handleUninstall = useCallback((name: string) => {
         showConfirm({

@@ -56,7 +56,10 @@ export default function CustomerDetailPage() {
         }
     }, [params.id]);
 
-    useEffect(() => {        syncRelationDetail(true);    }, [syncRelationDetail]);
+    useEffect(() => {
+        syncRelationDetail(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [params.id]); // Re-fetch when URL customer ID changes.
 
     if (loading) {
         return <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900 min-h-screen"><Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" /> Initializing Node Pulse...</div>;

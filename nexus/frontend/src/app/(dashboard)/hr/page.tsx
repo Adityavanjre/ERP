@@ -139,7 +139,11 @@ export default function HrPage() {
         }
     }, []);
 
-    useEffect(() => {        setMounted(true);        syncEmployeeData(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncEmployeeData]);
+    useEffect(() => {
+        setMounted(true);
+        syncEmployeeData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Fire once on mount. Refresh triggered manually after mutations.
 
     const handleAddEmployee = async () => {
         if (!empForm.firstName || !empForm.lastName || !empForm.employeeId) {

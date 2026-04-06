@@ -112,7 +112,10 @@ export default function SalesPage() {
         }
     }, []);
 
-    useEffect(() => {        syncSalesData(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncSalesData]);
+    useEffect(() => {
+        syncSalesData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Fire once on mount. Refresh triggered manually after mutations.
 
     const submitOrder = useCallback(async () => {
         try {

@@ -106,7 +106,10 @@ export default function PurchasesPage() {
         }
     }, []);
 
-    useEffect(() => {        syncProcurement(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncProcurement]);
+    useEffect(() => {
+        syncProcurement(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Fire once on mount. Refresh triggered manually after mutations.
 
     const handleConfirmSubmit = () => {
         if (!newPO.supplierId || !newPO.productId || newPO.quantity <= 0) {

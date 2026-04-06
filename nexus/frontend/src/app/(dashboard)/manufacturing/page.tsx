@@ -98,7 +98,10 @@ export default function ManufacturingDashboard() {
         }
     }, []);
 
-    useEffect(() => {        syncManufacturingData(true);        // CONTINUOUS BACKGROUND SYNC: 30s interval    }, [syncManufacturingData]);
+    useEffect(() => {
+        syncManufacturingData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Fire once on mount. Refresh triggered manually after mutations.
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[400px]">

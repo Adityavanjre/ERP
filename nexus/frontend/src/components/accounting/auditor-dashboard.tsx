@@ -72,7 +72,8 @@ export function AuditorDashboard() {
 
     useEffect(() => {
         fetchDashboard();
-    }, [fetchDashboard]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Fire once on mount. Use "Refresh Audit" button to reload after changing period.
 
     const toggleLock = useCallback(() => {
         const action = data?.isLocked ? 'UNLOCK' : 'LOCK';
