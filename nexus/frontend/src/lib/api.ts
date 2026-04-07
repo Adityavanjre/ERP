@@ -314,11 +314,12 @@ api.interceptors.response.use(
     // Each new attempt should come from an explicit user action or approval.
     if (error.response?.status === 429) {
       return Promise.reject({
-        message: 'Too many requests. Please wait 90 seconds and retry manually once the server cools down.',
+        message: 'Klypso Cloud is waking up. Please try again after 90s.',
         status: 429,
         isRateLimited: true,
       });
     }
+
 
     if (error.response?.status === 401) {
       const isLoginRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');

@@ -37,7 +37,7 @@ export class LocalFrontendServer {
         NODE_ENV: 'production',
         PORT: String(port),
       },
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
 
@@ -123,23 +123,40 @@ async function findFreePort(preferredPort: number): Promise<number> {
 }
 
 async function waitForHttpReady(url: string, child: ChildProcess): Promise<void> {
-  const timeoutAt = Date.now() + 30000;
+  const timeoutAt = Date.now() + 90000; // Increased to 90s for reliability
+  const logPath = path.join(app.getPath('userData'), 'frontend-startup.log');
+  const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+
+  logStream.write(`\n--- Startup Attempt: ${new Date().toISOString()} ---\n`);
+  
+  if (child.stdout) {
+    child.stdout.on('data', (data) => logStream.write(`[STDOUT] ${data}`));
+  }
+  if (child.stderr) {
+    child.stderr.on('data', (data) => logStream.write(`[STDERR] ${data}`));
+  }
 
   while (Date.now() < timeoutAt) {
     const exited = child.exitCode !== null;
     if (exited) {
-      throw new Error(`Bundled frontend server exited before becoming ready (code ${child.exitCode ?? 'unknown'})`);
+      logStream.write(`[ERROR] Server exited with code ${child.exitCode}\n`);
+      logStream.end();
+      throw new Error(`Bundled frontend server exited before becoming ready (code ${child.exitCode ?? 'unknown'}). Check logs at ${logPath}`);
     }
 
     const ready = await canReach(url);
     if (ready) {
+      logStream.write(`[SUCCESS] Server ready at ${url}\n`);
+      logStream.end();
       return;
     }
 
-    await delay(250);
+    await delay(500);
   }
 
-  throw new Error('Timed out while waiting for the bundled frontend server to start');
+  logStream.write(`[TIMEOUT] Server failed to become ready within 90s\n`);
+  logStream.end();
+  throw new Error(`Timed out while waiting for the bundled frontend server to start. Check logs at ${logPath}`);
 }
 
 async function canReach(url: string): Promise<boolean> {

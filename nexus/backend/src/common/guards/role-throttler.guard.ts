@@ -28,14 +28,28 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
       getTracker,
       generateKey,
     } = requestProps;
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
+    const { user, url } = request;
+
+    // REF-001: Granular Path Scoping for klypso.in (Main Domain)
+    // Only apply rate limiting to API endpoints to prevent 429s on UI/Assets navigation
+    const isApiRequest = url.includes('/api/v1') || url.includes('/portal/api/v1');
+    const isStaticAsset = url.includes('/favicon.ico') || url.includes('/robots.txt') || url.includes('/sitemap.xml');
+    
+    // RED-001: Liveness probes must never be throttled to avoid deployment healthcheck failures
+    const isHealthCheck = url.includes('/health/liveness');
+
+    if (!isApiRequest || isStaticAsset || isHealthCheck) {
+      return true; // Skip throttling for non-API routes or assets
+    }
 
     let adjustedLimit = limit;
 
     if (user && user.role) {
-      if (user.role === Role.Owner) {
+      // Use string literals to prevent SSR 'Cannot read properties of undefined (reading Owner)' error
+      if (user.role === 'Owner') {
         adjustedLimit = limit * RATE_LIMIT_MULTIPLIER.OWNER;
-      } else if (user.role === Role.CA) {
+      } else if (user.role === 'CA') {
         adjustedLimit = limit * RATE_LIMIT_MULTIPLIER.ACCOUNTANT;
       }
     }

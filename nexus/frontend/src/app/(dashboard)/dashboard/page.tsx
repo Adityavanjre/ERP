@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
     Cpu,
     Zap,
@@ -249,15 +250,10 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-        // Only fetch from server if cache is empty or expired
-        if (getCachedDashboard()) {
-            console.log("DASHBOARD: Cache hit — skipping network requests.");
-            return;
-        }
-        fetchData(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // MANUALLY-TRIGGERED SYNC ONLY
+    // Removed automatic useEffect fetch on mount to follow 'Interaction-Only' strict rule.
+    // Data will only be fetched when the user clicks the manual refresh/sync button.
+
 
     const term = useMemo<Record<string, string>>(
         () => industryConfig?.terminology ?? {},
@@ -359,6 +355,14 @@ export default function DashboardPage() {
                     <Badge variant="outline" className={`px-4 py-2 rounded-2xl shadow-sm ${syncDegraded ? 'border-amber-200 text-amber-600 bg-amber-50/50' : 'border-blue-200 text-blue-600 bg-blue-50/50'}`}>
                         <Activity className="h-3 w-3 mr-2 animate-pulse" /> {syncDegraded ? 'Degraded' : 'Live Data'}
                     </Badge>
+                    <Button 
+                        onClick={() => fetchData()} 
+                        disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-500/20"
+                    >
+                        <Zap className={cn("h-3.5 w-3.5 mr-2", loading && "animate-spin")} />
+                        {loading ? 'Refreshing...' : 'Sync Cloud Data'}
+                    </Button>
                 </div>
             </div>
 

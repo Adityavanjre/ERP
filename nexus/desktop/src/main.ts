@@ -19,7 +19,8 @@ let localFrontendServer: LocalFrontendServer | null = null;
 let localSessionStore: LocalSessionStore | null = null;
 let localDataStore: LocalDataStore | null = null;
 const gotTheLock = app.requestSingleInstanceLock();
-app.setAppUserModelId('in.klypso.nexus');
+app.name = 'Klypso ERP';
+app.setAppUserModelId('in.klypso.erp');
 
 if (!gotTheLock) {
   app.quit();
@@ -32,15 +33,6 @@ async function createWindow() {
   analytics = new DesktopAnalytics(createDbAdapter());
   localSessionStore = new LocalSessionStore();
   localDataStore = new LocalDataStore();
-  const frontendBaseUrl = await resolveFrontendBaseUrl();
-  const allowedOrigin = new URL(frontendBaseUrl).origin;
-
-  // Restore token if saved
-  const savedToken = authStore.getToken();
-  if (savedToken) {
-    syncEngine.setToken(savedToken);
-  }
-
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -48,6 +40,7 @@ async function createWindow() {
     minHeight: 700,
     title: 'Klypso ERP',
     icon: resolveWindowIconPath(),
+    show: false, // Don't show until ready or loading is set
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -55,45 +48,66 @@ async function createWindow() {
     },
   });
 
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith(frontendBaseUrl)) {
-      return { action: 'allow' };
+  // LOCAL-FIRST: Show loading screen immediately
+  const loadingPath = path.join(__dirname, 'loading.html');
+  await mainWindow.loadFile(loadingPath);
+  mainWindow.show();
+
+  // Background Bootstrapping
+  void (async () => {
+    try {
+      const frontendBaseUrl = await resolveFrontendBaseUrl();
+      const allowedOrigin = new URL(frontendBaseUrl).origin;
+      const initialUrl = await getInitialUrl(frontendBaseUrl);
+      
+      // Security: Handle external links
+      mainWindow!.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith(frontendBaseUrl)) {
+          return { action: 'allow' };
+        }
+        void shell.openExternal(url);
+        return { action: 'deny' };
+      });
+
+      // Security: Restrict navigation
+      mainWindow!.webContents.on('will-navigate', (event, navigationUrl) => {
+        const url = new URL(navigationUrl);
+        if (url.origin !== allowedOrigin) {
+          event.preventDefault();
+          void shell.openExternal(navigationUrl);
+        }
+      });
+
+      // UX: Handle unsaved changes
+      mainWindow!.webContents.on('will-prevent-unload', (event) => {
+        const choice = dialog.showMessageBoxSync(mainWindow!, {
+          type: 'question',
+          buttons: ['Leave and Lose Changes', 'Stay'],
+          title: 'Unsaved Changes',
+          message: 'There are unsaved forms on your screen. Are you sure you want to close Klypso? Changes will be lost.',
+          defaultId: 0,
+          cancelId: 1
+        });
+        if (choice === 0) {
+          event.preventDefault();
+        }
+      });
+
+      configureRenderer(mainWindow!, [allowedOrigin]);
+      await mainWindow!.loadURL(initialUrl);
+
+      // Track session start
+      void analytics?.trackEvent('session', 'start', { platform: 'windows' });
+      
+    } catch (err: any) {
+      console.error('Core Boot Failure:', err);
+      dialog.showErrorBox(
+        'Klypso Startup Error',
+        `The application failed to initialize properly.\n\nError: ${err.message}`
+      );
+      app.quit();
     }
-
-    void shell.openExternal(url);
-    return { action: 'deny' };
-  });
-
-  mainWindow.webContents.on('will-prevent-unload', (event) => {
-    const choice = dialog.showMessageBoxSync(mainWindow!, {
-      type: 'question',
-      buttons: ['Leave and Lose Changes', 'Stay'],
-      title: 'Unsaved Changes',
-      message: 'There are unsaved forms on your screen. Are you sure you want to close Klypso? Changes will be lost.',
-      defaultId: 0,
-      cancelId: 1
-    });
-    if (choice === 0) {
-      event.preventDefault(); // Prevents the block, allowing the window to close
-    }
-  });
-
-  mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
-    const url = new URL(navigationUrl);
-    if (url.origin !== allowedOrigin) {
-      event.preventDefault();
-      void shell.openExternal(navigationUrl);
-    }
-  });
-
-  const initialUrl = await getInitialUrl(frontendBaseUrl);
-  await mainWindow.loadURL(initialUrl);
-
-  configureRenderer(mainWindow, [allowedOrigin]);
-
-  // Track session start
-  void analytics?.trackEvent('session', 'start', { platform: 'windows' });
-
+  })();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -313,7 +327,16 @@ app.on('second-instance', () => {
   }
 });
 
-app.whenReady().then(() => void createWindow());
+app.whenReady().then(() => {
+  createWindow().catch((err) => {
+    console.error('Failed to create window:', err);
+    dialog.showErrorBox(
+      'Klypso Startup Error',
+      `The application failed to initialize properly.\n\nError: ${err.message}\n\nStack: ${err.stack}`
+    );
+    app.quit();
+  });
+});
 
 app.on('before-quit', () => {
   localFrontendServer?.stop();

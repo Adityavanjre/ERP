@@ -73,10 +73,10 @@ export default function AuditorDashboard() {
         }
     }, [month, year]);
 
-    useEffect(() => {
-        syncAuditorData(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [month, year]); // Re-fetch when audit period changes. Manual trigger otherwise.
+    // INTERACTION-ONLY SYNC
+    // Removed automatic useEffect fetch on mount and period change.
+    // User must explicitly click the Search icon to fetch cloud data for the selected period.
+
 
     const handleLock = async () => {
         try {

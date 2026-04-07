@@ -116,7 +116,7 @@ export default function AppsMarketplace() {
                                     variant="outline"
                                     className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl h-12 px-4 font-bold"
                                     onClick={() => {
-                                        window.open("https://github.com/klypso/nexus/releases", "_blank");
+                                        window.open("https://github.com/adityavanjre/ERP/releases", "_blank");
                                     }}
                                 >
                                     <ExternalLink className="mr-2 h-4 w-4" /> GitHub
@@ -148,8 +148,8 @@ export default function AppsMarketplace() {
                                 <Button
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-emerald-500/20"
                                     onClick={() => {
-                                        toast.success("Downloading Nexus Mobile APK...");
-                                        window.open("/nexus-gateway.apk", "_blank");
+                                        toast.success("Downloading Klypso Mobile APK...");
+                                        window.open("/klypso-gateway.apk", "_blank");
                                     }}
                                 >
                                     <Download className="mr-2 h-5 w-5" /> Download APK

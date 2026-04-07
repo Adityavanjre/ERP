@@ -40,7 +40,7 @@ export default function NotFound() {
                             href={`/industries/${industry.toLowerCase()}`}
                             className="px-4 py-2 bg-white border border-slate-100 rounded-full text-sm font-bold text-slate-600 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm"
                         >
-                            Nexus for {industry}
+                            Klypso for {industry}
                         </Link>
                     ))}
                 </div>

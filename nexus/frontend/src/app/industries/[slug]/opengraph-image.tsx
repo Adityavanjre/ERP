@@ -37,7 +37,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
                     }}
                 >
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', marginBottom: '24px', letterSpacing: '-0.02em' }}>
-                        NEXUS ERP <span style={{ color: '#64748b', fontWeight: 'normal', margin: '0 8px' }}>|</span> {theme.name.toUpperCase()}
+                        KLYPSO ERP <span style={{ color: '#64748b', fontWeight: 'normal', margin: '0 8px' }}>|</span> {theme.name.toUpperCase()}
                     </div>
                     <div style={{ fontSize: '84px', fontWeight: '900', color: '#0f172a', textAlign: 'center', lineHeight: '1.1', letterSpacing: '-0.05em' }}>
                         The Imperial Standard <br /> for {theme.name}

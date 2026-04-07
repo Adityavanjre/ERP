@@ -1,5 +1,5 @@
 {
-  "name": "nexus-desktop",
+  "name": "klypso-erp",
   "version": "1.0.0",
   "description": "Klypso ERP Desktop Application",
   "author": "Klypso Technologies",
@@ -22,7 +22,7 @@
     "typescript": "^6.0.2"
   },
   "build": {
-    "appId": "in.klypso.nexus",
+    "appId": "in.klypso.erp",
     "productName": "Klypso ERP",
     "artifactName": "Klypso-ERP-setup.${ext}",
     "directories": {

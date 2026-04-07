@@ -20,6 +20,7 @@
   "workspaces": [
     "nexus/backend",
     "nexus/frontend",
+    "nexus/desktop",
     "agency/server",
     "agency/client",
     "gateway",

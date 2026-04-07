@@ -232,7 +232,7 @@ export default function Home() {
                   The native companion for Klypso ERP. Securely view inventory, track production, and manage sales drafts while on the move.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link href="/nexus-gateway-v1.apk" target="_blank">
+                  <Link href="/klypso-gateway-v1.apk" target="_blank">
                     <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg shadow-lg shadow-blue-500/20">
                       <Download className="mr-2 h-5 w-5" /> Download for Android
                     </Button>

@@ -157,8 +157,8 @@ export default async function IndustryLandingPage({ params }: Props) {
     const videoJsonLd = {
         "@context": "https://schema.org",
         "@type": "VideoObject",
-        "name": `Nexus ERP for ${theme.name} Demo`,
-        "description": `Watch how Nexus ERP transforms ${theme.name} businesses in India with automated BOM and GST compliance.`,
+        "name": `Klypso ERP for ${theme.name} Demo`,
+        "description": `Watch how Klypso ERP transforms ${theme.name} businesses in India with automated BOM and GST compliance.`,
         "thumbnailUrl": "https://klypso.in/portal/og-image.png",
         "uploadDate": "2024-01-01T08:00:00+08:00",
         "duration": "PT2M30S",

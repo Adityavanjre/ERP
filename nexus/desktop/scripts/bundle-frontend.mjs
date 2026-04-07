@@ -43,5 +43,14 @@ fs.cpSync(publicDir, path.join(bundleDir, 'nexus', 'frontend', 'public'), {
 fs.mkdirSync(iconDestDir, { recursive: true });
 fs.copyFileSync(iconSource, iconDest);
 
+const loadingSource = path.join(desktopDir, 'src', 'loading.html');
+const loadingDest = path.join(desktopDir, 'dist', 'loading.html');
+
+if (fs.existsSync(loadingSource)) {
+  fs.mkdirSync(path.dirname(loadingDest), { recursive: true });
+  fs.copyFileSync(loadingSource, loadingDest);
+  console.log(`Loading screen synced to ${loadingDest}`);
+}
+
 console.log(`Bundled frontend copied to ${bundleDir}`);
 console.log(`Desktop icon synced to ${iconDest}`);
