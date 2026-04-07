@@ -33,9 +33,13 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
 
     // REF-001: Granular Path Scoping for klypso.in (Main Domain)
     // Only apply rate limiting to API endpoints to prevent 429s on UI/Assets navigation
-    const isApiRequest = url.includes('/api/v1') || url.includes('/portal/api/v1');
-    const isStaticAsset = url.includes('/favicon.ico') || url.includes('/robots.txt') || url.includes('/sitemap.xml');
-    
+    const isApiRequest =
+      url.includes('/api/v1') || url.includes('/portal/api/v1');
+    const isStaticAsset =
+      url.includes('/favicon.ico') ||
+      url.includes('/robots.txt') ||
+      url.includes('/sitemap.xml');
+
     // RED-001: Liveness probes must never be throttled to avoid deployment healthcheck failures
     const isHealthCheck = url.includes('/health/liveness');
 
