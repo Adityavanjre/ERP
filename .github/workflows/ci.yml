@@ -137,3 +137,18 @@ jobs:
     needs: [backend-lint, backend-build, frontend-lint, frontend-build, security-audit, migration-gate]
     steps:
       - run: echo "Nexus Monorepo ready for deployment."
+
+  # 6. Formal Deployment Gate
+  deploy-render:
+    name: Trigger Render Deploy
+    needs: all-gates-pass
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Deploy Hook
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "RENDER_DEPLOY_HOOK secret not set — skipping deployment trigger."
+            exit 0
+          fi
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
