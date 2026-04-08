@@ -11,7 +11,7 @@ import { validateGSTIN } from '../common/utils/gst-validation.util';
 describe('PurchasesService (Supplier & PO)', () => {
   let service: PurchasesService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     supplier: {
       create: jest.fn(),
       findFirst: jest.fn(),

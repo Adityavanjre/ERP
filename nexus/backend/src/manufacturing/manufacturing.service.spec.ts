@@ -9,7 +9,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 describe('ManufacturingService (Work Order Numbering)', () => {
   let service: ManufacturingService;
 
-  const mockPrisma = {
+  const mockPrisma: any = {
     billOfMaterial: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
