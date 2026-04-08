@@ -100,7 +100,7 @@ services:
     value: "6379"
   region: oregon
   buildCommand: npm install && npm run build -w @nexus/shared && cd backend && npx prisma generate && npm run build
-  startCommand: cd backend && npx prisma migrate deploy && node dist/backend/src/main.js
+  startCommand: cd backend && npx prisma migrate deploy && node dist/nexus/backend/src/main.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
   rootDir: nexus
