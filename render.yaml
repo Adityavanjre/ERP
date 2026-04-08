@@ -99,7 +99,7 @@ services:
   - key: REDIS_PORT
     value: "6379"
   region: oregon
-  buildCommand: npm install && npm run build:shared && cd backend && npx prisma generate && npm run build
+  buildCommand: npm install && npm run build -w @nexus/shared && cd backend && npx prisma generate && npm run build
   startCommand: cd backend && npx prisma migrate deploy && node dist/backend/src/main.js
   healthCheckPath: /api/v1/health/liveness
   autoDeployTrigger: "off"
@@ -119,7 +119,7 @@ services:
   - key: NEXT_PUBLIC_API_URL
     sync: false
   region: oregon
-  buildCommand: npm install && npm run build:shared && cd frontend && npx next build
+  buildCommand: npm install && npm run build -w @nexus/shared && cd frontend && npx next build
   startCommand: cd frontend && npx next start -H 0.0.0.0 -p ${PORT:-10000}
   autoDeployTrigger: "off"
   rootDir: nexus

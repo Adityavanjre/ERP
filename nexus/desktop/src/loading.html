@@ -109,6 +109,51 @@
             letter-spacing: 0.2em;
         }
 
+        .cloud-fallback {
+            margin-top: 48px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+
+        .cloud-fallback.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .btn-cloud {
+            background: #f8fafc;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            text-decoration: none;
+        }
+
+        .btn-cloud:hover {
+            background: #ffffff;
+            color: #2563eb;
+            border-color: #2563eb;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1), 0 2px 4px -1px rgba(37, 99, 235, 0.06);
+            transform: translateY(-1px);
+        }
+
+        .cloud-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
         * {
             -webkit-user-select: none;
             user-select: none;
@@ -126,10 +171,33 @@
         <div class="loader">
             <div class="loader-bar"></div>
         </div>
+
+        <div id="cloud-fallback" class="cloud-fallback">
+            <button class="btn-cloud" onclick="switchToCloud()">
+                <svg class="cloud-icon" viewBox="0 0 24 24">
+                    <path d="M17.5 19c-3.037 0-5.5-2.463-5.5-5.5 0-3.037 2.463-5.5 5.5-5.5s5.5 2.463 5.5 5.5c0 3.037-2.463 5.5-5.5 5.5zm-11.5 0c-2.485 0-4.5-2.015-4.5-4.5 0-2.178 1.555-3.993 3.598-4.394.139-2.559 2.253-4.606 4.846-4.606 1.487 0 2.827.636 3.754 1.652.825-.353 1.737-.552 2.696-.552 3.866 0 7 3.134 7 7s-3.134 7-7 7h-10.394z"/>
+                </svg>
+                Connect to Klypso Cloud
+            </button>
+        </div>
     </div>
 
     <div class="footer">
         Powered by Klypso Native Engine
     </div>
+
+    <script>
+        // Show cloud fallback after 5 seconds of loading
+        setTimeout(() => {
+            const fallback = document.getElementById('cloud-fallback');
+            if (fallback) fallback.classList.add('visible');
+        }, 5000);
+
+        function switchToCloud() {
+            if (window.nexusDesktop && window.nexusDesktop.shell) {
+                window.nexusDesktop.shell.switchToCloud();
+            }
+        }
+    </script>
 </body>
 </html>

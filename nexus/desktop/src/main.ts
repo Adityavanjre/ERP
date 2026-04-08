@@ -134,6 +134,12 @@ ipcMain.handle('sync:resolve', async (_event, conflicts) => {
   return syncEngine.resolveConflicts(conflicts);
 });
 
+ipcMain.handle('shell:switchToCloud', async () => {
+  if (mainWindow) {
+    await mainWindow.loadURL('https://klypso.in/portal/login');
+  }
+});
+
 ipcMain.handle('auth:getToken', async () => {
   if (!authStore) return null;
   return authStore.getToken();

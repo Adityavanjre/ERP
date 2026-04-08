@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('nexusDesktop', {
   shell: {
     isDesktop: true,
+    switchToCloud: () => ipcRenderer.invoke('shell:switchToCloud'),
   },
   sync: {
     execute: () => ipcRenderer.invoke('sync:execute'),
