@@ -87,9 +87,11 @@ function validateEnvironment(): void {
       `[FATAL_CONFIG] Missing Critical Environment Variables: ${missingCritical.join(', ')}`,
     );
     console.error(
-      'The application refuses to start to prevent data corruption or insecurity. Exiting with Status 1.',
+      'The application refuses to start to prevent data corruption or insecurity. Exiting in 2s...',
     );
-    process.exit(1);
+    // Give logs time to flush on Render/Cloud environments
+    setTimeout(() => process.exit(1), 2000);
+    return;
   }
 
   const missingOptional = OPTIONAL_VARS.filter((key) => !process.env[key]);

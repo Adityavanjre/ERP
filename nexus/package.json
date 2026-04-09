@@ -8,7 +8,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build:shared": "npm run build -w @nexus/shared"
+    "build:shared": "npm run build -w @nexus/shared",
+    "start:render": "npx prisma migrate deploy --schema=backend/prisma/schema.prisma && npm run start:prod -w backend"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
