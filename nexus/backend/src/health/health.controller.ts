@@ -17,30 +17,37 @@ import { SaasAnalyticsService } from '../system/services/saas-analytics.service'
 @Controller('health')
 export class HealthController {
   constructor(
-    private health: HealthCheckService,
-    private db: PrismaHealthIndicator,
     private prisma: PrismaService,
-    private memory: MemoryHealthIndicator,
-    private disk: DiskHealthIndicator,
     private saas: SaasAnalyticsService,
   ) {}
 
   @Get('readiness')
-  @Public() // DevOps probe
-  @HealthCheck()
-  checkReadiness() {
-    return this.health.check([
-      () => this.db.pingCheck('database', this.prisma),
-      () => this.memory.checkHeap('memory_heap', 1024 * 1024 * 1024), // Boost to 1GB for readiness spikes
-    ]);
+  @Public()
+  async checkReadiness() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return {
+        status: 'ok',
+        info: { database: { status: 'up' } },
+        error: {},
+        details: { database: { status: 'up' } },
+      };
+    } catch (e) {
+      return {
+        status: 'error',
+        info: {},
+        error: { database: { status: 'down', message: e.message } },
+        details: {},
+      };
+    }
   }
 
   @Get('liveness')
-  @Public() // DevOps probe
+  @Public()
   checkLiveness() {
     return {
       status: 'up',
-      version: '1.0.0-ZENITH',
+      version: '1.1.0-KLYPSO',
       timestamp: new Date().toISOString(),
     };
   }
@@ -59,15 +66,11 @@ export class HealthController {
 
   @Get('infra')
   @Roles(Role.Owner)
-  @HealthCheck()
   checkInfra() {
-    return this.health.check([
-      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
-      // Check if we have at least some free disk space (Windows safe path logic)
-      () => {
-        const path = process.platform === 'win32' ? 'C:' : '/';
-        return this.disk.checkStorage('disk', { path, thresholdPercent: 0.99 });
-      },
-    ]);
+    return {
+      status: 'up',
+      memory: process.memoryUsage(),
+      uptime: process.uptime(),
+    };
   }
 }

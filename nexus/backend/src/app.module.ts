@@ -136,7 +136,12 @@ import { DiscoveryModule } from '@nestjs/core';
       provide: APP_INTERCEPTOR,
       useClass: IdempotencyInterceptor,
     },
-    HttpCacheInterceptor,
+    /*
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpCacheInterceptor,
+    },
+    */
   ],
 })
 export class AppModule implements NestModule {
