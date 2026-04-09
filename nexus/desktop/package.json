@@ -8,7 +8,7 @@
     "build:frontend": "npm --prefix .. run build -w frontend",
     "bundle:frontend": "node scripts/bundle-frontend.mjs",
     "compile": "tsc -p tsconfig.json",
-    "postinstall": "if [ \"$CI\" != \"true\" ]; then electron-builder install-app-deps; else echo 'Skipping electron-builder deps in CI'; fi",
+    "postinstall": "node -e \"if(process.env.CI !== 'true') { try { require('child_process').execSync('electron-builder install-app-deps', {stdio: 'inherit'}); } catch (e) { console.warn('Skipping electron-builder deps: ', e.message); } }\"",
     "start": "npm run bundle:frontend && npm run compile && electron .",
     "dev": "npm run bundle:frontend && npm run compile && electron . --dev",
     "build": "npm run build:frontend && npm run bundle:frontend && npm run compile && electron-builder --win --x64",

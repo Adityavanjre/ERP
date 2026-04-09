@@ -40,12 +40,15 @@ import { CsrfGuard } from './common/guards/csrf.guard';
 import { PlanGuard } from './common/guards/plan.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TenantMembershipGuard } from './common/guards/tenant-membership.guard';
+import { HttpCacheInterceptor } from './common/interceptors/cache.interceptor';
 
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DiscoveryModule } from '@nestjs/core';
 
 @Module({
   imports: [
+    DiscoveryModule,
     InfrastructureModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
@@ -133,6 +136,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       provide: APP_INTERCEPTOR,
       useClass: IdempotencyInterceptor,
     },
+    HttpCacheInterceptor,
   ],
 })
 export class AppModule implements NestModule {
