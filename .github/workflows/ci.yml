@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
 
   # 2. Shared Library Check
   check-shared:
@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - run: npm run build -w @nexus/shared
 
   # 3. Backend Quality Gates
@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - run: npm run lint -w backend
 
   backend-build:
@@ -61,7 +61,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - run: npm run build -w backend
 
   # 4. Frontend Quality Gates
@@ -75,7 +75,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - run: npm run lint -w frontend
 
   frontend-build:
@@ -88,7 +88,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - run: npm run build -w frontend
 
   # 5. Security & Migration Audit
@@ -102,7 +102,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - name: Dependency Audit (Critical/High)
         run: npm audit --audit-level=high
         continue-on-error: true
@@ -117,7 +117,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-      - run: npm ci
+      - run: npm install --no-audit
       - name: Verify Prisma Client
         run: npm run prisma:generate -w backend
       - name: Verify Migration Files
