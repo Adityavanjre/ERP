@@ -18,7 +18,10 @@ export class HttpCacheInterceptor implements NestInterceptor {
     private reflector: Reflector,
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
 
     // Only cache GET requests
