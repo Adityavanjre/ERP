@@ -28,7 +28,7 @@ export class YearCloseProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<YearCloseJobData>): Promise<any> {
+  async process(job: Job<YearCloseJobData>, token?: string): Promise<any> {
     const { tenantId, userId, year } = job.data;
     this.logger.log(
       `[JOB:${job.id}] Starting Year Close for tenant=${tenantId}, year=${year}`,
