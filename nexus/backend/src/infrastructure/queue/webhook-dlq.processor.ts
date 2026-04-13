@@ -45,7 +45,8 @@ export class WebhookDlqProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<WebhookDlqJobData>, token?: string): Promise<any> {
+  async process(job: Job, token?: string): Promise<any> {
+    const data = job.data as WebhookDlqJobData;
     const {
       provider,
       event,
@@ -53,7 +54,7 @@ export class WebhookDlqProcessor extends WorkerHost {
       originalTimestamp,
       tenantId,
       internalReplayUrl,
-    } = job.data;
+    } = data;
     this.logger.warn(
       `[DLQ:${job.id}] Replaying failed webhook: provider=${provider}, event=${event}, attempt=${job.attemptsMade + 1}/3`,
     );
