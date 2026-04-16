@@ -1,5 +1,98 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
-import { INDUSTRY_CONFIGS, Industry } from "@nexus/shared";
+
+// Inlined from @nexus/shared to avoid SSR module-init crash.
+// The CJS compiled enum pattern causes a TDZ error during Next.js server rendering
+// when imported at module evaluation time. Since desktop-offline is browser-only 
+// code, we duplicate only what we need here to keep SSR safe.
+const Industry = {
+  Retail: "Retail",
+  Manufacturing: "Manufacturing",
+  Healthcare: "Healthcare",
+  Construction: "Construction",
+  Logistics: "Logistics",
+  Automotive: "Automotive",
+  NBFC: "NBFC",
+  Ecommerce: "Ecommerce",
+  Service: "Service",
+  General: "General",
+} as const;
+
+type IndustryKey = typeof Industry[keyof typeof Industry];
+
+interface IndustryModuleConfig {
+  hasInventory: boolean;
+  hasProjects: boolean;
+  hasHealthcare: boolean;
+  hasManufacturing: boolean;
+  hasLogistics: boolean;
+  hasFinance: boolean;
+  enabledModules: string[];
+  mobileRestrictedModules: string[];
+  terminology: Record<string, string>;
+}
+
+const INDUSTRY_CONFIGS: Record<IndustryKey, IndustryModuleConfig> = {
+  [Industry.General]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "sales", "inventory", "accounting", "crm"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Product", Customer: "Customer", Invoice: "Invoice", Project: "Project" },
+  },
+  [Industry.Retail]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "sales", "inventory", "accounting", "crm", "pos"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Item", Customer: "Buyer", Invoice: "Bill", Project: "Event" },
+  },
+  [Industry.Construction]: {
+    hasInventory: true, hasProjects: true, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "projects", "inventory", "accounting", "construction"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Material", Customer: "Contractor", Invoice: "RA Bill", Project: "Site", BOM: "BOQ" },
+  },
+  [Industry.Healthcare]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: true, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "healthcare", "inventory", "accounting", "hr"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Medicine", Customer: "Patient", Invoice: "Prescription", Project: "Clinic" },
+  },
+  [Industry.Manufacturing]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: true, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "manufacturing", "inventory", "accounting", "sales", "purchases", "crm", "hr"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Finished Good", Customer: "Distributor", Invoice: "Sales Order", Project: "Production Unit", BOM: "BOM", WorkOrder: "Work Order" },
+  },
+  [Industry.Logistics]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: true, hasFinance: false,
+    enabledModules: ["dashboard", "logistics", "inventory", "accounting", "sales"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Consignment", Customer: "Consignor", Invoice: "Freight Bill", Project: "Route" },
+  },
+  [Industry.NBFC]: {
+    hasInventory: false, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: true,
+    enabledModules: ["dashboard", "nbfc", "accounting", "crm", "hr"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Loan Product", Customer: "Borrower", Invoice: "EMI Statement", Project: "Branch" },
+  },
+  [Industry.Automotive]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: true, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "manufacturing", "inventory", "accounting", "sales", "crm"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Spare Part", Customer: "Vehicle Owner", Invoice: "Service Bill", Project: "Workshop" },
+  },
+  [Industry.Ecommerce]: {
+    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: true, hasFinance: false,
+    enabledModules: ["dashboard", "sales", "inventory", "accounting", "logistics", "pos"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "SKU Item", Customer: "Buyer", Invoice: "Marketplace Bill", Project: "Fulfillment" },
+  },
+  [Industry.Service]: {
+    hasInventory: false, hasProjects: true, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    enabledModules: ["dashboard", "projects", "accounting", "crm", "hr"],
+    mobileRestrictedModules: ["accounting"],
+    terminology: { Product: "Service Package", Customer: "Client", Invoice: "Service Invoice", Project: "Engagement" },
+  },
+};
 
 type HttpMethod = "get" | "post" | "patch" | "put" | "delete";
 
