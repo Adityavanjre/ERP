@@ -31,8 +31,8 @@ export class BulkImportProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<BulkImportJobData, any, string>): Promise<any> {
-    const { tenantId, userId, type, csvContent, idempotencyKey } = job.data;
+  async process(job: Job<any, any, string>): Promise<any> {
+    const { tenantId, userId, type, csvContent, idempotencyKey } = job.data as BulkImportJobData;
     this.logger.log(
       `[JOB:${job.id}] Processing bulk import: type=${type}, tenant=${tenantId}`,
     );
