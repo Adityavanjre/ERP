@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { useAuth } from "@/hooks/use-auth";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { useAuth } from "../../../hooks/use-auth";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
 import {
     Cpu,
     Zap,
@@ -28,8 +28,8 @@ import {
     ClipboardList,
     BarChart2
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Badge } from "../../../components/ui/badge";
+import { cn } from "../../../lib/utils";
 import {
     BarChart,
     Bar,
