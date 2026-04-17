@@ -325,7 +325,9 @@ export default function LoginPage() {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between ml-1">
                                         <Label htmlFor="password" className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">Password</Label>
-                                        <Link href="/forgot-password" className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-tighter">Recovery?</Link>
+                                        {!isDesktopApp && (
+                                            <Link href="/forgot-password" className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-tighter">Recovery?</Link>
+                                        )}
                                     </div>
                                     <div className="relative">
                                         <Input
@@ -370,9 +372,11 @@ export default function LoginPage() {
                             {loading ? <Loader2 className="animate-spin" /> : (step === "identity" ? (isDesktopApp ? "Cloud Sign In" : "Sign In") : "Unlock Identity")}
                         </Button>
                         <Button type="button" onClick={handleGoogleLogin} variant="outline" className="w-full h-12 rounded-xl font-bold border-slate-200">Sign in with Google</Button>
-                        <div className="text-[10px] text-center text-slate-400 font-bold uppercase">
-                            New here? <Link href="/register" className="text-blue-600">Create an account</Link>
-                        </div>
+                        {!isDesktopApp && (
+                            <div className="text-[10px] text-center text-slate-400 font-bold uppercase">
+                                New here? <Link href="/register" className="text-blue-600">Create an account</Link>
+                            </div>
+                        )}
                         <button type="button" onClick={toggleAdmin} className="text-[10px] text-blue-600 font-bold uppercase underline underline-offset-4">
                             {isAdmin ? "Standard Login" : "Super Admin Mode"}
                         </button>

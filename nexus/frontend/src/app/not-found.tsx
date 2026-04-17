@@ -1,8 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { isDesktopShell } from "@/lib/desktop-offline";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
 
 export default function NotFound() {
+    const router = useRouter();
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        // DESKTOP-RECOVERY: Automatically return to the main flow if a 404 is hit in the app.
+        // This removes the "Unnecessary Page" experience reported by the user.
+        if (isDesktopShell()) {
+            setIsDesktop(true);
+            router.replace("/login");
+        }
+    }, [router]);
+
+    if (isDesktop) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-8 animate-bounce">

@@ -145,6 +145,16 @@ export default function DashboardPage() {
 
     const cache = getCachedDashboard();
 
+    // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a 
+    // brief simulated check. This prevents the "Loading Hang" while ensuring
+    // we don't trigger automatic network requests.
+    useEffect(() => {
+        if (mounted && !cache) {
+            const timer = setTimeout(() => setLoading(false), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [mounted, cache]);
+
     const [, setSystemStats] = useState<SystemStats>({
         apps: 0,
         installed: 0,

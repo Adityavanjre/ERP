@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { isDesktopShell } from "@/lib/desktop-offline";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BarChart3, ShieldCheck, Zap, Globe, Cpu, CheckCircle2, Smartphone, Download } from "lucide-react";
@@ -6,6 +11,18 @@ import Script from "next/script";
 import { InternalLink } from "@/components/seo/internal-link";
 
 export default function Home() {
+  const router = useRouter();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    // DESKTOP-REDIRECT: Skip marketing landing page if running as a standalone app.
+    // This provides a "Clean App" experience as requested by the user.
+    if (isDesktopShell()) {
+      setIsDesktop(true);
+      router.replace("/login");
+    }
+  }, [router]);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -59,6 +76,15 @@ export default function Home() {
       "closes": "18:00"
     }
   };
+
+  // If we are in desktop, show a minimal loader while the redirect happens
+  if (isDesktop) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-slate-900 selection:bg-blue-500/10">

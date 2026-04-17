@@ -61,7 +61,7 @@ export interface IndustryModuleConfig {
 }
 
 export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
-    [Industry.Manufacturing]: {
+    ['Manufacturing']: {
         enabledModules: ['accounting', 'inventory', 'manufacturing', 'hr', 'crm', 'purchases', 'sales'],
         mobileRestrictedModules: ['accounting'], // Risk management: No heavy accounting on mobile
         terminology: {
@@ -72,7 +72,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             'Work Order': 'Job Card'
         }
     },
-    [Industry.Retail]: {
+    ['Retail']: {
         enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'],
         terminology: {
             customer: 'Shopper/Consumer',
@@ -81,7 +81,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Store Section'
         }
     },
-    [Industry.Construction]: {
+    ['Construction']: {
         enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'projects', 'construction', 'sales'],
         terminology: {
             customer: 'Principal/Owner',
@@ -90,7 +90,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Project Site'
         }
     },
-    [Industry.Healthcare]: {
+    ['Healthcare']: {
         enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'healthcare', 'sales'],
         terminology: {
             customer: 'Patient',
@@ -99,7 +99,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Ward/Unit'
         }
     },
-    [Industry.Logistics]: {
+    ['Logistics']: {
         enabledModules: ['accounting', 'inventory', 'hr', 'purchases', 'crm', 'logistics', 'sales'],
         terminology: {
             customer: 'Client/Receiver',
@@ -108,7 +108,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Fleet Team'
         }
     },
-    [Industry.NBFC]: {
+    ['NBFC']: {
         enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'nbfc', 'sales'],
         terminology: {
             customer: 'Borrower',
@@ -117,7 +117,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Branch/Unit'
         }
     },
-    [Industry.Service]: {
+    ['Service']: {
         enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects', 'sales'],
         terminology: {
             customer: 'Client',
@@ -126,7 +126,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Department'
         }
     },
-    [Industry.Wholesale]: {
+    ['Wholesale']: {
         enabledModules: ['accounting', 'inventory', 'crm', 'purchases', 'hr', 'sales'],
         terminology: {
             customer: 'Distributor/Vendor',
@@ -135,7 +135,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Logistics Bay'
         }
     },
-    [Industry.RealEstate]: {
+    ['RealEstate']: {
         enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'projects', 'sales'],
         terminology: {
             customer: 'Tenant/Lead',
@@ -144,7 +144,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Estate/Wing'
         }
     },
-    [Industry.Education]: {
+    ['Education']: {
         enabledModules: ['accounting', 'hr', 'crm', 'purchases', 'sales'],
         terminology: {
             customer: 'Student/Parent',
@@ -153,7 +153,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Academic Dept'
         }
     },
-    [Industry.Gov]: {
+    ['Gov']: {
         enabledModules: ['accounting', 'hr', 'crm', 'purchases'],
         terminology: {
             customer: 'Citizen',
@@ -162,7 +162,7 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
             department: 'Department'
         }
     },
-    [Industry.General]: {
+    ['General']: {
         enabledModules: ['accounting', 'inventory', 'hr', 'crm', 'purchases'],
         terminology: {
             customer: 'Customer',
@@ -174,8 +174,8 @@ export const INDUSTRY_CONFIGS: Record<string, IndustryModuleConfig> = {
 };
 
 export const RolePermissions: Record<string, Permission[]> = {
-    [Role.Owner]: Object.values(Permission),
-    [Role.Manager]: [
+    ['Owner']: Object.values(Permission),
+    ['Manager']: [
         Permission.CREATE_INVOICE,
         Permission.EDIT_INVOICE,
         Permission.RECORD_PAYMENT,
@@ -189,13 +189,13 @@ export const RolePermissions: Record<string, Permission[]> = {
         Permission.MANAGE_SUPPLIERS,
         Permission.MANAGE_EMPLOYEES,
     ],
-    [Role.Biller]: [
+    ['Biller']: [
         Permission.CREATE_INVOICE,
         Permission.RECORD_PAYMENT,
         Permission.VIEW_PRODUCTS,
     ],
-    [Role.Storekeeper]: [Permission.ADJUST_STOCK, Permission.VIEW_PRODUCTS],
-    [Role.Accountant]: [
+    ['Storekeeper']: [Permission.ADJUST_STOCK, Permission.VIEW_PRODUCTS],
+    ['Accountant']: [
         Permission.VIEW_REPORTS,
         Permission.LOCK_MONTH,
         Permission.EXPORT_TALLY,
@@ -203,14 +203,14 @@ export const RolePermissions: Record<string, Permission[]> = {
         Permission.MANAGE_ACCOUNTS,
         Permission.MANAGE_INVENTORY,
     ],
-    [Role.CA]: [
+    ['CA']: [
         Permission.VIEW_REPORTS,
         Permission.VIEW_PRODUCTS,
         Permission.MANAGE_ACCOUNTS,
         Permission.MANAGE_EMPLOYEES,
     ],
-    [Role.Customer]: [],
-    [Role.Supplier]: [],
+    ['Customer']: [],
+    ['Supplier']: [],
 };
 
 export * from './mobile-whitelist';
