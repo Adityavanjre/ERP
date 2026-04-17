@@ -1,12 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import { ArrowLeft, CheckCircle2, ShieldCheck, BarChart3, Settings2, Home } from "lucide-react";
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { industryThemes } from "@/constants/industries";
+import { industryThemes } from "../../../constants/industries";
 import Script from "next/script";
-import { SmartContent } from "@/components/seo/smart-content";
+import { SmartContent } from "../../../components/seo/smart-content";
+import { DesktopRouteGate } from "../../../components/auth/route-gate";
 
 interface Props {
     params: Promise<{ slug: string }>;
@@ -191,6 +192,7 @@ export default async function IndustryLandingPage({ params }: Props) {
 
     return (
         <div className="min-h-screen bg-slate-50 selection:bg-blue-500/10">
+            <DesktopRouteGate />
             <Script id={`jsonld-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             <Script id={`faq-jsonld-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
             <Script id={`breadcrumb-jsonld-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />

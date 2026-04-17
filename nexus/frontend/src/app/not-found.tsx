@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isDesktopShell } from "@/lib/desktop-offline";
+import { isDesktopShell } from "../lib/desktop-offline";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
 
 export default function NotFound() {
