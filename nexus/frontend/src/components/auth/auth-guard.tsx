@@ -90,6 +90,16 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
                 }
 
                 if (isDesktopLocal) {
+                    if (isOnboarded === false && pathname !== '/onboarding') {
+                        router.push("/onboarding");
+                        return;
+                    }
+
+                    if (isOnboarded === true && pathname === '/onboarding') {
+                        router.push("/dashboard");
+                        return;
+                    }
+
                     if (!cancelled) {
                         setNeedsTenantSelection(false);
                         setAuthorized(true);

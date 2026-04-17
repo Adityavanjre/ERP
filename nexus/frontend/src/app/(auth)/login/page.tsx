@@ -89,7 +89,10 @@ export default function LoginPage() {
     }, []); // Run once on mount. isDesktopShell() is environment-only, no deps needed.
 
     const completeLogin = useCallback((data: AuthResponse) => {
-        localStorage.setItem("k_user", JSON.stringify(data.user))
+        localStorage.setItem("k_user", JSON.stringify(data.user));
+        if (data.accessToken) {
+            localStorage.setItem("k_token", data.accessToken);
+        }
 
         const SAFE_FALLBACK = "/portal/dashboard"
         const returnTo = localStorage.getItem("return_to")
@@ -151,11 +154,12 @@ export default function LoginPage() {
                         }
 
                         localStorage.setItem("k_user", JSON.stringify(desktopRes.data.user));
+                        localStorage.setItem("k_token", desktopRes.data.accessToken);
                         localStorage.setItem("k_cloud_sync_active", "true");
                         
                         try {
                             await nexusDesktop.session.set(desktopRes.data);
-                            await nexusDesktop.sync.bootstrap();
+                            // Removed auto-sync to strictly adhere to the manual "User-Initiated Only" policy.
                             window.location.href = "/portal/dashboard";
                         } catch (syncErr: unknown) {
                             const err = syncErr as { message?: string };

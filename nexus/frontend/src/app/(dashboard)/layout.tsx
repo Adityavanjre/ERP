@@ -28,7 +28,9 @@ const DashboardLayout = ({
 
         const bootstrap = async () => {
             try {
-                await hydrateDesktopOfflineSession();
+                if (typeof window !== 'undefined' && Boolean((window as any).nexusDesktop?.shell?.isDesktop)) {
+                    await hydrateDesktopOfflineSession();
+                }
                 const token = typeof window !== 'undefined' ? localStorage.getItem("k_token") : null;
                 if (token) {
                     const decoded = jwtDecode<DecodedToken>(token);

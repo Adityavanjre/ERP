@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import client from '../api/client';
 
-export const useQuery = <T>(url: string) => {
+export const useQuery = <T>(url: string, options: { enabled?: boolean } = {}) => {
+    const { enabled = false } = options;
     const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(enabled);
     const [error, setError] = useState<string | null>(null);
 
     const fetchData = useCallback(async (retryCount = 0) => {
@@ -27,8 +28,10 @@ export const useQuery = <T>(url: string) => {
     }, [url]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (enabled) {
+            fetchData();
+        }
+    }, [fetchData, enabled]);
 
     return { data, loading, error, refetch: () => fetchData() };
 };

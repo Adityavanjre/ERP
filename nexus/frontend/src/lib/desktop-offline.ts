@@ -1108,6 +1108,7 @@ export async function hydrateDesktopOfflineSession(): Promise<boolean> {
   
   const bridge = getDesktopBridge();
   if (typeof window === "undefined") return false;
+  if (!bridge || !bridge.localData) return false;
 
   const state = await getLocalState();
   
@@ -1316,6 +1317,30 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "auth/logout") {
+    return buildResponse(config, { success: true });
+  }
+
+  if (method === "post" && path === "auth/onboarding") {
+    const payload = parseBody<{ industry?: string, companyName?: string }>(config);
+    state.workspace.industry = payload.industry || state.workspace.industry;
+    state.workspace.name = payload.companyName || state.workspace.name;
+    
+    const sessionTokenUser = currentStoredUser();
+    if (sessionTokenUser) {
+      persistBrowserSession({
+        mode: "offline",
+        userId: sessionTokenUser.id,
+        fullName: sessionTokenUser.fullName,
+        email: sessionTokenUser.email,
+        role: sessionTokenUser.role,
+        tenantId: sessionTokenUser.tenantId,
+        tenantName: state.workspace.name,
+        industry: state.workspace.industry,
+        createdAt: nowIso(),
+        lastOpenedAt: nowIso()
+      }, true);
+    }
+    await saveLocalState(state);
     return buildResponse(config, { success: true });
   }
 
