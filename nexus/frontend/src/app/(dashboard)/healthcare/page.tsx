@@ -1,12 +1,11 @@
-
 "use client";
 
 import React from 'react';
 import { Users, Search, Plus, Filter, MoreHorizontal, FileText, Calendar, Activity } from 'lucide-react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { cn } from "../../lib/utils";
 
 const patients = [
     { id: 'PAT-001', name: 'John Doe', age: 45, gender: 'Male', contact: '+91 98765 43210', lastVisit: '2023-12-05', status: 'Stable' },

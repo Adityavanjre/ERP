@@ -8,17 +8,17 @@ import {
     DialogTitle,
     DialogDescription,
     DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
+} from "../ui/select";
+import { Label } from "../ui/label";
+import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Play, Loader2, Warehouse } from "lucide-react";
 

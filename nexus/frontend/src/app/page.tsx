@@ -17,11 +17,11 @@ export default function Home() {
   useEffect(() => {
     // DESKTOP-REDIRECT: Skip marketing landing page if running as a standalone app.
     // This provides a "Clean App" experience as requested by the user.
-    if (isDesktopShell()) {
+    if (isDesktopShell() && !isDesktop) {
       setIsDesktop(true);
       router.replace("/login");
     }
-  }, [router]);
+  }, [router, isDesktop]);
 
   const jsonLd = {
     "@context": "https://schema.org",

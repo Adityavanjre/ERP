@@ -3,11 +3,11 @@ import type { Metadata, Viewport } from "next";
 export const dynamic = 'force-dynamic';
 
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { UXProvider } from "@/components/providers/ux-provider";
-import { LoadingBar } from "@/components/ui/loading-bar";
+import { Toaster } from "../components/ui/sonner";
+import { UXProvider } from "../components/providers/ux-provider";
+import { LoadingBar } from "../components/ui/loading-bar";
 import { Suspense } from "react";
-import { PerformanceMonitor } from "@/components/seo/performance-monitor";
+import { PerformanceMonitor } from "../components/seo/performance-monitor";
 import Script from "next/script";
 
 // Mocking Google Fonts to resolve fetch errors during build in local/restricted environments
@@ -111,7 +111,7 @@ const organizationJsonLd = {
   }
 };
 
-import { ErrorBoundary } from "@/components/providers/error-boundary";
+import { ErrorBoundary } from "../components/providers/error-boundary";
 
 export default function RootLayout({
   children,

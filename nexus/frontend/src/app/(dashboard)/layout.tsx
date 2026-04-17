@@ -1,15 +1,14 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navbar } from "@/components/layout/navbar";
-import { Sidebar } from "@/components/layout/sidebar";
-import AuthGuard from "@/components/auth/auth-guard";
-import { CommandPalette } from "@/components/layout/command-palette";
+import { Navbar } from "../../components/layout/navbar";
+import { Sidebar } from "../../components/layout/sidebar";
+import AuthGuard from "../../components/auth/auth-guard";
+import { CommandPalette } from "../../components/layout/command-palette";
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
-import { DraftRecovery } from "@/components/auth/draft-recovery";
-import { hydrateDesktopOfflineSession } from "@/lib/desktop-offline";
+import { DraftRecovery } from "../../components/auth/draft-recovery";
+import { hydrateDesktopOfflineSession } from "../../lib/desktop-offline";
 
 interface DecodedToken {
     type?: string;
