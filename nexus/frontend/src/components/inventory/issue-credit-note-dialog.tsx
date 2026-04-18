@@ -7,18 +7,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { api } from "@/lib/api";
+} from "../../components/ui/select";
+import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Plus, Trash2, FileText, Loader2, IndianRupee } from "lucide-react";
 

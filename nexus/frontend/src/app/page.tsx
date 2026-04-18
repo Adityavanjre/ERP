@@ -102,9 +102,9 @@ export default function Home() {
             >
               Sign In
             </Link>
-            <Link href="/register">
+            <Link href={isDesktopShell() ? "/login" : "/register"}>
               <Button className="rounded-2xl bg-slate-900 hover:bg-black px-8 py-6 h-auto font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest whitespace-nowrap">
-                Start Free Trial
+                {isDesktopShell() ? "Open Dashboard" : "Start Free Trial"}
               </Button>
             </Link>
           </div>
@@ -144,9 +144,9 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
-                <Link href="/register">
+                <Link href={isDesktopShell() ? "/login" : "/register"}>
                   <Button className="rounded-[2rem] bg-blue-600 hover:bg-blue-700 px-12 py-8 h-auto text-lg font-black shadow-2xl shadow-blue-600/30 text-white flex items-center group transition-all hover:scale-105">
-                    Start Transformation{" "}
+                    {isDesktopShell() ? "Enter Dashboard" : "Start Transformation"}{" "}
                     <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-2 transition-transform" />
                   </Button>
                 </Link>
@@ -235,12 +235,12 @@ export default function Home() {
                   Tailored technology for your specific industrial vertical.
                 </p>
               </div>
-              <InternalLink
-                href="/register"
+              <Link
+                href={isDesktopShell() ? "/login" : "/register"}
                 className="text-blue-600 font-black text-xs uppercase tracking-widest hover:underline decoration-2"
               >
                 View all industries &rarr;
-              </InternalLink>
+              </Link>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">

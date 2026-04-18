@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import { LogOut } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import {
   clearDesktopOfflineSession,
   isDesktopOfflineMode,
-} from "@/lib/desktop-offline";
-import { revokeNetworkConsent } from "@/lib/network-consent";
+} from "../../lib/desktop-offline";
+import { revokeNetworkConsent } from "../../lib/network-consent";
 
 interface UserData {
   fullName: string;

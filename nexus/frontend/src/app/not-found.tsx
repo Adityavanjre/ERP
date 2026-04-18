@@ -36,12 +36,11 @@ export default function NotFound() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
-                <Link href="/" className="w-full">
-                    <Button variant="outline" className="w-full h-14 rounded-2xl border-slate-200 bg-white hover:bg-slate-50 font-bold group">
-                        <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                        Back to Home
-                    </Button>
-                </Link>
+            <Link href={isDesktopShell() ? "/login" : "/"} className="w-full">
+              <Button className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest flex items-center justify-center">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to {isDesktopShell() ? "Login" : "Home"}
+              </Button>
+            </Link>
                 <Link href="/register" className="w-full">
                     <Button className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold shadow-lg shadow-blue-500/20">
                         Start Free Trial

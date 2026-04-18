@@ -1,15 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,11 +17,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from "../../components/ui/table";
+import { Badge } from "../../components/ui/badge";
 import { Plus, RefreshCw, Landmark } from "lucide-react";
 import { toast } from "sonner";
-import { useUX } from "@/components/providers/ux-provider";
+import { useUX } from "../../components/providers/ux-provider";
 
 interface Asset {
   id: string;

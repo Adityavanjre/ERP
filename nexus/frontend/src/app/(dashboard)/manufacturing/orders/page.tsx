@@ -10,17 +10,17 @@ import {
   Boxes,
   BadgeCheck,
 } from "lucide-react";
-import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../../lib/api";
+import { Badge } from "../../../../components/ui/badge";
+import { Button } from "../../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+} from "../../../../components/ui/card";
+import { Input } from "../../../../components/ui/input";
 import {
   Table,
   TableBody,
@@ -28,10 +28,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { CreateWorkOrderDialog } from "@/components/manufacturing/create-work-order-dialog";
-import { CompleteWorkOrderDialog } from "@/components/manufacturing/complete-work-order-dialog";
+} from "../../../../components/ui/table";
+import { LoadingSpinner } from "../../../../components/ui/loading-spinner";
+import { CreateWorkOrderDialog } from "../../../../components/manufacturing/create-work-order-dialog";
+import { CompleteWorkOrderDialog } from "../../../../components/manufacturing/complete-work-order-dialog";
 
 interface WorkOrder {
   id: string;

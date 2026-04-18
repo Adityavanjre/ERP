@@ -8,12 +8,12 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
 import { AlertCircle, LogOut, ShieldCheck } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { isDesktopOfflineMode } from "@/lib/desktop-offline";
+import { cn } from "../../lib/utils";
+import { isDesktopOfflineMode } from "../../lib/desktop-offline";
 import { jwtDecode } from "jwt-decode";
 import {
   denyNetworkConsent,
@@ -23,7 +23,7 @@ import {
   NETWORK_CONSENT_REQUESTED_EVENT,
   recordUserInteraction,
   revokeNetworkConsent,
-} from "@/lib/network-consent";
+} from "../../lib/network-consent";
 
 interface UserToken {
   isOnboarded?: boolean;

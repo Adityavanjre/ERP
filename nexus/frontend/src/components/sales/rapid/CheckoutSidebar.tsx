@@ -8,7 +8,7 @@ import {
   Banknote,
   Smartphone,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../../lib/utils";
 import { NumericInput } from "../../ui/numeric-input";
 
 interface CheckoutSidebarProps {

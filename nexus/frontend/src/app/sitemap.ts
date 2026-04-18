@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { industryThemes } from "@/constants/industries";
+import { industryThemes } from "../constants/industries";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://klypso.in/portal";

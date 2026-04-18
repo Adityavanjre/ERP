@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { industryThemes } from "@/constants/industries";
+import { industryThemes } from "../../../constants/industries";
 
 export const runtime = "edge";
 

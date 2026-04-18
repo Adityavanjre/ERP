@@ -7,19 +7,19 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
 import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 import {
   ensureNetworkConsent,
   ensureRecentUserInteraction,
   isNetworkConsentError,
   revokeNetworkConsent,
-} from "@/lib/network-consent";
+} from "../../lib/network-consent";
 
 // Build the API base URL without any Axios interceptors.
 // Using fetch() directly with cookie-based auth (credentials: 'include').

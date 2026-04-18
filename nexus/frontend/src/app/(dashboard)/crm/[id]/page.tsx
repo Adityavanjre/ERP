@@ -2,15 +2,15 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../../lib/api";
+import { Button } from "../../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "../../../../components/ui/card";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../../components/ui/table";
 import {
   ArrowLeft,
   Phone,
@@ -28,7 +28,7 @@ import {
   Wallet,
   Loader2,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../../../components/ui/badge";
 
 interface CustomerDetail {
   id: string;

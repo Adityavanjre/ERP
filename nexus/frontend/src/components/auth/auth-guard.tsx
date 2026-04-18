@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import { hydrateDesktopOfflineSession } from "@/lib/desktop-offline";
+import { hydrateDesktopOfflineSession } from "../../lib/desktop-offline";
 
 // Route-level access control matrix
 // Maps path prefixes to allowed roles

@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "../../../components/ui/card";
 import {
   LayoutGrid,
   Download,
@@ -25,9 +25,9 @@ import {
   HardDrive,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../../components/ui/badge";
 import Link from "next/link";
-import { useUX } from "@/components/providers/ux-provider";
+import { useUX } from "../../../components/providers/ux-provider";
 
 interface SystemApp {
   id: string;

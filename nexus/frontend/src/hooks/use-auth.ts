@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { hydrateDesktopOfflineSession } from "@/lib/desktop-offline";
+import { hydrateDesktopOfflineSession } from "../lib/desktop-offline";
 
 export interface User {
   id: string;

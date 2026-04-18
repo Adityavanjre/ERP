@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Zap, Wifi, WifiOff } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../../../lib/api";
 import { toast } from "sonner";
-import { BarcodeSearch } from "@/components/sales/rapid/BarcodeSearch";
-import { CartTable } from "@/components/sales/rapid/CartTable";
-import { CheckoutSidebar } from "@/components/sales/rapid/CheckoutSidebar";
-import { ProductGrid } from "@/components/sales/rapid/ProductGrid";
-import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
+import { BarcodeSearch } from "../../../../components/sales/rapid/BarcodeSearch";
+import { CartTable } from "../../../../components/sales/rapid/CartTable";
+import { CheckoutSidebar } from "../../../../components/sales/rapid/CheckoutSidebar";
+import { ProductGrid } from "../../../../components/sales/rapid/ProductGrid";
+import { ConfirmationDialog } from "../../../../components/shared/ConfirmationDialog";
 
 const generateId = () =>
   Math.random().toString(36).substring(2, 10) + Date.now().toString(36);

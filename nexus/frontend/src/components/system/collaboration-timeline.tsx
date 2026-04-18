@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import { Textarea } from "../../components/ui/textarea";
 import { MessageSquare, Send, Reply, X, Paperclip } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import { formatDistanceToNow } from "date-fns";
 
 interface Comment {

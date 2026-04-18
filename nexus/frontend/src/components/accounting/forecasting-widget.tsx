@@ -7,10 +7,10 @@ import {
   CardTitle,
   CardContent,
   CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+} from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Progress } from "../../components/ui/progress";
+import { Button } from "../../components/ui/button";
 import {
   TrendingUp,
   Calendar,
@@ -18,7 +18,7 @@ import {
   Clock,
   RefreshCw,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import { motion } from "framer-motion";
 
 interface Projection {

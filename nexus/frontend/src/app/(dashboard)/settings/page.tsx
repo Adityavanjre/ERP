@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import { Settings, Shield, CreditCard, Bell, Globe, Zap } from "lucide-react";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
+import { Badge } from "../../../components/ui/badge";
 import { UserPlus, Key, Trash2, ShieldAlert } from "lucide-react";
 import {
   Dialog,
@@ -24,16 +24,16 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "../../../components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
-import { ApiKeyManager } from "@/components/system/api-key-manager";
+} from "../../../components/ui/select";
+import { useAuth } from "../../../hooks/use-auth";
+import { ApiKeyManager } from "../../../components/system/api-key-manager";
 import { Role } from "@nexus/shared";
 
 // Use shared Role enum instead of local string literals

@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../../lib/api";
+import { Button } from "../../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../../../components/ui/card";
+import { Input } from "../../../../components/ui/input";
+import { Label } from "../../../../components/ui/label";
 import { GitBranch, Plus, Save, Zap, Activity, Settings2 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../../../components/ui/badge";
 
 interface WorkflowNode {
   id: string;

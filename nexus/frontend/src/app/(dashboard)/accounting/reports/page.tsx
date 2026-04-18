@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { api } from "@/lib/api";
+import { api } from "../../../../lib/api";
 import { toast } from "sonner";
 import {
   Card,
@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Badge } from "@/components/ui/badge";
+} from "../../../../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tabs";
+import { LoadingSpinner } from "../../../../components/ui/loading-spinner";
+import { Badge } from "../../../../components/ui/badge";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../../components/ui/table";
 import {
   BarChart2,
   CheckCircle2,
@@ -29,7 +29,7 @@ import {
   TrendingDown,
   RefreshCw,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../../components/ui/button";
 
 interface TrialBalanceAccount {
   id: string;

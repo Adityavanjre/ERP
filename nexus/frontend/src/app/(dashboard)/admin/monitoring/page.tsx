@@ -15,10 +15,10 @@ import {
   PlayCircle,
   BarChart2,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { Card } from "../../../../components/ui/card";
+import { Badge } from "../../../../components/ui/badge";
+import { Button } from "../../../../components/ui/button";
+import { api } from "../../../../lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 

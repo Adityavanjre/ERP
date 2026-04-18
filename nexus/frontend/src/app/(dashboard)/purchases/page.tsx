@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "../../../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -26,9 +26,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   ShoppingBag,
   DollarSign,
@@ -41,12 +41,12 @@ import {
   Edit2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { CreateSupplierDialog } from "@/components/purchases/create-supplier-dialog";
-import { EditSupplierDialog } from "@/components/purchases/edit-supplier-dialog";
-import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
-import { NumericInput } from "@/components/ui/numeric-input";
-import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
+import { Badge } from "../../../components/ui/badge";
+import { CreateSupplierDialog } from "../../../components/purchases/create-supplier-dialog";
+import { EditSupplierDialog } from "../../../components/purchases/edit-supplier-dialog";
+import { OpeningBalanceDialog } from "../../../components/accounting/opening-balance-dialog";
+import { NumericInput } from "../../../components/ui/numeric-input";
+import { ConfirmationDialog } from "../../../components/shared/ConfirmationDialog";
 
 interface Supplier {
   id: string;

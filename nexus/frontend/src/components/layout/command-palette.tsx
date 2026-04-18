@@ -18,15 +18,15 @@ import {
   Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
 
 interface SearchResult {
   type: "Product" | "Customer" | "Bill" | "Order";

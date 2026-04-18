@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api } from "../../../../lib/api";
 import {
   LayoutGrid,
   Plus,
@@ -13,12 +13,12 @@ import {
   Loader2,
   Edit2,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CreateWarehouseDialog } from "@/components/inventory/create-warehouse-dialog";
-import { EditWarehouseDialog } from "@/components/inventory/edit-warehouse-dialog";
-import { TransferStockDialog } from "@/components/inventory/transfer-stock-dialog";
-import { WarehouseDetailsDialog } from "@/components/inventory/warehouse-details-dialog";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
+import { CreateWarehouseDialog } from "../../../../components/inventory/create-warehouse-dialog";
+import { EditWarehouseDialog } from "../../../../components/inventory/edit-warehouse-dialog";
+import { TransferStockDialog } from "../../../../components/inventory/transfer-stock-dialog";
+import { WarehouseDetailsDialog } from "../../../../components/inventory/warehouse-details-dialog";
 
 interface Warehouse {
   id: string;

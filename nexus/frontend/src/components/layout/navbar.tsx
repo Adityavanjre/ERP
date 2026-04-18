@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { UserMenu } from "@/components/layout/user-menu";
+import { UserMenu } from "../../components/layout/user-menu";
 import { Search, Command, HardDrive } from "lucide-react";
 import { MobileSidebar } from "./mobile-sidebar";
-import { isDesktopOfflineMode } from "@/lib/desktop-offline";
+import { isDesktopOfflineMode } from "../../lib/desktop-offline";
 
 export const Navbar = () => {
   const [offlineMode] = useState(() => {

@@ -7,11 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { NumericInput } from "@/components/ui/numeric-input";
-import { Label } from "@/components/ui/label";
+} from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { NumericInput } from "../../components/ui/numeric-input";
+import { Label } from "../../components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,9 +20,9 @@ import {
   SelectValue,
   SelectGroup,
   SelectLabel,
-} from "@/components/ui/select";
+} from "../../components/ui/select";
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import { toast } from "sonner";
 
 interface Product {

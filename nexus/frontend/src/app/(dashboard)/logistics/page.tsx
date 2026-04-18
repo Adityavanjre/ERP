@@ -13,8 +13,8 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
 
 export default function LogisticsDashboard() {
   return (

@@ -7,7 +7,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
+} from "../../../../components/ui/card";
 
 export default function ConstructionSubs() {
   return (

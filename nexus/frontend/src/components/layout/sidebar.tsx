@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "../../hooks/use-auth";
 import {
   LayoutDashboard,
   Package,
@@ -31,8 +31,8 @@ import {
 } from "lucide-react";
 import { KlypsoLogo } from "../brand/logo";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { api } from "../../lib/api";
+import { cn } from "../../lib/utils";
 
 // Role-based access matrix
 // Owner = all, Manager = all except settings, others = scoped

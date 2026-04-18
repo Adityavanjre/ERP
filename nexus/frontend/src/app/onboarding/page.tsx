@@ -21,11 +21,11 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 
 const INDUSTRIES = [
   {
@@ -116,7 +116,7 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    import("@/lib/desktop-offline").then((m) => {
+    import("../../lib/desktop-offline").then((m) => {
       if (m.isDesktopShell()) {
         m.hydrateDesktopOfflineSession().catch(console.error);
       }

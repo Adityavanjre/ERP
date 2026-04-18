@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
+import { Input } from "../../../../components/ui/input";
 import {
   Table,
   TableBody,
@@ -11,13 +11,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../../components/ui/table";
 import { Truck, Plus, Search, Filter, RefreshCw, FileText } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../../../lib/api";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../../../components/ui/badge";
 
-import { IssueDebitNoteDialog } from "@/components/inventory/issue-debit-note-dialog";
+import { IssueDebitNoteDialog } from "../../../../components/inventory/issue-debit-note-dialog";
 
 interface DebitNote {
   id: string;

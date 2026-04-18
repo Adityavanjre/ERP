@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useAuth } from "../../hooks/use-auth";
-import { api } from "../../lib/api";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { useAuth } from "../../../hooks/use-auth";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import {
     Table,
     TableBody,
@@ -13,21 +13,21 @@ import {
     TableHead,
     TableHeader,
     TableRow
-} from "../../components/ui/table";
+} from "../../../components/ui/table";
 import { Plus, Wallet, ArrowUpRight, ArrowDownRight, Landmark, Receipt, Printer, Search, RefreshCw, ShoppingCart, MessageCircle, Ban, Activity, Users } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "../../components/ui/badge";
-import { cn } from "../../lib/utils";
-import { RecordPaymentModal, type Invoice as PaymentInvoice } from "../../components/accounting/record-payment-modal";
-import { CreateInvoiceDialog } from "../../components/accounting/create-invoice-dialog";
-import { CreateAccountDialog } from "../../components/accounting/create-account-dialog";
-import { CreateJournalEntryDialog } from "../../components/accounting/create-journal-entry-dialog";
-import { CollaborationTimeline } from "../../components/system/collaboration-timeline";
-import { ForecastingWidget } from "../../components/accounting/forecasting-widget";
-import { useUX } from "../../components/providers/ux-provider";
-import { FixedAssetTab } from "../../components/accounting/fixed-asset-tab";
-import { AuditorDashboard } from "../../components/accounting/auditor-dashboard";
-import { EmptyState } from "../../components/ui/empty-state";
+import { Badge } from "../../../components/ui/badge";
+import { cn } from "../../../lib/utils";
+import { RecordPaymentModal, type Invoice as PaymentInvoice } from "../../../components/accounting/record-payment-modal";
+import { CreateInvoiceDialog } from "../../../components/accounting/create-invoice-dialog";
+import { CreateAccountDialog } from "../../../components/accounting/create-account-dialog";
+import { CreateJournalEntryDialog } from "../../../components/accounting/create-journal-entry-dialog";
+import { CollaborationTimeline } from "../../../components/system/collaboration-timeline";
+import { ForecastingWidget } from "../../../components/accounting/forecasting-widget";
+import { useUX } from "../../../components/providers/ux-provider";
+import { FixedAssetTab } from "../../../components/accounting/fixed-asset-tab";
+import { AuditorDashboard } from "../../../components/accounting/auditor-dashboard";
+import { EmptyState } from "../../../components/ui/empty-state";
 
 interface Account {
     id: string;
@@ -810,6 +810,7 @@ export default function AccountingPage() {
                 open={showCreateJournalEntry}
                 onOpenChange={setShowCreateJournalEntry}
                 onSuccess={syncLedgers}
+                accounts={accounts}
             />
         </div>
     );

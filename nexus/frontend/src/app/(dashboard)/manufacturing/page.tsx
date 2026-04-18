@@ -15,12 +15,12 @@ import {
   Play,
   History,
 } from "lucide-react";
-import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { CompleteWorkOrderDialog } from "@/components/manufacturing/complete-work-order-dialog";
-import { StartProductionDialog } from "@/components/manufacturing/start-production-dialog";
+import { api } from "../../../lib/api";
+import { cn } from "../../../lib/utils";
+import { Badge } from "../../../components/ui/badge";
+import { Card } from "../../../components/ui/card";
+import { CompleteWorkOrderDialog } from "../../../components/manufacturing/complete-work-order-dialog";
+import { StartProductionDialog } from "../../../components/manufacturing/start-production-dialog";
 
 interface BOMItem {
   id: string;

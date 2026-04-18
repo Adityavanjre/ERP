@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "../../../components/ui/card";
 import {
   Users,
   UserPlus,
@@ -24,8 +24,8 @@ import {
   Edit2,
   Scale,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   Table,
   TableBody,
@@ -33,31 +33,31 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../components/ui/table";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { useUX } from "@/components/providers/ux-provider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Badge } from "../../../components/ui/badge";
+import { useUX } from "../../../components/providers/ux-provider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
+import { LoadingSpinner } from "../../../components/ui/loading-spinner";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../../components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { EditCustomerDialog } from "@/components/crm/edit-customer-dialog";
-import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
-import { NumericInput } from "@/components/ui/numeric-input";
+} from "../../../components/ui/dialog";
+import { EditCustomerDialog } from "../../../components/crm/edit-customer-dialog";
+import { OpeningBalanceDialog } from "../../../components/accounting/opening-balance-dialog";
+import { NumericInput } from "../../../components/ui/numeric-input";
 
 import { useRouter } from "next/navigation";
-import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { useUnsavedChanges } from "../../../hooks/use-unsaved-changes";
 
 interface Customer {
   id: string;

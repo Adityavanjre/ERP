@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../../lib/api";
+import { Button } from "../../../../components/ui/button";
 import { Printer, Mail } from "lucide-react";
 import { toast } from "sonner";
 

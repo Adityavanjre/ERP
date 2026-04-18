@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { DynamicView } from "@/components/system/dynamic-view";
+import { DynamicView } from "../../../../components/system/dynamic-view";
 
 export default function DynamicAppPage() {
   const params = useParams();

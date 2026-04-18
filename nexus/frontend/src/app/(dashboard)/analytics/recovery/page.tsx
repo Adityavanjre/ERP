@@ -15,7 +15,7 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../../../lib/api";
 
 interface RecoveryOpportunity {
   id: string;

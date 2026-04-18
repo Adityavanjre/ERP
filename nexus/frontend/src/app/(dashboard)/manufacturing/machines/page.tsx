@@ -11,16 +11,16 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../../lib/api";
+import { Button } from "../../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+} from "../../../../components/ui/card";
+import { Input } from "../../../../components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +29,9 @@ import {
   DialogDescription,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+} from "../../../../components/ui/dialog";
+import { Badge } from "../../../../components/ui/badge";
+import { Progress } from "../../../../components/ui/progress";
 
 interface Machine {
   id: string;

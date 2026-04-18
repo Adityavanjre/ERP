@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { LinkingEngine } from "@/lib/seo/linking-engine";
+import { LinkingEngine } from "../../lib/seo/linking-engine";
 
 interface InternalLinkProps {
   children: string;

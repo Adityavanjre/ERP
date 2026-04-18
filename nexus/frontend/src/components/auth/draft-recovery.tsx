@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import { AlertCircle, RotateCcw, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
 
 interface Draft {

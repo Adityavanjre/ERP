@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   Card,
   CardContent,
@@ -15,18 +15,18 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../../../components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../../components/ui/select";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { useAuth } from "@/hooks/use-auth";
+import { api } from "../../../lib/api";
+import { useAuth } from "../../../hooks/use-auth";
 
 const onboardingSchema = z.object({
   industry: z.string().min(1, "Please select an industry"),

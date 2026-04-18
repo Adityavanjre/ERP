@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { Permission, RolePermissions } from "@/constants/permissions";
+import { useAuth } from "../../hooks/use-auth";
+import { Permission, RolePermissions } from "../../constants/permissions";
 
 interface HasPermissionProps {
   permission: Permission;

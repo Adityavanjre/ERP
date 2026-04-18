@@ -1,6 +1,6 @@
 import React from "react";
 import { InternalLink } from "./internal-link";
-import { LinkingEngine } from "@/lib/seo/linking-engine";
+import { LinkingEngine } from "../../lib/seo/linking-engine";
 
 interface SmartContentProps {
   children: string;

@@ -1,22 +1,22 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "../../../components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "../../../components/ui/dialog";
 import {
   Package,
   Plus,
@@ -33,10 +33,10 @@ import {
   Scale,
   Brain,
 } from "lucide-react";
-import { OpeningBalanceDialog } from "@/components/accounting/opening-balance-dialog";
-import { Input } from "@/components/ui/input";
-import { NumericInput } from "@/components/ui/numeric-input";
-import { Label } from "@/components/ui/label";
+import { OpeningBalanceDialog } from "../../../components/accounting/opening-balance-dialog";
+import { Input } from "../../../components/ui/input";
+import { NumericInput } from "../../../components/ui/numeric-input";
+import { Label } from "../../../components/ui/label";
 import {
   Table,
   TableBody,
@@ -44,11 +44,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../components/ui/table";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { useUX } from "@/components/providers/ux-provider";
-import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { Badge } from "../../../components/ui/badge";
+import { useUX } from "../../../components/providers/ux-provider";
+import { useUnsavedChanges } from "../../../hooks/use-unsaved-changes";
 
 interface Product {
   id: string;

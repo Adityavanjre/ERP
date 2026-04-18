@@ -6,9 +6,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { api } from "@/lib/api";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+} from "../../components/ui/dialog";
+import { api } from "../../lib/api";
+import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import {
   Table,
   TableBody,
@@ -16,9 +16,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+} from "../../components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
 import { Package, Calculator, Layers } from "lucide-react";
 
 interface BOMItemDetailed {

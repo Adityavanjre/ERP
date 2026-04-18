@@ -9,17 +9,17 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "../../components/ui/dialog";
+import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api } from "../../lib/api";
 import {
   UploadCloud,
   FileSpreadsheet,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { LoadingSpinner } from "../../components/ui/loading-spinner";
 
 interface ImportResults {
   total: number;

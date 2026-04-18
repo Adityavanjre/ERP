@@ -1,7 +1,7 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Input } from "../../components/ui/input";
+import { cn } from "../../lib/utils";
 import React from "react";
 
 interface NumericInputProps extends Omit<

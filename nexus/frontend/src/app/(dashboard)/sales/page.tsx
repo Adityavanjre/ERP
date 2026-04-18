@@ -2,15 +2,15 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/button";
+import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
+} from "../../../components/ui/card";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../components/ui/table";
 import {
   Plus,
   ShoppingCart,
@@ -28,20 +28,20 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { useUX } from "@/components/providers/ux-provider";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
+import { Badge } from "../../../components/ui/badge";
+import { useUX } from "../../../components/providers/ux-provider";
+import { LoadingSpinner } from "../../../components/ui/loading-spinner";
+import { Dialog, DialogContent, DialogTitle } from "../../../components/ui/dialog";
+import { ConfirmationDialog } from "../../../components/shared/ConfirmationDialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "../../../components/ui/select";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 
 interface SalesOrder {
   id: string;

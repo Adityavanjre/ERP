@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
 import {
   Card,
   CardContent,
@@ -15,14 +15,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
+} from "../../../components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from "../../../components/ui/select";
 import {
   Loader2,
   ArrowRight,
@@ -31,9 +31,9 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { Badge } from "../../components/ui/badge";
+import { Badge } from "../../../components/ui/badge";
 import { toast } from "sonner";
-import { api } from "../../lib/api";
+import { api } from "../../../lib/api";
 
 // Validation Schemas
 const userSchema = z

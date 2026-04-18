@@ -12,18 +12,18 @@ import {
   Calendar,
   X,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "../../../../lib/api";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../../components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+} from "../../../../components/ui/card";
+import { Label } from "../../../../components/ui/label";
+import { Input } from "../../../../components/ui/input";
 import {
   Table,
   TableBody,
@@ -31,16 +31,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "../../../../components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Badge } from "@/components/ui/badge";
+} from "../../../../components/ui/select";
+import { LoadingSpinner } from "../../../../components/ui/loading-spinner";
+import { Badge } from "../../../../components/ui/badge";
 
 interface MovementLog {
   id: string;
