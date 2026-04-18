@@ -1,7 +1,7 @@
 # Graph Report - D:\code\ERP  (2026-04-18)
 
 ## Corpus Check
-- 600 files · ~476,980 words
+- 600 files · ~476,976 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -2467,11 +2467,9 @@ Nodes (0):
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AccountingController` connect `Community 4` to `Community 1`, `Community 7`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
 - **Why does `AccountingService` connect `Community 7` to `Community 4`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
-- **Why does `AuthController` connect `Community 14` to `Community 0`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `ManufacturingService` connect `Community 10` to `Community 0`, `Community 1`?**
   _High betweenness centrality (0.020) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `handleDesktopOfflineRequest()` (e.g. with `.get()` and `.push()`) actually correct?**
   _`handleDesktopOfflineRequest()` has 2 INFERRED edges - model-reasoned connections that need verification._
@@ -2481,3 +2479,5 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.01 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.03 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.02 - nodes in this community are weakly interconnected._
