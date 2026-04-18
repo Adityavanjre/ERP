@@ -9,20 +9,17 @@ import { ArrowLeft, Search } from "lucide-react";
 
 export default function NotFound() {
     const router = useRouter();
-    const [isDesktop, setIsDesktop] = useState(false);
+    const redirectPerformed = useRef(false);
 
     useEffect(() => {
         // DESKTOP-RECOVERY: Automatically return to the main flow if a 404 is hit in the app.
         // This removes the "Unnecessary Page" experience reported by the user.
-        if (isDesktopShell()) {
-            setIsDesktop(true);
+        if (isDesktopShell() && !redirectPerformed.current) {
+            redirectPerformed.current = true;
             router.replace("/login");
         }
     }, [router]);
 
-    if (isDesktop) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
                 <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
             </div>
         );

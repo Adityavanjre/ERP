@@ -8,7 +8,7 @@ import { CommandPalette } from "../../components/layout/command-palette";
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
 import { DraftRecovery } from "../../components/auth/draft-recovery";
-import { hydrateDesktopOfflineSession } from "../../lib/desktop-offline";
+import { hydrateDesktopOfflineSession, isDesktopShell } from "../../lib/desktop-offline";
 
 interface DecodedToken {
     type?: string;
@@ -27,7 +27,7 @@ const DashboardLayout = ({
 
         const bootstrap = async () => {
             try {
-                if (typeof window !== 'undefined' && Boolean((window as any).nexusDesktop?.shell?.isDesktop)) {
+                if (isDesktopShell()) {
                     await hydrateDesktopOfflineSession();
                 }
                 const token = typeof window !== 'undefined' ? localStorage.getItem("k_token") : null;

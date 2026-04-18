@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { isDesktopShell } from "../lib/desktop-offline";
 import Link from "next/link";
@@ -12,16 +12,15 @@ import { InternalLink } from "../components/seo/internal-link";
 
 export default function Home() {
   const router = useRouter();
-  const [isDesktop, setIsDesktop] = useState(false);
+  const hasAttemptedRedirect = useRef(false);
 
   useEffect(() => {
     // DESKTOP-REDIRECT: Skip marketing landing page if running as a standalone app.
-    // This provides a "Clean App" experience as requested by the user.
-    if (isDesktopShell() && !isDesktop) {
-      setIsDesktop(true);
+    if (isDesktopShell() && !hasAttemptedRedirect.current) {
+      hasAttemptedRedirect.current = true;
       router.replace("/login");
     }
-  }, [router, isDesktop]);
+  }, [router]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -42,249 +41,192 @@ export default function Home() {
     }
   };
 
-  const businessJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Klypso ERP India",
-    "image": "https://klypso.in/portal/favicon.svg",
-    "@id": "https://klypso.in/portal",
-    "url": "https://klypso.in/portal",
-    "telephone": "+91-XXXXXXXXXX",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Klypso Tech Center, Sector 62",
-      "addressLocality": "Noida",
-      "addressRegion": "UP",
-      "postalCode": "201301",
-      "addressCountry": "IN"
-    },
-    "geo": {
-      "@type": "GeoCoordinates",
-      "latitude": 28.6282,
-      "longitude": 77.3898
-    },
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday"
-      ],
-      "opens": "09:00",
-      "closes": "18:00"
-    }
-  };
-
-  // If we are in desktop, show a minimal loader while the redirect happens
-  if (isDesktop) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col min-h-screen bg-white text-slate-900 selection:bg-blue-500/10">
+    <div className="flex flex-col min-h-screen bg-white">
       <Script
         id="structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Script
-        id="local-business-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }}
-      />
-      {/* Header */}
-      <header className="px-4 lg:px-6 h-20 flex items-center border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <Link className="flex items-center justify-center group" href="/">
-          <KlypsoLogo size={40} />
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-8 items-center">
-          <Link className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors hidden md:block" href="#features">
-            Features
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 h-20">
+        <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="p-2.5 bg-blue-600 rounded-2xl group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/20">
+              <KlypsoLogo className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-2xl font-black tracking-tighter text-slate-900 italic">KLYPSO</span>
+            <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-lg ml-2 uppercase tracking-widest">Enterprise</span>
           </Link>
-          <Link className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors hidden md:block" href="#solutions">
-            Solutions
-          </Link>
-          <Link className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors hidden md:block font-bold flex items-center gap-1" href="#mobile">
-            <Smartphone className="h-4 w-4" /> Mobile App
-          </Link>
-          <div className="h-4 w-px bg-slate-200 hidden md:block" />
-          <Link href="/login">
-            <Button variant="ghost" className="text-sm font-semibold hover:bg-slate-50 text-slate-600 hover:text-blue-600 transition-all">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/register">
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-full px-6 group transition-all shadow-md shadow-blue-500/10">
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-        </nav>
-      </header>
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative py-24 md:py-32 lg:py-48 overflow-hidden bg-slate-50/50">
-          {/* Background decoration */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/40 rounded-full blur-[120px] -z-10 animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-slate-200/40 rounded-full blur-[120px] -z-10 animate-delay-1000 animate-pulse" />
+          <div className="hidden lg:flex items-center gap-10">
+            <Link href="#features" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Features</Link>
+            <Link href="#solutions" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Solutions</Link>
+            <Link href="#pricing" className="text-sm font-bold text-slate-500 hover:text-blue-600 transition-colors uppercase tracking-widest">Pricing</Link>
           </div>
 
-          <div className="container px-4 md:px-6 mx-auto relative">
-            <div className="flex flex-col items-center space-y-8 text-center">
-              <div className="inline-flex items-center rounded-full border border-blue-100 bg-white px-3 py-1 text-sm font-bold text-blue-600 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-2 animate-ping" />
-                Klypso Software v2.0
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="hidden sm:block text-sm font-black text-slate-900 hover:text-blue-600 transition-colors uppercase tracking-widest mr-4">Sign In</Link>
+            <Link href="/register">
+              <Button className="rounded-2xl bg-slate-900 hover:bg-black px-8 py-6 h-auto font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest whitespace-nowrap">
+                Start Free Trial
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="flex-1 pt-32">
+        <section className="relative overflow-hidden px-6 lg:px-8 py-24 sm:py-32">
+          {/* Background Gradients */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(circle_at_50%_0%,rgba(59,130,246,0.08),transparent_70%)] pointer-events-none" />
+          <div className="absolute -top-24 right-0 w-96 h-96 bg-blue-400/5 blur-[120px] rounded-full" />
+          <div className="absolute top-1/2 left-0 w-72 h-72 bg-emerald-400/5 blur-[120px] rounded-full" />
+
+          <div className="max-w-[1400px] mx-auto relative">
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-10">
+              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+                <span className="text-xs font-black uppercase tracking-[0.2em]">Next-Gen ERP for Industry 4.0</span>
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl text-slate-900 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-                Operate at the <br />
-                <span className="text-blue-600">Run Your Business Faster.</span>
+
+              <h1 className="text-6xl md:text-8xl font-black tracking-tight text-slate-900 leading-[0.9] italic animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
+                BUILD <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">SMARTER.</span><br />
+                SCALE FASTER.
               </h1>
-              <p className="mx-auto max-w-[700px] text-slate-600 md:text-xl/relaxed lg:text-2xl/relaxed font-medium animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-500">
-                A modern, all-in-one platform to run your <InternalLink>Manufacturing</InternalLink> or <InternalLink>Retail</InternalLink> business with ease.
+
+              <p className="text-xl md:text-2xl text-slate-600 font-medium leading-relaxed max-w-3xl animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+                The ultimate enterprise operating system for manufacturing leaders. Automated GST compliance, real-time BOM management, and deep Tally Prime integration.
               </p>
-              <div className="flex flex-col gap-4 min-[400px]:flex-row justify-center animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-700">
+
+              <div className="flex flex-col sm:flex-row items-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
                 <Link href="/register">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg shadow-lg shadow-blue-500/20">
-                    Create Workspace
+                  <Button className="rounded-[2rem] bg-blue-600 hover:bg-blue-700 px-12 py-8 h-auto text-lg font-black shadow-2xl shadow-blue-600/30 text-white flex items-center group transition-all hover:scale-105">
+                    Start Transformation <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-2 transition-transform" />
                   </Button>
                 </Link>
-                <Link href="/login">
-                  <Button size="lg" variant="outline" className="border-slate-200 bg-white shadow-sm rounded-full px-8 h-14 text-lg hover:bg-slate-50 hover:border-slate-300">
-                    Live Demo
+                <Link href="#demo">
+                  <Button variant="outline" className="rounded-[2rem] px-12 py-8 h-auto text-lg font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-all">
+                    Book Custom Demo
                   </Button>
                 </Link>
+              </div>
+
+              {/* Stats/Badges */}
+              <div className="flex flex-wrap justify-center gap-8 pt-20 animate-in fade-in duration-1000 delay-700">
+                {[
+                  { label: "Active Enterprises", value: "200+" },
+                  { label: "Industry Sectors", value: "12" },
+                  { label: "Compliance Score", value: "100%" },
+                ].map((stat, i) => (
+                  <div key={i} className="flex flex-col items-center">
+                    <span className="text-2xl font-black text-slate-900 italic tracking-tighter">{stat.value}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">{stat.label}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Feature Grid */}
-        <section id="features" className="py-24 bg-white border-y border-slate-100">
-          <div className="container px-4 md:px-6 mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-16 text-slate-900">All-in-one Platform.</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Features Section */}
+        <section id="features" className="py-24 sm:py-32 bg-slate-50/50">
+          <div className="max-w-[1400px] mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              <div className="p-10 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 h-32 w-32 bg-blue-50 rounded-bl-[4rem] group-hover:scale-110 transition-transform" />
+                <BarChart3 className="h-10 w-10 text-blue-600 mb-8 relative z-10" />
+                <h3 className="text-22xl font-black text-slate-900 mb-4 tracking-tight uppercase italic underline decoration-blue-500/30">Intelligence</h3>
+                <p className="text-slate-500 font-medium leading-relaxed">Advanced analytics for production forecasting and financial health monitoring.</p>
+              </div>
+
+              <div className="p-10 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 h-32 w-32 bg-emerald-50 rounded-bl-[4rem] group-hover:scale-110 transition-transform" />
+                <ShieldCheck className="h-10 w-10 text-emerald-600 mb-8 relative z-10" />
+                <h3 className="text-22xl font-black text-slate-900 mb-4 tracking-tight uppercase italic underline decoration-emerald-500/30">Compliance</h3>
+                <p className="text-slate-500 font-medium leading-relaxed">Bulletproof GST automation with direct Tally synchronization.</p>
+              </div>
+
+              <div className="p-10 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-slate-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 h-32 w-32 bg-amber-50 rounded-bl-[4rem] group-hover:scale-110 transition-transform" />
+                <Zap className="h-10 w-10 text-amber-500 mb-8 relative z-10" />
+                <h3 className="text-22xl font-black text-slate-900 mb-4 tracking-tight uppercase italic underline decoration-amber-500/30">Performance</h3>
+                <p className="text-slate-500 font-medium leading-relaxed">Lightning-fast interface built on industrial-grade cloud infrastructure.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Industry Solutions */}
+        <section id="solutions" className="py-24 sm:py-32">
+          <div className="max-w-[1400px] mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
+              <div className="max-w-2xl">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight italic uppercase">Specialized Solutions</h2>
+                <p className="text-lg text-slate-500 mt-4 font-medium italic underline decoration-blue-500/20 underline-offset-8 decoration-4">Tailored technology for your specific industrial vertical.</p>
+              </div>
+              <InternalLink href="/register" className="text-blue-600 font-black text-xs uppercase tracking-widest hover:underline decoration-2">View all industries &rarr;</InternalLink>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { title: "Real-time Inventory", desc: "Elite tracking with automated stock journals and multi-location valuation.", icon: BarChart3 },
-                { title: "Manufacturing", desc: "Complex BOMs and shop-floor management with real-time tracking.", icon: Cpu },
-                { title: "GST Accounting", desc: "Automated GSTR-1 preparation and seamless Tally Prime export architecture.", icon: ShieldCheck },
-                { title: "Supply Chain", desc: "Coordinate stock across distributed locations with audit-ready log trails.", icon: Globe },
-                { title: "CRM Excellence", desc: "Convert leads to customers with integrated sales pipeline management.", icon: Zap },
-                { title: "Advanced Security", desc: "Enterprise-ready SOC2 compliance with robust system auditing.", icon: ShieldCheck },
-              ].map((feature, i) => (
-                <div key={i} className="group p-8 rounded-3xl bg-slate-50/50 border border-slate-100 hover:border-blue-200 hover:bg-white hover:shadow-xl hover:shadow-blue-500/5 transition-all text-left">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <feature.icon className="h-6 w-6 text-blue-600" />
+                { name: "Manufacturing", icon: Cpu, color: "blue" },
+                { name: "Healthcare", icon: Globe, color: "emerald" },
+                { name: "Logistics", icon: Smartphone, color: "amber" },
+                { name: "Construction", icon: CheckCircle2, color: "rose" },
+              ].map((ind, i) => (
+                <div key={i} className="p-8 bg-slate-50 rounded-3xl hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all group cursor-pointer border border-transparent hover:border-slate-100">
+                  <div className={`h-14 w-14 rounded-2xl bg-${ind.color}-100 flex items-center justify-center text-${ind.color}-600 mb-6 group-hover:scale-110 transition-transform`}>
+                    <ind.icon className="h-7 w-7" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-slate-800 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{feature.title}</h3>
-                  <p className="text-slate-500 font-medium leading-relaxed">{feature.desc}</p>
+                  <h4 className="text-xl font-black text-slate-900 tracking-tight">{ind.name}</h4>
+                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">Industry Package</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Industry Solutions - SEO Powerhouse */}
-        <section id="solutions" className="w-full py-24 bg-white">
-          <div className="container px-4 md:px-6 mx-auto">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center mb-16">
-              <div className="inline-block rounded-lg bg-blue-50 px-3 py-1 text-sm font-bold text-blue-600 uppercase tracking-widest">
-                Tailored Solutions
-              </div>
-              <h2 className="text-3xl font-black tracking-tighter sm:text-5xl text-slate-900 leading-tight">
-                Designed for Your <span className="text-blue-600">Specific Industry.</span>
-              </h2>
-              <p className="max-w-[800px] text-slate-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed font-medium">
-                Klypso isn&apos;t just a generic ERP. We&apos;ve built industry-specific architectures to handle the unique complexities of your business.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-              <Link href="/industries/manufacturing" className="group p-8 rounded-3xl border border-slate-100 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/10 transition-all text-center space-y-4 bg-slate-50/50 hover:bg-white">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <BarChart3 className="h-6 w-6 text-blue-600" />
-                </div>
-                <h3 className="font-bold text-slate-900 uppercase tracking-tighter text-sm">Manufacturing</h3>
-              </Link>
-              <Link href="/industries/healthcare" className="group p-8 rounded-3xl border border-slate-100 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all text-center space-y-4 bg-slate-50/50 hover:bg-white">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <ShieldCheck className="h-6 w-6 text-emerald-600" />
-                </div>
-                <h3 className="font-bold text-slate-900 uppercase tracking-tighter text-sm">Healthcare</h3>
-              </Link>
-              <Link href="/industries/construction" className="group p-8 rounded-3xl border border-slate-100 hover:border-amber-500 hover:shadow-2xl hover:shadow-amber-500/10 transition-all text-center space-y-4 bg-slate-50/50 hover:bg-white">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <BarChart3 className="h-6 w-6 text-amber-600" />
-                </div>
-                <h3 className="font-bold text-slate-900 uppercase tracking-tighter text-sm">Construction</h3>
-              </Link>
-              <Link href="/industries/logistics" className="group p-8 rounded-3xl border border-slate-100 hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all text-center space-y-4 bg-slate-50/50 hover:bg-white">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="h-6 w-6 text-indigo-600" />
-                </div>
-                <h3 className="font-bold text-slate-900 uppercase tracking-tighter text-sm">Logistics</h3>
-              </Link>
-              <Link href="/industries/retail" className="group p-8 rounded-3xl border border-slate-100 hover:border-rose-500 hover:shadow-2xl hover:shadow-rose-500/10 transition-all text-center space-y-4 bg-slate-50/50 hover:bg-white">
-                <div className="mx-auto w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="h-6 w-6 text-rose-600" />
-                </div>
-                <h3 className="font-bold text-slate-900 uppercase tracking-tighter text-sm">Retail</h3>
-              </Link>
-            </div>
-          </div>
-        </section>
+        {/* Global Download Center */}
+        <section className="py-24 bg-slate-900 relative overflow-hidden rounded-[4rem] mx-6 mb-24 min-h-[500px] flex items-center">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_100%,rgba(59,130,246,0.15),transparent)]" />
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 blur-[120px] rounded-full" />
 
-        {/* Mobile Download Section */}
-        <section id="mobile" className="py-24 bg-slate-900 border-y border-slate-800 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -z-0" />
-          <div className="container px-4 md:px-6 mx-auto relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-16">
-              <div className="flex-1 text-center lg:text-left space-y-8">
-                <div className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-sm font-bold text-blue-400 shadow-sm">
-                  <Smartphone className="mr-2 h-4 w-4" />
-                  Klypso Mobile Gateway
-                </div>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-tight">
-                  Take the shop floor <br />
-                  <span className="text-blue-500">In Your Pocket.</span>
-                </h2>
-                <p className="max-w-[600px] text-slate-400 text-lg font-medium">
-                  The native companion for Klypso ERP. Securely view inventory, track production, and manage sales drafts while on the move.
+          <div className="max-w-[1400px] mx-auto px-12 w-full relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+              <div>
+                <h2 className="text-5xl font-black text-white tracking-tight italic leading-tight">THE KLYPSO APP</h2>
+                <p className="text-xl text-slate-400 mt-6 font-medium leading-relaxed max-w-lg mb-8 italic">
+                  Take your enterprise control system anywhere. Native experience on Windows, MacOS, and mobile devices.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link href="/klypso-gateway-v1.apk" target="_blank">
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8 h-14 text-lg shadow-lg shadow-blue-500/20">
-                      <Download className="mr-2 h-5 w-5" /> Download for Android
-                    </Button>
-                  </Link>
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <Button className="rounded-2xl bg-white hover:bg-slate-100 text-slate-900 px-8 py-6 h-auto font-black flex items-center shadow-2xl shadow-white/5">
+                    <Download className="mr-3 h-5 w-5" /> Windows Desktop
+                  </Button>
+                  <Button variant="outline" className="rounded-2xl border-slate-700 text-white hover:bg-white/5 px-8 py-6 h-auto font-bold">
+                    Mobile Application
+                  </Button>
                 </div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
-                  Build 1.0.0 • Hardened Enterprise Edition
-                </p>
               </div>
-              <div className="flex-1 w-full max-w-[400px]">
-                <div className="aspect-[9/18] bg-slate-800 rounded-[3rem] border-8 border-slate-700 shadow-2xl relative overflow-hidden group">
-                  <div className="absolute inset-x-0 top-0 h-8 bg-slate-700 flex items-center justify-center">
-                    <div className="w-16 h-1 bg-slate-600 rounded-full" />
+
+              <div className="hidden lg:block">
+                <div className="bg-gradient-to-br from-blue-600/20 to-emerald-600/20 p-12 rounded-[3.5rem] border border-white/10 backdrop-blur-3xl relative">
+                  <div className="h-64 bg-slate-950 rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden group">
+                     {/* Mock App Interface Mini UI */}
+                     <div className="w-[80%] space-y-4">
+                        <div className="h-3 w-1/2 bg-blue-500/40 rounded-full" />
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="h-20 bg-slate-900 rounded-xl" />
+                           <div className="h-20 bg-slate-900 rounded-xl" />
+                        </div>
+                        <div className="h-3 w-full bg-slate-800 rounded-full" />
+                     </div>
+                     <div className="absolute inset-0 bg-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <div className="p-6 pt-12 space-y-6">
-                    <div className="h-4 w-3/4 bg-slate-700 rounded-lg animate-pulse" />
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="aspect-square bg-slate-700/50 rounded-2xl animate-pulse" />
-                      <div className="aspect-square bg-slate-700/50 rounded-2xl animate-pulse" />
-                    </div>
-                    <div className="h-32 w-full bg-slate-700/50 rounded-2xl animate-pulse" />
-                    <div className="h-4 w-1/2 bg-slate-700 rounded-lg animate-pulse" />
-                    <div className="h-20 w-full bg-blue-500/10 border border-blue-500/20 rounded-2xl" />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="px-6 py-3 bg-white text-slate-900 rounded-full font-black text-sm uppercase">Mobile Governance Layer</div>
+                  {/* Floating Elements */}
+                  <div className="absolute -top-6 -right-6 h-20 w-20 bg-blue-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-600/40 animate-bounce">
+                    <Zap className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </div>
@@ -294,48 +236,20 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-20 bg-slate-50/50">
-        <div className="container px-4 md:px-6 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-1 md:col-span-1">
-              <KlypsoLogo size={24} />
-              <p className="mt-4 text-sm text-slate-500 font-medium">
-                The imperial standard for SME management. Engineered for excellence, built for scale.
-              </p>
+      <footer className="bg-white border-t border-slate-100 py-12">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-3">
+              <KlypsoLogo className="h-5 w-5 text-blue-600" />
+              <span className="text-lg font-black tracking-tighter text-slate-900 italic uppercase">Klypso</span>
+              <span className="text-[10px] font-black text-slate-400 ml-2">&copy; 2024</span>
             </div>
-            <div>
-              <h4 className="font-bold text-slate-900 mb-6 uppercase tracking-wider text-xs">Solutions</h4>
-              <ul className="space-y-4 text-sm text-slate-500 font-semibold">
-                <li><InternalLink>Manufacturing</InternalLink></li>
-                <li><InternalLink>Healthcare</InternalLink></li>
-                <li><InternalLink>Construction</InternalLink></li>
-                <li><InternalLink>Logistics</InternalLink></li>
-                <li><InternalLink>Retail</InternalLink></li>
-                <li><Link href="#mobile" className="text-blue-500 font-bold">Mobile App</Link></li>
-              </ul>
+            <div className="flex items-center gap-10">
+              <Link href="#" className="font-bold text-slate-400 hover:text-slate-900 text-xs uppercase tracking-widest">Privacy</Link>
+              <Link href="#" className="font-bold text-slate-400 hover:text-slate-900 text-xs uppercase tracking-widest">Terms</Link>
+              <Link href="#" className="font-bold text-slate-400 hover:text-slate-900 text-xs uppercase tracking-widest">Security</Link>
             </div>
-            <div>
-              <h4 className="font-bold text-slate-900 mb-6 uppercase tracking-wider text-xs">Features</h4>
-              <ul className="space-y-4 text-sm text-slate-500 font-semibold text-nowrap">
-                <li><InternalLink>Bill of Materials</InternalLink></li>
-                <li><InternalLink>Warehouse</InternalLink></li>
-                <li><InternalLink>POS</InternalLink></li>
-                <li><InternalLink>GSTR-1 Compliance</InternalLink></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 mb-6 uppercase tracking-wider text-xs">Connect</h4>
-              <div className="flex gap-6 mt-2">
-                <Link href="#" className="text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-tighter">Twitter</Link>
-                <Link href="#" className="text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-tighter">GitHub</Link>
-                <Link href="#" className="text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-tighter">LinkedIn</Link>
-              </div>
-            </div>
-          </div>
-          <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest italic">
-              © 2026 Klypso Ecosystems. All Rights Reserved.
-            </p>
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Designed for high-performance Industry</div>
           </div>
         </div>
       </footer>
