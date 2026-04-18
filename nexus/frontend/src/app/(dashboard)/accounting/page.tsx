@@ -633,7 +633,7 @@ export default function AccountingPage() {
                                         <TableRow key={tx.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="pl-8 font-black text-[10px] text-slate-600 tracking-widest">{new Date(tx.date).toLocaleDateString()}</TableCell>
                                             <TableCell className="font-black text-slate-900 tracking-tight">{tx.account?.name}</TableCell>
-                                            <TableCell className="text-slate-500 font-bold text-xs italic">"{tx.description}"</TableCell>
+                                            <TableCell className="text-slate-500 font-bold text-xs italic">&quot;{tx.description}&quot;</TableCell>
                                             <TableCell className={`text-right pr-8 font-black text-lg ${tx.type === 'Credit' ? "text-emerald-600" : "text-rose-600"}`}>
                                                 {tx.type === 'Credit' ? '▲' : '▼'} ₹{Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </TableCell>
