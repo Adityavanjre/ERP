@@ -25,7 +25,10 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install --no-audit --no-fund
+        run: |
+          npm ci --no-audit --no-fund
+          # Ensure workspace hoisting is robust for build-time resolution
+          npm install --include=dev --include=workspace-root
 
       - name: Build Shared Contract
         run: npm run build -w @nexus/shared

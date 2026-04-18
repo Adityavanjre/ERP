@@ -12,10 +12,10 @@ import {
 
 // Ensure we always target the v1 API
 // PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
-// This eliminates CORS delays and masks the internal backend URL.
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "/portal/api";
+// FALLBACK: If NEXT_PUBLIC_API_URL is missing (Render.com), we default to the production cluster.
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://klypso-backend.onrender.com";
 // DESKTOP-DIRECT: Force cloud backend for desktop shell to match the web browser gateway
-const CLOUD_BACKEND_URL = "https://klypso.in/portal/api";
+const CLOUD_BACKEND_URL = "https://klypso-backend.onrender.com";
 const API_URL = isDesktopShell()
   ? `${CLOUD_BACKEND_URL}/v1`
   : baseURL.endsWith("/")

@@ -1,7 +1,7 @@
 # Graph Report - D:\code\ERP  (2026-04-18)
 
 ## Corpus Check
-- 600 files · ~476,984 words
+- 600 files · ~476,980 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -2468,11 +2468,11 @@ Nodes (0):
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `AccountingController` connect `Community 4` to `Community 1`, `Community 7`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
-- **Why does `bootstrap()` connect `Community 1` to `Community 0`, `Community 3`, `Community 12`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `AccountingService` connect `Community 7` to `Community 4`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `AuthController` connect `Community 14` to `Community 0`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
-- **Why does `handleDesktopOfflineRequest()` connect `Community 9` to `Community 0`, `Community 3`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `handleDesktopOfflineRequest()` (e.g. with `.get()` and `.push()`) actually correct?**
   _`handleDesktopOfflineRequest()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `MockPrismaService`, `AccountingModule`, `LedgerModule` to the rest of the system?**
