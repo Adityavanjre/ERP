@@ -72,15 +72,15 @@ export default function ReportsPage() {
     try {
       setLoading(true);
       const [tbRes, plRes] = await Promise.all([
-        api.get("accounting/reports/trial-balance"),
-        api.get("accounting/reports/profit-loss"),
+        api.get(&quot;accounting/reports/trial-balance&quot;),
+        api.get(&quot;accounting/reports/profit-loss&quot;),
       ]);
       setTrialBalance(tbRes.data);
       setProfitLoss(plRes.data);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(
-        error.response?.data?.message || "Failed to load financial reports",
+        error.response?.data?.message || &quot;Failed to load financial reports&quot;,
       );
     } finally {
       setLoading(false);
@@ -92,9 +92,9 @@ export default function ReportsPage() {
   }, [loadReports]);
 
   const fmtINR = (val: number | string) =>
-    Number(val).toLocaleString("en-IN", {
-      style: "currency",
-      currency: "INR",
+    Number(val).toLocaleString(&quot;en-IN&quot;, {
+      style: &quot;currency&quot;,
+      currency: &quot;INR&quot;,
       maximumFractionDigits: 2,
     });
 
@@ -214,10 +214,10 @@ export default function ReportsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-slate-700">
-                          {Number(acct.debit) > 0 ? fmtINR(acct.debit) : "-"}
+                          {Number(acct.debit) > 0 ? fmtINR(acct.debit) : &quot;-&quot;}
                         </TableCell>
                         <TableCell className="text-right pr-8 font-mono text-slate-700">
-                          {Number(acct.credit) > 0 ? fmtINR(acct.credit) : "-"}
+                          {Number(acct.credit) > 0 ? fmtINR(acct.credit) : &quot;-&quot;}
                         </TableCell>
                       </TableRow>
                     ),
@@ -269,8 +269,8 @@ export default function ReportsPage() {
                     <TrendingDown className="h-4 w-4" />
                   )}
                   {profitLoss?.isProfitable
-                    ? "Profitable Period"
-                    : "Loss Period"}
+                    ? &quot;Profitable Period&quot;
+                    : &quot;Loss Period&quot;}
                 </div>
               </CardContent>
             </Card>

@@ -122,32 +122,32 @@ export default function InventoryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState(&quot;&quot;);
+  const [selectedCategory, setSelectedCategory] = useState(&quot;ALL&quot;);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [obProduct, setObProduct] = useState<Product | null>(null);
   const [mounted, setMounted] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: "",
-    sku: "",
+    name: &quot;&quot;,
+    sku: &quot;&quot;,
     stock: 0,
-    warehouseId: "",
+    warehouseId: &quot;&quot;,
     price: 0,
     costPrice: 0,
-    category: "",
-    tags: "",
-    brand: "",
-    manufacturer: "",
+    category: &quot;&quot;,
+    tags: &quot;&quot;,
+    brand: &quot;&quot;,
+    manufacturer: &quot;&quot;,
     minStockLevel: 0,
-    hsnCode: "",
+    hsnCode: &quot;&quot;,
     gstRate: 0,
-    description: "",
-    barcode: "",
+    description: &quot;&quot;,
+    barcode: &quot;&quot;,
     isService: false,
   });
 
-  useUnsavedChanges(showForm || formData.name !== "" || formData.sku !== "");
+  useUnsavedChanges(showForm || formData.name !== &quot;&quot; || formData.sku !== &quot;&quot;);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -159,9 +159,9 @@ export default function InventoryPage() {
         setFetchError(null);
         const [prodRes, statsRes, aiRes, whRes] = await Promise.all([
           api.get(`/inventory/products?page=${page}&limit=50`),
-          api.get("inventory/stats"),
-          api.get("system/ai/inventory-forecast"),
-          api.get("inventory/warehouses"),
+          api.get(&quot;inventory/stats&quot;),
+          api.get(&quot;system/ai/inventory-forecast&quot;),
+          api.get(&quot;inventory/warehouses&quot;),
         ]);
 
         if (prodRes.data?.data) {
@@ -181,7 +181,7 @@ export default function InventoryPage() {
         const error = err as WakeupError;
         const msg = error.isWakeup
           ? error.message
-          : "Inventory update interrupted";
+          : &quot;Inventory update interrupted&quot;;
         setFetchError(msg);
       } finally {
         setLoading(false);
@@ -216,32 +216,32 @@ export default function InventoryPage() {
         minStockLevel: Number(formData.minStockLevel),
       };
 
-      await api.post("inventory/products", payload);
+      await api.post(&quot;inventory/products&quot;, payload);
 
       setShowForm(false);
       setFormData({
-        name: "",
-        sku: "",
+        name: &quot;&quot;,
+        sku: &quot;&quot;,
         stock: 0,
-        warehouseId: "",
+        warehouseId: &quot;&quot;,
         price: 0,
         costPrice: 0,
-        category: "",
-        tags: "",
-        brand: "",
-        manufacturer: "",
+        category: &quot;&quot;,
+        tags: &quot;&quot;,
+        brand: &quot;&quot;,
+        manufacturer: &quot;&quot;,
         minStockLevel: 0,
-        hsnCode: "",
+        hsnCode: &quot;&quot;,
         gstRate: 0,
-        description: "",
-        barcode: "",
+        description: &quot;&quot;,
+        barcode: &quot;&quot;,
         isService: false,
       });
-      toast.success("Product details updated");
+      toast.success(&quot;Product details updated&quot;);
       syncInventory(false);
     } catch (err: unknown) {
       const error = err as ApiError;
-      toast.error(error.response?.data?.message || "Creation failed");
+      toast.error(error.response?.data?.message || &quot;Creation failed&quot;);
     } finally {
       setIsSubmitting(false);
       setUILocked(false);
@@ -268,28 +268,28 @@ export default function InventoryPage() {
 
       setEditingProduct(null);
       setFormData({
-        name: "",
-        sku: "",
+        name: &quot;&quot;,
+        sku: &quot;&quot;,
         stock: 0,
-        warehouseId: "",
+        warehouseId: &quot;&quot;,
         price: 0,
         costPrice: 0,
-        category: "",
-        tags: "",
-        brand: "",
-        manufacturer: "",
+        category: &quot;&quot;,
+        tags: &quot;&quot;,
+        brand: &quot;&quot;,
+        manufacturer: &quot;&quot;,
         minStockLevel: 0,
-        hsnCode: "",
+        hsnCode: &quot;&quot;,
         gstRate: 0,
-        description: "",
-        barcode: "",
+        description: &quot;&quot;,
+        barcode: &quot;&quot;,
         isService: false,
       });
-      toast.success("Product updated");
+      toast.success(&quot;Product updated&quot;);
       syncInventory(false);
     } catch (err: unknown) {
       const error = err as ApiError;
-      toast.error(error.response?.data?.message || "Update failed");
+      toast.error(error.response?.data?.message || &quot;Update failed&quot;);
     } finally {
       setIsSubmitting(false);
       setUILocked(false);
@@ -299,41 +299,41 @@ export default function InventoryPage() {
   const startEdit = (p: Product) => {
     setEditingProduct(p);
     setFormData({
-      name: p.name || "",
-      sku: p.sku || "",
+      name: p.name || &quot;&quot;,
+      sku: p.sku || &quot;&quot;,
       stock: Number(p.stock) || 0,
       price: Number(p.price) || 0,
       costPrice: Number(p.costPrice) || 0,
-      category: p.category || "",
-      tags: p.tags || "",
-      brand: p.brand || "",
-      manufacturer: p.manufacturer || "",
+      category: p.category || &quot;&quot;,
+      tags: p.tags || &quot;&quot;,
+      brand: p.brand || &quot;&quot;,
+      manufacturer: p.manufacturer || &quot;&quot;,
       minStockLevel: Number(p.minStockLevel) || 0,
-      hsnCode: p.hsnCode || "",
+      hsnCode: p.hsnCode || &quot;&quot;,
       gstRate: Number(p.gstRate) || 0,
-      description: p.description || "",
-      barcode: p.barcode || "",
+      description: p.description || &quot;&quot;,
+      barcode: p.barcode || &quot;&quot;,
       isService: p.isService || false,
-      warehouseId: "",
+      warehouseId: &quot;&quot;,
     });
     setShowForm(false); // Close add form if open
   };
 
   const handleDelete = (id: string) => {
     showConfirm({
-      title: "Delete Product?",
+      title: &quot;Delete Product?&quot;,
       description:
-        "This will permanently delete the product. This action cannot be undone.",
-      confirmText: "Delete",
-      variant: "destructive",
+        &quot;This will permanently delete the product. This action cannot be undone.&quot;,
+      confirmText: &quot;Delete&quot;,
+      variant: &quot;destructive&quot;,
       onConfirm: async () => {
         try {
           setUILocked(true);
           await api.delete(`/inventory/products/${id}`);
-          toast.success("Product deleted successfully");
+          toast.success(&quot;Product deleted successfully&quot;);
           syncInventory(false);
         } catch {
-          toast.error("Failed to delete product");
+          toast.error(&quot;Failed to delete product&quot;);
         } finally {
           setUILocked(false);
         }
@@ -351,7 +351,7 @@ export default function InventoryPage() {
       (p.brand && p.brand.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesCategory =
-      selectedCategory === "ALL" || p.category === selectedCategory;
+      selectedCategory === &quot;ALL&quot; || p.category === selectedCategory;
 
     return matchesSearch && matchesCategory;
   });
@@ -368,9 +368,9 @@ export default function InventoryPage() {
     reader.onload = async (event) => {
       const csv = event.target?.result as string;
       try {
-        if (typeof csv !== "string") return;
-        const loadingToast = toast.loading("Processing bulk import...");
-        const res = await api.post("inventory/import", { csv });
+        if (typeof csv !== &quot;string&quot;) return;
+        const loadingToast = toast.loading(&quot;Processing bulk import...&quot;);
+        const res = await api.post(&quot;inventory/import&quot;, { csv });
         toast.dismiss(loadingToast);
         toast.success(`Processed: ${res.data.imported} products imported`);
         if (res.data.failed > 0) {
@@ -380,7 +380,7 @@ export default function InventoryPage() {
         syncInventory(false);
       } catch {
         toast.dismiss();
-        toast.error("Import failed");
+        toast.error(&quot;Import failed&quot;);
       }
     };
     reader.readAsText(file);
@@ -442,17 +442,17 @@ export default function InventoryPage() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-3xl font-black tracking-tighter ${stats.totalProducts > 0 ? "text-slate-900" : "text-slate-300"}`}
+              className={`text-3xl font-black tracking-tighter ${stats.totalProducts > 0 ? &quot;text-slate-900&quot; : &quot;text-slate-300&quot;}`}
             >
               {stats.totalProducts} Items
             </div>
             <p className="text-xs text-slate-500 mt-2 flex items-center font-bold">
               <TrendingDown
-                className={`h-3 w-3 mr-1 ${stats.lowStock > 0 ? "text-amber-500" : "text-emerald-500"}`}
+                className={`h-3 w-3 mr-1 ${stats.lowStock > 0 ? &quot;text-amber-500&quot; : &quot;text-emerald-500&quot;}`}
               />
               {stats.lowStock > 0
-                ? "Replenishment tracker active"
-                : "Stable supply levels"}
+                ? &quot;Replenishment tracker active&quot;
+                : &quot;Stable supply levels&quot;}
             </p>
           </CardContent>
         </Card>
@@ -482,7 +482,7 @@ export default function InventoryPage() {
           <CardContent>
             <div className="text-3xl font-black text-slate-900 tracking-tighter">
               ₹
-              {Number(stats.totalValue).toLocaleString("en-IN", {
+              {Number(stats.totalValue).toLocaleString(&quot;en-IN&quot;, {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -575,7 +575,7 @@ export default function InventoryPage() {
                             isService: e.target.checked,
                           })
                         }
-                        className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                        className=&quot;h-4 w-4 rounded border-slate-300 text-blue-600&quot;
                       />
                       <label
                         htmlFor="isService"
@@ -733,7 +733,7 @@ export default function InventoryPage() {
                   disabled={isSubmitting}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10"
                 >
-                  {isSubmitting ? "Syncing..." : "Register Product"}
+                  {isSubmitting ? &quot;Syncing...&quot; : &quot;Register Product&quot;}
                 </Button>
               </div>
             </form>
@@ -748,21 +748,21 @@ export default function InventoryPage() {
           if (!open) {
             setEditingProduct(null);
             setFormData({
-              name: "",
-              sku: "",
+              name: &quot;&quot;,
+              sku: &quot;&quot;,
               stock: 0,
-              warehouseId: "",
+              warehouseId: &quot;&quot;,
               price: 0,
               costPrice: 0,
-              category: "",
-              tags: "",
-              brand: "",
-              manufacturer: "",
+              category: &quot;&quot;,
+              tags: &quot;&quot;,
+              brand: &quot;&quot;,
+              manufacturer: &quot;&quot;,
               minStockLevel: 0,
-              hsnCode: "",
+              hsnCode: &quot;&quot;,
               gstRate: 0,
-              description: "",
-              barcode: "",
+              description: &quot;&quot;,
+              barcode: &quot;&quot;,
               isService: false,
             });
           }
@@ -776,7 +776,7 @@ export default function InventoryPage() {
             <DialogDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
               {editingProduct
                 ? `Review/Update metadata for SKU ${editingProduct?.sku}`
-                : ""}
+                : &quot;&quot;}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdate} className="space-y-6 pt-4">
@@ -829,7 +829,7 @@ export default function InventoryPage() {
                           isService: e.target.checked,
                         })
                       }
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                      className=&quot;h-4 w-4 rounded border-slate-300 text-blue-600&quot;
                     />
                     <label
                       htmlFor="isServiceEdit"
@@ -980,7 +980,7 @@ export default function InventoryPage() {
                 disabled={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10"
               >
-                {isSubmitting ? "Syncing..." : "Commit Changes"}
+                {isSubmitting ? &quot;Syncing...&quot; : &quot;Commit Changes&quot;}
               </Button>
             </div>
           </form>
@@ -1024,9 +1024,9 @@ export default function InventoryPage() {
                             : "border-emerald-200 text-emerald-600 bg-emerald-50 font-black text-[9px] rounded-lg border-none"
                         }
                       >
-                        {rec.recommendation === "Urgent Reorder"
-                          ? "RESTOCK"
-                          : "STABLE"}
+                        {rec.recommendation === &quot;Urgent Reorder&quot;
+                          ? &quot;RESTOCK&quot;
+                          : &quot;STABLE&quot;}
                       </Badge>
                     </div>
                     <div className="space-y-2 relative z-10">
@@ -1102,8 +1102,8 @@ export default function InventoryPage() {
                 size="icon"
                 className="h-12 w-12 bg-white border border-slate-200 text-slate-400 rounded-2xl hover:bg-slate-50"
                 onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory("ALL");
+                  setSearchQuery(&quot;&quot;);
+                  setSelectedCategory(&quot;ALL&quot;);
                 }}
               >
                 <Filter className="h-4 w-4" />
@@ -1157,9 +1157,9 @@ export default function InventoryPage() {
                           variant="secondary"
                           className="bg-blue-50 text-blue-600 font-black text-[9px] rounded-md border-none uppercase tracking-tighter shadow-none"
                         >
-                          {p.category || "GENERAL"}
+                          {p.category || &quot;GENERAL&quot;}
                         </Badge>
-                        {p.tags?.split(",").map((tag: string, idx: number) => (
+                        {p.tags?.split(&quot;,&quot;).map((tag: string, idx: number) => (
                           <Badge
                             key={idx}
                             variant="outline"
@@ -1189,7 +1189,7 @@ export default function InventoryPage() {
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       <span className="text-[10px] text-slate-900 font-black uppercase tracking-tighter">
-                        {p.updatedBy?.fullName || "System Admin"}
+                        {p.updatedBy?.fullName || &quot;System Admin&quot;}
                       </span>
                       <span className="text-[9px] text-slate-400 font-bold flex items-center">
                         <Clock className="h-2.5 w-2.5 mr-1" />
@@ -1225,7 +1225,7 @@ export default function InventoryPage() {
                   </TableCell>
                   <TableCell className="text-slate-600 font-bold">
                     ₹
-                    {Number(p.price).toLocaleString("en-IN", {
+                    {Number(p.price).toLocaleString(&quot;en-IN&quot;, {
                       minimumFractionDigits: 0,
                     })}
                   </TableCell>
@@ -1234,7 +1234,7 @@ export default function InventoryPage() {
                       <div className="font-black text-slate-900 tracking-tighter">
                         ₹
                         {(Number(p.price) * Number(p.stock)).toLocaleString(
-                          "en-IN",
+                          &quot;en-IN&quot;,
                           { minimumFractionDigits: 0 },
                         )}
                       </div>
@@ -1243,7 +1243,7 @@ export default function InventoryPage() {
                         size="icon"
                         className="h-8 w-8 text-slate-300 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all"
                         onClick={() => setObProduct(p)}
-                        title="Set Opening Balance"
+                        title=&quot;Set Opening Balance&quot;
                       >
                         <Scale className="h-3.5 w-3.5" />
                       </Button>
@@ -1289,7 +1289,7 @@ export default function InventoryPage() {
                         <Button
                           variant="outline"
                           className="mt-2 h-8 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100"
-                          onClick={() => setSearchQuery("")}
+                          onClick={() => setSearchQuery(&quot;&quot;)}
                         >
                           Clear Search Rules
                         </Button>
@@ -1306,7 +1306,7 @@ export default function InventoryPage() {
               size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="text-slate-500 hover:bg-white font-bold rounded-xl h-9"
+              className=&quot;text-slate-500 hover:bg-white font-bold rounded-xl h-9&quot;
             >
               Previous
             </Button>
@@ -1318,7 +1318,7 @@ export default function InventoryPage() {
               size="sm"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="text-slate-500 hover:bg-white font-bold rounded-xl h-9"
+              className=&quot;text-slate-500 hover:bg-white font-bold rounded-xl h-9&quot;
             >
               Next
             </Button>
@@ -1329,7 +1329,7 @@ export default function InventoryPage() {
         isOpen={!!obProduct}
         onClose={() => setObProduct(null)}
         productId={obProduct?.id}
-        targetName={obProduct?.name || ""}
+        targetName={obProduct?.name || &quot;&quot;}
         onSuccess={() => syncInventory(false)}
       />
     </div>

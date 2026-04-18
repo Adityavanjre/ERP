@@ -66,16 +66,16 @@ export default function OnboardingPage() {
   const onSubmit = useCallback(
     async (data: OnboardingFormData) => {
       if (!user?.tenantId) {
-        toast.error("Session error", {
+        toast.error(&quot;Session error&quot;, {
           description:
-            "Could not read your workspace. Please refresh the page.",
+            &quot;Could not read your workspace. Please refresh the page.&quot;,
         });
         return;
       }
 
       setIsLoading(true);
       try {
-        await api.post("auth/onboarding", {
+        await api.post(&quot;auth/onboarding&quot;, {
           ...data,
           tenantId: user.tenantId,
         });
@@ -84,37 +84,37 @@ export default function OnboardingPage() {
         // then go directly to the dashboard without forcing re-login.
         try {
           const { data: refreshData } = await api.post(
-            "auth/refresh",
+            &quot;auth/refresh&quot;,
             {},
             { withCredentials: true },
           );
           if (refreshData?.accessToken) {
             // SEC-006: Token stored in HttpOnly cookie by backend
             if (refreshData.user) {
-              localStorage.setItem("k_user", JSON.stringify(refreshData.user));
+              localStorage.setItem(&quot;k_user&quot;, JSON.stringify(refreshData.user));
             }
           }
         } catch {
           // If refresh fails, clear the token and fall back to login
-          localStorage.removeItem("k_token");
-          localStorage.removeItem("k_user");
-          toast.success("Onboarding complete!", {
-            description: "Please log in again to access your dashboard.",
+          localStorage.removeItem(&quot;k_token&quot;);
+          localStorage.removeItem(&quot;k_user&quot;);
+          toast.success(&quot;Onboarding complete!&quot;, {
+            description: &quot;Please log in again to access your dashboard.&quot;,
           });
-          router.push("/login");
+          router.push(&quot;/login&quot;);
           return;
         }
 
-        toast.success("Onboarding complete!", {
-          description: "Your workspace is ready.",
+        toast.success(&quot;Onboarding complete!&quot;, {
+          description: &quot;Your workspace is ready.&quot;,
         });
 
         // Hard reload to flush all React state with the new isOnboarded token
-        window.location.href = "/portal/dashboard";
+        window.location.href = &quot;/portal/dashboard&quot;;
       } catch (err: unknown) {
         const error = err as ApiError;
-        toast.error("Onboarding failed", {
-          description: error.response?.data?.message || "Something went wrong.",
+        toast.error(&quot;Onboarding failed&quot;, {
+          description: error.response?.data?.message || &quot;Something went wrong.&quot;,
         });
       } finally {
         setIsLoading(false);
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Industry
               </Label>
-              <Select onValueChange={(val) => setValue("industry", val)}>
+              <Select onValueChange={(val) => setValue(&quot;industry&quot;, val)}>
                 <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
                   <SelectValue placeholder="Select Industry" />
                 </SelectTrigger>
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Business Type
               </Label>
-              <Select onValueChange={(val) => setValue("businessType", val)}>
+              <Select onValueChange={(val) => setValue(&quot;businessType&quot;, val)}>
                 <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>

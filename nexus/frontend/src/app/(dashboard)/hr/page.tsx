@@ -127,31 +127,31 @@ export default function HrPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [empForm, setEmpForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    jobTitle: "",
-    employeeId: "",
-    salary: "",
-    departmentId: "",
+    firstName: &quot;&quot;,
+    lastName: &quot;&quot;,
+    email: &quot;&quot;,
+    phone: &quot;&quot;,
+    jobTitle: &quot;&quot;,
+    employeeId: &quot;&quot;,
+    salary: &quot;&quot;,
+    departmentId: &quot;&quot;,
   });
 
   // Add Department Dialog State
   const [addDeptOpen, setAddDeptOpen] = useState(false);
   const [addDeptLoading, setAddDeptLoading] = useState(false);
-  const [deptName, setDeptName] = useState("");
+  const [deptName, setDeptName] = useState(&quot;&quot;);
 
   const syncEmployeeData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
       const [empRes, leaveRes, payrollRes, deptRes, statsRes] =
         await Promise.all([
-          api.get("hr/employees"),
-          api.get("hr/leaves"),
-          api.get("hr/payroll"),
-          api.get("hr/departments"),
-          api.get("hr/stats"),
+          api.get(&quot;hr/employees&quot;),
+          api.get(&quot;hr/leaves&quot;),
+          api.get(&quot;hr/payroll&quot;),
+          api.get(&quot;hr/departments&quot;),
+          api.get(&quot;hr/stats&quot;),
         ]);
       setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
       setLeaves(Array.isArray(leaveRes.data) ? leaveRes.data : []);
@@ -166,7 +166,7 @@ export default function HrPage() {
       );
     } catch {
       // Suppressed in prod: HR data load failed
-      // const msg = "Failed to load HR data. Please refresh.";
+      // const msg = &quot;Failed to load HR data. Please refresh.&quot;;
     } finally {
       setLoading(false);
     }
@@ -180,31 +180,31 @@ export default function HrPage() {
 
   const handleAddEmployee = async () => {
     if (!empForm.firstName || !empForm.lastName || !empForm.employeeId) {
-      toast.error("First name, last name, and Employee ID are required.");
+      toast.error(&quot;First name, last name, and Employee ID are required.&quot;);
       return;
     }
     try {
       setAddLoading(true);
-      await api.post("/hr/employees", {
+      await api.post(&quot;/hr/employees&quot;, {
         ...empForm,
         salary: empForm.salary ? Number(empForm.salary) : 0,
       });
-      toast.success("Employee added successfully");
+      toast.success(&quot;Employee added successfully&quot;);
       setAddOpen(false);
       setEmpForm({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        jobTitle: "",
-        employeeId: "",
-        salary: "",
-        departmentId: "",
+        firstName: &quot;&quot;,
+        lastName: &quot;&quot;,
+        email: &quot;&quot;,
+        phone: &quot;&quot;,
+        jobTitle: &quot;&quot;,
+        employeeId: &quot;&quot;,
+        salary: &quot;&quot;,
+        departmentId: &quot;&quot;,
       });
       syncEmployeeData(true);
     } catch (err: unknown) {
       const error = err as ApiError;
-      toast.error(error.response?.data?.message || "Failed to add employee");
+      toast.error(error.response?.data?.message || &quot;Failed to add employee&quot;);
     } finally {
       setAddLoading(false);
     }
@@ -212,20 +212,20 @@ export default function HrPage() {
 
   const handleAddDepartment = async () => {
     if (!deptName.trim()) {
-      toast.error("Department name is required.");
+      toast.error(&quot;Department name is required.&quot;);
       return;
     }
     try {
       setAddDeptLoading(true);
-      await api.post("/hr/departments", { name: deptName });
-      toast.success("Department created successfully");
+      await api.post(&quot;/hr/departments&quot;, { name: deptName });
+      toast.success(&quot;Department created successfully&quot;);
       setAddDeptOpen(false);
-      setDeptName("");
+      setDeptName(&quot;&quot;);
       syncEmployeeData(true);
     } catch (err: unknown) {
       const error = err as ApiError;
       toast.error(
-        error.response?.data?.message || "Failed to create department",
+        error.response?.data?.message || &quot;Failed to create department&quot;,
       );
     } finally {
       setAddDeptLoading(false);
@@ -234,7 +234,7 @@ export default function HrPage() {
 
   const handleLeaveAction = async (
     leaveId: string,
-    action: "Approved" | "Rejected",
+    action: &quot;Approved&quot; | &quot;Rejected&quot;,
   ) => {
     try {
       await api.patch(`/hr/leaves/${leaveId}/status`, { status: action });
@@ -242,7 +242,7 @@ export default function HrPage() {
       syncEmployeeData(false);
     } catch (err: unknown) {
       const error = err as ApiError;
-      toast.error(error.response?.data?.message || "Action failed");
+      toast.error(error.response?.data?.message || &quot;Action failed&quot;);
     }
   };
 
@@ -293,8 +293,8 @@ export default function HrPage() {
                       onChange={(e) =>
                         setEmpForm((p) => ({ ...p, firstName: e.target.value }))
                       }
-                      placeholder="e.g. Rahul"
-                      className="h-10"
+                      placeholder=&quot;e.g. Rahul&quot;
+                      className=&quot;h-10&quot;
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -306,8 +306,8 @@ export default function HrPage() {
                       onChange={(e) =>
                         setEmpForm((p) => ({ ...p, lastName: e.target.value }))
                       }
-                      placeholder="e.g. Sharma"
-                      className="h-10"
+                      placeholder=&quot;e.g. Sharma&quot;
+                      className=&quot;h-10&quot;
                     />
                   </div>
                 </div>
@@ -324,8 +324,8 @@ export default function HrPage() {
                           employeeId: e.target.value,
                         }))
                       }
-                      placeholder="e.g. EMP-001"
-                      className="h-10 font-mono"
+                      placeholder=&quot;e.g. EMP-001&quot;
+                      className=&quot;h-10 font-mono&quot;
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -337,8 +337,8 @@ export default function HrPage() {
                       onChange={(e) =>
                         setEmpForm((p) => ({ ...p, jobTitle: e.target.value }))
                       }
-                      placeholder="e.g. Engineer"
-                      className="h-10"
+                      placeholder=&quot;e.g. Engineer&quot;
+                      className=&quot;h-10&quot;
                     />
                   </div>
                 </div>
@@ -353,8 +353,8 @@ export default function HrPage() {
                       onChange={(e) =>
                         setEmpForm((p) => ({ ...p, email: e.target.value }))
                       }
-                      placeholder="email@company.com"
-                      className="h-10"
+                      placeholder=&quot;email@company.com&quot;
+                      className=&quot;h-10&quot;
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -366,8 +366,8 @@ export default function HrPage() {
                       onChange={(e) =>
                         setEmpForm((p) => ({ ...p, phone: e.target.value }))
                       }
-                      placeholder="9876543210"
-                      className="h-10 font-mono"
+                      placeholder=&quot;9876543210&quot;
+                      className=&quot;h-10 font-mono&quot;
                     />
                   </div>
                 </div>
@@ -382,8 +382,8 @@ export default function HrPage() {
                       onChange={(e) =>
                         setEmpForm((p) => ({ ...p, salary: e.target.value }))
                       }
-                      placeholder="0"
-                      className="h-10 font-mono"
+                      placeholder=&quot;0&quot;
+                      className=&quot;h-10 font-mono&quot;
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -428,7 +428,7 @@ export default function HrPage() {
                   disabled={addLoading}
                   className="bg-blue-600 hover:bg-blue-700 font-bold"
                 >
-                  {addLoading ? "Saving..." : "Add Employee"}
+                  {addLoading ? &quot;Saving...&quot; : &quot;Add Employee&quot;}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -479,7 +479,7 @@ export default function HrPage() {
           <CardContent>
             <div className="text-3xl font-black text-slate-900 tracking-tighter">
               ₹
-              {Number(stats.totalPayroll).toLocaleString("en-IN", {
+              {Number(stats.totalPayroll).toLocaleString(&quot;en-IN&quot;, {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -559,7 +559,7 @@ export default function HrPage() {
                         #
                         {emp.employeeId
                           ? emp.employeeId.toUpperCase()
-                          : "UNKNOWN"}
+                          : &quot;UNKNOWN&quot;}
                       </TableCell>
                       <TableCell className="font-black text-slate-900 tracking-tight">
                         {emp.firstName} {emp.lastName}
@@ -569,7 +569,7 @@ export default function HrPage() {
                           variant="secondary"
                           className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-md border-none uppercase tracking-tighter"
                         >
-                          {emp.department?.name || "UNASSIGNED"}
+                          {emp.department?.name || &quot;UNASSIGNED&quot;}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-slate-600 font-bold text-sm tracking-tight">
@@ -636,8 +636,8 @@ export default function HrPage() {
                       <Input
                         value={deptName}
                         onChange={(e) => setDeptName(e.target.value)}
-                        placeholder="e.g. Sales"
-                        className="h-10"
+                        placeholder=&quot;e.g. Sales&quot;
+                        className=&quot;h-10&quot;
                       />
                     </div>
                     <DialogFooter>
@@ -653,7 +653,7 @@ export default function HrPage() {
                         disabled={addDeptLoading}
                         className="bg-blue-600 hover:bg-blue-700 font-bold"
                       >
-                        {addDeptLoading ? "Saving..." : "Create"}
+                        {addDeptLoading ? &quot;Saving...&quot; : &quot;Create&quot;}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -737,7 +737,7 @@ export default function HrPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-slate-500 font-bold text-xs">
-                        {new Date(leave.startDate).toLocaleDateString()} —{" "}
+                        {new Date(leave.startDate).toLocaleDateString()} —{&quot; &quot;}
                         {new Date(leave.endDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right pr-8">
@@ -753,16 +753,16 @@ export default function HrPage() {
                           >
                             {leave.status}
                           </Badge>
-                          {leave.status === "Pending" && (
+                          {leave.status === &quot;Pending&quot; && (
                             <>
                               <Button
                                 size="icon"
                                 variant="ghost"
                                 className="h-7 w-7 text-emerald-600 hover:bg-emerald-50"
                                 onClick={() =>
-                                  handleLeaveAction(leave.id, "Approved")
+                                  handleLeaveAction(leave.id, &quot;Approved&quot;)
                                 }
-                                title="Approve"
+                                title=&quot;Approve&quot;
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -771,9 +771,9 @@ export default function HrPage() {
                                 variant="ghost"
                                 className="h-7 w-7 text-red-500 hover:bg-red-50"
                                 onClick={() =>
-                                  handleLeaveAction(leave.id, "Rejected")
+                                  handleLeaveAction(leave.id, &quot;Rejected&quot;)
                                 }
-                                title="Reject"
+                                title=&quot;Reject&quot;
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -834,7 +834,7 @@ export default function HrPage() {
                       className="border-slate-100 hover:bg-slate-50/50 transition-all group"
                     >
                       <TableCell className="pl-8 text-slate-500 font-bold text-xs">
-                        {new Date(p.periodStart).toLocaleDateString()} —{" "}
+                        {new Date(p.periodStart).toLocaleDateString()} —{&quot; &quot;}
                         {new Date(p.periodEnd).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-black text-slate-900 tracking-tight">
@@ -842,7 +842,7 @@ export default function HrPage() {
                       </TableCell>
                       <TableCell className="font-black text-slate-900">
                         ₹
-                        {Number(p.netPay).toLocaleString("en-IN", {
+                        {Number(p.netPay).toLocaleString(&quot;en-IN&quot;, {
                           minimumFractionDigits: 0,
                         })}
                       </TableCell>

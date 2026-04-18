@@ -87,7 +87,7 @@ export default function NBFCDashboard() {
           </div>
           <div className="p-8 pt-0">
             <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-black text-[10px] uppercase tracking-widest gap-2 group">
-              Account Control{" "}
+              Account Control{&quot; &quot;}
               <ArrowRight
                 size={14}
                 className="group-hover:translate-x-1 transition-transform"

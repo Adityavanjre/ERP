@@ -65,7 +65,7 @@ export default function InvoicePrintPage() {
         const res = await api.get(`/accounting/invoices/${params.id}`);
         setInvoice(res.data);
       } catch {
-        toast.error("Failed to load invoice");
+        toast.error(&quot;Failed to load invoice&quot;);
       } finally {
         setLoading(false);
       }
@@ -94,10 +94,10 @@ export default function InvoicePrintPage() {
 
   // Helper for date formatting
   const fmtDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
+    return new Date(dateStr).toLocaleDateString(&quot;en-IN&quot;, {
+      day: &quot;2-digit&quot;,
+      month: &quot;short&quot;,
+      year: &quot;numeric&quot;,
     });
   };
 
@@ -249,20 +249,20 @@ export default function InvoicePrintPage() {
                 invoice.items.map((item: InvoiceItem, i: number) => (
                   <tr key={i}>
                     <td className="py-4 text-zinc-700 font-medium">
-                      {item.productName || item.product?.name || "Product Item"}
+                      {item.productName || item.product?.name || &quot;Product Item&quot;}
                       <div className="text-[10px] text-zinc-400 mt-0.5">
                         {item.product?.sku}
                       </div>
                     </td>
                     <td className="py-4 text-right text-zinc-500 font-mono">
-                      {item.hsnCode || item.product?.hsnCode || "-"}
+                      {item.hsnCode || item.product?.hsnCode || &quot;-&quot;}
                     </td>
                     <td className="py-4 text-right text-zinc-700">
                       {item.quantity}
                     </td>
                     <td className="py-4 text-right text-zinc-700">
                       ₹
-                      {Number(item.price).toLocaleString("en-IN", {
+                      {Number(item.price).toLocaleString(&quot;en-IN&quot;, {
                         minimumFractionDigits: 2,
                       })}
                     </td>
@@ -270,7 +270,7 @@ export default function InvoicePrintPage() {
                       ₹
                       {(
                         Number(item.price) * Number(item.quantity)
-                      ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      ).toLocaleString(&quot;en-IN&quot;, { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 ))}
@@ -317,14 +317,14 @@ export default function InvoicePrintPage() {
                       </td>
                       <td className="py-2 px-4 text-right text-zinc-700">
                         ₹
-                        {data.taxableAmount.toLocaleString("en-IN", {
+                        {data.taxableAmount.toLocaleString(&quot;en-IN&quot;, {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       {totalCGST > 0 && (
                         <td className="py-2 px-4 text-right text-zinc-700">
                           ₹
-                          {data.cgstAmount.toLocaleString("en-IN", {
+                          {data.cgstAmount.toLocaleString(&quot;en-IN&quot;, {
                             minimumFractionDigits: 2,
                           })}
                         </td>
@@ -332,7 +332,7 @@ export default function InvoicePrintPage() {
                       {totalSGST > 0 && (
                         <td className="py-2 px-4 text-right text-zinc-700">
                           ₹
-                          {data.sgstAmount.toLocaleString("en-IN", {
+                          {data.sgstAmount.toLocaleString(&quot;en-IN&quot;, {
                             minimumFractionDigits: 2,
                           })}
                         </td>
@@ -340,7 +340,7 @@ export default function InvoicePrintPage() {
                       {totalIGST > 0 && (
                         <td className="py-2 px-4 text-right text-zinc-700">
                           ₹
-                          {data.igstAmount.toLocaleString("en-IN", {
+                          {data.igstAmount.toLocaleString(&quot;en-IN&quot;, {
                             minimumFractionDigits: 2,
                           })}
                         </td>
@@ -359,7 +359,7 @@ export default function InvoicePrintPage() {
               <span>Subtotal</span>
               <span className="font-medium">
                 ₹
-                {(totalAmount - totalTax).toLocaleString("en-IN", {
+                {(totalAmount - totalTax).toLocaleString(&quot;en-IN&quot;, {
                   minimumFractionDigits: 2,
                 })}
               </span>
@@ -369,7 +369,7 @@ export default function InvoicePrintPage() {
                 <span>CGST</span>
                 <span className="font-medium">
                   ₹
-                  {totalCGST.toLocaleString("en-IN", {
+                  {totalCGST.toLocaleString(&quot;en-IN&quot;, {
                     minimumFractionDigits: 2,
                   })}
                 </span>
@@ -380,7 +380,7 @@ export default function InvoicePrintPage() {
                 <span>SGST</span>
                 <span className="font-medium">
                   ₹
-                  {totalSGST.toLocaleString("en-IN", {
+                  {totalSGST.toLocaleString(&quot;en-IN&quot;, {
                     minimumFractionDigits: 2,
                   })}
                 </span>
@@ -391,7 +391,7 @@ export default function InvoicePrintPage() {
                 <span>IGST</span>
                 <span className="font-medium">
                   ₹
-                  {totalIGST.toLocaleString("en-IN", {
+                  {totalIGST.toLocaleString(&quot;en-IN&quot;, {
                     minimumFractionDigits: 2,
                   })}
                 </span>
@@ -401,7 +401,7 @@ export default function InvoicePrintPage() {
               <span>Total</span>
               <span>
                 ₹
-                {totalAmount.toLocaleString("en-IN", {
+                {totalAmount.toLocaleString(&quot;en-IN&quot;, {
                   minimumFractionDigits: 2,
                 })}
               </span>
@@ -414,12 +414,12 @@ export default function InvoicePrintPage() {
           <div className="text-[10px] text-zinc-400 max-w-sm w-full">
             <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
             <p>
-              1. Payment due within{" "}
+              1. Payment due within{&quot; &quot;}
               {Math.ceil(
                 (new Date(invoice.dueDate).getTime() -
                   new Date(invoice.issueDate).getTime()) /
                   (1000 * 3600 * 24),
-              )}{" "}
+              )}{&quot; &quot;}
               days.
             </p>
             <p>2. Please quote the invoice number in all correspondence.</p>

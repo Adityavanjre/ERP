@@ -37,8 +37,8 @@ export default function WorkflowBuilder() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null,
   );
-  const [modelName, setModelName] = useState("sale.order");
-  const [workflowName, setWorkflowName] = useState("");
+  const [modelName, setModelName] = useState(&quot;sale.order&quot;);
+  const [workflowName, setWorkflowName] = useState(&quot;&quot;);
 
   const syncWorkflows = useCallback(
     async (showLoading = false) => {
@@ -62,17 +62,17 @@ export default function WorkflowBuilder() {
 
   const handleCreateWorkflow = async () => {
     try {
-      if (!workflowName) return toast.error("Name required");
-      const res = await api.post("system/workflows", {
+      if (!workflowName) return toast.error(&quot;Name required&quot;);
+      const res = await api.post(&quot;system/workflows&quot;, {
         name: workflowName,
         modelName,
       });
-      toast.success("Workflow stream created");
-      setWorkflowName("");
+      toast.success(&quot;Workflow stream created&quot;);
+      setWorkflowName(&quot;&quot;);
       syncWorkflows(true);
       setSelectedWorkflow(res.data);
     } catch {
-      toast.error("Initialization failed");
+      toast.error(&quot;Initialization failed&quot;);
     }
   };
 
@@ -82,8 +82,8 @@ export default function WorkflowBuilder() {
       const res = await api.post(
         `/system/workflows/${selectedWorkflow.id}/nodes`,
         {
-          name: "New State",
-          type: "state",
+          name: &quot;New State&quot;,
+          type: &quot;state&quot;,
           config: {},
         },
       );
@@ -91,9 +91,9 @@ export default function WorkflowBuilder() {
         ...selectedWorkflow,
         nodes: [...(selectedWorkflow.nodes || []), res.data],
       });
-      toast.success("State node added to graph");
+      toast.success(&quot;State node added to graph&quot;);
     } catch {
-      toast.error("Node creation failed");
+      toast.error(&quot;Node creation failed&quot;);
     }
   };
 
@@ -134,7 +134,7 @@ export default function WorkflowBuilder() {
               <Input
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-slate-900 h-9 font-mono text-xs"
+                className=&quot;bg-slate-50 border-slate-200 text-slate-900 h-9 font-mono text-xs&quot;
               />
             </div>
 
@@ -143,14 +143,14 @@ export default function WorkflowBuilder() {
                 <div
                   key={w.id}
                   onClick={() => setSelectedWorkflow(w)}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedWorkflow?.id === w.id ? "bg-emerald-50 border-emerald-500 shadow-sm shadow-emerald-500/10" : "bg-slate-50 border-slate-100 hover:border-slate-300"}`}
+                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedWorkflow?.id === w.id ? &quot;bg-emerald-50 border-emerald-500 shadow-sm shadow-emerald-500/10&quot; : &quot;bg-slate-50 border-slate-100 hover:border-slate-300&quot;}`}
                 >
                   <p className="text-sm font-bold text-slate-900">{w.name}</p>
                   <Badge
                     variant="outline"
                     className="mt-2 text-[9px] font-black border-emerald-500/20 text-emerald-600 bg-white"
                   >
-                    {w.isActive ? "RUNNING" : "DRAFT"}
+                    {w.isActive ? &quot;RUNNING&quot; : &quot;DRAFT&quot;}
                   </Badge>
                 </div>
               ))}
@@ -161,7 +161,7 @@ export default function WorkflowBuilder() {
                 placeholder="New Workflow Name..."
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
-                className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-9"
+                className=&quot;bg-slate-50 border-slate-200 text-slate-900 text-xs h-9&quot;
               />
               <Button
                 onClick={handleCreateWorkflow}
@@ -180,7 +180,7 @@ export default function WorkflowBuilder() {
                 <CardTitle className="text-slate-900 font-black text-xl tracking-tight">
                   {selectedWorkflow
                     ? selectedWorkflow.name
-                    : "Select a lifecycle stream"}
+                    : &quot;Select a lifecycle stream&quot;}
                 </CardTitle>
                 <CardDescription className="text-slate-500 font-medium">
                   Graph-based logic for {modelName}

@@ -36,13 +36,13 @@ interface DebitNote {
 export default function DebitNotesPage() {
   const [notes, setNotes] = useState<DebitNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(&quot;&quot;);
   const [isIssuing, setIsIssuing] = useState(false);
 
   const fetchNotes = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/accounting/debit-notes");
+      const res = await api.get(&quot;/accounting/debit-notes&quot;);
       setNotes(res.data);
     } catch {
       // Suppressed in prod
@@ -82,7 +82,7 @@ export default function DebitNotesPage() {
           </Button>
           <Button
             onClick={() => setIsIssuing(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200"
+            className=&quot;bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200&quot;
           >
             <Plus className="w-4 h-4 mr-2" />
             Issue Debit Note
@@ -179,23 +179,23 @@ export default function DebitNotesPage() {
                         {note.supplier?.name}
                       </div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase">
-                        {note.supplier?.category || "General"}
+                        {note.supplier?.category || &quot;General&quot;}
                       </div>
                     </TableCell>
                     <TableCell className="text-slate-500 font-medium">
-                      {format(new Date(note.date), "dd MMM yyyy")}
+                      {format(new Date(note.date), &quot;dd MMM yyyy&quot;)}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
                         className="rounded-lg font-mono text-[10px]"
                       >
-                        {note.purchaseOrder?.orderNumber || "Direct Debit"}
+                        {note.purchaseOrder?.orderNumber || &quot;Direct Debit&quot;}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-6 font-black text-blue-600 tabular-nums">
                       ₹
-                      {Number(note.totalAmount).toLocaleString("en-IN", {
+                      {Number(note.totalAmount).toLocaleString(&quot;en-IN&quot;, {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>

@@ -50,7 +50,7 @@ export default function WarehousesPage() {
   const syncWarehouses = async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get("inventory/warehouses");
+      const res = await api.get(&quot;inventory/warehouses&quot;);
       setWarehouses(res.data);
     } catch {
       // Suppressed in prod: Warehouse sync failed silently
@@ -82,7 +82,7 @@ export default function WarehousesPage() {
         </div>
         <Button
           onClick={() => setIsAddDialogOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2"
+          className=&quot;bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2&quot;
         >
           <Plus className="h-5 w-5" /> Add Warehouse
         </Button>
@@ -108,7 +108,7 @@ export default function WarehousesPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(true)}
-                className="rounded-xl font-bold border-slate-200 hover:bg-white active:scale-95"
+                className=&quot;rounded-xl font-bold border-slate-200 hover:bg-white active:scale-95&quot;
               >
                 Add First Warehouse
               </Button>
@@ -127,8 +127,8 @@ export default function WarehousesPage() {
                       {w.name}
                     </CardTitle>
                     <div className="flex items-center text-slate-500 text-[10px] font-bold uppercase tracking-wider gap-1.5">
-                      <MapPin className="h-3 w-3" />{" "}
-                      {w.location || "No address set"}
+                      <MapPin className="h-3 w-3" />{&quot; &quot;}
+                      {w.location || &quot;No address set&quot;}
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -139,7 +139,7 @@ export default function WarehousesPage() {
                         e.stopPropagation();
                         setEditingWarehouse(w);
                       }}
-                      className="h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl shadow-sm border border-slate-100 transition-all"
+                      className=&quot;h-9 w-9 text-slate-400 hover:text-blue-600 hover:bg-white rounded-xl shadow-sm border border-slate-100 transition-all&quot;
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -157,7 +157,7 @@ export default function WarehousesPage() {
                     </div>
                     <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
                       <User className="h-4 w-4 text-blue-500" />
-                      {w.manager || "Unassigned"}
+                      {w.manager || &quot;Unassigned&quot;}
                     </div>
                   </div>
                   <div className="text-right space-y-1">
@@ -179,7 +179,7 @@ export default function WarehousesPage() {
                       e.stopPropagation();
                       setTransferringWarehouse(w);
                     }}
-                    className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 font-bold text-xs transition-colors"
+                    className=&quot;flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 font-bold text-xs transition-colors&quot;
                   >
                     <ArrowRightLeft className="h-4 w-4" /> Transfer
                   </button>
@@ -188,7 +188,7 @@ export default function WarehousesPage() {
                       e.stopPropagation();
                       setDetailsWarehouse(w);
                     }}
-                    className="flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-xs transition-colors"
+                    className=&quot;flex items-center justify-center gap-2 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold text-xs transition-colors&quot;
                   >
                     Details
                   </button>

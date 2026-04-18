@@ -31,15 +31,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           await hydrateDesktopOfflineSession();
         }
         const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("k_token")
+          typeof window !== &quot;undefined&quot;
+            ? localStorage.getItem(&quot;k_token&quot;)
             : null;
         if (token) {
           const decoded = jwtDecode<DecodedToken>(token);
           if (!cancelled) {
             setIsIdentityState(
-              decoded.type === "identity" ||
-                (decoded.type === "admin" && !decoded.tenantId),
+              decoded.type === &quot;identity&quot; ||
+                (decoded.type === &quot;admin&quot; && !decoded.tenantId),
             );
           }
         } else if (!cancelled) {

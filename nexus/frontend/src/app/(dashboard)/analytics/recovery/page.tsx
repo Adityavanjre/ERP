@@ -55,7 +55,7 @@ export default function RecoveryMemoryDashboard() {
   const syncRecoveryData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get("accounting/recovery-memory");
+      const res = await api.get(&quot;accounting/recovery-memory&quot;);
       setData(res.data);
     } catch {
       // Suppressed in prod: Recovery sync failed silently
@@ -87,10 +87,10 @@ export default function RecoveryMemoryDashboard() {
             Insights
           </div>
           <h1 className="text-6xl font-black tracking-tighter mb-6 text-white leading-[1.1]">
-            System Protected{" "}
+            System Protected{&quot; &quot;}
             <span className="text-emerald-300">
               ₹{data.anchors.monthlyProtection.toLocaleString()}
-            </span>{" "}
+            </span>{&quot; &quot;}
             This Month.
           </h1>
           <p className="text-xl text-blue-50 font-medium leading-relaxed mb-10 opacity-90">
@@ -324,7 +324,7 @@ export default function RecoveryMemoryDashboard() {
               Maximize System Protection.
             </h2>
             <p className="text-slate-400 text-xl font-medium max-w-2xl leading-relaxed">
-              You&apos;ve already saved a lot with this plan. Upgrade to{" "}
+              You&apos;ve already saved a lot with this plan. Upgrade to{&quot; &quot;}
               <span className="text-white font-bold">Prime Plan</span> to unlock
               advanced overdue detection and automated follow-ups.
             </p>

@@ -47,7 +47,7 @@ export default function CreditNotesPage() {
   const [mounted, setMounted] = useState(false);
   const [notes, setNotes] = useState<CreditNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(&quot;&quot;);
   const [isIssuing, setIsIssuing] = useState(false);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function CreditNotesPage() {
   const fetchNotes = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/accounting/credit-notes");
+      const res = await api.get(&quot;/accounting/credit-notes&quot;);
       setNotes(res.data);
     } catch {
       // Suppressed in prod
@@ -138,7 +138,7 @@ export default function CreditNotesPage() {
                 variant="ghost"
                 size="sm"
                 className="text-slate-500 font-bold uppercase text-[10px] tracking-widest"
-                onClick={() => toast.info("Filter panel coming soon.")}
+                onClick={() => toast.info(&quot;Filter panel coming soon.&quot;)}
               >
                 <Filter className="w-3 h-3 mr-2" />
                 Filter
@@ -206,23 +206,23 @@ export default function CreditNotesPage() {
                         {note.customer?.firstName} {note.customer?.lastName}
                       </div>
                       <div className="text-[10px] text-slate-400 font-bold uppercase">
-                        {note.customer?.company || "Individual"}
+                        {note.customer?.company || &quot;Individual&quot;}
                       </div>
                     </TableCell>
                     <TableCell className="text-slate-500 font-medium">
-                      {format(new Date(note.date), "dd MMM yyyy")}
+                      {format(new Date(note.date), &quot;dd MMM yyyy&quot;)}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
                         className="rounded-lg font-mono text-[10px]"
                       >
-                        {note.invoice?.invoiceNumber || "Direct Credit"}
+                        {note.invoice?.invoiceNumber || &quot;Direct Credit&quot;}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-6 font-black text-rose-600 tabular-nums">
                       ₹
-                      {Number(note.totalAmount).toLocaleString("en-IN", {
+                      {Number(note.totalAmount).toLocaleString(&quot;en-IN&quot;, {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>

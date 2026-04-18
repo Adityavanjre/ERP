@@ -61,7 +61,7 @@ interface BOM {
 export default function BOMPage() {
   const [boms, setBoms] = useState<BOM[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(&quot;&quot;);
   const [selectedBomId, setSelectedBomId] = useState<string | null>(null);
   const [selectedBom, setSelectedBom] = useState<BOM | null>(null);
   const [costAnalysis, setCostAnalysis] = useState<{
@@ -73,7 +73,7 @@ export default function BOMPage() {
   const syncLogicStructs = React.useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get("manufacturing/boms");
+      const res = await api.get(&quot;manufacturing/boms&quot;);
       setBoms(res.data);
     } catch {
       // Suppressed in prod: Logic Struct sync failed silently
@@ -228,7 +228,7 @@ export default function BOMPage() {
                       {bom.overheadRate}%
                     </div>
                     <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                      {bom.isOverheadFixed ? "Fixed" : "Variable"}
+                      {bom.isOverheadFixed ? &quot;Fixed&quot; : &quot;Variable&quot;}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -302,7 +302,7 @@ export default function BOMPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right pr-6 py-3 font-black text-slate-900">
-                        {item.quantity}{" "}
+                        {item.quantity}{&quot; &quot;}
                         <span className="text-[10px] text-slate-400 font-bold">
                           {item.product?.unit}
                         </span>
@@ -361,7 +361,7 @@ export default function BOMPage() {
                 <div className="pt-2">
                   <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
                     Includes {selectedBom.overheadRate}% overhead (
-                    {selectedBom.isOverheadFixed ? "Fixed" : "Variable"})
+                    {selectedBom.isOverheadFixed ? &quot;Fixed&quot; : &quot;Variable&quot;})
                   </p>
                 </div>
               </div>

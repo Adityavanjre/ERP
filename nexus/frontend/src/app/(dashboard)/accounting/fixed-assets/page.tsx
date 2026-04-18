@@ -50,23 +50,23 @@ export default function FixedAssetsPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    assetCode: "",
-    purchaseDate: new Date().toISOString().split("T")[0],
-    purchaseValue: "",
-    salvageValue: "0",
-    usefulLife: "60",
+    name: &quot;&quot;,
+    assetCode: &quot;&quot;,
+    purchaseDate: new Date().toISOString().split(&quot;T&quot;)[0],
+    purchaseValue: &quot;&quot;,
+    salvageValue: &quot;0&quot;,
+    usefulLife: &quot;60&quot;,
   });
 
   const fetchAssets = useCallback(async () => {
     try {
       setFetchError(null);
-      const res = await api.get("accounting/fixed-assets");
+      const res = await api.get(&quot;accounting/fixed-assets&quot;);
       setAssets(Array.isArray(res.data) ? res.data : []);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       const msg =
-        error.response?.data?.message || "Failed to load fixed assets";
+        error.response?.data?.message || &quot;Failed to load fixed assets&quot;;
       setFetchError(msg);
       toast.error(msg);
     } finally {
@@ -80,33 +80,33 @@ export default function FixedAssetsPage() {
 
   const handleAdd = async () => {
     if (!form.name || !form.assetCode || !form.purchaseValue) {
-      toast.error("Name, asset code, and purchase value are required");
+      toast.error(&quot;Name, asset code, and purchase value are required&quot;);
       return;
     }
     try {
-      await api.post("accounting/fixed-assets", {
+      await api.post(&quot;accounting/fixed-assets&quot;, {
         ...form,
         purchaseValue: parseFloat(form.purchaseValue),
-        salvageValue: parseFloat(form.salvageValue || "0"),
+        salvageValue: parseFloat(form.salvageValue || &quot;0&quot;),
         usefulLife: parseInt(form.usefulLife),
         purchaseDate: new Date(form.purchaseDate).toISOString(),
         idempotencyKey: `FA-${form.assetCode}-${Date.now()}`,
       });
 
-      toast.success("Fixed asset added");
+      toast.success(&quot;Fixed asset added&quot;);
       setDialogOpen(false);
       setForm({
-        name: "",
-        assetCode: "",
-        purchaseDate: new Date().toISOString().split("T")[0],
-        purchaseValue: "",
-        salvageValue: "0",
-        usefulLife: "60",
+        name: &quot;&quot;,
+        assetCode: &quot;&quot;,
+        purchaseDate: new Date().toISOString().split(&quot;T&quot;)[0],
+        purchaseValue: &quot;&quot;,
+        salvageValue: &quot;0&quot;,
+        usefulLife: &quot;60&quot;,
       });
       fetchAssets();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Failed to add asset");
+      toast.error(error.response?.data?.message || &quot;Failed to add asset&quot;);
     }
   };
 
@@ -121,7 +121,7 @@ export default function FixedAssetsPage() {
       fetchAssets();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Depreciation failed");
+      toast.error(error.response?.data?.message || &quot;Depreciation failed&quot;);
     }
   };
 
@@ -132,10 +132,10 @@ export default function FixedAssetsPage() {
     ).toFixed(2);
 
   const statusColor = (status: string) => {
-    if (status === "Active") return "bg-emerald-100 text-emerald-700";
-    if (status === "FullyDepreciated") return "bg-slate-100 text-slate-600";
-    if (status === "Disposed") return "bg-red-100 text-red-700";
-    return "bg-slate-100 text-slate-600";
+    if (status === &quot;Active&quot;) return &quot;bg-emerald-100 text-emerald-700&quot;;
+    if (status === &quot;FullyDepreciated&quot;) return &quot;bg-slate-100 text-slate-600&quot;;
+    if (status === &quot;Disposed&quot;) return &quot;bg-red-100 text-red-700&quot;;
+    return &quot;bg-slate-100 text-slate-600&quot;;
   };
 
   return (
@@ -169,7 +169,7 @@ export default function FixedAssetsPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, name: e.target.value }))
                     }
-                    placeholder="e.g. Lathe Machine"
+                    placeholder=&quot;e.g. Lathe Machine&quot;
                   />
                 </div>
                 <div className="space-y-2">
@@ -179,7 +179,7 @@ export default function FixedAssetsPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, assetCode: e.target.value }))
                     }
-                    placeholder="e.g. MACH-001"
+                    placeholder=&quot;e.g. MACH-001&quot;
                   />
                 </div>
               </div>
@@ -201,13 +201,13 @@ export default function FixedAssetsPage() {
                     value={form.purchaseValue || ""}
                     onChange={(e) => {
                       const val =
-                        e.target.value === "" ? 0 : parseFloat(e.target.value);
+                        e.target.value === &quot;&quot; ? 0 : parseFloat(e.target.value);
                       setForm((f) => ({
                         ...f,
-                        purchaseValue: isNaN(val) ? "0" : val.toString(),
+                        purchaseValue: isNaN(val) ? &quot;0&quot; : val.toString(),
                       }));
                     }}
-                    placeholder="500000"
+                    placeholder=&quot;500000&quot;
                   />
                 </div>
                 <div className="space-y-2">
@@ -218,7 +218,7 @@ export default function FixedAssetsPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, salvageValue: e.target.value }))
                     }
-                    placeholder="0"
+                    placeholder=&quot;0&quot;
                   />
                 </div>
               </div>
@@ -229,13 +229,13 @@ export default function FixedAssetsPage() {
                   value={form.usefulLife || ""}
                   onChange={(e) => {
                     const val =
-                      e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+                      e.target.value === &quot;&quot; ? 0 : parseInt(e.target.value, 10);
                     setForm((f) => ({
                       ...f,
-                      usefulLife: isNaN(val) ? "0" : val.toString(),
+                      usefulLife: isNaN(val) ? &quot;0&quot; : val.toString(),
                     }));
                   }}
-                  placeholder="60"
+                  placeholder=&quot;60&quot;
                 />
               </div>
               <Button
@@ -268,7 +268,7 @@ export default function FixedAssetsPage() {
                 setLoading(true);
                 fetchAssets();
               }}
-              className="mt-4 text-sm text-blue-600 font-bold hover:underline"
+              className=&quot;mt-4 text-sm text-blue-600 font-bold hover:underline&quot;
             >
               Try again
             </button>
@@ -327,16 +327,16 @@ export default function FixedAssetsPage() {
                     {asset.assetCode}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ₹{parseFloat(asset.purchaseValue).toLocaleString("en-IN")}
+                    ₹{parseFloat(asset.purchaseValue).toLocaleString(&quot;en-IN&quot;)}
                   </TableCell>
                   <TableCell className="text-right text-slate-500">
                     ₹
                     {parseFloat(asset.accumulatedDepreciation).toLocaleString(
-                      "en-IN",
+                      &quot;en-IN&quot;,
                     )}
                   </TableCell>
                   <TableCell className="text-right font-bold text-blue-600">
-                    ₹{parseFloat(bookValue(asset)).toLocaleString("en-IN")}
+                    ₹{parseFloat(bookValue(asset)).toLocaleString(&quot;en-IN&quot;)}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {asset.usefulLife}
@@ -349,12 +349,12 @@ export default function FixedAssetsPage() {
                     </span>
                   </TableCell>
                   <TableCell className="flex gap-2">
-                    {asset.status === "Active" && (
+                    {asset.status === &quot;Active&quot; && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleDepreciate(asset.id, asset.name)}
-                        className="rounded-xl text-xs font-bold border-slate-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600"
+                        className=&quot;rounded-xl text-xs font-bold border-slate-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600&quot;
                       >
                         <PlayCircle className="h-3 w-3 mr-1" />
                         Depreciate
@@ -394,7 +394,7 @@ export default function FixedAssetsPage() {
                                     <p className="font-bold text-slate-900">
                                       ₹
                                       {parseFloat(log.amount).toLocaleString(
-                                        "en-IN",
+                                        &quot;en-IN&quot;,
                                       )}
                                     </p>
                                     <p className="text-[10px] text-slate-500">

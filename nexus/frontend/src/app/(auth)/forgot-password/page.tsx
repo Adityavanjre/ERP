@@ -25,16 +25,16 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(&quot;&quot;);
 
     try {
-      await api.post("auth/forgot-password", { email });
+      await api.post(&quot;auth/forgot-password&quot;, { email });
       setSuccess(true);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(
         error.response?.data?.message ||
-          "Something went wrong. Please try again.",
+          &quot;Something went wrong. Please try again.&quot;,
       );
     } finally {
       setLoading(false);
@@ -119,7 +119,7 @@ export default function ForgotPasswordPage() {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
               disabled={loading}
             >
-              {loading ? "Sending..." : "Send Reset Link"}
+              {loading ? &quot;Sending...&quot; : &quot;Send Reset Link&quot;}
             </Button>
             <Link
               href="/login"

@@ -87,26 +87,26 @@ export default function StockMovementsPage() {
 
   // Form State
   const [movementType, setMovementType] = useState<"TRANSFER" | "IN" | "OUT">(
-    "TRANSFER",
+    &quot;TRANSFER&quot;,
   );
-  const [productId, setProductId] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [fromWarehouse, setFromWarehouse] = useState("");
-  const [toWarehouse, setToWarehouse] = useState("");
-  const [notes, setNotes] = useState("");
+  const [productId, setProductId] = useState(&quot;&quot;);
+  const [quantity, setQuantity] = useState(&quot;&quot;);
+  const [fromWarehouse, setFromWarehouse] = useState(&quot;&quot;);
+  const [toWarehouse, setToWarehouse] = useState(&quot;&quot;);
+  const [notes, setNotes] = useState(&quot;&quot;);
 
   // BUG-015 FIX: date filter state for movement log
   const [movements, setMovements] = useState<MovementLog[]>([]);
-  const [filterFrom, setFilterFrom] = useState("");
-  const [filterTo, setFilterTo] = useState("");
+  const [filterFrom, setFilterFrom] = useState(&quot;&quot;);
+  const [filterTo, setFilterTo] = useState(&quot;&quot;);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [prodRes, whRes, movRes] = await Promise.all([
-        api.get("/inventory/products?limit=1000"),
-        api.get("/inventory/warehouses"),
-        api.get("/inventory/movements").catch(() => ({ data: [] })),
+        api.get(&quot;/inventory/products?limit=1000&quot;),
+        api.get(&quot;/inventory/warehouses&quot;),
+        api.get(&quot;/inventory/movements&quot;).catch(() => ({ data: [] })),
       ]);
       setProducts(prodRes.data.data || []);
       setWarehouses(whRes.data || []);
@@ -114,7 +114,7 @@ export default function StockMovementsPage() {
         Array.isArray(movRes.data) ? movRes.data : movRes.data?.data || [],
       );
     } catch {
-      toast.error("Failed to load inventory data");
+      toast.error(&quot;Failed to load inventory data&quot;);
     } finally {
       setLoading(false);
     }
@@ -219,11 +219,11 @@ export default function StockMovementsPage() {
               <div className="grid grid-cols-3 gap-4">
                 <button
                   type="button"
-                  onClick={() => setMovementType("TRANSFER")}
+                  onClick={() => setMovementType(&quot;TRANSFER&quot;)}
                   className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                    movementType === "TRANSFER"
-                      ? "border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner"
-                      : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
+                    movementType === &quot;TRANSFER&quot;
+                      ? &quot;border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner&quot;
+                      : &quot;border-slate-100 hover:border-slate-300 text-slate-500 bg-white&quot;
                   }`}
                 >
                   <Truck className="h-6 w-6 mb-2" />
@@ -233,11 +233,11 @@ export default function StockMovementsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMovementType("IN")}
+                  onClick={() => setMovementType(&quot;IN&quot;)}
                   className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                    movementType === "IN"
-                      ? "border-emerald-600 bg-emerald-50/50 text-emerald-700 shadow-inner"
-                      : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
+                    movementType === &quot;IN&quot;
+                      ? &quot;border-emerald-600 bg-emerald-50/50 text-emerald-700 shadow-inner&quot;
+                      : &quot;border-slate-100 hover:border-slate-300 text-slate-500 bg-white&quot;
                   }`}
                 >
                   <TrendingUp className="h-6 w-6 mb-2" />
@@ -247,11 +247,11 @@ export default function StockMovementsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMovementType("OUT")}
+                  onClick={() => setMovementType(&quot;OUT&quot;)}
                   className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
-                    movementType === "OUT"
-                      ? "border-red-600 bg-red-50/50 text-red-700 shadow-inner"
-                      : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
+                    movementType === &quot;OUT&quot;
+                      ? &quot;border-red-600 bg-red-50/50 text-red-700 shadow-inner&quot;
+                      : &quot;border-slate-100 hover:border-slate-300 text-slate-500 bg-white&quot;
                   }`}
                 >
                   <TrendingDown className="h-6 w-6 mb-2" />
@@ -278,7 +278,7 @@ export default function StockMovementsPage() {
                           value={p.id}
                           className="font-medium"
                         >
-                          {p.name}{" "}
+                          {p.name}{&quot; &quot;}
                           <span className="text-slate-400 font-mono ml-2 text-xs">
                             {p.sku}
                           </span>
@@ -289,7 +289,7 @@ export default function StockMovementsPage() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  {movementType === "TRANSFER" && (
+                  {movementType === &quot;TRANSFER&quot; && (
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                         Source Warehouse
@@ -318,9 +318,9 @@ export default function StockMovementsPage() {
 
                   <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                      {movementType === "TRANSFER"
-                        ? "Destination Warehouse"
-                        : "Warehouse"}
+                      {movementType === &quot;TRANSFER&quot;
+                        ? &quot;Destination Warehouse&quot;
+                        : &quot;Warehouse&quot;}
                     </Label>
                     <Select value={toWarehouse} onValueChange={setToWarehouse}>
                       <SelectTrigger className="h-12 rounded-xl border-slate-200 bg-slate-50 shadow-inner font-medium text-slate-900 border-2">
@@ -475,14 +475,14 @@ export default function StockMovementsPage() {
                   type="date"
                   value={filterFrom}
                   onChange={(e) => setFilterFrom(e.target.value)}
-                  className="h-9 w-36 rounded-xl border-slate-200 text-sm"
+                  className=&quot;h-9 w-36 rounded-xl border-slate-200 text-sm&quot;
                 />
                 <span className="text-slate-400 text-xs font-bold">to</span>
                 <Input
                   type="date"
                   value={filterTo}
                   onChange={(e) => setFilterTo(e.target.value)}
-                  className="h-9 w-36 rounded-xl border-slate-200 text-sm"
+                  className=&quot;h-9 w-36 rounded-xl border-slate-200 text-sm&quot;
                 />
               </div>
               {(filterFrom || filterTo) && (
@@ -490,10 +490,10 @@ export default function StockMovementsPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setFilterFrom("");
-                    setFilterTo("");
+                    setFilterFrom(&quot;&quot;);
+                    setFilterTo(&quot;&quot;);
                   }}
-                  className="h-9 px-3 text-slate-400 hover:text-slate-700 rounded-xl"
+                  className=&quot;h-9 px-3 text-slate-400 hover:text-slate-700 rounded-xl&quot;
                 >
                   <X className="h-4 w-4 mr-1" /> Clear
                 </Button>
@@ -506,7 +506,7 @@ export default function StockMovementsPage() {
             const filtered = movements.filter((m) => {
               const d = new Date(m.createdAt);
               if (filterFrom && d < new Date(filterFrom)) return false;
-              if (filterTo && d > new Date(filterTo + "T23:59:59"))
+              if (filterTo && d > new Date(filterTo + &quot;T23:59:59&quot;))
                 return false;
               return true;
             });
@@ -514,8 +514,8 @@ export default function StockMovementsPage() {
               return (
                 <div className="h-32 flex items-center justify-center text-slate-400 font-bold text-sm">
                   {movements.length === 0
-                    ? "No movements recorded yet."
-                    : "No movements in selected date range."}
+                    ? &quot;No movements recorded yet.&quot;
+                    : &quot;No movements in selected date range.&quot;}
                 </div>
               );
             }
@@ -547,10 +547,10 @@ export default function StockMovementsPage() {
                       className="border-slate-50 hover:bg-slate-50/50"
                     >
                       <TableCell className="pl-8 text-slate-500 text-xs font-bold">
-                        {new Date(m.createdAt).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
+                        {new Date(m.createdAt).toLocaleDateString(&quot;en-IN&quot;, {
+                          day: &quot;2-digit&quot;,
+                          month: &quot;short&quot;,
+                          year: &quot;numeric&quot;,
                         })}
                       </TableCell>
                       <TableCell>
@@ -567,7 +567,7 @@ export default function StockMovementsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-bold text-slate-900 text-sm">
-                        {m.product?.name || "—"}
+                        {m.product?.name || &quot;—&quot;}
                         {m.product?.sku && (
                           <span className="text-slate-400 font-mono text-[10px] ml-2">
                             {m.product.sku}
@@ -575,9 +575,9 @@ export default function StockMovementsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-slate-500 text-sm font-medium">
-                        {m.type === "TRANSFER"
-                          ? `${m.fromWarehouse?.name || "?"} → ${m.toWarehouse?.name || "?"}`
-                          : m.warehouse?.name || "—"}
+                        {m.type === &quot;TRANSFER&quot;
+                          ? `${m.fromWarehouse?.name || &quot;?&quot;} → ${m.toWarehouse?.name || &quot;?&quot;}`
+                          : m.warehouse?.name || &quot;—&quot;}
                       </TableCell>
                       <TableCell className="text-right pr-8 font-black text-slate-900 tabular-nums">
                         {m.quantity}

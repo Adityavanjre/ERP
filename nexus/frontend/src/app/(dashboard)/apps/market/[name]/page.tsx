@@ -43,7 +43,7 @@ export default function AppDetailPage() {
     async (showLoading = false) => {
       try {
         if (showLoading) setLoading(true);
-        const res = await api.get("/system/apps");
+        const res = await api.get(&quot;/system/apps&quot;);
         const found = res.data.find((a: AppManifest) => a.name === appName);
         setApp(found);
       } catch {
@@ -65,7 +65,7 @@ export default function AppDetailPage() {
       toast.success(`${app?.label} activated successfully`);
       syncAppData(true);
     } catch {
-      toast.error("Installation failed");
+      toast.error(&quot;Installation failed&quot;);
     }
   }, [appName, app, syncAppData]);
 
@@ -75,7 +75,7 @@ export default function AppDetailPage() {
       toast.success(`${app?.label} removed successfully`);
       syncAppData(true);
     } catch {
-      toast.error("Removal error");
+      toast.error(&quot;Removal error&quot;);
     }
   }, [appName, app, syncAppData]);
 
@@ -97,7 +97,7 @@ export default function AppDetailPage() {
       <Button
         variant="ghost"
         onClick={() => router.back()}
-        className="text-slate-500 hover:text-slate-900 font-bold hover:bg-slate-100/50 rounded-xl"
+        className=&quot;text-slate-500 hover:text-slate-900 font-bold hover:bg-slate-100/50 rounded-xl&quot;
       >
         <ChevronLeft className="mr-2 h-4 w-4" /> Back to Marketplace
       </Button>
@@ -128,9 +128,9 @@ export default function AppDetailPage() {
                   </span>
                   <span className="text-slate-200">|</span>
                   <span className="text-slate-400 font-black uppercase text-[10px] tracking-widest">
-                    Authored by{" "}
+                    Authored by{&quot; &quot;}
                     <span className="text-slate-600 underline decoration-slate-200">
-                      {app.author || "Klypso Core"}
+                      {app.author || &quot;Klypso Core&quot;}
                     </span>
                   </span>
                 </div>
@@ -188,7 +188,7 @@ export default function AppDetailPage() {
             <TabsContent value="overview" className="mt-10 space-y-10">
               <p className="text-slate-600 leading-relaxed text-xl font-medium max-w-3xl">
                 {app.description ||
-                  "No extended details found for this module."}
+                  &quot;No extended details found for this module.&quot;}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-200/40 space-y-3">
@@ -232,7 +232,7 @@ export default function AppDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-4 p-10">
                   {app.dependencies ? (
-                    app.dependencies.split(",").map((dep: string) => (
+                    app.dependencies.split(&quot;,&quot;).map((dep: string) => (
                       <div
                         key={dep}
                         className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-100 transition-all group"
@@ -313,7 +313,7 @@ export default function AppDetailPage() {
                 <span
                   className={`text-[10px] font-black uppercase tracking-widest ${app.installed ? "text-blue-600" : "text-slate-400"}`}
                 >
-                  {app.installed ? "Active" : "Offline"}
+                  {app.installed ? &quot;Active&quot; : &quot;Offline&quot;}
                 </span>
               </div>
             </CardContent>

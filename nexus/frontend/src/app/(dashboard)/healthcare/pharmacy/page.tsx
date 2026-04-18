@@ -194,7 +194,7 @@ export default function PharmacyPage() {
                               : "bg-amber-50 text-amber-700",
                         )}
                       >
-                        {s.status === "Critical" && (
+                        {s.status === &quot;Critical&quot; && (
                           <AlertTriangle className="h-3 w-3 mr-1" />
                         )}
                         {s.status}

@@ -148,7 +148,7 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
-  const userRole = (user?.role as RoleName) || "Biller";
+  const userRole = (user?.role as RoleName) || &quot;Biller&quot;;
 
   useEffect(() => {
     setMounted(true);
@@ -157,8 +157,8 @@ export default function DashboardPage() {
   const cache = getCachedDashboard();
 
   // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a
-  // brief simulated check. This prevents the "Loading Hang" while ensuring
-  // we don't trigger automatic network requests.
+  // brief simulated check. This prevents the &quot;Loading Hang&quot; while ensuring
+  // we don&apos;t trigger automatic network requests.
   useEffect(() => {
     if (mounted && !cache) {
       const timer = setTimeout(() => setLoading(false), 1000);
@@ -170,7 +170,7 @@ export default function DashboardPage() {
     apps: 0,
     installed: 0,
     records: 0,
-    uptime: "99.9%",
+    uptime: &quot;99.9%&quot;,
   });
 
   const [biStats, setBiStats] = useState(cache?.biStats ?? EMPTY_BI_STATS);
@@ -209,36 +209,36 @@ export default function DashboardPage() {
     }
 
     try {
-      console.log("DASHBOARD: Starting Immediate Manual Fetch...");
+      console.log(&quot;DASHBOARD: Starting Immediate Manual Fetch...&quot;);
 
       // WAVE 1: VITALS (Lowest latency, highest priority)
       const vitalsPromise = api
-        .get("analytics/summary")
+        .get(&quot;analytics/summary&quot;)
         .then((res) => {
           setBiStats((prev) => ({ ...prev, ...res.data }));
         })
-        .catch((e) => console.error("Vitals Fail:", e));
+        .catch((e) => console.error(&quot;Vitals Fail:&quot;, e));
 
       await vitalsPromise; // Ensure vitals are in-flight or done before next wave
 
       // WAVE 2: CONFIG & INFRA
       const infraPromise = Promise.allSettled([
-        api.get("system/config"),
-        api.get("system/stats"),
+        api.get(&quot;system/config&quot;),
+        api.get(&quot;system/stats&quot;),
       ]).then((results) => {
         const cfg =
-          results[0].status === "fulfilled" ? results[0].value.data : null;
+          results[0].status === &quot;fulfilled&quot; ? results[0].value.data : null;
         const sys =
-          results[1].status === "fulfilled" ? results[1].value.data : null;
+          results[1].status === &quot;fulfilled&quot; ? results[1].value.data : null;
 
         if (cfg) {
           setIndustryConfig(cfg);
           const infrastructure = [
-            "dashboard",
-            "crm",
-            "settings",
-            "apps",
-            "accounting",
+            &quot;dashboard&quot;,
+            &quot;crm&quot;,
+            &quot;settings&quot;,
+            &quot;apps&quot;,
+            &quot;accounting&quot;,
           ];
           setEnabledModules(
             Array.from(new Set([...infrastructure, ...cfg.enabledModules])),
@@ -251,13 +251,13 @@ export default function DashboardPage() {
 
       // WAVE 3: HEAVY ANALYTICS
       const analyticsPromise = Promise.allSettled([
-        api.get("analytics/performance"),
-        api.get("analytics/health"),
-        api.get("analytics/activity"),
-        api.get("analytics/value-chain"),
+        api.get(&quot;analytics/performance&quot;),
+        api.get(&quot;analytics/health&quot;),
+        api.get(&quot;analytics/activity&quot;),
+        api.get(&quot;analytics/value-chain&quot;),
       ]).then((results) => {
         const getVal = <T,>(result: SettledApiResult<T>): T | null =>
-          result.status === "fulfilled" ? result.value.data : null;
+          result.status === &quot;fulfilled&quot; ? result.value.data : null;
 
         const perf = getVal(results[0]);
         const hlth = getVal(results[1]);
@@ -286,7 +286,7 @@ export default function DashboardPage() {
 
       await analyticsPromise;
     } catch (err) {
-      console.error("DASHBOARD: Critical Sync Failure", err);
+      console.error(&quot;DASHBOARD: Critical Sync Failure&quot;, err);
       setSyncDegraded(true);
     } finally {
       if (deadlineTimer) clearTimeout(deadlineTimer);
@@ -296,7 +296,7 @@ export default function DashboardPage() {
   }, []);
 
   // MANUALLY-TRIGGERED SYNC ONLY
-  // Removed automatic useEffect fetch on mount to follow 'Interaction-Only' strict rule.
+  // Removed automatic useEffect fetch on mount to follow &apos;Interaction-Only&apos; strict rule.
   // Data will only be fetched when the user clicks the manual refresh/sync button.
 
   const term = useMemo<Record<string, string>>(
@@ -307,71 +307,71 @@ export default function DashboardPage() {
   const kpiCards = useMemo(() => {
     const cards = [
       {
-        title: "Gross Revenue",
-        value: `₹${biStats.revenue.toLocaleString("en-IN")}`,
+        title: &quot;Gross Revenue&quot;,
+        value: `₹${biStats.revenue.toLocaleString(&quot;en-IN&quot;)}`,
         icon: DollarSign,
-        color: "text-emerald-500",
-        bg: "bg-emerald-500/10",
-        desc: "Total sales income",
+        color: &quot;text-emerald-500&quot;,
+        bg: &quot;bg-emerald-500/10&quot;,
+        desc: &quot;Total sales income&quot;,
       },
       {
-        title: "Total Purchases",
-        value: `₹${biStats.expenses.toLocaleString("en-IN")}`,
+        title: &quot;Total Purchases&quot;,
+        value: `₹${biStats.expenses.toLocaleString(&quot;en-IN&quot;)}`,
         icon: ArrowDownRight,
-        color: "text-rose-500",
-        bg: "bg-rose-500/10",
-        desc: "Total purchase cost",
+        color: &quot;text-rose-500&quot;,
+        bg: &quot;bg-rose-500/10&quot;,
+        desc: &quot;Total purchase cost&quot;,
       },
       {
-        title: term.Customer || "Customers",
+        title: term.Customer || &quot;Customers&quot;,
         value: biStats.customerCount,
         icon: Users,
-        color: "text-sky-400",
-        bg: "bg-sky-500/10",
-        desc: `Total ${term.Customer?.toLowerCase() || "customers"}`,
+        color: &quot;text-sky-400&quot;,
+        bg: &quot;bg-sky-500/10&quot;,
+        desc: `Total ${term.Customer?.toLowerCase() || &quot;customers&quot;}`,
       },
       {
-        title: term.Product || "Products",
+        title: term.Product || &quot;Products&quot;,
         value: biStats.inventoryCount,
         icon: Package,
-        color: "text-amber-500",
-        bg: "bg-amber-500/10",
-        desc: `Active ${term.Product?.toLowerCase() || "products"}`,
+        color: &quot;text-amber-500&quot;,
+        bg: &quot;bg-amber-500/10&quot;,
+        desc: `Active ${term.Product?.toLowerCase() || &quot;products&quot;}`,
       },
     ];
 
-    if (enabledModules.includes("manufacturing")) {
+    if (enabledModules.includes(&quot;manufacturing&quot;)) {
       cards.push({
-        title: term.WorkOrder || "Work Orders",
+        title: term.WorkOrder || &quot;Work Orders&quot;,
         value: biStats.workOrderCount,
         icon: ClipboardList,
-        color: "text-emerald-500",
-        bg: "bg-emerald-500/10",
-        desc: "Active production jobs",
+        color: &quot;text-emerald-500&quot;,
+        bg: &quot;bg-emerald-500/10&quot;,
+        desc: &quot;Active production jobs&quot;,
       });
       cards.push({
-        title: "Machine Uptime",
-        value: "94.2%",
+        title: &quot;Machine Uptime&quot;,
+        value: &quot;94.2%&quot;,
         icon: Cpu,
-        color: "text-blue-500",
-        bg: "bg-blue-500/10",
-        desc: "Average operational time",
+        color: &quot;text-blue-500&quot;,
+        bg: &quot;bg-blue-500/10&quot;,
+        desc: &quot;Average operational time&quot;,
       });
       cards.push({
-        title: "Production Yield",
-        value: "98.1%",
+        title: &quot;Production Yield&quot;,
+        value: &quot;98.1%&quot;,
         icon: BarChart2,
-        color: "text-indigo-500",
-        bg: "bg-indigo-500/10",
-        desc: "Output vs Target efficiency",
+        color: &quot;text-indigo-500&quot;,
+        bg: &quot;bg-indigo-500/10&quot;,
+        desc: &quot;Output vs Target efficiency&quot;,
       });
       cards.push({
-        title: "Open Shortages",
-        value: "12",
+        title: &quot;Open Shortages&quot;,
+        value: &quot;12&quot;,
         icon: Activity,
-        color: "text-rose-500",
-        bg: "bg-rose-500/10",
-        desc: "Stockouts affecting production",
+        color: &quot;text-rose-500&quot;,
+        bg: &quot;bg-rose-500/10&quot;,
+        desc: &quot;Stockouts affecting production&quot;,
       });
     }
     return cards;
@@ -393,11 +393,11 @@ export default function DashboardPage() {
             {user?.tenantName ||
               (industryConfig?.industry
                 ? `${industryConfig.industry} Console`
-                : "Klypso Dashboard")}
+                : &quot;Klypso Dashboard&quot;)}
           </h2>
           <p className="text-slate-600 mt-2 font-medium">
-            Business intelligence and operational metrics for{" "}
-            {user?.tenantName || "your business"}.
+            Business intelligence and operational metrics for{&quot; &quot;}
+            {user?.tenantName || &quot;your business&quot;}.
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -408,25 +408,25 @@ export default function DashboardPage() {
             <p
               className={`text-xs font-mono font-black ${syncDegraded ? "text-amber-500" : "text-emerald-600"}`}
             >
-              {syncDegraded ? "SYNC DEGRADED" : "LIVE DATA"}
+              {syncDegraded ? &quot;SYNC DEGRADED&quot; : &quot;LIVE DATA&quot;}
             </p>
           </div>
           <Badge
             variant="outline"
             className={`px-4 py-2 rounded-2xl shadow-sm ${syncDegraded ? "border-amber-200 text-amber-600 bg-amber-50/50" : "border-blue-200 text-blue-600 bg-blue-50/50"}`}
           >
-            <Activity className="h-3 w-3 mr-2 animate-pulse" />{" "}
-            {syncDegraded ? "Degraded" : "Live Data"}
+            <Activity className="h-3 w-3 mr-2 animate-pulse" />{&quot; &quot;}
+            {syncDegraded ? &quot;Degraded&quot; : &quot;Live Data&quot;}
           </Badge>
           <Button
             onClick={() => fetchData()}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-500/20"
+            className=&quot;bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-500/20&quot;
           >
             <Zap
               className={cn("h-3.5 w-3.5 mr-2", loading && "animate-spin")}
             />
-            {loading ? "Refreshing..." : "Sync Cloud Data"}
+            {loading ? &quot;Refreshing...&quot; : &quot;Sync Cloud Data&quot;}
           </Button>
         </div>
       </div>
@@ -471,64 +471,64 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
         {[
           {
-            label: "Quick Invoice",
+            label: &quot;Quick Invoice&quot;,
             icon: CreditCard,
-            color: "bg-emerald-100 text-emerald-600",
-            href: "/sales/rapid",
+            color: &quot;bg-emerald-100 text-emerald-600&quot;,
+            href: &quot;/sales/rapid&quot;,
             roles: SALES_ROLES,
           },
           {
-            label: `Add ${term.Product || "Product"}`,
+            label: `Add ${term.Product || &quot;Product&quot;}`,
             icon: Plus,
-            color: "bg-blue-100 text-blue-600",
-            href: "/inventory",
+            color: &quot;bg-blue-100 text-blue-600&quot;,
+            href: &quot;/inventory&quot;,
             roles: STOCK_ROLES,
           },
           {
-            label: term.Customer || "Customers",
+            label: term.Customer || &quot;Customers&quot;,
             icon: Users,
-            color: "bg-indigo-100 text-indigo-600",
-            href: "/crm",
+            color: &quot;bg-indigo-100 text-indigo-600&quot;,
+            href: &quot;/crm&quot;,
             roles: SALES_ROLES,
           },
           {
-            label: "Purchases",
+            label: &quot;Purchases&quot;,
             icon: Truck,
-            color: "bg-amber-100 text-amber-600",
-            href: "/purchases",
+            color: &quot;bg-amber-100 text-amber-600&quot;,
+            href: &quot;/purchases&quot;,
             roles: STOCK_ROLES,
           },
           {
-            label: term.WorkOrder || "Production",
+            label: term.WorkOrder || &quot;Production&quot;,
             icon: Factory,
-            color: "bg-emerald-100 text-emerald-600",
-            href: "/manufacturing",
+            color: &quot;bg-emerald-100 text-emerald-600&quot;,
+            href: &quot;/manufacturing&quot;,
             roles: MANUFACTURING_ROLES,
           },
           {
-            label: "Accounting",
+            label: &quot;Accounting&quot;,
             icon: FileText,
-            color: "bg-rose-100 text-rose-600",
-            href: "/accounting",
+            color: &quot;bg-rose-100 text-rose-600&quot;,
+            href: &quot;/accounting&quot;,
             roles: FINANCE_ROLES,
           },
           {
-            label: "Apps & Modules",
+            label: &quot;Apps & Modules&quot;,
             icon: LayoutGrid,
-            color: "bg-fuchsia-100 text-fuchsia-600",
-            href: "/apps",
-            roles: ["Owner", "Manager"] as RoleName[],
+            color: &quot;bg-fuchsia-100 text-fuchsia-600&quot;,
+            href: &quot;/apps&quot;,
+            roles: [&quot;Owner&quot;, &quot;Manager&quot;] as RoleName[],
           },
         ]
           .filter((action) => {
             const roleAllowed = action.roles.includes(userRole);
             if (!roleAllowed) return false;
 
-            const pathParts = action.href.split("/").filter((p) => p !== "");
+            const pathParts = action.href.split(&quot;/&quot;).filter((p) => p !== &quot;&quot;);
             const moduleKey = pathParts[0];
 
             if (moduleKey && enabledModules.length > 0) {
-              if (moduleKey === "crm") return true;
+              if (moduleKey === &quot;crm&quot;) return true;
               return enabledModules.includes(moduleKey);
             }
             return true;
@@ -537,7 +537,7 @@ export default function DashboardPage() {
             <button
               key={action.label}
               onClick={() => router.push(action.href)}
-              className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
+              className=&quot;flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95&quot;
             >
               <div
                 className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}
@@ -555,7 +555,7 @@ export default function DashboardPage() {
       <div
         className={cn(
           "grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4",
-          kpiCards.length > 4 && "lg:grid-cols-5",
+          kpiCards.length > 4 && &quot;lg:grid-cols-5&quot;,
         )}
       >
         {(kpiCards || []).map((kpi) => (
@@ -686,7 +686,7 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-xl font-black text-slate-800 tracking-tight">
                     ₹
-                    {healthStats.runRate.toLocaleString("en-IN", {
+                    {healthStats.runRate.toLocaleString(&quot;en-IN&quot;, {
                       maximumFractionDigits: 0,
                     })}
                   </p>
@@ -697,7 +697,7 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-xl font-black text-rose-600 tracking-tight">
                     ₹
-                    {healthStats.burnRate.toLocaleString("en-IN", {
+                    {healthStats.burnRate.toLocaleString(&quot;en-IN&quot;, {
                       maximumFractionDigits: 0,
                     })}
                   </p>
@@ -742,8 +742,8 @@ export default function DashboardPage() {
                         </span>
                         <Clock className="h-2.5 w-2.5 mr-1" />
                         {new Date(log.time).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
+                          hour: &quot;2-digit&quot;,
+                          minute: &quot;2-digit&quot;,
                         })}
                       </div>
                     </div>

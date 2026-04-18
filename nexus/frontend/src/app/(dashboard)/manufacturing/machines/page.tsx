@@ -47,14 +47,14 @@ interface Machine {
 export default function MachinesPage() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(&quot;&quot;);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newMachine, setNewMachine] = useState({
-    name: "",
-    code: "",
-    type: "",
+    name: &quot;&quot;,
+    code: &quot;&quot;,
+    type: &quot;&quot;,
     hourlyRate: 0,
-    status: "Idle",
+    status: &quot;Idle&quot;,
   });
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function MachinesPage() {
 
   const fetchMachines = async () => {
     try {
-      const res = await api.get("/manufacturing/machines");
+      const res = await api.get(&quot;/manufacturing/machines&quot;);
       // Add mock health data for visual appeal
       const enriched = res.data.map((m: Machine) => ({
         ...m,
@@ -71,7 +71,7 @@ export default function MachinesPage() {
       }));
       setMachines(enriched);
     } catch {
-      toast.error("Failed to load machines");
+      toast.error(&quot;Failed to load machines&quot;);
     } finally {
       setLoading(false);
     }
@@ -80,35 +80,35 @@ export default function MachinesPage() {
   const handleCreate = async () => {
     try {
       if (!newMachine.name || !newMachine.code) {
-        toast.error("Name and Code are required");
+        toast.error(&quot;Name and Code are required&quot;);
         return;
       }
-      await api.post("/manufacturing/machines", newMachine);
-      toast.success("Machine registered successfully");
+      await api.post(&quot;/manufacturing/machines&quot;, newMachine);
+      toast.success(&quot;Machine registered successfully&quot;);
       setIsAddOpen(false);
       fetchMachines();
       setNewMachine({
-        name: "",
-        code: "",
-        type: "",
+        name: &quot;&quot;,
+        code: &quot;&quot;,
+        type: &quot;&quot;,
         hourlyRate: 0,
-        status: "Idle",
+        status: &quot;Idle&quot;,
       });
     } catch {
-      toast.error("Registration failed");
+      toast.error(&quot;Registration failed&quot;);
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Running":
-        return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
-      case "Idle":
-        return "bg-blue-500/10 text-blue-500 border-blue-500/20";
-      case "Maintenance":
-        return "bg-amber-500/10 text-amber-500 border-amber-500/20";
+      case &quot;Running&quot;:
+        return &quot;bg-emerald-500/10 text-emerald-500 border-emerald-500/20&quot;;
+      case &quot;Idle&quot;:
+        return &quot;bg-blue-500/10 text-blue-500 border-blue-500/20&quot;;
+      case &quot;Maintenance&quot;:
+        return &quot;bg-amber-500/10 text-amber-500 border-amber-500/20&quot;;
       default:
-        return "bg-slate-500/10 text-slate-500 border-slate-500/20";
+        return &quot;bg-slate-500/10 text-slate-500 border-slate-500/20&quot;;
     }
   };
 
@@ -260,7 +260,7 @@ export default function MachinesPage() {
                       variant="outline"
                       className={getStatusColor(m.status)}
                     >
-                      {m.status === "Running" && (
+                      {m.status === &quot;Running&quot; && (
                         <Activity className="w-3 h-3 mr-1 animate-pulse" />
                       )}
                       {m.status}
@@ -277,7 +277,7 @@ export default function MachinesPage() {
                     size="icon"
                     className="text-slate-400 hover:text-slate-600"
                     onClick={() =>
-                      toast.info("Asset settings module in development")
+                      toast.info(&quot;Asset settings module in development&quot;)
                     }
                   >
                     <Settings className="w-4 h-4" />
@@ -301,7 +301,7 @@ export default function MachinesPage() {
                     <p className="font-semibold text-slate-800">
                       {m.lastMaintenance
                         ? new Date(m.lastMaintenance).toLocaleDateString()
-                        : "Never"}
+                        : &quot;Never&quot;}
                     </p>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function MachinesPage() {
                     variant="outline"
                     className="flex-1 bg-slate-50 border-slate-100 hover:bg-slate-100 text-xs h-8 text-slate-700"
                     onClick={() =>
-                      toast.info("Real-time diagnostics coming in v2.0")
+                      toast.info(&quot;Real-time diagnostics coming in v2.0&quot;)
                     }
                   >
                     Diagnostics
@@ -336,7 +336,7 @@ export default function MachinesPage() {
                     variant="outline"
                     className="flex-1 bg-slate-50 border-slate-100 hover:bg-slate-100 text-xs h-8 text-slate-700"
                     onClick={() =>
-                      toast.info("Maintenance history log coming soon")
+                      toast.info(&quot;Maintenance history log coming soon&quot;)
                     }
                   >
                     History

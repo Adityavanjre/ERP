@@ -64,7 +64,7 @@ export default function CustomerDetailPage() {
       if (!params.id) return;
       try {
         if (showLoading) setLoading(true);
-        const custRes = await api.get("/crm/customers");
+        const custRes = await api.get(&quot;/crm/customers&quot;);
         const found = custRes.data.find(
           (c: CustomerDetail) => c.id === params.id,
         );
@@ -89,7 +89,7 @@ export default function CustomerDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full bg-slate-50 text-slate-900 min-h-screen">
-        <Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" />{" "}
+        <Loader2 className="animate-spin h-8 w-8 mr-2 text-blue-600" />{&quot; &quot;}
         Initializing Node Pulse...
       </div>
     );
@@ -121,7 +121,7 @@ export default function CustomerDetailPage() {
             {customer.firstName} {customer.lastName}
           </h2>
           <p className="text-slate-500 font-medium text-sm">
-            {customer.company || "Independent Client"}
+            {customer.company || &quot;Independent Client&quot;}
           </p>
         </div>
         <div className="md:ml-auto w-full md:w-auto">
@@ -135,10 +135,10 @@ export default function CustomerDetailPage() {
                   Net Balance
                 </p>
                 <div
-                  className={`text-3xl font-black tracking-tighter ${currentBalance > 0 ? "text-rose-600" : "text-emerald-600"}`}
+                  className={`text-3xl font-black tracking-tighter ${currentBalance > 0 ? &quot;text-rose-600&quot; : &quot;text-emerald-600&quot;}`}
                 >
                   ₹
-                  {currentBalance.toLocaleString("en-IN", {
+                  {currentBalance.toLocaleString(&quot;en-IN&quot;, {
                     minimumFractionDigits: 0,
                   })}
                 </div>
@@ -157,16 +157,16 @@ export default function CustomerDetailPage() {
           </CardHeader>
           <CardContent className="p-8 space-y-5">
             <div className="flex items-center text-slate-600 font-bold text-sm">
-              <Mail className="h-4 w-4 mr-4 text-blue-500" />{" "}
-              {customer.email || "No email provided"}
+              <Mail className="h-4 w-4 mr-4 text-blue-500" />{&quot; &quot;}
+              {customer.email || &quot;No email provided&quot;}
             </div>
             <div className="flex items-center text-slate-600 font-bold text-sm">
-              <Phone className="h-4 w-4 mr-4 text-slate-400" />{" "}
-              {customer.phone || "No phone number"}
+              <Phone className="h-4 w-4 mr-4 text-slate-400" />{&quot; &quot;}
+              {customer.phone || &quot;No phone number&quot;}
             </div>
             <div className="flex items-center text-slate-600 font-bold text-sm">
-              <Building className="h-4 w-4 mr-4 text-slate-400" />{" "}
-              {customer.company || "Retail Consumer"}
+              <Building className="h-4 w-4 mr-4 text-slate-400" />{&quot; &quot;}
+              {customer.company || &quot;Retail Consumer&quot;}
             </div>
             <div className="pt-6 border-t border-slate-50">
               <div className="flex justify-between items-center mb-3">
@@ -199,14 +199,14 @@ export default function CustomerDetailPage() {
                 Audit Statement
               </CardTitle>
               <CardDescription className="text-slate-500 font-medium print:text-zinc-600">
-                Transaction history for: {customer.firstName}{" "}
+                Transaction history for: {customer.firstName}{&quot; &quot;}
                 {customer.lastName}
               </CardDescription>
             </div>
             <Button
               variant="outline"
               className="rounded-2xl border-slate-200 text-slate-600 font-bold h-11 px-6 print:hidden shadow-sm"
-              onClick={() => typeof window !== "undefined" && window.print()}
+              onClick={() => typeof window !== &quot;undefined&quot; && window.print()}
             >
               <FileText className="mr-2 h-4 w-4" /> Export Record
             </Button>
@@ -264,9 +264,9 @@ export default function CustomerDetailPage() {
                       <span
                         className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg ${entry.type === "INVOICE" ? "bg-blue-50 text-blue-600 print:text-black" : "bg-emerald-50 text-emerald-600 print:text-black"}`}
                       >
-                        {entry.type === "INVOICE"
-                          ? "Sales Invoice"
-                          : "Payment Received"}
+                        {entry.type === &quot;INVOICE&quot;
+                          ? &quot;Sales Invoice&quot;
+                          : &quot;Payment Received&quot;}
                       </span>
                     </TableCell>
                     <TableCell className="text-slate-500 text-[10px] font-black tracking-widest uppercase opacity-60 font-mono">
@@ -274,18 +274,18 @@ export default function CustomerDetailPage() {
                     </TableCell>
                     <TableCell className="text-right text-rose-600 font-black text-sm">
                       {Number(entry.debit) > 0
-                        ? `₹${Number(entry.debit).toLocaleString("en-IN")}`
-                        : ""}
+                        ? `₹${Number(entry.debit).toLocaleString(&quot;en-IN&quot;)}`
+                        : &quot;&quot;}
                     </TableCell>
                     <TableCell className="text-right text-emerald-600 font-black text-sm">
                       {Number(entry.credit) > 0
-                        ? `₹${Number(entry.credit).toLocaleString("en-IN")}`
-                        : ""}
+                        ? `₹${Number(entry.credit).toLocaleString(&quot;en-IN&quot;)}`
+                        : &quot;&quot;}
                     </TableCell>
                     <TableCell className="text-right pr-8 font-black text-slate-900">
-                      ₹{Number(entry.balance).toLocaleString("en-IN")}
+                      ₹{Number(entry.balance).toLocaleString(&quot;en-IN&quot;)}
                       <span className="text-[9px] ml-1 text-slate-400 font-normal uppercase tracking-widest">
-                        {entry.balance >= 0 ? "Dr" : "Cr"}
+                        {entry.balance >= 0 ? &quot;Dr&quot; : &quot;Cr&quot;}
                       </span>
                     </TableCell>
                   </TableRow>

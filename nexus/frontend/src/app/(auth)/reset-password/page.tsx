@@ -31,7 +31,7 @@ function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(&quot;Passwords do not match&quot;);
       return;
     }
     if (newPassword.length < 6) {
@@ -74,7 +74,7 @@ function ResetPasswordForm() {
             <Button
               variant="outline"
               className="w-full h-12 rounded-xl"
-              onClick={() => router.push("/login")}
+              onClick={() => router.push(&quot;/login&quot;)}
             >
               Back to Sign In
             </Button>
@@ -125,7 +125,7 @@ function ResetPasswordForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className=&quot;absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600&quot;
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -149,7 +149,7 @@ function ResetPasswordForm() {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
               disabled={loading}
             >
-              {loading ? "Updating..." : "Update Password"}
+              {loading ? &quot;Updating...&quot; : &quot;Update Password&quot;}
             </Button>
           </CardFooter>
         </form>

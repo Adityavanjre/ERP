@@ -74,42 +74,42 @@ interface ApiError {
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [orgName, setOrgName] = useState("");
+  const [orgName, setOrgName] = useState(&quot;&quot;);
   const [loading, setLoading] = useState(true);
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({
-    fullName: "",
-    email: "",
-    role: "Biller",
+    fullName: &quot;&quot;,
+    email: &quot;&quot;,
+    role: &quot;Biller&quot;,
   });
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user: currentUser } = useAuth();
-  const isOwner = currentUser?.role === "Owner";
+  const isOwner = currentUser?.role === &quot;Owner&quot;;
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [profRes, billRes, usersRes] = await Promise.all([
-        api.get("auth/profile"),
-        api.get("system/billing/status"),
-        api.get("users"),
+        api.get(&quot;auth/profile&quot;),
+        api.get(&quot;system/billing/status&quot;),
+        api.get(&quot;users&quot;),
       ]);
       setTenant(profRes.data?.tenant || null);
-      setOrgName(profRes.data?.tenant?.name || "");
+      setOrgName(profRes.data?.tenant?.name || &quot;&quot;);
       setBillingInfo(billRes.data || null);
       setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
     } catch (err: unknown) {
       const apiError = err as ApiError;
       setError(
         apiError.isWakeup
-          ? apiError.message || "Wakeup error"
-          : "Failed to load settings. Please refresh.",
+          ? apiError.message || &quot;Wakeup error&quot;
+          : &quot;Failed to load settings. Please refresh.&quot;,
       );
     } finally {
       setLoading(false);
@@ -125,13 +125,13 @@ export default function SettingsPage() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        await api.post("users", newUser);
+        await api.post(&quot;users&quot;, newUser);
         toast.success(`${newUser.fullName} added to the team`);
         setIsAddUserOpen(false);
-        const res = await api.get("users");
+        const res = await api.get(&quot;users&quot;);
         setMembers(Array.isArray(res.data) ? res.data : []);
       } catch {
-        toast.error("Failed to add user");
+        toast.error(&quot;Failed to add user&quot;);
       }
     },
     [newUser],
@@ -140,11 +140,11 @@ export default function SettingsPage() {
   const handleUpdateRole = useCallback(async (userId: string, role: Role) => {
     try {
       await api.patch(`/users/${userId}/role`, { role });
-      toast.success("Role updated successfully");
-      const res = await api.get("users");
+      toast.success(&quot;Role updated successfully&quot;);
+      const res = await api.get(&quot;users&quot;);
       setMembers(Array.isArray(res.data) ? res.data : []);
     } catch {
-      toast.error("Failed to update role");
+      toast.error(&quot;Failed to update role&quot;);
     }
   }, []);
 
@@ -153,41 +153,41 @@ export default function SettingsPage() {
       const res = await api.post(`/users/${userId}/reset-password`);
       setTempPassword(res.data.temporaryPassword);
       setIsResetOpen(true);
-      toast.success("Temporary password generated");
+      toast.success(&quot;Temporary password generated&quot;);
     } catch {
-      toast.error("Failed to generate password");
+      toast.error(&quot;Failed to generate password&quot;);
     }
   }, []);
 
   const handleRemoveUser = useCallback(async (userId: string) => {
     if (
       !confirm(
-        "Are you sure you want to remove this user? This cannot be undone.",
+        &quot;Are you sure you want to remove this user? This cannot be undone.&quot;,
       )
     )
       return;
     try {
       await api.delete(`/users/${userId}`);
-      toast.success("User removed from tenant");
-      const res = await api.get("users");
+      toast.success(&quot;User removed from tenant&quot;);
+      const res = await api.get(&quot;users&quot;);
       setMembers(Array.isArray(res.data) ? res.data : []);
     } catch {
-      toast.error("Failed to remove user");
+      toast.error(&quot;Failed to remove user&quot;);
     }
   }, []);
 
   const handleUpdate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info("Profile updates restricted in current version");
+    toast.info(&quot;Profile updates restricted in current version&quot;);
   }, []);
 
   const handleUpgrade = useCallback(async (plan: string) => {
     try {
-      await api.post("system/billing/upgrade", { plan });
+      await api.post(&quot;system/billing/upgrade&quot;, { plan });
       toast.success(`Successfully upgraded to ${plan} plan`);
       location.reload();
     } catch {
-      toast.error("Upgrade failed. Please try again.");
+      toast.error(&quot;Upgrade failed. Please try again.&quot;);
     }
   }, []);
 
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                     id="name"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10"
+                    className=&quot;bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10&quot;
                   />
                 </div>
                 <div className="grid gap-2">
@@ -365,7 +365,7 @@ export default function SettingsPage() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400">
-                            {member.fullName ? member.fullName[0] : "?"}
+                            {member.fullName ? member.fullName[0] : &quot;?&quot;}
                           </div>
                           <div>
                             <div className="text-sm font-bold text-slate-900">
@@ -388,10 +388,10 @@ export default function SettingsPage() {
                             }`}
                           >
                             {member.role
-                              ? typeof member.role === "string"
+                              ? typeof member.role === &quot;string&quot;
                                 ? member.role.toUpperCase()
-                                : "USER"
-                              : "UNKNOWN"}
+                                : &quot;USER&quot;
+                              : &quot;UNKNOWN&quot;}
                           </Badge>
 
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -407,12 +407,12 @@ export default function SettingsPage() {
                                   </SelectTrigger>
                                   <SelectContent className="bg-white">
                                     {[
-                                      "Owner",
-                                      "Manager",
-                                      "Biller",
-                                      "Storekeeper",
-                                      "Accountant",
-                                      "CA",
+                                      &quot;Owner&quot;,
+                                      &quot;Manager&quot;,
+                                      &quot;Biller&quot;,
+                                      &quot;Storekeeper&quot;,
+                                      &quot;Accountant&quot;,
+                                      &quot;CA&quot;,
                                     ].map((r) => (
                                       <SelectItem
                                         key={r}
@@ -522,9 +522,9 @@ export default function SettingsPage() {
                     {billingInfo?.plan}
                   </Badge>
                   <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
-                    {billingInfo?.plan === "Free"
-                      ? "Free Plan"
-                      : "Enterprise Plan"}
+                    {billingInfo?.plan === &quot;Free&quot;
+                      ? &quot;Free Plan&quot;
+                      : &quot;Enterprise Plan&quot;}
                   </h3>
                   <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">
                     Status: Active
@@ -560,7 +560,7 @@ export default function SettingsPage() {
                           : "border-slate-100 text-slate-400"
                       }
                     >
-                      {billingInfo?.quotas?.aiEnabled ? "ENABLED" : "DISABLED"}
+                      {billingInfo?.quotas?.aiEnabled ? &quot;ENABLED&quot; : &quot;DISABLED&quot;}
                     </Badge>
                   </div>
                 </div>
@@ -578,7 +578,7 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {["Pro", "Enterprise"].map((tier) => (
+                {[&quot;Pro&quot;, &quot;Enterprise&quot;].map((tier) => (
                   <div
                     key={tier}
                     className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between hover:border-indigo-500 transition-all group cursor-pointer hover:bg-white"
@@ -597,7 +597,7 @@ export default function SettingsPage() {
                       onClick={() => handleUpgrade(tier)}
                       disabled={billingInfo?.plan === tier}
                     >
-                      {billingInfo?.plan === tier ? "Active" : "Upgrade"}
+                      {billingInfo?.plan === tier ? &quot;Active&quot; : &quot;Upgrade&quot;}
                     </Button>
                   </div>
                 ))}
@@ -748,8 +748,8 @@ export default function SettingsPage() {
             <Button
               className="w-full font-bold bg-slate-900"
               onClick={async () => {
-                await navigator.clipboard.writeText(tempPassword || "");
-                toast.success("Key copied to clipboard");
+                await navigator.clipboard.writeText(tempPassword || &quot;&quot;);
+                toast.success(&quot;Key copied to clipboard&quot;);
               }}
             >
               Copy to Clipboard

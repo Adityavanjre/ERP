@@ -13,7 +13,7 @@ export default function RootError({
 }) {
   useEffect(() => {
     // Log fatal error to forensic service if available
-    console.error("CRITICAL_SYSTEM_ERROR:", error);
+    console.error(&quot;CRITICAL_SYSTEM_ERROR:&quot;, error);
   }, [error]);
 
   return (
@@ -37,7 +37,7 @@ export default function RootError({
               Error Digest
             </p>
             <code className="text-xs font-mono text-red-800 break-all">
-              {error.digest || error.message || "UNKNOWN_ERROR_DETECTED"}
+              {error.digest || error.message || &quot;UNKNOWN_ERROR_DETECTED&quot;}
             </code>
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function RootError({
         <div className="flex flex-col gap-3">
           <button
             onClick={() => reset()}
-            className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+            className=&quot;w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95&quot;
           >
             <RefreshCcw className="w-4 h-4" />
             Try Again

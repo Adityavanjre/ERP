@@ -55,12 +55,12 @@ interface WorkOrder {
 export default function WorkOrdersPage() {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(&quot;&quot;);
 
   const syncExecutionQueues = React.useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get("manufacturing/work-orders");
+      const res = await api.get(&quot;manufacturing/work-orders&quot;);
       setWorkOrders(res.data);
     } catch {
       // Suppressed in prod: Execution Queue sync failed silently
@@ -76,19 +76,19 @@ export default function WorkOrdersPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Completed":
+      case &quot;Completed&quot;:
         return (
           <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg">
             Completed
           </Badge>
         );
-      case "InProgress":
+      case &quot;InProgress&quot;:
         return (
           <Badge className="bg-blue-50 text-blue-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg animate-pulse">
             In Production
           </Badge>
         );
-      case "Planned":
+      case &quot;Planned&quot;:
         return (
           <Badge className="bg-slate-100 text-slate-500 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg">
             Planned
@@ -143,7 +143,7 @@ export default function WorkOrdersPage() {
           </CardHeader>
           <CardContent className="text-center">
             <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              {workOrders.filter((wo) => wo.status !== "Completed").length}
+              {workOrders.filter((wo) => wo.status !== &quot;Completed&quot;).length}
             </div>
           </CardContent>
         </Card>
@@ -155,7 +155,7 @@ export default function WorkOrdersPage() {
           </CardHeader>
           <CardContent className="text-center">
             <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              {workOrders.filter((wo) => wo.status === "Completed").length}
+              {workOrders.filter((wo) => wo.status === &quot;Completed&quot;).length}
             </div>
           </CardContent>
         </Card>
@@ -170,11 +170,11 @@ export default function WorkOrdersPage() {
               {(() => {
                 const completedOrders = workOrders.filter(
                   (wo) =>
-                    wo.status === "Completed" &&
+                    wo.status === &quot;Completed&quot; &&
                     wo.producedQuantity &&
                     wo.producedQuantity > 0,
                 );
-                if (completedOrders.length === 0) return "100%";
+                if (completedOrders.length === 0) return &quot;100%&quot;;
                 let totalProduced = 0;
                 let totalScrap = 0;
                 completedOrders.forEach((wo) => {
@@ -274,17 +274,17 @@ export default function WorkOrdersPage() {
                       <Calendar className="h-3 w-3 mr-2" />
                       {wo.startDate
                         ? new Date(wo.startDate).toLocaleDateString()
-                        : "N/A"}
+                        : &quot;N/A&quot;}
                     </div>
                     <div className="flex items-center text-[9px] text-slate-400 font-medium mt-1 uppercase tracking-tighter">
-                      <Clock className="h-3 w-3 mr-1" />{" "}
+                      <Clock className="h-3 w-3 mr-1" />{&quot; &quot;}
                       {wo.machineTimeHours
                         ? `${wo.machineTimeHours}h Logged`
-                        : "Pending Time"}
+                        : &quot;Pending Time&quot;}
                     </div>
                   </TableCell>
                   <TableCell className="text-right pr-8">
-                    {wo.status !== "Completed" ? (
+                    {wo.status !== &quot;Completed&quot; ? (
                       <CompleteWorkOrderDialog
                         workOrder={wo}
                         refreshData={() => syncExecutionQueues(true)}

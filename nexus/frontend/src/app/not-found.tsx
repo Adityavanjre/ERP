@@ -13,10 +13,10 @@ export default function NotFound() {
 
     useEffect(() => {
         // DESKTOP-RECOVERY: Automatically return to the main flow if a 404 is hit in the app.
-        // This removes the "Unnecessary Page" experience reported by the user.
+        // This removes the &quot;Unnecessary Page&quot; experience reported by the user.
         if (isDesktopShell() && !redirectPerformed.current) {
             redirectPerformed.current = true;
-            router.replace("/login");
+            router.replace(&quot;/login&quot;);
         }
     }, [router]);
 
@@ -38,7 +38,7 @@ export default function NotFound() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
             <Link href={isDesktopShell() ? "/login" : "/"} className="w-full">
               <Button className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest flex items-center justify-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to {isDesktopShell() ? "Login" : "Home"}
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to {isDesktopShell() ? &quot;Login&quot; : &quot;Home&quot;}
               </Button>
             </Link>
                 <Link href="/register" className="w-full">
@@ -51,7 +51,7 @@ export default function NotFound() {
             <div className="mt-20 pt-10 border-t border-slate-200 w-full max-w-2xl">
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 italic">Quick Solution Links</h3>
                 <div className="flex flex-wrap justify-center gap-4">
-                    {["Manufacturing", "Healthcare", "Construction", "Logistics", "Retail"].map((industry) => (
+                    {[&quot;Manufacturing&quot;, &quot;Healthcare&quot;, &quot;Construction&quot;, &quot;Logistics&quot;, &quot;Retail&quot;].map((industry) => (
                         <Link
                             key={industry}
                             href={`/industries/${industry.toLowerCase()}`}

@@ -57,7 +57,7 @@ export default function AuditorDashboard() {
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [reopenReason, setReopenReason] = useState("");
+  const [reopenReason, setReopenReason] = useState(&quot;&quot;);
   const [isReopening, setIsReopening] = useState(false);
 
   const syncAuditorData = useCallback(
@@ -83,33 +83,33 @@ export default function AuditorDashboard() {
 
   const handleLock = async () => {
     try {
-      await api.post("accounting/auditor/lock", { month, year });
-      toast.success("Period locked successfully");
+      await api.post(&quot;accounting/auditor/lock&quot;, { month, year });
+      toast.success(&quot;Period locked successfully&quot;);
       syncAuditorData(true);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Failed to lock period");
+      toast.error(error.response?.data?.message || &quot;Failed to lock period&quot;);
     }
   };
 
   const handleUnlock = async () => {
     if (!reopenReason) {
-      toast.error("Please provide a reason for reopening");
+      toast.error(&quot;Please provide a reason for reopening&quot;);
       return;
     }
     try {
-      await api.post("accounting/auditor/unlock", {
+      await api.post(&quot;accounting/auditor/unlock&quot;, {
         month,
         year,
         reason: reopenReason,
       });
-      toast.success("Period reopened");
+      toast.success(&quot;Period reopened&quot;);
       setIsReopening(false);
-      setReopenReason("");
+      setReopenReason(&quot;&quot;);
       syncAuditorData(true);
     } catch {
       // Suppressed in prod
-      toast.error("Failed to reopen period");
+      toast.error(&quot;Failed to reopen period&quot;);
     }
   };
 
@@ -122,57 +122,57 @@ export default function AuditorDashboard() {
       return;
 
     try {
-      const res = await api.post("accounting/close-year", { year });
+      const res = await api.post(&quot;accounting/close-year&quot;, { year });
       toast.success(res.data.message);
       syncAuditorData(true);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Failed to close year");
+      toast.error(error.response?.data?.message || &quot;Failed to close year&quot;);
     }
   };
 
   const handleTallyExport = async () => {
     try {
       toast.info(
-        `Generating Tally Vouchers for ${new Date(0, month - 1).toLocaleString("default", { month: "long" })} ${year}...`,
+        `Generating Tally Vouchers for ${new Date(0, month - 1).toLocaleString(&quot;default&quot;, { month: &quot;long&quot; })} ${year}...`,
       );
       const response = await api.get(
         `accounting/export/tally?month=${month}&year=${year}`,
         {
-          responseType: "blob",
+          responseType: &quot;blob&quot;,
         },
       );
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
+      const link = document.createElement(&quot;a&quot;);
       link.href = url;
-      link.setAttribute("download", `Tally_Vouchers_${month}_${year}.xml`);
+      link.setAttribute(&quot;download&quot;, `Tally_Vouchers_${month}_${year}.xml`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Vouchers exported successfully");
+      toast.success(&quot;Vouchers exported successfully&quot;);
     } catch {
       // Suppressed in prod
-      toast.error("Failed to generate Tally Export");
+      toast.error(&quot;Failed to generate Tally Export&quot;);
     }
   };
 
   const handleTallyMasters = async () => {
     try {
-      toast.info("Generating Tally Masters (Ledgers + Items)...");
+      toast.info(&quot;Generating Tally Masters (Ledgers + Items)...&quot;);
       const response = await api.get(`accounting/export/masters`, {
-        responseType: "blob",
+        responseType: &quot;blob&quot;,
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
+      const link = document.createElement(&quot;a&quot;);
       link.href = url;
-      link.setAttribute("download", `Tally_Masters.xml`);
+      link.setAttribute(&quot;download&quot;, `Tally_Masters.xml`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Masters exported successfully");
+      toast.success(&quot;Masters exported successfully&quot;);
     } catch {
       // Suppressed in prod
-      toast.error("Failed to generate Tally Masters");
+      toast.error(&quot;Failed to generate Tally Masters&quot;);
     }
   };
 
@@ -198,18 +198,18 @@ export default function AuditorDashboard() {
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            className="bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm"
+            className=&quot;bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm&quot;
           >
             {[...Array(12)].map((_, i) => (
               <option key={i + 1} value={i + 1} className="bg-white">
-                {new Date(0, i).toLocaleString("default", { month: "long" })}
+                {new Date(0, i).toLocaleString(&quot;default&quot;, { month: &quot;long&quot; })}
               </option>
             ))}
           </select>
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className="bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm"
+            className=&quot;bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm&quot;
           >
             {[2024, 2025, 2026].map((y) => (
               <option key={y} value={y} className="bg-zinc-900">
@@ -219,7 +219,7 @@ export default function AuditorDashboard() {
           </select>
           <button
             onClick={() => syncAuditorData(true)}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            className=&quot;p-2 hover:bg-zinc-800 rounded-lg transition-colors&quot;
           >
             <Search className="w-4 h-4 text-zinc-400" />
           </button>
@@ -243,9 +243,9 @@ export default function AuditorDashboard() {
               {data?.confidenceScore}%
             </span>
             <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${(data?.confidenceScore ?? 0) > 90 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${(data?.confidenceScore ?? 0) > 90 ? &quot;bg-emerald-50 text-emerald-600&quot; : &quot;bg-amber-50 text-amber-600&quot;}`}
             >
-              {(data?.confidenceScore ?? 0) > 90 ? "High" : "Moderate"}
+              {(data?.confidenceScore ?? 0) > 90 ? &quot;High&quot; : &quot;Moderate&quot;}
             </span>
           </div>
           <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -261,9 +261,9 @@ export default function AuditorDashboard() {
             Audit Status
           </p>
           <div className="mt-2 flex items-center gap-2">
-            {data?.status === "CLEAN" ? (
+            {data?.status === &quot;CLEAN&quot; ? (
               <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-            ) : data?.status === "BLOCKED" ? (
+            ) : data?.status === &quot;BLOCKED&quot; ? (
               <XCircle className="w-6 h-6 text-red-600" />
             ) : (
               <AlertTriangle className="w-6 h-6 text-amber-600" />
@@ -273,9 +273,9 @@ export default function AuditorDashboard() {
             </span>
           </div>
           <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
-            {data?.status === "CLEAN"
-              ? "Ready for statutory filing"
-              : "Corrections required before export"}
+            {data?.status === &quot;CLEAN&quot;
+              ? &quot;Ready for statutory filing&quot;
+              : &quot;Corrections required before export&quot;}
           </p>
         </div>
 
@@ -290,13 +290,13 @@ export default function AuditorDashboard() {
               <Unlock className="w-6 h-6 text-amber-500" />
             )}
             <span className="text-2xl font-black text-slate-900 tracking-tighter">
-              {data?.isLocked ? "Closed" : "Open"}
+              {data?.isLocked ? &quot;Closed&quot; : &quot;Open&quot;}
             </span>
           </div>
           <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
             {data?.isLocked && data.lockDetails
               ? `Locked on ${new Date(data.lockDetails.lockedAt).toLocaleDateString()}`
-              : "Vouchers can still be edited"}
+              : &quot;Vouchers can still be edited&quot;}
           </p>
         </div>
 
@@ -339,21 +339,21 @@ export default function AuditorDashboard() {
                 className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all hover:scale-[1.01] ${flag.severity === "BLOCKER" ? "bg-red-50 border-red-100 text-red-900" : "bg-amber-50 border-amber-100 text-amber-900"}`}
               >
                 <div className="flex items-center gap-4">
-                  {flag.type === "BACKDATED" && (
+                  {flag.type === &quot;BACKDATED&quot; && (
                     <Clock className="w-6 h-6 text-amber-600" />
                   )}
-                  {flag.type === "HIGH_ROUNDOFF" && (
+                  {flag.type === &quot;HIGH_ROUNDOFF&quot; && (
                     <BarChart3 className="w-6 h-6 text-amber-600" />
                   )}
-                  {flag.type === "NEGATIVE_STOCK" && (
+                  {flag.type === &quot;NEGATIVE_STOCK&quot; && (
                     <Package className="w-6 h-6 text-red-600" />
                   )}
-                  {flag.type === "UNLINKED_PAYMENTS" && (
+                  {flag.type === &quot;UNLINKED_PAYMENTS&quot; && (
                     <ArrowRightLeft className="w-6 h-6 text-amber-600" />
                   )}
                   <div>
                     <p className="font-black text-[11px] uppercase tracking-[0.1em]">
-                      {flag.type.replace("_", " ")}
+                      {flag.type.replace(&quot;_&quot;, &quot; &quot;)}
                     </p>
                     <p className="text-[10px] text-slate-500 font-bold mt-0.5">
                       {flag.count} occurrences detected.
@@ -463,8 +463,8 @@ export default function AuditorDashboard() {
             ></div>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
               {data?.isLocked
-                ? "Month Closed & Audited"
-                : "Month Open for Entries"}
+                ? &quot;Month Closed & Audited&quot;
+                : &quot;Month Open for Entries&quot;}
             </span>
           </div>
         </div>
@@ -474,7 +474,7 @@ export default function AuditorDashboard() {
             <>
               <button
                 onClick={() => setIsReopening(true)}
-                className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all border border-zinc-700"
+                className=&quot;px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all border border-zinc-700&quot;
               >
                 <Unlock className="w-4 h-4" />
                 Reopen Month
@@ -530,14 +530,14 @@ export default function AuditorDashboard() {
             <textarea
               value={reopenReason}
               onChange={(e) => setReopenReason(e.target.value)}
-              placeholder="Reason for reopening (e.g., Late GST invoice from supplier...)"
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-8 text-sm font-semibold"
+              placeholder=&quot;Reason for reopening (e.g., Late GST invoice from supplier...)&quot;
+              className=&quot;w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-8 text-sm font-semibold&quot;
             />
 
             <div className="flex gap-4">
               <button
                 onClick={() => setIsReopening(false)}
-                className="flex-1 px-4 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl font-bold text-slate-500 transition-all"
+                className=&quot;flex-1 px-4 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl font-bold text-slate-500 transition-all&quot;
               >
                 Cancel
               </button>

@@ -27,27 +27,27 @@ export default function Home() {
     // DESKTOP-REDIRECT: Skip marketing landing page if running as a standalone app.
     if (isDesktopShell() && !hasAttemptedRedirect.current) {
       hasAttemptedRedirect.current = true;
-      router.replace("/login");
+      router.replace(&quot;/login&quot;);
     }
   }, [router]);
 
   const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "Klypso ERP",
-    operatingSystem: "Web",
-    applicationCategory: "BusinessApplication",
+    &quot;@context&quot;: &quot;https://schema.org&quot;,
+    &quot;@type&quot;: &quot;SoftwareApplication&quot;,
+    name: &quot;Klypso ERP&quot;,
+    operatingSystem: &quot;Web&quot;,
+    applicationCategory: &quot;BusinessApplication&quot;,
     description:
-      "Advanced ERP for Manufacturing and GST Compliance. Features Tally Prime sync, BOM management, and automated accounting.",
+      &quot;Advanced ERP for Manufacturing and GST Compliance. Features Tally Prime sync, BOM management, and automated accounting.&quot;,
     aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "120",
+      &quot;@type&quot;: &quot;AggregateRating&quot;,
+      ratingValue: &quot;4.9&quot;,
+      reviewCount: &quot;120&quot;,
     },
     offers: {
-      "@type": "Offer",
-      price: "0.00",
-      priceCurrency: "INR",
+      &quot;@type&quot;: &quot;Offer&quot;,
+      price: &quot;0.00&quot;,
+      priceCurrency: &quot;INR&quot;,
     },
   };
 
@@ -103,7 +103,7 @@ export default function Home() {
             </Link>
             <Link href={isDesktopShell() ? "/login" : "/register"}>
               <Button className="rounded-2xl bg-slate-900 hover:bg-black px-8 py-6 h-auto font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest whitespace-nowrap">
-                {isDesktopShell() ? "Open Dashboard" : "Start Free Trial"}
+                {isDesktopShell() ? &quot;Open Dashboard&quot; : &quot;Start Free Trial&quot;}
               </Button>
             </Link>
           </div>
@@ -128,7 +128,7 @@ export default function Home() {
               </div>
 
               <h1 className="text-6xl md:text-8xl font-black tracking-tight text-slate-900 leading-[0.9] italic animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
-                BUILD{" "}
+                BUILD{&quot; &quot;}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-600">
                   SMARTER.
                 </span>
@@ -145,7 +145,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
                 <Link href={isDesktopShell() ? "/login" : "/register"}>
                   <Button className="rounded-[2rem] bg-blue-600 hover:bg-blue-700 px-12 py-8 h-auto text-lg font-black shadow-2xl shadow-blue-600/30 text-white flex items-center group transition-all hover:scale-105">
-                    {isDesktopShell() ? "Enter Dashboard" : "Start Transformation"}{" "}
+                    {isDesktopShell() ? &quot;Enter Dashboard&quot; : &quot;Start Transformation&quot;}{&quot; &quot;}
                     <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-2 transition-transform" />
                   </Button>
                 </Link>
@@ -162,9 +162,9 @@ export default function Home() {
               {/* Stats/Badges */}
               <div className="flex flex-wrap justify-center gap-8 pt-20 animate-in fade-in duration-1000 delay-700">
                 {[
-                  { label: "Active Enterprises", value: "200+" },
-                  { label: "Industry Sectors", value: "12" },
-                  { label: "Compliance Score", value: "100%" },
+                  { label: &quot;Active Enterprises&quot;, value: &quot;200+&quot; },
+                  { label: &quot;Industry Sectors&quot;, value: &quot;12&quot; },
+                  { label: &quot;Compliance Score&quot;, value: &quot;100%&quot; },
                 ].map((stat, i) => (
                   <div key={i} className="flex flex-col items-center">
                     <span className="text-2xl font-black text-slate-900 italic tracking-tighter">
@@ -244,10 +244,10 @@ export default function Home() {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { name: "Manufacturing", icon: Cpu, color: "blue" },
-                { name: "Healthcare", icon: Globe, color: "emerald" },
-                { name: "Logistics", icon: Smartphone, color: "amber" },
-                { name: "Construction", icon: CheckCircle2, color: "rose" },
+                { name: &quot;Manufacturing&quot;, icon: Cpu, color: &quot;blue&quot; },
+                { name: &quot;Healthcare&quot;, icon: Globe, color: &quot;emerald&quot; },
+                { name: &quot;Logistics&quot;, icon: Smartphone, color: &quot;amber&quot; },
+                { name: &quot;Construction&quot;, icon: CheckCircle2, color: &quot;rose&quot; },
               ].map((ind, i) => (
                 <div
                   key={i}

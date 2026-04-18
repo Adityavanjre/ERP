@@ -66,28 +66,28 @@ export default function ProjectPage() {
   // Task Management
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectTasks, setProjectTasks] = useState<ProjectTask[]>([]);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskTitle, setNewTaskTitle] = useState(&quot;&quot;);
 
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    startDate: "",
-    endDate: "",
-    status: "Planning",
+    name: &quot;&quot;,
+    description: &quot;&quot;,
+    startDate: &quot;&quot;,
+    endDate: &quot;&quot;,
+    status: &quot;Planning&quot;,
   });
 
   const syncProjectData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
       const [projRes, statsRes] = await Promise.all([
-        api.get("projects"),
-        api.get("projects/stats"),
+        api.get(&quot;projects&quot;),
+        api.get(&quot;projects/stats&quot;),
       ]);
       setProjects(projRes.data);
       setStats(statsRes.data);
     } catch {
       // Suppressed in prod: Projects load failed
-      toast.error("Failed to load projects. Please refresh.");
+      toast.error(&quot;Failed to load projects. Please refresh.&quot;);
     } finally {
       setLoading(false);
     }
@@ -103,26 +103,26 @@ export default function ProjectPage() {
       const res = await api.get(`/projects/tasks/all?projectId=${projectId}`);
       setProjectTasks(res.data);
     } catch {
-      toast.error("Failed to load tasks");
+      toast.error(&quot;Failed to load tasks&quot;);
     }
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post("projects", formData);
+      await api.post(&quot;projects&quot;, formData);
       setShowForm(false);
       setFormData({
-        name: "",
-        description: "",
-        startDate: "",
-        endDate: "",
-        status: "Planning",
+        name: &quot;&quot;,
+        description: &quot;&quot;,
+        startDate: &quot;&quot;,
+        endDate: &quot;&quot;,
+        status: &quot;Planning&quot;,
       });
-      toast.success("Project created successfully");
+      toast.success(&quot;Project created successfully&quot;);
       syncProjectData(true);
     } catch {
-      toast.error("Project creation failed");
+      toast.error(&quot;Project creation failed&quot;);
     }
   };
 
@@ -134,20 +134,20 @@ export default function ProjectPage() {
       await api.post(`projects/${selectedProject.id}/tasks`, {
         title: newTaskTitle,
         projectId: selectedProject.id,
-        status: "Pending", // Default
-        priority: "Medium",
+        status: &quot;Pending&quot;, // Default
+        priority: &quot;Medium&quot;,
       });
-      setNewTaskTitle("");
-      toast.success("Task added");
+      setNewTaskTitle(&quot;&quot;);
+      toast.success(&quot;Task added&quot;);
       fetchTasks(selectedProject.id);
       syncProjectData(true); // Refresh progress bars
     } catch {
-      toast.error("Task creation failed");
+      toast.error(&quot;Task creation failed&quot;);
     }
   };
 
   const toggleTaskStatus = async (task: ProjectTask) => {
-    const newStatus = task.status === "Completed" ? "Pending" : "Completed";
+    const newStatus = task.status === &quot;Completed&quot; ? &quot;Pending&quot; : &quot;Completed&quot;;
     try {
       // Optimistic update
       setProjectTasks((prev) =>
@@ -159,7 +159,7 @@ export default function ProjectPage() {
       });
       syncProjectData(true); // Refresh global progress
     } catch {
-      toast.error("Status update failed");
+      toast.error(&quot;Status update failed&quot;);
       if (selectedProject) fetchTasks(selectedProject.id); // Revert
     }
   };
@@ -167,10 +167,10 @@ export default function ProjectPage() {
   const handleArchive = async (id: string) => {
     try {
       await api.delete(`/projects/${id}`);
-      toast.success("Project archived successfully");
+      toast.success(&quot;Project archived successfully&quot;);
       syncProjectData(true);
     } catch {
-      toast.error("Failed to archive project");
+      toast.error(&quot;Failed to archive project&quot;);
     }
   };
 
@@ -345,7 +345,7 @@ export default function ProjectPage() {
           const progress =
             project.tasks?.length > 0
               ? (project.tasks.filter(
-                  (t: ProjectTask) => t.status === "Completed",
+                  (t: ProjectTask) => t.status === &quot;Completed&quot;,
                 ).length /
                   project.tasks.length) *
                 100
@@ -374,8 +374,8 @@ export default function ProjectPage() {
                           : "bg-slate-100 text-slate-400"
                     }`}
                   >
-                    {project.status === "InProgress"
-                      ? "In Progress"
+                    {project.status === &quot;InProgress&quot;
+                      ? &quot;In Progress&quot;
                       : project.status}
                   </Badge>
                   <div className="text-[10px] text-slate-400 font-black tracking-widest">
@@ -386,7 +386,7 @@ export default function ProjectPage() {
                   {project.name}
                 </CardTitle>
                 <CardDescription className="line-clamp-2 mt-1 font-medium text-slate-500">
-                  {project.description || "No description provided."}
+                  {project.description || &quot;No description provided.&quot;}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6 pt-6">
@@ -409,13 +409,13 @@ export default function ProjectPage() {
                     <Calendar className="h-3.5 w-3.5 text-slate-300" />
                     {project.startDate
                       ? new Date(project.startDate).toLocaleDateString()
-                      : "TBD"}
+                      : &quot;TBD&quot;}
                   </div>
                   <div className="flex items-center gap-2 justify-end">
                     <Clock className="h-3.5 w-3.5 text-slate-300" />
                     {project.endDate
                       ? new Date(project.endDate).toLocaleDateString()
-                      : "No end date"}
+                      : &quot;No end date&quot;}
                   </div>
                 </div>
 
@@ -462,7 +462,7 @@ export default function ProjectPage() {
               Task Management
             </DialogTitle>
             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-4 md:mt-6 flex flex-wrap items-center gap-2">
-              Project:{" "}
+              Project:{&quot; &quot;}
               <span className="text-blue-400 break-words">
                 {selectedProject?.name}
               </span>
@@ -507,13 +507,13 @@ export default function ProjectPage() {
                             type="button"
                             onClick={() => toggleTaskStatus(task)}
                             className={cn(
-                              "h-6 w-6 md:h-7 md:w-7 rounded-lg md:rounded-xl border-2 flex shrink-0 items-center justify-center transition-all",
-                              task.status === "Completed"
-                                ? "bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/20"
-                                : "border-slate-200 hover:border-blue-500",
+                              &quot;h-6 w-6 md:h-7 md:w-7 rounded-lg md:rounded-xl border-2 flex shrink-0 items-center justify-center transition-all&quot;,
+                              task.status === &quot;Completed&quot;
+                                ? &quot;bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/20&quot;
+                                : &quot;border-slate-200 hover:border-blue-500&quot;,
                             )}
                           >
-                            {task.status === "Completed" && (
+                            {task.status === &quot;Completed&quot; && (
                               <Check className="h-3 w-3 md:h-4 md:w-4 text-white" />
                             )}
                           </button>
@@ -540,7 +540,7 @@ export default function ProjectPage() {
                                 : "bg-slate-100 text-slate-400",
                           )}
                         >
-                          {task.priority || "Normal"}
+                          {task.priority || &quot;Normal&quot;}
                         </Badge>
                       </div>
                     ),

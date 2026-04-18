@@ -96,7 +96,7 @@ export default function AppointmentsPage() {
                           : "bg-amber-100 text-amber-700",
                     )}
                   >
-                    {apt.time.split(" ")[0]}
+                    {apt.time.split(&quot; &quot;)[0]}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-black text-slate-800 text-sm">
@@ -111,7 +111,7 @@ export default function AppointmentsPage() {
                   <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
                     {apt.id}
                   </span>
-                  {apt.status === "Confirmed" ? (
+                  {apt.status === &quot;Confirmed&quot; ? (
                     <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   ) : (
                     <Clock className="h-5 w-5 text-amber-500" />

@@ -45,12 +45,12 @@ export default async function Image({ params }: { params: { slug: string } }) {
             letterSpacing: "-0.02em",
           }}
         >
-          KLYPSO ERP{" "}
+          KLYPSO ERP{&quot; &quot;}
           <span
             style={{ color: "#64748b", fontWeight: "normal", margin: "0 8px" }}
           >
             |
-          </span>{" "}
+          </span>{&quot; &quot;}
           {theme.name.toUpperCase()}
         </div>
         <div
