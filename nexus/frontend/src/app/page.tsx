@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { KlypsoLogo } from "../components/brand/logo";
 import Script from "next/script";
-import { InternalLink } from "../components/seo/internal-link";
 
 export default function Home() {
   const router = useRouter();
