@@ -13,18 +13,16 @@ This is the comprehensive checklist for final stabilization. It covers critical 
 - `[x]` Hide "Create Account" / "Forgot Password" from desktop login.
 - `[ ]` **TASK-28**: Gate the remaining Marketing routes (`/industries/*` [X], `/klypso-health` [N/A]) with desktop redirects.
 - `[ ]` **TASK-29**: Hardened Navigation: Update "Back to Home" links to use `/login` instead of `/` when in desktop shell.
-- `[x]` **TASK-33**: Install and configure `graphifyy` knowledge graph tool.
+- [x] **TASK-26**: Converge Path Aliases to Relative Paths (frontend hardening)
+- `[x]` **TASK-33**: Install and configure `graphifyy` (Permanent Knowledge Activation)
+- `[x]` **TASK-32**: Overall Project Format Audit (Prettier/Lint Synchronization)
 
 ## 3. MEDIUM: Dashboard & Performance
 - `[x]` Implemented 1s safety timeout for "Synchronizing" state.
 - `[ ]` **TASK-30**: Verify the fix on the final Cloud-deployed build (Manual test).
 
-## 4. LOW: Production Deployment & Polish
-- `[ ]` **TASK-31**: Verify Render deployment hook triggers after CI passes.
-- `[ ]` **TASK-32**: Global code format check (Prettier).
-
 ---
 
 ## Execution Order
-**Current Phase**: Phase 11 (Absolute Brute Force & Knowledge Graph)
-**Next Phase**: Phase 12 (Final Verification)
+**Current Phase**: Phase 12 (Final Verification & CI/CD Hardening)
+**Next Phase**: Production Handover

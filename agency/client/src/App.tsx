@@ -1,45 +1,46 @@
-import { lazy, Suspense } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import ScrollToTop from './components/ScrollToTop';
-import ChatWidget from './components/ChatWidget';
-const Home = lazy(() => import('./pages/Home'));
-const Services = lazy(() => import('./pages/Services'));
-const Portfolio = lazy(() => import('./pages/Portfolio'));
-const Photography = lazy(() => import('./pages/Photography'));
-const ProjectDetails = lazy(() => import('./pages/ProjectDetails'));
-const About = lazy(() => import('./pages/About'));
-const Contact = lazy(() => import('./pages/Contact'));
-const Legal = lazy(() => import('./pages/Legal'));
-const Order = lazy(() => import('./pages/Order'));
-const Blog = lazy(() => import('./pages/Blog'));
-const BlogDetails = lazy(() => import('./pages/BlogDetails'));
-const Careers = lazy(() => import('./pages/Careers'));
-const Apply = lazy(() => import('./pages/Apply'));
-const Login = lazy(() => import('./pages/Login'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const AdminLayout = lazy(() => import('./components/AdminLayout'));
-const AdminRoute = lazy(() => import('./components/AdminRoute'));
-const Dashboard = lazy(() => import('./pages/Admin/Dashboard'));
-const AddProject = lazy(() => import('./pages/Admin/AddProject'));
-const ManageProjects = lazy(() => import('./pages/Admin/ManageProjects'));
-const ManageEnquiries = lazy(() => import('./pages/Admin/ManageEnquiries'));
-const ManageBlogs = lazy(() => import('./pages/Admin/ManageBlogs'));
-const AddBlog = lazy(() => import('./pages/Admin/AddBlog'));
-const EditBlog = lazy(() => import('./pages/Admin/EditBlog'));
-const ManageCareers = lazy(() => import('./pages/Admin/ManageCareers'));
-const AddJob = lazy(() => import('./pages/Admin/AddJob'));
-const EditProject = lazy(() => import('./pages/Admin/EditProject'));
-const ManageUsers = lazy(() => import('./pages/Admin/ManageUsers'));
+import { lazy, Suspense } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
+import ChatWidget from "./components/ChatWidget";
+const Home = lazy(() => import("./pages/Home"));
+const Services = lazy(() => import("./pages/Services"));
+const Portfolio = lazy(() => import("./pages/Portfolio"));
+const Photography = lazy(() => import("./pages/Photography"));
+const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Legal = lazy(() => import("./pages/Legal"));
+const Order = lazy(() => import("./pages/Order"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogDetails = lazy(() => import("./pages/BlogDetails"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Apply = lazy(() => import("./pages/Apply"));
+const Login = lazy(() => import("./pages/Login"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminLayout = lazy(() => import("./components/AdminLayout"));
+const AdminRoute = lazy(() => import("./components/AdminRoute"));
+const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
+const AddProject = lazy(() => import("./pages/Admin/AddProject"));
+const ManageProjects = lazy(() => import("./pages/Admin/ManageProjects"));
+const ManageEnquiries = lazy(() => import("./pages/Admin/ManageEnquiries"));
+const ManageBlogs = lazy(() => import("./pages/Admin/ManageBlogs"));
+const AddBlog = lazy(() => import("./pages/Admin/AddBlog"));
+const EditBlog = lazy(() => import("./pages/Admin/EditBlog"));
+const ManageCareers = lazy(() => import("./pages/Admin/ManageCareers"));
+const AddJob = lazy(() => import("./pages/Admin/AddJob"));
+const EditProject = lazy(() => import("./pages/Admin/EditProject"));
+const ManageUsers = lazy(() => import("./pages/Admin/ManageUsers"));
 
-import ScrollProgress from './components/ScrollProgress';
-import CookieConsent from './components/CookieConsent';
+import ScrollProgress from "./components/ScrollProgress";
+import CookieConsent from "./components/CookieConsent";
 
 function App() {
   const location = useLocation();
-  const isAuthPage = location.pathname.startsWith('/admin') || location.pathname === '/login';
+  const isAuthPage =
+    location.pathname.startsWith("/admin") || location.pathname === "/login";
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white font-sans">

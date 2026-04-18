@@ -8,273 +8,437 @@ import { Printer, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface InvoiceItem {
-    productName?: string;
-    product?: {
-        name: string;
-        sku: string;
-        gstRate?: number;
-        hsnCode?: string;
-    };
+  productName?: string;
+  product?: {
+    name: string;
+    sku: string;
     gstRate?: number;
     hsnCode?: string;
-    quantity: number;
-    price: number;
-    unitPrice?: number;
-    taxableAmount?: number;
-    cgstAmount?: number;
-    sgstAmount?: number;
-    igstAmount?: number;
+  };
+  gstRate?: number;
+  hsnCode?: string;
+  quantity: number;
+  price: number;
+  unitPrice?: number;
+  taxableAmount?: number;
+  cgstAmount?: number;
+  sgstAmount?: number;
+  igstAmount?: number;
 }
 
 interface InvoiceDetail {
-    invoiceNumber: string;
-    subtotal?: number;
-    totalAmount: number;
-    taxAmount?: number;
-    totalGST?: number;
-    totalCGST?: number;
-    totalSGST?: number;
-    totalIGST?: number;
-    issueDate: string;
-    dueDate: string;
-    customer: {
-        firstName: string;
-        lastName: string;
-        company: string;
-        address?: string;
-        gstin?: string;
-    };
-    items: InvoiceItem[];
+  invoiceNumber: string;
+  subtotal?: number;
+  totalAmount: number;
+  taxAmount?: number;
+  totalGST?: number;
+  totalCGST?: number;
+  totalSGST?: number;
+  totalIGST?: number;
+  issueDate: string;
+  dueDate: string;
+  customer: {
+    firstName: string;
+    lastName: string;
+    company: string;
+    address?: string;
+    gstin?: string;
+  };
+  items: InvoiceItem[];
 }
 
 interface TaxSummaryData {
-    taxableAmount: number;
-    cgstAmount: number;
-    sgstAmount: number;
-    igstAmount: number;
+  taxableAmount: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  igstAmount: number;
 }
 
 export default function InvoicePrintPage() {
-    const params = useParams();
-    const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
-    const [loading, setLoading] = useState(true);
+  const params = useParams();
+  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchInvoice = async () => {
-            try {
-                const res = await api.get(`/accounting/invoices/${params.id}`);
-                setInvoice(res.data);
-            } catch {
-                toast.error("Failed to load invoice");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchInvoice();
-    }, [params.id]);
-
-    if (loading) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest italic">Loading invoice...</div>;
-    if (!invoice) return <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest">Invoice not found</div>;
-
-    const totalTax = Number(invoice.totalGST || invoice.taxAmount || 0);
-    const totalCGST = Number(invoice.totalCGST || 0);
-    const totalSGST = Number(invoice.totalSGST || 0);
-    const totalIGST = Number(invoice.totalIGST || 0);
-    const totalAmount = Number(invoice.totalAmount);
-
-    // Helper for date formatting
-    const fmtDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' });
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      try {
+        const res = await api.get(`/accounting/invoices/${params.id}`);
+        setInvoice(res.data);
+      } catch {
+        toast.error("Failed to load invoice");
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchInvoice();
+  }, [params.id]);
 
-    // GST-005: Consolidate mixed tax rates (5%, 12%, 18%) subtotal roll-ups reliably
-    const taxSummary = (invoice.items || []).reduce<Record<number, TaxSummaryData>>((acc, item) => {
-        const rate = Number(item.gstRate || item.product?.gstRate || 0);
-        if (rate === 0) return acc;
-        if (!acc[rate]) acc[rate] = { taxableAmount: 0, cgstAmount: 0, sgstAmount: 0, igstAmount: 0 };
-        acc[rate].taxableAmount += Number(item.taxableAmount || (Number(item.price || item.unitPrice) * Number(item.quantity)));
-        acc[rate].cgstAmount += Number(item.cgstAmount || 0);
-        acc[rate].sgstAmount += Number(item.sgstAmount || 0);
-        acc[rate].igstAmount += Number(item.igstAmount || 0);
-        return acc;
-    }, {});
-
+  if (loading)
     return (
-        <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
-            <style jsx global>{`
-                @media print {
-                    @page {
-                        margin: 20mm;
-                    }
-                    thead {
-                        display: table-header-group;
-                    }
-                    tfoot {
-                        display: table-footer-group;
-                    }
-                    tr {
-                        page-break-inside: avoid;
-                    }
-                    .print-header {
-                        position: running(header);
-                    }
-                }
-            `}</style>
-            {/* Action Bar (Hidden in Print) */}
-            <div className="max-w-4xl mx-auto mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
-                <h1 className="text-2xl font-black text-white tracking-tighter">Invoice</h1>
-                <div className="flex gap-3">
-                    <Button variant="outline" className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all" onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
-                    </Button>
-                    <Button variant="outline" className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all">
-                        <Mail className="mr-2 h-4 w-4" /> Email Client
-                    </Button>
-                </div>
-            </div>
-
-            {/* Invoice Paper */}
-            <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 md:p-12 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
-                {/* Header */}
-                <div className="flex flex-col lg:flex-row justify-between items-start gap-8 lg:gap-0 border-b-2 border-zinc-100 pb-8 mb-8">
-                    <div className="w-full">
-                        <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">KLYPSO INVOICE</div>
-                        <div className="text-sm text-zinc-500 mt-1 font-medium italic tracking-widest uppercase">Invoice No: #{invoice.invoiceNumber}</div>
-                        <div className="mt-4 space-y-1 text-sm text-zinc-600">
-                            <p className="font-bold text-zinc-900 uppercase text-[10px] tracking-widest mb-1">Bill To:</p>
-                            <p className="font-black text-zinc-900">{invoice.customer.firstName} {invoice.customer.lastName}</p>
-                            <p>{invoice.customer.company}</p>
-                            {invoice.customer.address && <p>{invoice.customer.address}</p>}
-                            {invoice.customer.gstin && <p>GSTIN: {invoice.customer.gstin}</p>}
-                        </div>
-                    </div>
-                    <div className="text-left md:text-right w-full md:w-auto">
-                        <div className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">Klypso Ecosystems</div>
-                        <div className="text-sm text-zinc-500 mt-1">
-                            123 Business Park, Tech City<br />
-                            Maharashtra, India - 400001<br />
-                            GSTIN: 27AABCU9603R1ZN
-                        </div>
-                        <div className="mt-6 flex flex-col items-end gap-1">
-                            <div className="bg-zinc-100 px-4 py-2 rounded-lg text-right">
-                                <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Issue Date</div>
-                                <div className="font-bold text-zinc-900">{fmtDate(invoice.issueDate)}</div>
-                            </div>
-                            <div className="bg-zinc-100 px-4 py-2 rounded-lg text-right mt-1">
-                                <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Due Date</div>
-                                <div className="font-bold text-zinc-900">{fmtDate(invoice.dueDate)}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Items Table */}
-                <div className="overflow-x-auto mb-8 max-w-[100vw]">
-                    <table className="w-full text-sm min-w-[500px]">
-                        <thead className="border-b-2 border-zinc-900">
-                            <tr>
-                                <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">Description</th>
-                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">HSN</th>
-                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">Qty</th>
-                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Rate</th>
-                                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                            {invoice.items && invoice.items.map((item: InvoiceItem, i: number) => (
-                                <tr key={i}>
-                                    <td className="py-4 text-zinc-700 font-medium">
-                                        {item.productName || item.product?.name || "Product Item"}
-                                        <div className="text-[10px] text-zinc-400 mt-0.5">{item.product?.sku}</div>
-                                    </td>
-                                    <td className="py-4 text-right text-zinc-500 font-mono">{item.hsnCode || item.product?.hsnCode || "-"}</td>
-                                    <td className="py-4 text-right text-zinc-700">{item.quantity}</td>
-                                    <td className="py-4 text-right text-zinc-700">₹{Number(item.price).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                                    <td className="py-4 text-right font-bold text-zinc-900">₹{(Number(item.price) * Number(item.quantity)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Tax Summary Roll-Up (GST-005) */}
-                {Object.keys(taxSummary).length > 0 && totalTax > 0 && (
-                    <div className="mt-8 border border-zinc-200 rounded-xl overflow-hidden print:border-zinc-300">
-                        <table className="w-full text-xs">
-                            <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
-                                <tr>
-                                    <th className="text-left py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">GST Rate Roll-up</th>
-                                    <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">Taxable Base</th>
-                                    {totalCGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">CGST</th>}
-                                    {totalSGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">SGST</th>}
-                                    {totalIGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">IGST</th>}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-100 print:divide-zinc-200">
-                                {Object.entries(taxSummary).sort(([a], [b]) => Number(a) - Number(b)).map(([rate, data]: [string, TaxSummaryData]) => (
-                                    <tr key={rate}>
-                                        <td className="py-2 px-4 text-zinc-700 font-bold">{rate}% Tax Subtotal</td>
-                                        <td className="py-2 px-4 text-right text-zinc-700">₹{data.taxableAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                                        {totalCGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">₹{data.cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
-                                        {totalSGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">₹{data.sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
-                                        {totalIGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">₹{data.igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {/* Totals */}
-                <div className="flex justify-end pt-8">
-                    <div className="w-64 space-y-3">
-                        <div className="flex justify-between text-sm text-zinc-600">
-                            <span>Subtotal</span>
-                            <span className="font-medium">₹{(totalAmount - totalTax).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        {totalCGST > 0 && (
-                            <div className="flex justify-between text-sm text-zinc-600">
-                                <span>CGST</span>
-                                <span className="font-medium">₹{totalCGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                        )}
-                        {totalSGST > 0 && (
-                            <div className="flex justify-between text-sm text-zinc-600">
-                                <span>SGST</span>
-                                <span className="font-medium">₹{totalSGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                        )}
-                        {totalIGST > 0 && (
-                            <div className="flex justify-between text-sm text-zinc-600">
-                                <span>IGST</span>
-                                <span className="font-medium">₹{totalIGST.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-xl font-bold text-zinc-900 border-t-2 border-zinc-900 pt-4 mt-4">
-                            <span>Total</span>
-                            <span>₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer */}
-                <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col lg:flex-row justify-between items-start md:items-end gap-16 lg:gap-0">
-                    <div className="text-[10px] text-zinc-400 max-w-sm w-full">
-                        <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
-                        <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>
-                        <p>2. Please quote the invoice number in all correspondence.</p>
-                        <p>3. Make payment to &quot;Klypso Ecosystems&quot;.</p>
-                    </div>
-                    <div className="text-left md:text-right w-full md:w-auto">
-                        <div className="h-16 mb-2 flex justify-start md:justify-end">
-                            {/* Signature Placeholder */}
-                            <div className="font-script text-2xl text-zinc-400 italic font-medium pr-4 pt-4">Authorized Signature</div>
-                        </div>
-                        <div className="border-t border-zinc-300 w-48 ml-auto"></div>
-                        <div className="text-[10px] text-zinc-500 mt-1 font-bold uppercase tracking-wider">Authorized Signatory</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest italic">
+        Loading invoice...
+      </div>
     );
+  if (!invoice)
+    return (
+      <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest">
+        Invoice not found
+      </div>
+    );
+
+  const totalTax = Number(invoice.totalGST || invoice.taxAmount || 0);
+  const totalCGST = Number(invoice.totalCGST || 0);
+  const totalSGST = Number(invoice.totalSGST || 0);
+  const totalIGST = Number(invoice.totalIGST || 0);
+  const totalAmount = Number(invoice.totalAmount);
+
+  // Helper for date formatting
+  const fmtDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  // GST-005: Consolidate mixed tax rates (5%, 12%, 18%) subtotal roll-ups reliably
+  const taxSummary = (invoice.items || []).reduce<
+    Record<number, TaxSummaryData>
+  >((acc, item) => {
+    const rate = Number(item.gstRate || item.product?.gstRate || 0);
+    if (rate === 0) return acc;
+    if (!acc[rate])
+      acc[rate] = {
+        taxableAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        igstAmount: 0,
+      };
+    acc[rate].taxableAmount += Number(
+      item.taxableAmount ||
+        Number(item.price || item.unitPrice) * Number(item.quantity),
+    );
+    acc[rate].cgstAmount += Number(item.cgstAmount || 0);
+    acc[rate].sgstAmount += Number(item.sgstAmount || 0);
+    acc[rate].igstAmount += Number(item.igstAmount || 0);
+    return acc;
+  }, {});
+
+  return (
+    <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
+      <style jsx global>{`
+        @media print {
+          @page {
+            margin: 20mm;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tfoot {
+            display: table-footer-group;
+          }
+          tr {
+            page-break-inside: avoid;
+          }
+          .print-header {
+            position: running(header);
+          }
+        }
+      `}</style>
+      {/* Action Bar (Hidden in Print) */}
+      <div className="max-w-4xl mx-auto mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
+        <h1 className="text-2xl font-black text-white tracking-tighter">
+          Invoice
+        </h1>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all"
+            onClick={() => window.print()}
+          >
+            <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
+          </Button>
+          <Button
+            variant="outline"
+            className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all"
+          >
+            <Mail className="mr-2 h-4 w-4" /> Email Client
+          </Button>
+        </div>
+      </div>
+
+      {/* Invoice Paper */}
+      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 md:p-12 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-8 lg:gap-0 border-b-2 border-zinc-100 pb-8 mb-8">
+          <div className="w-full">
+            <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">
+              KLYPSO INVOICE
+            </div>
+            <div className="text-sm text-zinc-500 mt-1 font-medium italic tracking-widest uppercase">
+              Invoice No: #{invoice.invoiceNumber}
+            </div>
+            <div className="mt-4 space-y-1 text-sm text-zinc-600">
+              <p className="font-bold text-zinc-900 uppercase text-[10px] tracking-widest mb-1">
+                Bill To:
+              </p>
+              <p className="font-black text-zinc-900">
+                {invoice.customer.firstName} {invoice.customer.lastName}
+              </p>
+              <p>{invoice.customer.company}</p>
+              {invoice.customer.address && <p>{invoice.customer.address}</p>}
+              {invoice.customer.gstin && <p>GSTIN: {invoice.customer.gstin}</p>}
+            </div>
+          </div>
+          <div className="text-left md:text-right w-full md:w-auto">
+            <div className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">
+              Klypso Ecosystems
+            </div>
+            <div className="text-sm text-zinc-500 mt-1">
+              123 Business Park, Tech City
+              <br />
+              Maharashtra, India - 400001
+              <br />
+              GSTIN: 27AABCU9603R1ZN
+            </div>
+            <div className="mt-6 flex flex-col items-end gap-1">
+              <div className="bg-zinc-100 px-4 py-2 rounded-lg text-right">
+                <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                  Issue Date
+                </div>
+                <div className="font-bold text-zinc-900">
+                  {fmtDate(invoice.issueDate)}
+                </div>
+              </div>
+              <div className="bg-zinc-100 px-4 py-2 rounded-lg text-right mt-1">
+                <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                  Due Date
+                </div>
+                <div className="font-bold text-zinc-900">
+                  {fmtDate(invoice.dueDate)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <div className="overflow-x-auto mb-8 max-w-[100vw]">
+          <table className="w-full text-sm min-w-[500px]">
+            <thead className="border-b-2 border-zinc-900">
+              <tr>
+                <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">
+                  Description
+                </th>
+                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">
+                  HSN
+                </th>
+                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">
+                  Qty
+                </th>
+                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
+                  Rate
+                </th>
+                <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
+                  Amount
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              {invoice.items &&
+                invoice.items.map((item: InvoiceItem, i: number) => (
+                  <tr key={i}>
+                    <td className="py-4 text-zinc-700 font-medium">
+                      {item.productName || item.product?.name || "Product Item"}
+                      <div className="text-[10px] text-zinc-400 mt-0.5">
+                        {item.product?.sku}
+                      </div>
+                    </td>
+                    <td className="py-4 text-right text-zinc-500 font-mono">
+                      {item.hsnCode || item.product?.hsnCode || "-"}
+                    </td>
+                    <td className="py-4 text-right text-zinc-700">
+                      {item.quantity}
+                    </td>
+                    <td className="py-4 text-right text-zinc-700">
+                      ₹
+                      {Number(item.price).toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </td>
+                    <td className="py-4 text-right font-bold text-zinc-900">
+                      ₹
+                      {(
+                        Number(item.price) * Number(item.quantity)
+                      ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Tax Summary Roll-Up (GST-005) */}
+        {Object.keys(taxSummary).length > 0 && totalTax > 0 && (
+          <div className="mt-8 border border-zinc-200 rounded-xl overflow-hidden print:border-zinc-300">
+            <table className="w-full text-xs">
+              <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
+                <tr>
+                  <th className="text-left py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">
+                    GST Rate Roll-up
+                  </th>
+                  <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">
+                    Taxable Base
+                  </th>
+                  {totalCGST > 0 && (
+                    <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">
+                      CGST
+                    </th>
+                  )}
+                  {totalSGST > 0 && (
+                    <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">
+                      SGST
+                    </th>
+                  )}
+                  {totalIGST > 0 && (
+                    <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">
+                      IGST
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 print:divide-zinc-200">
+                {Object.entries(taxSummary)
+                  .sort(([a], [b]) => Number(a) - Number(b))
+                  .map(([rate, data]: [string, TaxSummaryData]) => (
+                    <tr key={rate}>
+                      <td className="py-2 px-4 text-zinc-700 font-bold">
+                        {rate}% Tax Subtotal
+                      </td>
+                      <td className="py-2 px-4 text-right text-zinc-700">
+                        ₹
+                        {data.taxableAmount.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </td>
+                      {totalCGST > 0 && (
+                        <td className="py-2 px-4 text-right text-zinc-700">
+                          ₹
+                          {data.cgstAmount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </td>
+                      )}
+                      {totalSGST > 0 && (
+                        <td className="py-2 px-4 text-right text-zinc-700">
+                          ₹
+                          {data.sgstAmount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </td>
+                      )}
+                      {totalIGST > 0 && (
+                        <td className="py-2 px-4 text-right text-zinc-700">
+                          ₹
+                          {data.igstAmount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Totals */}
+        <div className="flex justify-end pt-8">
+          <div className="w-64 space-y-3">
+            <div className="flex justify-between text-sm text-zinc-600">
+              <span>Subtotal</span>
+              <span className="font-medium">
+                ₹
+                {(totalAmount - totalTax).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            {totalCGST > 0 && (
+              <div className="flex justify-between text-sm text-zinc-600">
+                <span>CGST</span>
+                <span className="font-medium">
+                  ₹
+                  {totalCGST.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            )}
+            {totalSGST > 0 && (
+              <div className="flex justify-between text-sm text-zinc-600">
+                <span>SGST</span>
+                <span className="font-medium">
+                  ₹
+                  {totalSGST.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            )}
+            {totalIGST > 0 && (
+              <div className="flex justify-between text-sm text-zinc-600">
+                <span>IGST</span>
+                <span className="font-medium">
+                  ₹
+                  {totalIGST.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between text-xl font-bold text-zinc-900 border-t-2 border-zinc-900 pt-4 mt-4">
+              <span>Total</span>
+              <span>
+                ₹
+                {totalAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col lg:flex-row justify-between items-start md:items-end gap-16 lg:gap-0">
+          <div className="text-[10px] text-zinc-400 max-w-sm w-full">
+            <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
+            <p>
+              1. Payment due within{" "}
+              {Math.ceil(
+                (new Date(invoice.dueDate).getTime() -
+                  new Date(invoice.issueDate).getTime()) /
+                  (1000 * 3600 * 24),
+              )}{" "}
+              days.
+            </p>
+            <p>2. Please quote the invoice number in all correspondence.</p>
+            <p>3. Make payment to &quot;Klypso Ecosystems&quot;.</p>
+          </div>
+          <div className="text-left md:text-right w-full md:w-auto">
+            <div className="h-16 mb-2 flex justify-start md:justify-end">
+              {/* Signature Placeholder */}
+              <div className="font-script text-2xl text-zinc-400 italic font-medium pr-4 pt-4">
+                Authorized Signature
+              </div>
+            </div>
+            <div className="border-t border-zinc-300 w-48 ml-auto"></div>
+            <div className="text-[10px] text-zinc-500 mt-1 font-bold uppercase tracking-wider">
+              Authorized Signatory
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

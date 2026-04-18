@@ -1,8 +1,13 @@
-
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
@@ -10,280 +15,324 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-    ensureNetworkConsent,
-    ensureRecentUserInteraction,
-    isNetworkConsentError,
-    revokeNetworkConsent,
+  ensureNetworkConsent,
+  ensureRecentUserInteraction,
+  isNetworkConsentError,
+  revokeNetworkConsent,
 } from "@/lib/network-consent";
 
 // Build the API base URL without any Axios interceptors.
 // Using fetch() directly with cookie-based auth (credentials: 'include').
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
-const API_V1 = BASE_URL.endsWith('/') ? `${BASE_URL}v1` : `${BASE_URL}/v1`;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/portal/api";
+const API_V1 = BASE_URL.endsWith("/") ? `${BASE_URL}v1` : `${BASE_URL}/v1`;
 
 interface WakeupError extends Error {
-    isWakeup?: boolean;
+  isWakeup?: boolean;
 }
 
 interface HttpError extends Error {
-    status?: number;
-    data?: Record<string, unknown>;
+  status?: number;
+  data?: Record<string, unknown>;
 }
 
 async function authFetch(path: string, options: RequestInit = {}) {
-    await ensureNetworkConsent();
-    await ensureRecentUserInteraction();
+  await ensureNetworkConsent();
+  await ensureRecentUserInteraction();
 
-    // SEC-006: Use cookie-based auth (credentials: 'include') instead of Bearer token from localStorage.
-    // HttpOnly cookies are sent automatically — no localStorage token reading needed.
-    const res = await fetch(`${API_V1}/${path}`, {
-        ...options,
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {}),
-        },
-    });
+  // SEC-006: Use cookie-based auth (credentials: 'include') instead of Bearer token from localStorage.
+  // HttpOnly cookies are sent automatically — no localStorage token reading needed.
+  const res = await fetch(`${API_V1}/${path}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
 
-    // Detect Render cold-start HTML splash page returned instead of JSON
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('text/html')) {
-        const text = await res.text();
-        if (text.includes('Render') || text.includes('Waking up') || text.includes('Application loading')) {
-            const wakeErr = new Error('Klypso is starting up. Please wait...') as WakeupError;
-            wakeErr.isWakeup = true;
-            throw wakeErr;
-        }
+  // Detect Render cold-start HTML splash page returned instead of JSON
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("text/html")) {
+    const text = await res.text();
+    if (
+      text.includes("Render") ||
+      text.includes("Waking up") ||
+      text.includes("Application loading")
+    ) {
+      const wakeErr = new Error(
+        "Klypso is starting up. Please wait...",
+      ) as WakeupError;
+      wakeErr.isWakeup = true;
+      throw wakeErr;
     }
+  }
 
-    if (!res.ok) {
-        const err = new Error(`HTTP ${res.status}`) as HttpError;
-        err.status = res.status;
-        try { err.data = await res.json(); } catch { err.data = {}; }
-        throw err;
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status}`) as HttpError;
+    err.status = res.status;
+    try {
+      err.data = await res.json();
+    } catch {
+      err.data = {};
     }
-    return res.json();
+    throw err;
+  }
+  return res.json();
 }
 
 interface Tenant {
-    id: string;
-    name: string;
-    slug: string;
-    role: string;
-    isOnboarded: boolean;
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  isOnboarded: boolean;
 }
 
 export function TenantSelector() {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [selecting, setSelecting] = useState<string | null>(null);
-    const [shouldRetry, setShouldRetry] = useState(false);
-    const router = useRouter();
-    const isMounted = useRef(true);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [selecting, setSelecting] = useState<string | null>(null);
+  const [shouldRetry, setShouldRetry] = useState(false);
+  const router = useRouter();
+  const isMounted = useRef(true);
 
-    useEffect(() => {
-        return () => {
-            isMounted.current = false;
-        };
-    }, []);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-    const handleLogout = useCallback(async () => {
-        try {
-            await authFetch("auth/logout", { method: 'POST' });
-        } catch (e) {
-            console.error("Backend logout failed", e);
-        }
-        // Clean up any stale localStorage entries from old auth flows
-        localStorage.removeItem("k_token");
-        localStorage.removeItem("k_identity");
-        localStorage.removeItem("k_user");
-        revokeNetworkConsent();
-        router.push("/login");
-    }, [router]);
-
-    const fetchTenants = useCallback(async () => {
-        try {
-            const data: Tenant[] = await authFetch("auth/tenants");
-
-            if (!isMounted.current) return;
-
-            if (data.length === 0) {
-                router.push("/onboarding");
-                return;
-            }
-
-            setTenants(data);
-            setLoading(false);
-            setShouldRetry(false);
-        } catch (err: unknown) {
-            if (!isMounted.current) return;
-            const error = err as WakeupError & HttpError;
-            if (error?.isWakeup) {
-                toast.error("Klypso is starting up. Please wait a moment and try again.");
-                console.warn("[TenantSelector] Backend is waking up on Render. Waiting for manual retry.");
-                setShouldRetry(true);
-                setLoading(false);
-            } else if ((error as HttpError)?.status === 401 || (error as HttpError)?.status === 403) {
-                toast.error("Session expired. Please log in again.");
-                handleLogout();
-            } else if (isNetworkConsentError(error)) {
-                toast.message("Server access is still blocked until you approve it.");
-                setLoading(false);
-            } else {
-                toast.error("Could not load workspaces. Please try again.");
-                console.error("Failed to fetch tenants", error);
-                setLoading(false);
-            }
-        }
-    }, [router, handleLogout]);
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchTenants();
-    }, [fetchTenants]);
-
-    const handleSelect = useCallback(async (tenantId: string) => {
-        setSelecting(tenantId);
-        try {
-            await authFetch("auth/select-tenant", {
-                method: 'POST',
-                body: JSON.stringify({ tenantId }),
-            });
-            // SEC-006: Token is set as HttpOnly cookie by the backend.
-            // No localStorage write needed — cookie is sent automatically on subsequent requests.
-            // Hard reload to reset all React state with the new scoped token
-            window.location.href = "/portal/dashboard";
-        } catch {
-            toast.error("Failed to select workspace");
-            setSelecting(null);
-        }
-    }, []);
-
-    const navigateToOnboarding = useCallback(() => {
-        router.push("/onboarding");
-    }, [router]);
-
-    if (loading) {
-        return (
-            <div className="flex bg-slate-50 h-screen w-screen items-center justify-center">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            </div>
-        );
+  const handleLogout = useCallback(async () => {
+    try {
+      await authFetch("auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Backend logout failed", e);
     }
+    // Clean up any stale localStorage entries from old auth flows
+    localStorage.removeItem("k_token");
+    localStorage.removeItem("k_identity");
+    localStorage.removeItem("k_user");
+    revokeNetworkConsent();
+    router.push("/login");
+  }, [router]);
 
+  const fetchTenants = useCallback(async () => {
+    try {
+      const data: Tenant[] = await authFetch("auth/tenants");
+
+      if (!isMounted.current) return;
+
+      if (data.length === 0) {
+        router.push("/onboarding");
+        return;
+      }
+
+      setTenants(data);
+      setLoading(false);
+      setShouldRetry(false);
+    } catch (err: unknown) {
+      if (!isMounted.current) return;
+      const error = err as WakeupError & HttpError;
+      if (error?.isWakeup) {
+        toast.error(
+          "Klypso is starting up. Please wait a moment and try again.",
+        );
+        console.warn(
+          "[TenantSelector] Backend is waking up on Render. Waiting for manual retry.",
+        );
+        setShouldRetry(true);
+        setLoading(false);
+      } else if (
+        (error as HttpError)?.status === 401 ||
+        (error as HttpError)?.status === 403
+      ) {
+        toast.error("Session expired. Please log in again.");
+        handleLogout();
+      } else if (isNetworkConsentError(error)) {
+        toast.message("Server access is still blocked until you approve it.");
+        setLoading(false);
+      } else {
+        toast.error("Could not load workspaces. Please try again.");
+        console.error("Failed to fetch tenants", error);
+        setLoading(false);
+      }
+    }
+  }, [router, handleLogout]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTenants();
+  }, [fetchTenants]);
+
+  const handleSelect = useCallback(async (tenantId: string) => {
+    setSelecting(tenantId);
+    try {
+      await authFetch("auth/select-tenant", {
+        method: "POST",
+        body: JSON.stringify({ tenantId }),
+      });
+      // SEC-006: Token is set as HttpOnly cookie by the backend.
+      // No localStorage write needed — cookie is sent automatically on subsequent requests.
+      // Hard reload to reset all React state with the new scoped token
+      window.location.href = "/portal/dashboard";
+    } catch {
+      toast.error("Failed to select workspace");
+      setSelecting(null);
+    }
+  }, []);
+
+  const navigateToOnboarding = useCallback(() => {
+    router.push("/onboarding");
+  }, [router]);
+
+  if (loading) {
     return (
-        <div className="flex bg-slate-50 min-h-screen w-screen items-center justify-center p-4">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,130,246,0.05),transparent)]" />
-
-            <div className="w-full max-w-lg relative z-10">
-                <div className="flex justify-between items-center mb-8">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-500/20">
-                            K
-                        </div>
-                        <span className="font-black text-slate-900 tracking-tighter text-xl uppercase italic">Klypso</span>
-                    </div>
-                    <Button variant="ghost" onClick={handleLogout} className="text-slate-500 hover:text-rose-600 font-bold text-xs uppercase tracking-widest gap-2">
-                        <LogOut size={14} /> Sign Out
-                    </Button>
-                </div>
-
-                <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-                    <CardHeader className="bg-slate-900 text-white p-10 pb-12">
-                        <CardTitle className="text-3xl font-black tracking-tight mb-2 italic">Select Workspace</CardTitle>
-                        <CardDescription className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">
-                            Choose a company to access your dashboard
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-8 -mt-6 bg-white rounded-t-[2.5rem]">
-                        {shouldRetry && (
-                            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
-                                <p className="text-xs font-black uppercase tracking-widest text-amber-700">Server Wake-Up Paused</p>
-                                <p className="mt-2 text-sm text-slate-600">
-                                    Automatic retries are disabled. Retry only when you want to contact the server again.
-                                </p>
-                                <Button
-                                    type="button"
-                                    className="mt-4 h-10 rounded-xl bg-amber-500 px-4 text-[10px] font-black uppercase tracking-widest text-white hover:bg-amber-600"
-                                    onClick={() => {
-                                        setLoading(true);
-                                        fetchTenants();
-                                    }}
-                                >
-                                    Retry Manually
-                                </Button>
-                            </div>
-                        )}
-                        <div className="space-y-3">
-                            {tenants.length > 10 && (
-                                <div className="mb-6 relative">
-                                    <Input
-                                        placeholder="Search Workspaces..."
-                                        className="h-12 rounded-2xl bg-slate-50 border-slate-100 pl-10 text-[11px] font-bold uppercase tracking-widest text-slate-900 focus:ring-blue-500/10 placeholder:text-slate-400"
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                                    />
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                                        <Building2 size={14} />
-                                    </div>
-                                </div>
-                            )}
-
-                            {tenants.filter(t =>
-                                !searchQuery ||
-                                t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                t.id.toLowerCase().includes(searchQuery.toLowerCase())
-                            ).map((tenant) => (
-                                <button
-                                    key={tenant.id}
-                                    onClick={() => handleSelect(tenant.id)}
-                                    disabled={!!selecting}
-                                    className="w-full group flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all text-left disabled:opacity-50"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors shadow-sm">
-                                            <Building2 className="text-slate-400 group-hover:text-blue-600 transition-colors" size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-slate-900 text-lg tracking-tight font-sans">
-                                                {tenant.name}
-                                            </p>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className={cn(
-                                                    "text-[10px] font-black uppercase tracking-widest",
-                                                    tenant.role === 'Shadow' ? "text-amber-500" : "text-blue-600"
-                                                )}>
-                                                    {tenant.role === 'Shadow' ? 'Shadow-Admin' : tenant.role}
-                                                </span>
-                                                <span className="text-[10px] text-slate-400">•</span>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-2 rounded-xl bg-slate-100 group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:translate-x-1">
-                                        {selecting === tenant.id ? (
-                                            <Loader2 className="animate-spin" size={16} />
-                                        ) : (
-                                            <ChevronRight size={16} />
-                                        )}
-                                    </div>
-                                </button>
-                            ))}
-
-                            <button
-                                onClick={navigateToOnboarding}
-                                className="w-full flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/30 transition-all font-bold uppercase text-[10px] tracking-widest"
-                            >
-                                <Plus size={16} /> Create New Workspace
-                            </button>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-8">
-                    Secure Enterprise Managed Access • Klypso ERP
-                </p>
-            </div>
-        </div>
+      <div className="flex bg-slate-50 h-screen w-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
     );
+  }
+
+  return (
+    <div className="flex bg-slate-50 min-h-screen w-screen items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,130,246,0.05),transparent)]" />
+
+      <div className="w-full max-w-lg relative z-10">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-500/20">
+              K
+            </div>
+            <span className="font-black text-slate-900 tracking-tighter text-xl uppercase italic">
+              Klypso
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="text-slate-500 hover:text-rose-600 font-bold text-xs uppercase tracking-widest gap-2"
+          >
+            <LogOut size={14} /> Sign Out
+          </Button>
+        </div>
+
+        <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
+          <CardHeader className="bg-slate-900 text-white p-10 pb-12">
+            <CardTitle className="text-3xl font-black tracking-tight mb-2 italic">
+              Select Workspace
+            </CardTitle>
+            <CardDescription className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">
+              Choose a company to access your dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 -mt-6 bg-white rounded-t-[2.5rem]">
+            {shouldRetry && (
+              <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-xs font-black uppercase tracking-widest text-amber-700">
+                  Server Wake-Up Paused
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Automatic retries are disabled. Retry only when you want to
+                  contact the server again.
+                </p>
+                <Button
+                  type="button"
+                  className="mt-4 h-10 rounded-xl bg-amber-500 px-4 text-[10px] font-black uppercase tracking-widest text-white hover:bg-amber-600"
+                  onClick={() => {
+                    setLoading(true);
+                    fetchTenants();
+                  }}
+                >
+                  Retry Manually
+                </Button>
+              </div>
+            )}
+            <div className="space-y-3">
+              {tenants.length > 10 && (
+                <div className="mb-6 relative">
+                  <Input
+                    placeholder="Search Workspaces..."
+                    className="h-12 rounded-2xl bg-slate-50 border-slate-100 pl-10 text-[11px] font-bold uppercase tracking-widest text-slate-900 focus:ring-blue-500/10 placeholder:text-slate-400"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setSearchQuery(e.target.value)
+                    }
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Building2 size={14} />
+                  </div>
+                </div>
+              )}
+
+              {tenants
+                .filter(
+                  (t) =>
+                    !searchQuery ||
+                    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    t.id.toLowerCase().includes(searchQuery.toLowerCase()),
+                )
+                .map((tenant) => (
+                  <button
+                    key={tenant.id}
+                    onClick={() => handleSelect(tenant.id)}
+                    disabled={!!selecting}
+                    className="w-full group flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all text-left disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors shadow-sm">
+                        <Building2
+                          className="text-slate-400 group-hover:text-blue-600 transition-colors"
+                          size={20}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-900 text-lg tracking-tight font-sans">
+                          {tenant.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span
+                            className={cn(
+                              "text-[10px] font-black uppercase tracking-widest",
+                              tenant.role === "Shadow"
+                                ? "text-amber-500"
+                                : "text-blue-600",
+                            )}
+                          >
+                            {tenant.role === "Shadow"
+                              ? "Shadow-Admin"
+                              : tenant.role}
+                          </span>
+                          <span className="text-[10px] text-slate-400">•</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            Active
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-2 rounded-xl bg-slate-100 group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:translate-x-1">
+                      {selecting === tenant.id ? (
+                        <Loader2 className="animate-spin" size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      )}
+                    </div>
+                  </button>
+                ))}
+
+              <button
+                onClick={navigateToOnboarding}
+                className="w-full flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/30 transition-all font-bold uppercase text-[10px] tracking-widest"
+              >
+                <Plus size={16} /> Create New Workspace
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-8">
+          Secure Enterprise Managed Access • Klypso ERP
+        </p>
+      </div>
+    </div>
+  );
 }

@@ -1,7 +1,8 @@
 const STORAGE_KEY = "k_network_consent_granted";
 const USER_INTERACTION_WINDOW_MS = 5000;
 
-export const NETWORK_CONSENT_REQUESTED_EVENT = "klypso:network-consent-requested";
+export const NETWORK_CONSENT_REQUESTED_EVENT =
+  "klypso:network-consent-requested";
 
 type PendingConsent = {
   promise: Promise<void>;
@@ -26,7 +27,9 @@ export class NetworkConsentError extends Error {
 export class NetworkInteractionError extends Error {
   code = "NETWORK_INTERACTION_REQUIRED";
 
-  constructor(message = "A direct user interaction is required before contacting the server.") {
+  constructor(
+    message = "A direct user interaction is required before contacting the server.",
+  ) {
     super(message);
     this.name = "NetworkInteractionError";
   }
@@ -149,10 +152,20 @@ export function revokeNetworkConsent(): void {
   }
 }
 
-export function isNetworkConsentError(error: unknown): error is NetworkConsentError {
-  return error instanceof Error && (error as { code?: string }).code === "NETWORK_CONSENT_REQUIRED";
+export function isNetworkConsentError(
+  error: unknown,
+): error is NetworkConsentError {
+  return (
+    error instanceof Error &&
+    (error as { code?: string }).code === "NETWORK_CONSENT_REQUIRED"
+  );
 }
 
-export function isNetworkInteractionError(error: unknown): error is NetworkInteractionError {
-  return error instanceof Error && (error as { code?: string }).code === "NETWORK_INTERACTION_REQUIRED";
+export function isNetworkInteractionError(
+  error: unknown,
+): error is NetworkInteractionError {
+  return (
+    error instanceof Error &&
+    (error as { code?: string }).code === "NETWORK_INTERACTION_REQUIRED"
+  );
 }

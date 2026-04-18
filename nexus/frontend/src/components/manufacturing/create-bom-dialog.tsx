@@ -1,246 +1,339 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { NumericInput } from '@/components/ui/numeric-input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
-import { Plus, Trash2, Save, Loader2 } from 'lucide-react';
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
+import { Plus, Trash2, Save, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Product {
-    id: string;
-    name: string;
-    sku: string;
-    unit: string;
-    category?: string;
-    costPrice?: number;
-    stock?: number;
-    tags?: string;
+  id: string;
+  name: string;
+  sku: string;
+  unit: string;
+  category?: string;
+  costPrice?: number;
+  stock?: number;
+  tags?: string;
 }
 
 interface BOMItem {
-    productId: string;
-    quantity: number;
-    unit: string;
+  productId: string;
+  quantity: number;
+  unit: string;
 }
 
 interface CreateBOMDialogProps {
-    refreshData: () => void;
-    children: React.ReactNode;
+  refreshData: () => void;
+  children: React.ReactNode;
 }
 
-export function CreateBOMDialog({ refreshData, children }: CreateBOMDialogProps) {
-    const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [products, setProducts] = useState<Product[]>([]);
+export function CreateBOMDialog({
+  refreshData,
+  children,
+}: CreateBOMDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
 
-    // Form State
-    const [name, setName] = useState('');
-    const [selectedProduct, setSelectedProduct] = useState('');
-    const [quantity, setQuantity] = useState(1);
-    const [overheadRate, setOverheadRate] = useState(0);
-    const [isOverheadFixed, setIsOverheadFixed] = useState(false);
-    const [items, setItems] = useState<BOMItem[]>([]);
+  // Form State
+  const [name, setName] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [overheadRate, setOverheadRate] = useState(0);
+  const [isOverheadFixed, setIsOverheadFixed] = useState(false);
+  const [items, setItems] = useState<BOMItem[]>([]);
 
-    const fetchProducts = useCallback(async () => {
-        try {
-            const res = await api.get('/inventory/products');
-            // Handle both paginated ({ data: [...] }) and flat ([...]) responses
-            const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-            setProducts(list);
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to load products. Check console.");
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await api.get("/inventory/products");
+      // Handle both paginated ({ data: [...] }) and flat ([...]) responses
+      const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setProducts(list);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load products. Check console.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchProducts();
+    }
+  }, [open, fetchProducts]);
+
+  const addItem = useCallback(() => {
+    setItems((prev) => [...prev, { productId: "", quantity: 1, unit: "pcs" }]);
+  }, []);
+
+  const updateItem = useCallback(
+    (index: number, field: keyof BOMItem, value: string | number) => {
+      setItems((prev) => {
+        const newItems = [...prev];
+        newItems[index] = { ...newItems[index], [field]: value };
+
+        // Auto-set unit if product changes
+        if (field === "productId") {
+          const product = products.find((p) => p.id === value);
+          if (product) {
+            newItems[index].unit = product.unit || "pcs";
+          }
         }
-    }, []);
+        return newItems;
+      });
+    },
+    [products],
+  );
 
-    useEffect(() => {
-        if (open) {
-            fetchProducts();
-        }
-    }, [open, fetchProducts]);
+  const removeItem = useCallback((index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
-    const addItem = useCallback(() => {
-        setItems(prev => [...prev, { productId: '', quantity: 1, unit: 'pcs' }]);
-    }, []);
+  const handleSubmit = useCallback(async () => {
+    if (!name || !selectedProduct) {
+      toast.error("Name and Finished Good are required");
+      return;
+    }
+    if (items.length === 0) {
+      toast.error("Add at least one raw material");
+      return;
+    }
 
-    const updateItem = useCallback((index: number, field: keyof BOMItem, value: string | number) => {
-        setItems(prev => {
-            const newItems = [...prev];
-            newItems[index] = { ...newItems[index], [field]: value };
+    try {
+      setLoading(true);
+      await api.post("/manufacturing/boms", {
+        name,
+        productId: selectedProduct,
+        quantity,
+        overheadRate,
+        isOverheadFixed,
+        items,
+      });
+      toast.success("BOM Created Successfully");
+      setOpen(false);
+      refreshData();
+      // Reset form
+      setName("");
+      setSelectedProduct("");
+      setItems([]);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to create BOM");
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    name,
+    selectedProduct,
+    items,
+    quantity,
+    overheadRate,
+    isOverheadFixed,
+    refreshData,
+  ]);
 
-            // Auto-set unit if product changes
-            if (field === 'productId') {
-                const product = products.find(p => p.id === value);
-                if (product) {
-                    newItems[index].unit = product.unit || 'pcs';
-                }
-            }
-            return newItems;
-        });
-    }, [products]);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Bill of Materials</DialogTitle>
+        </DialogHeader>
 
-    const removeItem = useCallback((index: number) => {
-        setItems(prev => prev.filter((_, i) => i !== index));
-    }, []);
+        <div className="grid gap-6 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>BOM Name</Label>
+              <Input
+                placeholder="e.g. Standard Production"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Finished Good (Output)</Label>
+              <Select
+                value={selectedProduct}
+                onValueChange={setSelectedProduct}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Product to Manufacture" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from(
+                    new Set(
+                      products
+                        .filter((p) => !p.tags?.includes("RAW_MATERIAL"))
+                        .map((p) => p.category || "Uncategorized"),
+                    ),
+                  ).map((category) => (
+                    <SelectGroup key={category}>
+                      <SelectLabel>{category}</SelectLabel>
+                      {products
+                        .filter(
+                          (p) =>
+                            !p.tags?.includes("RAW_MATERIAL") &&
+                            (p.category || "Uncategorized") === category,
+                        )
+                        .map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name} ({p.sku})
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">
+                Product must exist in Inventory first.
+              </p>
+            </div>
+          </div>
 
-    const handleSubmit = useCallback(async () => {
-        if (!name || !selectedProduct) {
-            toast.error("Name and Finished Good are required");
-            return;
-        }
-        if (items.length === 0) {
-            toast.error("Add at least one raw material");
-            return;
-        }
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Output Quantity</Label>
+              <NumericInput value={quantity} onChange={setQuantity} />
+            </div>
+            <div className="space-y-2">
+              <Label>Extra Cost % (Overhead)</Label>
+              <div className="flex gap-2">
+                <NumericInput
+                  decimal
+                  value={overheadRate}
+                  onChange={setOverheadRate}
+                />
+                <Button
+                  variant="outline"
+                  className={`w-12 ${isOverheadFixed ? "bg-primary text-primary-foreground" : ""}`}
+                  onClick={() => setIsOverheadFixed(!isOverheadFixed)}
+                >
+                  {isOverheadFixed ? "$" : "%"}
+                </Button>
+              </div>
+            </div>
+          </div>
 
-        try {
-            setLoading(true);
-            await api.post('/manufacturing/boms', {
-                name,
-                productId: selectedProduct,
-                quantity,
-                overheadRate,
-                isOverheadFixed,
-                items
-            });
-            toast.success("BOM Created Successfully");
-            setOpen(false);
-            refreshData();
-            // Reset form
-            setName('');
-            setSelectedProduct('');
-            setItems([]);
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to create BOM");
-        } finally {
-            setLoading(false);
-        }
-    }, [name, selectedProduct, items, quantity, overheadRate, isOverheadFixed, refreshData]);
+          <div className="border-t pt-4">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <Label>Raw Materials / Components</Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Assemble raw materials into a finished good by defining its
+                  exact recipe. The &quot;Yield&quot; represents how many
+                  finished items this recipe produces.
+                </p>
+              </div>
+              <Button size="sm" variant="outline" onClick={addItem}>
+                <Plus className="w-4 h-4 mr-1" /> Add Component
+              </Button>
+            </div>
 
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {children}
-            </DialogTrigger>
-            <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Create New Bill of Materials</DialogTitle>
-                </DialogHeader>
-
-                <div className="grid gap-6 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>BOM Name</Label>
-                            <Input placeholder="e.g. Standard Production" value={name} onChange={e => setName(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Finished Good (Output)</Label>
-                            <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select Product to Manufacture" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Array.from(new Set(products.filter(p => !p.tags?.includes('RAW_MATERIAL')).map(p => p.category || 'Uncategorized'))).map(category => (
-                                        <SelectGroup key={category}>
-                                            <SelectLabel>{category}</SelectLabel>
-                                            {products.filter(p => !p.tags?.includes('RAW_MATERIAL') && (p.category || 'Uncategorized') === category).map(p => (
-                                                <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <p className="text-[10px] text-muted-foreground">
-                                Product must exist in Inventory first.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label>Output Quantity</Label>
-                            <NumericInput value={quantity} onChange={setQuantity} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Extra Cost % (Overhead)</Label>
-                            <div className="flex gap-2">
-                                <NumericInput decimal value={overheadRate} onChange={setOverheadRate} />
-                                <Button
-                                    variant="outline"
-                                    className={`w-12 ${isOverheadFixed ? 'bg-primary text-primary-foreground' : ''}`}
-                                    onClick={() => setIsOverheadFixed(!isOverheadFixed)}
-                                >
-                                    {isOverheadFixed ? '$' : '%'}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="border-t pt-4">
-                        <div className="flex justify-between items-center mb-4">
-                            <div>
-                                <Label>Raw Materials / Components</Label>
-                                <p className="text-[10px] text-muted-foreground">Assemble raw materials into a finished good by defining its exact recipe. The &quot;Yield&quot; represents how many finished items this recipe produces.</p>
-                            </div>
-                            <Button size="sm" variant="outline" onClick={addItem}>
-                                <Plus className="w-4 h-4 mr-1" /> Add Component
-                            </Button>
-                        </div>
-
-                        <div className="space-y-3">
-                            {items.map((item, index) => (
-                                <div key={index} className="flex gap-3 items-end">
-                                    <div className="flex-1 space-y-1">
-                                        <Label className="text-xs text-muted-foreground">Component</Label>
-                                        <Select value={item.productId} onValueChange={v => updateItem(index, 'productId', v)}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select Material" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {Array.from(new Set(products.filter(p => !p.tags?.includes('FINISHED_GOOD')).map(p => p.category || 'Uncategorized'))).map(category => (
-                                                    <SelectGroup key={category}>
-                                                        <SelectLabel>{category}</SelectLabel>
-                                                        {products.filter(p => !p.tags?.includes('FINISHED_GOOD') && (p.category || 'Uncategorized') === category).map(p => (
-                                                            <SelectItem key={p.id} value={p.id}>{p.name} ({p.stock} avail)</SelectItem>
-                                                        ))}
-                                                    </SelectGroup>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="w-24 space-y-1">
-                                        <Label className="text-xs text-muted-foreground">Qty</Label>
-                                        <NumericInput decimal value={item.quantity} onChange={v => updateItem(index, 'quantity', v)} />
-                                    </div>
-                                    <div className="w-20 space-y-1">
-                                        <Label className="text-xs text-muted-foreground">Unit</Label>
-                                        <Input value={item.unit} readOnly className="bg-muted" />
-                                    </div>
-                                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => removeItem(index)}>
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            ))}
-                            {items.length === 0 && (
-                                <div className="text-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm">
-                                    No items added. Click &quot;Add Item&quot; to start.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <Button onClick={handleSubmit} disabled={loading} className="w-full mt-2">
-                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        Create BOM
-                    </Button>
+            <div className="space-y-3">
+              {items.map((item, index) => (
+                <div key={index} className="flex gap-3 items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Component
+                    </Label>
+                    <Select
+                      value={item.productId}
+                      onValueChange={(v) => updateItem(index, "productId", v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Material" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from(
+                          new Set(
+                            products
+                              .filter((p) => !p.tags?.includes("FINISHED_GOOD"))
+                              .map((p) => p.category || "Uncategorized"),
+                          ),
+                        ).map((category) => (
+                          <SelectGroup key={category}>
+                            <SelectLabel>{category}</SelectLabel>
+                            {products
+                              .filter(
+                                (p) =>
+                                  !p.tags?.includes("FINISHED_GOOD") &&
+                                  (p.category || "Uncategorized") === category,
+                              )
+                              .map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.name} ({p.stock} avail)
+                                </SelectItem>
+                              ))}
+                          </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs text-muted-foreground">Qty</Label>
+                    <NumericInput
+                      decimal
+                      value={item.quantity}
+                      onChange={(v) => updateItem(index, "quantity", v)}
+                    />
+                  </div>
+                  <div className="w-20 space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Unit
+                    </Label>
+                    <Input value={item.unit} readOnly className="bg-muted" />
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-destructive"
+                    onClick={() => removeItem(index)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-            </DialogContent>
-        </Dialog>
-    );
+              ))}
+              {items.length === 0 && (
+                <div className="text-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm">
+                  No items added. Click &quot;Add Item&quot; to start.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full mt-2"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Create BOM
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

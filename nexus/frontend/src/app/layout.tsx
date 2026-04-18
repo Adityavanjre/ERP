@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 import "./globals.css";
 import { Toaster } from "../components/ui/sonner";
@@ -20,10 +20,12 @@ const geistMono = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://klypso.in/portal'), title: "Klypso ERP | Advanced Business OS for Manufacturing & GST Compliance",
-  description: "The imperial standard for SME management. Professional ERP with Tally Prime sync, automated GST GSTR-1 compliance, manufacturing BOM/WIP tracking, and double-entry accounting.",
+  metadataBase: new URL("https://klypso.in/portal"),
+  title: "Klypso ERP | Advanced Business OS for Manufacturing & GST Compliance",
+  description:
+    "The imperial standard for SME management. Professional ERP with Tally Prime sync, automated GST GSTR-1 compliance, manufacturing BOM/WIP tracking, and double-entry accounting.",
   alternates: {
-    canonical: 'https://klypso.in/portal',
+    canonical: "https://klypso.in/portal",
   },
   keywords: [
     "Best ERP for Manufacturing India",
@@ -35,7 +37,7 @@ export const metadata: Metadata = {
     "Double Entry Accounting Software",
     "Inventory Management System India",
     "Bill of Materials Software",
-    "Work Order Management ERP"
+    "Work Order Management ERP",
   ],
   authors: [{ name: "Klypso Engineering", url: "https://klypso.agency" }],
   creator: "Klypso Ecosystems",
@@ -46,14 +48,15 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   openGraph: {
     title: "Klypso ERP | The OS for Modern Indian Business",
-    description: "Scale your factory or retail business with elite-grade accounting and inventory.",
+    description:
+      "Scale your factory or retail business with elite-grade accounting and inventory.",
     url: "https://klypso.in",
     siteName: "Klypso ERP",
     images: [
@@ -70,7 +73,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Klypso ERP | Manufacturing & Accounting Refined",
-    description: "Built for Tally users, loved by manufacturers. The most powerful ERP for Indian SMEs.",
+    description:
+      "Built for Tally users, loved by manufacturers. The most powerful ERP for Indian SMEs.",
     creator: "@klypso",
     images: ["/og-image.png"],
   },
@@ -88,27 +92,24 @@ export const viewport: Viewport = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Klypso ERP",
-  "alternateName": "Klypso",
-  "url": "https://klypso.in/portal",
-  "logo": "https://klypso.in/portal/favicon.svg",
-  "contactPoint": {
+  name: "Klypso ERP",
+  alternateName: "Klypso",
+  url: "https://klypso.in/portal",
+  logo: "https://klypso.in/portal/favicon.svg",
+  contactPoint: {
     "@type": "ContactPoint",
-    "telephone": "+91-XXXXXXXXXX",
-    "contactType": "customer service",
-    "contactOption": "TollFree",
-    "areaServed": "IN",
-    "availableLanguage": "en"
+    telephone: "+91-XXXXXXXXXX",
+    contactType: "customer service",
+    contactOption: "TollFree",
+    areaServed: "IN",
+    availableLanguage: "en",
   },
-  "sameAs": [
-    "https://twitter.com/klypso",
-    "https://linkedin.com/company/klypso"
-  ],
-  "potentialAction": {
+  sameAs: ["https://twitter.com/klypso", "https://linkedin.com/company/klypso"],
+  potentialAction: {
     "@type": "SearchAction",
-    "target": "https://klypso.in/portal/search?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
+    target: "https://klypso.in/portal/search?q={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
 };
 
 import { ErrorBoundary } from "../components/providers/error-boundary";
@@ -134,7 +135,9 @@ export default function RootLayout({
             <Script
               id="organization-jsonld"
               type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify(organizationJsonLd),
+              }}
             />
             <PerformanceMonitor />
             <Suspense fallback={null}>

@@ -2,7 +2,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
 // Inlined from @nexus/shared to avoid SSR module-init crash.
 // The CJS compiled enum pattern causes a TDZ error during Next.js server rendering
-// when imported at module evaluation time. Since desktop-offline is browser-only 
+// when imported at module evaluation time. Since desktop-offline is browser-only
 // code, we duplicate only what we need here to keep SSR safe.
 const Industry = {
   Retail: "Retail",
@@ -17,7 +17,7 @@ const Industry = {
   General: "General",
 } as const;
 
-type IndustryKey = typeof Industry[keyof typeof Industry];
+type IndustryKey = (typeof Industry)[keyof typeof Industry];
 
 interface IndustryModuleConfig {
   hasInventory: boolean;
@@ -33,64 +33,215 @@ interface IndustryModuleConfig {
 
 const INDUSTRY_CONFIGS: Record<IndustryKey, IndustryModuleConfig> = {
   [Industry.General]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: false,
+    hasFinance: false,
     enabledModules: ["dashboard", "sales", "inventory", "accounting", "crm"],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Product", Customer: "Customer", Invoice: "Invoice", Project: "Project" },
+    terminology: {
+      Product: "Product",
+      Customer: "Customer",
+      Invoice: "Invoice",
+      Project: "Project",
+    },
   },
   [Industry.Retail]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
-    enabledModules: ["dashboard", "sales", "inventory", "accounting", "crm", "pos"],
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: false,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "sales",
+      "inventory",
+      "accounting",
+      "crm",
+      "pos",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Item", Customer: "Buyer", Invoice: "Bill", Project: "Event" },
+    terminology: {
+      Product: "Item",
+      Customer: "Buyer",
+      Invoice: "Bill",
+      Project: "Event",
+    },
   },
   [Industry.Construction]: {
-    hasInventory: true, hasProjects: true, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
-    enabledModules: ["dashboard", "projects", "inventory", "accounting", "construction"],
+    hasInventory: true,
+    hasProjects: true,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: false,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "projects",
+      "inventory",
+      "accounting",
+      "construction",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Material", Customer: "Contractor", Invoice: "RA Bill", Project: "Site", BOM: "BOQ" },
+    terminology: {
+      Product: "Material",
+      Customer: "Contractor",
+      Invoice: "RA Bill",
+      Project: "Site",
+      BOM: "BOQ",
+    },
   },
   [Industry.Healthcare]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: true, hasManufacturing: false, hasLogistics: false, hasFinance: false,
-    enabledModules: ["dashboard", "healthcare", "inventory", "accounting", "hr"],
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: true,
+    hasManufacturing: false,
+    hasLogistics: false,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "healthcare",
+      "inventory",
+      "accounting",
+      "hr",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Medicine", Customer: "Patient", Invoice: "Prescription", Project: "Clinic" },
+    terminology: {
+      Product: "Medicine",
+      Customer: "Patient",
+      Invoice: "Prescription",
+      Project: "Clinic",
+    },
   },
   [Industry.Manufacturing]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: true, hasLogistics: false, hasFinance: false,
-    enabledModules: ["dashboard", "manufacturing", "inventory", "accounting", "sales", "purchases", "crm", "hr"],
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: true,
+    hasLogistics: false,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "manufacturing",
+      "inventory",
+      "accounting",
+      "sales",
+      "purchases",
+      "crm",
+      "hr",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Finished Good", Customer: "Distributor", Invoice: "Sales Order", Project: "Production Unit", BOM: "BOM", WorkOrder: "Work Order" },
+    terminology: {
+      Product: "Finished Good",
+      Customer: "Distributor",
+      Invoice: "Sales Order",
+      Project: "Production Unit",
+      BOM: "BOM",
+      WorkOrder: "Work Order",
+    },
   },
   [Industry.Logistics]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: true, hasFinance: false,
-    enabledModules: ["dashboard", "logistics", "inventory", "accounting", "sales"],
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: true,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "logistics",
+      "inventory",
+      "accounting",
+      "sales",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Consignment", Customer: "Consignor", Invoice: "Freight Bill", Project: "Route" },
+    terminology: {
+      Product: "Consignment",
+      Customer: "Consignor",
+      Invoice: "Freight Bill",
+      Project: "Route",
+    },
   },
   [Industry.NBFC]: {
-    hasInventory: false, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: true,
+    hasInventory: false,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: false,
+    hasFinance: true,
     enabledModules: ["dashboard", "nbfc", "accounting", "crm", "hr"],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Loan Product", Customer: "Borrower", Invoice: "EMI Statement", Project: "Branch" },
+    terminology: {
+      Product: "Loan Product",
+      Customer: "Borrower",
+      Invoice: "EMI Statement",
+      Project: "Branch",
+    },
   },
   [Industry.Automotive]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: true, hasLogistics: false, hasFinance: false,
-    enabledModules: ["dashboard", "manufacturing", "inventory", "accounting", "sales", "crm"],
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: true,
+    hasLogistics: false,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "manufacturing",
+      "inventory",
+      "accounting",
+      "sales",
+      "crm",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Spare Part", Customer: "Vehicle Owner", Invoice: "Service Bill", Project: "Workshop" },
+    terminology: {
+      Product: "Spare Part",
+      Customer: "Vehicle Owner",
+      Invoice: "Service Bill",
+      Project: "Workshop",
+    },
   },
   [Industry.Ecommerce]: {
-    hasInventory: true, hasProjects: false, hasHealthcare: false, hasManufacturing: false, hasLogistics: true, hasFinance: false,
-    enabledModules: ["dashboard", "sales", "inventory", "accounting", "logistics", "pos"],
+    hasInventory: true,
+    hasProjects: false,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: true,
+    hasFinance: false,
+    enabledModules: [
+      "dashboard",
+      "sales",
+      "inventory",
+      "accounting",
+      "logistics",
+      "pos",
+    ],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "SKU Item", Customer: "Buyer", Invoice: "Marketplace Bill", Project: "Fulfillment" },
+    terminology: {
+      Product: "SKU Item",
+      Customer: "Buyer",
+      Invoice: "Marketplace Bill",
+      Project: "Fulfillment",
+    },
   },
   [Industry.Service]: {
-    hasInventory: false, hasProjects: true, hasHealthcare: false, hasManufacturing: false, hasLogistics: false, hasFinance: false,
+    hasInventory: false,
+    hasProjects: true,
+    hasHealthcare: false,
+    hasManufacturing: false,
+    hasLogistics: false,
+    hasFinance: false,
     enabledModules: ["dashboard", "projects", "accounting", "crm", "hr"],
     mobileRestrictedModules: ["accounting"],
-    terminology: { Product: "Service Package", Customer: "Client", Invoice: "Service Invoice", Project: "Engagement" },
+    terminology: {
+      Product: "Service Package",
+      Customer: "Client",
+      Invoice: "Service Invoice",
+      Project: "Engagement",
+    },
   },
 };
 
@@ -100,7 +251,7 @@ type HttpMethod = "get" | "post" | "patch" | "put" | "delete";
  * LINT-001: Common Generic Entity for Desktop Bridge
  * Used to avoid 'any' while satisfying dynamic access in the offline engine.
  */
-// LINT-001: Suppressing any for the dynamic bridge engine 
+// LINT-001: Suppressing any for the dynamic bridge engine
 
 interface DesktopOfflineSession {
   mode: "offline";
@@ -464,7 +615,8 @@ const MARKETPLACE_APPS = [
     id: "inventory-core",
     name: "inventory-core",
     label: "Inventory Core",
-    description: "Offline inventory management for products, stock, and warehouses.",
+    description:
+      "Offline inventory management for products, stock, and warehouses.",
     version: "1.0.0",
     author: "Klypso",
     category: "Operations",
@@ -473,7 +625,8 @@ const MARKETPLACE_APPS = [
     id: "accounting-core",
     name: "accounting-core",
     label: "Accounting Core",
-    description: "Offline invoicing, ledgers, and receivables for the desktop workspace.",
+    description:
+      "Offline invoicing, ledgers, and receivables for the desktop workspace.",
     version: "1.0.0",
     author: "Klypso",
     category: "Finance",
@@ -496,12 +649,14 @@ function getDesktopBridge() {
 
 export function isDesktopShell(): boolean {
   if (typeof window === "undefined") return false;
-  
+
   // Strict shell detection: Look for the 'nexusDesktop' bridge injected by the Electron preload.
   // This ensures we never misidentify a standard web browser as the desktop shell.
-  const hasBridge = Boolean(window.nexusDesktop && typeof window.nexusDesktop === 'object');
+  const hasBridge = Boolean(
+    window.nexusDesktop && typeof window.nexusDesktop === "object",
+  );
   const isDesktopEnv = Boolean(window.nexusDesktop?.shell?.isDesktop);
-  
+
   return hasBridge && isDesktopEnv;
 }
 
@@ -527,39 +682,71 @@ function round2(num: number): number {
 }
 
 function getBOMById(state: DesktopLocalState, id: string) {
-  return state.boms.find(b => b.id === id);
+  return state.boms.find((b) => b.id === id);
 }
 
-function explodeBOMRecursive(state: DesktopLocalState, bomId: string, multiplier: number, depth = 0): Array<{ productId: string, quantity: number, unit: string }> {
+function explodeBOMRecursive(
+  state: DesktopLocalState,
+  bomId: string,
+  multiplier: number,
+  depth = 0,
+): Array<{ productId: string; quantity: number; unit: string }> {
   if (depth > 10) return [];
   const bom = getBOMById(state, bomId);
   if (!bom) return [];
 
-  let result: Array<{ productId: string, quantity: number, unit: string }> = [];
+  let result: Array<{ productId: string; quantity: number; unit: string }> = [];
   const components = bom.components || [];
 
   for (const comp of components) {
-    const subBom = state.boms.find(b => b.productId === comp.productId);
+    const subBom = state.boms.find((b) => b.productId === comp.productId);
     const itemQty = comp.quantity * multiplier;
 
     if (subBom) {
-      result = result.concat(explodeBOMRecursive(state, subBom.id, itemQty / (bom.quantity || 1), depth + 1));
+      result = result.concat(
+        explodeBOMRecursive(
+          state,
+          subBom.id,
+          itemQty / (bom.quantity || 1),
+          depth + 1,
+        ),
+      );
     } else {
       result.push({
         productId: comp.productId,
         quantity: itemQty,
-        unit: comp.unit || "pcs"
+        unit: comp.unit || "pcs",
       });
     }
   }
   return result;
 }
 
-function recordProductionMovement(state: DesktopLocalState, params: {
-  productId: string, warehouseId: string, quantity: number, type: "IN" | "OUT", 
-  reference?: string, notes?: string, correlationId?: string, accountId?: string, contraAccountId?: string
-}) {
-  const { productId, warehouseId, quantity, type, reference, notes, correlationId, accountId, contraAccountId } = params;
+function recordProductionMovement(
+  state: DesktopLocalState,
+  params: {
+    productId: string;
+    warehouseId: string;
+    quantity: number;
+    type: "IN" | "OUT";
+    reference?: string;
+    notes?: string;
+    correlationId?: string;
+    accountId?: string;
+    contraAccountId?: string;
+  },
+) {
+  const {
+    productId,
+    warehouseId,
+    quantity,
+    type,
+    reference,
+    notes,
+    correlationId,
+    accountId,
+    contraAccountId,
+  } = params;
   // 1. Log Movement
   state.stockMovements.push({
     id: makeId("sm"),
@@ -570,24 +757,35 @@ function recordProductionMovement(state: DesktopLocalState, params: {
     reference,
     notes,
     correlationId,
-    createdAt: nowIso()
+    createdAt: nowIso(),
   });
 
   // 2. Update Location
-  let loc = state.stockLocations.find(l => l.productId === productId && l.warehouseId === warehouseId && l.notes === notes);
+  let loc = state.stockLocations.find(
+    (l) =>
+      l.productId === productId &&
+      l.warehouseId === warehouseId &&
+      l.notes === notes,
+  );
   if (!loc) {
     loc = { id: makeId("sl"), productId, warehouseId, quantity: 0, notes };
     state.stockLocations.push(loc);
   }
-  
+
   if (loc) {
-    loc.quantity = type === "IN" ? Number(loc.quantity || 0) + quantity : Number(loc.quantity || 0) - quantity;
+    loc.quantity =
+      type === "IN"
+        ? Number(loc.quantity || 0) + quantity
+        : Number(loc.quantity || 0) - quantity;
   }
 
   // 3. Update Product Total Stock
-  const product = state.products.find(p => p.id === productId); 
+  const product = state.products.find((p) => p.id === productId);
   if (product) {
-    product.stock = type === "IN" ? Number(product.stock || 0) + quantity : Number(product.stock || 0) - quantity;
+    product.stock =
+      type === "IN"
+        ? Number(product.stock || 0) + quantity
+        : Number(product.stock || 0) - quantity;
   }
 
   // 4. Accounting Ledger (Experimental Parity)
@@ -601,9 +799,17 @@ function recordProductionMovement(state: DesktopLocalState, params: {
         reference: reference || "INTERNAL",
         correlationId: correlationId || "none",
         transactions: [
-          { accountId, type: type === "IN" ? "Debit" : "Credit", amount: value },
-          { accountId: contraAccountId, type: type === "IN" ? "Credit" : "Debit", amount: value }
-        ]
+          {
+            accountId,
+            type: type === "IN" ? "Debit" : "Credit",
+            amount: value,
+          },
+          {
+            accountId: contraAccountId,
+            type: type === "IN" ? "Credit" : "Debit",
+            amount: value,
+          },
+        ],
       });
     }
   }
@@ -620,7 +826,10 @@ function deriveNameFromEmail(email: string): string {
     .join(" ");
 }
 
-function deriveWorkspaceName(email: string, fallback = "Local Workspace"): string {
+function deriveWorkspaceName(
+  email: string,
+  fallback = "Local Workspace",
+): string {
   const company = email.split("@")[1]?.split(".")[0];
   if (!company) return fallback;
   return company.charAt(0).toUpperCase() + company.slice(1);
@@ -636,14 +845,18 @@ function safeParseJson<T>(value: string | null): T | null {
 }
 
 function base64UrlEncode(value: string): string {
-  const encoded = typeof window !== "undefined"
-    ? window.btoa(unescape(encodeURIComponent(value)))
-    : Buffer.from(value, "utf8").toString("base64");
+  const encoded =
+    typeof window !== "undefined"
+      ? window.btoa(unescape(encodeURIComponent(value)))
+      : Buffer.from(value, "utf8").toString("base64");
 
   return encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function buildOfflineToken(session: DesktopOfflineSession, isOnboarded = true): string {
+function buildOfflineToken(
+  session: DesktopOfflineSession,
+  isOnboarded = true,
+): string {
   const header = { alg: "none", typ: "JWT" };
   const payload = {
     sub: session.userId,
@@ -658,7 +871,7 @@ function buildOfflineToken(session: DesktopOfflineSession, isOnboarded = true): 
     isOnboarded,
     isSuperAdmin: false,
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 365 * 5),
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365 * 5,
   };
 
   return `${base64UrlEncode(JSON.stringify(header))}.${base64UrlEncode(JSON.stringify(payload))}.`;
@@ -677,7 +890,10 @@ function buildUserProfile(session: DesktopOfflineSession): DesktopUserProfile {
   };
 }
 
-function persistBrowserSession(session: DesktopOfflineSession, isOnboarded = true) {
+function persistBrowserSession(
+  session: DesktopOfflineSession,
+  isOnboarded = true,
+) {
   if (typeof window === "undefined") return;
 
   localStorage.setItem("k_desktop_mode", "offline");
@@ -700,35 +916,71 @@ function normalizeState(raw: unknown): DesktopLocalState {
       createdAt: input.workspace?.createdAt || baseNow,
       updatedAt: input.workspace?.updatedAt || baseNow,
     },
-    users: Array.isArray(input.users) ? input.users as LocalUser[] : [],
-    warehouses: Array.isArray(input.warehouses) ? input.warehouses as LocalWarehouse[] : [
-      {
-        id: "warehouse-main",
-        name: "Main Warehouse",
-        location: "Local Device",
-        isPrimary: true,
-      },
-    ],
-    products: Array.isArray(input.products) ? input.products as LocalProduct[] : [],
-    customers: Array.isArray(input.customers) ? input.customers as LocalCustomer[] : [],
-    opportunities: Array.isArray(input.opportunities) ? input.opportunities as LocalOpportunity[] : [],
-    accounts: Array.isArray(input.accounts) ? input.accounts as LocalAccount[] : [],
-    transactions: Array.isArray(input.transactions) ? input.transactions as LocalTransaction[] : [],
-    invoices: Array.isArray(input.invoices) ? input.invoices as LocalInvoice[] : [],
-    activities: Array.isArray(input.activities) ? input.activities as LocalActivity[] : [],
-    syncQueue: Array.isArray(input.syncQueue) ? input.syncQueue as LocalSyncOperation[] : [],
-    fixedAssets: Array.isArray(input.fixedAssets) ? input.fixedAssets as LocalFixedAsset[] : [],
-    employees: Array.isArray(input.employees) ? input.employees as LocalEmployee[] : [],
-    leaves: Array.isArray(input.leaves) ? input.leaves as LocalLeave[] : [],
-    patients: Array.isArray(input.patients) ? input.patients as LocalPatient[] : [],
-    shipments: Array.isArray(input.shipments) ? input.shipments as LocalShipment[] : [],
-    loans: Array.isArray(input.loans) ? input.loans as LocalLoan[] : [],
-    machines: Array.isArray(input.machines) ? input.machines as LocalMachine[] : [],
+    users: Array.isArray(input.users) ? (input.users as LocalUser[]) : [],
+    warehouses: Array.isArray(input.warehouses)
+      ? (input.warehouses as LocalWarehouse[])
+      : [
+          {
+            id: "warehouse-main",
+            name: "Main Warehouse",
+            location: "Local Device",
+            isPrimary: true,
+          },
+        ],
+    products: Array.isArray(input.products)
+      ? (input.products as LocalProduct[])
+      : [],
+    customers: Array.isArray(input.customers)
+      ? (input.customers as LocalCustomer[])
+      : [],
+    opportunities: Array.isArray(input.opportunities)
+      ? (input.opportunities as LocalOpportunity[])
+      : [],
+    accounts: Array.isArray(input.accounts)
+      ? (input.accounts as LocalAccount[])
+      : [],
+    transactions: Array.isArray(input.transactions)
+      ? (input.transactions as LocalTransaction[])
+      : [],
+    invoices: Array.isArray(input.invoices)
+      ? (input.invoices as LocalInvoice[])
+      : [],
+    activities: Array.isArray(input.activities)
+      ? (input.activities as LocalActivity[])
+      : [],
+    syncQueue: Array.isArray(input.syncQueue)
+      ? (input.syncQueue as LocalSyncOperation[])
+      : [],
+    fixedAssets: Array.isArray(input.fixedAssets)
+      ? (input.fixedAssets as LocalFixedAsset[])
+      : [],
+    employees: Array.isArray(input.employees)
+      ? (input.employees as LocalEmployee[])
+      : [],
+    leaves: Array.isArray(input.leaves) ? (input.leaves as LocalLeave[]) : [],
+    patients: Array.isArray(input.patients)
+      ? (input.patients as LocalPatient[])
+      : [],
+    shipments: Array.isArray(input.shipments)
+      ? (input.shipments as LocalShipment[])
+      : [],
+    loans: Array.isArray(input.loans) ? (input.loans as LocalLoan[]) : [],
+    machines: Array.isArray(input.machines)
+      ? (input.machines as LocalMachine[])
+      : [],
     boms: Array.isArray(input.boms) ? input.boms : [],
-    manufacturingOrders: Array.isArray(input.manufacturingOrders) ? input.manufacturingOrders : [],
-    stockMovements: Array.isArray(input.stockMovements) ? input.stockMovements : [],
-    stockLocations: Array.isArray(input.stockLocations) ? input.stockLocations : [],
-    installedApps: Array.isArray(input.installedApps) ? input.installedApps : ["inventory-core", "accounting-core", "crm-core"],
+    manufacturingOrders: Array.isArray(input.manufacturingOrders)
+      ? input.manufacturingOrders
+      : [],
+    stockMovements: Array.isArray(input.stockMovements)
+      ? input.stockMovements
+      : [],
+    stockLocations: Array.isArray(input.stockLocations)
+      ? input.stockLocations
+      : [],
+    installedApps: Array.isArray(input.installedApps)
+      ? input.installedApps
+      : ["inventory-core", "accounting-core", "crm-core"],
   };
 }
 
@@ -741,7 +993,9 @@ async function getLocalState(): Promise<DesktopLocalState> {
   return normalizeState(await bridge.localData.get());
 }
 
-async function saveLocalState(state: DesktopLocalState): Promise<DesktopLocalState> {
+async function saveLocalState(
+  state: DesktopLocalState,
+): Promise<DesktopLocalState> {
   const bridge = getDesktopBridge();
   if (!bridge?.localData?.set) {
     throw new Error("Desktop local data bridge is unavailable.");
@@ -764,7 +1018,11 @@ function currentStoredUser(): DesktopUserProfile | null {
   return safeParseJson<DesktopUserProfile>(localStorage.getItem("k_user"));
 }
 
-function pushActivity(state: DesktopLocalState, message: string, user = currentStoredUser()?.fullName || "Local Owner") {
+function pushActivity(
+  state: DesktopLocalState,
+  message: string,
+  user = currentStoredUser()?.fullName || "Local Owner",
+) {
   state.activities.unshift({
     id: makeId("activity"),
     message,
@@ -774,7 +1032,12 @@ function pushActivity(state: DesktopLocalState, message: string, user = currentS
   state.activities = state.activities.slice(0, 100);
 }
 
-function queueForSync(state: DesktopLocalState, method: string, endpoint: string, payload: unknown) {
+function queueForSync(
+  state: DesktopLocalState,
+  method: string,
+  endpoint: string,
+  payload: unknown,
+) {
   state.syncQueue.unshift({
     id: makeId("sync"),
     method,
@@ -824,7 +1087,10 @@ function buildResponse<T>(
   };
 }
 
-function buildOfflineError(config: InternalAxiosRequestConfig, message: string): never {
+function buildOfflineError(
+  config: InternalAxiosRequestConfig,
+  message: string,
+): never {
   throw {
     config,
     response: {
@@ -856,46 +1122,77 @@ function paginate<T>(items: T[], page: number, limit: number) {
 
 function buildForecast(state: DesktopLocalState) {
   const pendingInvoices = state.invoices
-    .filter((invoice) => invoice.status !== "Cancelled" && invoice.totalAmount > invoice.amountPaid)
+    .filter(
+      (invoice) =>
+        invoice.status !== "Cancelled" &&
+        invoice.totalAmount > invoice.amountPaid,
+    )
     .slice(0, 3)
     .map((invoice, index) => ({
       invoiceNumber: invoice.invoiceNumber,
-      customerName: `${invoice.customer.firstName} ${invoice.customer.lastName}`.trim() || "Walk-in Customer",
+      customerName:
+        `${invoice.customer.firstName} ${invoice.customer.lastName}`.trim() ||
+        "Walk-in Customer",
       amount: round2(invoice.totalAmount - invoice.amountPaid),
-      expectedDate: new Date(Date.now() + ((index + 3) * 86400000)).toISOString(),
-      probability: 85 - (index * 10),
+      expectedDate: new Date(Date.now() + (index + 3) * 86400000).toISOString(),
+      probability: 85 - index * 10,
     }));
 
   return {
     projections: pendingInvoices,
-    totalExpected: round2(pendingInvoices.reduce((sum, invoice) => sum + invoice.amount, 0)),
+    totalExpected: round2(
+      pendingInvoices.reduce((sum, invoice) => sum + invoice.amount, 0),
+    ),
     avgSettlementDays: pendingInvoices.length > 0 ? 7 : 0,
     trendPercentage: pendingInvoices.length > 0 ? 8 : 0,
   };
 }
 
 function buildAccountingStats(state: DesktopLocalState) {
-  const activeInvoices = state.invoices.filter((invoice) => invoice.status !== "Cancelled");
-  const income = round2(activeInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0));
-  const receivable = round2(activeInvoices.reduce((sum, invoice) => sum + Math.max(0, invoice.totalAmount - invoice.amountPaid), 0));
-  const expenses = round2(activeInvoices.reduce((sum, invoice) => {
-    return sum + invoice.items.reduce((itemSum, item) => {
-      const product = state.products.find((entry) => entry.id === item.productId);
-      return itemSum + ((product?.costPrice || 0) * item.quantity);
-    }, 0);
-  }, 0));
-  const overdueAmount = round2(activeInvoices.reduce((sum, invoice) => {
-    if (new Date(invoice.dueDate).getTime() < Date.now() && invoice.totalAmount > invoice.amountPaid) {
-      return sum + (invoice.totalAmount - invoice.amountPaid);
-    }
-    return sum;
-  }, 0));
+  const activeInvoices = state.invoices.filter(
+    (invoice) => invoice.status !== "Cancelled",
+  );
+  const income = round2(
+    activeInvoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0),
+  );
+  const receivable = round2(
+    activeInvoices.reduce(
+      (sum, invoice) =>
+        sum + Math.max(0, invoice.totalAmount - invoice.amountPaid),
+      0,
+    ),
+  );
+  const expenses = round2(
+    activeInvoices.reduce((sum, invoice) => {
+      return (
+        sum +
+        invoice.items.reduce((itemSum, item) => {
+          const product = state.products.find(
+            (entry) => entry.id === item.productId,
+          );
+          return itemSum + (product?.costPrice || 0) * item.quantity;
+        }, 0)
+      );
+    }, 0),
+  );
+  const overdueAmount = round2(
+    activeInvoices.reduce((sum, invoice) => {
+      if (
+        new Date(invoice.dueDate).getTime() < Date.now() &&
+        invoice.totalAmount > invoice.amountPaid
+      ) {
+        return sum + (invoice.totalAmount - invoice.amountPaid);
+      }
+      return sum;
+    }, 0),
+  );
 
   const topDebtors = [...state.customers]
     .sort((a, b) => (b.receivable || 0) - (a.receivable || 0))
     .slice(0, 5)
     .map((customer) => ({
-      name: customer.company || `${customer.firstName} ${customer.lastName}`.trim(),
+      name:
+        customer.company || `${customer.firstName} ${customer.lastName}`.trim(),
       amount: round2(customer.receivable || 0),
       aging: customer.receivable > 0 ? 7 : 0,
     }));
@@ -906,9 +1203,19 @@ function buildAccountingStats(state: DesktopLocalState) {
     income,
     expenses,
     overdueAmount,
-    gstLiability: round2(activeInvoices.reduce((sum, invoice) => {
-      return sum + invoice.items.reduce((itemSum, item) => itemSum + ((item.price * item.quantity) * ((item.gstRate || 0) / 100)), 0);
-    }, 0)),
+    gstLiability: round2(
+      activeInvoices.reduce((sum, invoice) => {
+        return (
+          sum +
+          invoice.items.reduce(
+            (itemSum, item) =>
+              itemSum +
+              item.price * item.quantity * ((item.gstRate || 0) / 100),
+            0,
+          )
+        );
+      }, 0),
+    ),
     topDebtors,
   };
 }
@@ -916,8 +1223,15 @@ function buildAccountingStats(state: DesktopLocalState) {
 function buildInventoryStats(state: DesktopLocalState) {
   return {
     totalProducts: state.products.length,
-    lowStock: state.products.filter((product) => product.stock <= product.minStockLevel).length,
-    totalValue: round2(state.products.reduce((sum, product) => sum + (product.stock * product.costPrice), 0)),
+    lowStock: state.products.filter(
+      (product) => product.stock <= product.minStockLevel,
+    ).length,
+    totalValue: round2(
+      state.products.reduce(
+        (sum, product) => sum + product.stock * product.costPrice,
+        0,
+      ),
+    ),
   };
 }
 
@@ -928,7 +1242,9 @@ function buildAnalyticsSummary(state: DesktopLocalState) {
     revenue: accounting.income,
     expenses: accounting.expenses,
     profit: accounting.netProfit,
-    orderCount: state.invoices.filter((invoice) => invoice.status !== "Cancelled").length,
+    orderCount: state.invoices.filter(
+      (invoice) => invoice.status !== "Cancelled",
+    ).length,
     customerCount: state.customers.length,
     inventoryCount: state.products.length,
     activeCampaigns: 0,
@@ -948,9 +1264,14 @@ function buildPerformanceSeries(state: DesktopLocalState) {
 
   for (const invoice of state.invoices) {
     if (invoice.status === "Cancelled") continue;
-    const label = new Date(invoice.issueDate).toLocaleString("en-IN", { month: "short" });
+    const label = new Date(invoice.issueDate).toLocaleString("en-IN", {
+      month: "short",
+    });
     if (!monthMap.has(label)) continue;
-    monthMap.set(label, round2((monthMap.get(label) || 0) + invoice.totalAmount));
+    monthMap.set(
+      label,
+      round2((monthMap.get(label) || 0) + invoice.totalAmount),
+    );
   }
 
   return Array.from(monthMap.entries()).map(([month, revenue]) => ({
@@ -961,10 +1282,16 @@ function buildPerformanceSeries(state: DesktopLocalState) {
 
 function recalculateCustomerReceivables(state: DesktopLocalState) {
   state.customers = state.customers.map((customer) => {
-    const receivable = round2(state.invoices.reduce((sum, invoice) => {
-      if (invoice.customerId !== customer.id || invoice.status === "Cancelled") return sum;
-      return sum + Math.max(0, invoice.totalAmount - invoice.amountPaid);
-    }, 0));
+    const receivable = round2(
+      state.invoices.reduce((sum, invoice) => {
+        if (
+          invoice.customerId !== customer.id ||
+          invoice.status === "Cancelled"
+        )
+          return sum;
+        return sum + Math.max(0, invoice.totalAmount - invoice.amountPaid);
+      }, 0),
+    );
 
     return {
       ...customer,
@@ -975,18 +1302,41 @@ function recalculateCustomerReceivables(state: DesktopLocalState) {
 
 function buildValueChain(state: DesktopLocalState) {
   return [
-    { label: "Leads", count: state.customers.filter((customer) => customer.status === "Lead").length, color: "#94A3B8" },
-    { label: "Customers", count: state.customers.filter((customer) => customer.status !== "Lead").length, color: "#3B82F6" },
+    {
+      label: "Leads",
+      count: state.customers.filter((customer) => customer.status === "Lead")
+        .length,
+      color: "#94A3B8",
+    },
+    {
+      label: "Customers",
+      count: state.customers.filter((customer) => customer.status !== "Lead")
+        .length,
+      color: "#3B82F6",
+    },
     { label: "Products", count: state.products.length, color: "#10B981" },
-    { label: "Invoices", count: state.invoices.filter((invoice) => invoice.status !== "Cancelled").length, color: "#F59E0B" },
+    {
+      label: "Invoices",
+      count: state.invoices.filter((invoice) => invoice.status !== "Cancelled")
+        .length,
+      color: "#F59E0B",
+    },
   ];
 }
 
-function searchResults(state: DesktopLocalState, query: string): SearchResult[] {
+function searchResults(
+  state: DesktopLocalState,
+  query: string,
+): SearchResult[] {
   const q = query.toLowerCase();
 
   const productMatches = state.products
-    .filter((product) => [product.name, product.sku, product.barcode].join(" ").toLowerCase().includes(q))
+    .filter((product) =>
+      [product.name, product.sku, product.barcode]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    )
     .slice(0, 3)
     .map<SearchResult>((product) => ({
       type: "Product",
@@ -996,11 +1346,17 @@ function searchResults(state: DesktopLocalState, query: string): SearchResult[] 
     }));
 
   const customerMatches = state.customers
-    .filter((customer) => [customer.firstName, customer.lastName, customer.company, customer.phone].join(" ").toLowerCase().includes(q))
+    .filter((customer) =>
+      [customer.firstName, customer.lastName, customer.company, customer.phone]
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    )
     .slice(0, 3)
     .map<SearchResult>((customer) => ({
       type: "Customer",
-      title: customer.company || `${customer.firstName} ${customer.lastName}`.trim(),
+      title:
+        customer.company || `${customer.firstName} ${customer.lastName}`.trim(),
       subtitle: customer.email || customer.phone || "Offline customer",
       path: "/crm",
     }));
@@ -1011,14 +1367,19 @@ function searchResults(state: DesktopLocalState, query: string): SearchResult[] 
     .map<SearchResult>((invoice) => ({
       type: "Bill",
       title: invoice.invoiceNumber,
-      subtitle: `${invoice.customer.firstName} ${invoice.customer.lastName}`.trim() || "Walk-in Customer",
+      subtitle:
+        `${invoice.customer.firstName} ${invoice.customer.lastName}`.trim() ||
+        "Walk-in Customer",
       path: "/accounting",
     }));
 
   return [...productMatches, ...customerMatches, ...invoiceMatches];
 }
 
-function ensureUserInState(state: DesktopLocalState, session: DesktopOfflineSession) {
+function ensureUserInState(
+  state: DesktopLocalState,
+  session: DesktopOfflineSession,
+) {
   const existingUser = state.users.find((user) => user.id === session.userId);
   if (existingUser) {
     existingUser.fullName = session.fullName;
@@ -1048,7 +1409,7 @@ export async function createDesktopOfflineSession(input?: {
   let bridge = getDesktopBridge();
   let attempts = 0;
   while ((!bridge || !bridge.session) && attempts < 15) {
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 200));
     bridge = getDesktopBridge();
     attempts++;
   }
@@ -1069,11 +1430,16 @@ export async function createDesktopOfflineSession(input?: {
       updatedAt: nowIso(),
     };
   }
-  
-  const email = input?.email?.trim() || currentStoredUser()?.email || "owner@local.erp";
-  const fullName = input?.fullName?.trim() || deriveNameFromEmail(email) || "Local Owner";
+
+  const email =
+    input?.email?.trim() || currentStoredUser()?.email || "owner@local.erp";
+  const fullName =
+    input?.fullName?.trim() || deriveNameFromEmail(email) || "Local Owner";
   const createdAt = nowIso();
-  const tenantName = input?.tenantName?.trim() || state.workspace.name || deriveWorkspaceName(email);
+  const tenantName =
+    input?.tenantName?.trim() ||
+    state.workspace.name ||
+    deriveWorkspaceName(email);
 
   state.workspace = {
     ...state.workspace,
@@ -1098,26 +1464,28 @@ export async function createDesktopOfflineSession(input?: {
   pushActivity(state, "Opened desktop workspace in offline mode", fullName);
   await saveLocalState(state);
 
-  const persisted = await bridge.session.set(session) as DesktopOfflineSession;
+  const persisted = (await bridge.session.set(
+    session,
+  )) as DesktopOfflineSession;
   persistBrowserSession(persisted);
   return persisted;
 }
 
 export async function hydrateDesktopOfflineSession(): Promise<boolean> {
   if (!isDesktopShell()) return false;
-  
+
   const bridge = getDesktopBridge();
   if (typeof window === "undefined") return false;
   if (!bridge || !bridge.localData) return false;
 
   const state = await getLocalState();
-  
+
   // First-run detection: Is the workspace still using default "Guest" values?
   const isOnboarded = Boolean(
-    state.workspace.industry && 
-    state.workspace.industry !== "General" && 
-    state.workspace.name && 
-    state.workspace.name !== "Local Workspace"
+    state.workspace.industry &&
+    state.workspace.industry !== "General" &&
+    state.workspace.name &&
+    state.workspace.name !== "Local Workspace",
   );
 
   // If we already have a session in the bridge, use it
@@ -1161,13 +1529,15 @@ export async function clearDesktopOfflineSession(): Promise<void> {
 
 function applyInvoiceToState(
   state: DesktopLocalState,
-  payload: Record<string, unknown>, 
+  payload: Record<string, unknown>,
 ): LocalInvoice {
   const issueDate = String(payload.issueDate || nowIso());
   const dueDate = String(payload.dueDate || issueDate);
   const amountPaid = Number(payload.amountPaid || 0);
   const paymentMode = String(payload.paymentMode || "Cash");
-  const itemsPayload = Array.isArray(payload.items) ? payload.items as Array<Record<string, unknown>> : []; 
+  const itemsPayload = Array.isArray(payload.items)
+    ? (payload.items as Array<Record<string, unknown>>)
+    : [];
   const customerId = String(payload.customerId || "walk-in-customer");
 
   let customer = state.customers.find((entry) => entry.id === customerId);
@@ -1190,7 +1560,9 @@ function applyInvoiceToState(
   }
 
   const items: LocalInvoiceItem[] = itemsPayload.map((rawItem) => {
-    const product = state.products.find((entry) => entry.id === String(rawItem.productId || ""));
+    const product = state.products.find(
+      (entry) => entry.id === String(rawItem.productId || ""),
+    );
     const price = Number(rawItem.price ?? product?.price ?? 0);
     const quantity = Number(rawItem.quantity ?? 0);
     const gstRate = Number(rawItem.gstRate ?? product?.gstRate ?? 0);
@@ -1205,13 +1577,22 @@ function applyInvoiceToState(
     };
   });
 
-  const subtotal = round2(items.reduce((sum, item) => sum + (item.price * item.quantity), 0));
-  const totalTax = round2(items.reduce((sum, item) => sum + ((item.price * item.quantity) * (item.gstRate / 100)), 0));
+  const subtotal = round2(
+    items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+  );
+  const totalTax = round2(
+    items.reduce(
+      (sum, item) => sum + item.price * item.quantity * (item.gstRate / 100),
+      0,
+    ),
+  );
   const totalAmount = round2(subtotal + totalTax);
 
   const invoice: LocalInvoice = {
     id: String(payload.id || makeId("invoice")),
-    invoiceNumber: String(payload.invoiceNumber || `INV-${Date.now().toString().slice(-8)}`),
+    invoiceNumber: String(
+      payload.invoiceNumber || `INV-${Date.now().toString().slice(-8)}`,
+    ),
     customerId: customer.id,
     customer: {
       firstName: customer.firstName,
@@ -1222,7 +1603,12 @@ function applyInvoiceToState(
     dueDate,
     totalAmount,
     amountPaid,
-    status: amountPaid >= totalAmount ? "Paid" : amountPaid > 0 ? "Partially Paid" : "Pending",
+    status:
+      amountPaid >= totalAmount
+        ? "Paid"
+        : amountPaid > 0
+          ? "Partially Paid"
+          : "Pending",
     paymentMode,
     items,
     createdAt: nowIso(),
@@ -1250,7 +1636,9 @@ function applyInvoiceToState(
     {
       id: makeId("txn"),
       date: issueDate,
-      account: { name: amountPaid > 0 ? "Cash in Hand" : "Accounts Receivable" },
+      account: {
+        name: amountPaid > 0 ? "Cash in Hand" : "Accounts Receivable",
+      },
       type: "Debit",
       amount: totalAmount,
       description: `Invoice ${invoice.invoiceNumber}`,
@@ -1263,16 +1651,23 @@ function applyInvoiceToState(
   return invoice;
 }
 
-function recordPaymentInState(state: DesktopLocalState, payload: Record<string, unknown>) { 
+function recordPaymentInState(
+  state: DesktopLocalState,
+  payload: Record<string, unknown>,
+) {
   const invoiceId = String(payload.invoiceId || "");
   const invoice = state.invoices.find((entry) => entry.id === invoiceId);
   if (!invoice) {
-    buildOfflineError({} as InternalAxiosRequestConfig, "Invoice not found in local workspace.");
+    buildOfflineError(
+      {} as InternalAxiosRequestConfig,
+      "Invoice not found in local workspace.",
+    );
   }
 
   const amount = Number(payload.amount || 0);
   invoice.amountPaid = round2(invoice.amountPaid + amount);
-  invoice.status = invoice.amountPaid >= invoice.totalAmount ? "Paid" : "Partially Paid";
+  invoice.status =
+    invoice.amountPaid >= invoice.totalAmount ? "Paid" : "Partially Paid";
 
   state.transactions.unshift({
     id: makeId("txn"),
@@ -1297,16 +1692,23 @@ function profileFromState(state: DesktopLocalState) {
     tenant: {
       id: state.workspace.id,
       name: state.workspace.name,
-      slug: state.workspace.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      slug: state.workspace.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, ""),
     },
   };
 }
 
-export function shouldHandleDesktopOfflineRequest(config: InternalAxiosRequestConfig): boolean {
+export function shouldHandleDesktopOfflineRequest(
+  config: InternalAxiosRequestConfig,
+): boolean {
   return isDesktopOfflineMode() && Boolean(config.url);
 }
 
-export async function handleDesktopOfflineRequest(config: InternalAxiosRequestConfig): Promise<AxiosResponse> {
+export async function handleDesktopOfflineRequest(
+  config: InternalAxiosRequestConfig,
+): Promise<AxiosResponse> {
   const method = (config.method?.toLowerCase() || "get") as HttpMethod;
   const url = normalizeApiPath(config.url);
   const path = url.pathname.replace(/^\/+/, "");
@@ -1321,24 +1723,29 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "auth/onboarding") {
-    const payload = parseBody<{ industry?: string, companyName?: string }>(config);
+    const payload = parseBody<{ industry?: string; companyName?: string }>(
+      config,
+    );
     state.workspace.industry = payload.industry || state.workspace.industry;
     state.workspace.name = payload.companyName || state.workspace.name;
-    
+
     const sessionTokenUser = currentStoredUser();
     if (sessionTokenUser) {
-      persistBrowserSession({
-        mode: "offline",
-        userId: sessionTokenUser.id,
-        fullName: sessionTokenUser.fullName,
-        email: sessionTokenUser.email,
-        role: sessionTokenUser.role,
-        tenantId: sessionTokenUser.tenantId,
-        tenantName: state.workspace.name,
-        industry: state.workspace.industry,
-        createdAt: nowIso(),
-        lastOpenedAt: nowIso()
-      }, true);
+      persistBrowserSession(
+        {
+          mode: "offline",
+          userId: sessionTokenUser.id,
+          fullName: sessionTokenUser.fullName,
+          email: sessionTokenUser.email,
+          role: sessionTokenUser.role,
+          tenantId: sessionTokenUser.tenantId,
+          tenantName: state.workspace.name,
+          industry: state.workspace.industry,
+          createdAt: nowIso(),
+          lastOpenedAt: nowIso(),
+        },
+        true,
+      );
     }
     await saveLocalState(state);
     return buildResponse(config, { success: true });
@@ -1347,16 +1754,30 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   if (method === "get" && path === "system/config") {
     // 1. Get industry from local workspace state (Defaults to General if not set)
     const industryKey = state.workspace.industry || Industry.General;
-    
+
     // 2. Fetch the corresponding industry configuration from the unified registry
-    const industryConfig = (INDUSTRY_CONFIGS as unknown as Record<string, unknown>)[industryKey] || INDUSTRY_CONFIGS[Industry.General]; 
-    
+    const industryConfig =
+      (INDUSTRY_CONFIGS as unknown as Record<string, unknown>)[industryKey] ||
+      INDUSTRY_CONFIGS[Industry.General];
+
     return buildResponse(config, {
-      industry: String((industryConfig as Record<string, unknown>).industry || "General"),
+      industry: String(
+        (industryConfig as Record<string, unknown>).industry || "General",
+      ),
       // 3. Merge base infrastructure modules with industry-specific modules
-      enabledModules: Array.from(new Set([...DEFAULT_ENABLED_MODULES, ...((industryConfig as Record<string, unknown>).enabledModules as string[] || [])])),
+      enabledModules: Array.from(
+        new Set([
+          ...DEFAULT_ENABLED_MODULES,
+          ...(((industryConfig as Record<string, unknown>)
+            .enabledModules as string[]) || []),
+        ]),
+      ),
       // 4. Inject the unified terminology map
-      terminology: ((industryConfig as Record<string, unknown>).terminology as Record<string, string>) || {},
+      terminology:
+        ((industryConfig as Record<string, unknown>).terminology as Record<
+          string,
+          string
+        >) || {},
     });
   }
 
@@ -1364,7 +1785,11 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, {
       apps: MARKETPLACE_APPS.length,
       installed: state.installedApps.length,
-      records: state.products.length + state.customers.length + state.invoices.length + state.transactions.length,
+      records:
+        state.products.length +
+        state.customers.length +
+        state.invoices.length +
+        state.transactions.length,
       uptime: "Offline Mode",
     });
   }
@@ -1384,16 +1809,22 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
       burnRate: stats.expenses,
       growth: stats.income > 0 ? 8 : 0,
       healthScore: state.invoices.length > 0 ? 82 : 100,
-      alerts: state.syncQueue.length > 0 ? [`${state.syncQueue.length} sync items pending`] : [],
+      alerts:
+        state.syncQueue.length > 0
+          ? [`${state.syncQueue.length} sync items pending`]
+          : [],
     });
   }
 
   if (method === "get" && path === "analytics/activity") {
-    return buildResponse(config, state.activities.map((entry) => ({
-      message: entry.message,
-      user: entry.user,
-      time: entry.time,
-    })));
+    return buildResponse(
+      config,
+      state.activities.map((entry) => ({
+        message: entry.message,
+        user: entry.user,
+        time: entry.time,
+      })),
+    );
   }
 
   if (method === "get" && path === "analytics/value-chain") {
@@ -1405,26 +1836,41 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "get" && path === "system/search") {
-    return buildResponse(config, searchResults(state, url.searchParams.get("q") || ""));
+    return buildResponse(
+      config,
+      searchResults(state, url.searchParams.get("q") || ""),
+    );
   }
 
   if (method === "get" && path === "system/apps") {
-    return buildResponse(config, MARKETPLACE_APPS.map((app) => ({
-      ...app,
-      installed: state.installedApps.includes(app.name),
-    })));
+    return buildResponse(
+      config,
+      MARKETPLACE_APPS.map((app) => ({
+        ...app,
+        installed: state.installedApps.includes(app.name),
+      })),
+    );
   }
 
   if (method === "post" && path.startsWith("system/apps/")) {
     const [, , appName, action] = path.split("/");
-    if (appName && action === "install" && !state.installedApps.includes(appName)) {
+    if (
+      appName &&
+      action === "install" &&
+      !state.installedApps.includes(appName)
+    ) {
       state.installedApps.push(appName);
     }
     if (appName && action === "uninstall") {
-      state.installedApps = state.installedApps.filter((name) => name !== appName);
+      state.installedApps = state.installedApps.filter(
+        (name) => name !== appName,
+      );
     }
     queueForSync(state, "POST", path, parseBody(config));
-    pushActivity(state, `${action === "install" ? "Installed" : "Uninstalled"} module ${appName}`);
+    pushActivity(
+      state,
+      `${action === "install" ? "Installed" : "Uninstalled"} module ${appName}`,
+    );
     await saveLocalState(state);
     return buildResponse(config, { success: true });
   }
@@ -1451,7 +1897,10 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, []);
   }
 
-  if ((method === "post" || method === "delete") && path.startsWith("system/api/keys")) {
+  if (
+    (method === "post" || method === "delete") &&
+    path.startsWith("system/api/keys")
+  ) {
     queueForSync(state, method.toUpperCase(), path, parseBody(config));
     await saveLocalState(state);
     return buildResponse(config, { success: true });
@@ -1476,20 +1925,25 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path === "inventory/products/find-by-code") {
     const code = (url.searchParams.get("code") || "").toLowerCase();
-    const product = state.products.find((entry) =>
-      [entry.sku, entry.barcode, entry.name].some((value) => value.toLowerCase() === code),
-    ) || null;
+    const product =
+      state.products.find((entry) =>
+        [entry.sku, entry.barcode, entry.name].some(
+          (value) => value.toLowerCase() === code,
+        ),
+      ) || null;
     return buildResponse(config, product);
   }
 
   if (method === "get" && path === "inventory/products") {
     const page = Number(url.searchParams.get("page") || 1);
-    const limit = Number(url.searchParams.get("limit") || Math.max(state.products.length, 50));
+    const limit = Number(
+      url.searchParams.get("limit") || Math.max(state.products.length, 50),
+    );
     return buildResponse(config, paginate(state.products, page, limit));
   }
 
   if (method === "post" && path === "inventory/products") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const product: LocalProduct = {
       id: makeId("product"),
       name: String(payload.name || "Unnamed Product"),
@@ -1522,7 +1976,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("inventory/products/")) {
     const productId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const product = state.products.find((entry) => entry.id === productId);
     if (!product) {
       buildOfflineError(config, "Product not found in the local workspace.");
@@ -1530,11 +1984,22 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
     Object.assign(product, {
       ...payload,
-      stock: payload.stock !== undefined ? Number(payload.stock) : product.stock,
-      price: payload.price !== undefined ? Number(payload.price) : product.price,
-      costPrice: payload.costPrice !== undefined ? Number(payload.costPrice) : product.costPrice,
-      gstRate: payload.gstRate !== undefined ? Number(payload.gstRate) : product.gstRate,
-      minStockLevel: payload.minStockLevel !== undefined ? Number(payload.minStockLevel) : product.minStockLevel,
+      stock:
+        payload.stock !== undefined ? Number(payload.stock) : product.stock,
+      price:
+        payload.price !== undefined ? Number(payload.price) : product.price,
+      costPrice:
+        payload.costPrice !== undefined
+          ? Number(payload.costPrice)
+          : product.costPrice,
+      gstRate:
+        payload.gstRate !== undefined
+          ? Number(payload.gstRate)
+          : product.gstRate,
+      minStockLevel:
+        payload.minStockLevel !== undefined
+          ? Number(payload.minStockLevel)
+          : product.minStockLevel,
       updatedAt: nowIso(),
       updatedBy: {
         fullName: currentStoredUser()?.fullName || "Local Owner",
@@ -1565,7 +2030,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "inventory/warehouses") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const warehouse: LocalWarehouse = {
       id: makeId("warehouse"),
       name: String(payload.name || "New Warehouse"),
@@ -1580,8 +2045,10 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("inventory/warehouses/")) {
     const warehouseId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>> (config); 
-    const warehouse = state.warehouses.find((entry) => entry.id === warehouseId);
+    const payload = parseBody<Record<string, unknown>>(config);
+    const warehouse = state.warehouses.find(
+      (entry) => entry.id === warehouseId,
+    );
     if (!warehouse) {
       buildOfflineError(config, "Warehouse not found in the local workspace.");
     }
@@ -1597,19 +2064,24 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path === "crm/customers") {
     const page = Number(url.searchParams.get("page") || 1);
-    const limit = Number(url.searchParams.get("limit") || Math.max(state.customers.length, 50));
+    const limit = Number(
+      url.searchParams.get("limit") || Math.max(state.customers.length, 50),
+    );
     return buildResponse(config, paginate(state.customers, page, limit));
   }
 
   if (method === "post" && path === "crm/customers") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const customer: LocalCustomer = {
       id: makeId("customer"),
       firstName: String(payload.firstName || ""),
       lastName: String(payload.lastName || ""),
       email: String(payload.email || ""),
       phone: String(payload.phone || ""),
-      company: String(payload.company || `${payload.firstName || ""} ${payload.lastName || ""}`.trim()),
+      company: String(
+        payload.company ||
+          `${payload.firstName || ""} ${payload.lastName || ""}`.trim(),
+      ),
       address: String(payload.address || ""),
       state: String(payload.state || ""),
       gstin: String(payload.gstin || ""),
@@ -1626,7 +2098,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "patch" && path.startsWith("crm/customers/")) {
     const customerId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const customer = state.customers.find((entry) => entry.id === customerId);
     if (!customer) {
       buildOfflineError(config, "Customer not found in the local workspace.");
@@ -1639,8 +2111,12 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "delete" && path.startsWith("crm/customers/")) {
     const customerId = path.split("/")[2];
-    state.customers = state.customers.filter((entry) => entry.id !== customerId);
-    state.opportunities = state.opportunities.filter((entry) => entry.customerId !== customerId);
+    state.customers = state.customers.filter(
+      (entry) => entry.id !== customerId,
+    );
+    state.opportunities = state.opportunities.filter(
+      (entry) => entry.customerId !== customerId,
+    );
     queueForSync(state, "DELETE", path, null);
     await saveLocalState(state);
     return buildResponse(config, { success: true });
@@ -1648,10 +2124,20 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path === "crm/stats") {
     return buildResponse(config, {
-      totalCustomers: state.customers.filter((customer) => customer.status !== "Lead").length,
-      leads: state.customers.filter((customer) => customer.status === "Lead").length,
-      pipelineValue: round2(state.opportunities.reduce((sum, opportunity) => sum + opportunity.value, 0)),
-      openDeals: state.opportunities.filter((opportunity) => opportunity.stage !== "Closed").length,
+      totalCustomers: state.customers.filter(
+        (customer) => customer.status !== "Lead",
+      ).length,
+      leads: state.customers.filter((customer) => customer.status === "Lead")
+        .length,
+      pipelineValue: round2(
+        state.opportunities.reduce(
+          (sum, opportunity) => sum + opportunity.value,
+          0,
+        ),
+      ),
+      openDeals: state.opportunities.filter(
+        (opportunity) => opportunity.stage !== "Closed",
+      ).length,
     });
   }
 
@@ -1660,15 +2146,19 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "crm/opportunities") {
-    const payload = parseBody<Record<string, unknown>> (config); 
-    const customer = state.customers.find((entry) => entry.id === String(payload.customerId || ""));
+    const payload = parseBody<Record<string, unknown>>(config);
+    const customer = state.customers.find(
+      (entry) => entry.id === String(payload.customerId || ""),
+    );
     const opportunity: LocalOpportunity = {
       id: makeId("opportunity"),
       title: String(payload.title || "Untitled Deal"),
       value: Number(payload.value || 0),
       stage: String(payload.stage || "New"),
       customerId: String(payload.customerId || ""),
-      customer: customer ? { firstName: customer.firstName, lastName: customer.lastName } : undefined,
+      customer: customer
+        ? { firstName: customer.firstName, lastName: customer.lastName }
+        : undefined,
     };
     state.opportunities.unshift(opportunity);
     queueForSync(state, "POST", path, payload);
@@ -1678,13 +2168,19 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "post" && path.startsWith("crm/opportunities/")) {
     const opportunityId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>> (config); 
-    const opportunity = state.opportunities.find((entry) => entry.id === opportunityId);
+    const payload = parseBody<Record<string, unknown>>(config);
+    const opportunity = state.opportunities.find(
+      (entry) => entry.id === opportunityId,
+    );
     if (!opportunity) {
-      buildOfflineError(config, "Opportunity not found in the local workspace.");
+      buildOfflineError(
+        config,
+        "Opportunity not found in the local workspace.",
+      );
     }
     Object.assign(opportunity, payload, {
-      value: payload.value !== undefined ? Number(payload.value) : opportunity.value,
+      value:
+        payload.value !== undefined ? Number(payload.value) : opportunity.value,
     });
     queueForSync(state, "POST", path, payload);
     await saveLocalState(state);
@@ -1696,7 +2192,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/accounts") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const account: LocalAccount = {
       id: makeId("account"),
       code: String(payload.code || `A-${Date.now().toString().slice(-4)}`),
@@ -1718,19 +2214,21 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path === "accounting/invoices") {
     const page = Number(url.searchParams.get("page") || 1);
-    const limit = Number(url.searchParams.get("limit") || Math.max(state.invoices.length, 50));
+    const limit = Number(
+      url.searchParams.get("limit") || Math.max(state.invoices.length, 50),
+    );
     return buildResponse(config, paginate(state.invoices, page, limit));
   }
 
   if (method === "post" && path === "accounting/invoices") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const invoice = applyInvoiceToState(state, payload);
     await saveLocalState(state);
     return buildResponse(config, invoice, 201);
   }
 
   if (method === "post" && path === "accounting/invoices/bulk") {
-    const payload = parseBody<Array<Record<string, unknown>>> (config);
+    const payload = parseBody<Array<Record<string, unknown>>>(config);
     const results = (Array.isArray(payload) ? payload : []).map((entry) => {
       const invoice = applyInvoiceToState(state, entry);
       return {
@@ -1742,7 +2240,11 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, { results });
   }
 
-  if (method === "post" && path.startsWith("accounting/invoices/") && path.endsWith("/cancel")) {
+  if (
+    method === "post" &&
+    path.startsWith("accounting/invoices/") &&
+    path.endsWith("/cancel")
+  ) {
     const invoiceId = path.split("/")[2];
     const invoice = state.invoices.find((entry) => entry.id === invoiceId);
     if (!invoice) {
@@ -1757,7 +2259,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/payments") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const invoice = recordPaymentInState(state, payload);
     await saveLocalState(state);
     return buildResponse(config, invoice);
@@ -1776,17 +2278,22 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         avgEntryLag: 0,
         taggingRatio: "100%",
       },
-      signals: state.syncQueue.length > 0 ? ["Cloud sync pending"] : ["Workspace is fully local"],
+      signals:
+        state.syncQueue.length > 0
+          ? ["Cloud sync pending"]
+          : ["Workspace is fully local"],
     });
   }
 
   if (method === "get" && path === "accounting/leaderboard") {
     const user = currentStoredUser();
-    return buildResponse(config, [{
-      name: user?.fullName || "Local Owner",
-      invoices: state.invoices.length,
-      avgLag: 0,
-    }]);
+    return buildResponse(config, [
+      {
+        name: user?.fullName || "Local Owner",
+        invoices: state.invoices.length,
+        avgLag: 0,
+      },
+    ]);
   }
 
   if (method === "get" && path === "accounting/recovery-memory") {
@@ -1794,7 +2301,9 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
       .filter((customer) => customer.receivable > 0)
       .slice(0, 5)
       .map((customer) => ({
-        name: customer.company || `${customer.firstName} ${customer.lastName}`.trim(),
+        name:
+          customer.company ||
+          `${customer.firstName} ${customer.lastName}`.trim(),
         phone: customer.phone,
         daysSilent: 0,
       }));
@@ -1807,7 +2316,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "users") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const member: LocalUser = {
       id: makeId("user"),
       fullName: String(payload.fullName || "Team Member"),
@@ -1823,12 +2332,19 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, member, 201);
   }
 
-  if (method === "patch" && path.startsWith("users/") && path.endsWith("/role")) {
+  if (
+    method === "patch" &&
+    path.startsWith("users/") &&
+    path.endsWith("/role")
+  ) {
     const userId = path.split("/")[1];
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const member = state.users.find((entry) => entry.id === userId);
     if (!member) {
-      buildOfflineError(config, "Team member not found in the local workspace.");
+      buildOfflineError(
+        config,
+        "Team member not found in the local workspace.",
+      );
     }
     member.role = String(payload.role || member.role);
     queueForSync(state, "PATCH", path, payload);
@@ -1836,7 +2352,11 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, member);
   }
 
-  if (method === "post" && path.startsWith("users/") && path.endsWith("/reset-password")) {
+  if (
+    method === "post" &&
+    path.startsWith("users/") &&
+    path.endsWith("/reset-password")
+  ) {
     queueForSync(state, "POST", path, null);
     await saveLocalState(state);
     return buildResponse(config, { temporaryPassword: "LOCAL-ONLY-1234" });
@@ -1852,32 +2372,39 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
 
   if (method === "get" && path === "sales/orders") {
     const page = Number(url.searchParams.get("page") || 1);
-    const limit = Number(url.searchParams.get("limit") || Math.max(state.invoices.length, 50));
+    const limit = Number(
+      url.searchParams.get("limit") || Math.max(state.invoices.length, 50),
+    );
     const paginatedInvoices = paginate(state.invoices, page, limit);
     const ordersData = {
       ...paginatedInvoices,
-      data: paginatedInvoices.data.map(inv => ({
+      data: paginatedInvoices.data.map((inv) => ({
         id: inv.id,
         createdAt: inv.createdAt,
         total: inv.totalAmount,
         status: inv.status,
-        customer: inv.customer
-      }))
+        customer: inv.customer,
+      })),
     };
     return buildResponse(config, ordersData);
   }
 
   if (method === "get" && path === "sales/stats") {
-    const activeInvoices = state.invoices.filter((inv) => inv.status !== "Cancelled");
+    const activeInvoices = state.invoices.filter(
+      (inv) => inv.status !== "Cancelled",
+    );
     return buildResponse(config, {
-      totalRevenue: round2(activeInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0)),
+      totalRevenue: round2(
+        activeInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0),
+      ),
       orderCount: activeInvoices.length,
-      pendingOrders: activeInvoices.filter(i => i.status === "Pending").length,
+      pendingOrders: activeInvoices.filter((i) => i.status === "Pending")
+        .length,
     });
   }
 
   if (method === "post" && path === "sales/orders") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const invoice = applyInvoiceToState(state, payload);
     await saveLocalState(state);
     return buildResponse(config, invoice, 201);
@@ -1888,18 +2415,20 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "accounting/fixed-assets") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const asset: LocalFixedAsset = {
       id: makeId("fa"),
       name: String(payload.name || "Untitled Asset"),
-      assetCode: String(payload.assetCode || `FA-${Date.now().toString().slice(-4)}`),
+      assetCode: String(
+        payload.assetCode || `FA-${Date.now().toString().slice(-4)}`,
+      ),
       purchaseDate: String(payload.purchaseDate || nowIso()),
       purchaseValue: String(payload.purchaseValue || "0"),
       salvageValue: String(payload.salvageValue || "0"),
       usefulLife: Number(payload.usefulLife || 60),
       accumulatedDepreciation: "0",
       status: "Active",
-      depreciationLogs: []
+      depreciationLogs: [],
     };
     state.fixedAssets.unshift(asset);
     queueForSync(state, "POST", path, payload);
@@ -1907,28 +2436,37 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     await saveLocalState(state);
     return buildResponse(config, asset, 201);
   }
-  
-  if (method === "post" && path.startsWith("accounting/fixed-assets/") && path.endsWith("/depreciate")) {
+
+  if (
+    method === "post" &&
+    path.startsWith("accounting/fixed-assets/") &&
+    path.endsWith("/depreciate")
+  ) {
     const assetId = path.split("/")[2];
-    const asset = state.fixedAssets.find(a => a.id === assetId);
+    const asset = state.fixedAssets.find((a) => a.id === assetId);
     if (!asset) buildOfflineError(config, "Asset not found locally.");
-    
+
     const cost = parseFloat(asset.purchaseValue);
     const salvage = parseFloat(asset.salvageValue);
     const life = asset.usefulLife || 60;
-    const monthlyDepreciation = cost > 0 && life > 0 ? (cost - salvage) / life : 0;
-    
-    asset.accumulatedDepreciation = round2(parseFloat(asset.accumulatedDepreciation) + monthlyDepreciation).toString();
+    const monthlyDepreciation =
+      cost > 0 && life > 0 ? (cost - salvage) / life : 0;
+
+    asset.accumulatedDepreciation = round2(
+      parseFloat(asset.accumulatedDepreciation) + monthlyDepreciation,
+    ).toString();
     asset.depreciationLogs.unshift({
       id: makeId("dep"),
       amount: round2(monthlyDepreciation).toString(),
       date: nowIso(),
-      description: "Monthly Depreciation (Offline)"
+      description: "Monthly Depreciation (Offline)",
     });
-    
+
     queueForSync(state, "POST", path, null);
     await saveLocalState(state);
-    return buildResponse(config, { monthlyDepreciation: round2(monthlyDepreciation) });
+    return buildResponse(config, {
+      monthlyDepreciation: round2(monthlyDepreciation),
+    });
   }
 
   if (method === "get" && path === "accounting/auditor/dashboard") {
@@ -1947,8 +2485,8 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         totalReceipts: stats.income - stats.receivable,
         totalPayments: stats.expenses,
         netBalanceDr: stats.receivable,
-        netBalanceCr: 0
-      }
+        netBalanceCr: 0,
+      },
     });
   }
 
@@ -1976,13 +2514,16 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
       industry: payload.industry || state.workspace.industry,
       updatedAt: nowIso(),
     };
-    
-    pushActivity(state, `Initialized industrial workspace: ${state.workspace.name} (${state.workspace.industry})`);
+
+    pushActivity(
+      state,
+      `Initialized industrial workspace: ${state.workspace.name} (${state.workspace.industry})`,
+    );
     await saveLocalState(state);
-    
+
     // Refresh the dummy token to include the new onboarding status
     await hydrateDesktopOfflineSession();
-    
+
     return buildResponse(config, { success: true, workspace: state.workspace });
   }
 
@@ -1993,23 +2534,36 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   if (method === "get" && path === "hr/stats") {
     return buildResponse(config, {
       totalEmployees: state.employees.length,
-      onLeave: state.leaves.filter(l => l.status === "Approved").length,
+      onLeave: state.leaves.filter((l) => l.status === "Approved").length,
       newHires: 0,
-      payrollTotal: state.employees.reduce((sum, e) => sum + e.salary, 0)
+      payrollTotal: state.employees.reduce((sum, e) => sum + e.salary, 0),
     });
   }
 
   if (method === "get" && path === "healthcare/patients") {
-    return buildResponse(config, state.patients.length > 0 ? state.patients : [
-      { id: 'PAT-001', name: 'Sample Patient', age: 40, gender: 'Male', contact: '+91 99999 99999', lastVisit: nowIso(), status: 'Stable' }
-    ]);
+    return buildResponse(
+      config,
+      state.patients.length > 0
+        ? state.patients
+        : [
+            {
+              id: "PAT-001",
+              name: "Sample Patient",
+              age: 40,
+              gender: "Male",
+              contact: "+91 99999 99999",
+              lastVisit: nowIso(),
+              status: "Stable",
+            },
+          ],
+    );
   }
 
   if (method === "get" && path === "logistics/stats") {
     return buildResponse(config, {
       totalVehicles: state.shipments.length || 10,
       activeShipments: state.shipments.length,
-      efficiency: 92
+      efficiency: 92,
     });
   }
 
@@ -2024,14 +2578,14 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   // --- MANUFACTURING HUB (Offline Zenith Engine) ---
 
   if (method === "get" && path === "manufacturing/overview") {
-    const ordersWithBoms = state.manufacturingOrders.map(wo => ({
+    const ordersWithBoms = state.manufacturingOrders.map((wo) => ({
       ...wo,
-      bom: state.boms.find(b => b.id === wo.bomId)
+      bom: state.boms.find((b) => b.id === wo.bomId),
     }));
     return buildResponse(config, {
       boms: state.boms,
       workOrders: ordersWithBoms,
-      machines: state.machines
+      machines: state.machines,
     });
   }
 
@@ -2040,35 +2594,41 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "manufacturing/bom") {
-    const payload = parseBody<Record<string, unknown>>(config); 
-    const bom: LocalBOM = { 
+    const payload = parseBody<Record<string, unknown>>(config);
+    const bom: LocalBOM = {
       id: makeId("bom"),
       productId: String(payload.productId || ""),
       name: String(payload.name || "Standard BOM"),
       quantity: Number(payload.quantity || 1),
       overheadRate: Number(payload.overheadRate || 0),
       isOverheadFixed: Boolean(payload.isOverheadFixed),
-      components: Array.isArray(payload.components) ? payload.components as LocalBOMComponent[] : [],
+      components: Array.isArray(payload.components)
+        ? (payload.components as LocalBOMComponent[])
+        : [],
       createdAt: nowIso(),
-      updatedAt: nowIso()
+      updatedAt: nowIso(),
     };
-    state.boms.unshift(bom); 
+    state.boms.unshift(bom);
     queueForSync(state, "POST", "manufacturing/boms", payload);
     pushActivity(state, `Created Bill of Materials for ${bom.name}`);
     await saveLocalState(state);
     return buildResponse(config, bom, 201);
   }
 
-  if (method === "get" && path.startsWith("manufacturing/boms/") && path.endsWith("/cost")) {
+  if (
+    method === "get" &&
+    path.startsWith("manufacturing/boms/") &&
+    path.endsWith("/cost")
+  ) {
     const bomId = path.split("/")[2];
-    const bom = state.boms.find(b => b.id === bomId); 
+    const bom = state.boms.find((b) => b.id === bomId);
     if (!bom) return buildOfflineError(config, "BOM not found locally.");
 
     const requirements = explodeBOMRecursive(state, bomId, 1);
     let materialCost = 0;
     for (const req of requirements) {
-      const product = state.products.find(p => p.id === req.productId); 
-      materialCost += (Number(product?.costPrice || 0) * req.quantity);
+      const product = state.products.find((p) => p.id === req.productId);
+      materialCost += Number(product?.costPrice || 0) * req.quantity;
     }
 
     const overheadCost = bom.isOverheadFixed
@@ -2079,20 +2639,28 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
       materialCost: round2(materialCost),
       overheadCost: round2(overheadCost),
       totalCost: round2(materialCost + overheadCost),
-      items: requirements
+      items: requirements,
     });
   }
 
-  if (method === "get" && path.startsWith("manufacturing/work-orders/") && path.endsWith("/shortages")) {
+  if (
+    method === "get" &&
+    path.startsWith("manufacturing/work-orders/") &&
+    path.endsWith("/shortages")
+  ) {
     const woId = path.split("/")[2];
-    const wo = state.manufacturingOrders.find(o => o.id === woId); 
+    const wo = state.manufacturingOrders.find((o) => o.id === woId);
     if (!wo) return buildOfflineError(config, "Work order not found.");
 
-    const requirements = explodeBOMRecursive(state, wo.bomId, Number(wo.quantity));
+    const requirements = explodeBOMRecursive(
+      state,
+      wo.bomId,
+      Number(wo.quantity),
+    );
     const shortages = [];
 
     for (const req of requirements) {
-      const product = state.products.find(p => p.id === req.productId); 
+      const product = state.products.find((p) => p.id === req.productId);
       const currentStock = Number(product?.stock || 0);
       if (currentStock < req.quantity) {
         shortages.push({
@@ -2100,21 +2668,29 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
           productName: product?.name || "Unknown",
           required: req.quantity,
           available: currentStock,
-          missing: req.quantity - currentStock
+          missing: req.quantity - currentStock,
         });
       }
     }
     return buildResponse(config, shortages);
   }
 
-  if (method === "post" && path.startsWith("manufacturing/work-orders/") && path.endsWith("/start")) {
+  if (
+    method === "post" &&
+    path.startsWith("manufacturing/work-orders/") &&
+    path.endsWith("/start")
+  ) {
     const woId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>>(config); 
-    const wo = state.manufacturingOrders.find(o => o.id === woId); 
+    const payload = parseBody<Record<string, unknown>>(config);
+    const wo = state.manufacturingOrders.find((o) => o.id === woId);
     if (!wo) return buildOfflineError(config, "Work order not found.");
 
     const correlationId = makeCorrelationId();
-    const requirements = explodeBOMRecursive(state, wo.bomId, Number(wo.quantity));
+    const requirements = explodeBOMRecursive(
+      state,
+      wo.bomId,
+      Number(wo.quantity),
+    );
 
     for (const req of requirements) {
       recordProductionMovement(state, {
@@ -2126,7 +2702,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         notes: `Production Issue: ${woId.slice(-6)}`,
         correlationId,
         accountId: "acc-rm",
-        contraAccountId: "acc-wip"
+        contraAccountId: "acc-wip",
       });
 
       recordProductionMovement(state, {
@@ -2136,16 +2712,18 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         type: "IN",
         reference: woId.slice(-6),
         notes: "WIP_BIN",
-        correlationId
+        correlationId,
       });
     }
 
     wo.status = "InProgress";
     wo.startDate = nowIso();
     wo.machineId = String(payload.machineId || "");
-    
+
     if (payload.machineId) {
-      const machine = state.machines.find(m => m.id === String(payload.machineId)); 
+      const machine = state.machines.find(
+        (m) => m.id === String(payload.machineId),
+      );
       if (machine) machine.status = "Running";
     }
 
@@ -2155,14 +2733,18 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, { success: true });
   }
 
-  if (method === "post" && path.startsWith("manufacturing/work-orders/") && path.endsWith("/complete")) {
+  if (
+    method === "post" &&
+    path.startsWith("manufacturing/work-orders/") &&
+    path.endsWith("/complete")
+  ) {
     const woId = path.split("/")[2];
-    const payload = parseBody<Record<string, unknown>>(config); 
-    const wo = state.manufacturingOrders.find(o => o.id === woId); 
+    const payload = parseBody<Record<string, unknown>>(config);
+    const wo = state.manufacturingOrders.find((o) => o.id === woId);
     if (!wo) return buildOfflineError(config, "Work order not found.");
 
     const correlationId = makeCorrelationId();
-    const bom = state.boms.find(b => b.id === wo.bomId); 
+    const bom = state.boms.find((b) => b.id === wo.bomId);
     const finishedProductId = bom?.productId;
     const producedQty = Number(payload.producedQuantity || wo.quantity);
     const scrapQty = Number(payload.scrapQuantity || 0);
@@ -2178,7 +2760,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         type: "OUT",
         reference: woId.slice(-6),
         notes: "WIP_BIN",
-        correlationId
+        correlationId,
       });
     }
 
@@ -2192,11 +2774,11 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
         notes: `Production Receipt: ${woId.slice(-6)}`,
         correlationId,
         accountId: "acc-inventory",
-        contraAccountId: "acc-wip"
+        contraAccountId: "acc-wip",
       });
-      
-      const components = bom?.components || []; 
-      const byproducts = components.filter(c => c.isByproduct);
+
+      const components = bom?.components || [];
+      const byproducts = components.filter((c) => c.isByproduct);
       for (const bp of byproducts) {
         recordProductionMovement(state, {
           productId: bp.productId,
@@ -2205,7 +2787,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
           type: "IN",
           reference: woId.slice(-6),
           notes: `By-product from ${woId.slice(-6)}`,
-          correlationId
+          correlationId,
         });
       }
     }
@@ -2218,12 +2800,15 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     wo.operatorName = String(payload.operatorName || "");
 
     if (wo.machineId) {
-      const machine = state.machines.find(m => m.id === wo.machineId); 
+      const machine = state.machines.find((m) => m.id === wo.machineId);
       if (machine) machine.status = "Idle";
     }
 
     queueForSync(state, "POST", path, payload);
-    pushActivity(state, `Work Order ${woId.slice(-6)} completed with ${producedQty} units yield.`);
+    pushActivity(
+      state,
+      `Work Order ${woId.slice(-6)} completed with ${producedQty} units yield.`,
+    );
     await saveLocalState(state);
     return buildResponse(config, { success: true });
   }
@@ -2233,14 +2818,14 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "manufacturing/machines") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const machine: LocalMachine = {
       id: makeId("mac"),
       name: String(payload.name || "New Machine"),
       code: String(payload.code || `M-${Date.now().toString().slice(-4)}`),
       type: String(payload.type || "Generic"),
       status: "Idle",
-      hourlyRate: Number(payload.hourlyRate || 0)
+      hourlyRate: Number(payload.hourlyRate || 0),
     };
     state.machines.push(machine);
     queueForSync(state, "POST", path, payload);
@@ -2249,7 +2834,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
   }
 
   if (method === "post" && path === "manufacturing/work-orders") {
-    const payload = parseBody<Record<string, unknown>> (config); 
+    const payload = parseBody<Record<string, unknown>>(config);
     const wo: LocalWorkOrder = {
       id: makeId("wo"),
       bomId: String(payload.bomId || ""),
@@ -2257,7 +2842,7 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
       quantity: Number(payload.quantity || 1),
       status: "Planned",
       createdAt: nowIso(),
-      updatedAt: nowIso()
+      updatedAt: nowIso(),
     };
     state.manufacturingOrders.push(wo);
     queueForSync(state, "POST", "manufacturing/work-orders", payload);
@@ -2265,5 +2850,8 @@ export async function handleDesktopOfflineRequest(config: InternalAxiosRequestCo
     return buildResponse(config, wo, 201);
   }
 
-  return buildOfflineError(config, "This industry module is initialized but has no local data yet.");
+  return buildOfflineError(
+    config,
+    "This industry module is initialized but has no local data yet.",
+  );
 }

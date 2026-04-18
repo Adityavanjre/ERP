@@ -1,5 +1,13 @@
-import { Instagram, Twitter, Linkedin, ArrowUpRight, Mail, Phone, MapPin } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import {
+  Instagram,
+  Twitter,
+  Linkedin,
+  ArrowUpRight,
+  Mail,
+  Phone,
+  MapPin,
+} from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -12,13 +20,21 @@ const Footer = () => {
           KLYPSO
         </h2>
         <div className="relative z-10 flex flex-col items-center">
-          <NavLink to="/contact" className="group flex flex-col items-center gap-10">
+          <NavLink
+            to="/contact"
+            className="group flex flex-col items-center gap-10"
+          >
             <span className="text-4xl md:text-8xl font-bold text-white group-hover:text-[#C5A059] transition-all duration-700 font-heading tracking-tight">
               Build Your <br />
-              <span className="font-display italic font-light text-[#C5A059]">Digital Masterpiece.</span>
+              <span className="font-display italic font-light text-[#C5A059]">
+                Digital Masterpiece.
+              </span>
             </span>
             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#C5A059] text-black flex items-center justify-center group-hover:scale-110 transition-all duration-700 shadow-2xl">
-              <ArrowUpRight size={48} className="group-hover:rotate-45 transition-transform duration-700" />
+              <ArrowUpRight
+                size={48}
+                className="group-hover:rotate-45 transition-transform duration-700"
+              />
             </div>
           </NavLink>
         </div>
@@ -28,12 +44,17 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 lg:gap-24 mb-32 border-t border-white/5 pt-24">
           <div className="lg:col-span-1 space-y-10">
             <div className="group flex items-center gap-4">
-              <div className="w-10 h-10 bg-[#C5A059] rounded-xl flex items-center justify-center font-black text-black text-lg shadow-lg">K</div>
-              <span className="text-2xl font-black text-white tracking-tight font-heading">KLYPSO</span>
+              <div className="w-10 h-10 bg-[#C5A059] rounded-xl flex items-center justify-center font-black text-black text-lg shadow-lg">
+                K
+              </div>
+              <span className="text-2xl font-black text-white tracking-tight font-heading">
+                KLYPSO
+              </span>
             </div>
 
             <p className="text-sm font-medium leading-relaxed max-w-xs text-zinc-500 italic">
-              A boutique digital agency specialized in engineering high-performance systems and bespoke brand identities.
+              A boutique digital agency specialized in engineering
+              high-performance systems and bespoke brand identities.
             </p>
 
             <div className="flex gap-4">
@@ -44,35 +65,107 @@ const Footer = () => {
           </div>
 
           <div className="space-y-10">
-            <h3 className="text-white font-black uppercase tracking-[0.4em] text-[10px]">Expertise</h3>
+            <h3 className="text-white font-black uppercase tracking-[0.4em] text-[10px]">
+              Expertise
+            </h3>
             <ul className="space-y-6 text-sm font-medium">
-              <li><NavLink to="/services" className="hover:text-[#C5A059] transition-colors">Web Systems</NavLink></li>
-              <li><NavLink to="/services" className="hover:text-[#C5A059] transition-colors">Mobile Platforms</NavLink></li>
-              <li><NavLink to="/services" className="hover:text-[#C5A059] transition-colors">Cinematic Visuals</NavLink></li>
-              <li><NavLink to="/services" className="hover:text-[#C5A059] transition-colors">Market Domination</NavLink></li>
+              <li>
+                <NavLink
+                  to="/services"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Web Systems
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/services"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Mobile Platforms
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/services"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Cinematic Visuals
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/services"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Market Domination
+                </NavLink>
+              </li>
             </ul>
           </div>
 
           <div className="space-y-10">
-            <h3 className="text-white font-black uppercase tracking-[0.4em] text-[10px]">Explore</h3>
+            <h3 className="text-white font-black uppercase tracking-[0.4em] text-[10px]">
+              Explore
+            </h3>
             <ul className="space-y-6 text-sm font-medium">
-              <li><NavLink to="/about" className="hover:text-[#C5A059] transition-colors">About Us</NavLink></li>
-              <li><NavLink to="/portfolio" className="hover:text-[#C5A059] transition-colors">Portfolio</NavLink></li>
-              <li><NavLink to="/careers" className="hover:text-[#C5A059] transition-colors">Careers</NavLink></li>
-              <li><NavLink to="/resources" className="hover:text-[#C5A059] transition-colors">Resources</NavLink></li>
+              <li>
+                <NavLink
+                  to="/about"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  About Us
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/portfolio"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Portfolio
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/careers"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Careers
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/resources"
+                  className="hover:text-[#C5A059] transition-colors"
+                >
+                  Resources
+                </NavLink>
+              </li>
             </ul>
           </div>
 
           <div className="space-y-10">
-            <h3 className="text-white font-black uppercase tracking-[0.4em] text-[10px]">Contact</h3>
+            <h3 className="text-white font-black uppercase tracking-[0.4em] text-[10px]">
+              Contact
+            </h3>
             <div className="space-y-6 text-sm font-medium">
               <div className="flex gap-4">
                 <Mail size={16} className="text-[#C5A059] shrink-0" />
-                <a href="mailto:klypsoproduct@gmail.com" className="hover:text-white transition-colors">klypsoproduct@gmail.com</a>
+                <a
+                  href="mailto:klypsoproduct@gmail.com"
+                  className="hover:text-white transition-colors"
+                >
+                  klypsoproduct@gmail.com
+                </a>
               </div>
               <div className="flex gap-4">
                 <Phone size={16} className="text-[#C5A059] shrink-0" />
-                <a href="tel:+919449734414" className="hover:text-white transition-colors">+91 944 973 4414</a>
+                <a
+                  href="tel:+919449734414"
+                  className="hover:text-white transition-colors"
+                >
+                  +91 944 973 4414
+                </a>
               </div>
               <div className="flex gap-4">
                 <MapPin size={16} className="text-[#C5A059] shrink-0" />
@@ -85,10 +178,27 @@ const Footer = () => {
         <div className="pt-16 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-10 text-[9px] uppercase tracking-[0.5em] font-black text-zinc-700">
           <p>© {new Date().getFullYear()} KLYPSO. Crafting Digital Legacies.</p>
           <div className="flex gap-6 sm:gap-12">
-            <a href="/portal/login" className="hover:text-[#C5A059] transition-colors">System Admin</a>
-            <a href="/portal" className="hover:text-[#C5A059] transition-colors">ERP Portal</a>
-            <NavLink to="/login" className="hover:text-[#C5A059] transition-colors">Agency Admin</NavLink>
-            <NavLink to="/legal" className="hover:text-white transition-colors">Legal</NavLink>
+            <a
+              href="/portal/login"
+              className="hover:text-[#C5A059] transition-colors"
+            >
+              System Admin
+            </a>
+            <a
+              href="/portal"
+              className="hover:text-[#C5A059] transition-colors"
+            >
+              ERP Portal
+            </a>
+            <NavLink
+              to="/login"
+              className="hover:text-[#C5A059] transition-colors"
+            >
+              Agency Admin
+            </NavLink>
+            <NavLink to="/legal" className="hover:text-white transition-colors">
+              Legal
+            </NavLink>
           </div>
         </div>
       </div>

@@ -33,7 +33,11 @@ declare global {
         reset: () => Promise<unknown>;
       };
       analytics?: {
-        track: (eventType: string, eventName: string, metadata?: unknown) => Promise<void>;
+        track: (
+          eventType: string,
+          eventName: string,
+          metadata?: unknown,
+        ) => Promise<void>;
         getStats: () => Promise<unknown>;
         getEvents: (since?: string) => Promise<unknown>;
       };

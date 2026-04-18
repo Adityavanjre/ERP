@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { isDesktopShell } from "../lib/desktop-offline";
 import Link from "next/link";
@@ -20,12 +20,8 @@ export default function NotFound() {
         }
     }, [router]);
 
-                <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-            </div>
-        );
-    }
-
     return (
+
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-8 animate-bounce">
                 <Search className="h-10 w-10 text-blue-600" />

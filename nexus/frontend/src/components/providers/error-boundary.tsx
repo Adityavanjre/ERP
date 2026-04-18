@@ -15,7 +15,7 @@ interface State {
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -32,7 +32,9 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">
           <div className="bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl max-w-md w-full">
             <AlertTriangle className="h-16 w-16 text-rose-500 mx-auto mb-6" />
-            <h1 className="text-2xl font-black tracking-tighter mb-2 italic uppercase">System Exception</h1>
+            <h1 className="text-2xl font-black tracking-tighter mb-2 italic uppercase">
+              System Exception
+            </h1>
             <p className="text-zinc-400 text-sm mb-8">
               A critical UI error occurred. Our engineers have been notified.
             </p>
@@ -51,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Attempt Recovery
               </Button>
             </div>
-            {process.env.NODE_ENV === 'development' && (
+            {process.env.NODE_ENV === "development" && (
               <pre className="mt-8 text-[10px] text-rose-400 text-left bg-black/50 p-4 rounded-xl overflow-auto max-h-40">
                 {this.state.error?.message}
                 {this.state.error?.stack}

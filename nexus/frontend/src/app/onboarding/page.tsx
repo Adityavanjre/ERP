@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Factory, 
-  Store, 
-  Stethoscope, 
-  Truck, 
-  HardHat, 
-  ArrowRight, 
-  ArrowLeft, 
-  CheckCircle2, 
+import {
+  Factory,
+  Store,
+  Stethoscope,
+  Truck,
+  HardHat,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
   Building2,
   Globe,
   ShieldCheck,
@@ -18,7 +18,7 @@ import {
   CreditCard,
   Briefcase,
   Car,
-  ShoppingBag
+  ShoppingBag,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,8 @@ const INDUSTRIES = [
   {
     id: "Manufacturing",
     title: "Manufacturing",
-    description: "Production, BOM exploded, WIP tracking, and inventory parity.",
+    description:
+      "Production, BOM exploded, WIP tracking, and inventory parity.",
     icon: Factory,
     color: "from-blue-500 to-indigo-600",
   },
@@ -45,7 +46,8 @@ const INDUSTRIES = [
   {
     id: "Healthcare",
     title: "Healthcare",
-    description: "Patient records, clinical inventory, and pharmacy management.",
+    description:
+      "Patient records, clinical inventory, and pharmacy management.",
     icon: Stethoscope,
     color: "from-rose-500 to-pink-600",
   },
@@ -59,7 +61,8 @@ const INDUSTRIES = [
   {
     id: "Construction",
     title: "Construction",
-    description: "Project sites, resource allocation, and material requisition.",
+    description:
+      "Project sites, resource allocation, and material requisition.",
     icon: HardHat,
     color: "from-slate-600 to-slate-800",
   },
@@ -141,7 +144,7 @@ export default function OnboardingPage() {
       // In Desktop Offline, this is intercepted by desktop-offline.ts
       await api.post("auth/onboarding", formData);
       toast.success("Workspace initialized!");
-      
+
       // Delay slightly for effect
       setTimeout(() => {
         router.push("/portal/dashboard");
@@ -162,16 +165,15 @@ export default function OnboardingPage() {
       </div>
 
       {/* Glassmorphism Container */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-4xl"
       >
         <div className="glass-card rounded-[2rem] p-8 md:p-12 border-white/5 shadow-2xl backdrop-blur-3xl">
-          
           {/* Header */}
           <div className="flex flex-col items-center text-center mb-12">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20"
@@ -182,8 +184,8 @@ export default function OnboardingPage() {
               Ignite Your <span className="text-blue-400">Klypso</span>
             </h1>
             <p className="text-slate-400 text-lg max-w-lg">
-              {step === 1 
-                ? "Identity is the foundation of scale. Tell us about your enterprise." 
+              {step === 1
+                ? "Identity is the foundation of scale. Tell us about your enterprise."
                 : "Specialization drives efficiency. Select the blueprint for your industry."}
             </p>
           </div>
@@ -199,26 +201,40 @@ export default function OnboardingPage() {
               >
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="companyName" className="text-slate-300 ml-1">Business Name</Label>
-                    <Input 
+                    <Label
+                      htmlFor="companyName"
+                      className="text-slate-300 ml-1"
+                    >
+                      Business Name
+                    </Label>
+                    <Input
                       id="companyName"
                       placeholder="e.g. Klypso Industrial Systems"
                       className="h-14 bg-white/5 border-white/10 text-white rounded-xl focus:ring-blue-500/50 outline-none transition-all placeholder:text-slate-600"
                       value={formData.companyName}
-                      onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          companyName: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-300 ml-1">Organization Type</Label>
+                    <Label className="text-slate-300 ml-1">
+                      Organization Type
+                    </Label>
                     <div className="grid grid-cols-2 gap-3">
                       {ORGANIZATION_TYPES.map((type) => (
                         <button
                           key={type}
-                          onClick={() => setFormData({ ...formData, businessType: type })}
+                          onClick={() =>
+                            setFormData({ ...formData, businessType: type })
+                          }
                           className={`h-12 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${
-                            formData.businessType === type 
-                              ? "bg-blue-600 text-white ring-2 ring-blue-400/50" 
+                            formData.businessType === type
+                              ? "bg-blue-600 text-white ring-2 ring-blue-400/50"
                               : "bg-white/5 text-slate-400 border border-white/5 hover:bg-white/10"
                           }`}
                         >
@@ -229,7 +245,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <Button 
+                <Button
                   onClick={nextStep}
                   className="w-full h-14 rounded-xl text-lg font-bold premium-gradient text-white hover:shadow-blue-500/25 transition-all group"
                 >
@@ -252,17 +268,23 @@ export default function OnboardingPage() {
                     return (
                       <button
                         key={industry.id}
-                        onClick={() => setFormData({ ...formData, industry: industry.id })}
+                        onClick={() =>
+                          setFormData({ ...formData, industry: industry.id })
+                        }
                         className={`group relative p-6 rounded-2xl flex flex-col items-start text-left transition-all duration-300 border ${
-                          isActive 
-                            ? "bg-white/10 border-blue-500 ring-1 ring-blue-500 shadow-xl" 
+                          isActive
+                            ? "bg-white/10 border-blue-500 ring-1 ring-blue-500 shadow-xl"
                             : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
                         }`}
                       >
-                        <div className={`p-3 rounded-xl mb-4 bg-gradient-to-tr ${industry.color} shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
+                        <div
+                          className={`p-3 rounded-xl mb-4 bg-gradient-to-tr ${industry.color} shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}
+                        >
                           <Icon className="text-white w-6 h-6" />
                         </div>
-                        <h3 className="text-white font-bold text-lg mb-2">{industry.title}</h3>
+                        <h3 className="text-white font-bold text-lg mb-2">
+                          {industry.title}
+                        </h3>
                         <p className="text-slate-400 text-xs leading-relaxed">
                           {industry.description}
                         </p>
@@ -277,7 +299,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Button 
+                  <Button
                     variant="ghost"
                     onClick={prevStep}
                     className="h-14 flex-1 rounded-xl bg-transparent border border-white/10 text-white hover:bg-white/5"
@@ -285,7 +307,7 @@ export default function OnboardingPage() {
                     <ArrowLeft className="mr-2 w-5 h-5" />
                     Back
                   </Button>
-                  <Button 
+                  <Button
                     disabled={isSubmitting}
                     onClick={handleComplete}
                     className="h-14 flex-[2] rounded-xl text-lg font-bold premium-gradient text-white hover:shadow-blue-500/25 transition-all group border-none"

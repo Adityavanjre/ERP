@@ -1,21 +1,26 @@
-import axios, { type AxiosAdapter, type AxiosResponse } from 'axios';
-import { handleDesktopOfflineRequest, shouldHandleDesktopOfflineRequest } from './desktop-offline';
+import axios, { type AxiosAdapter, type AxiosResponse } from "axios";
+import {
+  handleDesktopOfflineRequest,
+  shouldHandleDesktopOfflineRequest,
+} from "./desktop-offline";
 import {
   ensureNetworkConsent,
   ensureRecentUserInteraction,
   isNetworkConsentError,
   isNetworkInteractionError,
-} from './network-consent';
+} from "./network-consent";
 
 // Ensure we always target the v1 API
 // PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
 // This eliminates CORS delays and masks the internal backend URL.
-const baseURL = process.env.NEXT_PUBLIC_API_URL || '/portal/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "/portal/api";
 // DESKTOP-DIRECT: Force cloud backend for desktop shell to match the web browser gateway
-const CLOUD_BACKEND_URL = 'https://klypso.in/portal/api';
-const API_URL = isDesktopShell() 
-  ? `${CLOUD_BACKEND_URL}/v1` 
-  : (baseURL.endsWith('/') ? `${baseURL}v1` : `${baseURL}/v1`);
+const CLOUD_BACKEND_URL = "https://klypso.in/portal/api";
+const API_URL = isDesktopShell()
+  ? `${CLOUD_BACKEND_URL}/v1`
+  : baseURL.endsWith("/")
+    ? `${baseURL}v1`
+    : `${baseURL}/v1`;
 
 // PERF-001: Zero-Latency Caching Layer
 // Stores responses for frequent GET requests (like system/config) to prevent navigation lag.
@@ -30,7 +35,7 @@ export const api = axios.create({
   withCredentials: true,
   timeout: 60000, // 60s timeout to survive DB queuing on Free Tiers
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -76,7 +81,7 @@ async function scheduleNetworkRequest<T>(task: () => Promise<T>): Promise<T> {
  * DESKTOP-SHELL: Detect if the app is running inside the Electron container.
  */
 function isDesktopShell(): boolean {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   // Look for the nexusDesktop bridge injected by the Electron preload
   return Boolean(window.nexusDesktop?.shell?.isDesktop);
 }
@@ -86,18 +91,16 @@ function isDesktopShell(): boolean {
  * Used to extract the nexus-csrf token set by the server on login.
  */
 function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
+  if (typeof document === "undefined") return null;
   const match = document.cookie.match(
     new RegExp(
-      '(?:^|; )' +
-      name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') +
-      '=([^;]*)'
-    )
+      "(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1") + "=([^;]*)",
+    ),
   );
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-const MUTATING_METHODS = new Set(['post', 'put', 'patch', 'delete']);
+const MUTATING_METHODS = new Set(["post", "put", "patch", "delete"]);
 
 api.interceptors.request.use(
   async (config) => {
@@ -107,24 +110,26 @@ api.interceptors.request.use(
     const handledOfflineRequest = shouldHandleDesktopOfflineRequest(config);
     if (handledOfflineRequest) {
       config.adapter = async () => handleDesktopOfflineRequest(config);
-    } 
+    }
     // DESKTOP-SHELL PROTECTION: If this is the desktop shell and we are NOT in a cloud session,
     // we must ABORT any request that isn't handled by the bridge above.
     // This prevents "cloud leakage" that creates unintended usage on Render and triggers 429s.
-    else if (isDesktopShell() && !localStorage.getItem('k_cloud_sync_active')) {
-      const isAuthRoute = 
-        config.url?.includes('auth/login') || 
-        config.url?.includes('auth/register') || 
-        config.url?.includes('auth/mfa') || 
-        config.url?.includes('auth/google') ||
-        config.url?.includes('auth/tenants') ||
-        config.url?.includes('auth/select-tenant') ||
-        config.url?.includes('auth/onboarding');
+    else if (isDesktopShell() && !localStorage.getItem("k_cloud_sync_active")) {
+      const isAuthRoute =
+        config.url?.includes("auth/login") ||
+        config.url?.includes("auth/register") ||
+        config.url?.includes("auth/mfa") ||
+        config.url?.includes("auth/google") ||
+        config.url?.includes("auth/tenants") ||
+        config.url?.includes("auth/select-tenant") ||
+        config.url?.includes("auth/onboarding");
       if (!isAuthRoute) {
         // Abort the request as "Forbidden Local Only"
         const controller = new AbortController();
         config.signal = controller.signal;
-        controller.abort("Klypso Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.");
+        controller.abort(
+          "Klypso Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.",
+        );
         return config;
       }
     }
@@ -140,9 +145,9 @@ api.interceptors.request.use(
 
     // FE-004: Attach the CSRF token on mutating requests so the backend CsrfGuard
     // double-submit cookie check can pass for web-channel cookie-based sessions.
-    if (config.method?.toLowerCase() === 'get') {
+    if (config.method?.toLowerCase() === "get") {
       const cacheKey = axios.getUri(config);
-      
+
       // 1. Check persistent cache
       const cached = requestCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -150,7 +155,7 @@ api.interceptors.request.use(
           Promise.resolve({
             data: cached.data,
             status: 200,
-            statusText: 'OK (Cache Hit)',
+            statusText: "OK (Cache Hit)",
             headers: {},
             config,
           } as never);
@@ -170,15 +175,15 @@ api.interceptors.request.use(
     if (config.method && MUTATING_METHODS.has(config.method.toLowerCase())) {
       // Flush cache on mutations to ensure freshness
       requestCache.clear();
-      const csrfToken = getCookie('nexus-csrf');
+      const csrfToken = getCookie("nexus-csrf");
       if (csrfToken) {
-        config.headers['X-CSRF-Token'] = csrfToken;
+        config.headers["X-CSRF-Token"] = csrfToken;
       }
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // DEDUPLICATION ADAPTER: Intercepts the low-level adapter call to prevent thundering herds.
@@ -186,7 +191,7 @@ api.interceptors.request.use(
 const originalAdapter = api.defaults.adapter as AxiosAdapter;
 
 api.defaults.adapter = async (config) => {
-  if (config.method?.toLowerCase() !== 'get' || !config.url) {
+  if (config.method?.toLowerCase() !== "get" || !config.url) {
     return scheduleNetworkRequest(() => originalAdapter(config));
   }
 
@@ -198,7 +203,7 @@ api.defaults.adapter = async (config) => {
     return {
       data: cached.data,
       status: 200,
-      statusText: 'OK (Cache Hit)',
+      statusText: "OK (Cache Hit)",
       headers: {},
       config,
     } as AxiosResponse;
@@ -234,37 +239,50 @@ api.defaults.adapter = async (config) => {
 api.interceptors.response.use(
   (response) => {
     // If Render returns a splash screen (HTML) instead of JSON for a JSON request
-    const contentType = response.headers['content-type'];
-    if (contentType && contentType.includes('text/html') && typeof response.data === 'string') {
-      if (response.data.includes('Render') || response.data.includes('Waking up')) {
+    const contentType = response.headers["content-type"];
+    if (
+      contentType &&
+      contentType.includes("text/html") &&
+      typeof response.data === "string"
+    ) {
+      if (
+        response.data.includes("Render") ||
+        response.data.includes("Waking up")
+      ) {
         return Promise.reject({
-          message: 'Klypso is starting up. Please wait as we sync your data.',
-          isWakeup: true
+          message: "Klypso is starting up. Please wait as we sync your data.",
+          isWakeup: true,
         });
       }
     }
 
     // DEV-003: Soft Refresh checks for overlapping deployments mismatching old chunk caches vs backend versions
-    const appVersion = response.headers['x-app-version'];
-    const currentFeVersion = typeof window !== 'undefined' ? localStorage.getItem('nexus_version') : null;
+    const appVersion = response.headers["x-app-version"];
+    const currentFeVersion =
+      typeof window !== "undefined"
+        ? localStorage.getItem("nexus_version")
+        : null;
 
-    if (appVersion && typeof window !== 'undefined') {
+    if (appVersion && typeof window !== "undefined") {
       if (!currentFeVersion) {
-        localStorage.setItem('nexus_version', appVersion);
+        localStorage.setItem("nexus_version", appVersion);
       } else if (currentFeVersion !== appVersion) {
-        console.warn(`Blue-green deployment conflict detected (Local: ${currentFeVersion}, Remote: ${appVersion}). Enacting soft refresh.`);
-        localStorage.setItem('nexus_version', appVersion);
+        console.warn(
+          `Blue-green deployment conflict detected (Local: ${currentFeVersion}, Remote: ${appVersion}). Enacting soft refresh.`,
+        );
+        localStorage.setItem("nexus_version", appVersion);
         window.location.reload();
       }
     }
 
-    // DESKTOP-SYNC BRIDGE: Automatically trap any accessToken from JSON responses (login, switch-tenant, refresh) 
+    // DESKTOP-SYNC BRIDGE: Automatically trap any accessToken from JSON responses (login, switch-tenant, refresh)
     // and sync it to the Desktop Shell's native sync engine. This ensures the background sync uses the correct tenant-scoped token.
-    const accessToken = typeof response.data === 'object' && response.data !== null
-      ? (response.data as { accessToken?: string }).accessToken
-      : undefined;
+    const accessToken =
+      typeof response.data === "object" && response.data !== null
+        ? (response.data as { accessToken?: string }).accessToken
+        : undefined;
 
-    if (typeof accessToken === 'string' && typeof window !== 'undefined') {
+    if (typeof accessToken === "string" && typeof window !== "undefined") {
       window.nexusDesktop?.auth?.setToken(accessToken).catch(console.error);
     }
 
@@ -273,7 +291,7 @@ api.interceptors.response.use(
   async (error) => {
     if (isNetworkConsentError(error)) {
       return Promise.reject({
-        code: 'NETWORK_CONSENT_REQUIRED',
+        code: "NETWORK_CONSENT_REQUIRED",
         message: error.message,
         isConsentRequired: true,
       });
@@ -281,30 +299,37 @@ api.interceptors.response.use(
 
     if (isNetworkInteractionError(error)) {
       return Promise.reject({
-        code: 'NETWORK_INTERACTION_REQUIRED',
+        code: "NETWORK_INTERACTION_REQUIRED",
         message: error.message,
         isInteractionRequired: true,
       });
     }
 
     // RES-003: 503 (Server Overload/Warmup) - No automatic retry per user request
-    if (error.response?.status === 503 || error.response?.status === 502 || error.response?.status === 504) {
-      if (typeof window !== 'undefined') {
+    if (
+      error.response?.status === 503 ||
+      error.response?.status === 502 ||
+      error.response?.status === 504
+    ) {
+      if (typeof window !== "undefined") {
         return Promise.reject({
-          message: 'Klypso Cloud is waking up. Please wait 90 seconds and try again.',
-          isWakeup: true
+          message:
+            "Klypso Cloud is waking up. Please wait 90 seconds and try again.",
+          isWakeup: true,
         });
       }
     }
 
     // PERF-001: Trap unhandled offline constraints to gracefully drop to Offline Mode
-    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('offline-mode', { detail: 'Network unavailable' }));
+    if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("offline-mode", { detail: "Network unavailable" }),
+        );
       }
       return Promise.reject({
-        message: 'Offline Mode: Please check your internet connection.',
-        isOffline: true
+        message: "Offline Mode: Please check your internet connection.",
+        isOffline: true,
       });
     }
 
@@ -314,26 +339,48 @@ api.interceptors.response.use(
     // Each new attempt should come from an explicit user action or approval.
     if (error.response?.status === 429) {
       return Promise.reject({
-        message: 'Klypso Cloud is waking up. Please try again after 90s.',
+        message: "Klypso Cloud is waking up. Please try again after 90s.",
         status: 429,
         isRateLimited: true,
       });
     }
 
-
     if (error.response?.status === 401) {
-      const isLoginRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh');
-      const isIdentityFlowRequest = originalRequest.url?.includes('/auth/tenants') || originalRequest.url?.includes('/auth/select-tenant');
+      const isLoginRequest =
+        originalRequest.url?.includes("/auth/login") ||
+        originalRequest.url?.includes("/auth/refresh");
+      const isIdentityFlowRequest =
+        originalRequest.url?.includes("/auth/tenants") ||
+        originalRequest.url?.includes("/auth/select-tenant");
 
-      if (typeof window !== 'undefined' && !isLoginRequest && !isIdentityFlowRequest && !originalRequest._retry) {
-        const authPages = ['/login', '/register', '/forgot-password', '/reset-password'];
-        const isAuthPage = authPages.some(page => window.location.pathname.includes(page));
+      if (
+        typeof window !== "undefined" &&
+        !isLoginRequest &&
+        !isIdentityFlowRequest &&
+        !originalRequest._retry
+      ) {
+        const authPages = [
+          "/login",
+          "/register",
+          "/forgot-password",
+          "/reset-password",
+        ];
+        const isAuthPage = authPages.some((page) =>
+          window.location.pathname.includes(page),
+        );
 
-        const isTokenExpired = error.response?.data?.code === 'TOKEN_EXPIRED';
-        const isIdentityScopeError = error.response?.data?.message?.includes("A tenant-scoped token is required");
+        const isTokenExpired = error.response?.data?.code === "TOKEN_EXPIRED";
+        const isIdentityScopeError = error.response?.data?.message?.includes(
+          "A tenant-scoped token is required",
+        );
         const isForbidden = error.response?.status === 403;
 
-        if (isTokenExpired && !isAuthPage && !isIdentityScopeError && !isForbidden) {
+        if (
+          isTokenExpired &&
+          !isAuthPage &&
+          !isIdentityScopeError &&
+          !isForbidden
+        ) {
           if (isRefreshing) {
             return new Promise((resolve, reject) => {
               failedQueue.push({ resolve, reject });
@@ -342,7 +389,7 @@ api.interceptors.response.use(
                 originalRequest._retry = true;
                 return api(originalRequest);
               })
-              .catch(_err => Promise.reject(_err));
+              .catch((_err) => Promise.reject(_err));
           }
 
           originalRequest._retry = true;
@@ -350,10 +397,16 @@ api.interceptors.response.use(
 
           return new Promise((resolve, reject) => {
             ensureNetworkConsent()
-              .then(() => axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true }))
+              .then(() =>
+                axios.post(
+                  `${API_URL}/auth/refresh`,
+                  {},
+                  { withCredentials: true },
+                ),
+              )
               .then(({ data }) => {
-                if (typeof window !== 'undefined' && data.user) {
-                  localStorage.setItem('k_user', JSON.stringify(data.user));
+                if (typeof window !== "undefined" && data.user) {
+                  localStorage.setItem("k_user", JSON.stringify(data.user));
                 }
                 isRefreshing = false;
                 processQueue(null);
@@ -362,21 +415,21 @@ api.interceptors.response.use(
               .catch((refreshError) => {
                 isRefreshing = false;
                 processQueue(refreshError);
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('k_user');
-                  window.dispatchEvent(new CustomEvent('session-expired'));
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("k_user");
+                  window.dispatchEvent(new CustomEvent("session-expired"));
                 }
                 reject(refreshError);
               });
           });
         } else if (!isAuthPage && !isIdentityScopeError && !isForbidden) {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('k_user');
-            window.dispatchEvent(new CustomEvent('session-expired'));
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("k_user");
+            window.dispatchEvent(new CustomEvent("session-expired"));
           }
         }
       }
     }
     return Promise.reject(error);
-  }
+  },
 );

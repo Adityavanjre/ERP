@@ -1,225 +1,307 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import {
-    Search,
-    Zap,
-    Settings,
-    Users,
-    Package,
-    Boxes,
-    Terminal,
-    Cpu,
-    Activity,
-    Landmark,
-    LayoutGrid,
-    FileText,
-    ArrowRight,
-    Loader2
+  Search,
+  Zap,
+  Settings,
+  Users,
+  Package,
+  Boxes,
+  Terminal,
+  Cpu,
+  Activity,
+  Landmark,
+  LayoutGrid,
+  FileText,
+  ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 interface SearchResult {
-    type: 'Product' | 'Customer' | 'Bill' | 'Order';
-    title: string;
-    subtitle: string;
-    path: string;
+  type: "Product" | "Customer" | "Bill" | "Order";
+  title: string;
+  subtitle: string;
+  path: string;
 }
 
 export function CommandPalette(): React.ReactNode {
-    const [open, setOpen] = useState(false);
-    const [query, setQuery] = useState("");
-    const [results, setResults] = useState<SearchResult[]>([]);
-    const [searching, setSearching] = useState(false);
-    const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const router = useRouter();
 
-    useEffect(() => {
-        const fetchResults = async () => {
-            if (query.length < 2) {
-                setResults([]);
-                return;
-            }
-            setSearching(true);
-            try {
-                const res = await api.get(`/system/search?q=${query}`);
-                setResults(res.data);
-            } catch (err) {
-                console.error("Search failed", err);
-            } finally {
-                setSearching(false);
-            }
-        };
-
-        const timer = setTimeout(fetchResults, 300);
-        return () => clearTimeout(timer);
-    }, [query]);
-
-    useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                setOpen((open) => !open);
-            }
-        };
-
-        const toggle = () => setOpen((open) => !open);
-
-        document.addEventListener("keydown", down);
-        window.addEventListener('open-command-palette', toggle);
-        return () => {
-            document.removeEventListener("keydown", down);
-            window.removeEventListener('open-command-palette', toggle);
-        };
-    }, []);
-
-    const commands = [
-        { name: "Dashboard", icon: LayoutGrid, path: "/dashboard", category: "Navigation" },
-        { name: "Manufacturing", icon: Boxes, path: "/manufacturing", category: "Navigation" },
-        { name: "Inventory", icon: Package, path: "/inventory", category: "Navigation" },
-        { name: "Accounting", icon: Landmark, path: "/accounting", category: "Navigation" },
-        { name: "Customers (CRM)", icon: Users, path: "/crm", category: "Navigation" },
-        { name: "Apps", icon: Zap, path: "/apps", category: "Settings" },
-        { name: "Settings", icon: Settings, path: "/settings", category: "Settings" },
-        { name: "Support Insights", icon: Cpu, path: "/dashboard", category: "Support" },
-        { name: "Activity", icon: Activity, path: "/dashboard", category: "Settings" },
-    ];
-
-    const filteredCommands = query === ""
-        ? commands
-        : commands.filter(c => c.name.toLowerCase().includes(query.toLowerCase()));
-
-    const runCommand = (path: string) => {
-        router.push(path);
-        setOpen(false);
-        setQuery("");
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (query.length < 2) {
+        setResults([]);
+        return;
+      }
+      setSearching(true);
+      try {
+        const res = await api.get(`/system/search?q=${query}`);
+        setResults(res.data);
+      } catch (err) {
+        console.error("Search failed", err);
+      } finally {
+        setSearching(false);
+      }
     };
 
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
-                <DialogHeader className="p-4 sm:p-6 border-b border-slate-100">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <DialogTitle className="sr-only">Command Palette</DialogTitle>
-                        <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
-                        <div className="relative flex-1">
-                            <Input
-                                autoFocus
-                                placeholder="Search..."
-                                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-6 sm:py-8 font-medium px-0 sm:px-3 w-full"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                            />
-                            {searching && (
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 font-black text-[10px] hidden sm:flex">ESC</Badge>
-                        </div>
-                    </div>
-                </DialogHeader>
+    const timer = setTimeout(fetchResults, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-                <div className="max-h-[450px] overflow-y-auto p-4 space-y-6 pb-6">
-                    {/* Search Results */}
-                    {results.length > 0 && (
-                        <div className="space-y-2">
-                            <div className="px-3 py-2 text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                <Search className="h-3 w-3" /> Search Results
-                            </div>
-                            {results.map((res, i) => {
-                                const Icon = res.type === 'Product' ? Package : res.type === 'Customer' ? Users : FileText;
-                                return (
-                                    <button
-                                        key={`res-${i}`}
-                                        onClick={() => runCommand(res.path)}
-                                        className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 transition-colors">
-                                                <Icon className="h-5 w-5 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <div className="text-[15px] text-slate-900 font-bold">{res.title}</div>
-                                                <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">{res.subtitle}</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-[9px] text-slate-500 uppercase font-black">
-                                            {res.type}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpen((open) => !open);
+      }
+    };
 
-                    {filteredCommands.length > 0 ? (
-                        <>
-                            {["Navigation", "Settings", "Support"].map(cat => {
-                                const catCommands = filteredCommands.filter(c => c.category === cat);
-                                if (catCommands.length === 0) return null;
+    const toggle = () => setOpen((open) => !open);
 
-                                return (
-                                    <div key={cat} className="space-y-2">
-                                        <div className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{cat}</div>
-                                        {catCommands.map((command, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => runCommand(command.path)}
-                                                className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-3 rounded-2xl bg-slate-100 border border-slate-200 group-hover:border-blue-500/50 transition-colors">
-                                                        <command.icon className="h-5 w-5 text-slate-500 group-hover:text-blue-600" />
-                                                    </div>
-                                                    <span className="text-slate-700 group-hover:text-slate-900 font-bold">{command.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Go</span>
-                                                    <ArrowRight className="h-4 w-4 text-blue-600" />
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                );
-                            })}
-                        </>
-                    ) : (
-                        <div className="p-16 text-center space-y-4">
-                            <Search className="h-16 w-16 text-slate-100 mx-auto" />
-                            <p className="text-slate-400 text-sm font-medium">No results found for &quot;{query}&quot;</p>
-                        </div>
-                    )}
+    document.addEventListener("keydown", down);
+    window.addEventListener("open-command-palette", toggle);
+    return () => {
+      document.removeEventListener("keydown", down);
+      window.removeEventListener("open-command-palette", toggle);
+    };
+  }, []);
+
+  const commands = [
+    {
+      name: "Dashboard",
+      icon: LayoutGrid,
+      path: "/dashboard",
+      category: "Navigation",
+    },
+    {
+      name: "Manufacturing",
+      icon: Boxes,
+      path: "/manufacturing",
+      category: "Navigation",
+    },
+    {
+      name: "Inventory",
+      icon: Package,
+      path: "/inventory",
+      category: "Navigation",
+    },
+    {
+      name: "Accounting",
+      icon: Landmark,
+      path: "/accounting",
+      category: "Navigation",
+    },
+    {
+      name: "Customers (CRM)",
+      icon: Users,
+      path: "/crm",
+      category: "Navigation",
+    },
+    { name: "Apps", icon: Zap, path: "/apps", category: "Settings" },
+    {
+      name: "Settings",
+      icon: Settings,
+      path: "/settings",
+      category: "Settings",
+    },
+    {
+      name: "Support Insights",
+      icon: Cpu,
+      path: "/dashboard",
+      category: "Support",
+    },
+    {
+      name: "Activity",
+      icon: Activity,
+      path: "/dashboard",
+      category: "Settings",
+    },
+  ];
+
+  const filteredCommands =
+    query === ""
+      ? commands
+      : commands.filter((c) =>
+          c.name.toLowerCase().includes(query.toLowerCase()),
+        );
+
+  const runCommand = (path: string) => {
+    router.push(path);
+    setOpen(false);
+    setQuery("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
+        <DialogHeader className="p-4 sm:p-6 border-b border-slate-100">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <DialogTitle className="sr-only">Command Palette</DialogTitle>
+            <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
+            <div className="relative flex-1">
+              <Input
+                autoFocus
+                placeholder="Search..."
+                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-6 sm:py-8 font-medium px-0 sm:px-3 w-full"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {searching && (
+                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
                 </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Badge
+                variant="outline"
+                className="border-slate-200 text-slate-400 px-2 font-black text-[10px] hidden sm:flex"
+              >
+                ESC
+              </Badge>
+            </div>
+          </div>
+        </DialogHeader>
 
-                <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
-                    <div className="hidden sm:flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 py-0.5 font-black">↵</Badge>
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Select</span>
+        <div className="max-h-[450px] overflow-y-auto p-4 space-y-6 pb-6">
+          {/* Search Results */}
+          {results.length > 0 && (
+            <div className="space-y-2">
+              <div className="px-3 py-2 text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                <Search className="h-3 w-3" /> Search Results
+              </div>
+              {results.map((res, i) => {
+                const Icon =
+                  res.type === "Product"
+                    ? Package
+                    : res.type === "Customer"
+                      ? Users
+                      : FileText;
+                return (
+                  <button
+                    key={`res-${i}`}
+                    onClick={() => runCommand(res.path)}
+                    className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 transition-colors">
+                        <Icon className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="text-[15px] text-slate-900 font-bold">
+                          {res.title}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="border-slate-200 text-slate-400 px-2 py-0.5 font-black">↑↓</Badge>
-                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Navigate</span>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">
+                          {res.subtitle}
                         </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
-                        <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">v2.10</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-[9px] text-slate-500 uppercase font-black">
+                      {res.type}
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {filteredCommands.length > 0 ? (
+            <>
+              {["Navigation", "Settings", "Support"].map((cat) => {
+                const catCommands = filteredCommands.filter(
+                  (c) => c.category === cat,
+                );
+                if (catCommands.length === 0) return null;
+
+                return (
+                  <div key={cat} className="space-y-2">
+                    <div className="px-3 py-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                      {cat}
+                    </div>
+                    {catCommands.map((command, i) => (
+                      <button
+                        key={i}
+                        onClick={() => runCommand(command.path)}
+                        className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-2xl bg-slate-100 border border-slate-200 group-hover:border-blue-500/50 transition-colors">
+                            <command.icon className="h-5 w-5 text-slate-500 group-hover:text-blue-600" />
+                          </div>
+                          <span className="text-slate-700 group-hover:text-slate-900 font-bold">
+                            {command.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                            Go
+                          </span>
+                          <ArrowRight className="h-4 w-4 text-blue-600" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <div className="p-16 text-center space-y-4">
+              <Search className="h-16 w-16 text-slate-100 mx-auto" />
+              <p className="text-slate-400 text-sm font-medium">
+                No results found for &quot;{query}&quot;
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
+          <div className="hidden sm:flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="border-slate-200 text-slate-400 px-2 py-0.5 font-black"
+              >
+                ↵
+              </Badge>
+              <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                Select
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="border-slate-200 text-slate-400 px-2 py-0.5 font-black"
+              >
+                ↑↓
+              </Badge>
+              <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                Navigate
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+            <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">
+              v2.10
+            </span>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

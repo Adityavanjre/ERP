@@ -14,11 +14,16 @@ export default function AccountingError({
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
       <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl max-w-md w-full">
         <AlertTriangle className="h-10 w-10 text-blue-500 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-slate-900 mb-1">Accounting Module Error</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-1">
+          Accounting Module Error
+        </h3>
         <p className="text-slate-500 text-sm mb-4">
           Failed to load accounting data. Your financial records are safe.
         </p>
-        <Button onClick={reset} className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl">
+        <Button
+          onClick={reset}
+          className="bg-slate-900 text-white hover:bg-slate-800 rounded-xl"
+        >
           <RefreshCcw className="mr-2 h-4 w-4" /> Retry
         </Button>
       </div>

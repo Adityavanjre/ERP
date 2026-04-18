@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from "react-helmet-async";
 
 interface SEOProps {
   title: string;
@@ -19,23 +19,24 @@ const SEO = ({
   image = "/og-image.png",
   type = "website",
   schema,
-  noindex = false
+  noindex = false,
 }: SEOProps) => {
-  const siteUrl = 'https://klypso.agency';
+  const siteUrl = "https://klypso.agency";
   const fullUrl = canonical ? `${siteUrl}${canonical}` : siteUrl;
-  const fullImage = image.startsWith('http') ? image : `${siteUrl}${image}`;
+  const fullImage = image.startsWith("http") ? image : `${siteUrl}${image}`;
 
   const defaultSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Klypso",
-    "url": siteUrl,
-    "logo": `${siteUrl}/favicon.svg`,
-    "sameAs": [
+    name: "Klypso",
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.svg`,
+    sameAs: [
       "https://linkedin.com/company/klypso",
-      "https://twitter.com/klypso"
+      "https://twitter.com/klypso",
     ],
-    "description": "Boutique digital agency crafting high-performance systems and bespoke brand identities."
+    description:
+      "Boutique digital agency crafting high-performance systems and bespoke brand identities.",
   };
 
   return (
@@ -46,7 +47,12 @@ const SEO = ({
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
-      {!noindex && <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}
+      {!noindex && (
+        <meta
+          name="robots"
+          content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        />
+      )}
       <link rel="canonical" href={fullUrl} />
 
       {/* Open Graph / Facebook */}

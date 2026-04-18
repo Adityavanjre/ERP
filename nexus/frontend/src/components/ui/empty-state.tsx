@@ -26,7 +26,7 @@ export function EmptyState({
       <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
       <p className="text-zinc-400 text-sm max-w-xs mb-8">{description}</p>
       {actionText && onAction && (
-        <Button 
+        <Button
           onClick={onAction}
           className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl px-6"
         >

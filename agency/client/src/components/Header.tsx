@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { NavLink } from "react-router-dom";
+import { Menu, X, ArrowUpRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,29 +25,35 @@ const Header = () => {
       }
       setLastScrollY(currentScrollY);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY, isOpen]);
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Services', path: '/services' },
-    { name: 'Portfolio', path: '/portfolio' },
-    { name: 'Resources', path: '/resources' },
-    { name: 'Careers', path: '/careers' },
-    { name: 'Portal', path: '/portal', external: true },
+    { name: "Home", path: "/" },
+    { name: "Services", path: "/services" },
+    { name: "Portfolio", path: "/portfolio" },
+    { name: "Resources", path: "/resources" },
+    { name: "Careers", path: "/careers" },
+    { name: "Portal", path: "/portal", external: true },
   ];
 
   return (
-    <header className={`fixed w-full top-0 z-[100] transition-all duration-700 py-6 pointer-events-none lg:pointer-events-auto ${hidden ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
-      <div className={`container mx-auto px-4 transition-all duration-700 pointer-events-auto ${scrolled ? 'max-w-6xl' : 'max-w-7xl'}`}>
-        <div className={`flex justify-between items-center transition-all duration-700 px-6 lg:px-10 py-5 ${scrolled
-          ? 'bg-[#0A0A0B]/80 backdrop-blur-3xl border border-white/5 shadow-2xl rounded-[2.5rem]'
-          : 'bg-transparent border border-transparent'
-          }`}>
-
+    <header
+      className={`fixed w-full top-0 z-[100] transition-all duration-700 py-6 pointer-events-none lg:pointer-events-auto ${hidden ? "-translate-y-full opacity-0" : "translate-y-0 opacity-100"}`}
+    >
+      <div
+        className={`container mx-auto px-4 transition-all duration-700 pointer-events-auto ${scrolled ? "max-w-6xl" : "max-w-7xl"}`}
+      >
+        <div
+          className={`flex justify-between items-center transition-all duration-700 px-6 lg:px-10 py-5 ${
+            scrolled
+              ? "bg-[#0A0A0B]/80 backdrop-blur-3xl border border-white/5 shadow-2xl rounded-[2.5rem]"
+              : "bg-transparent border border-transparent"
+          }`}
+        >
           {/* Logo */}
           <NavLink to="/" className="group flex items-center gap-4">
             <div className="w-10 h-10 bg-[#C5A059] rounded-xl flex items-center justify-center font-black text-black text-xl shadow-lg shadow-[#C5A059]/20 group-hover:rotate-6 transition-transform">
@@ -61,7 +67,7 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-6 xl:gap-12">
             <div className="flex gap-4 xl:gap-8">
-              {navLinks.map((link) => (
+              {navLinks.map((link) =>
                 link.external ? (
                   <a
                     key={link.name}
@@ -78,17 +84,18 @@ const Header = () => {
                     key={link.name}
                     to={link.path}
                     className={({ isActive }) =>
-                      `text-[10px] font-black tracking-[0.4em] uppercase transition-all relative group ${isActive
-                        ? 'text-[#C5A059]'
-                        : 'text-zinc-500 hover:text-white'
+                      `text-[10px] font-black tracking-[0.4em] uppercase transition-all relative group ${
+                        isActive
+                          ? "text-[#C5A059]"
+                          : "text-zinc-500 hover:text-white"
                       }`
                     }
                   >
                     {link.name}
                     <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#C5A059] group-hover:w-full transition-all duration-500" />
                   </NavLink>
-                )
-              ))}
+                ),
+              )}
             </div>
 
             <NavLink
@@ -145,7 +152,10 @@ const Header = () => {
                         to={link.path}
                         onClick={() => setIsOpen(false)}
                         className={({ isActive }) =>
-                          `text-4xl font-bold tracking-tight transition-all block font-heading ${isActive ? 'text-[#C5A059]' : 'text-zinc-500 hover:text-white'
+                          `text-4xl font-bold tracking-tight transition-all block font-heading ${
+                            isActive
+                              ? "text-[#C5A059]"
+                              : "text-zinc-500 hover:text-white"
                           }`
                         }
                       >
