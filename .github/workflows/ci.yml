@@ -26,9 +26,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          npm ci --no-audit --no-fund
-          # Ensure workspace hoisting is robust for build-time resolution
-          npm install --include=dev --include=workspace-root
+          npm install --no-audit --no-fund
+          # Force workspace population to ensure local binary resolution
+          npm install --include=dev --workspace=nexus/frontend --workspace=nexus/backend
 
       - name: Build Shared Contract
         run: npm run build -w @nexus/shared
