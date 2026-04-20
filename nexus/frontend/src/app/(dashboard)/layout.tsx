@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Navbar } from "../../components/layout/navbar";
@@ -31,15 +31,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           await hydrateDesktopOfflineSession();
         }
         const token =
-          typeof window !== &quot;undefined&quot;
-            ? localStorage.getItem(&quot;k_token&quot;)
+          typeof window !== "undefined"
+            ? localStorage.getItem("k_token")
             : null;
         if (token) {
           const decoded = jwtDecode<DecodedToken>(token);
           if (!cancelled) {
             setIsIdentityState(
-              decoded.type === &quot;identity&quot; ||
-                (decoded.type === &quot;admin&quot; && !decoded.tenantId),
+              decoded.type === "identity" ||
+                (decoded.type === "admin" && !decoded.tenantId),
             );
           }
         } else if (!cancelled) {
@@ -94,3 +94,4 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default DashboardLayout;
+

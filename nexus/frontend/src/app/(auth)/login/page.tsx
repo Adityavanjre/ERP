@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
@@ -57,30 +57,30 @@ interface NexusDesktop {
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState(&quot;&quot;);
-  const [password, setPassword] = useState(&quot;&quot;);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(&quot;&quot;);
+  const [error, setError] = useState("");
 
-  const [step, setStep] = useState<"identity" | "mfa">(&quot;identity&quot;);
+  const [step, setStep] = useState<"identity" | "mfa">("identity");
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tempToken, setTempToken] = useState(&quot;&quot;);
-  const [mfaCode, setMfaCode] = useState(&quot;&quot;);
+  const [tempToken, setTempToken] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const [isDesktopApp, setIsDesktopApp] = useState(false);
   const [offlineOpening, setOfflineOpening] = useState(false);
 
   const handleOfflineOpen = useCallback(async () => {
     setOfflineOpening(true);
-    setError(&quot;&quot;);
+    setError("");
     try {
       await createDesktopOfflineSession({
-        email: email.trim() || &quot;owner@local.erp&quot;,
+        email: email.trim() || "owner@local.erp",
       });
-      window.location.href = &quot;/portal/dashboard&quot;;
+      window.location.href = "/portal/dashboard";
     } catch (offlineError) {
       console.error(offlineError);
-      setError(&quot;Offline workspace could not be opened on this device.&quot;);
+      setError("Offline workspace could not be opened on this device.");
     } finally {
       setOfflineOpening(false);
     }
@@ -92,25 +92,25 @@ export default function LoginPage() {
   }, []); // Run once on mount. isDesktopShell() is environment-only, no deps needed.
 
   const completeLogin = useCallback((data: AuthResponse) => {
-    localStorage.setItem(&quot;k_user&quot;, JSON.stringify(data.user));
+    localStorage.setItem("k_user", JSON.stringify(data.user));
     if (data.accessToken) {
-      localStorage.setItem(&quot;k_token&quot;, data.accessToken);
+      localStorage.setItem("k_token", data.accessToken);
     }
 
-    const SAFE_FALLBACK = &quot;/portal/dashboard&quot;;
-    const returnTo = localStorage.getItem(&quot;return_to&quot;);
-    localStorage.removeItem(&quot;return_to&quot;);
+    const SAFE_FALLBACK = "/portal/dashboard";
+    const returnTo = localStorage.getItem("return_to");
+    localStorage.removeItem("return_to");
 
     if (data.user?.isSuperAdmin) {
-      window.location.href = &quot;/portal/admin/monitoring&quot;;
+      window.location.href = "/portal/admin/monitoring";
       return;
     }
 
     const safeRedirect = (raw: string | null): string => {
       if (!raw) return SAFE_FALLBACK;
       if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return SAFE_FALLBACK;
-      if (raw.startsWith(&quot;//&quot;)) return SAFE_FALLBACK;
-      if (!raw.startsWith(&quot;/portal&quot;)) return SAFE_FALLBACK;
+      if (raw.startsWith("//")) return SAFE_FALLBACK;
+      if (!raw.startsWith("/portal")) return SAFE_FALLBACK;
       try {
         const parsed = new URL(raw, window.location.origin);
         if (parsed.origin !== window.location.origin) return SAFE_FALLBACK;
@@ -127,20 +127,20 @@ export default function LoginPage() {
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setLoading(true);
-      setError(&quot;&quot;);
+      setError("");
 
       try {
-        if (step === &quot;identity&quot;) {
+        if (step === "identity") {
           const finalEmail = email.trim();
           const finalPassword = password.trim();
 
           if (!finalEmail || !finalPassword) {
-            setError(&quot;Credentials required.&quot;);
+            setError("Credentials required.");
             setLoading(false);
             return;
           }
 
-          const endpoint = isAdmin ? &quot;auth/login/admin&quot; : &quot;auth/login/web&quot;;
+          const endpoint = isAdmin ? "auth/login/admin" : "auth/login/web";
 
           if (isDesktopApp) {
             try {
@@ -154,33 +154,33 @@ export default function LoginPage() {
               });
 
               if (desktopRes.error) {
-                setError(desktopRes.message || &quot;Desktop authentication failed&quot;);
+                setError(desktopRes.message || "Desktop authentication failed");
                 setLoading(false);
                 return;
               }
 
               localStorage.setItem(
-                &quot;k_user&quot;,
+                "k_user",
                 JSON.stringify(desktopRes.data.user),
               );
-              localStorage.setItem(&quot;k_token&quot;, desktopRes.data.accessToken);
-              localStorage.setItem(&quot;k_cloud_sync_active&quot;, &quot;true&quot;);
+              localStorage.setItem("k_token", desktopRes.data.accessToken);
+              localStorage.setItem("k_cloud_sync_active", "true");
 
               try {
                 await nexusDesktop.session.set(desktopRes.data);
-                // Removed auto-sync to strictly adhere to the manual &quot;User-Initiated Only&quot; policy.
-                window.location.href = &quot;/portal/dashboard&quot;;
+                // Removed auto-sync to strictly adhere to the manual "User-Initiated Only" policy.
+                window.location.href = "/portal/dashboard";
               } catch (syncErr: unknown) {
                 const err = syncErr as { message?: string };
-                console.error(&quot;[DESKTOP_SYNC_FAIL]&quot;, err);
-                window.location.href = &quot;/portal/dashboard&quot;;
+                console.error("[DESKTOP_SYNC_FAIL]", err);
+                window.location.href = "/portal/dashboard";
               }
               return;
             } catch (err: unknown) {
               const error = err as { message?: string };
               setError(
-                &quot;Bridge Communication Error: &quot; +
-                  (error.message || &quot;Unknown error&quot;),
+                "Bridge Communication Error: " +
+                  (error.message || "Unknown error"),
               );
               setLoading(false);
               return;
@@ -194,7 +194,7 @@ export default function LoginPage() {
 
           if (res.data.requiresMfa) {
             setTempToken(res.data.tempToken);
-            setStep(&quot;mfa&quot;);
+            setStep("mfa");
             setLoading(false);
             return;
           }
@@ -202,7 +202,7 @@ export default function LoginPage() {
           completeLogin(res.data as AuthResponse);
         } else {
           // MFA Step
-          const res = await api.post(&quot;auth/mfa/verify-login&quot;, {
+          const res = await api.post("auth/mfa/verify-login", {
             tempToken,
             totpCode: mfaCode,
           });
@@ -212,9 +212,9 @@ export default function LoginPage() {
         const err = error as { response?: { data?: { message?: string } } };
         console.error(err);
         if (!err.response) {
-          setError(&quot;Network Error: Unable to reach the server.&quot;);
+          setError("Network Error: Unable to reach the server.");
         } else {
-          setError(err.response?.data?.message || &quot;Authentication Failed&quot;);
+          setError(err.response?.data?.message || "Authentication Failed");
         }
       } finally {
         setLoading(false);
@@ -234,22 +234,22 @@ export default function LoginPage() {
 
   const handleGoogleLogin = useCallback(async () => {
     setLoading(true);
-    setError(&quot;&quot;);
+    setError("");
     try {
-      const idToken = &quot;sim-google-token&quot;;
+      const idToken = "sim-google-token";
       const endpoint = isAdmin
-        ? &quot;auth/google-login/admin&quot;
-        : &quot;auth/google-login/web&quot;;
+        ? "auth/google-login/admin"
+        : "auth/google-login/web";
       const res = await api.post(endpoint, { idToken });
 
       if (res.data.requiresMfa || res.data.requiresMfaSetup) {
         if (res.data.requiresMfaSetup) {
-          setError(&quot;MFA setup required. Please login with password first.&quot;);
+          setError("MFA setup required. Please login with password first.");
           setLoading(false);
           return;
         }
         setTempToken(res.data.tempToken);
-        setStep(&quot;mfa&quot;);
+        setStep("mfa");
         setLoading(false);
         return;
       }
@@ -257,15 +257,15 @@ export default function LoginPage() {
       completeLogin(res.data as AuthResponse);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      setError(err.response?.data?.message || &quot;Google Authentication Failed&quot;);
+      setError(err.response?.data?.message || "Google Authentication Failed");
       setLoading(false);
     }
   }, [isAdmin, completeLogin]);
 
   const goBack = useCallback(() => {
-    setStep(&quot;identity&quot;);
-    setMfaCode(&quot;&quot;);
-    setError(&quot;&quot;);
+    setStep("identity");
+    setMfaCode("");
+    setError("");
   }, []);
 
   const toggleAdmin = useCallback(() => {
@@ -291,14 +291,14 @@ export default function LoginPage() {
               </div>
             </div>
             <CardTitle className="text-3xl font-extrabold text-center text-slate-900 tracking-tight uppercase">
-              {isAdmin ? &quot;Admin Login&quot; : &quot;Sign In&quot;}
+              {isAdmin ? "Admin Login" : "Sign In"}
             </CardTitle>
             <CardDescription className="text-center text-slate-500 font-medium">
               {isAdmin
-                ? &quot;Global Infrastructure Access&quot;
+                ? "Global Infrastructure Access"
                 : isDesktopApp
-                  ? &quot;Open your local workspace offline, or use cloud sign-in only when you need sync.&quot;
-                  : &quot;Welcome back. Enter your details to continue.&quot;}
+                  ? "Open your local workspace offline, or use cloud sign-in only when you need sync."
+                  : "Welcome back. Enter your details to continue."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -311,7 +311,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            {step === &quot;identity&quot; ? (
+            {step === "identity" ? (
               <>
                 {isDesktopApp && !isAdmin && (
                   <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
@@ -337,8 +337,8 @@ export default function LoginPage() {
                           className="bg-slate-900 hover:bg-slate-950 text-white font-black h-11 rounded-xl uppercase tracking-widest text-xs"
                         >
                           {offlineOpening
-                            ? &quot;Opening Workspace...&quot;
-                            : &quot;Continue Offline On This Device&quot;}
+                            ? "Opening Workspace..."
+                            : "Continue Offline On This Device"}
                         </Button>
                       </div>
                     </div>
@@ -439,14 +439,14 @@ export default function LoginPage() {
             >
               {loading ? (
                 <Loader2 className="animate-spin" />
-              ) : step === &quot;identity&quot; ? (
+              ) : step === "identity" ? (
                 isDesktopApp ? (
-                  &quot;Cloud Sign In&quot;
+                  "Cloud Sign In"
                 ) : (
-                  &quot;Sign In&quot;
+                  "Sign In"
                 )
               ) : (
-                &quot;Unlock Identity&quot;
+                "Unlock Identity"
               )}
             </Button>
             <Button
@@ -459,7 +459,7 @@ export default function LoginPage() {
             </Button>
             {!isDesktopApp && (
               <div className="text-[10px] text-center text-slate-400 font-bold uppercase">
-                New here?{&quot; &quot;}
+                New here?{" "}
                 <Link href="/register" className="text-blue-600">
                   Create an account
                 </Link>
@@ -470,7 +470,7 @@ export default function LoginPage() {
               onClick={toggleAdmin}
               className="text-[10px] text-blue-600 font-bold uppercase underline underline-offset-4"
             >
-              {isAdmin ? &quot;Standard Login&quot; : &quot;Super Admin Mode&quot;}
+              {isAdmin ? "Standard Login" : "Super Admin Mode"}
             </button>
           </CardFooter>
         </form>
@@ -478,3 +478,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

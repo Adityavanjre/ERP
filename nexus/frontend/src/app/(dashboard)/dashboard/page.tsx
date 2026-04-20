@@ -103,12 +103,12 @@ type ApiResponse<T> = {
 
 type SettledApiResult<T> = PromiseSettledResult<ApiResponse<T>>;
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // SESSION-LEVEL CACHE
 // Prevents re-fetching all 7 analytics endpoints every time the user navigates
 // back to the dashboard within the same browser session.
 // Cache is invalidated after 5 minutes to keep data reasonably fresh.
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 const EMPTY_BI_STATS = {
@@ -145,33 +145,12 @@ function getCachedDashboard(): DashboardCache | null {
 }
 
 export default function DashboardPage() {
+  const cache = getCachedDashboard();
+  const [loading, setLoading] = useState(!cache);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
-  const userRole = (user?.role as RoleName) || &quot;Biller&quot;;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const cache = getCachedDashboard();
-
-  // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a
-  // brief simulated check. This prevents the &quot;Loading Hang&quot; while ensuring
-  // we don&apos;t trigger automatic network requests.
-  useEffect(() => {
-    if (mounted && !cache) {
-      const timer = setTimeout(() => setLoading(false), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [mounted, cache]);
-
-  const [, setSystemStats] = useState<SystemStats>({
-    apps: 0,
-    installed: 0,
-    records: 0,
-    uptime: &quot;99.9%&quot;,
-  });
+  const userRole = (user?.role as RoleName) || "Biller";
 
   const [biStats, setBiStats] = useState(cache?.biStats ?? EMPTY_BI_STATS);
   const [healthStats, setHealthStats] = useState<HealthStats>(
@@ -192,7 +171,27 @@ export default function DashboardPage() {
   const [valueChain, setValueChain] = useState<ValueChainStep[]>(
     cache?.valueChain ?? [],
   );
-  const [loading, setLoading] = useState(!cache); // Skip loading spinner if cache hit
+  const [, setSystemStats] = useState<SystemStats>({
+    apps: 0,
+    installed: 0,
+    records: 0,
+    uptime: "99.9%",
+  });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a
+  // brief simulated check. This prevents the "Loading Hang" while ensuring
+  // we don't trigger automatic network requests.
+  useEffect(() => {
+    if (mounted && !cache) {
+      const timer = setTimeout(() => setLoading(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, cache]);
+
   const [syncDegraded, setSyncDegraded] = useState(false);
   const [enabledModules, setEnabledModules] = useState<string[]>(
     cache?.enabledModules ?? [],
@@ -209,36 +208,36 @@ export default function DashboardPage() {
     }
 
     try {
-      console.log(&quot;DASHBOARD: Starting Immediate Manual Fetch...&quot;);
+      console.log("DASHBOARD: Starting Immediate Manual Fetch...");
 
       // WAVE 1: VITALS (Lowest latency, highest priority)
       const vitalsPromise = api
-        .get(&quot;analytics/summary&quot;)
+        .get("analytics/summary")
         .then((res) => {
           setBiStats((prev) => ({ ...prev, ...res.data }));
         })
-        .catch((e) => console.error(&quot;Vitals Fail:&quot;, e));
+        .catch((e) => console.error("Vitals Fail:", e));
 
       await vitalsPromise; // Ensure vitals are in-flight or done before next wave
 
       // WAVE 2: CONFIG & INFRA
       const infraPromise = Promise.allSettled([
-        api.get(&quot;system/config&quot;),
-        api.get(&quot;system/stats&quot;),
+        api.get("system/config"),
+        api.get("system/stats"),
       ]).then((results) => {
         const cfg =
-          results[0].status === &quot;fulfilled&quot; ? results[0].value.data : null;
+          results[0].status === "fulfilled" ? results[0].value.data : null;
         const sys =
-          results[1].status === &quot;fulfilled&quot; ? results[1].value.data : null;
+          results[1].status === "fulfilled" ? results[1].value.data : null;
 
         if (cfg) {
           setIndustryConfig(cfg);
           const infrastructure = [
-            &quot;dashboard&quot;,
-            &quot;crm&quot;,
-            &quot;settings&quot;,
-            &quot;apps&quot;,
-            &quot;accounting&quot;,
+            "dashboard",
+            "crm",
+            "settings",
+            "apps",
+            "accounting",
           ];
           setEnabledModules(
             Array.from(new Set([...infrastructure, ...cfg.enabledModules])),
@@ -251,13 +250,13 @@ export default function DashboardPage() {
 
       // WAVE 3: HEAVY ANALYTICS
       const analyticsPromise = Promise.allSettled([
-        api.get(&quot;analytics/performance&quot;),
-        api.get(&quot;analytics/health&quot;),
-        api.get(&quot;analytics/activity&quot;),
-        api.get(&quot;analytics/value-chain&quot;),
+        api.get("analytics/performance"),
+        api.get("analytics/health"),
+        api.get("analytics/activity"),
+        api.get("analytics/value-chain"),
       ]).then((results) => {
         const getVal = <T,>(result: SettledApiResult<T>): T | null =>
-          result.status === &quot;fulfilled&quot; ? result.value.data : null;
+          result.status === "fulfilled" ? result.value.data : null;
 
         const perf = getVal(results[0]);
         const hlth = getVal(results[1]);
@@ -286,7 +285,7 @@ export default function DashboardPage() {
 
       await analyticsPromise;
     } catch (err) {
-      console.error(&quot;DASHBOARD: Critical Sync Failure&quot;, err);
+      console.error("DASHBOARD: Critical Sync Failure", err);
       setSyncDegraded(true);
     } finally {
       if (deadlineTimer) clearTimeout(deadlineTimer);
@@ -296,7 +295,7 @@ export default function DashboardPage() {
   }, []);
 
   // MANUALLY-TRIGGERED SYNC ONLY
-  // Removed automatic useEffect fetch on mount to follow &apos;Interaction-Only&apos; strict rule.
+  // Removed automatic useEffect fetch on mount to follow 'Interaction-Only' strict rule.
   // Data will only be fetched when the user clicks the manual refresh/sync button.
 
   const term = useMemo<Record<string, string>>(
@@ -307,71 +306,71 @@ export default function DashboardPage() {
   const kpiCards = useMemo(() => {
     const cards = [
       {
-        title: &quot;Gross Revenue&quot;,
-        value: `₹${biStats.revenue.toLocaleString(&quot;en-IN&quot;)}`,
+        title: "Gross Revenue",
+        value: `â‚¹${biStats.revenue.toLocaleString("en-IN")}`,
         icon: DollarSign,
-        color: &quot;text-emerald-500&quot;,
-        bg: &quot;bg-emerald-500/10&quot;,
-        desc: &quot;Total sales income&quot;,
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10",
+        desc: "Total sales income",
       },
       {
-        title: &quot;Total Purchases&quot;,
-        value: `₹${biStats.expenses.toLocaleString(&quot;en-IN&quot;)}`,
+        title: "Total Purchases",
+        value: `â‚¹${biStats.expenses.toLocaleString("en-IN")}`,
         icon: ArrowDownRight,
-        color: &quot;text-rose-500&quot;,
-        bg: &quot;bg-rose-500/10&quot;,
-        desc: &quot;Total purchase cost&quot;,
+        color: "text-rose-500",
+        bg: "bg-rose-500/10",
+        desc: "Total purchase cost",
       },
       {
-        title: term.Customer || &quot;Customers&quot;,
+        title: term.Customer || "Customers",
         value: biStats.customerCount,
         icon: Users,
-        color: &quot;text-sky-400&quot;,
-        bg: &quot;bg-sky-500/10&quot;,
-        desc: `Total ${term.Customer?.toLowerCase() || &quot;customers&quot;}`,
+        color: "text-sky-400",
+        bg: "bg-sky-500/10",
+        desc: `Total ${term.Customer?.toLowerCase() || "customers"}`,
       },
       {
-        title: term.Product || &quot;Products&quot;,
+        title: term.Product || "Products",
         value: biStats.inventoryCount,
         icon: Package,
-        color: &quot;text-amber-500&quot;,
-        bg: &quot;bg-amber-500/10&quot;,
-        desc: `Active ${term.Product?.toLowerCase() || &quot;products&quot;}`,
+        color: "text-amber-500",
+        bg: "bg-amber-500/10",
+        desc: `Active ${term.Product?.toLowerCase() || "products"}`,
       },
     ];
 
-    if (enabledModules.includes(&quot;manufacturing&quot;)) {
+    if (enabledModules.includes("manufacturing")) {
       cards.push({
-        title: term.WorkOrder || &quot;Work Orders&quot;,
+        title: term.WorkOrder || "Work Orders",
         value: biStats.workOrderCount,
         icon: ClipboardList,
-        color: &quot;text-emerald-500&quot;,
-        bg: &quot;bg-emerald-500/10&quot;,
-        desc: &quot;Active production jobs&quot;,
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10",
+        desc: "Active production jobs",
       });
       cards.push({
-        title: &quot;Machine Uptime&quot;,
-        value: &quot;94.2%&quot;,
+        title: "Machine Uptime",
+        value: "94.2%",
         icon: Cpu,
-        color: &quot;text-blue-500&quot;,
-        bg: &quot;bg-blue-500/10&quot;,
-        desc: &quot;Average operational time&quot;,
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+        desc: "Average operational time",
       });
       cards.push({
-        title: &quot;Production Yield&quot;,
-        value: &quot;98.1%&quot;,
+        title: "Production Yield",
+        value: "98.1%",
         icon: BarChart2,
-        color: &quot;text-indigo-500&quot;,
-        bg: &quot;bg-indigo-500/10&quot;,
-        desc: &quot;Output vs Target efficiency&quot;,
+        color: "text-indigo-500",
+        bg: "bg-indigo-500/10",
+        desc: "Output vs Target efficiency",
       });
       cards.push({
-        title: &quot;Open Shortages&quot;,
-        value: &quot;12&quot;,
+        title: "Open Shortages",
+        value: "12",
         icon: Activity,
-        color: &quot;text-rose-500&quot;,
-        bg: &quot;bg-rose-500/10&quot;,
-        desc: &quot;Stockouts affecting production&quot;,
+        color: "text-rose-500",
+        bg: "bg-rose-500/10",
+        desc: "Stockouts affecting production",
       });
     }
     return cards;
@@ -393,11 +392,11 @@ export default function DashboardPage() {
             {user?.tenantName ||
               (industryConfig?.industry
                 ? `${industryConfig.industry} Console`
-                : &quot;Klypso Dashboard&quot;)}
+                : "Klypso Dashboard")}
           </h2>
           <p className="text-slate-600 mt-2 font-medium">
-            Business intelligence and operational metrics for{&quot; &quot;}
-            {user?.tenantName || &quot;your business&quot;}.
+            Business intelligence and operational metrics for{" "}
+            {user?.tenantName || "your business"}.
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -408,25 +407,25 @@ export default function DashboardPage() {
             <p
               className={`text-xs font-mono font-black ${syncDegraded ? "text-amber-500" : "text-emerald-600"}`}
             >
-              {syncDegraded ? &quot;SYNC DEGRADED&quot; : &quot;LIVE DATA&quot;}
+              {syncDegraded ? "SYNC DEGRADED" : "LIVE DATA"}
             </p>
           </div>
           <Badge
             variant="outline"
             className={`px-4 py-2 rounded-2xl shadow-sm ${syncDegraded ? "border-amber-200 text-amber-600 bg-amber-50/50" : "border-blue-200 text-blue-600 bg-blue-50/50"}`}
           >
-            <Activity className="h-3 w-3 mr-2 animate-pulse" />{&quot; &quot;}
-            {syncDegraded ? &quot;Degraded&quot; : &quot;Live Data&quot;}
+            <Activity className="h-3 w-3 mr-2 animate-pulse" />{" "}
+            {syncDegraded ? "Degraded" : "Live Data"}
           </Badge>
           <Button
             onClick={() => fetchData()}
             disabled={loading}
-            className=&quot;bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-500/20&quot;
+            className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-500/20"
           >
             <Zap
               className={cn("h-3.5 w-3.5 mr-2", loading && "animate-spin")}
             />
-            {loading ? &quot;Refreshing...&quot; : &quot;Sync Cloud Data&quot;}
+            {loading ? "Refreshing..." : "Sync Cloud Data"}
           </Button>
         </div>
       </div>
@@ -471,64 +470,64 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
         {[
           {
-            label: &quot;Quick Invoice&quot;,
+            label: "Quick Invoice",
             icon: CreditCard,
-            color: &quot;bg-emerald-100 text-emerald-600&quot;,
-            href: &quot;/sales/rapid&quot;,
+            color: "bg-emerald-100 text-emerald-600",
+            href: "/sales/rapid",
             roles: SALES_ROLES,
           },
           {
-            label: `Add ${term.Product || &quot;Product&quot;}`,
+            label: `Add ${term.Product || "Product"}`,
             icon: Plus,
-            color: &quot;bg-blue-100 text-blue-600&quot;,
-            href: &quot;/inventory&quot;,
+            color: "bg-blue-100 text-blue-600",
+            href: "/inventory",
             roles: STOCK_ROLES,
           },
           {
-            label: term.Customer || &quot;Customers&quot;,
+            label: term.Customer || "Customers",
             icon: Users,
-            color: &quot;bg-indigo-100 text-indigo-600&quot;,
-            href: &quot;/crm&quot;,
+            color: "bg-indigo-100 text-indigo-600",
+            href: "/crm",
             roles: SALES_ROLES,
           },
           {
-            label: &quot;Purchases&quot;,
+            label: "Purchases",
             icon: Truck,
-            color: &quot;bg-amber-100 text-amber-600&quot;,
-            href: &quot;/purchases&quot;,
+            color: "bg-amber-100 text-amber-600",
+            href: "/purchases",
             roles: STOCK_ROLES,
           },
           {
-            label: term.WorkOrder || &quot;Production&quot;,
+            label: term.WorkOrder || "Production",
             icon: Factory,
-            color: &quot;bg-emerald-100 text-emerald-600&quot;,
-            href: &quot;/manufacturing&quot;,
+            color: "bg-emerald-100 text-emerald-600",
+            href: "/manufacturing",
             roles: MANUFACTURING_ROLES,
           },
           {
-            label: &quot;Accounting&quot;,
+            label: "Accounting",
             icon: FileText,
-            color: &quot;bg-rose-100 text-rose-600&quot;,
-            href: &quot;/accounting&quot;,
+            color: "bg-rose-100 text-rose-600",
+            href: "/accounting",
             roles: FINANCE_ROLES,
           },
           {
-            label: &quot;Apps & Modules&quot;,
+            label: "Apps & Modules",
             icon: LayoutGrid,
-            color: &quot;bg-fuchsia-100 text-fuchsia-600&quot;,
-            href: &quot;/apps&quot;,
-            roles: [&quot;Owner&quot;, &quot;Manager&quot;] as RoleName[],
+            color: "bg-fuchsia-100 text-fuchsia-600",
+            href: "/apps",
+            roles: ["Owner", "Manager"] as RoleName[],
           },
         ]
           .filter((action) => {
             const roleAllowed = action.roles.includes(userRole);
             if (!roleAllowed) return false;
 
-            const pathParts = action.href.split(&quot;/&quot;).filter((p) => p !== &quot;&quot;);
+            const pathParts = action.href.split("/").filter((p) => p !== "");
             const moduleKey = pathParts[0];
 
             if (moduleKey && enabledModules.length > 0) {
-              if (moduleKey === &quot;crm&quot;) return true;
+              if (moduleKey === "crm") return true;
               return enabledModules.includes(moduleKey);
             }
             return true;
@@ -537,7 +536,7 @@ export default function DashboardPage() {
             <button
               key={action.label}
               onClick={() => router.push(action.href)}
-              className=&quot;flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95&quot;
+              className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
             >
               <div
                 className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}
@@ -555,7 +554,7 @@ export default function DashboardPage() {
       <div
         className={cn(
           "grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4",
-          kpiCards.length > 4 && &quot;lg:grid-cols-5&quot;,
+          kpiCards.length > 4 && "lg:grid-cols-5",
         )}
       >
         {(kpiCards || []).map((kpi) => (
@@ -615,7 +614,7 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: "#475569", fontSize: 10, fontWeight: "700" }}
-                    tickFormatter={(val) => `₹${val / 1000}k`}
+                    tickFormatter={(val) => `â‚¹${val / 1000}k`}
                   />
                   <Tooltip
                     cursor={{ fill: "#f8fafc" }}
@@ -685,8 +684,8 @@ export default function DashboardPage() {
                     Monthly MRR
                   </p>
                   <p className="text-xl font-black text-slate-800 tracking-tight">
-                    ₹
-                    {healthStats.runRate.toLocaleString(&quot;en-IN&quot;, {
+                    â‚¹
+                    {healthStats.runRate.toLocaleString("en-IN", {
                       maximumFractionDigits: 0,
                     })}
                   </p>
@@ -696,8 +695,8 @@ export default function DashboardPage() {
                     Monthly Burn
                   </p>
                   <p className="text-xl font-black text-rose-600 tracking-tight">
-                    ₹
-                    {healthStats.burnRate.toLocaleString(&quot;en-IN&quot;, {
+                    â‚¹
+                    {healthStats.burnRate.toLocaleString("en-IN", {
                       maximumFractionDigits: 0,
                     })}
                   </p>
@@ -742,8 +741,8 @@ export default function DashboardPage() {
                         </span>
                         <Clock className="h-2.5 w-2.5 mr-1" />
                         {new Date(log.time).toLocaleTimeString([], {
-                          hour: &quot;2-digit&quot;,
-                          minute: &quot;2-digit&quot;,
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </div>
                     </div>
@@ -767,3 +766,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

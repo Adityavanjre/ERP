@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Landmark,
@@ -45,7 +45,7 @@ export default function NBFCDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 pt-0">
-            <p className="text-4xl font-black text-slate-900">₹1.2 Cr</p>
+            <p className="text-4xl font-black text-slate-900">â‚¹1.2 Cr</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-widest">
               Active AUM
             </p>
@@ -87,7 +87,7 @@ export default function NBFCDashboard() {
           </div>
           <div className="p-8 pt-0">
             <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-black text-[10px] uppercase tracking-widest gap-2 group">
-              Account Control{&quot; &quot;}
+              Account Control{" "}
               <ArrowRight
                 size={14}
                 className="group-hover:translate-x-1 transition-transform"
@@ -113,3 +113,4 @@ export default function NBFCDashboard() {
     </div>
   );
 }
+

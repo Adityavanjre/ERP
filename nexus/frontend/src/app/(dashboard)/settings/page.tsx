@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -74,42 +74,42 @@ interface ApiError {
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [orgName, setOrgName] = useState(&quot;&quot;);
+  const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(true);
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({
-    fullName: &quot;&quot;,
-    email: &quot;&quot;,
-    role: &quot;Biller&quot;,
+    fullName: "",
+    email: "",
+    role: "Biller",
   });
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user: currentUser } = useAuth();
-  const isOwner = currentUser?.role === &quot;Owner&quot;;
+  const isOwner = currentUser?.role === "Owner";
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [profRes, billRes, usersRes] = await Promise.all([
-        api.get(&quot;auth/profile&quot;),
-        api.get(&quot;system/billing/status&quot;),
-        api.get(&quot;users&quot;),
+        api.get("auth/profile"),
+        api.get("system/billing/status"),
+        api.get("users"),
       ]);
       setTenant(profRes.data?.tenant || null);
-      setOrgName(profRes.data?.tenant?.name || &quot;&quot;);
+      setOrgName(profRes.data?.tenant?.name || "");
       setBillingInfo(billRes.data || null);
       setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
     } catch (err: unknown) {
       const apiError = err as ApiError;
       setError(
         apiError.isWakeup
-          ? apiError.message || &quot;Wakeup error&quot;
-          : &quot;Failed to load settings. Please refresh.&quot;,
+          ? apiError.message || "Wakeup error"
+          : "Failed to load settings. Please refresh.",
       );
     } finally {
       setLoading(false);
@@ -125,13 +125,13 @@ export default function SettingsPage() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        await api.post(&quot;users&quot;, newUser);
+        await api.post("users", newUser);
         toast.success(`${newUser.fullName} added to the team`);
         setIsAddUserOpen(false);
-        const res = await api.get(&quot;users&quot;);
+        const res = await api.get("users");
         setMembers(Array.isArray(res.data) ? res.data : []);
       } catch {
-        toast.error(&quot;Failed to add user&quot;);
+        toast.error("Failed to add user");
       }
     },
     [newUser],
@@ -140,11 +140,11 @@ export default function SettingsPage() {
   const handleUpdateRole = useCallback(async (userId: string, role: Role) => {
     try {
       await api.patch(`/users/${userId}/role`, { role });
-      toast.success(&quot;Role updated successfully&quot;);
-      const res = await api.get(&quot;users&quot;);
+      toast.success("Role updated successfully");
+      const res = await api.get("users");
       setMembers(Array.isArray(res.data) ? res.data : []);
     } catch {
-      toast.error(&quot;Failed to update role&quot;);
+      toast.error("Failed to update role");
     }
   }, []);
 
@@ -153,41 +153,41 @@ export default function SettingsPage() {
       const res = await api.post(`/users/${userId}/reset-password`);
       setTempPassword(res.data.temporaryPassword);
       setIsResetOpen(true);
-      toast.success(&quot;Temporary password generated&quot;);
+      toast.success("Temporary password generated");
     } catch {
-      toast.error(&quot;Failed to generate password&quot;);
+      toast.error("Failed to generate password");
     }
   }, []);
 
   const handleRemoveUser = useCallback(async (userId: string) => {
     if (
       !confirm(
-        &quot;Are you sure you want to remove this user? This cannot be undone.&quot;,
+        "Are you sure you want to remove this user? This cannot be undone.",
       )
     )
       return;
     try {
       await api.delete(`/users/${userId}`);
-      toast.success(&quot;User removed from tenant&quot;);
-      const res = await api.get(&quot;users&quot;);
+      toast.success("User removed from tenant");
+      const res = await api.get("users");
       setMembers(Array.isArray(res.data) ? res.data : []);
     } catch {
-      toast.error(&quot;Failed to remove user&quot;);
+      toast.error("Failed to remove user");
     }
   }, []);
 
   const handleUpdate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info(&quot;Profile updates restricted in current version&quot;);
+    toast.info("Profile updates restricted in current version");
   }, []);
 
   const handleUpgrade = useCallback(async (plan: string) => {
     try {
-      await api.post(&quot;system/billing/upgrade&quot;, { plan });
+      await api.post("system/billing/upgrade", { plan });
       toast.success(`Successfully upgraded to ${plan} plan`);
       location.reload();
     } catch {
-      toast.error(&quot;Upgrade failed. Please try again.&quot;);
+      toast.error("Upgrade failed. Please try again.");
     }
   }, []);
 
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                     id="name"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    className=&quot;bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10&quot;
+                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -365,7 +365,7 @@ export default function SettingsPage() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400">
-                            {member.fullName ? member.fullName[0] : &quot;?&quot;}
+                            {member.fullName ? member.fullName[0] : "?"}
                           </div>
                           <div>
                             <div className="text-sm font-bold text-slate-900">
@@ -388,10 +388,10 @@ export default function SettingsPage() {
                             }`}
                           >
                             {member.role
-                              ? typeof member.role === &quot;string&quot;
+                              ? typeof member.role === "string"
                                 ? member.role.toUpperCase()
-                                : &quot;USER&quot;
-                              : &quot;UNKNOWN&quot;}
+                                : "USER"
+                              : "UNKNOWN"}
                           </Badge>
 
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
@@ -407,12 +407,12 @@ export default function SettingsPage() {
                                   </SelectTrigger>
                                   <SelectContent className="bg-white">
                                     {[
-                                      &quot;Owner&quot;,
-                                      &quot;Manager&quot;,
-                                      &quot;Biller&quot;,
-                                      &quot;Storekeeper&quot;,
-                                      &quot;Accountant&quot;,
-                                      &quot;CA&quot;,
+                                      "Owner",
+                                      "Manager",
+                                      "Biller",
+                                      "Storekeeper",
+                                      "Accountant",
+                                      "CA",
                                     ].map((r) => (
                                       <SelectItem
                                         key={r}
@@ -522,9 +522,9 @@ export default function SettingsPage() {
                     {billingInfo?.plan}
                   </Badge>
                   <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
-                    {billingInfo?.plan === &quot;Free&quot;
-                      ? &quot;Free Plan&quot;
-                      : &quot;Enterprise Plan&quot;}
+                    {billingInfo?.plan === "Free"
+                      ? "Free Plan"
+                      : "Enterprise Plan"}
                   </h3>
                   <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">
                     Status: Active
@@ -560,7 +560,7 @@ export default function SettingsPage() {
                           : "border-slate-100 text-slate-400"
                       }
                     >
-                      {billingInfo?.quotas?.aiEnabled ? &quot;ENABLED&quot; : &quot;DISABLED&quot;}
+                      {billingInfo?.quotas?.aiEnabled ? "ENABLED" : "DISABLED"}
                     </Badge>
                   </div>
                 </div>
@@ -578,7 +578,7 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[&quot;Pro&quot;, &quot;Enterprise&quot;].map((tier) => (
+                {["Pro", "Enterprise"].map((tier) => (
                   <div
                     key={tier}
                     className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between hover:border-indigo-500 transition-all group cursor-pointer hover:bg-white"
@@ -597,7 +597,7 @@ export default function SettingsPage() {
                       onClick={() => handleUpgrade(tier)}
                       disabled={billingInfo?.plan === tier}
                     >
-                      {billingInfo?.plan === tier ? &quot;Active&quot; : &quot;Upgrade&quot;}
+                      {billingInfo?.plan === tier ? "Active" : "Upgrade"}
                     </Button>
                   </div>
                 ))}
@@ -748,8 +748,8 @@ export default function SettingsPage() {
             <Button
               className="w-full font-bold bg-slate-900"
               onClick={async () => {
-                await navigator.clipboard.writeText(tempPassword || &quot;&quot;);
-                toast.success(&quot;Key copied to clipboard&quot;);
+                await navigator.clipboard.writeText(tempPassword || "");
+                toast.success("Key copied to clipboard");
               }}
             >
               Copy to Clipboard
@@ -760,3 +760,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

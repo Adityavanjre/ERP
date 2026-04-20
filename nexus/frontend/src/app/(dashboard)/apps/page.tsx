@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -48,11 +48,11 @@ export default function AppsMarketplace() {
   const syncAppData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get(&quot;system/apps&quot;);
+      const res = await api.get("system/apps");
       setApps(res.data);
     } catch {
       // Suppressed in prod: App sync failed silently
-      toast.error(&quot;Failed to load apps. Please refresh.&quot;);
+      toast.error("Failed to load apps. Please refresh.");
     } finally {
       setLoading(false);
     }
@@ -66,18 +66,18 @@ export default function AppsMarketplace() {
   const handleUninstall = useCallback(
     (name: string) => {
       showConfirm({
-        title: &quot;Remove Module?&quot;,
+        title: "Remove Module?",
         description: `This will remove the [${name}] module from your system. Any data specific to this module might become inaccessible.`,
-        confirmText: &quot;Uninstall&quot;,
-        variant: &quot;destructive&quot;,
+        confirmText: "Uninstall",
+        variant: "destructive",
         onConfirm: async () => {
           try {
             await api.post(`/system/apps/${name}/uninstall`);
             toast.success(`Module [${name}] removed successfully`);
             syncAppData(true);
-            window.dispatchEvent(new CustomEvent(&quot;system-apps-updated&quot;));
+            window.dispatchEvent(new CustomEvent("system-apps-updated"));
           } catch {
-            toast.error(&quot;Failed to remove module&quot;);
+            toast.error("Failed to remove module");
           }
         },
       });
@@ -91,9 +91,9 @@ export default function AppsMarketplace() {
         await api.post(`/system/apps/${name}/install`);
         toast.success(`Module [${name}] installed successfully`);
         syncAppData(true);
-        window.dispatchEvent(new CustomEvent(&quot;system-apps-updated&quot;));
+        window.dispatchEvent(new CustomEvent("system-apps-updated"));
       } catch {
-        toast.error(&quot;Installation failed&quot;);
+        toast.error("Installation failed");
       }
     },
     [syncAppData],
@@ -128,7 +128,7 @@ export default function AppsMarketplace() {
               Klypso Desktop
             </CardTitle>
             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-              Windows Application • Build 1.0.0
+              Windows Application â€¢ Build 1.0.0
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
@@ -141,8 +141,8 @@ export default function AppsMarketplace() {
                 <Button
                   className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-blue-500/20"
                   onClick={() => {
-                    toast.success(&quot;Downloading Klypso Desktop...&quot;);
-                    window.open(&quot;/portal/Klypso-ERP-setup.exe&quot;, &quot;_blank&quot;);
+                    toast.success("Downloading Klypso Desktop...");
+                    window.open("/portal/Klypso-ERP-setup.exe", "_blank");
                   }}
                 >
                   <HardDrive className="mr-2 h-5 w-5" /> Download EXE
@@ -152,8 +152,8 @@ export default function AppsMarketplace() {
                   className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl h-12 px-4 font-bold"
                   onClick={() => {
                     window.open(
-                      &quot;https://github.com/adityavanjre/ERP/releases&quot;,
-                      &quot;_blank&quot;,
+                      "https://github.com/adityavanjre/ERP/releases",
+                      "_blank",
                     );
                   }}
                 >
@@ -177,7 +177,7 @@ export default function AppsMarketplace() {
               Klypso Mobile Gateway
             </CardTitle>
             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-              Android Application • Build 1.0.0
+              Android Application â€¢ Build 1.0.0
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
@@ -190,8 +190,8 @@ export default function AppsMarketplace() {
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-emerald-500/20"
                   onClick={() => {
-                    toast.success(&quot;Downloading Klypso Mobile APK...&quot;);
-                    window.open(&quot;/klypso-gateway.apk&quot;, &quot;_blank&quot;);
+                    toast.success("Downloading Klypso Mobile APK...");
+                    window.open("/klypso-gateway.apk", "_blank");
                   }}
                 >
                   <Download className="mr-2 h-5 w-5" /> Download APK
@@ -200,7 +200,7 @@ export default function AppsMarketplace() {
                   variant="outline"
                   className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl h-12 px-4 font-bold"
                   onClick={() => {
-                    window.open(&quot;https://play.google.com/store/apps&quot;, &quot;_blank&quot;);
+                    window.open("https://play.google.com/store/apps", "_blank");
                   }}
                 >
                   <ExternalLink className="mr-2 h-4 w-4" /> Play Store
@@ -227,7 +227,7 @@ export default function AppsMarketplace() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-4 pt-8">
-            {[&quot;Manufacturing&quot;, &quot;Retail&quot;, &quot;Wholesale&quot;, &quot;Services&quot;].map(
+            {["Manufacturing", "Retail", "Wholesale", "Services"].map(
               (type) => (
                 <Button
                   key={type}
@@ -235,14 +235,14 @@ export default function AppsMarketplace() {
                   variant="outline"
                   onClick={async () => {
                     try {
-                      await api.post(&quot;system/apps/preset&quot;, { type });
+                      await api.post("system/apps/preset", { type });
                       toast.success(`${type} blueprint sequence initiated`);
                       syncAppData(true);
                       window.dispatchEvent(
-                        new CustomEvent(&quot;system-apps-updated&quot;),
+                        new CustomEvent("system-apps-updated"),
                       );
                     } catch {
-                      toast.error(&quot;Blueprint installation failed&quot;);
+                      toast.error("Blueprint installation failed");
                     }
                   }}
                 >
@@ -340,3 +340,4 @@ export default function AppsMarketplace() {
     </div>
   );
 }
+

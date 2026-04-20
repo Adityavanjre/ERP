@@ -40,10 +40,6 @@ export function ApiKeyManager() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchKeys();
-  }, []);
-
   const fetchKeys = async () => {
     try {
       const resp = await api.get("system/api/keys");
@@ -54,6 +50,10 @@ export function ApiKeyManager() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchKeys();
+  }, []);
 
   const generateKey = async () => {
     if (!newName.trim()) return toast.error("Key name is required");

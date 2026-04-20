@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
@@ -300,7 +300,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
               Session Terminated
             </DialogTitle>
             <DialogDescription className="text-slate-500 font-medium leading-relaxed">
-              Your security token has expired. For your safety, we&apos;ve
+              Your security token has expired. For your safety, we've
               locked the session. Please re-authenticate to continue.
             </DialogDescription>
           </DialogHeader>
@@ -323,3 +323,4 @@ export const useUX = () => {
   if (!context) throw new Error("useUX must be used within a UXProvider");
   return context;
 };
+

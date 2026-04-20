@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -239,7 +239,7 @@ export function CreateBOMDialog({
                 <Label>Raw Materials / Components</Label>
                 <p className="text-[10px] text-muted-foreground">
                   Assemble raw materials into a finished good by defining its
-                  exact recipe. The &quot;Yield&quot; represents how many
+                  exact recipe. The "Yield" represents how many
                   finished items this recipe produces.
                 </p>
               </div>
@@ -314,7 +314,7 @@ export function CreateBOMDialog({
               ))}
               {items.length === 0 && (
                 <div className="text-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm">
-                  No items added. Click &quot;Add Item&quot; to start.
+                  No items added. Click "Add Item" to start.
                 </div>
               )}
             </div>
@@ -337,3 +337,4 @@ export function CreateBOMDialog({
     </Dialog>
   );
 }
+

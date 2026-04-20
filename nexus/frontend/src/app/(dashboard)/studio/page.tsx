@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -52,13 +52,13 @@ export default function StudioPage() {
   const [modelName, setModelName] = useState("");
   const [modelLabel, setModelLabel] = useState("");
   const [fields, setFields] = useState<StudioField[]>([
-    { name: &quot;name&quot;, label: &quot;Display Name&quot;, type: &quot;Char&quot;, required: true },
+    { name: "name", label: "Display Name", type: "Char", required: true },
   ]);
 
   const addField = useCallback(() => {
     setFields((prev) => [
       ...prev,
-      { name: &quot;&quot;, label: &quot;&quot;, type: &quot;Char&quot;, required: false },
+      { name: "", label: "", type: "Char", required: false },
     ]);
   }, []);
 
@@ -80,7 +80,7 @@ export default function StudioPage() {
   const handleGenerate = useCallback(async () => {
     try {
       if (!modelName || !modelLabel) {
-        toast.error(&quot;Model technical name and label are required&quot;);
+        toast.error("Model technical name and label are required");
         return;
       }
 
@@ -91,18 +91,18 @@ export default function StudioPage() {
         fields: fields,
       };
 
-      await api.post(&quot;system/studio/models&quot;, payload);
+      await api.post("system/studio/models", payload);
       toast.success(`Object [${modelLabel}] created in system!`);
 
       // Reset
-      setModelName(&quot;&quot;);
-      setModelLabel(&quot;&quot;);
+      setModelName("");
+      setModelLabel("");
       setFields([
-        { name: &quot;name&quot;, label: &quot;Display Name&quot;, type: &quot;Char&quot;, required: true },
+        { name: "name", label: "Display Name", type: "Char", required: true },
       ]);
     } catch (err: unknown) {
       const error = err as ApiError;
-      toast.error(error.response?.data?.message || &quot;Creation failed&quot;);
+      toast.error(error.response?.data?.message || "Creation failed");
     }
   }, [appName, modelName, modelLabel, fields]);
 
@@ -155,8 +155,8 @@ export default function StudioPage() {
               <Input
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
-                className=&quot;bg-slate-50 border-slate-200 text-slate-900 font-semibold&quot;
-                placeholder=&quot;e.g. sales&quot;
+                className="bg-slate-50 border-slate-200 text-slate-900 font-semibold"
+                placeholder="e.g. sales"
               />
             </div>
             <div className="space-y-2">
@@ -166,8 +166,8 @@ export default function StudioPage() {
               <Input
                 value={modelName}
                 onChange={(e) => setModelName(e.target.value)}
-                className=&quot;bg-slate-50 border-slate-200 text-slate-900 font-semibold&quot;
-                placeholder=&quot;e.g. custom_vehicle&quot;
+                className="bg-slate-50 border-slate-200 text-slate-900 font-semibold"
+                placeholder="e.g. custom_vehicle"
               />
             </div>
             <div className="space-y-2">
@@ -177,8 +177,8 @@ export default function StudioPage() {
               <Input
                 value={modelLabel}
                 onChange={(e) => setModelLabel(e.target.value)}
-                className=&quot;bg-slate-50 border-slate-200 text-slate-900 font-semibold&quot;
-                placeholder=&quot;e.g. Company Vehicle&quot;
+                className="bg-slate-50 border-slate-200 text-slate-900 font-semibold"
+                placeholder="e.g. Company Vehicle"
               />
             </div>
           </CardContent>
@@ -215,8 +215,8 @@ export default function StudioPage() {
                   </Label>
                   <Input
                     value={field.name}
-                    onChange={(e) => updateField(index, &quot;name&quot;, e.target.value)}
-                    className=&quot;bg-white border-slate-200 text-slate-900 h-9 text-sm font-semibold&quot;
+                    onChange={(e) => updateField(index, "name", e.target.value)}
+                    className="bg-white border-slate-200 text-slate-900 h-9 text-sm font-semibold"
                   />
                 </div>
                 <div className="flex-1 w-full sm:w-auto space-y-2">
@@ -226,9 +226,9 @@ export default function StudioPage() {
                   <Input
                     value={field.label}
                     onChange={(e) =>
-                      updateField(index, &quot;label&quot;, e.target.value)
+                      updateField(index, "label", e.target.value)
                     }
-                    className=&quot;bg-white border-slate-200 text-slate-900 h-9 text-sm font-semibold&quot;
+                    className="bg-white border-slate-200 text-slate-900 h-9 text-sm font-semibold"
                   />
                 </div>
                 <div className="w-full sm:w-[150px] space-y-2">
@@ -237,7 +237,7 @@ export default function StudioPage() {
                   </Label>
                   <Select
                     value={field.type}
-                    onValueChange={(val) => updateField(index, &quot;type&quot;, val)}
+                    onValueChange={(val) => updateField(index, "type", val)}
                   >
                     <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-9 text-sm font-bold">
                       <SelectValue />
@@ -288,7 +288,7 @@ export default function StudioPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
-            {[&quot;Admin&quot;, &quot;Manager&quot;, &quot;Employee&quot;, &quot;Viewer&quot;].map((role) => (
+            {["Admin", "Manager", "Employee", "Viewer"].map((role) => (
               <div
                 key={role}
                 className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
@@ -312,3 +312,4 @@ export default function StudioPage() {
     </div>
   );
 }
+

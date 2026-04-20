@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -61,7 +61,7 @@ export default function FounderMonitoring() {
   const syncDashboardStats = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get(&quot;system/founder-dashboard&quot;);
+      const res = await api.get("system/founder-dashboard");
       setData(res.data);
     } catch {
       // Suppressed in prod: Dashboard sync failed silently
@@ -119,7 +119,7 @@ export default function FounderMonitoring() {
             MRR At Risk
           </p>
           <p className="text-4xl font-black mt-3 text-red-600 tracking-tighter italic">
-            ₹{data.mrrAtRisk.toLocaleString()}
+            â‚¹{data.mrrAtRisk.toLocaleString()}
           </p>
           <div className="mt-6 flex items-center gap-2 text-[9px] bg-red-50 text-red-600 w-fit px-3 py-1 rounded-lg font-black uppercase tracking-widest">
             <TrendingDown className="w-3 h-3" />
@@ -137,9 +137,9 @@ export default function FounderMonitoring() {
               <span className="text-lg text-slate-300 ml-1">%</span>
             </p>
             <Badge
-              className={`text-[10px] font-black border-none px-3 py-1 rounded-lg ${data.systemStatus > 80 ? &quot;bg-emerald-50 text-emerald-600&quot; : &quot;bg-amber-50 text-amber-600&quot;}`}
+              className={`text-[10px] font-black border-none px-3 py-1 rounded-lg ${data.systemStatus > 80 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
             >
-              {data.systemStatus > 80 ? &quot;EXCELLENT&quot; : &quot;STABILIZING&quot;}
+              {data.systemStatus > 80 ? "EXCELLENT" : "STABILIZING"}
             </Badge>
           </div>
           <div className="mt-8 w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
@@ -155,7 +155,7 @@ export default function FounderMonitoring() {
             Live Tenants
           </p>
           <p className="text-4xl font-black mt-3 tracking-tighter text-slate-900">
-            {data.totalTenants.toString().padStart(3, &quot;0&quot;)}
+            {data.totalTenants.toString().padStart(3, "0")}
           </p>
           <p className="text-[10px] text-slate-400 mt-6 font-black uppercase tracking-widest flex items-center gap-2 bg-slate-50 w-fit px-3 py-1 rounded-lg">
             <Users className="w-3 h-3" />
@@ -218,7 +218,7 @@ export default function FounderMonitoring() {
                         {tenant.plan} PHASE
                       </Badge>
                       <span className="text-xl font-black text-slate-900 tracking-tighter italic">
-                        ₹{tenant.mrr.toLocaleString()}
+                        â‚¹{tenant.mrr.toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -230,19 +230,19 @@ export default function FounderMonitoring() {
                       key={i}
                       className="text-[9px] bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-slate-500 font-black uppercase tracking-widest"
                     >
-                      {s.split(&quot;:&quot;)[0]}
+                      {s.split(":")[0]}
                     </div>
                   ))}
                 </div>
 
                 <div className="flex gap-4 w-full md:w-auto">
-                  {tenant.interventions?.action === &quot;SCHEDULE_SUPPORT_CALL&quot; && (
+                  {tenant.interventions?.action === "SCHEDULE_SUPPORT_CALL" && (
                     <Button className="flex-1 md:flex-none h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl px-8 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Follow Up
                     </Button>
                   )}
-                  {tenant.interventions?.action === &quot;SEND_TRAINING_VIDEO&quot; && (
+                  {tenant.interventions?.action === "SEND_TRAINING_VIDEO" && (
                     <Button className="flex-1 md:flex-none h-14 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-8 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
                       <PlayCircle className="w-4 h-4 mr-2" />
                       Send Nudge
@@ -251,18 +251,18 @@ export default function FounderMonitoring() {
                   <button
                     onClick={async () => {
                       try {
-                        await api.post(&quot;auth/select-tenant&quot;, {
+                        await api.post("auth/select-tenant", {
                           tenantId: tenant.tenantId,
                         });
                         // SEC-006: Token stored in HttpOnly cookie by backend
-                        router.push(&quot;/portal/dashboard&quot;);
+                        router.push("/portal/dashboard");
                       } catch {
                         toast.error(
-                          &quot;Shadow Access Failed: Infrastructure bypass rejected.&quot;,
+                          "Shadow Access Failed: Infrastructure bypass rejected.",
                         );
                       }
                     }}
-                    className=&quot;h-14 w-14 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all text-white shadow-xl shadow-slate-900/20 active:scale-90&quot;
+                    className="h-14 w-14 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all text-white shadow-xl shadow-slate-900/20 active:scale-90"
                   >
                     <ArrowUpRight className="w-5 h-5" />
                   </button>
@@ -324,8 +324,8 @@ export default function FounderMonitoring() {
 
         <div className="flex gap-6">
           <Button
-            onClick={() => (window.location.href = &quot;/portal/onboarding&quot;)}
-            className=&quot;h-14 px-10 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/20 active:scale-95&quot;
+            onClick={() => (window.location.href = "/portal/onboarding")}
+            className="h-14 px-10 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/20 active:scale-95"
           >
             Provision New Tenant
           </Button>
@@ -363,3 +363,4 @@ function HistoryFeedIcon() {
     </svg>
   );
 }
+

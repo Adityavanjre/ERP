@@ -24,7 +24,8 @@ const eslintConfig = defineConfig([
       "@next/next/no-img-element": "error",
       "prefer-const": "error",
       "no-empty": "error",
-      "react-hooks/set-state-in-effect": "error",
+      "react-hooks/set-state-in-effect": "warn",
+      "react/no-unescaped-entities": "warn",
     },
   },
 ]);

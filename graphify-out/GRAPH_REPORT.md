@@ -1,7 +1,7 @@
-# Graph Report - D:\code\ERP  (2026-04-18)
+# Graph Report - D:\code\ERP  (2026-04-19)
 
 ## Corpus Check
-- 600 files · ~476,737 words
+- 600 files · ~476,730 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -2377,12 +2377,6 @@ Nodes (0):
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AccountingService` connect `Community 13` to `Community 6`?**
-  _High betweenness centrality (0.047) - this node is a cross-community bridge._
-- **Why does `AccountingController` connect `Community 6` to `Community 4`, `Community 13`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `AuthController` connect `Community 7` to `Community 4`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `handleDesktopOfflineRequest()` (e.g. with `.get()` and `.push()`) actually correct?**
   _`handleDesktopOfflineRequest()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `MockPrismaService`, `AccountingModule`, `LedgerModule` to the rest of the system?**
@@ -2391,3 +2385,9 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.01 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.02 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.03 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.02 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.03 - nodes in this community are weakly interconnected._

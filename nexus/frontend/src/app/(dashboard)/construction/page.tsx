@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   LayoutGrid,
@@ -88,7 +88,7 @@ export default function ConstructionDashboard() {
           </div>
           <div className="p-8 pt-0">
             <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-12 font-black text-[10px] uppercase tracking-widest gap-2 group">
-              Civil Control{&quot; &quot;}
+              Civil Control{" "}
               <ArrowRight
                 size={14}
                 className="group-hover:translate-x-1 transition-transform"
@@ -114,3 +114,4 @@ export default function ConstructionDashboard() {
     </div>
   );
 }
+

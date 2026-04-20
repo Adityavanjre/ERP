@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -263,7 +263,7 @@ export function CommandPalette(): React.ReactNode {
             <div className="p-16 text-center space-y-4">
               <Search className="h-16 w-16 text-slate-100 mx-auto" />
               <p className="text-slate-400 text-sm font-medium">
-                No results found for &quot;{query}&quot;
+                No results found for "{query}"
               </p>
             </div>
           )}
@@ -276,7 +276,7 @@ export function CommandPalette(): React.ReactNode {
                 variant="outline"
                 className="border-slate-200 text-slate-400 px-2 py-0.5 font-black"
               >
-                ↵
+                â†µ
               </Badge>
               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                 Select
@@ -287,7 +287,7 @@ export function CommandPalette(): React.ReactNode {
                 variant="outline"
                 className="border-slate-200 text-slate-400 px-2 py-0.5 font-black"
               >
-                ↑↓
+                â†‘â†“
               </Badge>
               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                 Navigate
@@ -305,3 +305,4 @@ export function CommandPalette(): React.ReactNode {
     </Dialog>
   );
 }
+

@@ -65,7 +65,7 @@ interface AccountingStats {
 }
 
 interface HealthScore {
-    status: &apos;RED&apos; | &apos;YELLOW&apos; | &apos;BLUE&apos;;
+    status: 'RED' | 'YELLOW' | 'BLUE';
     riskScore: number;
     metrics: {
         avgEntryLag: number;
@@ -123,10 +123,12 @@ export default function AccountingPage() {
     const { user } = useAuth();
     const { setUILocked, showConfirm } = useUX();
 
-    // Rehydrate from cache if available and fresh
-    const initialData = (_accountingCache && (Date.now() - _accountingCache.timestamp < CACHE_TTL)) 
-        ? _accountingCache.data 
-        : null;
+    // Rehydrate from cache if available and fresh - wrapped in state initializer for purity
+    const [initialData] = useState(() => {
+        return (_accountingCache && (Date.now() - _accountingCache.timestamp < CACHE_TTL)) 
+            ? _accountingCache.data 
+            : null;
+    });
 
     const [accounts, setAccounts] = useState<Account[]>(initialData?.accounts || []);
     const [transactions, setTransactions] = useState<Transaction[]>(initialData?.transactions || []);
@@ -136,7 +138,7 @@ export default function AccountingPage() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<AccountingInvoice | null>(null);
     const [showCreateInvoice, setShowCreateInvoice] = useState(false);
-    const [searchQuery, setSearchQuery] = useState(&quot;&quot;);
+    const [searchQuery, setSearchQuery] = useState("");
 
     const [invoicePage, setInvoicePage] = useState(1);
     const [invoiceTotalPages, setInvoiceTotalPages] = useState(initialData?.totalPages || 1);
@@ -146,7 +148,7 @@ export default function AccountingPage() {
     const [recoveryMemory, setRecoveryMemory] = useState<RecoveryMemory | null>(initialData?.recoveryMemory || null);
     const [showCreateAccount, setShowCreateAccount] = useState(false);
     const [showCreateJournalEntry, setShowCreateJournalEntry] = useState(false);
-    const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
+    const [lastSyncTime, setLastSyncTime] = useState<number>(() => Date.now());
     const isSyncingRef = useRef(false);
 
     const syncLedgers = useCallback(async (silent = false, force = false) => {
@@ -161,13 +163,13 @@ export default function AccountingPage() {
                 setIsSyncing(true);
             }
 
-            const hasFullAccess = [&apos;Owner&apos;, &apos;Manager&apos;, &apos;Accountant&apos;, &apos;CA&apos;].includes(user?.role || &apos;&apos;) || user?.isSuperAdmin;
-            const isOwner = user?.role === &apos;Owner&apos; || user?.isSuperAdmin;
+            const hasFullAccess = ['Owner', 'Manager', 'Accountant', 'CA'].includes(user?.role || '') || user?.isSuperAdmin;
+            const isOwner = user?.role === 'Owner' || user?.isSuperAdmin;
 
             // CORE DATA: Fetch accounts, transactions, and invoices first to unblock UI
             const [accRes, txRes, invRes] = await Promise.all([
-                api.get(&quot;accounting/accounts&quot;).catch(() => ({ data: [] })),
-                api.get(&quot;accounting/transactions&quot;).catch(() => ({ data: { data: [] } })),
+                api.get("accounting/accounts").catch(() => ({ data: [] })),
+                api.get("accounting/transactions").catch(() => ({ data: { data: [] } })),
                 api.get(`accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } }))
             ]);
 
@@ -186,11 +188,11 @@ export default function AccountingPage() {
 
             // ANALYTICAL DATA: Fetch background analytical stats without blocking the UI
             Promise.all([
-                hasFullAccess ? api.get(&quot;accounting/stats&quot;).catch(() => ({ data: null })) : Promise.resolve({ data: null }),
-                hasFullAccess ? api.get(&quot;inventory/stats&quot;).catch(() => ({ data: null })) : Promise.resolve({ data: null }),
-                isOwner ? api.get(&quot;accounting/health-score&quot;).catch(() => ({ data: null })) : Promise.resolve({ data: null }),
-                hasFullAccess ? api.get(&quot;accounting/leaderboard&quot;).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                hasFullAccess ? api.get(&quot;accounting/recovery-memory&quot;).catch(() => ({ data: null })) : Promise.resolve({ data: null })
+                hasFullAccess ? api.get("accounting/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                hasFullAccess ? api.get("inventory/stats").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                isOwner ? api.get("accounting/health-score").catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+                hasFullAccess ? api.get("accounting/leaderboard").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                hasFullAccess ? api.get("accounting/recovery-memory").catch(() => ({ data: null })) : Promise.resolve({ data: null })
             ]).then(([statsRes, , healthRes, leaderRes, recoveryRes]) => {
                 const s = statsRes.data || { receivable: 0, netProfit: 0, income: 0, expenses: 0, overdueAmount: 0, topDebtors: [] };
                 const h = healthRes.data;
@@ -221,15 +223,15 @@ export default function AccountingPage() {
 
         } catch {
             // silent
-            if (!silent) toast.error(&quot;Failed to load accounting data. Please refresh.&quot;);
+            if (!silent) toast.error("Failed to load accounting data. Please refresh.");
         } finally {
             isSyncingRef.current = false;
             setIsSyncing(false);
         }
-    }, [invoicePage, user?.role, user?.isSuperAdmin, accounts.length]);
+    }, [invoicePage, user, accounts.length]);
 
     useEffect(() => {
-        const draft = localStorage.getItem(&quot;invoice_draft&quot;);
+        const draft = localStorage.getItem("invoice_draft");
         if (draft) {
             try {
                 const parsed = JSON.parse(draft);
@@ -244,19 +246,19 @@ export default function AccountingPage() {
 
     const proceedWithCancellation = useCallback((id: string) => {
         showConfirm({
-            title: &quot;Cancel Invoice?&quot;,
-            description: &quot;Are you sure you want to cancel this invoice? This will reverse all ledger entries and stock movements. This action cannot be undone.&quot;,
-            confirmText: &quot;Yes, Cancel Invoice&quot;,
-            variant: &quot;destructive&quot;,
+            title: "Cancel Invoice?",
+            description: "Are you sure you want to cancel this invoice? This will reverse all ledger entries and stock movements. This action cannot be undone.",
+            confirmText: "Yes, Cancel Invoice",
+            variant: "destructive",
             onConfirm: async () => {
                 try {
                     setUILocked(true);
-                    await api.post(`accounting/invoices/${id}/cancel`, { reason: &quot;User cancelled from dashboard&quot; });
-                    toast.success(&quot;Invoice cancelled successfully&quot;);
+                    await api.post(`accounting/invoices/${id}/cancel`, { reason: "User cancelled from dashboard" });
+                    toast.success("Invoice cancelled successfully");
                     syncLedgers();
                 } catch (err: unknown) {
                     const error = err as ApiError;
-                    toast.error(error.response?.data?.message || &quot;Cancellation failed&quot;);
+                    toast.error(error.response?.data?.message || "Cancellation failed");
                 } finally {
                     setUILocked(false);
                 }
@@ -266,7 +268,7 @@ export default function AccountingPage() {
 
     const handleCancelInvoice = useCallback((id: string) => {
         if (Date.now() - lastSyncTime > 60000) {
-            toast.warning(&quot;Accounting data might be stale. Syncing before action...&quot;, { icon: <RefreshCw className="h-4 w-4 animate-spin" /> });
+            toast.warning("Accounting data might be stale. Syncing before action...", { icon: <RefreshCw className="h-4 w-4 animate-spin" /> });
             syncLedgers().then(() => proceedWithCancellation(id));
             return;
         }
@@ -275,7 +277,7 @@ export default function AccountingPage() {
 
     const filteredInvoices = useMemo(() => {
         return invoices.filter((inv) => {
-            const customerName = [inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(&quot; &quot;).toLowerCase();
+            const customerName = [inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(" ").toLowerCase();
             return inv.invoiceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 customerName.includes(searchQuery.toLowerCase());
         });
@@ -349,7 +351,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-slate-900 tracking-tighter">₹{Number(stats.income || 0).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 0 })}</div>
+                        <div className="text-3xl font-black text-slate-900 tracking-tighter">â‚¹{Number(stats.income || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-emerald-600 mt-2 font-black uppercase tracking-widest bg-emerald-50 w-fit px-2 py-0.5 rounded-lg">Accelerating</p>
                     </CardContent>
                 </Card>
@@ -361,7 +363,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-amber-600 tracking-tighter">₹{Number(stats.receivable || 0).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 0 })}</div>
+                        <div className="text-3xl font-black text-amber-600 tracking-tighter">â‚¹{Number(stats.receivable || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">Pending Collection</p>
                     </CardContent>
                 </Card>
@@ -373,7 +375,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-rose-600 tracking-tighter">₹{Number(stats.overdueAmount || 0).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 0 })}</div>
+                        <div className="text-3xl font-black text-rose-600 tracking-tighter">â‚¹{Number(stats.overdueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest bg-rose-50 w-fit px-2 py-0.5 rounded-lg">Critical Alert</p>
                     </CardContent>
                 </Card>
@@ -385,7 +387,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-blue-600 tracking-tighter">₹{Number(stats.gstLiability || 0).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 0 })}</div>
+                        <div className="text-3xl font-black text-blue-600 tracking-tighter">â‚¹{Number(stats.gstLiability || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">GST Obligation</p>
                     </CardContent>
                 </Card>
@@ -413,7 +415,7 @@ export default function AccountingPage() {
                                     <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-5 last:border-0 hover:translate-x-1 transition-transform">
                                         <div className="flex items-center gap-5">
                                             <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center text-xs font-black text-white shadow-lg shadow-slate-900/10">
-                                                {String(i + 1).padStart(2, &apos;0&apos;)}
+                                                {String(i + 1).padStart(2, '0')}
                                             </div>
                                             <div>
                                                 <span className="text-slate-900 font-black tracking-tight text-lg leading-tight block">{d.name}</span>
@@ -421,7 +423,7 @@ export default function AccountingPage() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-rose-600 font-black text-xl italic tracking-tighter block">₹{d.amount.toLocaleString(&apos;en-IN&apos;)}</span>
+                                            <span className="text-rose-600 font-black text-xl italic tracking-tighter block">â‚¹{d.amount.toLocaleString('en-IN')}</span>
                                             <Badge variant="secondary" className="bg-rose-50 text-rose-500 font-black text-[9px] border-none uppercase tracking-widest px-2 py-0.5 mt-1">Aging: {d.aging || 30}+ Days</Badge>
                                         </div>
                                     </div>
@@ -477,9 +479,9 @@ export default function AccountingPage() {
                                     {filteredInvoices.map((inv) => (
                                         <TableRow key={inv.id} className="border-slate-100 hover:bg-slate-50 transition-all group">
                                             <TableCell className="font-mono text-slate-600 text-xs pl-6 font-bold">#{inv.invoiceNumber}</TableCell>
-                                            <TableCell className="font-black text-slate-800 tracking-tight">{[inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(&quot; &quot;)}</TableCell>
+                                            <TableCell className="font-black text-slate-800 tracking-tight">{[inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(" ")}</TableCell>
                                             <TableCell className="text-slate-500 text-sm font-semibold">{new Date(inv.issueDate).toLocaleDateString()}</TableCell>
-                                            <TableCell className="font-black text-slate-900">₹{Number(inv.totalAmount).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 2 })}</TableCell>
+                                            <TableCell className="font-black text-slate-900">â‚¹{Number(inv.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
                                             <TableCell>
                                                 <Badge variant={inv.status === 'Paid' ? 'default' : 'outline'} className={inv.status === 'Paid' ? "bg-emerald-100 text-emerald-700 border-none font-bold shadow-sm" : "border-slate-200 text-slate-500 font-bold"}>
                                                     {inv.status.toUpperCase()}
@@ -491,8 +493,8 @@ export default function AccountingPage() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-9 w-9 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"
-                                                        onClick={() => window.open(`/invoice/${inv.id}`, &apos;_blank&apos;)}
-                                                        title=&quot;Print Invoice&quot;
+                                                        onClick={() => window.open(`/invoice/${inv.id}`, '_blank')}
+                                                        title="Print Invoice"
                                                     >
                                                         <Printer className="h-4 w-4" />
                                                     </Button>
@@ -501,31 +503,31 @@ export default function AccountingPage() {
                                                         size="icon"
                                                         className="h-9 w-9 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all"
                                                         onClick={() => {
-                                                            const phone = inv.customer?.phone?.replace(/[^0-9]/g, &apos;&apos;) || &quot;&quot;;
-                                                            const text = `Invoice #${inv.invoiceNumber} for ₹${Number(inv.totalAmount).toLocaleString(&apos;en-IN&apos;)}. View here: ${window.location.origin}/invoice/${inv.id}`;
-                                                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, &apos;_blank&apos;);
+                                                            const phone = inv.customer?.phone?.replace(/[^0-9]/g, '') || "";
+                                                            const text = `Invoice #${inv.invoiceNumber} for â‚¹${Number(inv.totalAmount).toLocaleString('en-IN')}. View here: ${window.location.origin}/invoice/${inv.id}`;
+                                                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
                                                         }}
-                                                        title=&quot;Share on WhatsApp&quot;
+                                                        title="Share on WhatsApp"
                                                     >
                                                         <MessageCircle className="h-4 w-4" />
                                                     </Button>
-                                                    {inv.status !== &apos;Paid&apos; && inv.status !== &apos;Cancelled&apos; && (
+                                                    {inv.status !== 'Paid' && inv.status !== 'Cancelled' && (
                                                         <Button
                                                             variant="default"
                                                             size="sm"
                                                             onClick={() => setSelectedInvoice(inv)}
-                                                            className=&quot;bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl h-8 px-4 shadow-md shadow-amber-600/20&quot;
+                                                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl h-8 px-4 shadow-md shadow-amber-600/20"
                                                         >
                                                             Tag Payment
                                                         </Button>
                                                     )}
-                                                    {inv.status !== &apos;Cancelled&apos; && (
+                                                    {inv.status !== 'Cancelled' && (
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
                                                             className="h-9 w-9 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-all"
                                                             onClick={() => handleCancelInvoice(inv.id)}
-                                                            title=&quot;Cancel Invoice&quot;
+                                                            title="Cancel Invoice"
                                                         >
                                                             <Ban className="h-4 w-4" />
                                                         </Button>
@@ -550,9 +552,9 @@ export default function AccountingPage() {
                                 </TableBody>
                             </Table>
                             <div className="flex justify-between items-center p-4 border-t border-slate-100 bg-slate-50/50">
-                                <Button variant="outline" size="sm" onClick={() => setInvoicePage(p => Math.max(1, p - 1))} disabled={invoicePage === 1} className=&quot;text-slate-500 border-slate-200 hover:bg-white&quot;>Previous</Button>
+                                <Button variant="outline" size="sm" onClick={() => setInvoicePage(p => Math.max(1, p - 1))} disabled={invoicePage === 1} className="text-slate-500 border-slate-200 hover:bg-white">Previous</Button>
                                 <span className="text-xs text-slate-500 font-medium tracking-tight">Page {invoicePage} of {invoiceTotalPages}</span>
-                                <Button variant="outline" size="sm" onClick={() => setInvoicePage(p => Math.min(invoiceTotalPages, p + 1))} disabled={invoicePage === invoiceTotalPages} className=&quot;text-slate-500 border-slate-200 hover:bg-white&quot;>Next</Button>
+                                <Button variant="outline" size="sm" onClick={() => setInvoicePage(p => Math.min(invoiceTotalPages, p + 1))} disabled={invoicePage === invoiceTotalPages} className="text-slate-500 border-slate-200 hover:bg-white">Next</Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -566,7 +568,7 @@ export default function AccountingPage() {
                                     <CardTitle className="text-slate-900 text-xl font-black">Chart of Accounts</CardTitle>
                                     <CardDescription className="text-slate-500 font-medium">All company accounts and current balances.</CardDescription>
                                 </div>
-                                <Button onClick={() => setShowCreateAccount(true)} className=&quot;bg-amber-500 hover:bg-amber-600 font-bold shadow-lg shadow-amber-500/20 text-white&quot;>
+                                <Button onClick={() => setShowCreateAccount(true)} className="bg-amber-500 hover:bg-amber-600 font-bold shadow-lg shadow-amber-500/20 text-white">
                                     <Plus className="mr-2 h-4 w-4" /> Add Account
                                 </Button>
                             </div>
@@ -590,7 +592,7 @@ export default function AccountingPage() {
                                                 <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-semibold text-xs rounded-lg border-none">{acc.type}</Badge>
                                             </TableCell>
                                             <TableCell className="text-right pr-8 font-black text-slate-900 text-lg">
-                                                ₹{Number(acc.balance).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 0 })}
+                                                â‚¹{Number(acc.balance).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -613,7 +615,7 @@ export default function AccountingPage() {
                                     <CardTitle className="text-slate-900 text-xl font-black">Transaction Journal</CardTitle>
                                     <CardDescription className="text-slate-500 font-medium">Complete record of all financial transactions.</CardDescription>
                                 </div>
-                                <Button onClick={() => setShowCreateJournalEntry(true)} className=&quot;bg-amber-500 hover:bg-amber-600 font-bold shadow-lg shadow-amber-500/20 text-white&quot;>
+                                <Button onClick={() => setShowCreateJournalEntry(true)} className="bg-amber-500 hover:bg-amber-600 font-bold shadow-lg shadow-amber-500/20 text-white">
                                     <Plus className="mr-2 h-4 w-4" /> New Journal Entry
                                 </Button>
                             </div>
@@ -633,9 +635,9 @@ export default function AccountingPage() {
                                         <TableRow key={tx.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="pl-8 font-black text-[10px] text-slate-600 tracking-widest">{new Date(tx.date).toLocaleDateString()}</TableCell>
                                             <TableCell className="font-black text-slate-900 tracking-tight">{tx.account?.name}</TableCell>
-                                            <TableCell className="text-slate-500 font-bold text-xs italic">&quot;{tx.description}&quot;</TableCell>
+                                            <TableCell className="text-slate-500 font-bold text-xs italic">"{tx.description}"</TableCell>
                                             <TableCell className={`text-right pr-8 font-black text-lg ${tx.type === 'Credit' ? "text-emerald-600" : "text-rose-600"}`}>
-                                                {tx.type === &apos;Credit&apos; ? &apos;▲&apos; : &apos;▼&apos;} ₹{Number(tx.amount).toLocaleString(&apos;en-IN&apos;, { minimumFractionDigits: 0 })}
+                                                {tx.type === 'Credit' ? 'â–²' : 'â–¼'} â‚¹{Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -687,7 +689,7 @@ export default function AccountingPage() {
                                         </div>
                                         <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Fulfillment Ratio</p>
-                                            <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.taggingRatio || &quot;0%&quot;}</p>
+                                            <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.taggingRatio || "0%"}</p>
                                             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
                                                 <div className="h-full bg-emerald-500 w-[85%]" />
                                             </div>
@@ -731,7 +733,7 @@ export default function AccountingPage() {
                                                     {leaderboard.map((u: LeaderboardUser, i: number) => (
                                                         <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-4 last:border-0 hover:translate-x-1 transition-transform">
                                                             <div className="flex items-center gap-4">
-                                                                <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 text-xs">{(i + 1).toString().padStart(2, &apos;0&apos;)}</div>
+                                                                <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 text-xs">{(i + 1).toString().padStart(2, '0')}</div>
                                                                 <span className="text-slate-900 font-black tracking-tight">{u.name}</span>
                                                             </div>
                                                             <div className="text-right">
@@ -765,7 +767,7 @@ export default function AccountingPage() {
                                                                 variant="default"
                                                                 size="sm"
                                                                 className="bg-slate-900 hover:bg-blue-600 text-white font-black text-[9px] h-9 rounded-xl border-none shadow-lg shadow-slate-900/10 px-4 uppercase tracking-[0.2em] transition-all"
-                                                                onClick={() => window.open(`https://wa.me/${c.phone?.replace(/[^0-9]/g, &apos;&apos;)}?text=Hi ${c.name}, hope you are doing well!`, &apos;_blank&apos;)}
+                                                                onClick={() => window.open(`https://wa.me/${c.phone?.replace(/[^0-9]/g, '')}?text=Hi ${c.name}, hope you are doing well!`, '_blank')}
                                                             >
                                                                 Reconnect
                                                             </Button>
@@ -815,3 +817,4 @@ export default function AccountingPage() {
         </div>
     );
 }
+

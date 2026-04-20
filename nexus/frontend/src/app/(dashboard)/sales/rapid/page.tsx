@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Zap, Wifi, WifiOff } from "lucide-react";
@@ -31,25 +31,25 @@ interface POSProduct {
 }
 
 interface SyncBatchResult {
-  status: &quot;SUCCESS&quot; | &quot;FAILED&quot; | &quot;ERROR&quot;;
+  status: "SUCCESS" | "FAILED" | "ERROR";
   invoiceNumber: string;
   error?: string;
 }
 
 export default function RapidBillingPage() {
   const [items, setItems] = useState<Item[]>([]);
-  const [search, setSearch] = useState(&quot;&quot;);
+  const [search, setSearch] = useState("");
   // BUG-006 FIX: add setters so customer can be changed (not permanently Walk-in)
 
   const [customerId] = useState<string | null>(null);
 
-  const [customerName] = useState(&quot;Walk-in Customer&quot;);
+  const [customerName] = useState("Walk-in Customer");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [isOffline, setIsOffline] = useState(false);
   const [pendingSync, setPendingSync] = useState(0);
   const [paymentMode, setPaymentMode] = useState<"CASH" | "UPI" | "CREDIT">(
-    &quot;CASH&quot;,
+    "CASH",
   );
   const [lastScanFailed, setLastScanFailed] = useState(false);
   const [customAmountPaid, setCustomAmountPaid] = useState<number>(0);
@@ -80,7 +80,7 @@ export default function RapidBillingPage() {
           name: product.name,
           sku: product.sku,
           price:
-            typeof product.price === &quot;string&quot;
+            typeof product.price === "string"
               ? parseFloat(product.price)
               : product.price,
           quantity: quantity,
@@ -93,16 +93,16 @@ export default function RapidBillingPage() {
 
   useEffect(() => {
     searchRef.current?.focus();
-    if (typeof navigator !== &quot;undefined&quot;) {
+    if (typeof navigator !== "undefined") {
       setIsOffline(!navigator.onLine);
-      window.addEventListener(&quot;online&quot;, () => setIsOffline(false));
-      window.addEventListener(&quot;offline&quot;, () => setIsOffline(true));
+      window.addEventListener("online", () => setIsOffline(false));
+      window.addEventListener("offline", () => setIsOffline(true));
     }
 
     const loadMetadata = () => {
-      const queue = JSON.parse(localStorage.getItem(&quot;billing_queue&quot;) || &quot;[]&quot;);
+      const queue = JSON.parse(localStorage.getItem("billing_queue") || "[]");
       setPendingSync(queue.length);
-      const userData = localStorage.getItem(&quot;k_user&quot;);
+      const userData = localStorage.getItem("k_user");
       if (userData) {
         try {
           const u = JSON.parse(userData);
@@ -135,8 +135,8 @@ export default function RapidBillingPage() {
     let multiplier = 1;
     let finalCode = search.trim();
 
-    if (search.includes(&quot;*&quot;)) {
-      const parts = search.split(&quot;*&quot;);
+    if (search.includes("*")) {
+      const parts = search.split("*");
       if (parts.length === 2 && !isNaN(parseFloat(parts[0]))) {
         multiplier = parseFloat(parts[0]);
         finalCode = parts[1].trim();
@@ -157,13 +157,13 @@ export default function RapidBillingPage() {
       } else {
         setLastScanFailed(true);
         setTimeout(() => setLastScanFailed(false), 1000);
-        toast.error(&quot;Product not found&quot;);
+        toast.error("Product not found");
       }
     } catch {
-      toast.error(&quot;Connection issue&quot;);
+      toast.error("Connection issue");
     } finally {
       setIsSearching(false);
-      setSearch(&quot;&quot;);
+      setSearch("");
     }
   };
 
@@ -200,7 +200,7 @@ export default function RapidBillingPage() {
     setItems([]);
     setStartTime(null);
     setElapsed(0);
-    setSearch(&quot;&quot;);
+    setSearch("");
     setCustomAmountPaid(0);
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
@@ -215,7 +215,7 @@ export default function RapidBillingPage() {
     const amountPaid =
       customAmountPaid > 0
         ? customAmountPaid
-        : paymentMode === &quot;CREDIT&quot;
+        : paymentMode === "CREDIT"
           ? 0
           : total;
 
@@ -237,25 +237,25 @@ export default function RapidBillingPage() {
     };
 
     if (isOffline) {
-      const queue = JSON.parse(localStorage.getItem(&quot;billing_queue&quot;) || &quot;[]&quot;);
+      const queue = JSON.parse(localStorage.getItem("billing_queue") || "[]");
       queue.push(invoiceData);
-      localStorage.setItem(&quot;billing_queue&quot;, JSON.stringify(queue));
+      localStorage.setItem("billing_queue", JSON.stringify(queue));
       setPendingSync(queue.length);
-      toast.success(&quot;Saved Offline&quot;);
+      toast.success("Saved Offline");
       reset();
       setIsSubmitting(false);
       return;
     }
 
     try {
-      await api.post(&quot;accounting/invoices&quot;, invoiceData);
+      await api.post("accounting/invoices", invoiceData);
       toast.success(`Success!`);
       reset();
     } catch {
-      toast.error(&quot;Sync Error: Saved Locally&quot;);
-      const queue = JSON.parse(localStorage.getItem(&quot;billing_queue&quot;) || &quot;[]&quot;);
+      toast.error("Sync Error: Saved Locally");
+      const queue = JSON.parse(localStorage.getItem("billing_queue") || "[]");
       queue.push(invoiceData);
-      localStorage.setItem(&quot;billing_queue&quot;, JSON.stringify(queue));
+      localStorage.setItem("billing_queue", JSON.stringify(queue));
       setPendingSync(queue.length);
       reset();
     } finally {
@@ -288,22 +288,22 @@ export default function RapidBillingPage() {
   // Previously isSubmitting in deps caused this to fire during its own execution.
   const syncQueue = useCallback(async () => {
     if (isOffline || isSyncingRef.current) return;
-    const queue = JSON.parse(localStorage.getItem(&quot;billing_queue&quot;) || &quot;[]&quot;);
+    const queue = JSON.parse(localStorage.getItem("billing_queue") || "[]");
     if (queue.length === 0) return;
 
     isSyncingRef.current = true;
     setIsSubmitting(true);
     try {
-      const res = await api.post(&quot;accounting/invoices/bulk&quot;, queue);
+      const res = await api.post("accounting/invoices/bulk", queue);
       const results: SyncBatchResult[] = res.data.results;
       const successful = new Set(
         results
-          .filter((r) => r.status === &quot;SUCCESS&quot;)
+          .filter((r) => r.status === "SUCCESS")
           .map((r) => r.invoiceNumber),
       );
       const alreadyDone = new Set(
         results
-          .filter((r) => r.error === &quot;ALREADY_SYNCED&quot;)
+          .filter((r) => r.error === "ALREADY_SYNCED")
           .map((r) => r.invoiceNumber),
       );
 
@@ -312,12 +312,12 @@ export default function RapidBillingPage() {
           !successful.has(inv.invoiceNumber) &&
           !alreadyDone.has(inv.invoiceNumber),
       );
-      localStorage.setItem(&quot;billing_queue&quot;, JSON.stringify(remaining));
+      localStorage.setItem("billing_queue", JSON.stringify(remaining));
       setPendingSync(remaining.length);
       if (successful.size > 0 || alreadyDone.size > 0)
-        toast.success(&quot;Sync complete&quot;);
+        toast.success("Sync complete");
     } catch {
-      toast.error(&quot;Sync failed&quot;);
+      toast.error("Sync failed");
     } finally {
       setIsSubmitting(false);
       isSyncingRef.current = false;
@@ -331,21 +331,21 @@ export default function RapidBillingPage() {
 
   useEffect(() => {
     const handleKeys = (e: KeyboardEvent) => {
-      if (e.key === &quot;F1&quot;) {
+      if (e.key === "F1") {
         e.preventDefault();
         handleCompletePress();
       }
-      if (e.key === &quot;F2&quot;) {
+      if (e.key === "F2") {
         e.preventDefault();
-        const modes = [&quot;CASH&quot;, &quot;UPI&quot;, &quot;CREDIT&quot;] as const;
+        const modes = ["CASH", "UPI", "CREDIT"] as const;
         const next = modes[(modes.indexOf(paymentMode) + 1) % modes.length];
         setPaymentMode(next);
         toast(`Payment: ${next}`);
       }
-      if (e.key === &quot;Escape&quot;) reset();
+      if (e.key === "Escape") reset();
     };
-    window.addEventListener(&quot;keydown&quot;, handleKeys);
-    return () => window.removeEventListener(&quot;keydown&quot;, handleKeys);
+    window.addEventListener("keydown", handleKeys);
+    return () => window.removeEventListener("keydown", handleKeys);
   }, [handleCompletePress, paymentMode, reset]);
 
   return (
@@ -365,7 +365,7 @@ export default function RapidBillingPage() {
             <button
               onClick={() => void syncQueue()}
               disabled={isSubmitting}
-              className=&quot;flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm&quot;
+              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
             >
               <Zap className="w-3.5 h-3.5" />
               <span>Sync {pendingSync} Records</span>
@@ -378,7 +378,7 @@ export default function RapidBillingPage() {
               <Wifi className="w-4 h-4 text-emerald-500" />
             )}
             <span className="text-[10px] font-black uppercase tracking-widest">
-              {isOffline ? &quot;Offline Mode&quot; : &quot;Online System&quot;}
+              {isOffline ? "Offline Mode" : "Online System"}
             </span>
           </div>
         </div>
@@ -431,12 +431,13 @@ export default function RapidBillingPage() {
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={completeInvoice}
-        title=&quot;High Value Invoice&quot;
-        description={`You are about to generate an invoice for ₹${total.toLocaleString(&quot;en-IN&quot;)}. Are you sure you want to proceed?`}
-        confirmLabel=&quot;Yes, Generate&quot;
-        cancelLabel=&quot;Review&quot;
-        variant=&quot;warning&quot;
+        title="High Value Invoice"
+        description={`You are about to generate an invoice for â‚¹${total.toLocaleString("en-IN")}. Are you sure you want to proceed?`}
+        confirmLabel="Yes, Generate"
+        cancelLabel="Review"
+        variant="warning"
       />
     </div>
   );
 }
+

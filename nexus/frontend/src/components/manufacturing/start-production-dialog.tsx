@@ -58,12 +58,6 @@ export function StartProductionDialog({
   const [selectedWarehouseId, setSelectedWarehouseId] = useState("");
   const [selectedMachineId, setSelectedMachineId] = useState("");
 
-  useEffect(() => {
-    if (open) {
-      void fetchInitialData();
-    }
-  }, [open]);
-
   const fetchInitialData = async () => {
     try {
       const [wRes, mRes] = await Promise.all([
@@ -80,6 +74,12 @@ export function StartProductionDialog({
       toast.error("Failed to load initial data");
     }
   };
+
+  useEffect(() => {
+    if (open) {
+      void fetchInitialData();
+    }
+  }, [open]);
 
   const handleStart = async () => {
     if (!workOrder) return;

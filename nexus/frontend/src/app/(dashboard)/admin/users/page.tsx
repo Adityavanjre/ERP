@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -27,7 +27,7 @@ import { api } from "../../../../lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-// ────────────────── Types ──────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TenantUser {
   id: string;
@@ -80,50 +80,50 @@ interface ModalTargetProperties {
   lockoutUntil?: string | null;
 }
 
-// ────────────────── Constants ──────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const PLANS = [&quot;Free&quot;, &quot;Starter&quot;, &quot;Growth&quot;, &quot;Business&quot;, &quot;Enterprise&quot;];
-const STATUSES = [&quot;Active&quot;, &quot;GracePeriod&quot;, &quot;ReadOnly&quot;, &quot;Suspended&quot;];
+const PLANS = ["Free", "Starter", "Growth", "Business", "Enterprise"];
+const STATUSES = ["Active", "GracePeriod", "ReadOnly", "Suspended"];
 const ALL_MODULES = [
-  &quot;accounting&quot;,
-  &quot;inventory&quot;,
-  &quot;manufacturing&quot;,
-  &quot;hr&quot;,
-  &quot;crm&quot;,
-  &quot;purchases&quot;,
-  &quot;sales&quot;,
-  &quot;healthcare&quot;,
-  &quot;nbfc&quot;,
-  &quot;logistics&quot;,
-  &quot;construction&quot;,
-  &quot;projects&quot;,
+  "accounting",
+  "inventory",
+  "manufacturing",
+  "hr",
+  "crm",
+  "purchases",
+  "sales",
+  "healthcare",
+  "nbfc",
+  "logistics",
+  "construction",
+  "projects",
 ];
 
 const PLAN_COLORS: Record<string, string> = {
-  Free: &quot;bg-slate-100 text-slate-600&quot;,
-  Starter: &quot;bg-blue-50 text-blue-600&quot;,
-  Growth: &quot;bg-emerald-50 text-emerald-600&quot;,
-  Business: &quot;bg-violet-50 text-violet-600&quot;,
-  Enterprise: &quot;bg-amber-50 text-amber-700&quot;,
+  Free: "bg-slate-100 text-slate-600",
+  Starter: "bg-blue-50 text-blue-600",
+  Growth: "bg-emerald-50 text-emerald-600",
+  Business: "bg-violet-50 text-violet-600",
+  Enterprise: "bg-amber-50 text-amber-700",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Active: &quot;bg-emerald-50 text-emerald-600&quot;,
-  GracePeriod: &quot;bg-amber-50 text-amber-600&quot;,
-  ReadOnly: &quot;bg-orange-50 text-orange-600&quot;,
-  Suspended: &quot;bg-red-50 text-red-600&quot;,
+  Active: "bg-emerald-50 text-emerald-600",
+  GracePeriod: "bg-amber-50 text-amber-600",
+  ReadOnly: "bg-orange-50 text-orange-600",
+  Suspended: "bg-red-50 text-red-600",
 };
 
-// ────────────────── Component ──────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function SuperAdminPage() {
   const router = useRouter();
   const [tenants, setTenants] = useState<TenantListItem[]>([]);
   const [stats, setStats] = useState<PlanStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(&quot;&quot;);
-  const [filterPlan, setFilterPlan] = useState(&quot;&quot;);
-  const [filterStatus, setFilterStatus] = useState(&quot;&quot;);
+  const [search, setSearch] = useState("");
+  const [filterPlan, setFilterPlan] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   // Detail view state
   const [selectedTenant, setSelectedTenant] = useState<TenantListItem | null>(
@@ -142,16 +142,16 @@ export default function SuperAdminPage() {
   );
 
   // Form states
-  const [newPlan, setNewPlan] = useState(&quot;&quot;);
-  const [newStatus, setNewStatus] = useState(&quot;&quot;);
-  const [suspendReason, setSuspendReason] = useState(&quot;&quot;);
-  const [editFullName, setEditFullName] = useState(&quot;&quot;);
-  const [editEmail, setEditEmail] = useState(&quot;&quot;);
-  const [tempPassword, setTempPassword] = useState(&quot;&quot;);
+  const [newPlan, setNewPlan] = useState("");
+  const [newStatus, setNewStatus] = useState("");
+  const [suspendReason, setSuspendReason] = useState("");
+  const [editFullName, setEditFullName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [tempPassword, setTempPassword] = useState("");
   const [moduleList, setModuleList] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // ──────── Data Fetching ────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€ Data Fetching â”€â”€â”€â”€â”€â”€â”€â”€
 
   const fetchTenants = useCallback(async () => {
     try {
@@ -159,16 +159,16 @@ export default function SuperAdminPage() {
       if (search) params.search = search;
       if (filterPlan) params.plan = filterPlan;
       if (filterStatus) params.status = filterStatus;
-      const res = await api.get(&quot;super-admin/tenants&quot;, { params });
+      const res = await api.get("super-admin/tenants", { params });
       setTenants(res.data);
     } catch {
-      toast.error(&quot;Failed to load tenants&quot;);
+      toast.error("Failed to load tenants");
     }
   }, [search, filterPlan, filterStatus]);
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await api.get(&quot;super-admin/stats&quot;);
+      const res = await api.get("super-admin/stats");
       setStats(res.data);
     } catch {
       // silent
@@ -190,11 +190,11 @@ export default function SuperAdminPage() {
       const res = await api.get(`super-admin/tenants/${tenant.id}`);
       setSelectedTenant({ ...tenant, ...res.data });
     } catch {
-      toast.error(&quot;Failed to load tenant details&quot;);
+      toast.error("Failed to load tenant details");
     }
   };
 
-  // ──────── Actions ────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleUpdatePlan = async () => {
     try {
@@ -211,7 +211,7 @@ export default function SuperAdminPage() {
       }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to update plan&quot;);
+      toast.error(error.response?.data?.message || "Failed to update plan");
     } finally {
       setActionLoading(false);
     }
@@ -233,7 +233,7 @@ export default function SuperAdminPage() {
       }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to update status&quot;);
+      toast.error(error.response?.data?.message || "Failed to update status");
     } finally {
       setActionLoading(false);
     }
@@ -246,10 +246,10 @@ export default function SuperAdminPage() {
         `super-admin/users/${target.id}/reset-password`,
       );
       setTempPassword(res.data.temporaryPassword);
-      toast.success(&quot;Password reset successful&quot;);
+      toast.success("Password reset successful");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to reset password&quot;);
+      toast.error(error.response?.data?.message || "Failed to reset password");
     } finally {
       setActionLoading(false);
     }
@@ -264,12 +264,12 @@ export default function SuperAdminPage() {
         fullName: editFullName,
         email: editEmail,
       });
-      toast.success(&quot;Profile updated&quot;);
+      toast.success("Profile updated");
       setShowProfileModal(false);
       if (selectedTenant) await openTenantDetail(selectedTenant);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to update profile&quot;);
+      toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setActionLoading(false);
     }
@@ -285,14 +285,14 @@ export default function SuperAdminPage() {
       await api.patch(`super-admin/users/${target.id}/block`, {
         block: !isCurrentlyBlocked,
       });
-      toast.success(`User ${!isCurrentlyBlocked ? &quot;blocked&quot; : &quot;unblocked&quot;}`);
+      toast.success(`User ${!isCurrentlyBlocked ? "blocked" : "unblocked"}`);
       setShowDeleteModal(false);
       if (selectedTenant) await openTenantDetail(selectedTenant);
       await fetchTenants();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(
-        error.response?.data?.message || &quot;Failed to update user status&quot;,
+        error.response?.data?.message || "Failed to update user status",
       );
     } finally {
       setActionLoading(false);
@@ -307,11 +307,11 @@ export default function SuperAdminPage() {
       await api.patch(`super-admin/tenants/${target.id}/modules`, {
         modules: moduleList,
       });
-      toast.success(&quot;Module access updated&quot;);
+      toast.success("Module access updated");
       setShowModuleModal(false);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to update modules&quot;);
+      toast.error(error.response?.data?.message || "Failed to update modules");
     } finally {
       setActionLoading(false);
     }
@@ -328,7 +328,7 @@ export default function SuperAdminPage() {
     setShowModuleModal(true);
   };
 
-  // ──────── Render ────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (loading) {
     return (
@@ -340,14 +340,14 @@ export default function SuperAdminPage() {
     );
   }
 
-  // ──── Detail View ────
+  // â”€â”€â”€â”€ Detail View â”€â”€â”€â”€
   if (selectedTenant) {
     return (
       <div className="p-4 md:p-10 space-y-8 bg-slate-50/50 min-h-screen pb-20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setSelectedTenant(null)}
-            className=&quot;h-12 w-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all shadow-sm&quot;
+            className="h-12 w-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all shadow-sm"
           >
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </button>
@@ -380,7 +380,7 @@ export default function SuperAdminPage() {
               Industry
             </p>
             <p className="text-xl font-black mt-2 text-slate-900">
-              {selectedTenant.industry || selectedTenant.type || &quot;General&quot;}
+              {selectedTenant.industry || selectedTenant.type || "General"}
             </p>
           </Card>
           <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
@@ -396,10 +396,10 @@ export default function SuperAdminPage() {
               State / GSTIN
             </p>
             <p className="text-xl font-black mt-2 text-slate-900">
-              {selectedTenant.state || &quot;N/A&quot;}
+              {selectedTenant.state || "N/A"}
             </p>
             <p className="text-[10px] text-slate-400 mt-1">
-              {selectedTenant.gstin || &quot;No GSTIN&quot;}
+              {selectedTenant.gstin || "No GSTIN"}
             </p>
           </Card>
           <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
@@ -407,10 +407,10 @@ export default function SuperAdminPage() {
               Created
             </p>
             <p className="text-xl font-black mt-2 text-slate-900">
-              {new Date(selectedTenant.createdAt).toLocaleDateString(&quot;en-IN&quot;, {
-                day: &quot;numeric&quot;,
-                month: &quot;short&quot;,
-                year: &quot;numeric&quot;,
+              {new Date(selectedTenant.createdAt).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
               })}
             </p>
           </Card>
@@ -424,7 +424,7 @@ export default function SuperAdminPage() {
               setNewPlan(selectedTenant.plan);
               setShowPlanModal(true);
             }}
-            className=&quot;h-12 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-violet-500/20&quot;
+            className="h-12 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-violet-500/20"
           >
             <Crown className="w-4 h-4 mr-2" /> Change Plan
           </Button>
@@ -432,23 +432,23 @@ export default function SuperAdminPage() {
             onClick={() => {
               setModalTarget(selectedTenant);
               setNewStatus(selectedTenant.subscriptionStatus);
-              setSuspendReason(&quot;&quot;);
+              setSuspendReason("");
               setShowStatusModal(true);
             }}
-            className=&quot;h-12 px-6 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20&quot;
+            className="h-12 px-6 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
           >
-            {selectedTenant.subscriptionStatus === &quot;Suspended&quot; ? (
+            {selectedTenant.subscriptionStatus === "Suspended" ? (
               <UnlockIcon className="w-4 h-4 mr-2" />
             ) : (
               <LockIcon className="w-4 h-4 mr-2" />
             )}
-            {selectedTenant.subscriptionStatus === &quot;Suspended&quot;
-              ? &quot;Activate&quot;
-              : &quot;Change Status&quot;}
+            {selectedTenant.subscriptionStatus === "Suspended"
+              ? "Activate"
+              : "Change Status"}
           </Button>
           <Button
             onClick={() => openModuleModal(selectedTenant)}
-            className=&quot;h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20&quot;
+            className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
           >
             <Puzzle className="w-4 h-4 mr-2" /> Module Access
           </Button>
@@ -474,7 +474,7 @@ export default function SuperAdminPage() {
                   </div>
                   <div>
                     <p className="font-black text-slate-900">
-                      {tu.user.fullName || &quot;Unnamed&quot;}
+                      {tu.user.fullName || "Unnamed"}
                     </p>
                     <p className="text-xs text-slate-400">{tu.user.email}</p>
                   </div>
@@ -507,23 +507,23 @@ export default function SuperAdminPage() {
                   <button
                     onClick={() => {
                       setModalTarget(tu.user);
-                      setEditFullName(tu.user.fullName || &quot;&quot;);
+                      setEditFullName(tu.user.fullName || "");
                       setEditEmail(tu.user.email);
                       setShowProfileModal(true);
                     }}
-                    className=&quot;h-10 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-all flex items-center gap-2&quot;
-                    title=&quot;Edit Profile&quot;
+                    className="h-10 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-all flex items-center gap-2"
+                    title="Edit Profile"
                   >
                     <Settings className="w-3 h-3" /> Edit
                   </button>
                   <button
                     onClick={() => {
                       setModalTarget(tu.user);
-                      setTempPassword(&quot;&quot;);
+                      setTempPassword("");
                       setShowPasswordModal(true);
                     }}
-                    className=&quot;h-10 px-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-blue-600 transition-all flex items-center gap-2&quot;
-                    title=&quot;Reset Password&quot;
+                    className="h-10 px-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-blue-600 transition-all flex items-center gap-2"
+                    title="Reset Password"
                   >
                     <KeyRound className="w-3 h-3" /> Password
                   </button>
@@ -533,12 +533,12 @@ export default function SuperAdminPage() {
                         setModalTarget(tu.user);
                         setShowDeleteModal(true);
                       }}
-                      className={`h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${tu.user.lockoutUntil && new Date(tu.user.lockoutUntil) > new Date() ? &quot;bg-emerald-50 hover:bg-emerald-100 text-emerald-600&quot; : &quot;bg-red-50 hover:bg-red-100 text-red-600&quot;}`}
+                      className={`h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${tu.user.lockoutUntil && new Date(tu.user.lockoutUntil) > new Date() ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-600" : "bg-red-50 hover:bg-red-100 text-red-600"}`}
                       title={
                         tu.user.lockoutUntil &&
                         new Date(tu.user.lockoutUntil) > new Date()
-                          ? &quot;Unblock User&quot;
-                          : &quot;Block User&quot;
+                          ? "Unblock User"
+                          : "Block User"
                       }
                     >
                       {tu.user.lockoutUntil &&
@@ -549,8 +549,8 @@ export default function SuperAdminPage() {
                       )}
                       {tu.user.lockoutUntil &&
                       new Date(tu.user.lockoutUntil) > new Date()
-                        ? &quot;Unblock&quot;
-                        : &quot;Block&quot;}
+                        ? "Unblock"
+                        : "Block"}
                     </button>
                   )}
                 </div>
@@ -559,20 +559,20 @@ export default function SuperAdminPage() {
           </div>
         </div>
 
-        {/* ──── Modals ──── */}
+        {/* â”€â”€â”€â”€ Modals â”€â”€â”€â”€ */}
 
         {/* Plan Modal */}
         {showPlanModal && (
           <ModalOverlay
             onClose={() => setShowPlanModal(false)}
-            title=&quot;Change Subscription Plan&quot;
+            title="Change Subscription Plan"
           >
             <div className="space-y-3">
               {PLANS.map((p) => (
                 <button
                   key={p}
                   onClick={() => setNewPlan(p)}
-                  className={`w-full p-4 rounded-2xl text-left font-black text-sm transition-all border-2 ${newPlan === p ? &quot;border-violet-500 bg-violet-50 text-violet-700&quot; : &quot;border-slate-100 bg-white text-slate-600 hover:border-slate-200&quot;}`}
+                  className={`w-full p-4 rounded-2xl text-left font-black text-sm transition-all border-2 ${newPlan === p ? "border-violet-500 bg-violet-50 text-violet-700" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"}`}
                 >
                   <div className="flex items-center justify-between">
                     {p}
@@ -588,7 +588,7 @@ export default function SuperAdminPage() {
               disabled={actionLoading}
               className="w-full h-14 mt-6 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
-              {actionLoading ? &quot;Updating...&quot; : &quot;Confirm Plan Change&quot;}
+              {actionLoading ? "Updating..." : "Confirm Plan Change"}
             </Button>
           </ModalOverlay>
         )}
@@ -597,14 +597,14 @@ export default function SuperAdminPage() {
         {showStatusModal && (
           <ModalOverlay
             onClose={() => setShowStatusModal(false)}
-            title=&quot;Change Subscription Status&quot;
+            title="Change Subscription Status"
           >
             <div className="space-y-3">
               {STATUSES.map((s) => (
                 <button
                   key={s}
                   onClick={() => setNewStatus(s)}
-                  className={`w-full p-4 rounded-2xl text-left font-black text-sm transition-all border-2 ${newStatus === s ? &quot;border-amber-500 bg-amber-50 text-amber-700&quot; : &quot;border-slate-100 bg-white text-slate-600 hover:border-slate-200&quot;}`}
+                  className={`w-full p-4 rounded-2xl text-left font-black text-sm transition-all border-2 ${newStatus === s ? "border-amber-500 bg-amber-50 text-amber-700" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"}`}
                 >
                   <div className="flex items-center justify-between">
                     {s}
@@ -615,12 +615,12 @@ export default function SuperAdminPage() {
                 </button>
               ))}
             </div>
-            {newStatus === &quot;Suspended&quot; && (
+            {newStatus === "Suspended" && (
               <input
                 value={suspendReason}
                 onChange={(e) => setSuspendReason(e.target.value)}
-                placeholder=&quot;Reason for suspension...&quot;
-                className=&quot;w-full mt-4 h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500&quot;
+                placeholder="Reason for suspension..."
+                className="w-full mt-4 h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             )}
             <Button
@@ -628,7 +628,7 @@ export default function SuperAdminPage() {
               disabled={actionLoading}
               className="w-full h-14 mt-6 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
-              {actionLoading ? &quot;Updating...&quot; : &quot;Confirm Status Change&quot;}
+              {actionLoading ? "Updating..." : "Confirm Status Change"}
             </Button>
           </ModalOverlay>
         )}
@@ -637,10 +637,10 @@ export default function SuperAdminPage() {
         {showPasswordModal && (
           <ModalOverlay
             onClose={() => setShowPasswordModal(false)}
-            title=&quot;Reset User Password&quot;
+            title="Reset User Password"
           >
             <p className="text-sm text-slate-500 mb-6">
-              This will generate a new temporary password for{&quot; &quot;}
+              This will generate a new temporary password for{" "}
               <strong>{modalTarget?.fullName || modalTarget?.email}</strong>.
               The user will need to change it on next login.
             </p>
@@ -662,7 +662,7 @@ export default function SuperAdminPage() {
                 disabled={actionLoading}
                 className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
               >
-                {actionLoading ? &quot;Resetting...&quot; : &quot;Generate New Password&quot;}
+                {actionLoading ? "Resetting..." : "Generate New Password"}
               </Button>
             )}
           </ModalOverlay>
@@ -672,7 +672,7 @@ export default function SuperAdminPage() {
         {showProfileModal && (
           <ModalOverlay
             onClose={() => setShowProfileModal(false)}
-            title=&quot;Edit User Profile&quot;
+            title="Edit User Profile"
           >
             <div className="space-y-4">
               <div>
@@ -682,7 +682,7 @@ export default function SuperAdminPage() {
                 <input
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className=&quot;w-full h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500&quot;
+                  className="w-full h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -692,7 +692,7 @@ export default function SuperAdminPage() {
                 <input
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className=&quot;w-full h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500&quot;
+                  className="w-full h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -701,7 +701,7 @@ export default function SuperAdminPage() {
               disabled={actionLoading}
               className="w-full h-14 mt-6 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
-              {actionLoading ? &quot;Saving...&quot; : &quot;Save Changes&quot;}
+              {actionLoading ? "Saving..." : "Save Changes"}
             </Button>
           </ModalOverlay>
         )}
@@ -713,24 +713,24 @@ export default function SuperAdminPage() {
             title={
               modalTarget?.lockoutUntil &&
               new Date(modalTarget.lockoutUntil) > new Date()
-                ? &quot;Confirm User Unblock&quot;
-                : &quot;Confirm User Block&quot;
+                ? "Confirm User Unblock"
+                : "Confirm User Block"
             }
           >
             <div
-              className={`p-6 rounded-2xl border-2 mb-6 ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? &quot;bg-emerald-50 border-emerald-200&quot; : &quot;bg-red-50 border-red-200&quot;}`}
+              className={`p-6 rounded-2xl border-2 mb-6 ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <AlertTriangle
-                  className={`w-6 h-6 ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? &quot;text-emerald-600&quot; : &quot;text-red-600&quot;}`}
+                  className={`w-6 h-6 ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? "text-emerald-600" : "text-red-600"}`}
                 />
                 <p
-                  className={`font-black ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? &quot;text-emerald-700&quot; : &quot;text-red-700&quot;}`}
+                  className={`font-black ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? "text-emerald-700" : "text-red-700"}`}
                 >
                   {modalTarget?.lockoutUntil &&
                   new Date(modalTarget.lockoutUntil) > new Date()
-                    ? &quot;Restore Access&quot;
-                    : &quot;Block Access&quot;}
+                    ? "Restore Access"
+                    : "Block Access"}
                 </p>
               </div>
               {modalTarget?.lockoutUntil &&
@@ -746,22 +746,22 @@ export default function SuperAdminPage() {
             <div className="flex gap-4">
               <Button
                 onClick={() => setShowDeleteModal(false)}
-                variant=&quot;outline&quot;
-                className=&quot;flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest&quot;
+                variant="outline"
+                className="flex-1 h-14 rounded-2xl font-black text-xs uppercase tracking-widest"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleToggleUserBlock}
                 disabled={actionLoading}
-                className={`flex-1 h-14 text-white rounded-2xl font-black text-xs uppercase tracking-widest ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? &quot;bg-emerald-600 hover:bg-emerald-700&quot; : &quot;bg-red-600 hover:bg-red-700&quot;}`}
+                className={`flex-1 h-14 text-white rounded-2xl font-black text-xs uppercase tracking-widest ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
               >
                 {actionLoading
-                  ? &quot;Updating...&quot;
+                  ? "Updating..."
                   : modalTarget?.lockoutUntil &&
                       new Date(modalTarget.lockoutUntil) > new Date()
-                    ? &quot;Unblock User&quot;
-                    : &quot;Block User&quot;}
+                    ? "Unblock User"
+                    : "Block User"}
               </Button>
             </div>
           </ModalOverlay>
@@ -771,7 +771,7 @@ export default function SuperAdminPage() {
         {showModuleModal && (
           <ModalOverlay
             onClose={() => setShowModuleModal(false)}
-            title=&quot;Manage Module Access&quot;
+            title="Manage Module Access"
           >
             <p className="text-sm text-slate-500 mb-6">
               Toggle modules for <strong>{modalTarget?.name}</strong>.
@@ -791,7 +791,7 @@ export default function SuperAdminPage() {
                         setModuleList([...moduleList, mod]);
                       }
                     }}
-                    className={`p-4 rounded-2xl text-left font-black text-xs uppercase tracking-widest transition-all border-2 ${enabled ? &quot;border-blue-500 bg-blue-50 text-blue-700&quot; : &quot;border-slate-100 bg-white text-slate-400 hover:border-slate-200&quot;}`}
+                    className={`p-4 rounded-2xl text-left font-black text-xs uppercase tracking-widest transition-all border-2 ${enabled ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-100 bg-white text-slate-400 hover:border-slate-200"}`}
                   >
                     <div className="flex items-center justify-between">
                       {mod}
@@ -807,7 +807,7 @@ export default function SuperAdminPage() {
               className="w-full h-14 mt-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
               <Save className="w-4 h-4 mr-2" />
-              {actionLoading ? &quot;Saving...&quot; : &quot;Save Module Access&quot;}
+              {actionLoading ? "Saving..." : "Save Module Access"}
             </Button>
           </ModalOverlay>
         )}
@@ -815,7 +815,7 @@ export default function SuperAdminPage() {
     );
   }
 
-  // ──── Main List View ────
+  // â”€â”€â”€â”€ Main List View â”€â”€â”€â”€
   return (
     <div className="p-4 md:p-10 space-y-8 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-20">
       {/* Header */}
@@ -832,9 +832,9 @@ export default function SuperAdminPage() {
           </p>
         </div>
         <Button
-          onClick={() => router.push(&quot;/portal/admin/monitoring&quot;)}
-          variant=&quot;outline&quot;
-          className=&quot;h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest&quot;
+          onClick={() => router.push("/portal/admin/monitoring")}
+          variant="outline"
+          className="h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest"
         >
           <BarChart3 className="w-4 h-4 mr-2" /> Business Monitoring
         </Button>
@@ -874,14 +874,14 @@ export default function SuperAdminPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder=&quot;Search tenants by name or slug...&quot;
-            className=&quot;w-full h-14 pl-14 pr-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm&quot;
+            placeholder="Search tenants by name or slug..."
+            className="w-full h-14 pl-14 pr-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
           />
         </div>
         <select
           value={filterPlan}
           onChange={(e) => setFilterPlan(e.target.value)}
-          className=&quot;h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]&quot;
+          className="h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]"
         >
           <option value="">All Plans</option>
           {PLANS.map((p) => (
@@ -893,7 +893,7 @@ export default function SuperAdminPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className=&quot;h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]&quot;
+          className="h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]"
         >
           <option value="">All Statuses</option>
           {STATUSES.map((s) => (
@@ -935,7 +935,7 @@ export default function SuperAdminPage() {
                       </span>
                       <span className="text-[10px] text-slate-300">|</span>
                       <span className="text-[10px] text-slate-400 font-bold">
-                        {tenant.industry || tenant.type || &quot;General&quot;}
+                        {tenant.industry || tenant.type || "General"}
                       </span>
                     </div>
                   </div>
@@ -974,7 +974,7 @@ export default function SuperAdminPage() {
                 >
                   <button
                     onClick={() => openTenantDetail(tenant)}
-                    className=&quot;h-10 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-all flex items-center gap-2&quot;
+                    className="h-10 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-600 transition-all flex items-center gap-2"
                   >
                     <Eye className="w-3 h-3" /> View
                   </button>
@@ -984,7 +984,7 @@ export default function SuperAdminPage() {
                       setNewPlan(tenant.plan);
                       setShowPlanModal(true);
                     }}
-                    className=&quot;h-10 px-4 bg-violet-50 hover:bg-violet-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-violet-600 transition-all flex items-center gap-2&quot;
+                    className="h-10 px-4 bg-violet-50 hover:bg-violet-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-violet-600 transition-all flex items-center gap-2"
                   >
                     <Crown className="w-3 h-3" /> Plan
                   </button>
@@ -992,19 +992,19 @@ export default function SuperAdminPage() {
                     onClick={() => {
                       setModalTarget(tenant);
                       setNewStatus(tenant.subscriptionStatus);
-                      setSuspendReason(&quot;&quot;);
+                      setSuspendReason("");
                       setShowStatusModal(true);
                     }}
-                    className={`h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${tenant.subscriptionStatus === &quot;Suspended&quot; ? &quot;bg-emerald-50 hover:bg-emerald-100 text-emerald-600&quot; : &quot;bg-red-50 hover:bg-red-100 text-red-600&quot;}`}
+                    className={`h-10 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${tenant.subscriptionStatus === "Suspended" ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-600" : "bg-red-50 hover:bg-red-100 text-red-600"}`}
                   >
-                    {tenant.subscriptionStatus === &quot;Suspended&quot; ? (
+                    {tenant.subscriptionStatus === "Suspended" ? (
                       <UnlockIcon className="w-3 h-3" />
                     ) : (
                       <LockIcon className="w-3 h-3" />
                     )}
-                    {tenant.subscriptionStatus === &quot;Suspended&quot;
-                      ? &quot;Activate&quot;
-                      : &quot;Block&quot;}
+                    {tenant.subscriptionStatus === "Suspended"
+                      ? "Activate"
+                      : "Block"}
                   </button>
                 </div>
               </div>
@@ -1016,7 +1016,7 @@ export default function SuperAdminPage() {
   );
 }
 
-// ────────────────── Modal Overlay ──────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Modal Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ModalOverlay({
   children,
@@ -1050,3 +1050,4 @@ function ModalOverlay({
     </div>
   );
 }
+

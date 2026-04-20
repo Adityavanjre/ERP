@@ -26,19 +26,21 @@ export function NumericInput({
     value === 0 ? "" : value.toString(),
   );
 
-  // Sync external value changes to display
-  React.useEffect(() => {
+  const [prevPropValue, setPrevPropValue] = React.useState(value);
+
+  // Sync external value changes to display during the render phase
+  // this is the recommended way to sync state from props in React 18/19
+  if (value !== prevPropValue) {
+    setPrevPropValue(value);
     const numDisplay = Number(displayValue);
     if (numDisplay !== value || (value === 0 && displayValue === "0")) {
-      // Only update display if the numeric value actually changed,
-      // to avoid resetting the cursor while user is typing "0." or "0.0"
       if (value === 0 && !displayValue) {
         setDisplayValue("");
       } else {
         setDisplayValue(value.toString());
       }
     }
-  }, [value, displayValue]);
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { api } from "../../../../lib/api";
@@ -72,15 +72,15 @@ export default function ReportsPage() {
     try {
       setLoading(true);
       const [tbRes, plRes] = await Promise.all([
-        api.get(&quot;accounting/reports/trial-balance&quot;),
-        api.get(&quot;accounting/reports/profit-loss&quot;),
+        api.get("accounting/reports/trial-balance"),
+        api.get("accounting/reports/profit-loss"),
       ]);
       setTrialBalance(tbRes.data);
       setProfitLoss(plRes.data);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       toast.error(
-        error.response?.data?.message || &quot;Failed to load financial reports&quot;,
+        error.response?.data?.message || "Failed to load financial reports",
       );
     } finally {
       setLoading(false);
@@ -92,9 +92,9 @@ export default function ReportsPage() {
   }, [loadReports]);
 
   const fmtINR = (val: number | string) =>
-    Number(val).toLocaleString(&quot;en-IN&quot;, {
-      style: &quot;currency&quot;,
-      currency: &quot;INR&quot;,
+    Number(val).toLocaleString("en-IN", {
+      style: "currency",
+      currency: "INR",
       maximumFractionDigits: 2,
     });
 
@@ -214,10 +214,10 @@ export default function ReportsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-slate-700">
-                          {Number(acct.debit) > 0 ? fmtINR(acct.debit) : &quot;-&quot;}
+                          {Number(acct.debit) > 0 ? fmtINR(acct.debit) : "-"}
                         </TableCell>
                         <TableCell className="text-right pr-8 font-mono text-slate-700">
-                          {Number(acct.credit) > 0 ? fmtINR(acct.credit) : &quot;-&quot;}
+                          {Number(acct.credit) > 0 ? fmtINR(acct.credit) : "-"}
                         </TableCell>
                       </TableRow>
                     ),
@@ -269,8 +269,8 @@ export default function ReportsPage() {
                     <TrendingDown className="h-4 w-4" />
                   )}
                   {profitLoss?.isProfitable
-                    ? &quot;Profitable Period&quot;
-                    : &quot;Loss Period&quot;}
+                    ? "Profitable Period"
+                    : "Loss Period"}
                 </div>
               </CardContent>
             </Card>
@@ -340,3 +340,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+

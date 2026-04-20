@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { AlertCircle, RefreshCcw, Home } from "lucide-react";
@@ -13,7 +13,7 @@ export default function RootError({
 }) {
   useEffect(() => {
     // Log fatal error to forensic service if available
-    console.error(&quot;CRITICAL_SYSTEM_ERROR:&quot;, error);
+    console.error("CRITICAL_SYSTEM_ERROR:", error);
   }, [error]);
 
   return (
@@ -26,10 +26,10 @@ export default function RootError({
 
         <div className="space-y-4">
           <h1 className="text-4xl font-black text-rose-500 tracking-tight">
-            We&apos;re sorry, something went wrong.
+            We're sorry, something went wrong.
           </h1>
           <p className="text-slate-500 font-medium leading-relaxed">
-            We&apos;ve encountered an unexpected error. The system has safely
+            We've encountered an unexpected error. The system has safely
             stopped the current action to protect your data.
           </p>
           <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
@@ -37,7 +37,7 @@ export default function RootError({
               Error Digest
             </p>
             <code className="text-xs font-mono text-red-800 break-all">
-              {error.digest || error.message || &quot;UNKNOWN_ERROR_DETECTED&quot;}
+              {error.digest || error.message || "UNKNOWN_ERROR_DETECTED"}
             </code>
           </div>
         </div>
@@ -45,7 +45,7 @@ export default function RootError({
         <div className="flex flex-col gap-3">
           <button
             onClick={() => reset()}
-            className=&quot;w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95&quot;
+            className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95"
           >
             <RefreshCcw className="w-4 h-4" />
             Try Again
@@ -66,3 +66,4 @@ export default function RootError({
     </div>
   );
 }
+

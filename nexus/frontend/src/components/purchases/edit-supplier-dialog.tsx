@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -55,7 +55,11 @@ export function EditSupplierDialog({
     address: "",
   });
 
-  useEffect(() => {
+  const [prevSupplier, setPrevSupplier] = useState<MinimalSupplier | null>(null);
+
+  // Sync supplier changes to formData during the render phase
+  if (supplier?.id !== prevSupplier?.id) {
+    setPrevSupplier(supplier);
     if (supplier) {
       setFormData({
         name: supplier.name || "",
@@ -65,7 +69,7 @@ export function EditSupplierDialog({
         address: supplier.address || "",
       });
     }
-  }, [supplier, open]);
+  }
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {

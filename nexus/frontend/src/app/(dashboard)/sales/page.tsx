@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -97,19 +97,19 @@ export default function SalesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [products, setProducts] = useState<SalesProduct[]>([]);
   const [customers, setCustomers] = useState<SalesCustomer[]>([]);
-  const [customerId, setCustomerId] = useState(&quot;&quot;);
+  const [customerId, setCustomerId] = useState("");
   const [orderItems, setOrderItems] = useState([
-    { productId: &quot;&quot;, quantity: 1 },
+    { productId: "", quantity: 1 },
   ]);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const addOrderItem = () =>
-    setOrderItems((prev) => [...prev, { productId: &quot;&quot;, quantity: 1 }]);
+    setOrderItems((prev) => [...prev, { productId: "", quantity: 1 }]);
   const removeOrderItem = (i: number) =>
     setOrderItems((prev) => prev.filter((_, idx) => idx !== i));
   const updateOrderItem = (
     i: number,
-    field: &quot;productId&quot; | &quot;quantity&quot;,
+    field: "productId" | "quantity",
     value: string | number,
   ) =>
     setOrderItems((prev) =>
@@ -117,18 +117,18 @@ export default function SalesPage() {
     );
 
   const resetForm = () => {
-    setCustomerId(&quot;&quot;);
-    setOrderItems([{ productId: &quot;&quot;, quantity: 1 }]);
+    setCustomerId("");
+    setOrderItems([{ productId: "", quantity: 1 }]);
   };
 
   const syncSalesData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
       const [orderRes, statsRes, prodRes, custRes] = await Promise.all([
-        api.get(&quot;sales/orders&quot;),
-        api.get(&quot;sales/stats&quot;),
-        api.get(&quot;inventory/products&quot;),
-        api.get(&quot;crm/customers&quot;),
+        api.get("sales/orders"),
+        api.get("sales/stats"),
+        api.get("inventory/products"),
+        api.get("crm/customers"),
       ]);
       setOrders(
         Array.isArray(orderRes.data) ? orderRes.data : orderRes.data.data || [],
@@ -166,14 +166,14 @@ export default function SalesPage() {
             price: p ? Number(p.price) : 0,
           };
         });
-      await api.post(&quot;sales/orders&quot;, { customerId, items });
+      await api.post("sales/orders", { customerId, items });
       setShowForm(false);
       resetForm();
-      toast.success(&quot;Sales order processed successfully&quot;);
+      toast.success("Sales order processed successfully");
       syncSalesData();
     } catch (err: unknown) {
       const error = err as ApiError;
-      toast.error(error.response?.data?.message || &quot;Order processing failed&quot;);
+      toast.error(error.response?.data?.message || "Order processing failed");
     } finally {
       setIsSubmitting(false);
       setUILocked(false);
@@ -185,7 +185,7 @@ export default function SalesPage() {
       e.preventDefault();
       const validItems = orderItems.filter((i) => i.productId);
       if (!customerId || validItems.length === 0) {
-        toast.error(&quot;Please select a customer and at least one product&quot;);
+        toast.error("Please select a customer and at least one product");
         return;
       }
       const orderTotal = validItems.reduce((sum, item) => {
@@ -203,25 +203,25 @@ export default function SalesPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case &quot;Paid&quot;:
+      case "Paid":
         return (
           <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">
             Paid
           </Badge>
         );
-      case &quot;Shipped&quot;:
+      case "Shipped":
         return (
           <Badge className="bg-blue-50 text-blue-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">
             Shipped
           </Badge>
         );
-      case &quot;Pending&quot;:
+      case "Pending":
         return (
           <Badge className="bg-amber-50 text-amber-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">
             Pending
           </Badge>
         );
-      case &quot;Cancelled&quot;:
+      case "Cancelled":
         return (
           <Badge className="bg-rose-50 text-rose-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-full px-3 py-1">
             Cancelled
@@ -278,8 +278,8 @@ export default function SalesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
-              ₹
-              {Number(stats.totalRevenue).toLocaleString(&quot;en-IN&quot;, {
+              â‚¹
+              {Number(stats.totalRevenue).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -297,7 +297,7 @@ export default function SalesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
-              {stats.orderCount.toString().padStart(3, &quot;0&quot;)}
+              {stats.orderCount.toString().padStart(3, "0")}
             </div>
             <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">
               Completed Orders
@@ -316,7 +316,7 @@ export default function SalesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black text-amber-600 tracking-tighter italic">
-              {stats.pendingOrders.toString().padStart(2, &quot;0&quot;)}
+              {stats.pendingOrders.toString().padStart(2, "0")}
             </div>
             <p className="text-[10px] text-amber-600/60 font-black mt-4 uppercase tracking-widest bg-amber-50 w-fit px-2 py-1 rounded-lg animate-pulse">
               Awaiting Confirmation
@@ -335,13 +335,13 @@ export default function SalesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
-              ₹
+              â‚¹
               {stats.orderCount > 0
                 ? (stats.totalRevenue / stats.orderCount).toLocaleString(
-                    &quot;en-IN&quot;,
+                    "en-IN",
                     { maximumFractionDigits: 0 },
                   )
-                : &quot;0&quot;}
+                : "0"}
             </div>
             <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">
               Per Transaction Average
@@ -415,7 +415,7 @@ export default function SalesPage() {
                       >
                         {order.customer
                           ? `${order.customer.firstName} ${order.customer.lastName}`
-                          : &quot;Direct Transaction&quot;}
+                          : "Direct Transaction"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                         Customer
@@ -425,16 +425,16 @@ export default function SalesPage() {
                   <TableCell className="text-slate-500 font-black text-xs italic tracking-tighter">
                     {new Date(order.createdAt)
                       .toLocaleDateString(undefined, {
-                        month: &quot;short&quot;,
-                        day: &quot;2-digit&quot;,
-                        year: &quot;numeric&quot;,
+                        month: "short",
+                        day: "2-digit",
+                        year: "numeric",
                       })
                       .toUpperCase()}
                   </TableCell>
                   <TableCell>
                     <span className="font-black text-slate-900 text-lg tabular-nums">
-                      ₹
-                      {Number(order.total).toLocaleString(&quot;en-IN&quot;, {
+                      â‚¹
+                      {Number(order.total).toLocaleString("en-IN", {
                         minimumFractionDigits: 0,
                       })}
                     </span>
@@ -549,7 +549,7 @@ export default function SalesPage() {
                   <div key={i} className="flex gap-2 items-center">
                     <Select
                       value={item.productId}
-                      onValueChange={(v) => updateOrderItem(i, &quot;productId&quot;, v)}
+                      onValueChange={(v) => updateOrderItem(i, "productId", v)}
                     >
                       <SelectTrigger className="flex-1 bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-12 px-4 font-bold text-sm">
                         <SelectValue placeholder="Choose Product" />
@@ -564,7 +564,7 @@ export default function SalesPage() {
                             <div className="flex justify-between items-center w-full min-w-[260px]">
                               <span>{p.name}</span>
                               <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-lg text-[9px] ml-4">
-                                ₹{p.price}
+                                â‚¹{p.price}
                               </span>
                             </div>
                           </SelectItem>
@@ -578,17 +578,17 @@ export default function SalesPage() {
                       onChange={(e) =>
                         updateOrderItem(
                           i,
-                          &quot;quantity&quot;,
+                          "quantity",
                           Math.max(1, parseInt(e.target.value) || 1),
                         )
                       }
-                      className=&quot;w-20 bg-slate-50 border-slate-100 rounded-2xl h-12 text-center font-black text-slate-900 tabular-nums&quot;
+                      className="w-20 bg-slate-50 border-slate-100 rounded-2xl h-12 text-center font-black text-slate-900 tabular-nums"
                     />
                     {orderItems.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeOrderItem(i)}
-                        className=&quot;p-2 text-slate-300 hover:text-rose-500 transition-colors rounded-xl&quot;
+                        className="p-2 text-slate-300 hover:text-rose-500 transition-colors rounded-xl"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -615,7 +615,7 @@ export default function SalesPage() {
                 disabled={isSubmitting}
                 className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-14 shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98]"
               >
-                {isSubmitting ? &quot;Creating Order...&quot; : &quot;Create Order&quot;}
+                {isSubmitting ? "Creating Order..." : "Create Order"}
               </Button>
             </div>
           </form>
@@ -626,12 +626,13 @@ export default function SalesPage() {
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={submitOrder}
-        title=&quot;Large Order Alert&quot;
-        description=&quot;This order exceeds ₹1,00,000. Please verify the customer and quantities before finalizing.&quot;
-        confirmLabel=&quot;Confirm Order&quot;
-        cancelLabel=&quot;Review Changes&quot;
-        variant=&quot;warning&quot;
+        title="Large Order Alert"
+        description="This order exceeds â‚¹1,00,000. Please verify the customer and quantities before finalizing."
+        confirmLabel="Confirm Order"
+        cancelLabel="Review Changes"
+        variant="warning"
       />
     </div>
   );
 }
+

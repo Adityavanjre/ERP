@@ -36,7 +36,10 @@ export function CollaborationTimeline({
   const syncCommunicationFlux = useCallback(
     async (showLoading = false) => {
       try {
-        if (showLoading) setLoading(true);
+        if (showLoading) {
+          // Defer to avoid synchronous setState inside useEffect
+          setTimeout(() => setLoading(true), 0);
+        }
         const { data } = await api.get(
           `/system/collaboration/comments/${resourceType}/${resourceId}`,
         );
@@ -108,45 +111,49 @@ export function CollaborationTimeline({
   );
 
   const renderComment = useCallback(
-    (comment: Comment, isReply = false): React.ReactNode => (
-      <motion.div
-        key={comment.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`${isReply ? "ml-8 mt-2" : "mt-4"}`}
-      >
-        <div className="flex gap-3 p-3 rounded-lg bg-secondary/20 border border-secondary/30">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-            {comment.userId.substring(0, 2).toUpperCase()}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">
-                User {comment.userId.substring(0, 4)}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(comment.createdAt), {
-                  addSuffix: true,
-                })}
-              </span>
+    function internalRender(comment: Comment, isReply = false): React.ReactNode {
+      return (
+        <motion.div
+          key={comment.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`${isReply ? "ml-8 mt-2" : "mt-4"}`}
+        >
+          <div className="flex gap-3 p-3 rounded-lg bg-secondary/20 border border-secondary/30">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+              {comment.userId.substring(0, 2).toUpperCase()}
             </div>
-            <p className="text-sm mt-1 text-foreground/80">{comment.content}</p>
-            <div className="flex items-center gap-4 mt-2">
-              {!isReply && (
-                <button
-                  onClick={() => setReplyTo(comment)}
-                  className="text-xs text-primary hover:underline flex items-center gap-1"
-                >
-                  <Reply className="w-3 h-3" /> Reply
-                </button>
-              )}
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">
+                  User {comment.userId.substring(0, 4)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(comment.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+              <p className="text-sm mt-1 text-foreground/80">
+                {comment.content}
+              </p>
+              <div className="flex items-center gap-4 mt-2">
+                {!isReply && (
+                  <button
+                    onClick={() => setReplyTo(comment)}
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    <Reply className="w-3 h-3" /> Reply
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        {comment.replies &&
-          comment.replies.map((reply) => renderComment(reply, true))}
-      </motion.div>
-    ),
+          {comment.replies &&
+            comment.replies.map((reply) => internalRender(reply, true))}
+        </motion.div>
+      );
+    },
     [],
   );
 

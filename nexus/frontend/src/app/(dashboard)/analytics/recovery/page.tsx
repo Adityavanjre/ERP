@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -55,7 +55,7 @@ export default function RecoveryMemoryDashboard() {
   const syncRecoveryData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await api.get(&quot;accounting/recovery-memory&quot;);
+      const res = await api.get("accounting/recovery-memory");
       setData(res.data);
     } catch {
       // Suppressed in prod: Recovery sync failed silently
@@ -87,10 +87,10 @@ export default function RecoveryMemoryDashboard() {
             Insights
           </div>
           <h1 className="text-6xl font-black tracking-tighter mb-6 text-white leading-[1.1]">
-            System Protected{&quot; &quot;}
+            System Protected{" "}
             <span className="text-emerald-300">
-              ₹{data.anchors.monthlyProtection.toLocaleString()}
-            </span>{&quot; &quot;}
+              â‚¹{data.anchors.monthlyProtection.toLocaleString()}
+            </span>{" "}
             This Month.
           </h1>
           <p className="text-xl text-blue-50 font-medium leading-relaxed mb-10 opacity-90">
@@ -104,7 +104,7 @@ export default function RecoveryMemoryDashboard() {
                 Lifetime Protection
               </p>
               <p className="text-3xl md:text-4xl font-black flex items-center gap-3 text-white">
-                ₹{data.anchors.lifetimeRecovery.toLocaleString()}
+                â‚¹{data.anchors.lifetimeRecovery.toLocaleString()}
                 <Trophy className="w-7 h-7 text-amber-300" />
               </p>
             </div>
@@ -130,7 +130,7 @@ export default function RecoveryMemoryDashboard() {
               <Wallet className="w-8 h-8 text-emerald-600" />
             </div>
             <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full uppercase tracking-widest">
-              +₹{data.moneyFound.total.toLocaleString()} FOUND
+              +â‚¹{data.moneyFound.total.toLocaleString()} FOUND
             </span>
           </div>
           <div>
@@ -145,19 +145,19 @@ export default function RecoveryMemoryDashboard() {
             <div className="flex justify-between items-center text-sm font-medium">
               <span className="text-slate-500">Overdue Reminders</span>
               <span className="font-black text-slate-900">
-                ₹{data.moneyFound.overdueRecovered.toLocaleString()}
+                â‚¹{data.moneyFound.overdueRecovered.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm font-medium">
               <span className="text-slate-500">Dispute Verification Logs</span>
               <span className="font-black text-slate-900">
-                ₹{data.moneyFound.disputesPrevented.toLocaleString()}
+                â‚¹{data.moneyFound.disputesPrevented.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm font-medium">
               <span className="text-slate-500">Inventory Loss Prevention</span>
               <span className="font-black text-slate-900">
-                ₹{data.moneyFound.shrinkageAvoided.toLocaleString()}
+                â‚¹{data.moneyFound.shrinkageAvoided.toLocaleString()}
               </span>
             </div>
           </div>
@@ -226,7 +226,7 @@ export default function RecoveryMemoryDashboard() {
               Time Saved
             </h2>
             <p className="text-slate-500 font-medium">
-              Tasks handled automatically, so you don&apos;t have to.
+              Tasks handled automatically, so you don't have to.
             </p>
           </div>
           <div className="flex items-center gap-8 pt-4">
@@ -241,7 +241,7 @@ export default function RecoveryMemoryDashboard() {
             <div className="h-16 w-px bg-slate-100"></div>
             <div className="space-y-1">
               <p className="text-5xl font-black text-blue-600">
-                ₹{data.timeSaved.monetaryValue.toLocaleString()}
+                â‚¹{data.timeSaved.monetaryValue.toLocaleString()}
               </p>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 Saved Labor Cost
@@ -264,7 +264,7 @@ export default function RecoveryMemoryDashboard() {
               Recovery Opportunities
             </h2>
             <p className="text-slate-500 font-medium text-lg">
-              Customers who haven&apos;t purchased recently. Reach out to bring
+              Customers who haven't purchased recently. Reach out to bring
               them back.
             </p>
           </div>
@@ -297,7 +297,7 @@ export default function RecoveryMemoryDashboard() {
                 {opp.name}
               </h3>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">
-                Delta: ₹{opp.lastTransaction.toLocaleString()}
+                Delta: â‚¹{opp.lastTransaction.toLocaleString()}
               </p>
               <button className="w-full py-3 bg-white border border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
                 Send Reminder
@@ -324,7 +324,7 @@ export default function RecoveryMemoryDashboard() {
               Maximize System Protection.
             </h2>
             <p className="text-slate-400 text-xl font-medium max-w-2xl leading-relaxed">
-              You&apos;ve already saved a lot with this plan. Upgrade to{&quot; &quot;}
+              You've already saved a lot with this plan. Upgrade to{" "}
               <span className="text-white font-bold">Prime Plan</span> to unlock
               advanced overdue detection and automated follow-ups.
             </p>
@@ -344,3 +344,4 @@ export default function RecoveryMemoryDashboard() {
     </div>
   );
 }
+

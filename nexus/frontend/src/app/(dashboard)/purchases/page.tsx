@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -100,21 +100,21 @@ export default function PurchasesPage() {
 
   // Form state
   const [newPO, setNewPO] = useState({
-    supplierId: &quot;&quot;,
-    productId: &quot;&quot;,
+    supplierId: "",
+    productId: "",
     quantity: 1,
     unitPrice: 0,
-    orderDate: new Date().toISOString().split(&quot;T&quot;)[0],
+    orderDate: new Date().toISOString().split("T")[0],
   });
 
   const syncProcurement = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
       const [suppRes, prodRes, poRes, statsRes] = await Promise.all([
-        api.get(&quot;purchases/suppliers&quot;),
-        api.get(&quot;inventory/products&quot;),
-        api.get(&quot;purchases/orders&quot;),
-        api.get(&quot;purchases/stats&quot;),
+        api.get("purchases/suppliers"),
+        api.get("inventory/products"),
+        api.get("purchases/orders"),
+        api.get("purchases/stats"),
       ]);
       const rawSuppliers = suppRes.data?.data ?? suppRes.data;
       setSuppliers(Array.isArray(rawSuppliers) ? rawSuppliers : []);
@@ -164,20 +164,20 @@ export default function PurchasesPage() {
         },
       ];
 
-      await api.post(&quot;purchases/orders&quot;, {
+      await api.post("purchases/orders", {
         supplierId: newPO.supplierId,
         orderDate: new Date(newPO.orderDate),
         totalAmount: newPO.quantity * newPO.unitPrice,
-        status: &quot;Ordered&quot;,
+        status: "Ordered",
         items,
       });
 
-      toast.success(&quot;Purchase order created successfully&quot;);
+      toast.success("Purchase order created successfully");
       setShowPODialog(false);
-      setNewPO({ ...newPO, productId: &quot;&quot;, quantity: 1, unitPrice: 0 });
+      setNewPO({ ...newPO, productId: "", quantity: 1, unitPrice: 0 });
       syncProcurement(true);
     } catch {
-      toast.error(&quot;Failed to create purchase order&quot;);
+      toast.error("Failed to create purchase order");
     } finally {
       setIsSubmitting(false);
     }
@@ -189,31 +189,31 @@ export default function PurchasesPage() {
       toast.success(`Purchase order marked as ${status}`);
       syncProcurement(true);
     } catch {
-      toast.error(&quot;Failed to update purchase order&quot;);
+      toast.error("Failed to update purchase order");
     }
   };
 
   const getPOStatusBadge = (status: string) => {
     switch (status) {
-      case &quot;Received&quot;:
+      case "Received":
         return (
           <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg px-3 py-1">
             Received
           </Badge>
         );
-      case &quot;Ordered&quot;:
+      case "Ordered":
         return (
           <Badge className="bg-blue-50 text-blue-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg px-3 py-1">
             Ordered
           </Badge>
         );
-      case &quot;Draft&quot;:
+      case "Draft":
         return (
           <Badge className="bg-slate-50 text-slate-500 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg px-3 py-1">
             Draft
           </Badge>
         );
-      case &quot;Cancelled&quot;:
+      case "Cancelled":
         return (
           <Badge className="bg-rose-50 text-rose-600 border-none font-black text-[10px] uppercase tracking-tighter rounded-lg px-3 py-1">
             Cancelled
@@ -248,7 +248,7 @@ export default function PurchasesPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-            <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-indigo-600" />{&quot; &quot;}
+            <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-indigo-600" />{" "}
             Purchases & Suppliers
           </h2>
           <p className="text-slate-500 mt-2 font-medium">
@@ -259,13 +259,13 @@ export default function PurchasesPage() {
           <Button
             variant="outline"
             onClick={() => setIsAddSupplierOpen(true)}
-            className=&quot;flex-1 sm:flex-none justify-center rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-6 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap&quot;
+            className="flex-1 sm:flex-none justify-center rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-6 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
           >
             <UserPlus className="h-4 w-4" /> Add Supplier
           </Button>
           <Button
             onClick={() => setShowPODialog(true)}
-            className=&quot;flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-8 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap&quot;
+            className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-8 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap"
           >
             New Order
           </Button>
@@ -282,8 +282,8 @@ export default function PurchasesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              ₹
-              {Number(stats?.totalSpent || 0).toLocaleString(&quot;en-IN&quot;, {
+              â‚¹
+              {Number(stats?.totalSpent || 0).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -383,7 +383,7 @@ export default function PurchasesPage() {
                       className="border-slate-100 hover:bg-slate-50/50 transition-all group"
                     >
                       <TableCell className="pl-8 font-black text-[10px] text-blue-600 tracking-widest bg-slate-50/30 w-32 uppercase tracking-tighter leading-none">
-                        {po.orderNumber.startsWith(&quot;PO-&quot;)
+                        {po.orderNumber.startsWith("PO-")
                           ? po.orderNumber
                           : `PO-${po.orderNumber.toUpperCase()}`}
                       </TableCell>
@@ -394,28 +394,28 @@ export default function PurchasesPage() {
                         {new Date(po.orderDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-black text-slate-900">
-                        ₹
-                        {Number(po.totalAmount).toLocaleString(&quot;en-IN&quot;, {
+                        â‚¹
+                        {Number(po.totalAmount).toLocaleString("en-IN", {
                           minimumFractionDigits: 0,
                         })}
                       </TableCell>
                       <TableCell>{getPOStatusBadge(po.status)}</TableCell>
                       <TableCell className="text-right pr-8">
-                        {po.status === &quot;Ordered&quot; && (
+                        {po.status === "Ordered" && (
                           <Button
                             size="sm"
                             onClick={() =>
-                              handleUpdateStatus(po.id, &quot;Received&quot;)
+                              handleUpdateStatus(po.id, "Received")
                             }
-                            className=&quot;bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl h-8 px-4 text-[11px] shadow-lg shadow-emerald-500/20&quot;
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl h-8 px-4 text-[11px] shadow-lg shadow-emerald-500/20"
                           >
                             <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark
                             Received
                           </Button>
                         )}
-                        {po.status === &quot;Received&quot; && (
+                        {po.status === "Received" && (
                           <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest flex items-center justify-end">
-                            <CheckCircle2 className="mr-1.5 h-4 w-4 text-emerald-500" />{&quot; &quot;}
+                            <CheckCircle2 className="mr-1.5 h-4 w-4 text-emerald-500" />{" "}
                             Fulfilled
                           </span>
                         )}
@@ -466,7 +466,7 @@ export default function PurchasesPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setEditingSupplier(s)}
-                            className=&quot;h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all&quot;
+                            className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -488,8 +488,8 @@ export default function PurchasesPage() {
                     <CardContent>
                       <div className="flex flex-col gap-3">
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest bg-slate-100/50 p-3 rounded-xl italic">
-                          <Package className="inline mr-1.5 h-3.5 w-3.5" />{&quot; &quot;}
-                          {s.address || &quot;Global Operations&quot;}
+                          <Package className="inline mr-1.5 h-3.5 w-3.5" />{" "}
+                          {s.address || "Global Operations"}
                         </p>
                         <Button
                           variant="outline"
@@ -497,7 +497,7 @@ export default function PurchasesPage() {
                           onClick={() =>
                             setOpeningBalanceTarget({ id: s.id, name: s.name })
                           }
-                          className=&quot;w-full h-8 rounded-xl border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all gap-2&quot;
+                          className="w-full h-8 rounded-xl border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all gap-2"
                         >
                           <Scale className="h-3.5 w-3.5" /> Set Opening Balance
                         </Button>
@@ -548,7 +548,7 @@ export default function PurchasesPage() {
                 onChange={(e) =>
                   setNewPO({ ...newPO, supplierId: e.target.value })
                 }
-                className=&quot;flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-all&quot;
+                className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-all"
               >
                 <option value="">Select supplier...</option>
                 {Array.isArray(suppliers) &&
@@ -579,7 +579,7 @@ export default function PurchasesPage() {
                       unitPrice: prod?.costPrice || 0,
                     });
                   }}
-                  className=&quot;flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-all&quot;
+                  className="flex h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 transition-all"
                 >
                   <option value="">Select product...</option>
                   {Array.isArray(products) &&
@@ -601,7 +601,7 @@ export default function PurchasesPage() {
                   id="quantity"
                   value={newPO.quantity}
                   onChange={(val) => setNewPO({ ...newPO, quantity: val })}
-                  className=&quot;h-11 rounded-2xl border-slate-200 font-bold px-4&quot;
+                  className="h-11 rounded-2xl border-slate-200 font-bold px-4"
                 />
               </div>
             </div>
@@ -612,14 +612,14 @@ export default function PurchasesPage() {
                   htmlFor="unitPrice"
                   className="text-slate-700 font-black text-[10px] uppercase tracking-widest pl-1"
                 >
-                  Unit Cost (₹)
+                  Unit Cost (â‚¹)
                 </Label>
                 <NumericInput
                   id="unitPrice"
                   value={newPO.unitPrice}
                   onChange={(val) => setNewPO({ ...newPO, unitPrice: val })}
                   decimal
-                  className=&quot;h-11 rounded-2xl border-slate-200 font-bold px-4&quot;
+                  className="h-11 rounded-2xl border-slate-200 font-bold px-4"
                 />
               </div>
               <div className="grid gap-2">
@@ -636,7 +636,7 @@ export default function PurchasesPage() {
                   onChange={(e) =>
                     setNewPO({ ...newPO, orderDate: e.target.value })
                   }
-                  className=&quot;h-11 rounded-2xl border-slate-200 font-bold px-4&quot;
+                  className="h-11 rounded-2xl border-slate-200 font-bold px-4"
                 />
               </div>
             </div>
@@ -645,7 +645,7 @@ export default function PurchasesPage() {
               <div className="flex justify-between items-center text-blue-900 font-black tracking-tight">
                 <span className="text-[10px] uppercase">Total Amount</span>
                 <span className="text-xl">
-                  ₹{(newPO.quantity * newPO.unitPrice).toLocaleString(&quot;en-IN&quot;)}
+                  â‚¹{(newPO.quantity * newPO.unitPrice).toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
@@ -663,7 +663,7 @@ export default function PurchasesPage() {
               onClick={handleConfirmSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? &quot;Creating...&quot; : &quot;Create Purchase Order&quot;}
+              {isSubmitting ? "Creating..." : "Create Purchase Order"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -673,19 +673,20 @@ export default function PurchasesPage() {
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={createPO}
-        title=&quot;Confirm Purchase&quot;
-        description={`You are creating a purchase order for ₹${(newPO.quantity * newPO.unitPrice).toLocaleString(&quot;en-IN&quot;)}. Verify supplier and pricing before proceeding.`}
-        confirmLabel=&quot;Yes, Create PO&quot;
-        cancelLabel=&quot;Review&quot;
-        variant=&quot;warning&quot;
+        title="Confirm Purchase"
+        description={`You are creating a purchase order for â‚¹${(newPO.quantity * newPO.unitPrice).toLocaleString("en-IN")}. Verify supplier and pricing before proceeding.`}
+        confirmLabel="Yes, Create PO"
+        cancelLabel="Review"
+        variant="warning"
       />
       <OpeningBalanceDialog
         isOpen={!!openingBalanceTarget}
         onClose={() => setOpeningBalanceTarget(null)}
         supplierId={openingBalanceTarget?.id}
-        targetName={openingBalanceTarget?.name || &quot;&quot;}
+        targetName={openingBalanceTarget?.name || ""}
         onSuccess={() => syncProcurement(true)}
       />
     </div>
   );
 }
+

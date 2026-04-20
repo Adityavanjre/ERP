@@ -36,7 +36,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const theme = industryThemes[slug.toLowerCase()];
-  if (!theme) return { title: &quot;Klypso ERP&quot; };
+  if (!theme) return { title: "Klypso ERP" };
 
   return {
     title: theme.title,
@@ -54,15 +54,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: theme.title,
       description: theme.desc,
-      type: &quot;website&quot;,
+      type: "website",
     },
     other: {
-      &quot;twitter:label1&quot;: &quot;Region&quot;,
-      &quot;twitter:data1&quot;: &quot;India / Regional&quot;,
-      &quot;twitter:label2&quot;: &quot;Rating&quot;,
-      &quot;twitter:data2&quot;: &quot;4.9/5 ⭐&quot;,
-      &quot;theme-color&quot;: &quot;#0f172a&quot;,
-      &quot;ai-optimized&quot;: &quot;true&quot;,
+      "twitter:label1": "Region",
+      "twitter:data1": "India / Regional",
+      "twitter:label2": "Rating",
+      "twitter:data2": "4.9/5 ⭐",
+      "theme-color": "#0f172a",
+      "ai-optimized": "true",
     },
   };
 }
@@ -80,51 +80,51 @@ export default async function IndustryLandingPage({ params }: Props) {
   );
 
   const jsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;SoftwareApplication&quot;,
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
     name: `Klypso ERP for ${theme.name}`,
     description: theme.desc,
-    applicationCategory: &quot;BusinessApplication&quot;,
-    operatingSystem: &quot;Web&quot;,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
     offers: {
-      &quot;@type&quot;: &quot;Offer&quot;,
-      price: &quot;0.00&quot;,
-      priceCurrency: &quot;INR&quot;,
+      "@type": "Offer",
+      price: "0.00",
+      priceCurrency: "INR",
     },
     featureList: theme.features,
   };
 
   const faqJsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;FAQPage&quot;,
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
     mainEntity: theme.faqs.map((faq: { q: string; a: string }) => ({
-      &quot;@type&quot;: &quot;Question&quot;,
+      "@type": "Question",
       name: faq.q,
       acceptedAnswer: {
-        &quot;@type&quot;: &quot;Answer&quot;,
+        "@type": "Answer",
         text: faq.a,
       },
     })),
   };
 
   const breadcrumbJsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;BreadcrumbList&quot;,
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: [
       {
-        &quot;@type&quot;: &quot;ListItem&quot;,
+        "@type": "ListItem",
         position: 1,
-        name: &quot;Klypso ERP&quot;,
-        item: &quot;https://klypso.in/portal&quot;,
+        name: "Klypso ERP",
+        item: "https://klypso.in/portal",
       },
       {
-        &quot;@type&quot;: &quot;ListItem&quot;,
+        "@type": "ListItem",
         position: 2,
-        name: &quot;Solutions&quot;,
-        item: &quot;https://klypso.in/portal#solutions&quot;,
+        name: "Solutions",
+        item: "https://klypso.in/portal#solutions",
       },
       {
-        &quot;@type&quot;: &quot;ListItem&quot;,
+        "@type": "ListItem",
         position: 3,
         name: theme.name,
         item: `https://klypso.in/portal/industries/${slug}`,
@@ -133,66 +133,66 @@ export default async function IndustryLandingPage({ params }: Props) {
   };
 
   const serviceJsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;Service&quot;,
-    serviceType: &quot;Enterprise Resource Planning&quot;,
+    "@context": "https://schema.org",
+    "@type": "Service",
+    serviceType: "Enterprise Resource Planning",
     provider: {
-      &quot;@type&quot;: &quot;Organization&quot;,
-      name: &quot;Klypso ERP India&quot;,
+      "@type": "Organization",
+      name: "Klypso ERP India",
     },
-    areaServed: &quot;IN&quot;,
+    areaServed: "IN",
     description: theme.desc,
     aggregateRating: {
-      &quot;@type&quot;: &quot;AggregateRating&quot;,
-      ratingValue: &quot;4.9&quot;,
-      reviewCount: &quot;250&quot;,
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      reviewCount: "250",
     },
     offers: {
-      &quot;@type&quot;: &quot;Offer&quot;,
-      price: &quot;0.00&quot;,
-      priceCurrency: &quot;INR&quot;,
+      "@type": "Offer",
+      price: "0.00",
+      priceCurrency: "INR",
     },
   };
 
   const speakableJsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;WebPage&quot;,
+    "@context": "https://schema.org",
+    "@type": "WebPage",
     speakable: {
-      &quot;@type&quot;: &quot;SpeakableSpecification&quot;,
-      cssSelector: [&quot;.industry-desc&quot;, &quot;.industry-title&quot;],
+      "@type": "SpeakableSpecification",
+      cssSelector: [".industry-desc", ".industry-title"],
     },
     url: `https://klypso.in/portal/industries/${slug}`,
   };
 
   const videoJsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;VideoObject&quot;,
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
     name: `Klypso ERP for ${theme.name} Demo`,
     description: `Watch how Klypso ERP transforms ${theme.name} businesses in India with automated BOM and GST compliance.`,
-    thumbnailUrl: &quot;https://klypso.in/portal/og-image.png&quot;,
-    uploadDate: &quot;2024-01-01T08:00:00+08:00&quot;,
-    duration: &quot;PT2M30S&quot;,
+    thumbnailUrl: "https://klypso.in/portal/og-image.png",
+    uploadDate: "2024-01-01T08:00:00+08:00",
+    duration: "PT2M30S",
     contentUrl: `https://klypso.in/portal/videos/${slug}-demo.mp4`,
     embedUrl: `https://klypso.in/portal/embed/${slug}`,
     interactionStatistic: {
-      &quot;@type&quot;: &quot;InteractionCounter&quot;,
-      interactionType: { &quot;@type&quot;: &quot;WatchAction&quot; },
+      "@type": "InteractionCounter",
+      interactionType: { "@type": "WatchAction" },
       userInteractionCount: 12500,
     },
   };
 
   const sourceCodeJsonLd = {
-    &quot;@context&quot;: &quot;https://schema.org&quot;,
-    &quot;@type&quot;: &quot;SoftwareSourceCode&quot;,
-    name: &quot;Klypso ERP Core Engine&quot;,
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    name: "Klypso ERP Core Engine",
     description:
-      &quot;High-performance business OS built with Next.js, Prisma, and PostgreSQL.&quot;,
-    programmingLanguage: &quot;TypeScript&quot;,
-    runtimePlatform: &quot;Node.js&quot;,
-    codeRepository: &quot;https://github.com/adityavanjre/ERP&quot;,
+      "High-performance business OS built with Next.js, Prisma, and PostgreSQL.",
+    programmingLanguage: "TypeScript",
+    runtimePlatform: "Node.js",
+    codeRepository: "https://github.com/adityavanjre/ERP",
     author: {
-      &quot;@type&quot;: &quot;Organization&quot;,
-      name: &quot;Klypso Ecosystems&quot;,
+      "@type": "Organization",
+      name: "Klypso Ecosystems",
     },
   };
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -122,36 +122,36 @@ export default function CrmPage() {
     id: string;
     name: string;
   } | null>(null);
-  const [searchQuery, setSearchQuery] = useState(&quot;&quot;);
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"customers" | "leads">(
-    &quot;customers&quot;,
+    "customers",
   );
 
   // Edit Mode
   const [editingDeal, setEditingDeal] = useState<Opportunity | null>(null);
 
   const [formData, setFormData] = useState({
-    firstName: &quot;&quot;,
-    lastName: &quot;&quot;,
-    email: &quot;&quot;,
-    phone: &quot;&quot;,
-    company: &quot;&quot;,
-    address: &quot;&quot;,
-    state: &quot;&quot;,
-    gstin: &quot;&quot;,
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    address: "",
+    state: "",
+    gstin: "",
   });
   const [dealData, setDealData] = useState({
-    title: &quot;&quot;,
-    value: &quot;&quot;,
-    customerId: &quot;&quot;,
-    stage: &quot;New&quot;,
+    title: "",
+    value: "",
+    customerId: "",
+    stage: "New",
   });
 
   const isDirty =
     showForm ||
     showDealForm ||
-    formData.firstName !== &quot;&quot; ||
-    dealData.title !== &quot;&quot;;
+    formData.firstName !== "" ||
+    dealData.title !== "";
 
   useUnsavedChanges(isDirty);
 
@@ -164,8 +164,8 @@ export default function CrmPage() {
         if (showLoading) setLoading(true);
         const [custRes, statsRes, oppRes] = await Promise.all([
           api.get(`/crm/customers?page=${custPage}&limit=50`),
-          api.get(&quot;crm/stats&quot;),
-          api.get(&quot;crm/opportunities&quot;).catch(() => ({ data: [] })),
+          api.get("crm/stats"),
+          api.get("crm/opportunities").catch(() => ({ data: [] })),
         ]);
 
         if (custRes.data.data) {
@@ -206,10 +206,10 @@ export default function CrmPage() {
     reader.onload = async (event) => {
       const csv = event.target?.result as string;
       try {
-        if (typeof csv !== &quot;string&quot;) return;
-        const loadingToast = toast.loading(&quot;Importing customers...&quot;);
+        if (typeof csv !== "string") return;
+        const loadingToast = toast.loading("Importing customers...");
 
-        const res = await api.post(&quot;crm/import&quot;, { csv });
+        const res = await api.post("crm/import", { csv });
         toast.dismiss(loadingToast);
 
         toast.success(`Imported: ${res.data.imported} customers.`);
@@ -220,7 +220,7 @@ export default function CrmPage() {
         syncRelations(true);
       } catch {
         toast.dismiss();
-        toast.error(&quot;Import failed&quot;);
+        toast.error("Import failed");
       }
     };
     reader.readAsText(file);
@@ -231,27 +231,27 @@ export default function CrmPage() {
     try {
       setIsSubmitting(true);
       setUILocked(true);
-      await api.post(&quot;crm/customers&quot;, {
+      await api.post("crm/customers", {
         ...formData,
-        status: activeTab === &quot;leads&quot; ? &quot;Lead&quot; : &quot;Customer&quot;,
+        status: activeTab === "leads" ? "Lead" : "Customer",
       });
       setShowForm(false);
       setFormData({
-        firstName: &quot;&quot;,
-        lastName: &quot;&quot;,
-        email: &quot;&quot;,
-        phone: &quot;&quot;,
-        company: &quot;&quot;,
-        address: &quot;&quot;,
-        state: &quot;&quot;,
-        gstin: &quot;&quot;,
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        company: "",
+        address: "",
+        state: "",
+        gstin: "",
       });
       toast.success(
-        `${activeTab === &quot;leads&quot; ? &quot;Lead&quot; : &quot;Customer&quot;} created successfully`,
+        `${activeTab === "leads" ? "Lead" : "Customer"} created successfully`,
       );
       syncRelations(true);
     } catch {
-      toast.error(&quot;Failed to create customer&quot;);
+      toast.error("Failed to create customer");
     } finally {
       setIsSubmitting(false);
       setUILocked(false);
@@ -261,20 +261,20 @@ export default function CrmPage() {
   const handleDeleteCustomer = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     showConfirm({
-      title: &quot;Delete Customer?&quot;,
+      title: "Delete Customer?",
       description:
-        &quot;This will remove the customer and all associated history. This action cannot be undone.&quot;,
-      confirmText: &quot;Delete&quot;,
-      variant: &quot;destructive&quot;,
+        "This will remove the customer and all associated history. This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "destructive",
       onConfirm: async () => {
         try {
           setUILocked(true);
           await api.delete(`/crm/customers/${id}`);
-          toast.success(&quot;Customer deleted successfully&quot;);
+          toast.success("Customer deleted successfully");
           syncRelations(true);
         } catch (err: unknown) {
           const error = err as ApiError;
-          toast.error(error.response?.data?.message || &quot;Delete failed&quot;);
+          toast.error(error.response?.data?.message || "Delete failed");
         } finally {
           setUILocked(false);
         }
@@ -286,16 +286,16 @@ export default function CrmPage() {
     e.preventDefault();
     try {
       setUILocked(true);
-      await api.post(&quot;crm/opportunities&quot;, {
+      await api.post("crm/opportunities", {
         ...dealData,
         value: Number(dealData.value),
       });
       setShowDealForm(false);
-      setDealData({ title: &quot;&quot;, value: &quot;&quot;, customerId: &quot;&quot;, stage: &quot;New&quot; });
-      toast.success(&quot;Deal created successfully&quot;);
+      setDealData({ title: "", value: "", customerId: "", stage: "New" });
+      toast.success("Deal created successfully");
       syncRelations(true);
     } catch {
-      toast.error(&quot;Failed to create deal&quot;);
+      toast.error("Failed to create deal");
     } finally {
       setUILocked(false);
     }
@@ -321,10 +321,10 @@ export default function CrmPage() {
         stage: editingDeal.stage,
       });
       setEditingDeal(null);
-      toast.success(&quot;Deal updated&quot;);
+      toast.success("Deal updated");
       syncRelations(true);
     } catch {
-      toast.error(&quot;Failed to update deal&quot;);
+      toast.error("Failed to update deal");
       syncRelations(true);
     } finally {
       setUILocked(false);
@@ -340,7 +340,7 @@ export default function CrmPage() {
       toast.success(`Deal moved to ${newStage}`);
       syncRelations(true);
     } catch {
-      toast.error(&quot;Failed to move deal&quot;);
+      toast.error("Failed to move deal");
       syncRelations(true);
     }
   };
@@ -350,18 +350,18 @@ export default function CrmPage() {
       `${c.firstName} ${c.lastName}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      (c.company || &quot;&quot;).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.email || &quot;&quot;).toLowerCase().includes(searchQuery.toLowerCase());
+      (c.company || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.email || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesTab =
-      activeTab === &quot;leads&quot;
-        ? c.status === &quot;Lead&quot; || c.status === &quot;Prospect&quot;
-        : c.status !== &quot;Lead&quot; && c.status !== &quot;Prospect&quot;;
+      activeTab === "leads"
+        ? c.status === "Lead" || c.status === "Prospect"
+        : c.status !== "Lead" && c.status !== "Prospect";
 
     return matchesSearch && matchesTab;
   });
 
-  const stages = [&quot;New&quot;, &quot;Qualified&quot;, &quot;Proposal&quot;, &quot;Negotiation&quot;, &quot;Won&quot;, &quot;Lost&quot;];
+  const stages = ["New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"];
 
   if (loading)
     return <LoadingSpinner className="h-full" text="Loading CRM data..." />;
@@ -400,8 +400,8 @@ export default function CrmPage() {
             className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
             onClick={() => setShowForm(!showForm)}
           >
-            <UserPlus className="mr-2 h-4 w-4" />{&quot; &quot;}
-            {activeTab === &quot;leads&quot; ? &quot;Add Lead&quot; : &quot;Add Customer&quot;}
+            <UserPlus className="mr-2 h-4 w-4" />{" "}
+            {activeTab === "leads" ? "Add Lead" : "Add Customer"}
           </Button>
         </div>
       </div>
@@ -411,7 +411,7 @@ export default function CrmPage() {
         <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
             <CardTitle className="text-slate-900 font-black text-xl">
-              {activeTab === &quot;leads&quot; ? &quot;Add New Lead&quot; : &quot;Add New Customer&quot;}
+              {activeTab === "leads" ? "Add New Lead" : "Add New Customer"}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-8">
@@ -455,7 +455,7 @@ export default function CrmPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  type=&quot;email&quot;
+                  type="email"
                   required
                 />
               </div>
@@ -529,10 +529,10 @@ export default function CrmPage() {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-500/10"
                 >
                   {isSubmitting
-                    ? &quot;Saving...&quot;
-                    : activeTab === &quot;leads&quot;
-                      ? &quot;Create Lead&quot;
-                      : &quot;Create Customer&quot;}
+                    ? "Saving..."
+                    : activeTab === "leads"
+                      ? "Create Lead"
+                      : "Create Customer"}
                 </Button>
               </div>
             </form>
@@ -569,7 +569,7 @@ export default function CrmPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Estimated Value (₹)
+                  Estimated Value (â‚¹)
                 </Label>
                 <NumericInput
                   value={Number(dealData.value)}
@@ -577,7 +577,7 @@ export default function CrmPage() {
                     setDealData({ ...dealData, value: val.toString() })
                   }
                   decimal
-                  className=&quot;bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11&quot;
+                  className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11"
                   required
                 />
               </div>
@@ -648,7 +648,7 @@ export default function CrmPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest pl-1">
-                  Value (₹)
+                  Value (â‚¹)
                 </Label>
                 <NumericInput
                   value={Number(editingDeal.value)}
@@ -656,7 +656,7 @@ export default function CrmPage() {
                     setEditingDeal({ ...editingDeal, value: val })
                   }
                   decimal
-                  className=&quot;bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-12&quot;
+                  className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-12"
                 />
               </div>
               <div className="space-y-2">
@@ -728,7 +728,7 @@ export default function CrmPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-slate-900 tracking-tighter">
-                  ₹{Number(stats.pipelineValue || 0).toLocaleString(&quot;en-IN&quot;)}
+                  â‚¹{Number(stats.pipelineValue || 0).toLocaleString("en-IN")}
                 </div>
               </CardContent>
             </Card>
@@ -772,7 +772,7 @@ export default function CrmPage() {
                       </Badge>
                     </div>
                     <div className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                      ₹{(total / 1000).toFixed(1)}K
+                      â‚¹{(total / 1000).toFixed(1)}K
                     </div>
                   </div>
                   <div className="p-4 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
@@ -780,7 +780,7 @@ export default function CrmPage() {
                       <div
                         onClick={() => setEditingDeal(opp)}
                         key={opp.id}
-                        className=&quot;p-5 cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-2xl group transition-all shadow-sm hover:shadow-xl hover:shadow-blue-500/5 active:scale-[0.98]&quot;
+                        className="p-5 cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-2xl group transition-all shadow-sm hover:shadow-xl hover:shadow-blue-500/5 active:scale-[0.98]"
                       >
                         <div className="flex justify-between items-start mb-3">
                           <h4
@@ -790,7 +790,7 @@ export default function CrmPage() {
                             {opp.title}
                           </h4>
                           <div className="text-[11px] font-black text-emerald-600">
-                            ₹{Number(opp.value).toLocaleString(&quot;en-IN&quot;)}
+                            â‚¹{Number(opp.value).toLocaleString("en-IN")}
                           </div>
                         </div>
                         <div className="flex items-center gap-3 mb-4">
@@ -808,10 +808,10 @@ export default function CrmPage() {
                               const idx = stages.indexOf(stage);
                               if (idx > 0) moveStage(opp.id, stages[idx - 1]);
                             }}
-                            className=&quot;p-1.5 hover:bg-white hover:shadow-sm rounded-lg disabled:opacity-30 text-slate-400 hover:text-blue-600 transition-all&quot;
+                            className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg disabled:opacity-30 text-slate-400 hover:text-blue-600 transition-all"
                             disabled={stages.indexOf(stage) === 0}
                           >
-                            ←
+                            â†
                           </button>
                           <span className="text-[9px] text-slate-300 font-black uppercase tracking-widest px-4">
                             Move
@@ -828,7 +828,7 @@ export default function CrmPage() {
                               stages.indexOf(stage) === stages.length - 1
                             }
                           >
-                            →
+                            â†’
                           </button>
                         </div>
                       </div>
@@ -854,22 +854,22 @@ export default function CrmPage() {
                 <div>
                   <div className="flex gap-4 mb-4">
                     <button
-                      onClick={() => setActiveTab(&quot;customers&quot;)}
-                      className={`text-xl font-black transition-colors ${activeTab === &quot;customers&quot; ? &quot;text-slate-900 border-b-2 border-blue-600 pb-1&quot; : &quot;text-slate-400 hover:text-slate-600&quot;}`}
+                      onClick={() => setActiveTab("customers")}
+                      className={`text-xl font-black transition-colors ${activeTab === "customers" ? "text-slate-900 border-b-2 border-blue-600 pb-1" : "text-slate-400 hover:text-slate-600"}`}
                     >
                       Customer Directory
                     </button>
                     <button
-                      onClick={() => setActiveTab(&quot;leads&quot;)}
-                      className={`text-xl font-black transition-colors ${activeTab === &quot;leads&quot; ? &quot;text-slate-900 border-b-2 border-blue-600 pb-1&quot; : &quot;text-slate-400 hover:text-slate-600&quot;}`}
+                      onClick={() => setActiveTab("leads")}
+                      className={`text-xl font-black transition-colors ${activeTab === "leads" ? "text-slate-900 border-b-2 border-blue-600 pb-1" : "text-slate-400 hover:text-slate-600"}`}
                     >
                       Leads & Prospects
                     </button>
                   </div>
                   <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-                    {activeTab === &quot;customers&quot;
-                      ? &quot;Complete list of all active customers&quot;
-                      : &quot;Potential clients and ongoing leads&quot;}
+                    {activeTab === "customers"
+                      ? "Complete list of all active customers"
+                      : "Potential clients and ongoing leads"}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">
@@ -936,11 +936,11 @@ export default function CrmPage() {
                         <div className="space-y-1.5">
                           <div className="flex items-center text-xs text-slate-600 font-bold">
                             <Mail className="h-3 w-3 mr-2 text-blue-500" />
-                            {c.email || &quot;No email&quot;}
+                            {c.email || "No email"}
                           </div>
                           <div className="flex items-center text-[11px] text-slate-400 font-medium">
                             <Phone className="h-3 w-3 mr-2" />
-                            {c.phone || &quot;No phone&quot;}
+                            {c.phone || "No phone"}
                           </div>
                         </div>
                       </TableCell>
@@ -948,7 +948,7 @@ export default function CrmPage() {
                         <div className="flex flex-col text-slate-500 text-xs">
                           <div className="flex items-center font-bold">
                             <Building className="h-3.5 w-3.5 mr-2 text-slate-300" />
-                            {c.company || &quot;Retail Client&quot;}
+                            {c.company || "Retail Client"}
                           </div>
                           {c.state && (
                             <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">
@@ -959,18 +959,18 @@ export default function CrmPage() {
                       </TableCell>
                       <TableCell>
                         <div
-                          className={`text-sm font-black ${c.receivable > 0 ? &quot;text-rose-600&quot; : &quot;text-emerald-600&quot;}`}
+                          className={`text-sm font-black ${c.receivable > 0 ? "text-rose-600" : "text-emerald-600"}`}
                         >
-                          ₹
-                          {Number(c.receivable || 0).toLocaleString(&quot;en-IN&quot;, {
+                          â‚¹
+                          {Number(c.receivable || 0).toLocaleString("en-IN", {
                             minimumFractionDigits: 0,
                           })}
                         </div>
                       </TableCell>
                       <TableCell className="text-slate-400 text-[11px] font-bold uppercase tracking-tighter">
                         {new Date(c.createdAt).toLocaleDateString(undefined, {
-                          year: &quot;numeric&quot;,
-                          month: &quot;short&quot;,
+                          year: "numeric",
+                          month: "short",
                         })}
                       </TableCell>
                       <TableCell className="text-right pr-8">
@@ -1006,7 +1006,7 @@ export default function CrmPage() {
                                 name: `${c.firstName} ${c.lastName}`,
                               });
                             }}
-                            title=&quot;Set Opening Balance&quot;
+                            title="Set Opening Balance"
                           >
                             <Scale className="h-4 w-4" />
                           </Button>
@@ -1026,7 +1026,7 @@ export default function CrmPage() {
                   )}
                 </TableBody>
               </Table>
-              {/* BUG-018 FIX: hide pagination when search is active — search filters client-side */}
+              {/* BUG-018 FIX: hide pagination when search is active â€” search filters client-side */}
               {!searchQuery && (
                 <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/50">
                   <Button
@@ -1034,7 +1034,7 @@ export default function CrmPage() {
                     size="sm"
                     onClick={() => setCustPage((p) => Math.max(1, p - 1))}
                     disabled={custPage === 1}
-                    className=&quot;text-slate-500 hover:bg-white font-bold rounded-xl h-9&quot;
+                    className="text-slate-500 hover:bg-white font-bold rounded-xl h-9"
                   >
                     Previous
                   </Button>
@@ -1048,7 +1048,7 @@ export default function CrmPage() {
                       setCustPage((p) => Math.min(custTotalPages, p + 1))
                     }
                     disabled={custPage === custTotalPages}
-                    className=&quot;text-slate-500 hover:bg-white font-bold rounded-xl h-9&quot;
+                    className="text-slate-500 hover:bg-white font-bold rounded-xl h-9"
                   >
                     Next
                   </Button>
@@ -1070,9 +1070,10 @@ export default function CrmPage() {
         isOpen={!!openingBalanceTarget}
         onClose={() => setOpeningBalanceTarget(null)}
         customerId={openingBalanceTarget?.id}
-        targetName={openingBalanceTarget?.name || &quot;&quot;}
+        targetName={openingBalanceTarget?.name || ""}
         onSuccess={() => syncRelations(true)}
       />
     </div>
   );
 }
+

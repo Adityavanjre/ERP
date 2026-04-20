@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -66,16 +66,16 @@ export default function OnboardingPage() {
   const onSubmit = useCallback(
     async (data: OnboardingFormData) => {
       if (!user?.tenantId) {
-        toast.error(&quot;Session error&quot;, {
+        toast.error("Session error", {
           description:
-            &quot;Could not read your workspace. Please refresh the page.&quot;,
+            "Could not read your workspace. Please refresh the page.",
         });
         return;
       }
 
       setIsLoading(true);
       try {
-        await api.post(&quot;auth/onboarding&quot;, {
+        await api.post("auth/onboarding", {
           ...data,
           tenantId: user.tenantId,
         });
@@ -84,37 +84,37 @@ export default function OnboardingPage() {
         // then go directly to the dashboard without forcing re-login.
         try {
           const { data: refreshData } = await api.post(
-            &quot;auth/refresh&quot;,
+            "auth/refresh",
             {},
             { withCredentials: true },
           );
           if (refreshData?.accessToken) {
             // SEC-006: Token stored in HttpOnly cookie by backend
             if (refreshData.user) {
-              localStorage.setItem(&quot;k_user&quot;, JSON.stringify(refreshData.user));
+              localStorage.setItem("k_user", JSON.stringify(refreshData.user));
             }
           }
         } catch {
           // If refresh fails, clear the token and fall back to login
-          localStorage.removeItem(&quot;k_token&quot;);
-          localStorage.removeItem(&quot;k_user&quot;);
-          toast.success(&quot;Onboarding complete!&quot;, {
-            description: &quot;Please log in again to access your dashboard.&quot;,
+          localStorage.removeItem("k_token");
+          localStorage.removeItem("k_user");
+          toast.success("Onboarding complete!", {
+            description: "Please log in again to access your dashboard.",
           });
-          router.push(&quot;/login&quot;);
+          router.push("/login");
           return;
         }
 
-        toast.success(&quot;Onboarding complete!&quot;, {
-          description: &quot;Your workspace is ready.&quot;,
+        toast.success("Onboarding complete!", {
+          description: "Your workspace is ready.",
         });
 
         // Hard reload to flush all React state with the new isOnboarded token
-        window.location.href = &quot;/portal/dashboard&quot;;
+        window.location.href = "/portal/dashboard";
       } catch (err: unknown) {
         const error = err as ApiError;
-        toast.error(&quot;Onboarding failed&quot;, {
-          description: error.response?.data?.message || &quot;Something went wrong.&quot;,
+        toast.error("Onboarding failed", {
+          description: error.response?.data?.message || "Something went wrong.",
         });
       } finally {
         setIsLoading(false);
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Industry
               </Label>
-              <Select onValueChange={(val) => setValue(&quot;industry&quot;, val)}>
+              <Select onValueChange={(val) => setValue("industry", val)}>
                 <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
                   <SelectValue placeholder="Select Industry" />
                 </SelectTrigger>
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Business Type
               </Label>
-              <Select onValueChange={(val) => setValue(&quot;businessType&quot;, val)}>
+              <Select onValueChange={(val) => setValue("businessType", val)}>
                 <SelectTrigger className="h-12 bg-slate-50 border-slate-100 rounded-xl font-medium">
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
@@ -225,3 +225,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { Calendar, Clock, Plus, CheckCircle2, AlertCircle } from "lucide-react";
@@ -72,7 +72,7 @@ export default function AppointmentsPage() {
           <CardHeader className="px-8 pt-8">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-black uppercase tracking-widest">
-                Today&apos;s Schedule
+                Today's Schedule
               </CardTitle>
               <Badge className="bg-blue-50 text-blue-700 border-none font-black px-3 py-1">
                 12 Slots Left
@@ -96,14 +96,14 @@ export default function AppointmentsPage() {
                           : "bg-amber-100 text-amber-700",
                     )}
                   >
-                    {apt.time.split(&quot; &quot;)[0]}
+                    {apt.time.split(" ")[0]}
                   </div>
                   <div className="flex flex-col">
                     <span className="font-black text-slate-800 text-sm">
                       {apt.patient}
                     </span>
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                      {apt.doctor} • {apt.type}
+                      {apt.doctor} â€¢ {apt.type}
                     </span>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export default function AppointmentsPage() {
                   <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
                     {apt.id}
                   </span>
-                  {apt.status === &quot;Confirmed&quot; ? (
+                  {apt.status === "Confirmed" ? (
                     <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   ) : (
                     <Clock className="h-5 w-5 text-amber-500" />
@@ -167,3 +167,4 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+

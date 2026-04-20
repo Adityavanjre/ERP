@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -116,7 +116,7 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    import(&quot;../../lib/desktop-offline&quot;).then((m) => {
+    import("../../lib/desktop-offline").then((m) => {
       if (m.isDesktopShell()) {
         m.hydrateDesktopOfflineSession().catch(console.error);
       }
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
 
   const nextStep = () => {
     if (step === 1 && !formData.companyName) {
-      toast.error(&quot;Please enter your business name.&quot;);
+      toast.error("Please enter your business name.");
       return;
     }
     setStep(step + 1);
@@ -135,23 +135,23 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     if (!formData.industry) {
-      toast.error(&quot;Please select an industry.&quot;);
+      toast.error("Please select an industry.");
       return;
     }
 
     setIsSubmitting(true);
     try {
       // In Desktop Offline, this is intercepted by desktop-offline.ts
-      await api.post(&quot;auth/onboarding&quot;, formData);
-      toast.success(&quot;Workspace initialized!&quot;);
+      await api.post("auth/onboarding", formData);
+      toast.success("Workspace initialized!");
 
       // Delay slightly for effect
       setTimeout(() => {
-        router.push(&quot;/portal/dashboard&quot;);
+        router.push("/portal/dashboard");
       }, 800);
     } catch (error) {
-      console.error(&quot;Onboarding failed:&quot;, error);
-      toast.error(&quot;Failed to initialize workspace.&quot;);
+      console.error("Onboarding failed:", error);
+      toast.error("Failed to initialize workspace.");
       setIsSubmitting(false);
     }
   };
@@ -185,8 +185,8 @@ export default function OnboardingPage() {
             </h1>
             <p className="text-slate-400 text-lg max-w-lg">
               {step === 1
-                ? &quot;Identity is the foundation of scale. Tell us about your enterprise.&quot;
-                : &quot;Specialization drives efficiency. Select the blueprint for your industry.&quot;}
+                ? "Identity is the foundation of scale. Tell us about your enterprise."
+                : "Specialization drives efficiency. Select the blueprint for your industry."}
             </p>
           </div>
 
@@ -234,8 +234,8 @@ export default function OnboardingPage() {
                           }
                           className={`h-12 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${
                             formData.businessType === type
-                              ? &quot;bg-blue-600 text-white ring-2 ring-blue-400/50&quot;
-                              : &quot;bg-white/5 text-slate-400 border border-white/5 hover:bg-white/10&quot;
+                              ? "bg-blue-600 text-white ring-2 ring-blue-400/50"
+                              : "bg-white/5 text-slate-400 border border-white/5 hover:bg-white/10"
                           }`}
                         >
                           {type}
@@ -273,8 +273,8 @@ export default function OnboardingPage() {
                         }
                         className={`group relative p-6 rounded-2xl flex flex-col items-start text-left transition-all duration-300 border ${
                           isActive
-                            ? &quot;bg-white/10 border-blue-500 ring-1 ring-blue-500 shadow-xl&quot;
-                            : &quot;bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20&quot;
+                            ? "bg-white/10 border-blue-500 ring-1 ring-blue-500 shadow-xl"
+                            : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
                         }`}
                       >
                         <div
@@ -357,3 +357,4 @@ export default function OnboardingPage() {
     </div>
   );
 }
+

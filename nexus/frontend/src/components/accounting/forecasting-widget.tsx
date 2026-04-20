@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useCallback } from "react";
 import {
@@ -111,7 +111,7 @@ export function ForecastingWidget() {
               Expected Inflow
             </span>
             <div className="text-2xl font-black text-slate-900">
-              ₹{data.totalExpected.toLocaleString()}
+              â‚¹{data.totalExpected.toLocaleString()}
             </div>
             <span className="text-[10px] text-green-600 font-bold flex items-center gap-1 mt-1">
               +{data.trendPercentage || 12}% vs last period{" "}
@@ -147,13 +147,13 @@ export function ForecastingWidget() {
               <div className="flex-1">
                 <div className="text-sm font-bold">{proj.customerName}</div>
                 <div className="text-[10px] text-slate-500">
-                  Invoice #{proj.invoiceNumber} • Expected{" "}
+                  Invoice #{proj.invoiceNumber} â€¢ Expected{" "}
                   {new Date(proj.expectedDate).toLocaleDateString()}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm font-black text-slate-900">
-                  ₹{proj.amount.toLocaleString()}
+                  â‚¹{proj.amount.toLocaleString()}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Progress
@@ -173,8 +173,8 @@ export function ForecastingWidget() {
           <div className="bg-amber-900/5 p-3 rounded-xl flex gap-3 border border-amber-900/10">
             <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
             <div className="text-[11px] font-medium text-amber-800 leading-relaxed">
-              <strong>Insight:</strong> 3 invoices from &quot;Aura
-              Financial&quot; are trending 4 days late. Settlement probability
+              <strong>Insight:</strong> 3 invoices from "Aura
+              Financial" are trending 4 days late. Settlement probability
               adjusted to 65%. Recommend manual follow-up via Klypso Ion.
             </div>
           </div>
@@ -183,3 +183,4 @@ export function ForecastingWidget() {
     </Card>
   );
 }
+

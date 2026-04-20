@@ -57,24 +57,25 @@ export function CreateWorkOrderDialog({
   const [quantity, setQuantity] = useState(1);
   const [shortages, setShortages] = useState<Shortage[]>([]);
 
-  useEffect(() => {
-    if (open) {
-      fetchBOMs();
-    }
-  }, [open]);
-
-  const fetchBOMs = async () => {
+  const fetchBOMs = useCallback(async () => {
     try {
       const { data } = await api.get("/manufacturing/boms");
       setBoms(data);
     } catch {
       toast.error("Failed to load BOMs");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchBOMs();
+    }
+  }, [open, fetchBOMs]);
 
   const checkShortages = useCallback(async () => {
     if (!selectedBomId) return;
-    setChecking(true);
+    // Defer loading state to avoid synchronous setState inside useEffect
+    setTimeout(() => setChecking(true), 0);
     try {
       const { data } = await api.get(
         `/manufacturing/boms/${selectedBomId}/shortages?quantity=${quantity}`,

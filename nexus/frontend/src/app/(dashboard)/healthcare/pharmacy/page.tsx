@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +121,7 @@ export default function PharmacyPage() {
           <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">
             Monthly Sales
           </h4>
-          <h3 className="text-3xl font-black text-blue-900">₹2.4L</h3>
+          <h3 className="text-3xl font-black text-blue-900">â‚¹2.4L</h3>
         </Card>
       </div>
 
@@ -194,7 +194,7 @@ export default function PharmacyPage() {
                               : "bg-amber-50 text-amber-700",
                         )}
                       >
-                        {s.status === &quot;Critical&quot; && (
+                        {s.status === "Critical" && (
                           <AlertTriangle className="h-3 w-3 mr-1" />
                         )}
                         {s.status}
@@ -202,7 +202,7 @@ export default function PharmacyPage() {
                     </td>
                     <td className="px-8 py-6">
                       <span className="font-black text-slate-900">
-                        ₹{s.price.toFixed(2)}
+                        â‚¹{s.price.toFixed(2)}
                       </span>
                     </td>
                   </tr>
@@ -230,3 +230,4 @@ export default function PharmacyPage() {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +57,7 @@ export default function AuditorDashboard() {
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [reopenReason, setReopenReason] = useState(&quot;&quot;);
+  const [reopenReason, setReopenReason] = useState("");
   const [isReopening, setIsReopening] = useState(false);
 
   const syncAuditorData = useCallback(
@@ -83,33 +83,33 @@ export default function AuditorDashboard() {
 
   const handleLock = async () => {
     try {
-      await api.post(&quot;accounting/auditor/lock&quot;, { month, year });
-      toast.success(&quot;Period locked successfully&quot;);
+      await api.post("accounting/auditor/lock", { month, year });
+      toast.success("Period locked successfully");
       syncAuditorData(true);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to lock period&quot;);
+      toast.error(error.response?.data?.message || "Failed to lock period");
     }
   };
 
   const handleUnlock = async () => {
     if (!reopenReason) {
-      toast.error(&quot;Please provide a reason for reopening&quot;);
+      toast.error("Please provide a reason for reopening");
       return;
     }
     try {
-      await api.post(&quot;accounting/auditor/unlock&quot;, {
+      await api.post("accounting/auditor/unlock", {
         month,
         year,
         reason: reopenReason,
       });
-      toast.success(&quot;Period reopened&quot;);
+      toast.success("Period reopened");
       setIsReopening(false);
-      setReopenReason(&quot;&quot;);
+      setReopenReason("");
       syncAuditorData(true);
     } catch {
       // Suppressed in prod
-      toast.error(&quot;Failed to reopen period&quot;);
+      toast.error("Failed to reopen period");
     }
   };
 
@@ -122,57 +122,57 @@ export default function AuditorDashboard() {
       return;
 
     try {
-      const res = await api.post(&quot;accounting/close-year&quot;, { year });
+      const res = await api.post("accounting/close-year", { year });
       toast.success(res.data.message);
       syncAuditorData(true);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || &quot;Failed to close year&quot;);
+      toast.error(error.response?.data?.message || "Failed to close year");
     }
   };
 
   const handleTallyExport = async () => {
     try {
       toast.info(
-        `Generating Tally Vouchers for ${new Date(0, month - 1).toLocaleString(&quot;default&quot;, { month: &quot;long&quot; })} ${year}...`,
+        `Generating Tally Vouchers for ${new Date(0, month - 1).toLocaleString("default", { month: "long" })} ${year}...`,
       );
       const response = await api.get(
         `accounting/export/tally?month=${month}&year=${year}`,
         {
-          responseType: &quot;blob&quot;,
+          responseType: "blob",
         },
       );
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement(&quot;a&quot;);
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute(&quot;download&quot;, `Tally_Vouchers_${month}_${year}.xml`);
+      link.setAttribute("download", `Tally_Vouchers_${month}_${year}.xml`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success(&quot;Vouchers exported successfully&quot;);
+      toast.success("Vouchers exported successfully");
     } catch {
       // Suppressed in prod
-      toast.error(&quot;Failed to generate Tally Export&quot;);
+      toast.error("Failed to generate Tally Export");
     }
   };
 
   const handleTallyMasters = async () => {
     try {
-      toast.info(&quot;Generating Tally Masters (Ledgers + Items)...&quot;);
+      toast.info("Generating Tally Masters (Ledgers + Items)...");
       const response = await api.get(`accounting/export/masters`, {
-        responseType: &quot;blob&quot;,
+        responseType: "blob",
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement(&quot;a&quot;);
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute(&quot;download&quot;, `Tally_Masters.xml`);
+      link.setAttribute("download", `Tally_Masters.xml`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success(&quot;Masters exported successfully&quot;);
+      toast.success("Masters exported successfully");
     } catch {
       // Suppressed in prod
-      toast.error(&quot;Failed to generate Tally Masters&quot;);
+      toast.error("Failed to generate Tally Masters");
     }
   };
 
@@ -198,18 +198,18 @@ export default function AuditorDashboard() {
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            className=&quot;bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm&quot;
+            className="bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm"
           >
             {[...Array(12)].map((_, i) => (
               <option key={i + 1} value={i + 1} className="bg-white">
-                {new Date(0, i).toLocaleString(&quot;default&quot;, { month: &quot;long&quot; })}
+                {new Date(0, i).toLocaleString("default", { month: "long" })}
               </option>
             ))}
           </select>
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className=&quot;bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm&quot;
+            className="bg-transparent border-none text-slate-900 focus:ring-0 cursor-pointer font-bold text-sm"
           >
             {[2024, 2025, 2026].map((y) => (
               <option key={y} value={y} className="bg-zinc-900">
@@ -219,7 +219,7 @@ export default function AuditorDashboard() {
           </select>
           <button
             onClick={() => syncAuditorData(true)}
-            className=&quot;p-2 hover:bg-zinc-800 rounded-lg transition-colors&quot;
+            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
           >
             <Search className="w-4 h-4 text-zinc-400" />
           </button>
@@ -243,9 +243,9 @@ export default function AuditorDashboard() {
               {data?.confidenceScore}%
             </span>
             <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${(data?.confidenceScore ?? 0) > 90 ? &quot;bg-emerald-50 text-emerald-600&quot; : &quot;bg-amber-50 text-amber-600&quot;}`}
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${(data?.confidenceScore ?? 0) > 90 ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}
             >
-              {(data?.confidenceScore ?? 0) > 90 ? &quot;High&quot; : &quot;Moderate&quot;}
+              {(data?.confidenceScore ?? 0) > 90 ? "High" : "Moderate"}
             </span>
           </div>
           <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -261,9 +261,9 @@ export default function AuditorDashboard() {
             Audit Status
           </p>
           <div className="mt-2 flex items-center gap-2">
-            {data?.status === &quot;CLEAN&quot; ? (
+            {data?.status === "CLEAN" ? (
               <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-            ) : data?.status === &quot;BLOCKED&quot; ? (
+            ) : data?.status === "BLOCKED" ? (
               <XCircle className="w-6 h-6 text-red-600" />
             ) : (
               <AlertTriangle className="w-6 h-6 text-amber-600" />
@@ -273,9 +273,9 @@ export default function AuditorDashboard() {
             </span>
           </div>
           <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
-            {data?.status === &quot;CLEAN&quot;
-              ? &quot;Ready for statutory filing&quot;
-              : &quot;Corrections required before export&quot;}
+            {data?.status === "CLEAN"
+              ? "Ready for statutory filing"
+              : "Corrections required before export"}
           </p>
         </div>
 
@@ -290,13 +290,13 @@ export default function AuditorDashboard() {
               <Unlock className="w-6 h-6 text-amber-500" />
             )}
             <span className="text-2xl font-black text-slate-900 tracking-tighter">
-              {data?.isLocked ? &quot;Closed&quot; : &quot;Open&quot;}
+              {data?.isLocked ? "Closed" : "Open"}
             </span>
           </div>
           <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
             {data?.isLocked && data.lockDetails
               ? `Locked on ${new Date(data.lockDetails.lockedAt).toLocaleDateString()}`
-              : &quot;Vouchers can still be edited&quot;}
+              : "Vouchers can still be edited"}
           </p>
         </div>
 
@@ -339,21 +339,21 @@ export default function AuditorDashboard() {
                 className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all hover:scale-[1.01] ${flag.severity === "BLOCKER" ? "bg-red-50 border-red-100 text-red-900" : "bg-amber-50 border-amber-100 text-amber-900"}`}
               >
                 <div className="flex items-center gap-4">
-                  {flag.type === &quot;BACKDATED&quot; && (
+                  {flag.type === "BACKDATED" && (
                     <Clock className="w-6 h-6 text-amber-600" />
                   )}
-                  {flag.type === &quot;HIGH_ROUNDOFF&quot; && (
+                  {flag.type === "HIGH_ROUNDOFF" && (
                     <BarChart3 className="w-6 h-6 text-amber-600" />
                   )}
-                  {flag.type === &quot;NEGATIVE_STOCK&quot; && (
+                  {flag.type === "NEGATIVE_STOCK" && (
                     <Package className="w-6 h-6 text-red-600" />
                   )}
-                  {flag.type === &quot;UNLINKED_PAYMENTS&quot; && (
+                  {flag.type === "UNLINKED_PAYMENTS" && (
                     <ArrowRightLeft className="w-6 h-6 text-amber-600" />
                   )}
                   <div>
                     <p className="font-black text-[11px] uppercase tracking-[0.1em]">
-                      {flag.type.replace(&quot;_&quot;, &quot; &quot;)}
+                      {flag.type.replace("_", " ")}
                     </p>
                     <p className="text-[10px] text-slate-500 font-bold mt-0.5">
                       {flag.count} occurrences detected.
@@ -392,7 +392,7 @@ export default function AuditorDashboard() {
                   Total Sales
                 </p>
                 <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                  ₹{data?.summary.totalSales.toLocaleString()}
+                  â‚¹{data?.summary.totalSales.toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -400,7 +400,7 @@ export default function AuditorDashboard() {
                   Total GST Liability
                 </p>
                 <p className="text-2xl font-black text-blue-600 tracking-tighter">
-                  ₹{data?.summary.totalGST.toLocaleString()}
+                  â‚¹{data?.summary.totalGST.toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -408,7 +408,7 @@ export default function AuditorDashboard() {
                   Total Receipts
                 </p>
                 <p className="text-2xl font-black text-emerald-600 tracking-tighter">
-                  ₹{data?.summary.totalReceipts.toLocaleString()}
+                  â‚¹{data?.summary.totalReceipts.toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -416,7 +416,7 @@ export default function AuditorDashboard() {
                   Total Payments
                 </p>
                 <p className="text-2xl font-black text-rose-600 tracking-tighter">
-                  ₹{data?.summary.totalPayments.toLocaleString()}
+                  â‚¹{data?.summary.totalPayments.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -427,7 +427,7 @@ export default function AuditorDashboard() {
                   Simulated Net Dr (Receivables)
                 </span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">
-                  ₹{data?.summary.netBalanceDr.toLocaleString()}
+                  â‚¹{data?.summary.netBalanceDr.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-6">
@@ -435,7 +435,7 @@ export default function AuditorDashboard() {
                   Simulated Net Cr (Payables)
                 </span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">
-                  ₹{data?.summary.netBalanceCr.toLocaleString()}
+                  â‚¹{data?.summary.netBalanceCr.toLocaleString()}
                 </span>
               </div>
               <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center justify-between">
@@ -463,8 +463,8 @@ export default function AuditorDashboard() {
             ></div>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
               {data?.isLocked
-                ? &quot;Month Closed & Audited&quot;
-                : &quot;Month Open for Entries&quot;}
+                ? "Month Closed & Audited"
+                : "Month Open for Entries"}
             </span>
           </div>
         </div>
@@ -474,7 +474,7 @@ export default function AuditorDashboard() {
             <>
               <button
                 onClick={() => setIsReopening(true)}
-                className=&quot;px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all border border-zinc-700&quot;
+                className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all border border-zinc-700"
               >
                 <Unlock className="w-4 h-4" />
                 Reopen Month
@@ -530,14 +530,14 @@ export default function AuditorDashboard() {
             <textarea
               value={reopenReason}
               onChange={(e) => setReopenReason(e.target.value)}
-              placeholder=&quot;Reason for reopening (e.g., Late GST invoice from supplier...)&quot;
-              className=&quot;w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-8 text-sm font-semibold&quot;
+              placeholder="Reason for reopening (e.g., Late GST invoice from supplier...)"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-8 text-sm font-semibold"
             />
 
             <div className="flex gap-4">
               <button
                 onClick={() => setIsReopening(false)}
-                className=&quot;flex-1 px-4 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl font-bold text-slate-500 transition-all&quot;
+                className="flex-1 px-4 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl font-bold text-slate-500 transition-all"
               >
                 Cancel
               </button>
@@ -554,3 +554,4 @@ export default function AuditorDashboard() {
     </div>
   );
 }
+

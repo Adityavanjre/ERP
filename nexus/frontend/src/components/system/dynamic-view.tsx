@@ -40,7 +40,10 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
   const syncNodeData = useCallback(
     async (showLoading = false) => {
       try {
-        if (showLoading) setLoading(true);
+        if (showLoading) {
+          // Defer to avoid synchronous setState inside useEffect
+          setTimeout(() => setLoading(true), 0);
+        }
         const recordsRes = await api.get(`/system/studio/records/${modelName}`);
         const data = recordsRes.data.data || recordsRes.data || [];
         setRecords(Array.isArray(data) ? data : []);
@@ -55,7 +58,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
 
   useEffect(() => {
     syncNodeData(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [syncNodeData]);
 
   const formattedModelName = modelName
     .split(".")

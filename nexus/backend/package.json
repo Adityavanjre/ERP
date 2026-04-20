@@ -70,7 +70,8 @@
     "streamifier": "^0.1.1",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "ajv": "^8.18.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
@@ -133,7 +134,6 @@
   "overrides": {
     "@nestjs/common": "11.1.18",
     "@nestjs/core": "11.1.18",
-    "ajv": "^8.18.0",
     "multer": "2.1.1",
     "minimist": "^1.2.8",
     "webpack": "^5.94.0",

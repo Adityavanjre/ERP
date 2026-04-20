@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
@@ -25,16 +25,16 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(&quot;&quot;);
+    setError("");
 
     try {
-      await api.post(&quot;auth/forgot-password&quot;, { email });
+      await api.post("auth/forgot-password", { email });
       setSuccess(true);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       setError(
         error.response?.data?.message ||
-          &quot;Something went wrong. Please try again.&quot;,
+          "Something went wrong. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
               Check Email
             </CardTitle>
             <CardDescription className="text-slate-500 font-medium">
-              If an account exists for {email}, we&apos;ve sent a recovery link.
+              If an account exists for {email}, we've sent a recovery link.
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex flex-col gap-4 pb-8">
@@ -119,7 +119,7 @@ export default function ForgotPasswordPage() {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
               disabled={loading}
             >
-              {loading ? &quot;Sending...&quot; : &quot;Send Reset Link&quot;}
+              {loading ? "Sending..." : "Send Reset Link"}
             </Button>
             <Link
               href="/login"
@@ -134,3 +134,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

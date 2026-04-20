@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Building2,
@@ -85,7 +85,7 @@ export default function LogisticsDashboard() {
           </div>
           <div className="p-8 pt-0">
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-12 font-black text-[10px] uppercase tracking-widest gap-2 group">
-              Dispatch Control{&quot; &quot;}
+              Dispatch Control{" "}
               <ArrowRight
                 size={14}
                 className="group-hover:translate-x-1 transition-transform"
@@ -111,3 +111,4 @@ export default function LogisticsDashboard() {
     </div>
   );
 }
+

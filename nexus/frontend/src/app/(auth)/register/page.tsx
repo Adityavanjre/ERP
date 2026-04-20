@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -44,13 +44,13 @@ const userSchema = z
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: &quot;Passwords do not match&quot;,
-    path: [&quot;confirmPassword&quot;],
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 
 const companySchema = z.object({
-  tenantName: z.string().min(3, &quot;Company name is required&quot;),
-  companyType: z.string().min(1, &quot;Please select an industry&quot;),
+  tenantName: z.string().min(3, "Company name is required"),
+  companyType: z.string().min(1, "Please select an industry"),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
@@ -65,7 +65,7 @@ export default function RegisterPage() {
 
   // PERF-002: Trap browser history payload states natively protecting the multi-step form data
   useEffect(() => {
-    if (typeof window === &quot;undefined&quot;) return;
+    if (typeof window === "undefined") return;
     const handlePopState = (_e: PopStateEvent) => {
       if (step === 2) {
         // Intercept back button allowing user to return to Step 1
@@ -73,8 +73,8 @@ export default function RegisterPage() {
         setStep(1);
       }
     };
-    window.addEventListener(&quot;popstate&quot;, handlePopState);
-    return () => window.removeEventListener(&quot;popstate&quot;, handlePopState);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [step]);
 
   // Forms
@@ -86,7 +86,7 @@ export default function RegisterPage() {
     formState: { errors: userErrors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
-    mode: &quot;onChange&quot;, // Enable live validation
+    mode: "onChange", // Enable live validation
   });
 
   const {
@@ -103,8 +103,8 @@ export default function RegisterPage() {
     setUserData(data);
     setStep(2);
     // Push fake state so hitting back browser-button triggers popstate trap
-    if (typeof window !== &quot;undefined&quot;) {
-      window.history.pushState({ wizardStep: 2 }, &quot;&quot;, window.location.href);
+    if (typeof window !== "undefined") {
+      window.history.pushState({ wizardStep: 2 }, "", window.location.href);
     }
   };
 
@@ -122,19 +122,19 @@ export default function RegisterPage() {
         ...companyData,
       };
 
-      const response = await api.post(&quot;auth/register&quot;, payload);
+      const response = await api.post("auth/register", payload);
       const { accessToken: _accessToken } = response.data;
 
       // Store user profile for UI hydration only
       // JWT tokens are in HttpOnly cookies (set by backend)
-      localStorage.setItem(&quot;k_user&quot;, JSON.stringify(response.data.user));
+      localStorage.setItem("k_user", JSON.stringify(response.data.user));
 
-      toast.success(&quot;Registration successful!&quot;, {
-        description: &quot;Welcome to your new business account.&quot;,
+      toast.success("Registration successful!", {
+        description: "Welcome to your new business account.",
       });
 
       // Redirect
-      window.location.href = &quot;/portal/dashboard&quot;;
+      window.location.href = "/portal/dashboard";
     } catch (error: unknown) {
       const err = error as {
         response?: { status?: number; data?: { message?: string } };
@@ -143,19 +143,19 @@ export default function RegisterPage() {
       console.error(err);
       if (err.response?.status === 409) {
         // Set specific error on the email field
-        setError(&quot;email&quot;, {
-          type: &quot;manual&quot;,
-          message: &quot;This email is already registered. Please sign in.&quot;,
+        setError("email", {
+          type: "manual",
+          message: "This email is already registered. Please sign in.",
         });
         // Switch back to step 1 to show the error
         setStep(1);
       }
 
-      toast.error(&quot;Registration failed&quot;, {
+      toast.error("Registration failed", {
         description:
           err.response?.data?.message ||
           err.message ||
-          &quot;Something went wrong. Please try again.&quot;,
+          "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -165,16 +165,16 @@ export default function RegisterPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      // If NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing, trigger the backend&apos;s internal offline testability mode
-      const idToken = &quot;sim-google-token&quot;;
+      // If NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing, trigger the backend's internal offline testability mode
+      const idToken = "sim-google-token";
 
       // Note: If using real Google OAuth in the future, inject the real ID token here.
       // For now, the backend explicitly supports the simulation token for demo/testing.
-      const res = await api.post(&quot;auth/google-login/web&quot;, { idToken });
+      const res = await api.post("auth/google-login/web", { idToken });
 
       if (res.data.requiresMfa || res.data.requiresMfaSetup) {
         toast.error(
-          &quot;MFA setup or verification required. Please sign in via the login page.&quot;,
+          "MFA setup or verification required. Please sign in via the login page.",
         );
         setIsLoading(false);
         return;
@@ -182,19 +182,19 @@ export default function RegisterPage() {
 
       // Store both keys the same way login does
 
-      localStorage.setItem(&quot;k_user&quot;, JSON.stringify(res.data.user));
+      localStorage.setItem("k_user", JSON.stringify(res.data.user));
 
-      toast.success(&quot;Registration successful!&quot;, {
-        description: &quot;Please complete your company onboarding next.&quot;,
+      toast.success("Registration successful!", {
+        description: "Please complete your company onboarding next.",
       });
 
       // Redirect
-      window.location.href = &quot;/portal/dashboard&quot;;
+      window.location.href = "/portal/dashboard";
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(&quot;Google Registration failed&quot;, {
+      toast.error("Google Registration failed", {
         description:
-          err.response?.data?.message || &quot;Google Authentication Failed&quot;,
+          err.response?.data?.message || "Google Authentication Failed",
       });
       setIsLoading(false);
     }
@@ -224,7 +224,7 @@ export default function RegisterPage() {
           <CardHeader className="p-8 pb-4">
             <div className="flex items-center justify-between mb-2">
               <CardTitle className="text-xl font-black uppercase tracking-tight text-slate-900">
-                {step === 1 ? &quot;Personal Profile&quot; : &quot;Company Details&quot;}
+                {step === 1 ? "Personal Profile" : "Company Details"}
               </CardTitle>
               <Badge
                 variant="outline"
@@ -235,8 +235,8 @@ export default function RegisterPage() {
             </div>
             <CardDescription className="text-slate-500 font-medium">
               {step === 1
-                ? &quot;Enter your credentials to create the primary admin profile.&quot;
-                : &quot;Configure your company identity.&quot;}
+                ? "Enter your credentials to create the primary admin profile."
+                : "Configure your company identity."}
             </CardDescription>
           </CardHeader>
 
@@ -306,7 +306,7 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className=&quot;absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors&quot;
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -318,20 +318,20 @@ export default function RegisterPage() {
                     <div className="grid grid-cols-1 gap-2">
                       {[
                         {
-                          label: &quot;At least 8 characters&quot;,
-                          valid: (watch(&quot;password&quot;)?.length || 0) >= 8,
+                          label: "At least 8 characters",
+                          valid: (watch("password")?.length || 0) >= 8,
                         },
                         {
-                          label: &quot;One uppercase letter&quot;,
-                          valid: /[A-Z]/.test(watch(&quot;password&quot;) || &quot;&quot;),
+                          label: "One uppercase letter",
+                          valid: /[A-Z]/.test(watch("password") || ""),
                         },
                         {
-                          label: &quot;One number&quot;,
-                          valid: /[0-9]/.test(watch(&quot;password&quot;) || &quot;&quot;),
+                          label: "One number",
+                          valid: /[0-9]/.test(watch("password") || ""),
                         },
                         {
-                          label: &quot;One special character&quot;,
-                          valid: /[^a-zA-Z0-9]/.test(watch(&quot;password&quot;) || &quot;&quot;),
+                          label: "One special character",
+                          valid: /[^a-zA-Z0-9]/.test(watch("password") || ""),
                         },
                       ].map((req, i) => (
                         <div key={i} className="flex items-center gap-2">
@@ -378,7 +378,7 @@ export default function RegisterPage() {
                       onClick={() =>
                         setShowConfirmPassword(!showConfirmPassword)
                       }
-                      className=&quot;absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors&quot;
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                     >
                       {showConfirmPassword ? (
                         <EyeOff size={16} />
@@ -430,7 +430,7 @@ export default function RegisterPage() {
                   <input type="hidden" {...registerCompany("companyType")} />
                   <Select
                     onValueChange={(val) =>
-                      setCompanyValue(&quot;companyType&quot;, val, {
+                      setCompanyValue("companyType", val, {
                         shouldValidate: true,
                       })
                     }
@@ -474,10 +474,10 @@ export default function RegisterPage() {
                   type="button"
                   onClick={() => {
                     setStep(1);
-                    if (typeof window !== &quot;undefined&quot;) window.history.back();
+                    if (typeof window !== "undefined") window.history.back();
                   }}
                   disabled={isLoading}
-                  className=&quot;text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 rounded-xl h-12&quot;
+                  className="text-slate-400 font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 rounded-xl h-12"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
@@ -495,7 +495,7 @@ export default function RegisterPage() {
                   </>
                 ) : (
                   <>
-                    {step === 1 ? &quot;Continue&quot; : &quot;Create Account&quot;}
+                    {step === 1 ? "Continue" : "Create Account"}
                     {step === 1 ? (
                       <ArrowRight className="ml-2 h-4 w-4" />
                     ) : (
@@ -548,7 +548,7 @@ export default function RegisterPage() {
 
             {step === 1 && (
               <div className="text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">
-                Already have an account?{&quot; &quot;}
+                Already have an account?{" "}
                 <Link
                   href="/login"
                   className="font-semibold text-blue-600 hover:text-blue-500 hover:underline"
@@ -566,3 +566,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+
