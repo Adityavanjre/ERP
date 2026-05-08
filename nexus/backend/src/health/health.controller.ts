@@ -56,13 +56,13 @@ export class HealthController {
   @Get('pulse')
   @Roles(Role.Owner)
   async getSaasPulse(@Req() req: AuthenticatedRequest) {
-    return this.saas.getClientHealthScore(req.user.tenantId as string);
+    return this.saas.getClientHealthScore(req.user.tenantId!);
   }
 
   @Get('forecast')
   @Roles(Role.Owner)
   async getForecast(@Req() req: AuthenticatedRequest) {
-    return this.saas.getCashflowProjections(req.user.tenantId as string);
+    return this.saas.getCashflowProjections(req.user.tenantId!);
   }
 
   @Get('infra')
