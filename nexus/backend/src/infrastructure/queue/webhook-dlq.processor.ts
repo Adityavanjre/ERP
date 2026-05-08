@@ -119,7 +119,7 @@ export class WebhookDlqProcessor extends WorkerHost {
     this.logger.error(
       `[DLQ:${job.id}] No replay URL configured. Storing in persistent dead-letter store for manual review.`,
     );
-    await (this.prisma as any).webhookDeadLetter
+    await this.prisma.webhookDeadLetter
       .create({
         data: {
           provider,
