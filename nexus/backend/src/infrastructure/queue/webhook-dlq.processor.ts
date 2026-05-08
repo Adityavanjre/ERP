@@ -45,7 +45,7 @@ export class WebhookDlqProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job, token?: string): Promise<any> {
+  async process(job: any, token?: string): Promise<any> {
     const data = job.data as WebhookDlqJobData;
     const {
       provider,
