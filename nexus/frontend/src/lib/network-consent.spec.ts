@@ -1,10 +1,10 @@
 describe('network-consent', () => {
-  let hasNetworkConsent: any;
+  let hasNetworkConsent: () => boolean;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.resetModules();
-    const module = require('./network-consent');
-    hasNetworkConsent = module.hasNetworkConsent;
+    const networkConsentModule = await import('./network-consent');
+    hasNetworkConsent = networkConsentModule.hasNetworkConsent;
   });
 
   afterEach(() => {
