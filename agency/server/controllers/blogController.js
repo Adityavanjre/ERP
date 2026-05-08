@@ -77,7 +77,16 @@ const updateBlog = async (req, res) => {
         const blog = await Blog.findById(req.params.id);
 
         if (blog) {
-            Object.assign(blog, req.body);
+            const { title, author, date, category, image, excerpt, content, readTime, tags, slug, status } = req.body;
+
+            // Only update fields provided in request
+            const updateFields = { title, author, date, category, image, excerpt, content, readTime, tags, slug, status };
+            Object.keys(updateFields).forEach(key => {
+                if (updateFields[key] !== undefined) {
+                    blog[key] = updateFields[key];
+                }
+            });
+
             const updatedBlog = await blog.save();
             res.json(updatedBlog);
         } else {
