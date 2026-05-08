@@ -154,7 +154,7 @@ export class YearCloseProcessor extends WorkerHost {
             netProfit: netProfit.toFixed(2),
             jobId: job.id,
             journalId: journalEntry.id,
-          } as any,
+          },
         },
       });
 
