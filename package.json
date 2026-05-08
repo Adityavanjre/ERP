@@ -68,6 +68,6 @@
     "reflect-metadata": "^0.2.2",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
-    "ajv": "^6.12.6"
+    "ajv": "^8.18.0"
   }
 }
