@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import { useParams, Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 import { motion, useScroll, useSpring } from "framer-motion";
 import { Calendar, ArrowLeft, Tag, Share2, BookOpen } from "lucide-react";
 import Loader from "../components/Loader";
@@ -187,9 +188,10 @@ const BlogDetails = () => {
             <div
               className="text-zinc-400 leading-loose space-y-12 text-xl font-medium"
               dangerouslySetInnerHTML={{
-                __html:
+                __html: DOMPurify.sanitize(
                   post.content ||
-                  "<p>Detailed content for this article is coming soon. Stay tuned for expert insights and deep dives into this topic.</p>",
+                  "<p>Detailed content for this article is coming soon. Stay tuned for expert insights and deep dives into this topic.</p>"
+                ),
               }}
             />
           </div>
