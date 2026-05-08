@@ -73,7 +73,7 @@ export class WebhookDlqProcessor extends WorkerHost {
               jobId: job.id,
               attempt: job.attemptsMade + 1,
               originalTimestamp,
-            } as any,
+            },
           },
         });
       } catch (auditErr: any) {
