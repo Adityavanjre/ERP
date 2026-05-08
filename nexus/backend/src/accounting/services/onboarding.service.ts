@@ -98,13 +98,13 @@ export class OnboardingService {
               transactions: [
                 {
                   accountId: account.id,
-                  type: entryType as any,
+                  type: entryType,
                   amount: amount.abs().toNumber(),
                   description: 'Trial Balance Migration',
                 },
                 {
                   accountId: obAcc.id,
-                  type: (entryType === 'Debit' ? 'Credit' : 'Debit') as any,
+                  type: entryType === 'Debit' ? 'Credit' : 'Debit',
                   amount: amount.abs().toNumber(),
                   description: 'Offsetting Equity',
                 },

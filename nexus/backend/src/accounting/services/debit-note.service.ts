@@ -173,7 +173,7 @@ export class DebitNoteService {
             date: debitNote.date.toISOString(),
             description: `Debit Note: ${noteNumber} (Return for PO ${purchaseOrderId || 'Direct'})`,
             reference: debitNote.id,
-            transactions: journalTransactions as any,
+            transactions: journalTransactions,
           },
           tx,
         );

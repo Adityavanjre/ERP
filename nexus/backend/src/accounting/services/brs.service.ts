@@ -84,9 +84,7 @@ export class BrsService {
       const possibleMatches = allTransactions.filter((t) => {
         if (usedTransactionIds.has(t.id)) return false;
         // strict match on precise amount
-        if (
-          !new Decimal(t.amount as any).equals(new Decimal(line.amount as any))
-        )
+        if (!new Decimal(t.amount).equals(new Decimal(line.amount)))
           return false;
         const txTime = new Date(t.date).getTime();
         return Math.abs(txTime - lineTime) <= threeDaysMs;

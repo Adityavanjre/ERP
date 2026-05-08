@@ -147,7 +147,7 @@ export class WarehouseService {
         });
 
         if (invAccount && adjAccount) {
-          const movementValue = new Decimal(product.costPrice as any).mul(
+          const movementValue = new Decimal(product.costPrice).mul(
             new Decimal(data.quantity),
           );
           const isEntry = data.type === MovementType.IN;
