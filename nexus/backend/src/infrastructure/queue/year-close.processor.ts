@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QUEUE_YEAR_CLOSE } from '../../infrastructure/queue/queue.module';
+import { TransactionEntryDto } from '../../accounting/dto/create-journal.dto';
 
 export interface YearCloseJobData {
   tenantId: string;
@@ -71,7 +72,7 @@ export class YearCloseProcessor extends WorkerHost {
     await job.updateProgress(50);
 
     let netProfit = new Decimal(0);
-    const journalTransactions: any[] = [];
+    const journalTransactions: TransactionEntryDto[] = [];
 
     for (const acc of plAccounts) {
       const bal = new Decimal(acc.balance || 0);
