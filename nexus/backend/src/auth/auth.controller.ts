@@ -61,7 +61,7 @@ export class AuthController {
     const result = await this.authService.login(
       loginDto,
       'WEB',
-      req.ip || (req.get('X-Forwarded-For') as string),
+      req.ip || req.get('X-Forwarded-For'),
     );
     const authResult = result as AuthResponse;
     if (authResult && authResult.accessToken && authResult.refreshToken) {
@@ -77,7 +77,7 @@ export class AuthController {
     return this.authService.login(
       loginDto,
       'MOBILE',
-      req.ip || (req.get('X-Forwarded-For') as string),
+      req.ip || req.get('X-Forwarded-For'),
     );
   }
 
@@ -92,7 +92,7 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const result = await this.authService.adminLogin(
       loginDto,
-      req.ip || (req.get('X-Forwarded-For') as string),
+      req.ip || req.get('X-Forwarded-For'),
     );
     const authResult = result as AuthResponse;
     if (authResult && authResult.accessToken && authResult.refreshToken) {

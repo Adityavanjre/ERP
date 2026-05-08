@@ -96,7 +96,7 @@ export class NbfcService {
       );
 
       // 2. Generate EMI Schedule (Equated Monthly Installment)
-      const loanAmount = new Decimal(loan.loanAmount as any);
+      const loanAmount = new Decimal(loan.loanAmount);
       const tenureMonths = new Decimal(loan.tenureMonths);
       const baseMonthlyRate = new Decimal(loan.interestRate).div(100).div(12);
 
@@ -222,12 +222,10 @@ export class NbfcService {
         (sum, emi) => sum.add(new Decimal(emi.principalPart as any)),
         new Decimal(0),
       );
-      const currentPrincipal = new Decimal(loan.loanAmount as any).sub(
-        paidPrincipal,
-      );
+      const currentPrincipal = new Decimal(loan.loanAmount).sub(paidPrincipal);
 
       const dailyInterest = currentPrincipal
-        .mul(new Decimal(loan.interestRate as any))
+        .mul(new Decimal(loan.interestRate))
         .div(100)
         .div(365)
         .toDecimalPlaces(6); // Enhanced Precision for Daily Accruals
@@ -266,7 +264,7 @@ export class NbfcService {
             },
           ]),
         },
-        tx as any,
+        tx,
       );
 
       await tx.interestAccrual.createMany({

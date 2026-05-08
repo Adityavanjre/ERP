@@ -236,7 +236,7 @@ export class Gstr1ExportService {
         const nilKey = isInterState ? 'INTRB2B' : 'INTRB2C';
         if (!nilMap[nilKey]) {
           nilMap[nilKey] = {
-            sply_ty: nilKey as any,
+            sply_ty: nilKey,
             nil_amt: 0,
             expt_amt: 0,
             ngsup_amt: 0,

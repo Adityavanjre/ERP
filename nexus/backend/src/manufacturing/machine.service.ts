@@ -114,7 +114,7 @@ export class MachineService {
       // FREEZE: Has associated data, set to Offline (frozen state)
       await this.prisma.machine.updateMany({
         where: { id, tenantId },
-        data: { status: 'Offline' as MachineStatus },
+        data: { status: 'Offline' },
       });
 
       await this.audit.log({

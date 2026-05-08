@@ -121,7 +121,7 @@ export class ProjectService {
 
     return this.prisma.project.updateMany({
       where: { id, tenantId },
-      data: { status: 'Cancelled' as ProjectStatus },
+      data: { status: 'Cancelled' },
     });
   }
 }
