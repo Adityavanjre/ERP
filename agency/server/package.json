@@ -4,9 +4,9 @@
   "description": "Backend for Klypso agency website",
   "main": "index.js",
   "scripts": {
+    "test": "jest",
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "jest"
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
