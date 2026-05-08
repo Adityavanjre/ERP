@@ -39,7 +39,7 @@ export class BulkImportProcessor extends WorkerHost {
     );
 
     // Idempotency guard: check if this exact job was already completed
-    const existing = await (this.prisma as any).backgroundJob.findUnique({
+    const existing = await this.prisma.backgroundJob.findUnique({
       where: { idempotencyKey },
     });
     if (existing?.status === 'Completed') {
@@ -50,7 +50,7 @@ export class BulkImportProcessor extends WorkerHost {
     }
 
     // Mark as processing
-    const jobRecord = await (this.prisma as any).backgroundJob.upsert({
+    const jobRecord = await this.prisma.backgroundJob.upsert({
       where: { idempotencyKey },
       update: {
         status: 'Processing',
@@ -214,7 +214,7 @@ export class BulkImportProcessor extends WorkerHost {
             }
           }
 
-          await (this.prisma as any).backgroundJob.update({
+          await this.prisma.backgroundJob.update({
             where: { id: jobRecord.id },
             data: {
               status: 'Completed',
@@ -230,7 +230,7 @@ export class BulkImportProcessor extends WorkerHost {
         }, // end tenantContext.run
       );
     } catch (err: any) {
-      await (this.prisma as any).backgroundJob.update({
+      await this.prisma.backgroundJob.update({
         where: { id: jobRecord.id },
         data: { status: 'Failed', failedAt: new Date(), error: err.message },
       });
