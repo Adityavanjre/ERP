@@ -31,6 +31,7 @@
     "audit:verify-chain": "ts-node -r tsconfig-paths/register scripts/verify-audit-chain.ts"
   },
   "dependencies": {
+    "@nestjs/bullmq": "11.0.4",
     "@nexus/shared": "*",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/auto-instrumentations-node": "^0.70.1",
@@ -43,10 +44,11 @@
     "@sentry/profiling-node": "^10.42.0",
     "@types/multer": "^2.0.0",
     "@types/streamifier": "^0.1.2",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "axios": "^1.13.5",
     "bcrypt": "^6.0.0",
     "bullmq": "5.70.1",
-    "@nestjs/bullmq": "11.0.4",
     "cache-manager": "^7.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -70,8 +72,7 @@
     "streamifier": "^0.1.1",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.19.0",
-    "zod": "^4.3.6",
-    "ajv": "^8.18.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.16",
