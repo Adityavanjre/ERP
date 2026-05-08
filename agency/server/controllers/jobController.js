@@ -43,7 +43,12 @@ const updateJob = async (req, res) => {
         const job = await Job.findById(req.params.id);
 
         if (job) {
-            Object.assign(job, req.body);
+            const allowedFields = ['role', 'type', 'location', 'description', 'requirements', 'isActive'];
+            allowedFields.forEach(field => {
+                if (req.body[field] !== undefined) {
+                    job[field] = req.body[field];
+                }
+            });
             const updatedJob = await job.save();
             res.json(updatedJob);
         } else {
