@@ -10,7 +10,7 @@ describe('MobileWhitelistGuard - Kill Switch (MOB-009)', () => {
 
   beforeEach(() => {
     reflector = new Reflector();
-    logging = { log: jest.fn() } as any;
+    logging = { log: jest.fn() };
     guard = new MobileWhitelistGuard(reflector, logging as any);
   });
 

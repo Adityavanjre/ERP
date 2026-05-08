@@ -124,7 +124,7 @@ export class AuthService {
         await this.accountingService.initializeTenantAccounts(
           tenant.id,
           tx,
-          tenantType as string,
+          tenantType,
         );
 
         return tenant;
@@ -240,7 +240,7 @@ export class AuthService {
           await this.accountingService.initializeTenantAccounts(
             tenant.id,
             tx,
-            tenant.type as string,
+            tenant.type,
           );
 
           // Telemetry (Phase 4)
@@ -522,7 +522,7 @@ export class AuthService {
     const isNewUser = !user;
 
     if (user) {
-      await this.checkBruteForce(user as User);
+      await this.checkBruteForce(user);
       // Identity Safety Check (Rule E)
       if (user.authProvider === AuthProvider.Email) {
         throw new ConflictException(
@@ -538,7 +538,7 @@ export class AuthService {
       }
     } else {
       // Create new Google User (Rule C: No tenant created yet, must onboard)
-      user = (await this.prisma.user.create({
+      user = await this.prisma.user.create({
         data: {
           email: googleUser.email!,
           fullName: googleUser.fullName,
@@ -547,10 +547,10 @@ export class AuthService {
           providerId: googleUser.providerId,
         },
         include: { memberships: { include: { tenant: true } } },
-      })) as any;
+      });
     }
 
-    const finalUser = user! as any;
+    const finalUser = user as any;
 
     // Fail-safe (SYS-011): Sync SuperAdmin status if config admin logs in via social flow
     const configAdminEmail = this.config

@@ -177,7 +177,7 @@ export class AiService {
     ]);
 
     const revenue = sales._sum.totalAmount
-      ? new Decimal(sales._sum.totalAmount as any).toNumber()
+      ? new Decimal(sales._sum.totalAmount).toNumber()
       : 0;
 
     return {

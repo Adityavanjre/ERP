@@ -183,14 +183,14 @@ export class FixedAssetService {
 
       // 1. Calculate Monthly Depreciation (Straight Line Method)
       // Formula: (Purchase Value - Salvage Value) / Useful Life (months)
-      const cost = new Decimal(asset.purchaseValue as any);
-      const salvage = new Decimal(asset.salvageValue as any);
+      const cost = new Decimal(asset.purchaseValue);
+      const salvage = new Decimal(asset.salvageValue);
       const life = new Decimal(asset.usefulLife);
 
       const monthlyDep = this.ledger.round2(cost.sub(salvage).div(life));
 
       // 2. Check if we've already reached salvage value
-      const currentAccDep = new Decimal(asset.accumulatedDepreciation as any);
+      const currentAccDep = new Decimal(asset.accumulatedDepreciation);
       const remainingLife = cost.sub(salvage).sub(currentAccDep);
 
       if (remainingLife.lessThanOrEqualTo(0)) {

@@ -426,8 +426,8 @@ export class PurchasesService {
           });
 
           if (product) {
-            const oldStock = new Decimal(product.stock as any);
-            const oldCost = new Decimal(product.costPrice as any);
+            const oldStock = new Decimal(product.stock);
+            const oldCost = new Decimal(product.costPrice);
             const newQty = new Decimal(item.quantity);
             const newPrice = new Decimal(item.unitPrice);
 
