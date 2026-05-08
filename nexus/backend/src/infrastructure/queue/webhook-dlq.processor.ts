@@ -12,7 +12,7 @@ export interface WebhookDlqJobData {
   /** The event type that failed */
   event: string;
   /** Original payload that needs to be reprocessed */
-  payload: any;
+  payload: Record<string, unknown>;
   /** Original attempt timestamp */
   originalTimestamp: string;
   /** Internal tenant ID if determinable */
