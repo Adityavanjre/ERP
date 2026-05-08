@@ -61,7 +61,38 @@ async function performFinancialAudit() {
       } else {
         console.error(`  ❌ VERDICT: LEDGER IMBALANCE DETECTED! Drift: ${drift.toString()}`);
         console.log('  Triggering deep transaction audit...');
-        // TODO: Drill down into journal entries if drift exists
+
+        const journalEntries = await prisma.journalEntry.findMany({
+          where: { tenantId: tenant.id },
+          include: { transactions: true }
+        });
+
+        let imbalancedCount = 0;
+        for (const je of journalEntries) {
+          let jeDebits = new Decimal(0);
+          let jeCredits = new Decimal(0);
+
+          for (const txn of je.transactions) {
+            const amount = new Decimal(txn.amount as any);
+            if (txn.type === 'Debit') {
+              jeDebits = jeDebits.add(amount);
+            } else if (txn.type === 'Credit') {
+              jeCredits = jeCredits.add(amount);
+            }
+          }
+
+          if (!jeDebits.equals(jeCredits)) {
+            imbalancedCount++;
+            const diff = jeDebits.sub(jeCredits);
+            console.error(`    -> IMBALANCE in JournalEntry ${je.id} (${je.description}): Debits=${jeDebits.toString()}, Credits=${jeCredits.toString()}, Diff=${diff.toString()}`);
+          }
+        }
+
+        if (imbalancedCount === 0) {
+          console.log('    -> No individual journal entry imbalances found. Drift might be caused by manual account balance overrides or missing entries.');
+        } else {
+          console.log(`    -> Found ${imbalancedCount} imbalanced journal entries.`);
+        }
       }
     }
   } catch (e) {
