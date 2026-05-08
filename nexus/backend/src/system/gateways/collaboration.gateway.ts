@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { UseGuards, Logger } from '@nestjs/common';
 import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
+import { getAllowedOrigins } from '../../config/cors.config';
 
 /**
  * ARCH-002: Real-time Collaboration & Analytics Gateway.
@@ -17,7 +18,8 @@ import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
  */
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: getAllowedOrigins(),
+    credentials: true,
   },
   namespace: 'collaboration',
 })
