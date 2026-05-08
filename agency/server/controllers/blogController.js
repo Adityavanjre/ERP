@@ -77,7 +77,19 @@ const updateBlog = async (req, res) => {
         const blog = await Blog.findById(req.params.id);
 
         if (blog) {
-            Object.assign(blog, req.body);
+            const { title, author, category, image, excerpt, content, readTime, tags, slug, status } = req.body;
+
+            if (title !== undefined) blog.title = title;
+            if (author !== undefined) blog.author = author;
+            if (category !== undefined) blog.category = category;
+            if (image !== undefined) blog.image = image;
+            if (excerpt !== undefined) blog.excerpt = excerpt;
+            if (content !== undefined) blog.content = content;
+            if (readTime !== undefined) blog.readTime = readTime;
+            if (tags !== undefined) blog.tags = tags;
+            if (slug !== undefined) blog.slug = slug;
+            if (status !== undefined) blog.status = status;
+
             const updatedBlog = await blog.save();
             res.json(updatedBlog);
         } else {
