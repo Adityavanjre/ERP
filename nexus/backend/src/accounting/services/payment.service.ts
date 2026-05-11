@@ -341,7 +341,7 @@ export class PaymentService {
             );
           ledgerTransactions.push({
             accountId: tdsPayableAccount.id,
-            type: 'Credit' as any,
+            type: 'Credit',
             amount: tdsAmount.toNumber(),
             description: `TDS Deducted (${data.tdsSection})`,
           });

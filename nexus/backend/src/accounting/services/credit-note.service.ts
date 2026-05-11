@@ -173,7 +173,7 @@ export class CreditNoteService {
             date: creditNote.date.toISOString(),
             description: `Credit Note: ${noteNumber} (Return for ${invoiceId || 'Direct'})`,
             reference: creditNote.id,
-            transactions: journalTransactions as any,
+            transactions: journalTransactions,
           },
           tx,
         );
