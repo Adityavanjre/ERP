@@ -138,7 +138,7 @@ export class BulkImportProcessor extends WorkerHost {
             } else if (type === 'customers') {
               // Since tenantId_email is not unique in schema, we find or create
               const existing = await this.prisma.customer.findFirst({
-                where: { tenantId, email: rowData.email as string as string },
+                where: { tenantId, email: rowData.email as string },
               });
 
               if (existing) {
@@ -152,14 +152,14 @@ export class BulkImportProcessor extends WorkerHost {
                     lastName:
                       (rowData.lastname as string) ||
                       (rowData.name as string)?.split(' ').slice(1).join(' '),
-                    phone: rowData.phone as string as string,
+                    phone: rowData.phone as string,
                   },
                 });
               } else {
                 await this.prisma.customer.create({
                   data: {
                     tenantId,
-                    email: rowData.email as string as string,
+                    email: rowData.email as string,
                     firstName:
                       (rowData.firstname as string) ||
                       (rowData.name as string)?.split(' ')[0] ||
@@ -167,7 +167,7 @@ export class BulkImportProcessor extends WorkerHost {
                     lastName:
                       (rowData.lastname as string) ||
                       (rowData.name as string)?.split(' ').slice(1).join(' '),
-                    phone: rowData.phone as string as string,
+                    phone: rowData.phone as string,
                     status: 'Customer',
                   },
                 });
@@ -178,16 +178,16 @@ export class BulkImportProcessor extends WorkerHost {
               // Use email-based find-or-create instead, which is the natural key for suppliers.
               if (rowData.email) {
                 const existingSupplier = await this.prisma.supplier.findFirst({
-                  where: { tenantId, email: rowData.email as string as string },
+                  where: { tenantId, email: rowData.email as string },
                 });
                 if (existingSupplier) {
                   await this.prisma.supplier.update({
                     where: { id: existingSupplier.id },
                     data: {
                       name: rowData.name as string,
-                      phone: rowData.phone as string as string,
-                      address: rowData.address as string as string,
-                      gstin: rowData.gstin as string as string,
+                      phone: rowData.phone as string,
+                      address: rowData.address as string,
+                      gstin: rowData.gstin as string,
                     },
                   });
                 } else {
@@ -195,10 +195,10 @@ export class BulkImportProcessor extends WorkerHost {
                     data: {
                       tenantId,
                       name: rowData.name as string,
-                      email: rowData.email as string as string,
-                      phone: rowData.phone as string as string,
-                      address: rowData.address as string as string,
-                      gstin: rowData.gstin as string as string,
+                      email: rowData.email as string,
+                      phone: rowData.phone as string,
+                      address: rowData.address as string,
+                      gstin: rowData.gstin as string,
                     },
                   });
                 }
