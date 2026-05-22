@@ -27,7 +27,7 @@ export class YearCloseProcessor extends WorkerHost {
   constructor(private readonly prisma: PrismaService) {
     super();
   }
-  async process(job: Job<any, any, string>, token?: string): Promise<any> {
+  async process(job: any, token?: string): Promise<any> {
     const { tenantId, userId, year } = job.data as YearCloseJobData;
     this.logger.log(
       `[JOB:${job.id}] Starting Year Close for tenant=${tenantId}, year=${year}`,
@@ -152,9 +152,9 @@ export class YearCloseProcessor extends WorkerHost {
           details: {
             year,
             netProfit: netProfit.toFixed(2),
-            jobId: job.id,
+            jobId: job.id ?? null,
             journalId: journalEntry.id,
-          } as any,
+          },
         },
       });
 

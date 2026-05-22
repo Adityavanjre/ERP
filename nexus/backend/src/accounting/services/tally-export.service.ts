@@ -786,23 +786,21 @@ export class TallyService {
         chunk += `              <ISDEEMEDPOSITIVE>YES</ISDEEMEDPOSITIVE>\n`;
         chunk += `              <HSNCODE>${this.escapeXml(wo.bom.product.hsnCode || '')}</HSNCODE>\n`;
         chunk += `              <RATE>${wo.bom.product.costPrice}</RATE>\n`;
-        chunk += `              <AMOUNT>-${new Decimal(wo.producedQuantity as any).mul(new Decimal(wo.bom.product.costPrice as any)).toFixed(2)}</AMOUNT>\n`;
+        chunk += `              <AMOUNT>-${new Decimal(wo.producedQuantity).mul(new Decimal(wo.bom.product.costPrice)).toFixed(2)}</AMOUNT>\n`;
         chunk += `              <ACTUALQTY>${wo.producedQuantity} Nos</ACTUALQTY>\n`;
         chunk += `              <BILLEDQTY>${wo.producedQuantity} Nos</BILLEDQTY>\n`;
         chunk += `            </INVENTORYENTRIES.LIST>\n`;
 
         // CONSUMPTION (Raw Materials)
         for (const item of wo.bom.items) {
-          const consumedQty = new Decimal(item.quantity as any).mul(
-            new Decimal(wo.producedQuantity as any).add(
-              new Decimal(wo.scrapQuantity as any),
-            ),
+          const consumedQty = new Decimal(item.quantity).mul(
+            new Decimal(wo.producedQuantity).add(new Decimal(wo.scrapQuantity)),
           );
           chunk += `            <INVENTORYENTRIES.LIST>\n`;
           chunk += `              <STOCKITEMNAME>${this.escapeXml(item.product.name)}</STOCKITEMNAME>\n`;
           chunk += `              <ISDEEMEDPOSITIVE>NO</ISDEEMEDPOSITIVE>\n`;
           chunk += `              <HSNCODE>${this.escapeXml(item.product.hsnCode || '')}</HSNCODE>\n`;
-          chunk += `              <AMOUNT>${consumedQty.mul(new Decimal(item.product.costPrice as any)).toFixed(2)}</AMOUNT>\n`;
+          chunk += `              <AMOUNT>${consumedQty.mul(new Decimal(item.product.costPrice)).toFixed(2)}</AMOUNT>\n`;
           chunk += `              <ACTUALQTY>${consumedQty} Nos</ACTUALQTY>\n              <BILLEDQTY>${consumedQty} Nos</BILLEDQTY>\n`;
           chunk += `            </INVENTORYENTRIES.LIST>\n`;
         }

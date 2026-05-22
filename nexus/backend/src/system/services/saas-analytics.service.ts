@@ -286,7 +286,7 @@ export class SaasAnalyticsService {
         taggingRatio: taggingRatio.toFixed(1) + '%',
         todayAdjustments: adjustments,
         lastSeen: lastAction?.createdAt || null,
-        totalCustomers: activeCustomers as unknown as number,
+        totalCustomers: activeCustomers,
         periodLockStatus: periodLock ? 'Locked' : 'Vulnerable',
       },
       interventions: this.getInterventionStrategy(status, healthScore),

@@ -68,6 +68,18 @@
     "reflect-metadata": "^0.2.2",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
-    "ajv": "^6.12.6"
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "eslint": {
+      "ajv": "^6.12.6"
+    },
+    "@eslint/eslintrc": {
+      "ajv": "^6.12.6"
+    },
+    "@angular-devkit/core": {
+      "ajv": "^8.18.0",
+      "ajv-formats": "^3.0.1"
+    },
+    "express": "^4.21.2"
   }
 }

@@ -19,6 +19,7 @@ import cookieParser from 'cookie-parser';
 import hpp from 'hpp';
 import helmet from 'helmet';
 import compression from 'compression';
+import { getAllowedOrigins } from './config/cors.config';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PHASE 0 â€” FAIL-FAST ENVIRONMENT VALIDATION
@@ -234,32 +235,12 @@ async function bootstrap() {
   // In our Proxy model, the browser on klypso.in calls /portal/api (Same-Origin).
   // This bypasses CORS entirely for browser users. We only keep these for
   // specific Cross-Origin scenarios (like landing pages on separate subdomains).
-  const allowedOrigins: (string | RegExp)[] = [
-    'https://klypso.in',
-    'https://www.klypso.in',
-    /\.klypso\.in$/, // Trust all klypso.in subdomains
-    'http://localhost:3000',
-    'http://localhost:5173', // Vite dev server
-    /^http:\/\/localhost:\d+$/, // Desktop app dynamic ports
-    /^http:\/\/127\.0\.0\.1:\d+$/, // Desktop app dynamic ports
-  ];
-
-  // BUG-FIX: Previously only KLYPSO_FRONTEND_URL was added.
-  // On Render, the frontend URL is set as NEXUS_FRONTEND_URL, so CORS was
-  // blocking all authenticated requests from the deployed frontend.
-  const extraOrigins = [
-    process.env.NEXUS_FRONTEND_URL, // Primary -- set this in Render env vars
-    process.env.KLYPSO_FRONTEND_URL, // Legacy key (backwards compat)
-    process.env.CORS_ORIGIN, // Escape hatch for additional origins
-  ];
-  for (const o of extraOrigins) {
-    if (o && !allowedOrigins.includes(o)) allowedOrigins.push(o);
-  }
+  const allowedOrigins = getAllowedOrigins();
 
   console.log(
     '[BOOT] CORS origins: ' +
       allowedOrigins
-        .map((o) => (o instanceof RegExp ? o.source : o))
+        .map((o: string | RegExp) => (o instanceof RegExp ? o.source : o))
         .join(' | '),
   );
 

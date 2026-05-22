@@ -95,7 +95,7 @@ export class LedgerService {
           const amount = new Decimal(openingBalance);
           const isDebitNormal = (
             [AccountType.Asset, AccountType.Expense] as string[]
-          ).includes(account.type as string);
+          ).includes(account.type);
           const isDebitEntry = amount.isPositive(); // +ve amount as opening balance is treated as 'Normal' for that account type
 
           // For Assets: +ve is Debit
@@ -117,15 +117,13 @@ export class LedgerService {
               transactions: [
                 {
                   accountId: account.id,
-                  type: type as TransactionType,
+                  type: type,
                   amount: amount.abs().toNumber(),
                   description: 'Opening Balance Entry',
                 },
                 {
                   accountId: obAcc.id,
-                  type: (type === 'Debit'
-                    ? 'Credit'
-                    : 'Debit') as TransactionType,
+                  type: type === 'Debit' ? 'Credit' : 'Debit',
                   amount: amount.abs().toNumber(),
                   description: 'Opening Balance Entry',
                 },

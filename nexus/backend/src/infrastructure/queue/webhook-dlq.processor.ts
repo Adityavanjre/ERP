@@ -45,7 +45,7 @@ export class WebhookDlqProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job, token?: string): Promise<any> {
+  async process(job: any, token?: string): Promise<any> {
     const data = job.data as WebhookDlqJobData;
     const {
       provider,
@@ -119,7 +119,7 @@ export class WebhookDlqProcessor extends WorkerHost {
     this.logger.error(
       `[DLQ:${job.id}] No replay URL configured. Storing in persistent dead-letter store for manual review.`,
     );
-    await (this.prisma as any).webhookDeadLetter
+    await this.prisma.webhookDeadLetter
       .create({
         data: {
           provider,

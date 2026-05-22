@@ -208,7 +208,7 @@ export class PurchaseBillService {
             reference: `PB-${bill.id.slice(0, 8)}`,
             transactions,
             correlationId: this.traceService.getCorrelationId(),
-          } as any,
+          },
           tx,
         );
 
