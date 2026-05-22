@@ -242,7 +242,7 @@ api.interceptors.response.use(
     const contentType = response.headers["content-type"];
     if (
       contentType &&
-      contentType.includes("text/html") &&
+      String(contentType).includes("text/html") &&
       typeof response.data === "string"
     ) {
       if (
