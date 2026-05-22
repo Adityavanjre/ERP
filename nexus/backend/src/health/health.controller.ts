@@ -12,6 +12,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { SaasAnalyticsService } from '../system/services/saas-analytics.service';
+import { AuthenticatedRequest } from '../common/interfaces/request.interface';
 
 @SkipThrottle()
 @Controller('health')
@@ -54,14 +55,14 @@ export class HealthController {
 
   @Get('pulse')
   @Roles(Role.Owner)
-  async getSaasPulse(@Req() req: any) {
-    return this.saas.getClientHealthScore(req.user.tenantId);
+  async getSaasPulse(@Req() req: AuthenticatedRequest) {
+    return this.saas.getClientHealthScore(req.user.tenantId!);
   }
 
   @Get('forecast')
   @Roles(Role.Owner)
-  async getForecast(@Req() req: any) {
-    return this.saas.getCashflowProjections(req.user.tenantId);
+  async getForecast(@Req() req: AuthenticatedRequest) {
+    return this.saas.getCashflowProjections(req.user.tenantId!);
   }
 
   @Get('infra')
