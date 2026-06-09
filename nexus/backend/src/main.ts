@@ -7,7 +7,17 @@ import 'class-transformer';
 
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+// NOTE: @sentry/profiling-node loads a native .node binary per platform/version.
+// It crashes startup in dev when the native binary is unavailable.
+// We therefore load/enable it only when explicitly configured.
+const nodeProfilingIntegration = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('@sentry/profiling-node').nodeProfilingIntegration;
+  } catch {
+    return undefined;
+  }
+})();
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
@@ -117,22 +127,22 @@ async function bootstrap() {
       // MON-001: Pinging the OTEL collector to ensure observability is actually draining.
       // We do a non-blocking check to avoid delaying startup, but it logs a critical warning on failure.
       import('axios')
-        .then(async (axios) => {
+        .then(async (axiosMod) => {
           try {
+            const axios = axiosMod.default ?? axiosMod;
             // Collector base endpoint (e.g. Jaeger/OTel-Collector) usually responds to a health probe
-            await axios.default.head(otelEndpoint.replace('/v1/traces', ''), {
+            await axios.head(otelEndpoint.replace('/v1/traces', ''), {
               timeout: 3000,
             });
-            console.log(
-              '[BOOT] â—‹ OTEL Collector is REACHABLE. Tracing pipeline active.',
-            );
+            console.log('[BOOT] — OTEL Collector is REACHABLE. Tracing pipeline active.');
           } catch (e) {
             console.warn(
-              `[BOOT] â—‹ OTEL Collector UNREACHABLE at ${otelEndpoint}. Observability Gap detected!`,
+              `[BOOT] — OTEL Collector UNREACHABLE at ${otelEndpoint}. Observability Gap detected!`,
             );
           }
         })
         .catch(() => void 0);
+
 
       otracing.start();
     } catch (otelErr) {
