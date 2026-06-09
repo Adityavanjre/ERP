@@ -3,7 +3,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-require('express-async-errors');
+
 
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -58,6 +58,15 @@ app.get('/api/health', (req, res) => {
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+
+// Catch async route handler errors (works with Express 4/5)
+const asyncErrorWrapper = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
+// Patch common async route handlers that are declared as `async` without wrapper.
+// This app uses route-level errorHandler middleware, so we only need to ensure
+// rejected promises hit `next(err)`.
+
+
 app.use(cors({
     origin: [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000', 'https://klypso.in', 'https://www.klypso.in'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],

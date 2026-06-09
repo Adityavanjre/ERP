@@ -43,14 +43,14 @@ import { TenantMembershipGuard } from './common/guards/tenant-membership.guard';
 import { HttpCacheInterceptor } from './common/interceptors/cache.interceptor';
 
 import { InfrastructureModule } from './infrastructure/infrastructure.module';
-import { ScheduleModule } from '@nestjs/schedule';
 import { DiscoveryModule } from '@nestjs/core';
+import { ScheduleRootModule } from './schedule/schedule-root.module';
 
 @Module({
   imports: [
     DiscoveryModule,
     InfrastructureModule,
-    ScheduleModule.forRoot(),
+    ScheduleRootModule,
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

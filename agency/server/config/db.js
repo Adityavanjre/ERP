@@ -7,6 +7,8 @@ const connectDB = async () => {
 
     if (!process.env.MONGO_URI) {
         console.error("CRITICAL: MONGO_URI is missing from environment variables!");
+        // Prevent mongoose.connect(undefined, ...) which breaks the startup logs/runtime.
+        return;
     }
 
     // 1. Try to connect to persistent MongoDB
@@ -37,9 +39,11 @@ const createAdminSafely = async () => {
         const Job = require('../models/Job');
 
         const adminEmail = (process.env.ADMIN_EMAIL || 'adityavanjre111@gmail.com').trim().toLowerCase();
+
         if (!process.env.ADMIN_PASSWORD) {
             throw new Error('SEC-020: ADMIN_PASSWORD is required for system initialization.');
         }
+
         const adminPassword = process.env.ADMIN_PASSWORD.trim();
         const userExists = await User.findOne({ email: adminEmail });
 
@@ -56,7 +60,9 @@ const createAdminSafely = async () => {
             console.log(`System Check: Admin user (${adminEmail}) detected. Monitoring context...`);
             let modified = false;
 
-            if (rawPassword) {
+            // Sync admin password from env if it already exists
+            const rawPassword = process.env.ADMIN_PASSWORD;
+            if (rawPassword && userExists.password !== rawPassword.trim()) {
                 userExists.password = rawPassword.trim();
                 modified = true;
                 console.log('Admin password sync triggered by environment.');

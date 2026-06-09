@@ -1,16 +1,12 @@
 # Klypso ERP Infrastructure Details
 
-## Render Services
-- klypso-redis: Available (Valkey 8, oregon)
-- klypso-gateway: Deployed (Docker, oregon)
-- klypso-frontend: Deployed (Node, oregon)
-- klypso-backend: Deployed (Node, oregon)
-- klypso-agency-backend: Deployed (Node, oregon)
-- klypso-agency-viewer: Deployed (Node, oregon)
-- klypso-agency-frontend: Deployed (Static, global)
+## Hostinger VPS Services
+- **Ecosystem**: Gateway, Backend, Frontend, and Desktop portal services hosted on Hostinger VPS.
+- **Database**: PostgreSQL hosted directly on Hostinger VPS (replacing Supabase).
+- **Redis**: Hosted on Hostinger VPS / Redis Cloud.
 
 ## Essential URLs
-- **Supabase**: https://supabase.com/dashboard/project/nyakpylctpygnlrxvhxn
+- **Database Connection**: Configured via the `DATABASE_URL` environment variable pointing to the Hostinger VPS PostgreSQL instance.
 - **Resend (Emails)**: https://resend.com/emails
 - **Cloudinary**: https://console.cloudinary.com/app/c-2dbdf454d26184ac683da298040bab/settings/api-keys
 - **Redis Cloud**: https://cloud.redis.io/#/subscriptions/subscription/3150749/bdb
