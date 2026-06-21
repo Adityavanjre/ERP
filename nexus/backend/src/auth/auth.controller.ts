@@ -15,6 +15,7 @@ import {
 import { Response, Request as ExpressRequest } from 'express';
 import { AuthenticatedRequest } from '../common/interfaces/request.interface';
 import { AuthResponse } from './interfaces/auth-response.interface';
+import { setAuthCookies, clearAuthCookies } from './helpers/cookie.helper';
 import { AuthService } from './auth.service';
 import {
   LoginDto,
@@ -65,7 +66,7 @@ export class AuthController {
     );
     const authResult = result as AuthResponse;
     if (authResult && authResult.accessToken && authResult.refreshToken) {
-      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
+      setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
     return authResult;
   }
@@ -96,7 +97,7 @@ export class AuthController {
     );
     const authResult = result as AuthResponse;
     if (authResult && authResult.accessToken && authResult.refreshToken) {
-      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
+      setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
     return authResult;
   }
@@ -111,7 +112,7 @@ export class AuthController {
     const result = await this.authService.googleLogin(googleLoginDto, 'WEB');
     const authResult = result as AuthResponse;
     if (authResult && authResult.accessToken && authResult.refreshToken) {
-      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
+      setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
     return authResult;
   }
@@ -150,7 +151,7 @@ export class AuthController {
       authResult.refreshToken &&
       channel === 'WEB'
     ) {
-      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
+      setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
     return authResult;
   }
@@ -239,7 +240,7 @@ export class AuthController {
       registerDto,
     )) as AuthResponse;
     if (result && result.accessToken && result.refreshToken) {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -322,7 +323,7 @@ export class AuthController {
       result.refreshToken &&
       channel === 'WEB'
     ) {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -342,7 +343,7 @@ export class AuthController {
     // The channel is embedded in the MFA challenge token and propagated through
     // generateAuthResponse back to the result — use it to decide cookie behaviour.
     if (result && result.accessToken && result.channel === 'WEB') {
-      this.setAuthCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, result.accessToken, result.refreshToken);
     }
     return result;
   }
@@ -365,8 +366,7 @@ export class AuthController {
     // Instead of maintaining complex blacklist states, we forcibly increment the user's tokenVersion.
     // This instantly invalidates ALL active tokens (both AT and RT) for this user across all devices.
     await this.authService.logoutAll(req.user.sub);
-    res.clearCookie('nexus_token');
-    res.clearCookie('nexus_refresh');
+    clearAuthCookies(res);
     return { success: true, message: 'Session terminated. Token revoked.' };
   }
 
@@ -380,8 +380,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.logoutAll(req.user.sub);
-    res.clearCookie('nexus_token');
-    res.clearCookie('nexus_refresh');
+    clearAuthCookies(res);
     return {
       success: true,
       message: 'All active sessions have been invalidated.',
@@ -408,42 +407,8 @@ export class AuthController {
 
     // Auto-update web cookies if it was a web session
     if (authResult && authResult.accessToken && authResult.refreshToken) {
-      this.setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
+      setAuthCookies(res, authResult.accessToken, authResult.refreshToken);
     }
     return authResult;
-  }
-
-  private setAuthCookies(res: Response, token: string, refreshToken?: string) {
-    res.cookie('nexus_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-      path: '/',
-    });
-
-    if (refreshToken) {
-      res.cookie('nexus_refresh', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: '/',
-      });
-    }
-
-    // FIX-AUTH-08: sameSite changed from 'strict' to 'lax'.
-    // 'strict' blocked the CSRF cookie on top-level navigations from external origins
-    // (e.g., clicking a link from an email). 'lax' allows it on top-level GET navigations
-    // while still blocking cross-site POST/PUT/PATCH/DELETE — which is the correct threat model.
-    // Non-httpOnly so frontend can read it to send X-CSRF-Token header.
-    const csrfToken = require('crypto').randomBytes(32).toString('hex');
-    res.cookie('nexus-csrf', csrfToken, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
-      path: '/',
-    });
   }
 }
