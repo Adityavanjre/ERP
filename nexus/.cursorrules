@@ -1,0 +1,85 @@
+# 🚨 STRICT EXECUTION PROTOCOL — NO AUTONOMOUS DESIGN
+
+You are NOT allowed to:
+* redesign sections
+* add new features, animations, transitions, or effects
+* add custom cursors, overlays, motion styles, or interactions
+* add "luxury" concepts, "cinematic" ideas, or "creative improvements"
+unless EXPLICITLY instructed.
+
+## 🚨 MOST IMPORTANT RULE
+DO EXACTLY WHAT IS WRITTEN.
+NOT what you think looks better, what feels premium, what other websites do, or what your design instinct says.
+ONLY what is explicitly instructed.
+No hardcode in codebase everything should be dynamic.
+
+## 🚨 NO ASSUMPTIONS
+If something is NOT mentioned: DO NOT invent it.
+Examples: no custom cursor, no floating particles, no glow systems, no breathing animations.
+
+## 🚨 SECTION ISOLATION RULE
+You may ONLY work on the section explicitly mentioned.
+You must NOT modify global styles, retune timing globally, alter typography globally, or rebalance layout globally unless instructed.
+
+## 🚨 BROWSER REALITY RULE
+Do NOT report intended, theoretical, or logical implementation.
+ONLY report what is ACTUALLY VISIBLE in browser. If a layer exists in code but is not perceptible, report it as FAILED.
+Do NOT say "world class", "production ready", "flawless", "masterpiece" unless visually validated in browser.
+
+## 🚨 VALIDATION RULE
+Every report must include:
+## WHAT WORKS
+## WHAT IS WEAK
+## WHAT IS BROKEN
+## WHAT IS MISSING
+## WHAT IS VISUALLY NOTICEABLE
+## WHAT IS NOT NOTICEABLE
+## WHAT STILL FEELS WRONG
+
+## 🚨 HUMAN EXPERIENCE RULE
+Prioritize: readability, emotional clarity, product visibility, motion smoothness, visual hierarchy, physical depth perception.
+NOT: technical complexity, animation quantity, layered theory, cinematic buzzwords.
+
+## 🚨 FINAL RULE
+If implementation deviates from instructions: consider it FAILED, even if technically advanced.
+
+## 🔱 GENERALIZED ARCHITECTURAL SHOWROOM — MASTER WORKSPACE RULES
+This structure, pacing, motion language, and visual hierarchy is permanent.
+
+### 1. PRODUCT-FIRST RULE
+The website exists to showcase premium materials, establish showroom trust, create architectural desire, generate inquiries, and drive physical visits.
+NOT to showcase animation skill or cinematic experiments.
+
+### 2. MATERIALS ARE THE HERO
+The user must always notice product scale, proportions, surface finish details, seamless alignment, texture richness, and realism before animations or effects.
+
+### 3. LESS BUT BETTER
+Reduce motion quantity, blur layers, unnecessary overlays, opacity chaos, and effect stacking.
+Increase clarity, composition, spacing, hierarchy, focus, and material visibility.
+
+### 4. MOTION PHILOSOPHY
+Motion should feel architectural, premium, weighted, restrained, smooth, and invisible. NOT flashy, theatrical, playful, or cinematic.
+
+### 5. TEXT & SCROLL PHILOSOPHY
+Text must guide, orient, and reinforce quality. It must NOT dominate visuals or become storytelling essays.
+The user should feel they are walking through a premium modern physical showroom, NOT scrolling through animated scenes.
+
+### 6. DYNAMIC DATA RULE (NO HARDCODING)
+Code must remain fully clean and separated from content. Do NOT hardcode text descriptions, collections, pricing, images, locations, metadata, or coordinates inside UI components. Maintain a single external data model (static JSON, config hooks, or API). Components must render, map, and loop through items dynamically.
+
+### 7. TECH STACK INTEGRITY
+Respect the framework guidelines. Core web projects use clean Vanilla CSS (no Tailwind unless requested). Next.js/Vite should be structured cleanly. Components must be highly reusable, optimized, and scoped. Include proper title tags, meta descriptions, semantic HTML (single H1), ARIA labels, and unique IDs for automated testing.
+
+## 🧬 GLOBAL ANIMATION & PARALLAX RULES
+- Framer Motion / CSS Transitions: Use ONLY for hover states, UI feedback, card interaction. Quick and performance-optimal (max 200ms duration).
+- Parallax: Strict limits to support depth ONLY. (BG: 1 → 1.015, MG: 20-40px, FG: 40-80px). Anything more feels fake.
+
+## 🧬 GLOBAL EFFECT & TYPOGRAPHY RULES
+- Allowed Effects: clean borders, subtle drop shadows, standard high-contrast text, soft specular sweep, localized gradients.
+- Forbidden Effects: fog overload, glow spam, cinematic bloom, floating particles, giant blur layers, random opacity tricks, breathing loops, heavy vignettes.
+- Typography: Headlines (large, bold, simple, highly readable). Body (concise, premium, direct, max 2-3 lines).
+
+## 🧬 SPACING & COMPOSITION RULES
+- Ensure luxurious breathing room, calm composition, clean hierarchy, premium whitespace.
+- Text must ALWAYS have protected space, visual breathing room, and isolation from reflections.
+- Image cropping: Use asymmetrical compositions, side crops, lower-third framing, partial reveals, editorial spacing. Avoid centered everything, fullscreen detail overlays, busy compositions.

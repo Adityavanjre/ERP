@@ -11,13 +11,13 @@ import {
 } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { POStatus } from '@prisma/client';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
 import { Module } from '../common/decorators/module.decorator';
 import {
   CreateSupplierDto,
@@ -28,35 +28,25 @@ import {
   ImportSuppliersDto,
 } from './dto/purchases.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @Module('purchases')
 @Controller('purchases')
 export class PurchasesController {
   constructor(private readonly purchasesService: PurchasesService) {}
 
   @Post('suppliers')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   createSupplier(@Req() req: any, @Body() dto: CreateSupplierDto) {
     return this.purchasesService.createSupplier(req.user.tenantId, dto);
   }
 
   @Get('suppliers')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getSuppliers(@Req() req: any) {
     return this.purchasesService.getSuppliers(req.user.tenantId);
   }
 
   @Patch('suppliers/:id')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   updateSupplier(
     @Req() req: any,
@@ -67,7 +57,6 @@ export class PurchasesController {
   }
 
   @Post('import')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   importSuppliers(@Req() req: any, @Body() body: ImportSuppliersDto) {
     const csvContent = body.csv || body;
@@ -78,21 +67,12 @@ export class PurchasesController {
   }
 
   @Post('orders')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   createPO(@Req() req: any, @Body() dto: CreatePurchaseOrderDto) {
     return this.purchasesService.createPurchaseOrder(req.user.tenantId, dto);
   }
 
   @Get('orders')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getPOs(
     @Req() req: any,
@@ -107,7 +87,6 @@ export class PurchasesController {
   }
 
   @Patch('orders/:id/status')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   updateStatus(
     @Req() req: any,
@@ -123,7 +102,6 @@ export class PurchasesController {
   }
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: any) {
     return this.purchasesService.getPurchasesStats(req.user.tenantId);
@@ -131,7 +109,6 @@ export class PurchasesController {
 
   // --- Opening Balances ---
   @Post('suppliers/opening-balance')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   addOpeningBalance(@Req() req: any, @Body() dto: SupplierOpeningBalanceDto) {
     return this.purchasesService.addSupplierOpeningBalance(
@@ -141,14 +118,6 @@ export class PurchasesController {
   }
 
   @Get('suppliers/:id/opening-balances')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getOpeningBalances(@Req() req: any, @Param('id') id: string) {
     return this.purchasesService.getSupplierOpeningBalances(

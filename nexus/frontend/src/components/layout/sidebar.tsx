@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../../hooks/use-auth";
+import { useUX } from "../providers/ux-provider";
 import {
   LayoutDashboard,
   Package,
@@ -339,7 +340,8 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   const { user } = useAuth();
   const userRole = (user?.role as RoleName) || "Biller";
 
-  const [enabledModules, setEnabledModules] = useState<string[]>([]);
+  const { pbac, hasPermission } = useUX();
+
   const [terminology, setTerminology] = useState<Record<string, string>>({});
   const [loadingConfig, setLoadingConfig] = useState(true);
 
@@ -348,16 +350,6 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
       setLoadingConfig(true);
       const { data } = await api.get("system/config");
       if (data) {
-        const infrastructure = [
-          "dashboard",
-          "crm",
-          "settings",
-          "apps",
-          "accounting",
-        ];
-        setEnabledModules(
-          Array.from(new Set([...infrastructure, ...data.enabledModules])),
-        );
         setTerminology(data.terminology || {});
       }
     } catch (err) {
@@ -370,6 +362,17 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
+
+  const enabledModules = useMemo(() => {
+    const infrastructure = [
+      "dashboard",
+      "crm",
+      "settings",
+      "apps",
+      "accounting",
+    ];
+    return Array.from(new Set([...infrastructure, ...pbac.modules]));
+  }, [pbac.modules]);
 
   const visibleStreams = businessStreams
     .filter(
@@ -392,9 +395,17 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         label: translatedStreamLabel,
         items: stream.items
           .filter((item) => {
-            const roleAllowed =
+            let roleAllowed =
               user?.isSuperAdmin ||
               (item.allowedRoles as RoleName[]).includes(userRole);
+
+            // Also check dynamic PBAC if available (fallback to role allowed if no PBAC mapped yet)
+            // Example: check if user has * permissions
+            if (!user?.isSuperAdmin && Object.keys(pbac.permissions).length > 0) {
+              const baseResource = item.href.split("/")[1] || "dashboard";
+              roleAllowed = hasPermission(baseResource, "read") || hasPermission("*", "*");
+            }
+
             if (!roleAllowed) return false;
 
             const pathParts = item.href.split("/").filter((p) => p !== "");

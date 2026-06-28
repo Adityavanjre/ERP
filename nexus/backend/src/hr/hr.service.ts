@@ -64,6 +64,29 @@ export class HrService {
     });
   }
 
+  async updateEmployee(tenantId: string, id: string, data: any) {
+    const emp = await this.prisma.employee.findFirst({
+      where: { id, tenantId },
+    });
+    if (!emp) {
+      throw new NotFoundException(`Employee '${id}' not found in this tenant.`);
+    }
+
+    const updatedEmp = await this.prisma.employee.update({
+      where: { id },
+      data,
+      include: { department: true },
+    });
+
+    await this.audit.log({
+      tenantId,
+      action: 'UPDATE',
+      resource: 'Employee',
+      details: { id: updatedEmp.id, employeeId: updatedEmp.employeeId, name: updatedEmp.firstName },
+    });
+    return updatedEmp;
+  }
+
   // --- Leave Management ---
   async requestLeave(tenantId: string, data: any) {
     const employee = await this.prisma.employee.findFirst({

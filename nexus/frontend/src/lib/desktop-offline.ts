@@ -1515,6 +1515,9 @@ export async function hydrateDesktopOfflineSession(): Promise<boolean> {
 
 export async function clearDesktopOfflineSession(): Promise<void> {
   const bridge = getDesktopBridge();
+  if (bridge?.auth?.logout) {
+    await bridge.auth.logout();
+  }
   if (bridge?.session?.clear) {
     await bridge.session.clear();
   }
@@ -2060,6 +2063,29 @@ export async function handleDesktopOfflineRequest(
 
   if (method === "get" && path === "system/ai/inventory-forecast") {
     return buildResponse(config, { recommendations: [] });
+  }
+
+  if (method === "get" && path === "sync/metadata") {
+    let modules: string[] = [];
+    if (typeof window !== "undefined") {
+      const userStr = localStorage.getItem("k_user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user?.tenant?.enabledModules) {
+            modules = user.tenant.enabledModules;
+          }
+        } catch {
+          // ignore parsing error
+        }
+      }
+    }
+    return buildResponse(config, {
+      permissions: {
+        "*": ["*"], // Desktop owner has full permissions
+      },
+      modules,
+    });
   }
 
   if (method === "get" && path === "crm/customers") {

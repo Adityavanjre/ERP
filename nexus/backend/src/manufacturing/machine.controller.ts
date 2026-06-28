@@ -12,10 +12,10 @@ import {
 } from '@nestjs/common';
 import { MachineService } from './machine.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { MachineStatus, Role } from '@prisma/client';
-import { Roles } from '../common/decorators/roles.decorator';
+import { MachineStatus } from '@prisma/client';
+
 import { CreateMachineDto, UpdateMachineDto } from './dto/manufacturing.dto';
 
 import { PermissionsGuard } from '../common/guards/permissions.guard';
@@ -23,7 +23,7 @@ import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { Module } from '../common/decorators/module.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @Module('manufacturing')
 @UseInterceptors(AuditInterceptor)
 @Controller('manufacturing/machines')
@@ -31,28 +31,18 @@ export class MachineController {
   constructor(private readonly machineService: MachineService) {}
 
   @Post()
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   create(@Req() req: any, @Body() data: CreateMachineDto) {
     return this.machineService.createMachine(req.user.tenantId, data);
   }
 
   @Get()
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findAll(@Req() req: any) {
     return this.machineService.getMachines(req.user.tenantId);
   }
 
   @Patch(':id')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   updateMachine(
     @Req() req: any,
@@ -63,7 +53,6 @@ export class MachineController {
   }
 
   @Patch(':id/status')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.ADJUST_STOCK)
   updateStatus(
     @Req() req: any,
@@ -78,7 +67,6 @@ export class MachineController {
   }
 
   @Delete(':id')
-  @Roles(Role.Owner)
   @Permissions(Permission.ADJUST_STOCK)
   remove(@Req() req: any, @Param('id') id: string) {
     return this.machineService.deleteMachine(req.user.tenantId, id);

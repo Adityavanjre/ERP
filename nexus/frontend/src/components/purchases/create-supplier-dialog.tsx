@@ -56,7 +56,8 @@ export function CreateSupplierDialog({
     reset,
     formState: { errors },
   } = useForm<SupplierFormData>({
-    resolver: zodResolver(supplierSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(supplierSchema as any),
     defaultValues: {
       name: "",
       email: "",

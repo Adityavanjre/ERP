@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -62,12 +62,7 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 h-20">
         <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="p-2.5 bg-blue-600 rounded-2xl group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/20">
-              <KlypsoLogo className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-black tracking-tighter text-slate-900 italic">
-              KLYPSO
-            </span>
+            <KlypsoLogo size={32} />
             <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-lg ml-2 uppercase tracking-widest">
               Enterprise
             </span>
@@ -101,9 +96,9 @@ export default function Home() {
             >
               Sign In
             </Link>
-            <Link href={isDesktopShell() ? "/login" : "/register"}>
+            <Link href="/login">
               <Button className="rounded-2xl bg-slate-900 hover:bg-black px-8 py-6 h-auto font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest whitespace-nowrap">
-                {isDesktopShell() ? "Open Dashboard" : "Start Free Trial"}
+                {isDesktopShell() ? "Open Dashboard" : "Sign In"}
               </Button>
             </Link>
           </div>
@@ -143,9 +138,9 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
-                <Link href={isDesktopShell() ? "/login" : "/register"}>
+                <Link href="/login">
                   <Button className="rounded-[2rem] bg-blue-600 hover:bg-blue-700 px-12 py-8 h-auto text-lg font-black shadow-2xl shadow-blue-600/30 text-white flex items-center group transition-all hover:scale-105">
-                    {isDesktopShell() ? "Enter Dashboard" : "Start Transformation"}{" "}
+                    {isDesktopShell() ? "Enter Dashboard" : "Enter Platform"}{" "}
                     <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-2 transition-transform" />
                   </Button>
                 </Link>
@@ -235,7 +230,7 @@ export default function Home() {
                 </p>
               </div>
               <Link
-                href={isDesktopShell() ? "/login" : "/register"}
+                href="/login"
                 className="text-blue-600 font-black text-xs uppercase tracking-widest hover:underline decoration-2"
               >
                 View all industries &rarr;
@@ -328,10 +323,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="flex items-center gap-3">
-              <KlypsoLogo className="h-5 w-5 text-blue-600" />
-              <span className="text-lg font-black tracking-tighter text-slate-900 italic uppercase">
-                Klypso
-              </span>
+              <KlypsoLogo size={24} />
               <span className="text-[10px] font-black text-slate-400 ml-2">
                 &copy; 2024
               </span>

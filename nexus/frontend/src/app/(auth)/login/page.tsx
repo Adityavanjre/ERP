@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
@@ -14,7 +14,7 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import Link from "next/link";
 import { api } from "../../../lib/api";
-import { Eye, EyeOff, HardDrive, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import {
   createDesktopOfflineSession,
   isDesktopShell,
@@ -68,28 +68,21 @@ export default function LoginPage() {
   const [tempToken, setTempToken] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [isDesktopApp, setIsDesktopApp] = useState(false);
-  const [offlineOpening, setOfflineOpening] = useState(false);
-
-  const handleOfflineOpen = useCallback(async () => {
-    setOfflineOpening(true);
-    setError("");
-    try {
-      await createDesktopOfflineSession({
-        email: email.trim() || "owner@local.erp",
-      });
-      window.location.href = "/portal/dashboard";
-    } catch (offlineError) {
-      console.error(offlineError);
-      setError("Offline workspace could not be opened on this device.");
-    } finally {
-      setOfflineOpening(false);
-    }
-  }, [email]);
+  const [isLocalNetwork, setIsLocalNetwork] = useState(false);
 
   useEffect(() => {
     const isShell = isDesktopShell();
     setIsDesktopApp(isShell);
-  }, []); // Run once on mount. isDesktopShell() is environment-only, no deps needed.
+    
+    // Detect if we are accessing this via a local IP (LAN) or localhost
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const isLocal = hostname === 'localhost' || 
+        hostname === '127.0.0.1' || 
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(hostname);
+      setIsLocalNetwork(isLocal);
+    }
+  }, []);
 
   const completeLogin = useCallback((data: AuthResponse) => {
     localStorage.setItem("k_user", JSON.stringify(data.user));
@@ -296,9 +289,7 @@ export default function LoginPage() {
             <CardDescription className="text-center text-slate-500 font-medium">
               {isAdmin
                 ? "Global Infrastructure Access"
-                : isDesktopApp
-                  ? "Open your local workspace offline, or use cloud sign-in only when you need sync."
-                  : "Welcome back. Enter your details to continue."}
+                : "Welcome back. Enter your details to continue."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -313,38 +304,6 @@ export default function LoginPage() {
 
             {step === "identity" ? (
               <>
-                {isDesktopApp && !isAdmin && (
-                  <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 rounded-xl bg-white p-2 text-blue-600 shadow-sm">
-                        <HardDrive size={16} />
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-blue-700">
-                            Desktop Offline Mode
-                          </p>
-                          <p className="mt-1 text-sm text-slate-600">
-                            This device can run locally without the website.
-                            Cloud login is only needed later for sync and team
-                            workspace sharing.
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={handleOfflineOpen}
-                          disabled={offlineOpening || loading}
-                          className="bg-slate-900 hover:bg-slate-950 text-white font-black h-11 rounded-xl uppercase tracking-widest text-xs"
-                        >
-                          {offlineOpening
-                            ? "Opening Workspace..."
-                            : "Continue Offline On This Device"}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-2">
                   <Label
                     htmlFor="email"
@@ -372,7 +331,17 @@ export default function LoginPage() {
                     >
                       Password
                     </Label>
-                    {!isDesktopApp && (
+                    {isDesktopApp ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.open('https://klypso.in/portal/forgot-password', '_blank');
+                        }}
+                        className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-tighter"
+                      >
+                        Recovery?
+                      </button>
+                    ) : (
                       <Link
                         href="/forgot-password"
                         className="text-[10px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-tighter"
@@ -440,38 +409,30 @@ export default function LoginPage() {
               {loading ? (
                 <Loader2 className="animate-spin" />
               ) : step === "identity" ? (
-                isDesktopApp ? (
-                  "Cloud Sign In"
-                ) : (
-                  "Sign In"
-                )
+                "Sign In"
               ) : (
                 "Unlock Identity"
               )}
             </Button>
-            <Button
-              type="button"
-              onClick={handleGoogleLogin}
-              variant="outline"
-              className="w-full h-12 rounded-xl font-bold border-slate-200"
-            >
-              Sign in with Google
-            </Button>
-            {!isDesktopApp && (
-              <div className="text-[10px] text-center text-slate-400 font-bold uppercase">
-                New here?{" "}
-                <Link href="/register" className="text-blue-600">
-                  Create an account
-                </Link>
-              </div>
+            {!isDesktopApp && !isLocalNetwork && (
+              <Button
+                type="button"
+                onClick={handleGoogleLogin}
+                variant="outline"
+                className="w-full h-12 rounded-xl font-bold border-slate-200"
+              >
+                Sign in with Google
+              </Button>
             )}
-            <button
-              type="button"
-              onClick={toggleAdmin}
-              className="text-[10px] text-blue-600 font-bold uppercase underline underline-offset-4"
-            >
-              {isAdmin ? "Standard Login" : "Super Admin Mode"}
-            </button>
+            {!isDesktopApp && !isLocalNetwork && (
+              <button
+                type="button"
+                onClick={toggleAdmin}
+                className="text-[10px] text-blue-600 font-bold uppercase underline underline-offset-4"
+              >
+                {isAdmin ? "Standard Login" : "Super Admin Mode"}
+              </button>
+            )}
           </CardFooter>
         </form>
       </Card>

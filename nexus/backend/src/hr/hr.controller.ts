@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { HrService } from './hr.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
@@ -21,10 +21,10 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+
+
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
 @Module('hr')
 @Controller('hr')
@@ -33,7 +33,6 @@ export class HrController {
 
   // Departments
   @Post('departments')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_EMPLOYEES)
   createDept(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.createDepartment(user.tenantId, dto);
@@ -41,21 +40,12 @@ export class HrController {
 
   @Get('departments')
   @Permissions(Permission.MANAGE_EMPLOYEES)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getDepts(@CurrentUser() user: any) {
     return this.hrService.getDepartments(user.tenantId);
   }
 
   // Employees
   @Post('employees')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_EMPLOYEES)
   createEmployee(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.createEmployee(user.tenantId, dto);
@@ -63,20 +53,17 @@ export class HrController {
 
   @Get('employees')
   @Permissions(Permission.MANAGE_EMPLOYEES)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getEmployees(@CurrentUser() user: any) {
     return this.hrService.getEmployees(user.tenantId);
   }
 
+  @Patch('employees/:id')
+  @Permissions(Permission.MANAGE_EMPLOYEES)
+  updateEmployee(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: any) {
+    return this.hrService.updateEmployee(user.tenantId, id, dto);
+  }
+
   @Post('import')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_EMPLOYEES)
   importEmployees(@CurrentUser() user: any, @Body() body: any) {
     const csvContent = body.csv || body;
@@ -88,7 +75,6 @@ export class HrController {
 
   // Leaves
   @Post('leaves')
-  @Roles(Role.Owner, Role.Manager, Role.Biller, Role.CA)
   @Permissions(Permission.VIEW_PRODUCTS)
   requestLeave(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.requestLeave(user.tenantId, dto);
@@ -96,21 +82,12 @@ export class HrController {
 
   @Get('leaves')
   @Permissions(Permission.MANAGE_EMPLOYEES)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @MobileAction('VIEW_LEAVES')
   getLeaves(@CurrentUser() user: any) {
     return this.hrService.getLeaves(user.tenantId);
   }
 
   @Patch('leaves/:id/status')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_EMPLOYEES)
   @MobileAction('APPROVE_LEAVE')
   updateLeaveStatus(
@@ -123,21 +100,18 @@ export class HrController {
 
   // Payroll
   @Post('payroll')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   generatePayroll(@CurrentUser() user: any, @Body() dto: any) {
     return this.hrService.generatePayroll(user.tenantId, dto);
   }
 
   @Get('payroll')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getPayrolls(@CurrentUser() user: any) {
     return this.hrService.getPayrolls(user.tenantId);
   }
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@CurrentUser() user: any) {
     return this.hrService.getHrStats(user.tenantId);

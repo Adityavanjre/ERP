@@ -15,6 +15,7 @@ import { Theme } from '../constants/theme';
 import client from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { DraftService } from '../services/DraftService';
+import { getNetworkStatus } from '../sync/mobile-sync';
 
 interface Product {
     id: string;
@@ -57,15 +58,12 @@ export const CreateSalesOrderScreen = ({ onBack }: { onBack: () => void }) => {
     const [isOffline, setIsOffline] = useState(false);
 
     useEffect(() => {
-        const checkConn = async () => {
-            try {
-                const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-                setIsOffline(!res.ok && res.type !== 'opaque');
-            } catch { setIsOffline(true); }
-        };
-        const interval = setInterval(checkConn, 5000);
-        checkConn();
-        return () => clearInterval(interval);
+        const netStatus = getNetworkStatus();
+        setIsOffline(!netStatus.isOnline);
+        const unsubscribe = netStatus.subscribe((online) => {
+            setIsOffline(!online);
+        });
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {

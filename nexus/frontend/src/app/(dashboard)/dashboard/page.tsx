@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../hooks/use-auth";
+import { isDesktopShell } from "../../../lib/desktop-offline";
 import {
   Card,
   CardContent,
@@ -178,8 +179,15 @@ export default function DashboardPage() {
     uptime: "99.9%",
   });
 
+  const [localIPs, setLocalIPs] = useState<string[]>([]);
+
   useEffect(() => {
     setMounted(true);
+    if (isDesktopShell()) {
+      window.nexusDesktop?.shell?.getNetworkIPs?.().then((ips) => {
+        setLocalIPs(ips || []);
+      });
+    }
   }, []);
 
   // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a
@@ -646,6 +654,30 @@ export default function DashboardPage() {
 
         {/* System Activity */}
         <div className="col-span-3 space-y-6">
+          {localIPs.length > 0 && (
+            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
+              <CardHeader className="bg-emerald-50 border-b border-emerald-100 py-6">
+                <CardTitle className="text-emerald-950 text-base flex items-center uppercase tracking-widest font-black">
+                  <Activity className="mr-3 h-5 w-5 text-emerald-600 shadow-sm" />
+                  Local Network Access
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-6">
+                <p className="text-[11px] font-black text-slate-600 leading-normal">
+                  Your store's local server is running. Employees can connect using the IP below:
+                </p>
+                {localIPs.map(ip => (
+                  <div key={ip} className="flex flex-col p-4 rounded-2xl border border-emerald-100 bg-emerald-50/50">
+                    <p className="text-[10px] text-emerald-600 font-black uppercase mb-1 tracking-widest">WIFI URL</p>
+                    <p className="text-xl font-black text-emerald-800 tracking-tight select-all cursor-pointer">
+                      http://{ip}:3130/portal
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
             <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
               <CardTitle className="text-slate-950 text-base flex items-center uppercase tracking-widest font-black">

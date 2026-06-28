@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -32,6 +32,8 @@ import {
   Tags,
   Scale,
   Brain,
+  Edit2,
+  Trash2,
 } from "lucide-react";
 import { OpeningBalanceDialog } from "../../../components/accounting/opening-balance-dialog";
 import { Input } from "../../../components/ui/input";
@@ -49,6 +51,7 @@ import { toast } from "sonner";
 import { Badge } from "../../../components/ui/badge";
 import { useUX } from "../../../components/providers/ux-provider";
 import { useUnsavedChanges } from "../../../hooks/use-unsaved-changes";
+import { EditProductDialog } from "../../../components/inventory/edit-product-dialog";
 
 interface Product {
   id: string;
@@ -118,7 +121,9 @@ export default function InventoryPage() {
     totalValue: 0,
   });
   const [forecast, setForecast] = useState<InventoryForecast | null>(null);
-  const [, setLoading] = useState(true);
+  const [productToEdit, setProductToEdit] = useState<any>(null);
+  const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -481,7 +486,7 @@ export default function InventoryPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              â‚¹
+              ₹
               {Number(stats.totalValue).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
@@ -654,7 +659,7 @@ export default function InventoryPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                    Selling Price (â‚¹) <span className="text-rose-500">*</span>
+                    Selling Price (₹) <span className="text-rose-500">*</span>
                   </Label>
                   <NumericInput
                     decimal
@@ -906,7 +911,7 @@ export default function InventoryPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Selling Price (â‚¹) <span className="text-rose-500">*</span>
+                  Selling Price (₹) <span className="text-rose-500">*</span>
                 </Label>
                 <NumericInput
                   decimal
@@ -986,6 +991,13 @@ export default function InventoryPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <EditProductDialog
+        open={isEditProductOpen}
+        onOpenChange={setIsEditProductOpen}
+        product={productToEdit}
+        onSuccess={() => syncInventory()}
+      />
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-amber-500">
         <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
@@ -1171,7 +1183,7 @@ export default function InventoryPage() {
                       </div>
                       {p.hsnCode && (
                         <span className="text-[10px] text-slate-400 font-bold tracking-tighter">
-                          HSN {p.hsnCode} â€¢ {p.gstRate}% TAX
+                          HSN {p.hsnCode} • {p.gstRate}% TAX
                         </span>
                       )}
                       {p.brand && (
@@ -1224,7 +1236,7 @@ export default function InventoryPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-600 font-bold">
-                    â‚¹
+                    ₹
                     {Number(p.price).toLocaleString("en-IN", {
                       minimumFractionDigits: 0,
                     })}
@@ -1232,7 +1244,7 @@ export default function InventoryPage() {
                   <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-2">
                       <div className="font-black text-slate-900 tracking-tighter">
-                        â‚¹
+                        ₹
                         {(Number(p.price) * Number(p.stock)).toLocaleString(
                           "en-IN",
                           { minimumFractionDigits: 0 },
@@ -1251,9 +1263,13 @@ export default function InventoryPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                        onClick={() => startEdit(p)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setProductToEdit(p);
+                          setIsEditProductOpen(true);
+                        }}
                       >
-                        <Edit3 className="h-3.5 w-3.5" />
+                        <Edit2 className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -1261,7 +1277,7 @@ export default function InventoryPage() {
                         className="h-8 w-8 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                         onClick={() => handleDelete(p.id)}
                       >
-                        <Plus className="h-3.5 w-3.5 rotate-45" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

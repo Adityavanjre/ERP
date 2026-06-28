@@ -4,9 +4,10 @@ contextBridge.exposeInMainWorld('nexusDesktop', {
   shell: {
     isDesktop: true,
     switchToCloud: () => ipcRenderer.invoke('shell:switchToCloud'),
+    getNetworkIPs: () => ipcRenderer.invoke('shell:getNetworkIPs'),
   },
   sync: {
-    execute: () => ipcRenderer.invoke('sync:execute'),
+    // Manual sync triggers removed in favor of automatic background polling
     bootstrap: () => ipcRenderer.invoke('sync:bootstrap'),
     status: () => ipcRenderer.invoke('sync:status'),
     resolve: (conflicts: any[]) => ipcRenderer.invoke('sync:resolve', conflicts),
@@ -17,11 +18,16 @@ contextBridge.exposeInMainWorld('nexusDesktop', {
     getToken: () => ipcRenderer.invoke('auth:getToken'),
     setToken: (token: string) => ipcRenderer.invoke('auth:setToken', token),
     clearToken: () => ipcRenderer.invoke('auth:clearToken'),
+    logout: () => ipcRenderer.invoke('auth:logout'),
+    localOnboarding: (data: any) => ipcRenderer.invoke('auth:localOnboarding', data),
   },
   session: {
     get: () => ipcRenderer.invoke('session:get'),
     set: (session: unknown) => ipcRenderer.invoke('session:set', session),
     clear: () => ipcRenderer.invoke('session:clear'),
+  },
+  settings: {
+    updateModules: (modules: string[]) => ipcRenderer.invoke('settings:updateModules', modules),
   },
   offline: {
     isOnline: () => ipcRenderer.invoke('offline:isOnline'),

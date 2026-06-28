@@ -122,4 +122,14 @@ export class WebhookController {
 
     return { received: true };
   }
+
+  /**
+   * Internal Replay Endpoint for DLQ
+   * Used by the WebhookDlqProcessor to replay failed events.
+   */
+  @Public()
+  @Post('razorpay/replay')
+  async handleRazorpayReplay(@Req() req: RawBodyRequest<any>, @Body() body: any) {
+    return this.handleRazorpay(req, body);
+  }
 }

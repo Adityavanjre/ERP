@@ -15,6 +15,19 @@ declare global {
         getToken: () => Promise<string | null>;
         setToken: (token: string) => Promise<void>;
         clearToken: () => Promise<void>;
+        logout?: () => Promise<void>;
+        login?: (credentials: Record<string, unknown>) => Promise<{
+          error?: boolean;
+          message?: string;
+          data: {
+            user: Record<string, unknown>;
+            accessToken: string;
+          };
+        }>;
+        localOnboarding?: (data: Record<string, unknown>) => Promise<{ error?: string; success?: boolean }>;
+      };
+      settings?: {
+        updateModules: (modules: string[]) => Promise<void>;
       };
       session?: {
         get: () => Promise<unknown>;

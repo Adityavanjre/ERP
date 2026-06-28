@@ -36,7 +36,27 @@ export class CrmService {
       });
     }
 
-    return customer;
+  }
+
+  async updateCustomer(tenantId: string, id: string, data: any) {
+    const existing = await this.prisma.customer.findFirst({
+      where: { id, tenantId, isDeleted: false },
+    });
+    if (!existing) {
+      throw new BadRequestException('Customer not found');
+    }
+    const { openingBalance, ...updateData } = data;
+    const updated = await this.prisma.customer.update({
+      where: { id },
+      data: updateData,
+    });
+    await this.audit.log({
+      tenantId,
+      action: 'UPDATE',
+      resource: 'Customer',
+      details: { id: updated.id, email: updated.email },
+    });
+    return updated;
   }
 
   async ensureWalkInCustomer(tenantId: string) {

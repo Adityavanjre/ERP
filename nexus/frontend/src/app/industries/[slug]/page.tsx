@@ -285,12 +285,12 @@ export default async function IndustryLandingPage({ params }: Props) {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 w-full sm:w-auto">
-            <Link href="/register">
+            <Link href="/login">
               <Button
                 size="lg"
                 className="bg-blue-600 hover:bg-blue-700 h-16 px-10 rounded-full text-lg shadow-xl shadow-blue-500/20 font-bold group"
               >
-                Start Free Trial
+                Sign In to Platform
                 <ArrowLeft className="ml-2 h-5 w-5 rotate-180 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>

@@ -9,13 +9,13 @@ import {
 } from '@nestjs/common';
 import { BillingService } from '../services/billing.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
+
 import { AdminGuard } from '../../common/guards/admin.guard';
-import { PlanType, Role } from '@prisma/client';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { PlanType } from '@prisma/client';
+
 import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, )
 @Controller('system/billing')
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
@@ -23,7 +23,6 @@ export class BillingController {
   // --- Tenant-facing ---
 
   @Get('status')
-  @Roles(Role.Owner)
   getStatus(@Req() req: AuthenticatedRequest) {
     return this.billingService.getTenantSubscription(
       req.user.tenantId as string,
@@ -31,14 +30,12 @@ export class BillingController {
   }
 
   @Get('history')
-  @Roles(Role.Owner)
   getHistory(@Req() req: AuthenticatedRequest) {
     return this.billingService.getBillingHistory(req.user.tenantId as string);
   }
 
   // SEC: Only the workspace Owner can initiate a plan upgrade.
   // Manager, CA, Biller roles do not have billing authority.
-  @Roles(Role.Owner)
   @Post('upgrade')
   upgrade(@Req() req: AuthenticatedRequest, @Body('plan') plan: PlanType) {
     return this.billingService.upgradePlan(
@@ -54,7 +51,6 @@ export class BillingController {
 
   @Post('admin/:tenantId/suspend')
   @UseGuards(AdminGuard)
-  @Roles(Role.Owner)
   suspendTenant(
     @Param('tenantId') tenantId: string,
     @Body('reason') reason: string,
@@ -69,7 +65,6 @@ export class BillingController {
 
   @Post('admin/:tenantId/reactivate')
   @UseGuards(AdminGuard)
-  @Roles(Role.Owner)
   reactivateTenant(
     @Param('tenantId') tenantId: string,
     @Body('plan') plan: PlanType,
@@ -80,7 +75,6 @@ export class BillingController {
 
   @Post('admin/:tenantId/grace-period')
   @UseGuards(AdminGuard)
-  @Roles(Role.Owner)
   enterGracePeriod(
     @Param('tenantId') tenantId: string,
     @Body('reason') reason: string,
@@ -95,7 +89,6 @@ export class BillingController {
 
   @Post('admin/:tenantId/read-only')
   @UseGuards(AdminGuard)
-  @Roles(Role.Owner)
   downgradeToReadOnly(
     @Param('tenantId') tenantId: string,
     @Body('reason') reason: string,

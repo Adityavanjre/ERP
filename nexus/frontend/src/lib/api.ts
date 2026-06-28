@@ -13,9 +13,9 @@ import {
 // Ensure we always target the v1 API
 // PRD-001: For production grade, we use the Gateway Proxy model (/portal/api)
 // FALLBACK: If NEXT_PUBLIC_API_URL is missing (Render.com), we default to the production cluster.
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://klypso-backend.onrender.com";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://klypso.in/portal/api";
 // DESKTOP-DIRECT: Force cloud backend for desktop shell to match the web browser gateway
-const CLOUD_BACKEND_URL = "https://klypso-backend.onrender.com";
+const CLOUD_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://klypso.in/portal/api";
 const API_URL = isDesktopShell()
   ? `${CLOUD_BACKEND_URL}/v1`
   : baseURL.endsWith("/")
@@ -117,7 +117,6 @@ api.interceptors.request.use(
     else if (isDesktopShell() && !localStorage.getItem("k_cloud_sync_active")) {
       const isAuthRoute =
         config.url?.includes("auth/login") ||
-        config.url?.includes("auth/register") ||
         config.url?.includes("auth/mfa") ||
         config.url?.includes("auth/google") ||
         config.url?.includes("auth/tenants") ||
@@ -361,7 +360,6 @@ api.interceptors.response.use(
       ) {
         const authPages = [
           "/login",
-          "/register",
           "/forgot-password",
           "/reset-password",
         ];

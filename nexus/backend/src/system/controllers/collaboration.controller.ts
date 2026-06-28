@@ -16,9 +16,9 @@ import { memoryStorage } from 'multer';
 import { CollaborationService } from '../services/collaboration.service';
 import { CloudinaryService } from '../services/cloudinary.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
+
 import {
   validateFileMagicBytes,
   validateFileSize,
@@ -27,7 +27,7 @@ import {
 import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
 @Controller('collaboration')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, )
 export class CollaborationController {
   constructor(
     private readonly collaborationService: CollaborationService,
@@ -35,14 +35,6 @@ export class CollaborationController {
   ) {}
 
   @Post('upload')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Accountant,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.CA,
-  )
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
@@ -73,7 +65,6 @@ export class CollaborationController {
   }
 
   @Get('comments/:type/:id')
-  @Roles(Role.Owner)
   async getComments(
     @Req() req: AuthenticatedRequest,
     @Param('type') type: string,
@@ -87,14 +78,6 @@ export class CollaborationController {
   }
 
   @Post('comments')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Accountant,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.CA,
-  )
   async addComment(@Req() req: AuthenticatedRequest, @Body() body: any) {
     return this.collaborationService.addComment(
       req.user.tenantId as string,
@@ -104,7 +87,6 @@ export class CollaborationController {
   }
 
   @Delete('comments/:id')
-  @Roles(Role.Owner, Role.Manager)
   async deleteComment(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,

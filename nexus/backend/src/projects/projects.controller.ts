@@ -14,14 +14,14 @@ import {
 import { ProjectService } from './projects.service';
 import { CollaborationService } from '../system/services/collaboration.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
-import { Roles } from '../common/decorators/roles.decorator';
+
 import { Permission } from '../common/constants/permissions';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { AuthenticatedRequest } from '../common/interfaces/request.interface';
-import { TaskStatus, Role } from '@prisma/client';
+import { TaskStatus } from '@prisma/client';
 import { Module } from '../common/decorators/module.decorator';
 import {
   CreateProjectDto,
@@ -29,7 +29,7 @@ import {
   CreateTaskDto,
 } from './dto/projects.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
 @Module('project')
 @Controller('projects')
@@ -40,49 +40,30 @@ export class ProjectController {
   ) {}
 
   @Post()
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   create(@Req() req: AuthenticatedRequest, @Body() data: CreateProjectDto) {
     return this.projectService.createProject(req.user.tenantId as string, data);
   }
 
   @Get()
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findAll(@Req() req: AuthenticatedRequest) {
     return this.projectService.getProjects(req.user.tenantId as string);
   }
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: AuthenticatedRequest) {
     return this.projectService.getProjectStats(req.user.tenantId as string);
   }
 
   @Get(':id')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findOne(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.projectService.getProjectById(req.user.tenantId as string, id);
   }
 
   @Patch(':id')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_USERS)
   update(
     @Req() req: AuthenticatedRequest,
@@ -97,7 +78,6 @@ export class ProjectController {
   }
 
   @Post(':id/tasks')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   createTask(
     @Req() req: AuthenticatedRequest,
@@ -111,14 +91,6 @@ export class ProjectController {
   }
 
   @Get('tasks/all')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   getTasks(
     @Req() req: AuthenticatedRequest,
@@ -128,7 +100,6 @@ export class ProjectController {
   }
 
   @Patch('tasks/:taskId/status')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.ADJUST_STOCK)
   updateTaskStatus(
     @Req() req: AuthenticatedRequest,
@@ -143,7 +114,6 @@ export class ProjectController {
   }
 
   @Delete(':id')
-  @Roles(Role.Owner, Role.Manager)
   async deleteProject(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,

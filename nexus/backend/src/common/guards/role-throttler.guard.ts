@@ -1,6 +1,6 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
 import { ThrottlerGuard, ThrottlerRequest } from '@nestjs/throttler';
-import { Role } from '@prisma/client';
+
 import { RATE_LIMIT_MULTIPLIER } from '@nexus/shared';
 
 @Injectable()
@@ -49,11 +49,11 @@ export class RoleThrottlerGuard extends ThrottlerGuard {
 
     let adjustedLimit = limit;
 
-    if (user && user.role) {
+    if (user && user.isSuperAdmin) {
       // Use string literals to prevent SSR 'Cannot read properties of undefined (reading Owner)' error
-      if (user.role === 'Owner') {
+      if (user.isSuperAdmin === 'Owner') {
         adjustedLimit = limit * RATE_LIMIT_MULTIPLIER.OWNER;
-      } else if (user.role === 'CA') {
+      } else if (user.isSuperAdmin === 'CA') {
         adjustedLimit = limit * RATE_LIMIT_MULTIPLIER.ACCOUNTANT;
       }
     }

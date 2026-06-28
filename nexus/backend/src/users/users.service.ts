@@ -44,7 +44,7 @@ export class UsersService {
       id: m.userId,
       email: m.user.email,
       fullName: m.user.fullName,
-      role: m.role,
+      
       joinedAt: m.user.createdAt,
     }));
   }
@@ -93,7 +93,7 @@ export class UsersService {
         data: {
           userId: user.id,
           tenantId,
-          role: dto.role,
+          
         },
       });
     });
@@ -111,9 +111,9 @@ export class UsersService {
     }
 
     // Protection: Cannot demote the last Owner
-    if (membership.role === Role.Owner && dto.role !== Role.Owner) {
+    if ((membership.permissions as string) === "Owner" && dto.permissions !== "Owner") {
       const ownerCount = await this.prisma.tenantUser.count({
-        where: { tenantId, role: Role.Owner },
+        where: { tenantId },
       });
       if (ownerCount <= 1) {
         throw new ForbiddenException('Tenant must have at least one Owner');
@@ -125,7 +125,7 @@ export class UsersService {
         userId_tenantId: { userId, tenantId },
       },
       data: {
-        role: dto.role,
+        permissions: dto.permissions,
         user: {
           update: {
             tokenVersion: { increment: 1 },
@@ -173,9 +173,9 @@ export class UsersService {
       throw new NotFoundException('User not found in tenant');
     }
 
-    if (membership.role === Role.Owner) {
+    if ((membership.permissions as string) === "Owner") {
       const ownerCount = await this.prisma.tenantUser.count({
-        where: { tenantId, role: Role.Owner },
+        where: { tenantId },
       });
       if (ownerCount <= 1) {
         throw new ForbiddenException('Cannot remove the only Owner');

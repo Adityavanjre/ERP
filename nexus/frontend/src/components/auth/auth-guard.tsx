@@ -71,7 +71,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const decoded = jwtDecode<DecodedToken>(token);
+        let decoded: DecodedToken;
+        if (token.startsWith("offline_")) {
+          const userStr = localStorage.getItem("k_user");
+          const user = userStr ? JSON.parse(userStr) : null;
+          decoded = {
+            type: "desktop-local",
+            isOnboarded: true,
+            role: user?.isSuperAdmin ? "Owner" : "Manager"
+          };
+        } else {
+          decoded = jwtDecode<DecodedToken>(token);
+        }
         const role = decoded.role;
         const type = decoded.type;
         const isOnboarded = decoded.isOnboarded;

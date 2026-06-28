@@ -17,12 +17,16 @@
   "devDependencies": {
     "@electron/packager": "^19.1.0",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "electron": "33.0.0",
     "electron-builder": "^25.0.0",
     "typescript": "^6.0.2"
   },
   "build": {
     "appId": "in.klypso.erp",
+    "npmRebuild": true,
+    "buildDependenciesFromSource": true,
     "productName": "Klypso ERP",
     "artifactName": "Klypso-ERP-setup.${ext}",
     "directories": {
@@ -70,8 +74,14 @@
     }
   },
   "dependencies": {
-    "@nexus/sync-engine": "file:vendor/sync-engine",
+    "@nexus/sync-engine": "file:../packages/sync-engine/nexus-sync-engine-0.1.3.tgz",
+    "@types/bcryptjs": "^2.4.6",
     "axios": "^1.14.0",
-    "better-sqlite3": "^12.8.0"
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "file:./better-sqlite3-12.8.0.tgz",
+    "bonjour-service": "^1.4.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1"
   }
 }

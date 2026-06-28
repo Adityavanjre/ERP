@@ -176,12 +176,12 @@ export class SalesService {
 
   async approveOrder(tenantId: string, id: string, user: any) {
     const channel = user.channel || 'WEB';
-    const role = user.role;
+    const role = user.isSuperAdmin;
 
     // Architecture Guide Enforcement:
     // MOBILE: Approve/Reject only. No edits. No amount changes.
     // Only Owners or Managers can approve on mobile.
-    if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
+    if (channel === 'MOBILE' && role !== "Owner" && role !== "Owner") {
       throw new BadRequestException(
         'Governance Error: Only Owners or Managers can approve orders from mobile.',
       );
@@ -229,9 +229,9 @@ export class SalesService {
 
   async rejectOrder(tenantId: string, id: string, user: any) {
     const channel = user.channel || 'WEB';
-    const role = user.role;
+    const role = user.isSuperAdmin;
 
-    if (channel === 'MOBILE' && role !== Role.Owner && role !== Role.Manager) {
+    if (channel === 'MOBILE' && role !== "Owner" && role !== "Owner") {
       throw new BadRequestException(
         'Governance Error: Only Owners or Managers can reject orders from mobile.',
       );

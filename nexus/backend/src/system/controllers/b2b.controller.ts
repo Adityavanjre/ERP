@@ -9,8 +9,8 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { B2BGuard } from '../../common/guards/b2b.guard';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Role } from '@prisma/client';
-import { Roles } from '../../common/decorators/roles.decorator';
+
+
 import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
 @Controller('b2b')
@@ -23,13 +23,12 @@ export class B2BController {
    * PERF-004: Universal Pagination.
    */
   @Get('invoices')
-  @Roles(Role.Owner, Role.Customer)
   async getMyInvoices(
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    if (req.user.role !== Role.Customer) {
+    if (!req.user.customerId) {
       throw new ForbiddenException('Endpoint restricted to Customers');
     }
 
@@ -52,13 +51,12 @@ export class B2BController {
    * PERF-004: Universal Pagination.
    */
   @Get('purchase-orders')
-  @Roles(Role.Owner, Role.Supplier)
   async getMyPurchaseOrders(
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    if (req.user.role !== Role.Supplier) {
+    if (!req.user.supplierId) {
       throw new ForbiddenException('Endpoint restricted to Suppliers');
     }
 
@@ -80,11 +78,10 @@ export class B2BController {
    * PORTAL DASHBOARD: Get Summary Statistics
    */
   @Get('dashboard')
-  @Roles(Role.Owner, Role.Customer, Role.Supplier)
   async getPortalStats(@Req() req: AuthenticatedRequest) {
-    const { tenantId, customerId, supplierId, role } = req.user;
+    const { tenantId, customerId, supplierId } = req.user;
 
-    if (role === Role.Customer) {
+    if (customerId) {
       const invoices = await this.prisma.invoice.aggregate({
         where: {
           tenantId: tenantId as string,
@@ -95,7 +92,7 @@ export class B2BController {
       });
 
       return {
-        role: 'Customer',
+        
         totalInvoices: invoices._count.id,
         outstandingAmount:
           Number(invoices._sum.totalAmount || 0) -
@@ -112,7 +109,7 @@ export class B2BController {
       });
 
       return {
-        role: 'Supplier',
+        
         totalPurchaseOrders: pos._count.id,
         totalVolume: Number(pos._sum.totalAmount || 0),
       };

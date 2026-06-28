@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -12,9 +12,10 @@ import {
 } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
-import { Settings, Shield, CreditCard, Bell, Globe, Zap } from "lucide-react";
+import { Settings, Shield, CreditCard, Bell, Globe, Box, Cloud, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
+import Link from "next/link";
 import { Badge } from "../../../components/ui/badge";
 import { UserPlus, Key, Trash2, ShieldAlert } from "lucide-react";
 import {
@@ -300,6 +301,28 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
+            <CardHeader>
+              <CardTitle className="text-slate-900 font-black flex items-center">
+                <Box className="mr-2 h-5 w-5 text-emerald-600" />
+                Modules & Features
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Configure which modules are enabled for your workspace.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-500 mb-6">
+                Turn modules on or off at any time. Disabling a module hides it from your workspace but preserves all your data.
+              </p>
+              <Link href="/settings/modules">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-8 rounded-xl">
+                  Configure Modules
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
@@ -626,8 +649,31 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="connectivity">
-          <div className="max-w-4xl">
+          <div className="max-w-4xl space-y-6">
             <ApiKeyManager />
+            
+            <Card className="bg-white border-blue-200 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-transparent border-b border-blue-100">
+                <CardTitle className="text-blue-900 font-black flex items-center">
+                  <Cloud className="mr-2 h-5 w-5 text-blue-600" />
+                  Migrate to Klypso Cloud
+                </CardTitle>
+                <CardDescription className="text-blue-700">
+                  Upgrade your local peer-to-peer setup to a fully managed cloud workspace.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <p className="text-sm text-slate-600 mb-6">
+                  Ready to scale? This process will safely copy your local SQLite database to our secure cloud infrastructure. You'll gain global access, automated backups, and higher performance without losing any of your existing data.
+                </p>
+                <Button disabled className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-8 rounded-xl opacity-80">
+                  Begin Cloud Migration
+                </Button>
+                <p className="text-[10px] text-slate-400 mt-3 font-bold uppercase tracking-widest">
+                  * Coming soon in the next major update
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

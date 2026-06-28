@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+
 import { AccessChannel } from '@nexus/shared';
 
 export interface AuthUserResponse {
@@ -13,7 +13,7 @@ export interface TenantResponse {
   id: string;
   name: string;
   slug: string;
-  role: Role;
+  
   isOnboarded: boolean;
 }
 

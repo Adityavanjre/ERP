@@ -13,13 +13,13 @@ import {
 } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
-import { Roles } from '../common/decorators/roles.decorator';
+
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
-import { Role } from '@prisma/client';
+
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
 import {
@@ -29,7 +29,7 @@ import {
   AddOpeningBalanceDto,
 } from './dto/crm.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @UseInterceptors(AuditInterceptor)
 @Module('crm')
 @Controller('crm')
@@ -37,14 +37,18 @@ export class CrmController {
   constructor(private readonly crmService: CrmService) {}
 
   @Post('customers')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.MANAGE_CUSTOMERS)
   create(@Req() req: any, @Body() createCustomerDto: UpdateCustomerDto) {
     return this.crmService.createCustomer(req.user.tenantId, createCustomerDto);
   }
 
+  @Patch('customers/:id')
+  @Permissions(Permission.MANAGE_CUSTOMERS)
+  update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+    return this.crmService.updateCustomer(req.user.tenantId, id, dto);
+  }
+
   @Post('import')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_CUSTOMERS)
   uploadFile(@Req() req: any, @Body() body: any) {
     const csvContent = body.csv || body;
@@ -56,14 +60,6 @@ export class CrmController {
 
   @Get('customers')
   @Permissions(Permission.MANAGE_CUSTOMERS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @MobileAction('VIEW_LEADS')
   findAll(
     @Req() req: any,
@@ -78,14 +74,12 @@ export class CrmController {
   }
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: any) {
     return this.crmService.getStats(req.user.tenantId);
   }
 
   @Post('opportunities')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('CREATE_LEAD')
   createOpp(@Req() req: any, @Body() data: CreateOpportunityDto) {
@@ -93,7 +87,6 @@ export class CrmController {
   }
 
   @Get('opportunities')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('VIEW_LEADS')
   getOpps(@Req() req: any) {
@@ -101,21 +94,18 @@ export class CrmController {
   }
 
   @Delete('customers/:id')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_CUSTOMERS)
   deleteCustomer(@Req() req: any, @Param('id') id: string) {
     return this.crmService.deleteCustomer(req.user.tenantId, id);
   }
 
   @Get('export-csv')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   async exportCsv(@Req() req: any) {
     return this.crmService.exportCustomers(req.user.tenantId);
   }
 
   @Post('opportunities/:id')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   updateOpp(
     @Req() req: any,
@@ -126,7 +116,6 @@ export class CrmController {
   }
 
   @Patch('customers/:id')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.MANAGE_CUSTOMERS)
   update(
     @Req() req: any,
@@ -141,7 +130,6 @@ export class CrmController {
   }
 
   @Post('customers/:id/opening-balance')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.MANAGE_CUSTOMERS)
   addOpeningBalance(
     @Req() req: any,
@@ -153,14 +141,6 @@ export class CrmController {
 
   @Get('customers/:id/opening-balances')
   @Permissions(Permission.MANAGE_CUSTOMERS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getOpeningBalances(@Req() req: any, @Param('id') id: string) {
     return this.crmService.getOpeningBalances(req.user.tenantId, id);
   }

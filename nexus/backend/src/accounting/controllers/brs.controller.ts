@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { BrsService } from '../services/brs.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Permission } from '../../common/constants/permissions';
 import { Module } from '../../common/decorators/module.decorator';
@@ -20,13 +20,12 @@ import { UploadBrsStatementDto } from '../dto/brs.dto';
 import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
 @Controller('accounting/brs')
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @Module('accounting')
 export class BrsController {
   constructor(private brsService: BrsService) {}
 
   @Post('upload/:accountId')
-  @Roles('Accountant', 'Owner', 'CA')
   @Permissions(Permission.RECORD_PAYMENT)
   async uploadStatement(
     @Req() req: AuthenticatedRequest,
@@ -41,7 +40,6 @@ export class BrsController {
   }
 
   @Post('auto-match/:statementId')
-  @Roles('Accountant', 'Owner', 'CA')
   @Permissions(Permission.RECORD_PAYMENT)
   async autoMatch(
     @Req() req: AuthenticatedRequest,
@@ -51,7 +49,6 @@ export class BrsController {
   }
 
   @Post('manual-match')
-  @Roles('Accountant', 'Owner', 'CA')
   @Permissions(Permission.RECORD_PAYMENT)
   async manualMatch(
     @Req() req: AuthenticatedRequest,
@@ -65,7 +62,6 @@ export class BrsController {
   }
 
   @Get('report/:accountId')
-  @Roles('Accountant', 'Owner', 'CA')
   @Permissions(Permission.VIEW_REPORTS)
   async getReport(
     @Req() req: AuthenticatedRequest,
@@ -80,7 +76,6 @@ export class BrsController {
   }
 
   @Get('statement/:statementId')
-  @Roles('Accountant', 'Owner', 'CA')
   @Permissions(Permission.VIEW_REPORTS)
   async getStatementDetails(
     @Req() req: AuthenticatedRequest,

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -60,7 +60,8 @@ export default function OnboardingPage() {
     setValue,
     formState: { errors },
   } = useForm<OnboardingFormData>({
-    resolver: zodResolver(onboardingSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(onboardingSchema as any),
   });
 
   const onSubmit = useCallback(

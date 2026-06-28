@@ -76,11 +76,11 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    if (!user || (!user.role && user.type !== 'admin')) {
+    if (!user || (!user.isSuperAdmin && user.type !== 'admin')) {
       throw new ForbiddenException('User context missing');
     }
 
-    const userPermissions = (RolePermissions as any)[user.role] || [];
+    const userPermissions = (RolePermissions as any)[user.isSuperAdmin] || [];
 
     // Channel-Aware Gating (Rule 5: Prevents touch-based disasters)
     let hasPermission = requiredPermissions.every((p) =>
@@ -90,8 +90,8 @@ export class PermissionsGuard implements CanActivate {
     // Special Case: Staff on Mobile cannot DELETE or LOCK_MONTH even if role has it usually
     if (
       channel === 'MOBILE' &&
-      user.role !== Role.Owner &&
-      user.role !== Role.Manager
+      user.isSuperAdmin !== "Owner" &&
+      user.isSuperAdmin !== "Owner"
     ) {
       const restrictedOnMobile = [
         Permission.DELETE_INVOICE,
@@ -112,7 +112,7 @@ export class PermissionsGuard implements CanActivate {
         channel: channel,
         details: {
           required: requiredPermissions,
-          userRole: user.role,
+          userRole: user.isSuperAdmin,
           handler: context.getHandler().name,
           reason: 'Insufficient permissions for role/channel',
         },

@@ -26,9 +26,13 @@ if (!fs.existsSync(path.join(standaloneFrontendDir, 'server.js'))) {
   );
 }
 
+const standaloneNodeModules = path.join(frontendDir, '.next', 'standalone', 'node_modules');
 fs.rmSync(bundleDir, { recursive: true, force: true });
 fs.mkdirSync(bundleDir, { recursive: true });
 fs.cpSync(standaloneRoot, path.join(bundleDir, 'nexus'), { recursive: true });
+if (fs.existsSync(standaloneNodeModules)) {
+  fs.cpSync(standaloneNodeModules, path.join(bundleDir, 'node_modules'), { recursive: true });
+}
 
 fs.mkdirSync(path.join(bundleDir, 'nexus', 'frontend', '.next'), { recursive: true });
 fs.cpSync(staticDir, path.join(bundleDir, 'nexus', 'frontend', '.next', 'static'), { recursive: true });

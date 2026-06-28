@@ -68,11 +68,19 @@ export class SyncEngine {
       const pushResult = await this.push();
       const pullResult = await this.pull();
 
+      await this.pushAuditLogs();
+      await this.pullMetadata();
+
+      let resolvedCount = 0;
+      if (pushResult.conflicts > 0) {
+        resolvedCount = await this.resolver.autoResolveConflicts();
+      }
+
       return this.reportProgress(
         'complete',
         pushResult.pushed,
         pullResult.pulled,
-        pushResult.conflicts
+        Math.max(0, pushResult.conflicts - resolvedCount)
       );
     } catch (err: any) {
       return this.reportProgress('error', 0, 0, 0, err.message);
@@ -217,6 +225,41 @@ export class SyncEngine {
     }
 
     return { pulled };
+  }
+
+  async pullMetadata(): Promise<void> {
+    try {
+      const metadata = await this.api.get<{ modules: string[]; permissions: any }>('/api/v1/sync/metadata');
+      if (metadata) {
+        await this.db.run(
+          `UPDATE _tenant_settings SET enabled_modules = ?, updated_at = datetime('now')`,
+          [JSON.stringify(metadata.modules)]
+        );
+        await this.db.run(
+          `UPDATE _users SET permissions = ?`,
+          [JSON.stringify(metadata.permissions)]
+        );
+      }
+    } catch (err) {
+      console.error('[SYNC] Failed to pull metadata:', err);
+    }
+  }
+
+  async pushAuditLogs(): Promise<void> {
+    try {
+      const logs = await this.db.all<any>(
+        `SELECT * FROM _audit_logs WHERE synced = 0`
+      );
+      if (logs.length > 0) {
+        await this.api.post('/api/v1/sync/audit', { logs });
+        const ids = logs.map(l => l.id).join("','");
+        await this.db.run(
+          `UPDATE _audit_logs SET synced = 1 WHERE id IN ('${ids}')`
+        );
+      }
+    } catch (err) {
+      console.error('[SYNC] Failed to push audit logs:', err);
+    }
   }
 
   async resolveConflicts(req: ConflictResolveRequest): Promise<number> {

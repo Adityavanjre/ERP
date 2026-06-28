@@ -11,12 +11,12 @@ import {
 } from '@nestjs/common';
 import { PurchaseBillService } from './purchase-bill.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
 import { Module } from '../common/decorators/module.decorator';
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { UseInterceptors } from '@nestjs/common';
@@ -25,7 +25,7 @@ import {
   UpdatePurchaseBillStatusDto,
 } from './dto/purchase-bill.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @Module('purchases')
 @Controller('purchases/bills')
 @UseInterceptors(AuditInterceptor)
@@ -33,21 +33,12 @@ export class PurchaseBillController {
   constructor(private readonly billService: PurchaseBillService) {}
 
   @Post()
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   create(@Req() req: any, @Body() dto: CreatePurchaseBillDto) {
     return this.billService.create(req.user.tenantId, dto);
   }
 
   @Get()
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findAll(
     @Req() req: any,
@@ -66,21 +57,12 @@ export class PurchaseBillController {
   }
 
   @Get(':id')
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   @Permissions(Permission.VIEW_PRODUCTS)
   findOne(@Req() req: any, @Param('id') id: string) {
     return this.billService.findOne(req.user.tenantId, id);
   }
 
   @Patch(':id/status')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_SUPPLIERS)
   updateStatus(
     @Req() req: any,

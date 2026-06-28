@@ -32,7 +32,7 @@ export class LocalFrontendServer {
       env: {
         ...process.env,
         ELECTRON_RUN_AS_NODE: '1',
-        HOSTNAME: '127.0.0.1',
+        HOSTNAME: '0.0.0.0',
         KLYPSO_BACKEND_URL: this.backendUrl || process.env.KLYPSO_BACKEND_URL || 'https://nexus-backend-3ukg.onrender.com',
         NODE_ENV: 'production',
         PORT: String(port),
@@ -118,7 +118,7 @@ async function findFreePort(preferredPort: number): Promise<number> {
       });
     });
 
-    server.listen(preferredPort, '127.0.0.1');
+    server.listen(preferredPort, '0.0.0.0');
   });
 }
 

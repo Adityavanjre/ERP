@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -35,17 +35,12 @@ export default function NotFound() {
                 The imperial standard doesn't usually fail, but this route seems to have disappeared. Let's get you back to the platform.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+            <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
             <Link href={isDesktopShell() ? "/login" : "/"} className="w-full">
               <Button className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-black shadow-xl shadow-slate-900/10 text-xs uppercase tracking-widest flex items-center justify-center">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to {isDesktopShell() ? "Login" : "Home"}
               </Button>
             </Link>
-                <Link href="/register" className="w-full">
-                    <Button className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold shadow-lg shadow-blue-500/20">
-                        Start Free Trial
-                    </Button>
-                </Link>
             </div>
 
             <div className="mt-20 pt-10 border-t border-slate-200 w-full max-w-2xl">

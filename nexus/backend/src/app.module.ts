@@ -38,7 +38,7 @@ import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
 import { CsrfGuard } from './common/guards/csrf.guard';
 import { PlanGuard } from './common/guards/plan.guard';
-import { RolesGuard } from './common/guards/roles.guard';
+
 import { TenantMembershipGuard } from './common/guards/tenant-membership.guard';
 import { HttpCacheInterceptor } from './common/interceptors/cache.interceptor';
 
@@ -104,10 +104,7 @@ import { ScheduleRootModule } from './schedule/schedule-root.module';
       provide: APP_GUARD,
       useClass: ModuleGuard, // 4th: Module enable/disable — requires req.user.tenantId.
     },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard, // 5th: Role enforcement — fail-closed on mutations. All endpoints must declare @Roles(), @Public(), or @AllowIdentity().
-    },
+
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard, // 6th: Mobile Safety Contract — fine-grained permission checks within a role.

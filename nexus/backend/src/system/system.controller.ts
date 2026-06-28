@@ -14,16 +14,16 @@ import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SystemAuditService } from './services/system-audit.service';
 import { getIndustryConfig } from '../common/constants/industry-config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
 import { Module } from '../common/decorators/module.decorator';
-import { Role } from '@prisma/client';
-import { Roles } from '../common/decorators/roles.decorator';
+
+
 import { AllowIdentity } from '../common/decorators/allow-identity.decorator';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @Module('system')
 @Controller('system')
 export class SystemController {
@@ -35,7 +35,6 @@ export class SystemController {
   ) {}
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant)
   async getSystemStats(@Req() req: any) {
     const tenantId = req.user.tenantId;
     const cacheKey = `nexus:system:stats:${tenantId}`;
@@ -120,14 +119,12 @@ export class SystemController {
   }
 
   @Get('audit')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   async getIntegrityAudit(@Req() req: any) {
     return this.audit.verifyFinancialIntegrity(req.user.tenantId);
   }
 
   @Get('audit/logs')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   async getAuditLogs(
     @Req() req: any,
@@ -143,7 +140,6 @@ export class SystemController {
 
   @Get('founder-dashboard')
   @AllowIdentity() // Allow global admin access without tenant context
-  @Roles(Role.Owner)
   async getFounderDashboard(@Req() req: any) {
     if (!req.user.isSuperAdmin) {
       throw new ForbiddenException(

@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 import { SaasAnalyticsService } from '../system/services/saas-analytics.service';
 import { CollaborationService } from '../system/services/collaboration.service';
@@ -32,11 +32,11 @@ import { Module } from '../common/decorators/module.decorator';
 import { MfaGuard } from '../common/guards/mfa.guard';
 import { MfaRequired } from '../common/decorators/mfa-required.decorator';
 import { PlanLimit } from '../common/guards/plan.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
 import { Gstr1ExportService } from './services/gstr1-export.service';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard, MfaGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard, MfaGuard)
 @Module('accounting')
 @Controller('accounting')
 @UseInterceptors(AuditInterceptor)
@@ -49,28 +49,24 @@ export class AccountingController {
   ) {}
 
   @Get('health-score')
-  @Roles(Role.Owner)
   @Permissions(Permission.ACCESS_HEALTH_CORE)
   getHealthScore(@Req() req: AuthenticatedRequest) {
     return this.saas.getClientHealthScore(req.user.tenantId as string);
   }
 
   @Get('leaderboard')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getLeaderboard(@Req() req: AuthenticatedRequest) {
     return this.saas.getStaffLeaderboard(req.user.tenantId as string);
   }
 
   @Get('recovery-memory')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getRecoveryMemory(@Req() req: AuthenticatedRequest) {
     return this.saas.getRecoveryMemory(req.user.tenantId as string);
   }
 
   @Post('accounts')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.MANAGE_ACCOUNTS)
   createAccount(
     @Req() req: AuthenticatedRequest,
@@ -84,14 +80,6 @@ export class AccountingController {
 
   @Get('accounts')
   @Permissions(Permission.VIEW_REPORTS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getAccounts(
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
@@ -107,7 +95,6 @@ export class AccountingController {
   }
 
   @Post('journals')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   @PlanLimit('maxLedgerEntries')
   createJournal(
@@ -121,7 +108,6 @@ export class AccountingController {
   }
 
   @Post('invoices')
-  @Roles(Role.Owner, Role.Manager, Role.CA, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   @PlanLimit('maxInvoicesPerMonth')
   createInvoice(
@@ -135,7 +121,6 @@ export class AccountingController {
   }
 
   @Post('invoices/bulk')
-  @Roles(Role.Owner, Role.Manager, Role.CA, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   @PlanLimit('maxInvoicesPerMonth')
   createInvoicesBulk(
@@ -150,14 +135,6 @@ export class AccountingController {
 
   @Get('invoices')
   @Permissions(Permission.VIEW_REPORTS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getInvoices(
     @Req() req: AuthenticatedRequest,
     @Query('page') page?: number,
@@ -172,14 +149,6 @@ export class AccountingController {
 
   @Get('invoices/:id')
   @Permissions(Permission.VIEW_REPORTS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getInvoice(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.accountingService.getInvoiceById(
       req.user.tenantId as string,
@@ -188,7 +157,6 @@ export class AccountingController {
   }
 
   @Post('payments')
-  @Roles(Role.Owner, Role.Manager, Role.CA, Role.Biller)
   @Permissions(Permission.RECORD_PAYMENT)
   @PlanLimit('maxLedgerEntries')
   createPayment(
@@ -201,7 +169,6 @@ export class AccountingController {
     );
   }
   @Get('ledger/:customerId')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getLedger(
     @Req() req: AuthenticatedRequest,
@@ -214,7 +181,6 @@ export class AccountingController {
   }
 
   @Post('credit-notes')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.CREATE_INVOICE)
   @PlanLimit('maxLedgerEntries')
   createCreditNote(
@@ -229,20 +195,11 @@ export class AccountingController {
 
   @Get('credit-notes')
   @Permissions(Permission.VIEW_REPORTS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getCreditNotes(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getCreditNotes(req.user.tenantId as string);
   }
 
   @Post('debit-notes')
-  @Roles(Role.Owner, Role.Manager, Role.CA)
   @Permissions(Permission.CREATE_INVOICE)
   @PlanLimit('maxLedgerEntries')
   createDebitNote(
@@ -257,20 +214,11 @@ export class AccountingController {
 
   @Get('debit-notes')
   @Permissions(Permission.VIEW_REPORTS)
-  @Roles(
-    Role.Owner,
-    Role.Manager,
-    Role.Biller,
-    Role.Storekeeper,
-    Role.Accountant,
-    Role.CA,
-  )
   getDebitNotes(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getDebitNotes(req.user.tenantId as string);
   }
 
   @Post('customers/:id/opening-balance')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   createCustomerOpeningBalance(
     @Req() req: AuthenticatedRequest,
@@ -284,7 +232,6 @@ export class AccountingController {
   }
 
   @Post('suppliers/:id/opening-balance')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   createSupplierOpeningBalance(
     @Req() req: AuthenticatedRequest,
@@ -298,7 +245,6 @@ export class AccountingController {
   }
 
   @Get('suppliers/:id/ledger')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getSupplierLedger(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.accountingService.getSupplierLedger(
@@ -308,7 +254,6 @@ export class AccountingController {
   }
 
   @Get('transactions')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getTransactions(
     @Req() req: AuthenticatedRequest,
@@ -323,7 +268,6 @@ export class AccountingController {
   }
 
   @Get('transactions/export-csv')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   @PlanLimit('maxExportsPerDay')
   @Header('Content-Type', 'text/csv')
@@ -338,14 +282,12 @@ export class AccountingController {
   }
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getStats(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getStats(req.user.tenantId as string);
   }
 
   @Get('export/tally')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant)
   @Permissions(Permission.EXPORT_TALLY)
   @PlanLimit('maxExportsPerDay')
   @Header('Content-Type', 'application/xml')
@@ -368,7 +310,6 @@ export class AccountingController {
   }
 
   @Get('export/validate')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant)
   @Permissions(Permission.EXPORT_TALLY)
   validateTally(
     @Req() req: AuthenticatedRequest,
@@ -384,7 +325,6 @@ export class AccountingController {
   }
 
   @Get('export/masters')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant)
   @Permissions(Permission.EXPORT_TALLY)
   @PlanLimit('maxExportsPerDay')
   @Header('Content-Type', 'application/xml')
@@ -399,7 +339,6 @@ export class AccountingController {
   }
 
   @Get('auditor/dashboard')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getAuditorDashboard(
     @Req() req: AuthenticatedRequest,
@@ -415,7 +354,6 @@ export class AccountingController {
   }
 
   @Post('auditor/lock')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   @MfaRequired()
   lockAuditor(
@@ -433,7 +371,6 @@ export class AccountingController {
   }
 
   @Post('auditor/unlock')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   @MfaRequired()
   unlockAuditor(
@@ -453,7 +390,6 @@ export class AccountingController {
   }
 
   @Post('setup/coa')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_ACCOUNTS)
   initializeAccounts(@Req() req: AuthenticatedRequest) {
     return this.accountingService.initializeTenantAccounts(
@@ -462,7 +398,6 @@ export class AccountingController {
   }
 
   @Post('import/trial-balance')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_ACCOUNTS)
   importTrialBalance(@Req() req: AuthenticatedRequest, @Body() body: any) {
     const csvContent = body.csv || body;
@@ -473,7 +408,6 @@ export class AccountingController {
   }
 
   @Post('invoices/:id/cancel')
-  @Roles(Role.Owner, Role.CA, Role.Manager)
   @Permissions(Permission.CREATE_INVOICE)
   async cancelInvoice(
     @Req() req: AuthenticatedRequest,
@@ -488,7 +422,6 @@ export class AccountingController {
   }
 
   @Get('reports/trial-balance')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getTrialBalance(
     @Req() req: AuthenticatedRequest,
@@ -501,7 +434,6 @@ export class AccountingController {
   }
 
   @Get('reports/profit-loss')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getProfitLoss(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getProfitLoss(req.user.tenantId as string);
@@ -509,14 +441,12 @@ export class AccountingController {
 
   // --- Fixed Assets ---
   @Get('fixed-assets')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   getFixedAssets(@Req() req: AuthenticatedRequest) {
     return this.accountingService.getFixedAssets(req.user.tenantId as string);
   }
 
   @Post('import/fixed-assets')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.MANAGE_ACCOUNTS)
   importFixedAssets(@Req() req: AuthenticatedRequest, @Body() body: any) {
     const csvContent = body.csv || body;
@@ -527,7 +457,6 @@ export class AccountingController {
   }
 
   @Post('fixed-assets')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.CREATE_INVOICE)
   createFixedAsset(
     @Req() req: AuthenticatedRequest,
@@ -540,7 +469,6 @@ export class AccountingController {
   }
 
   @Post('fixed-assets/:id/depreciate')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   runDepreciation(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.accountingService.runMonthlyDepreciation(
@@ -550,7 +478,6 @@ export class AccountingController {
   }
 
   @Post('lock-period')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   @MfaRequired()
   lockPeriod(
@@ -567,7 +494,6 @@ export class AccountingController {
   }
 
   @Post('unlock-period')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   @MfaRequired()
   unlockPeriod(
@@ -585,7 +511,6 @@ export class AccountingController {
   }
 
   @Post('close-year')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.LOCK_MONTH)
   @MfaRequired()
   closeFinancialYear(
@@ -600,7 +525,6 @@ export class AccountingController {
   }
 
   @Get('export/gstr1')
-  @Roles(Role.Owner, Role.CA)
   @Permissions(Permission.EXPORT_TALLY)
   @PlanLimit('maxExportsPerDay')
   exportGstr1(

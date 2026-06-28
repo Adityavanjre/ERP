@@ -63,7 +63,7 @@ describe('AuthService', () => {
       const mockTenant = { id: 'tenant-1', type: 'Retail' };
 
       // We need to mock $transaction to actually execute the callback
-      prismaService.$transaction.mockImplementation(async (callback) => {
+      prismaService.$transaction.mockImplementation(async (callback: any) => {
         const tx = {
           user: { create: jest.fn().mockResolvedValue(mockUser) },
           tenant: {

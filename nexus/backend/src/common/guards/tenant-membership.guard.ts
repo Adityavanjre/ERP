@@ -31,7 +31,7 @@ export class TenantMembershipGuard implements CanActivate {
 
     // 2. Bypass for Identity Scoped Tokens
     // If no tenantId is in the token, it's an identity token (e.g. for /auth/tenants).
-    // We allow it to pass this guard. RolesGuard will enforce that identity tokens
+    // We allow it to pass this guard. will enforce that identity tokens
     // cannot hit tenant-scoped controllers unless tagged with @AllowIdentity().
     if (!user.tenantId) {
       return true;
@@ -88,13 +88,13 @@ export class TenantMembershipGuard implements CanActivate {
     // 4. Stale Role Protection
     // Sync the role from DB into the request context.
     // If a user's role was changed in DB, the new role takes effect immediately.
-    user.role = membership.role;
+    user.isSuperAdmin = membership.role;
     user.tenantName = tenant.name;
     user.subscriptionStatus = tenant.subscriptionStatus;
 
     // 5. Attach Verified Metadata
     // Override the user object with DB-verified role to prevent JWT spoofing
-    user.role = membership.role;
+    user.isSuperAdmin = membership.role;
     user.tenant = membership.tenant;
 
     return true;

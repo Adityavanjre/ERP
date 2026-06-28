@@ -20,15 +20,7 @@ import {
   OnboardingDto,
   CreateWorkspaceDto,
 } from './dto/auth.dto';
-import {
-  TenantType,
-  PlanType,
-  Role,
-  Prisma,
-  User,
-  AuthProvider,
-  SubscriptionStatus,
-} from '@prisma/client';
+import { TenantType, PlanType, Prisma, User, AuthProvider, SubscriptionStatus } from '@prisma/client';
 import { AccessChannel } from '@nexus/shared';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -116,7 +108,7 @@ export class AuthService {
           data: {
             userId: user.id,
             tenantId: tenant.id,
-            role: Role.Owner,
+            
           },
         });
 
@@ -148,7 +140,7 @@ export class AuthService {
       id: tenant.id,
       name: tenant.name,
       slug: tenant.slug,
-      role: Role.Owner,
+      
       isOnboarded: false,
     };
   }
@@ -232,7 +224,7 @@ export class AuthService {
             data: {
               userId: user.id,
               tenantId: tenant.id,
-              role: Role.Owner,
+              
             },
           });
 
@@ -373,9 +365,9 @@ export class AuthService {
     await this.resetLoginAttempts(user.id);
 
     // MFA Enforcement — only if user has explicitly enabled MFA
-    const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
+    const rolesRequiringMfa: string[] = ["Owner", "Admin"];
     const hasSensitiveRole = user.memberships.some((m) =>
-      rolesRequiringMfa.includes(m.role),
+      rolesRequiringMfa.includes(m.permissions as string),
     );
 
     if (user.mfaEnabled) {
@@ -401,7 +393,7 @@ export class AuthService {
         details: {
           method: 'Email',
           memberships: user.memberships.length,
-          role: hasSensitiveRole ? 'Administrative' : 'Standard',
+          
           channel,
         },
         ipAddress,
@@ -525,9 +517,22 @@ export class AuthService {
       await this.checkBruteForce(user);
       // Identity Safety Check (Rule E)
       if (user.authProvider === AuthProvider.Email) {
-        throw new ConflictException(
-          'An account already exists with this email using password login. Please log in with your password and link Google in settings.',
-        );
+        if (!user.providerId) {
+          // Link Google account automatically if email exists but no provider ID is set
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: { providerId: googleUser.providerId },
+            include: {
+              memberships: {
+                include: { tenant: true },
+              },
+            },
+          });
+        } else if (user.providerId !== googleUser.providerId) {
+          throw new ConflictException(
+            'This account is already linked to a different Google account.',
+          );
+        }
       }
       if (user.providerId !== googleUser.providerId) {
         // Handle edge case of changing provider ID (rare but possible if Google sub changes)
@@ -570,16 +575,16 @@ export class AuthService {
     }
 
     // MFA Enforcement for Google Login
-    const rolesRequiringMfa: Role[] = [Role.Owner, Role.CA];
+    const rolesRequiringMfa: string[] = ["Owner", "Admin"];
     const hasSensitiveRole = (finalUser.memberships || []).some((m: any) =>
-      rolesRequiringMfa.includes(m.role),
+      rolesRequiringMfa.includes(m.permissions as string),
     );
 
     if (finalUser.mfaEnabled || hasSensitiveRole) {
       if (!finalUser.mfaEnabled) {
         // SECURITY: This token may ONLY be used for POST /auth/mfa/verify-setup.
         // It has a 10-minute expiry and the type 'mfa_setup_pending'.
-        // ModuleGuard/RolesGuard must reject this token on all other endpoints.
+        // ModuleGuard/must reject this token on all other endpoints.
         return {
           requiresMfaSetup: true,
           setupToken: this.jwtService.sign(
@@ -659,7 +664,7 @@ export class AuthService {
         id: m.tenant.id,
         name: m.tenant.name,
         slug: m.tenant.slug,
-        role: m.role,
+        
         isOnboarded: m.tenant.isOnboarded,
       })),
       requiresOnboarding: user.memberships.length === 0 && !user.isSuperAdmin,
@@ -692,7 +697,7 @@ export class AuthService {
         membership = {
           userId,
           tenantId,
-          role: Role.Owner, // Grant virtual Owner role for administration
+           // Grant virtual Owner role for administration
           tenant,
         } as any;
       }
@@ -713,7 +718,7 @@ export class AuthService {
     const [customer, supplier] = await this.tenantContext.run(
       tenantId,
       userId,
-      membership.role,
+      membership.permissions as string,
       undefined,
       async () => {
         return Promise.all([
@@ -733,7 +738,7 @@ export class AuthService {
       email: userRecord?.email,
       tenantId: membership.tenantId,
       tenantName: membership.tenant.name,
-      role: membership.role,
+      
       jti: crypto.randomBytes(16).toString('hex'),
       tokenVersion: userRecord?.tokenVersion ?? 1,
       mfaEnabled: (userRecord as any)?.mfaEnabled ?? false,
@@ -766,7 +771,7 @@ export class AuthService {
       tenantId: membership.tenantId,
       action: 'TENANT_SELECTED',
       resource: 'Tenant',
-      details: { role: membership.role },
+      details: {}
     });
 
     return {
@@ -775,9 +780,10 @@ export class AuthService {
       tenant: {
         id: membership.tenant.id,
         name: membership.tenant.name,
-        role: membership.role,
         isOnboarded: membership.tenant.isOnboarded,
+        enabledModules: membership.tenant.enabledModules || [],
       },
+      permissions: membership.permissions || {},
     };
   }
 
@@ -839,7 +845,7 @@ export class AuthService {
     });
 
     if (
-      (!membership || membership.role !== Role.Owner) &&
+      (!membership || membership.permissions !== "Owner") &&
       !userRecord?.isSuperAdmin
     ) {
       throw new ForbiddenException(
@@ -976,7 +982,7 @@ export class AuthService {
 
     if (
       !membership ||
-      (membership.role !== Role.Owner && membership.role !== Role.Manager)
+      (membership.permissions !== "Owner" && membership.permissions !== "Owner")
     ) {
       throw new ForbiddenException(
         'Only Owners and Managers can access company security logs.',
@@ -1105,7 +1111,63 @@ export class AuthService {
       },
     });
 
+    // Revoke all connected devices to force re-authentication for sync tokens
+    await this.prisma.device.deleteMany({
+      where: { userId: user.id },
+    });
+
     return { success: true, message: 'Password reset successful' };
+  }
+
+
+
+  async registerDevice(userId: string, tenantId: string, dto: { deviceId: string; deviceName?: string; platform?: string }) {
+    const existing = await this.prisma.device.findUnique({
+      where: { tenantId_deviceId: { tenantId, deviceId: dto.deviceId } }
+    });
+
+    if (existing) {
+      return this.prisma.device.update({
+        where: { id: existing.id },
+        data: {
+          lastSeenAt: new Date(),
+          deviceName: dto.deviceName || existing.deviceName,
+          platform: dto.platform || existing.platform
+        }
+      });
+    }
+
+    return this.prisma.device.create({
+      data: {
+        userId,
+        tenantId,
+        deviceId: dto.deviceId,
+        deviceName: dto.deviceName || 'Unknown Device',
+        platform: dto.platform || 'DESKTOP',
+        isTrusted: false // Requires admin approval to sync
+      }
+    });
+  }
+
+  async getDevices(tenantId: string) {
+    return this.prisma.device.findMany({
+      where: { tenantId },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
+      orderBy: { lastSeenAt: 'desc' }
+    });
+  }
+
+  async updateDeviceTrust(tenantId: string, deviceId: string, isTrusted: boolean) {
+    return this.prisma.device.update({
+      where: { tenantId_deviceId: { tenantId, deviceId } },
+      data: { isTrusted }
+    });
+  }
+
+  async revokeDevice(tenantId: string, deviceId: string) {
+    return this.prisma.device.delete({
+      where: { tenantId_deviceId: { tenantId, deviceId } }
+    });
   }
 
   async logoutAll(userId: string) {
@@ -1151,7 +1213,7 @@ export class AuthService {
         id: m.tenant.id,
         name: m.tenant.name,
         slug: m.tenant.slug,
-        role: m.role,
+        
         isOnboarded: m.tenant.isOnboarded,
       })),
     };
@@ -1185,7 +1247,7 @@ export class AuthService {
           id: t.id,
           name: t.name,
           slug: t.slug,
-          role: (membership?.role as string) || 'Shadow', // Explicitly label shadowed tenants
+           // Explicitly label shadowed tenants
           isOnboarded: t.isOnboarded,
         };
       });
@@ -1195,7 +1257,7 @@ export class AuthService {
       id: m.tenant.id,
       name: m.tenant.name,
       slug: m.tenant.slug,
-      role: m.role,
+      
       isOnboarded: m.tenant.isOnboarded,
     }));
   }

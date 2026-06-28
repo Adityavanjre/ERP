@@ -76,7 +76,8 @@ export function EditCustomerDialog({
     reset,
     formState: { errors },
   } = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(customerSchema as any),
     defaultValues: {
       firstName: "",
       lastName: "",

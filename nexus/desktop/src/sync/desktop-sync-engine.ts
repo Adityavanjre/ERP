@@ -10,6 +10,8 @@ import {
 } from '@nexus/sync-engine';
 import * as https from 'https';
 import * as http from 'http';
+import { getDeviceId, getDeviceName } from '../auth/device-manager';
+import { getDiscoveredPeers } from './peer-server';
 
 class SqliteAdapter implements DBAdapter {
   constructor(private db: Database.Database) {}
@@ -28,10 +30,14 @@ class SqliteAdapter implements DBAdapter {
 }
 
 class DesktopApiClient implements ApiClient {
-  // Confirmed production endpoint — no probing needed
-  private readonly baseUrl = 'https://klypso.in/portal/api/v1';
+  // Cloud production endpoint
+  private baseUrl = 'https://klypso.in/portal/api/v1';
   private token: string | null = null;
   private priorityOnly: boolean = false;
+
+  setBaseUrl(url: string) {
+    this.baseUrl = url;
+  }
 
   setToken(token: string) {
     this.token = token;
@@ -58,6 +64,8 @@ class DesktopApiClient implements ApiClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'x-device-id': getDeviceId(),
+      'x-device-name': getDeviceName()
     };
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
@@ -147,6 +155,7 @@ export class DesktopSyncEngine {
   private engine: SyncEngine;
   private api: DesktopApiClient;
   private db: Database.Database;
+  private syncInterval: NodeJS.Timeout | null = null;
 
   constructor(db: Database.Database) {
     this.db = db;
@@ -180,6 +189,52 @@ export class DesktopSyncEngine {
 
   setToken(token: string): void {
     this.api.setToken(token);
+  }
+
+  startBackgroundSync(intervalMs = 60000): void {
+    if (this.syncInterval) clearInterval(this.syncInterval);
+    
+    this.syncInterval = setInterval(async () => {
+      if (!net.isOnline()) {
+        // LAN Peer Sync
+        const peers = getDiscoveredPeers();
+        if (peers.length > 0) {
+          console.log(`[SYNC] Offline. Attempting LAN sync with ${peers.length} peers...`);
+          for (const peerUrl of peers) {
+            try {
+              this.api.setBaseUrl(peerUrl);
+              await this.sync();
+              console.log(`[SYNC] Successfully synced with peer ${peerUrl}`);
+            } catch (err) {
+              console.warn(`[SYNC] Peer sync failed for ${peerUrl}:`, err);
+            }
+          }
+          // Restore cloud URL
+          this.api.setBaseUrl('https://klypso.in/portal/api/v1');
+        }
+        return; // Skip cloud sync if offline
+      }
+      
+      try {
+        console.log('[SYNC] Running background cloud sync poll...');
+        this.api.setBaseUrl('https://klypso.in/portal/api/v1'); // Ensure cloud url
+        await this.sync();
+      } catch (err) {
+        console.error('[SYNC] Background cloud sync failed:', err);
+      }
+    }, intervalMs);
+    
+    // Initial trigger
+    if (net.isOnline()) {
+      this.sync().catch(console.error);
+    }
+  }
+
+  stopBackgroundSync(): void {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+    }
   }
 
   query(sql: string, params: unknown[] = []): any[] {

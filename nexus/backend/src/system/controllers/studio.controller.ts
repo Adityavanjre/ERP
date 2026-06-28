@@ -11,14 +11,13 @@ import {
 } from '@nestjs/common';
 import { OrmService } from '../services/orm.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
+
 import { DefineModelDto } from '../dto/system.dto';
 import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.Owner, Role.Manager)
+@UseGuards(JwtAuthGuard, )
 @Controller('system/studio')
 export class StudioController {
   constructor(private readonly ormService: OrmService) {}
@@ -48,7 +47,6 @@ export class StudioController {
   }
 
   @Post('records/:modelName')
-  @Roles(Role.Owner, Role.Manager)
   createRecord(
     @Req() req: AuthenticatedRequest,
     @Param('modelName') modelName: string,
@@ -58,7 +56,7 @@ export class StudioController {
       req.user.tenantId as string,
       modelName,
       data,
-      req.user.role as string,
+      req.user.isSuperAdmin ? 'SuperAdmin' : '',
     );
   }
 
@@ -76,7 +74,6 @@ export class StudioController {
   }
 
   @Post('records/:modelName/:id')
-  @Roles(Role.Owner, Role.Manager)
   updateRecord(
     @Req() req: AuthenticatedRequest,
     @Param('modelName') modelName: string,
@@ -88,12 +85,11 @@ export class StudioController {
       modelName,
       id,
       data,
-      req.user.role as string,
+      req.user.isSuperAdmin ? 'SuperAdmin' : '',
     );
   }
 
   @Delete('records/:modelName/:id')
-  @Roles(Role.Owner, Role.Manager)
   deleteRecord(
     @Req() req: AuthenticatedRequest,
     @Param('modelName') modelName: string,
@@ -103,7 +99,7 @@ export class StudioController {
       req.user.tenantId as string,
       modelName,
       id,
-      req.user.role as string,
+      req.user.isSuperAdmin ? 'SuperAdmin' : '',
     );
   }
 }

@@ -373,7 +373,7 @@ export class ManufacturingService {
 
   async approveWorkOrder(tenantId: string, id: string, user: any) {
     const channel = user.channel || 'WEB';
-    const role = user.role;
+    const role = user.isSuperAdmin;
 
     // Mobile Governance: Owners/Managers only
     if (channel === 'MOBILE' && role !== 'Owner' && role !== 'Manager') {
@@ -413,7 +413,7 @@ export class ManufacturingService {
 
   async rejectWorkOrder(tenantId: string, id: string, user: any) {
     const channel = user.channel || 'WEB';
-    const role = user.role;
+    const role = user.isSuperAdmin;
 
     if (channel === 'MOBILE' && role !== 'Owner' && role !== 'Manager') {
       throw new BadRequestException(

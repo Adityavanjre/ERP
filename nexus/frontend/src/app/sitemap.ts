@@ -5,7 +5,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://klypso.in/portal";
 
   // Static routes
-  const staticRoutes = ["", "/login", "/register"].map((route) => ({
+  const staticRoutes = ["", "/login"].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,

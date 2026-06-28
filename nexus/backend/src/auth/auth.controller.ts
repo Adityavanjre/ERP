@@ -11,6 +11,9 @@ import {
   UnauthorizedException,
   Res,
   Req,
+  Patch,
+  Param,
+  Delete,
 } from '@nestjs/common';
 import { Response, Request as ExpressRequest } from 'express';
 import { AuthenticatedRequest } from '../common/interfaces/request.interface';
@@ -28,6 +31,7 @@ import {
   CreateWorkspaceDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { AdminGuard } from '../common/guards/admin.guard';
 import { AllowUnboarded } from '../common/decorators/allow-unboarded.decorator';
 import { AllowIdentity } from '../common/decorators/allow-identity.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -36,8 +40,8 @@ import { Module } from '../common/decorators/module.decorator';
 import { AccessChannel } from '@nexus/shared';
 import { Throttle } from '@nestjs/throttler';
 import { SecurityStorageService } from '../common/services/security-storage.service';
-import { Role } from '@prisma/client';
-import { Roles } from '../common/decorators/roles.decorator';
+
+
 import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
 
 @Module('auth')
@@ -179,7 +183,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('security-logs')
-  @Roles(Role.Owner)
   async getSecurityLogs(@Req() req: AuthenticatedRequest) {
     if (!req.user.tenantId) {
       throw new ForbiddenException(
@@ -218,6 +221,47 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @Post('device/register')
+  async registerDevice(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: { deviceId: string; deviceName?: string; platform?: string },
+  ) {
+    if (!req.user.tenantId) {
+       return { success: false, message: 'Must be in a workspace to register a device' };
+    }
+    return this.authService.registerDevice(req.user.sub, req.user.tenantId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('devices')
+  async getDevices(@Req() req: AuthenticatedRequest) {
+    if (!req.user.tenantId) return [];
+    return this.authService.getDevices(req.user.tenantId);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Patch('devices/:deviceId/trust')
+  async updateDeviceTrust(
+    @Req() req: AuthenticatedRequest,
+    @Param('deviceId') deviceId: string,
+    @Body('isTrusted') isTrusted: boolean,
+  ) {
+    if (!req.user.tenantId) return { success: false };
+    return this.authService.updateDeviceTrust(req.user.tenantId, deviceId, isTrusted);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('devices/:deviceId')
+  async revokeDevice(
+    @Req() req: AuthenticatedRequest,
+    @Param('deviceId') deviceId: string,
+  ) {
+    if (!req.user.tenantId) return { success: false };
+    return this.authService.revokeDevice(req.user.tenantId, deviceId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @AllowIdentity()
   @AllowUnboarded()
   @Post('push-token')
@@ -229,7 +273,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Public()
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post('register')
   async register(
     @Body() registerDto: RegisterDto,

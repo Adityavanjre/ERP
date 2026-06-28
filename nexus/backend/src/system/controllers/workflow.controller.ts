@@ -9,19 +9,18 @@ import {
 } from '@nestjs/common';
 import { WorkflowService } from '../services/workflow.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
+
 import { WorkflowDto, WorkflowNodeDto } from '../dto/system.dto';
 import { AuthenticatedRequest } from '../../common/interfaces/request.interface';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, )
 @Controller('system/workflows')
 export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 
   @Get(':modelName')
-  @Roles(Role.Owner)
   getWorkflows(
     @Param('modelName') modelName: string,
     @Req() req: AuthenticatedRequest,
@@ -33,7 +32,6 @@ export class WorkflowController {
   }
 
   @Post()
-  @Roles(Role.Owner, Role.Manager)
   createWorkflow(@Body() data: WorkflowDto, @Req() req: AuthenticatedRequest) {
     return this.workflowService.createWorkflow(
       req.user.tenantId as string,
@@ -42,7 +40,6 @@ export class WorkflowController {
   }
 
   @Post(':id/nodes')
-  @Roles(Role.Owner, Role.Manager)
   addNode(
     @Param('id') id: string,
     @Body() node: WorkflowNodeDto,
@@ -52,7 +49,6 @@ export class WorkflowController {
   }
 
   @Post(':id/transitions')
-  @Roles(Role.Owner, Role.Manager)
   addTransition(
     @Param('id') id: string,
     @Body() transition: any,

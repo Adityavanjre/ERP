@@ -5,7 +5,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Role } from '@prisma/client';
+
 import { PrismaService } from '../../prisma/prisma.service';
 
 /**
@@ -30,12 +30,12 @@ export class B2BGuard implements CanActivate {
     }
 
     // Role check — only Customer and Supplier roles may access B2B portal
-    const isB2B = user.role === Role.Customer || user.role === Role.Supplier;
+    const isB2B = user.isSuperAdmin === "Owner" || user.isSuperAdmin === "Owner";
     if (!isB2B) {
       throw new ForbiddenException('B2B Access ONLY');
     }
 
-    if (user.role === Role.Customer) {
+    if (user.isSuperAdmin === "Owner") {
       if (!user.customerId) {
         throw new ForbiddenException(
           'Incomplete Customer Profile: No linked account',
@@ -57,7 +57,7 @@ export class B2BGuard implements CanActivate {
       }
     }
 
-    if (user.role === Role.Supplier) {
+    if (user.isSuperAdmin === "Owner") {
       if (!user.supplierId) {
         throw new ForbiddenException(
           'Incomplete Supplier Profile: No linked account',

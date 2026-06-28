@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { SalesService } from './sales.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Permission } from '../common/constants/permissions';
@@ -22,12 +22,12 @@ import { CacheTTL } from '@nestjs/cache-manager';
 
 import { Module } from '../common/decorators/module.decorator';
 import { MobileAction } from '../common/decorators/mobile-action.decorator';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+
+
 
 import { PosService } from './services/pos.service';
 
-@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard,  PermissionsGuard)
 @Module('sales')
 @Controller('sales')
 export class SalesController {
@@ -37,14 +37,12 @@ export class SalesController {
   ) {}
 
   @Post('pos/checkout')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   quickCheckout(@Req() req: any, @Body() dto: any) {
     return this.posService.quickCheckout(req.user.tenantId, dto);
   }
 
   @Post('orders')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('CREATE_ORDER')
   createOrder(@Req() req: any, @Body() dto: CreateOrderDto) {
@@ -52,7 +50,6 @@ export class SalesController {
   }
 
   @Get('orders')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('VIEW_ORDERS')
   getOrders(@Req() req: any) {
@@ -60,14 +57,12 @@ export class SalesController {
   }
 
   @Get('orders/:id')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   getOrderById(@Req() req: any, @Param('id') id: string) {
     return this.salesService.getOrderById(req.user.tenantId, id);
   }
 
   @Patch('orders/:id/status')
-  @Roles(Role.Owner, Role.Manager, Role.Biller)
   @Permissions(Permission.CREATE_INVOICE)
   updateStatus(
     @Req() req: any,
@@ -78,7 +73,6 @@ export class SalesController {
   }
 
   @Post('orders/:id/approve')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('APPROVE_ORDER')
   approveOrder(@Req() req: any, @Param('id') id: string) {
@@ -86,7 +80,6 @@ export class SalesController {
   }
 
   @Post('orders/:id/reject')
-  @Roles(Role.Owner, Role.Manager)
   @Permissions(Permission.CREATE_INVOICE)
   @MobileAction('REJECT_ORDER')
   rejectOrder(@Req() req: any, @Param('id') id: string) {
@@ -94,7 +87,6 @@ export class SalesController {
   }
 
   @Get('stats')
-  @Roles(Role.Owner, Role.Manager, Role.Accountant, Role.CA)
   @Permissions(Permission.VIEW_REPORTS)
   @MobileAction('VIEW_SALES_STATS')
   @CacheTTL(60 * 1000) // Cache for 1 min

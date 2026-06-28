@@ -100,6 +100,36 @@ export class ConflictResolver {
     return conflicts.length;
   }
 
+  async autoResolveConflicts(): Promise<number> {
+    const conflicts = await this.getUnresolvedConflicts();
+    let resolvedCount = 0;
+
+    for (const conflict of conflicts) {
+      try {
+        const local = JSON.parse(conflict.local_data) as Record<string, unknown>;
+        const server = JSON.parse(conflict.server_data) as Record<string, unknown>;
+        
+        // Merge strategy: Preserve server changes, apply local non-null changes
+        const mergedData = { ...server };
+        for (const [key, value] of Object.entries(local)) {
+          if (!key.startsWith('_') && value !== null && value !== undefined) {
+            // Keep local edits over server, unless it's a critical system field
+            if (key !== 'id' && key !== 'tenant_id' && key !== 'created_at') {
+              mergedData[key] = value;
+            }
+          }
+        }
+
+        await this.resolveConflict(conflict.id!, 'manual', mergedData);
+        resolvedCount++;
+      } catch (err) {
+        console.error(`Failed to auto-resolve conflict ${conflict.id}:`, err);
+      }
+    }
+
+    return resolvedCount;
+  }
+
   private camelToSnake(str: string): string {
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
   }

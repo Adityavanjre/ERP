@@ -33,14 +33,44 @@ CREATE TABLE IF NOT EXISTS _conflicts (
 );
 
 -- Analytics events
-CREATE TABLE IF NOT EXISTS _analytics (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  event_type TEXT NOT NULL,
-  event_name TEXT NOT NULL,
-  metadata TEXT,
-  session_id TEXT,
-  platform TEXT,
+CREATE TABLE IF NOT EXISTS _audit_logs (
+  id TEXT PRIMARY KEY,
+  action TEXT NOT NULL,
+  resource TEXT NOT NULL,
+  details TEXT,
+  status TEXT,
+  error_message TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  synced INTEGER DEFAULT 0
+);
+
+-- Users (Offline Credentials & PBAC)
+CREATE TABLE IF NOT EXISTS _users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  full_name TEXT,
+  tenant_id TEXT,
+  is_super_admin INTEGER DEFAULT 0,
+  permissions TEXT, 
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Devices
+CREATE TABLE IF NOT EXISTS _devices (
+  id TEXT PRIMARY KEY,
+  device_id TEXT NOT NULL UNIQUE,
+  device_name TEXT,
+  is_trusted INTEGER DEFAULT 0,
+  last_sync_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Organization Settings (Modules)
+CREATE TABLE IF NOT EXISTS _tenant_settings (
+  tenant_id TEXT PRIMARY KEY,
+  enabled_modules TEXT, 
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 `;
 
@@ -251,7 +281,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   _conflict TEXT
 );
 
-// Machines
+-- Machines
 CREATE TABLE IF NOT EXISTS machines (
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL,
@@ -327,6 +357,7 @@ CREATE TABLE IF NOT EXISTS crm_opportunities (
   expected_close_date TEXT,
   created_at TEXT,
   updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
   _sync_version INTEGER DEFAULT 1,
   _dirty INTEGER DEFAULT 0,
   _deleted INTEGER DEFAULT 0,
@@ -364,6 +395,8 @@ CREATE TABLE IF NOT EXISTS leaves (
   start_date TEXT NOT NULL,
   end_date TEXT NOT NULL,
   status TEXT DEFAULT 'Pending',
+  created_at TEXT,
+  updated_at TEXT,
   _sync_version INTEGER DEFAULT 1,
   _dirty INTEGER DEFAULT 0,
   _deleted INTEGER DEFAULT 0,
@@ -399,6 +432,7 @@ CREATE TABLE IF NOT EXISTS logistics_shipments (
   estimated_delivery TEXT,
   created_at TEXT,
   updated_at TEXT,
+  is_deleted INTEGER DEFAULT 0,
   _sync_version INTEGER DEFAULT 1,
   _dirty INTEGER DEFAULT 0,
   _deleted INTEGER DEFAULT 0,

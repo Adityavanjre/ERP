@@ -10,6 +10,9 @@ import { LocalFrontendServer } from './local-frontend-server';
 import { LocalSessionStore, type LocalSessionRecord } from './local/local-session-store';
 import { LocalDataStore, type LocalDataState } from './local/local-data-store';
 import { JsonSqliteBridge } from './local/json-sqlite-bridge';
+import { getDeviceId, getDeviceName } from './auth/device-manager';
+import { startPeerServer, stopPeerServer } from './sync/peer-server';
+import { config } from './config';
 
 let mainWindow: BrowserWindow | null = null;
 let syncEngine: DesktopSyncEngine | null = null;
@@ -114,10 +117,7 @@ async function createWindow() {
   });
 }
 
-ipcMain.handle('sync:execute', async () => {
-  if (!syncEngine) return { error: 'Sync engine not initialized' };
-  return syncEngine.sync();
-});
+// Manual sync triggers removed in favor of automatic background polling
 
 ipcMain.handle('sync:bootstrap', async () => {
   if (!syncEngine) return { error: 'Sync engine not initialized' };
@@ -140,6 +140,24 @@ ipcMain.handle('shell:switchToCloud', async () => {
   }
 });
 
+ipcMain.handle('shell:getNetworkIPs', async () => {
+  const os = require('os');
+  const interfaces = os.networkInterfaces();
+  const ips: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name] || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        ips.push(net.address);
+      }
+    }
+  }
+  return ips;
+});
+
+ipcMain.handle('config:getAuthMode', () => {
+  return config.AUTH_MODE;
+});
+
 ipcMain.handle('auth:getToken', async () => {
   if (!authStore) return null;
   return authStore.getToken();
@@ -150,6 +168,7 @@ ipcMain.handle('auth:setToken', async (_event, token) => {
   authStore.setToken(token);
   if (syncEngine && token) {
     syncEngine.setToken(token);
+    syncEngine.startBackgroundSync();
   }
 });
 
@@ -158,20 +177,110 @@ ipcMain.handle('auth:clearToken', async () => {
   authStore.clearToken();
 });
 
+ipcMain.handle('auth:logout', async () => {
+  if (authStore) authStore.clearToken();
+  if (localSessionStore) localSessionStore.clear();
+  if (syncEngine) syncEngine.stopBackgroundSync();
+});
+
+ipcMain.handle('auth:localOnboarding', async (_event, data) => {
+  try {
+    const db = getDb();
+    const bcrypt = require('bcryptjs');
+    const crypto = require('crypto');
+    
+    const tenantId = crypto.randomUUID();
+    const userId = crypto.randomUUID();
+    const hash = bcrypt.hashSync(data.owner.password, 10);
+    
+    db.transaction(() => {
+      db.prepare(`
+        INSERT INTO _tenant_settings (tenant_id, enabled_modules) 
+        VALUES (?, ?)
+      `).run(tenantId, JSON.stringify([])); // Modules selected later
+      
+      db.prepare(`
+        INSERT INTO _users (id, email, password_hash, full_name, tenant_id, is_super_admin)
+        VALUES (?, ?, ?, ?, ?, 1)
+      `).run(userId, data.owner.email, hash, data.owner.fullName, tenantId);
+    })();
+    
+    return { success: true };
+  } catch (err: any) {
+    console.error('Local onboarding failed:', err);
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('settings:updateModules', async (_event, modules: string[]) => {
+  try {
+    const db = getDb();
+    // Assuming single tenant per device for now in local mode
+    const tenant = db.prepare('SELECT tenant_id FROM _tenant_settings LIMIT 1').get() as any;
+    if (tenant) {
+      db.prepare('UPDATE _tenant_settings SET enabled_modules = ?, updated_at = datetime("now") WHERE tenant_id = ?')
+        .run(JSON.stringify(modules), tenant.tenant_id);
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error('Update modules failed:', err);
+    return { error: err.message };
+  }
+});
+
+const pendingMfaPasswords = new Map<string, string>();
+
 ipcMain.handle('auth:login', async (_event, credentials) => {
   const { email, password, isAdmin } = credentials;
+  const db = getDb();
+
+  // 1. Check local SQLite DB first for offline login
+  try {
+    const localUser = db.prepare('SELECT * FROM _users WHERE email = ?').get(email) as any;
+    if (localUser) {
+      const bcrypt = require('bcryptjs');
+      if (bcrypt.compareSync(password, localUser.password_hash)) {
+        console.log('[AUTH] Local offline login success for:', email);
+        const offlineToken = 'offline_' + Math.random().toString(36).substring(2);
+        
+        const authData = {
+          user: {
+            id: localUser.id,
+            email: localUser.email,
+            fullName: localUser.full_name,
+            isSuperAdmin: Boolean(localUser.is_super_admin),
+            permissions: localUser.permissions ? JSON.parse(localUser.permissions) : null,
+          },
+          accessToken: offlineToken
+        };
+        
+        if (authStore) authStore.setToken(offlineToken);
+        if (syncEngine) {
+          syncEngine.setToken(offlineToken);
+          syncEngine.startBackgroundSync();
+        }
+        
+        return { data: authData, status: 200 };
+      }
+    }
+  } catch (err) {
+    console.error('Local DB read error during auth:', err);
+  }
+
+  // 2. Fallback to Cloud Login
   const endpoint = isAdmin ? 'auth/login/admin' : 'auth/login/web';
   const url = `https://klypso.in/portal/api/v1/${endpoint}`;
 
   try {
     const response = await axios.post(url, { email, password }, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-device-id': getDeviceId(),
+        'x-device-name': getDeviceName()
+      },
       withCredentials: true
     });
 
-    // MASQUERADE-003: Core-Level Cookie Injection
-    // Node.js got the cookies, but the Renderer doesn't know yet.
-    // We manually push these into the Electron session memory.
     const cookies = response.headers['set-cookie'];
     if (cookies && mainWindow) {
       for (const cookieStr of cookies) {
@@ -179,12 +288,11 @@ ipcMain.handle('auth:login', async (_event, credentials) => {
         const name = parts[0].trim();
         const value = parts[1].trim();
         
-        // RECOVERY-01: Ensure cookies are pinned to the top-level domain for reliable sync session reuse
         await session.defaultSession.cookies.set({
           url: 'https://klypso.in',
           name,
           value,
-          domain: '.klypso.in', // Using wildcard domain for cross-subdomain API access
+          domain: '.klypso.in',
           path: '/',
           secure: true,
           httpOnly: cookieStr.includes('HttpOnly'),
@@ -195,10 +303,63 @@ ipcMain.handle('auth:login', async (_event, credentials) => {
 
     if (response.data.accessToken && syncEngine) {
       syncEngine.setToken(response.data.accessToken);
+      syncEngine.startBackgroundSync();
+
+      try {
+        await axios.post('https://klypso.in/portal/api/v1/auth/device/register', {
+          deviceId: getDeviceId(),
+          deviceName: getDeviceName(),
+          platform: 'DESKTOP'
+        }, {
+          headers: { 'Authorization': `Bearer ${response.data.accessToken}` },
+          withCredentials: true
+        });
+      } catch (err) {
+        console.warn('Failed to register device:', err);
+      }
+    }
+
+    if (response.data.tempToken) {
+      pendingMfaPasswords.set(response.data.tempToken, password);
+    } else if (response.data?.user) {
+      try {
+        const bcrypt = require('bcryptjs');
+        const hash = bcrypt.hashSync(password, 10);
+        const u = response.data.user;
+        db.prepare(`
+          INSERT INTO _users (id, email, password_hash, full_name, tenant_id, is_super_admin, permissions)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            email = excluded.email,
+            password_hash = excluded.password_hash,
+            full_name = excluded.full_name,
+            tenant_id = excluded.tenant_id,
+            is_super_admin = excluded.is_super_admin,
+            permissions = excluded.permissions
+        `).run(
+          u.id, 
+          u.email, 
+          hash, 
+          u.fullName, 
+          u.tenantId || null, 
+          u.isSuperAdmin ? 1 : 0, 
+          u.permissions ? JSON.stringify(u.permissions) : null
+        );
+      } catch (err) {
+        console.error('Failed to cache user offline credentials:', err);
+      }
     }
 
     return { data: response.data, status: response.status };
   } catch (error: any) {
+    if (error.code === 'ENOTFOUND' || error.message?.includes('Network Error')) {
+      return { 
+        error: true, 
+        status: 0, 
+        message: "Initial login requires internet. No local offline account found for this email.",
+        code: error.code
+      };
+    }
     if (error.response?.status === 429) {
       console.warn('[429 RATE LIMIT] Cloud login blocked due to high frequency. Advise user to use Offline Mode.');
     }
@@ -207,7 +368,7 @@ ipcMain.handle('auth:login', async (_event, credentials) => {
       error: true, 
       status: error.response?.status, 
       message: error.response?.status === 429 
-        ? "Klypso Cloud is temporarily limiting your requests. Please try 'Continue Offline' instead."
+        ? "Klypso Cloud is temporarily limiting your requests. Please try again later."
         : (error.response?.data?.message || error.message),
       code: error.code
     };
@@ -220,7 +381,11 @@ ipcMain.handle('auth:verifyMfa', async (_event, data) => {
 
   try {
     const response = await axios.post(url, { tempToken, totpCode }, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-device-id': getDeviceId(),
+        'x-device-name': getDeviceName()
+      },
       withCredentials: true
     });
 
@@ -243,8 +408,63 @@ ipcMain.handle('auth:verifyMfa', async (_event, data) => {
       }
     }
 
+    if (response.data.accessToken && syncEngine) {
+      syncEngine.setToken(response.data.accessToken);
+      syncEngine.startBackgroundSync();
+
+      try {
+        await axios.post('https://klypso.in/portal/api/v1/auth/device/register', {
+          deviceId: getDeviceId(),
+          deviceName: getDeviceName(),
+          platform: 'DESKTOP'
+        }, {
+          headers: { 'Authorization': `Bearer ${response.data.accessToken}` },
+          withCredentials: true
+        });
+      } catch (err) {
+        console.warn('Failed to register device:', err);
+      }
+    }
+
+    // Cache user credentials locally for future offline logins
+    if (response.data?.user) {
+      try {
+        const password = pendingMfaPasswords.get(tempToken);
+        if (password) {
+          const bcrypt = require('bcryptjs');
+          const hash = bcrypt.hashSync(password, 10);
+          const u = response.data.user;
+          const db = getDb();
+          db.prepare(`
+            INSERT INTO _users (id, email, password_hash, full_name, tenant_id, is_super_admin, permissions)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              email = excluded.email,
+              password_hash = excluded.password_hash,
+              full_name = excluded.full_name,
+              tenant_id = excluded.tenant_id,
+              is_super_admin = excluded.is_super_admin,
+              permissions = excluded.permissions
+          `).run(
+            u.id, 
+            u.email, 
+            hash, 
+            u.fullName, 
+            u.tenantId || null, 
+            u.isSuperAdmin ? 1 : 0, 
+            u.permissions ? JSON.stringify(u.permissions) : null
+          );
+        }
+      } catch (err) {
+        console.error('Failed to cache MFA user offline credentials:', err);
+      } finally {
+        pendingMfaPasswords.delete(tempToken);
+      }
+    }
+
     return { data: response.data, status: response.status };
   } catch (error: any) {
+    pendingMfaPasswords.delete(tempToken);
     return { 
       error: true, 
       status: error.response?.status, 
@@ -342,6 +562,12 @@ app.whenReady().then(() => {
     );
     app.quit();
   });
+  
+  try {
+    startPeerServer(getDb());
+  } catch (err) {
+    console.error('Failed to start peer server:', err);
+  }
 });
 
 app.on('before-quit', () => {
@@ -353,6 +579,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     localFrontendServer?.stop();
     localFrontendServer = null;
+    stopPeerServer();
     app.quit();
   }
 });
@@ -382,8 +609,66 @@ async function getInitialUrl(baseUrl: string): Promise<string> {
   const normalizedBase = baseUrl.endsWith('/portal') ? baseUrl : `${baseUrl}/portal`;
   
   if (session) {
+    // If a session exists, initialize sync and load dashboard immediately
+    const token = authStore?.getToken();
+    if (token && syncEngine) {
+      syncEngine.setToken(token);
+      syncEngine.startBackgroundSync();
+    }
     return `${normalizedBase}/dashboard`;
   }
+  
+  // If no session exists, check AUTH_MODE
+  if (config.AUTH_MODE === 'LOCAL' || config.AUTH_MODE === 'HYBRID') {
+    // Check if local organization exists
+    try {
+      const db = getDb();
+      const org = db.prepare('SELECT * FROM _tenant_settings LIMIT 1').get();
+      if (!org) {
+        return `${normalizedBase}/onboarding`;
+      }
+      
+      // Local organization exists. Let's see if a local owner exists to auto-login.
+      const localUser = db.prepare('SELECT * FROM _users LIMIT 1').get() as any;
+      if (localUser) {
+        // Construct the session payload format expected by LocalSessionStore
+        const offlineSession = {
+          mode: 'offline' as const,
+          userId: localUser.id,
+          fullName: localUser.full_name,
+          email: localUser.email,
+          role: localUser.is_super_admin ? 'Owner' : 'Manager',
+          tenantId: localUser.tenant_id || 'local-tenant',
+          tenantName: 'Local Workspace',
+          industry: 'General',
+          createdAt: new Date().toISOString(),
+          lastOpenedAt: new Date().toISOString()
+        };
+        
+        if (!localSessionStore) {
+          localSessionStore = new LocalSessionStore();
+        }
+        
+        // Save it! The frontend's hydrateDesktopOfflineSession() will automatically
+        // pick this up from IPC and inject it into localStorage.
+        localSessionStore.set(offlineSession);
+        
+        // Ensure background sync starts if needed
+        const offlineToken = 'offline_' + Math.random().toString(36).substring(2);
+        if (authStore) authStore.setToken(offlineToken);
+        if (syncEngine) {
+          syncEngine.setToken(offlineToken);
+          syncEngine.startBackgroundSync();
+        }
+        
+        console.log('[AUTO-LOGIN] Bypassed login screen. Booting directly into local workspace for:', localUser.email);
+        return `${normalizedBase}/dashboard`;
+      }
+    } catch (err) {
+      console.warn('Could not query _tenant_settings or _users', err);
+    }
+  }
+
   return `${normalizedBase}/login`;
 }
 

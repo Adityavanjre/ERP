@@ -30,7 +30,7 @@ model User {
   pushToken             String?
   auditLogs             AuditLog[]
   journalEntriesCreated JournalEntry[] @relation("JournalCreator")
-  mobileDevices         MobileDevice[]
+  devices               Device[]
   productsCreated       Product[]      @relation("ProductCreator")
   productsUpdated       Product[]      @relation("ProductUpdater")
   memberships           TenantUser[]
@@ -103,7 +103,8 @@ model Tenant {
   machines                Machine[]
   maintenanceSchedules    MaintenanceSchedule[]
   medicalRecords          MedicalRecord[]
-  mobileDevices           MobileDevice[]
+  devices                 Device[]
+  enabledModules          String[]                 @default([])
   modelDefinitions        ModelDefinition[]
   opportunities           Opportunity[]
   orders                  Order[]
@@ -162,7 +163,7 @@ model TenantUser {
   id       String @id @default(uuid())
   userId   String
   tenantId String
-  role     Role   @default(Biller)
+  permissions Json?
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   user     User   @relation(fields: [userId], references: [id])
 
@@ -320,6 +321,8 @@ model AuditLog {
   action         String
   resource       String
   details        Json?
+  status         String?
+  errorMessage   String?
   ipAddress      String?
   createdAt      DateTime @default(now())
   channel        String?
@@ -1728,7 +1731,7 @@ model UnitConversion {
   @@unique([tenantId, fromUnit, toUnit, productId])
 }
 
-model MobileDevice {
+model Device {
   id           String   @id @default(uuid())
   tenantId     String
   userId       String
@@ -1737,6 +1740,7 @@ model MobileDevice {
   platform     String
   pushToken    String?
   isActive     Boolean  @default(true)
+  isTrusted    Boolean  @default(false)
   lastSeenAt   DateTime @default(now())
   registeredAt DateTime @default(now())
   strictMode   Boolean  @default(false)
@@ -1822,16 +1826,6 @@ enum FieldType {
   Html
 }
 
-enum Role {
-  Owner
-  Manager
-  Biller
-  Storekeeper
-  Accountant
-  CA
-  Customer
-  Supplier
-}
 
 enum AuthProvider {
   Email

@@ -179,6 +179,44 @@ export class SyncService {
     }
   }
 
+  async getMetadata(tenantId: string, userId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { enabledModules: true },
+    });
+
+    const tenantUser = await this.prisma.tenantUser.findUnique({
+      where: { userId_tenantId: { userId, tenantId } },
+      select: { permissions: true },
+    });
+
+    return {
+      modules: tenant?.enabledModules || [],
+      permissions: tenantUser?.permissions || {},
+    };
+  }
+
+  async pushAuditLogs(tenantId: string, userId: string, logs: any[]) {
+    if (!logs || logs.length === 0) return { inserted: 0 };
+    
+    const auditData = logs.map(log => ({
+      tenantId,
+      userId,
+      action: log.action || 'UNKNOWN',
+      resource: log.resource || 'UNKNOWN',
+      details: log.details ? JSON.parse(log.details) : null,
+      status: log.status,
+      errorMessage: log.error_message,
+      createdAt: new Date(log.created_at || Date.now()),
+    }));
+
+    await this.prisma.auditLog.createMany({
+      data: auditData,
+    });
+
+    return { inserted: auditData.length };
+  }
+
   private prepareCreateData(
     data: Record<string, unknown>,
     tenantId: string,

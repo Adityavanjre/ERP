@@ -54,10 +54,8 @@ export class SuperAdminService {
           select: { users: true },
         },
         users: {
-          where: { role: 'Owner' },
           take: 1,
           select: {
-            role: true,
             user: {
               select: {
                 id: true,
@@ -279,9 +277,9 @@ export class SuperAdminService {
     if (block) {
       // Check if user is the only Owner in any active tenant
       for (const membership of user.memberships) {
-        if (membership.role === 'Owner') {
+        if ((membership.permissions as string) === 'Owner') {
           const ownerCount = await this.prisma.tenantUser.count({
-            where: { tenantId: membership.tenantId, role: 'Owner' },
+            where: { tenantId: membership.tenantId },
           });
           if (ownerCount <= 1) {
             throw new ForbiddenException(

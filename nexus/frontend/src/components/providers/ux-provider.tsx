@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
@@ -24,15 +24,24 @@ import {
   recordUserInteraction,
   revokeNetworkConsent,
 } from "../../lib/network-consent";
+import { api } from "../../lib/api";
 
 interface UserToken {
   isOnboarded?: boolean;
+}
+
+interface PBACState {
+  permissions: Record<string, string[]>;
+  modules: string[];
 }
 
 interface UXContextType {
   showConfirm: (options: ConfirmOptions) => void;
   triggerSessionExpiry: () => void;
   setUILocked: (locked: boolean) => void;
+  pbac: PBACState;
+  hasPermission: (resource: string, action: string) => boolean;
+  hasModule: (moduleName: string) => boolean;
 }
 
 interface ConfirmOptions {
@@ -54,6 +63,16 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
   const [isNetworkConsentOpen, setIsNetworkConsentOpen] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [isUILocked, setIsUILocked] = useState(false);
+  const [pbac, setPbac] = useState<PBACState>({ permissions: {}, modules: [] });
+
+  const hasPermission = (resource: string, action: string) => {
+    if (pbac.permissions["*"]?.includes("*")) return true;
+    return pbac.permissions[resource]?.includes(action) || false;
+  };
+
+  const hasModule = (moduleName: string) => {
+    return pbac.modules.includes(moduleName);
+  };
 
   const showConfirm = (options: ConfirmOptions) => {
     setConfirmOptions(options);
@@ -105,7 +124,6 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
       // Don't trigger if we are already on auth pages
       const authPages = [
         "/login",
-        "/register",
         "/forgot-password",
         "/reset-password",
       ];
@@ -118,6 +136,26 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("session-expired", handleSessionExpiry);
     return () =>
       window.removeEventListener("session-expired", handleSessionExpiry);
+  }, [pathname]);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const res = await api.get("/sync/metadata");
+        if (res.data) {
+          setPbac({
+            permissions: res.data.permissions || {},
+            modules: res.data.modules || [],
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to fetch PBAC metadata", err);
+      }
+    };
+    // Don't fetch on auth pages
+    if (!pathname?.includes("/login") && !pathname?.includes("/forgot-password")) {
+      fetchMetadata();
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -166,7 +204,12 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
 
     try {
-      const decoded = jwtDecode<UserToken>(token);
+      let decoded: UserToken;
+      if (token.startsWith("offline_")) {
+        decoded = { isOnboarded: true }; // Offline mode implies onboarded via local flow
+      } else {
+        decoded = jwtDecode<UserToken>(token);
+      }
       // If the user isn't onboarded and we aren't already there, go to onboarding
       if (
         decoded.isOnboarded === false &&
@@ -181,7 +224,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UXContext.Provider
-      value={{ showConfirm, triggerSessionExpiry, setUILocked }}
+      value={{ showConfirm, triggerSessionExpiry, setUILocked, pbac, hasPermission, hasModule }}
     >
       {children}
 

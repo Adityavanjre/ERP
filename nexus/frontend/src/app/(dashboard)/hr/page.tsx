@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -27,6 +27,7 @@ import {
   Building2,
   Check,
   X,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -142,6 +143,19 @@ export default function HrPage() {
   const [addDeptLoading, setAddDeptLoading] = useState(false);
   const [deptName, setDeptName] = useState("");
 
+  // Edit Employee Dialog State
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editEmpId, setEditEmpId] = useState("");
+  const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    jobTitle: "",
+    status: "",
+  });
+
   const syncEmployeeData = useCallback(async (showLoading = false) => {
     try {
       if (showLoading) setLoading(true);
@@ -207,6 +221,25 @@ export default function HrPage() {
       toast.error(error.response?.data?.message || "Failed to add employee");
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  const handleEditEmployee = async () => {
+    if (!editForm.firstName || !editForm.lastName) {
+      toast.error("First name and last name are required.");
+      return;
+    }
+    try {
+      setEditLoading(true);
+      await api.patch(`/hr/employees/${editEmpId}`, editForm);
+      toast.success("Employee details updated");
+      setEditOpen(false);
+      syncEmployeeData(true);
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      toast.error(error.response?.data?.message || "Failed to update employee");
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -575,7 +608,7 @@ export default function HrPage() {
                       <TableCell className="text-slate-600 font-bold text-sm tracking-tight">
                         {emp.jobTitle}
                       </TableCell>
-                      <TableCell className="text-right pr-8">
+                      <TableCell className="text-right pr-8 flex items-center justify-end gap-2">
                         <Badge
                           className={
                             emp.status === "Active"
@@ -585,6 +618,25 @@ export default function HrPage() {
                         >
                           {emp.status}
                         </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                          onClick={() => {
+                            setEditEmpId(emp.id);
+                            setEditForm({
+                              firstName: emp.firstName,
+                              lastName: emp.lastName,
+                              email: emp.email || "",
+                              phone: emp.phone || "",
+                              jobTitle: emp.jobTitle || "",
+                              status: emp.status || "Active",
+                            });
+                            setEditOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -603,6 +655,78 @@ export default function HrPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Edit Employee Dialog */}
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="sm:max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Edit Employee Details</DialogTitle>
+              <DialogDescription>
+                Update employee profile information.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">First Name</Label>
+                <Input
+                  value={editForm.firstName}
+                  onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Last Name</Label>
+                <Input
+                  value={editForm.lastName}
+                  onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Email Address</Label>
+                <Input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Phone Number</Label>
+                <Input
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Job Title</Label>
+                <Input
+                  value={editForm.jobTitle}
+                  onChange={(e) => setEditForm({ ...editForm, jobTitle: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Status</Label>
+                <Select
+                  value={editForm.status}
+                  onValueChange={(val) => setEditForm({ ...editForm, status: val })}
+                >
+                  <SelectTrigger className="bg-slate-50 border-slate-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Terminated">Terminated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button onClick={handleEditEmployee} disabled={editLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                {editLoading ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <TabsContent value="departments">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">

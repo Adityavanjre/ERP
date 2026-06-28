@@ -115,7 +115,7 @@ export class MobileWhitelistGuard implements CanActivate {
     // 6. Enforce Role Requirements
     const isIdentityToken = user.type === 'identity';
     const hasRequiredRole =
-      user.role && feature.requiredRoles.includes(user.role);
+      user.isSuperAdmin && feature.requiredRoles.includes(user.isSuperAdmin);
 
     // ALLOWANCE: Identity tokens are allowed for whitelisted infrastructure actions
     // even if they don't have a specific tenant role yet.
@@ -126,11 +126,11 @@ export class MobileWhitelistGuard implements CanActivate {
         action: 'SECURITY_VIOLATION_UNAUTHORIZED_ROLE',
         resource: actionId,
         channel: 'MOBILE',
-        details: { role: user.role, requiredRoles: feature.requiredRoles },
+        details: { role: user.isSuperAdmin, requiredRoles: feature.requiredRoles },
         ipAddress: request.ip,
       });
       throw new ForbiddenException(
-        `Security Violation: Role '${user.role}' is not authorized to perform '${actionId}' on Mobile.`,
+        `Security Violation: Role '${user.isSuperAdmin}' is not authorized to perform '${actionId}' on Mobile.`,
       );
     }
 
