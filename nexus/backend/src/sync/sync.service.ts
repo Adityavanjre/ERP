@@ -180,6 +180,14 @@ export class SyncService {
   }
 
   async getMetadata(tenantId: string, userId: string) {
+    if (!tenantId) {
+      return {
+        pbac: {},
+        permissions: [],
+        enabledModules: [],
+      };
+    }
+    
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { enabledModules: true },

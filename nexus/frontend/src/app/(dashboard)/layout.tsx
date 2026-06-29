@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Navbar } from "../../components/layout/navbar";
@@ -26,26 +26,43 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     let cancelled = false;
 
     const bootstrap = async () => {
+      console.log("[DashboardLayout] bootstrap started");
       try {
-        if (isDesktopShell()) {
-          await hydrateDesktopOfflineSession();
+        const isShell = isDesktopShell();
+        console.log("[DashboardLayout] isDesktopShell:", isShell);
+        if (isShell) {
+          console.log("[DashboardLayout] hydrating desktop offline session");
+          // Wrap in a 2-second timeout to prevent IPC bridge hangs from blocking the UI forever
+          await Promise.race([
+            hydrateDesktopOfflineSession(),
+            new Promise((resolve) => setTimeout(resolve, 2000))
+          ]);
         }
         const token =
           typeof window !== "undefined"
             ? localStorage.getItem("k_token")
             : null;
+        console.log("[DashboardLayout] token found:", !!token);
         if (token) {
           const decoded = jwtDecode<DecodedToken>(token);
+          console.log("[DashboardLayout] decoded token:", decoded);
           if (!cancelled) {
-            setIsIdentityState(
+            const isId =
               decoded.type === "identity" ||
-                (decoded.type === "admin" && !decoded.tenantId),
-            );
+              (decoded.type === "admin" && !decoded.tenantId);
+            console.log("[DashboardLayout] setting identity state:", isId);
+            setIsIdentityState(isId);
+          } else {
+            console.log("[DashboardLayout] cancelled was true during decode");
           }
         } else if (!cancelled) {
+          console.log("[DashboardLayout] setting identity state to false (no token)");
           setIsIdentityState(false);
+        } else {
+          console.log("[DashboardLayout] cancelled was true (no token)");
         }
-      } catch {
+      } catch (err) {
+        console.error("[DashboardLayout] bootstrap error:", err);
         if (!cancelled) {
           setIsIdentityState(false);
         }
@@ -55,6 +72,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     void bootstrap();
 
     return () => {
+      console.log("[DashboardLayout] useEffect cleanup (cancelled = true)");
       cancelled = true;
     };
   }, []);
@@ -62,8 +80,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   // Prevent hydration flashes
   if (isIdentityState === null) {
     return (
-      <div className="flex bg-slate-50 h-screen w-screen items-center justify-center">
+      <div className="flex flex-col bg-slate-50 h-screen w-screen items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <span className="text-blue-600 font-bold tracking-widest text-[10px] uppercase">Verifying Session...</span>
       </div>
     );
   }

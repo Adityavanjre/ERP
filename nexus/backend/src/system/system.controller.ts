@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Patch,
+  Body,
   UseGuards,
   Req,
   Query,
@@ -108,14 +110,53 @@ export class SystemController {
       ...new Set([...(config.enabledModules || []), ...extraModules]),
     ];
 
+    // Fetch currency from DB
+    const tenantForCurrency = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { currency: true, enabledModules: true },
+    });
+
+    // Merge DB-saved modules with industry defaults
+    const dbModules = tenantForCurrency?.enabledModules || [];
+    const finalModules = dbModules.length > 0
+      ? [...new Set([...dbModules, ...mergedModules])]
+      : mergedModules;
+
     const result = {
       ...config,
-      enabledModules: mergedModules,
+      enabledModules: finalModules,
       industry: industry,
+      currency: tenantForCurrency?.currency || 'INR',
     };
 
     await this.cacheManager.set(cacheKey, result, 3600000); // 1 hour
     return result;
+  }
+
+  @Patch('modules')
+  async updateModules(
+    @Req() req: any,
+    @Body() body: { modules: string[] },
+  ) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) {
+      throw new ForbiddenException('No workspace context. Please select a workspace first.');
+    }
+
+    // Only Owner can update module configuration
+    if (req.user.role !== 'Owner' && !req.user.isSuperAdmin) {
+      throw new ForbiddenException('Only the workspace Owner can change module settings.');
+    }
+
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { enabledModules: body.modules },
+    });
+
+    // Invalidate the config cache so next GET returns fresh data
+    await this.cacheManager.del(`nexus:system:config:${tenantId}`);
+
+    return { success: true, enabledModules: body.modules };
   }
 
   @Get('audit')

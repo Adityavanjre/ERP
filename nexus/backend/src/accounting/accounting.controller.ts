@@ -36,6 +36,8 @@ import { PlanLimit } from '../common/guards/plan.guard';
 
 import { Gstr1ExportService } from './services/gstr1-export.service';
 
+import { BrsService } from './services/brs.service';
+
 @UseGuards(JwtAuthGuard,  PermissionsGuard, MfaGuard)
 @Module('accounting')
 @Controller('accounting')
@@ -46,6 +48,7 @@ export class AccountingController {
     private readonly saas: SaasAnalyticsService,
     private readonly collaboration: CollaborationService,
     private readonly gstr1: Gstr1ExportService,
+    private readonly brsService: BrsService,
   ) {}
 
   @Get('health-score')
@@ -58,6 +61,24 @@ export class AccountingController {
   @Permissions(Permission.VIEW_REPORTS)
   getLeaderboard(@Req() req: AuthenticatedRequest) {
     return this.saas.getStaffLeaderboard(req.user.tenantId as string);
+  }
+
+  @Get('bank-statements')
+  @Permissions(Permission.VIEW_REPORTS)
+  getBankStatements(@Req() req: AuthenticatedRequest, @Query('accountId') accountId?: string) {
+    return this.brsService.getBankStatements(req.user.tenantId as string, accountId);
+  }
+
+  @Post('bank-statements')
+  @Permissions(Permission.CREATE_PAYMENT)
+  uploadBankStatement(@Req() req: AuthenticatedRequest, @Body() data: any) {
+    return this.brsService.uploadStatement(req.user.tenantId as string, data.accountId, data);
+  }
+
+  @Post('bank-statements/:id/auto-match')
+  @Permissions(Permission.CREATE_PAYMENT)
+  autoMatchBankStatement(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.brsService.autoMatch(req.user.tenantId as string, id);
   }
 
   @Get('recovery-memory')

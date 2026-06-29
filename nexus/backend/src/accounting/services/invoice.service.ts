@@ -135,8 +135,11 @@ export class InvoiceService {
         );
       }
 
-      const invoiceNumber =
-        data.invoiceNumber || (await this.generateInvoiceNumber(tenantId, tx));
+      let invoiceNumber = data.invoiceNumber;
+      if (!invoiceNumber) {
+        invoiceNumber = await this.generateInvoiceNumber(tenantId, tx, (data as any).billingPrefix, tenant);
+      }
+
       const existingInvoice = await tx.invoice.findFirst({
         where: { tenantId, invoiceNumber },
       });
@@ -702,7 +705,7 @@ export class InvoiceService {
     };
   }
 
-  async generateInvoiceNumber(tenantId: string, tx: any): Promise<string> {
+  async generateInvoiceNumber(tenantId: string, tx: any, prefix?: string, tenant?: any): Promise<string> {
     // ACC-001: Concurrency-safe invoice numbering via PostgreSQL advisory lock.
     //
     // The old COUNT-based approach had a race: two concurrent transactions both
@@ -726,9 +729,25 @@ export class InvoiceService {
     await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(${lockKey})`);
 
     // Under the lock: count is stable, no concurrent transaction can also hold this lock
-    const year = new Date().getFullYear();
     const count = await tx.invoice.count({ where: { tenantId } });
-    const candidate = `INV/${year}/${(count + 1).toString().padStart(4, '0')}`;
+    
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const fyStartMonth = tenant?.fyStartMonth || 4; // default April
+    
+    let fyStartYear = currentYear;
+    let fyEndYear = currentYear + 1;
+    if (currentMonth < fyStartMonth) {
+      fyStartYear = currentYear - 1;
+      fyEndYear = currentYear;
+    }
+    const fyString = `${fyStartYear}-${fyEndYear.toString().slice(-2)}`;
+    
+    let candidate = `INV/${fyString}/${(count + 1).toString().padStart(4, '0')}`;
+    if (prefix) {
+      candidate = `${prefix}-${fyString}-${(count + 1).toString().padStart(4, '0')}`;
+    }
 
     // Uniqueness double-check: handles the edge case of invoices created in a prior year
     // that break the padded sequence (e.g., count=9999 produces INV/2026/10000)
@@ -737,7 +756,7 @@ export class InvoiceService {
     });
     if (collision) {
       // Fall back to a timestamp-based suffix to ensure uniqueness
-      return `INV/${year}/${Date.now().toString(36).toUpperCase()}`;
+      return `${prefix ? prefix + '-' : 'INV/'}${fyString}/${Date.now().toString(36).toUpperCase()}`;
     }
 
     return candidate;

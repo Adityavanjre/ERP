@@ -1,4 +1,4 @@
-const { PrismaClient, Role } = require('@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
@@ -41,7 +41,6 @@ async function seed() {
             data: {
                 userId: user.id,
                 tenantId: tenant.id,
-                role: Role.Owner,
             },
         });
 

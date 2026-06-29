@@ -1,19 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../../../components/ui/card";
 import { getAllModules, type ModuleDefinition } from "../../../lib/module-registry";
 import { Check, Loader2 } from "lucide-react";
+import { api } from "../../../lib/api";
 
 export default function ModuleSetupPage() {
 
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set(
     getAllModules().filter((m: ModuleDefinition) => m.isRecommended).map((m: ModuleDefinition) => m.id)
   ));
   const [error, setError] = useState("");
+
+  // Load the currently-saved module list from the backend on mount
+  useEffect(() => {
+    api.get("system/config")
+      .then((res) => {
+        const savedModules: string[] = res.data?.enabledModules ?? [];
+        if (savedModules.length > 0) {
+          setSelected(new Set(savedModules));
+        }
+      })
+      .catch(() => {
+        // If config fetch fails, keep the recommended defaults
+      })
+      .finally(() => setInitializing(false));
+  }, []);
 
   const toggleModule = (id: string) => {
     const newSelected = new Set(selected);
@@ -30,23 +47,16 @@ export default function ModuleSetupPage() {
     setError("");
     try {
       const selectedModules = Array.from(selected);
-      // If we are in desktop mode, call the IPC bridge
+
       if (typeof window !== "undefined" && window.nexusDesktop?.settings?.updateModules) {
+        // Desktop app: use IPC bridge
         await window.nexusDesktop.settings.updateModules(selectedModules);
       } else {
-        // Fallback for cloud (we can hit a cloud API, but this is a stub for dev)
-        console.log("Modules selected:", selectedModules);
+        // Web: persist to backend DB
+        await api.patch("system/modules", { modules: selectedModules });
       }
-      
-      // Update local storage context
-      const userStr = localStorage.getItem("k_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        user.tenant = { ...user.tenant, enabledModules: selectedModules };
-        localStorage.setItem("k_user", JSON.stringify(user));
-      }
-      
-      // Force reload to dashboard so sidebar recalculates
+
+      // Force reload to dashboard so sidebar recalculates with new modules
       window.location.href = "/portal/dashboard";
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -128,11 +138,11 @@ export default function ModuleSetupPage() {
           </p>
           <Button
             onClick={handleComplete}
-            disabled={loading || selected.size === 0}
+            disabled={loading || initializing || selected.size === 0}
             className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
           >
-            {loading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
-            Finish Setup
+            {(loading || initializing) ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
+            {initializing ? "Loading..." : "Finish Setup"}
           </Button>
         </CardFooter>
       </Card>

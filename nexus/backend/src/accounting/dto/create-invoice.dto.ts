@@ -36,6 +36,10 @@ export class CreateInvoiceDto {
   invoiceNumber?: string;
 
   @IsOptional()
+  @IsString()
+  billingPrefix?: string;
+
+  @IsOptional()
   @IsDateString()
   issueDate?: string;
 

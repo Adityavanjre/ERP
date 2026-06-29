@@ -27,6 +27,7 @@ import { ForecastingWidget } from "../../../components/accounting/forecasting-wi
 import { useUX } from "../../../components/providers/ux-provider";
 import { FixedAssetTab } from "../../../components/accounting/fixed-asset-tab";
 import { AuditorDashboard } from "../../../components/accounting/auditor-dashboard";
+import { BankStatementsTab } from "../../../components/accounting/bank-statements-tab";
 import { EmptyState } from "../../../components/ui/empty-state";
 
 interface Account {
@@ -439,6 +440,7 @@ export default function AccountingPage() {
                     <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
                     <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
                     <TabsTrigger value="transactions" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Transactions</TabsTrigger>
+                    <TabsTrigger value="bank-statements" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Bank Statements</TabsTrigger>
                     <TabsTrigger value="assets" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Fixed Assets</TabsTrigger>
                     <TabsTrigger value="auditor" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Auditor</TabsTrigger>
                     <TabsTrigger value="health" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Store Health</TabsTrigger>
@@ -650,6 +652,10 @@ export default function AccountingPage() {
                             </Table>
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                <TabsContent value="bank-statements">
+                    <BankStatementsTab />
                 </TabsContent>
 
                 <TabsContent value="assets">

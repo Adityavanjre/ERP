@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +54,7 @@ export default function AuditorDashboard() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [reopenReason, setReopenReason] = useState("");
@@ -68,8 +68,8 @@ export default function AuditorDashboard() {
           `accounting/auditor/dashboard?month=${month}&year=${year}`,
         );
         setData(res.data);
-      } catch {
-        // Suppressed in prod: Auditor sync failed silently
+      } catch (err) {
+        console.error("Auditor sync failed:", err);
       } finally {
         setLoading(false);
       }
@@ -107,8 +107,8 @@ export default function AuditorDashboard() {
       setIsReopening(false);
       setReopenReason("");
       syncAuditorData(true);
-    } catch {
-      // Suppressed in prod
+    } catch (err) {
+      console.error("Failed to reopen period:", err);
       toast.error("Failed to reopen period");
     }
   };
@@ -294,8 +294,8 @@ export default function AuditorDashboard() {
             </span>
           </div>
           <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
-            {data?.isLocked && data.lockDetails
-              ? `Locked on ${new Date(data.lockDetails.lockedAt).toLocaleDateString()}`
+            {data?.isLocked && data?.lockDetails
+              ? `Locked on ${data?.lockDetails?.lockedAt ? new Date(data.lockDetails.lockedAt).toLocaleDateString() : ""}`
               : "Vouchers can still be edited"}
           </p>
         </div>
@@ -328,7 +328,7 @@ export default function AuditorDashboard() {
             Account Alerts & Blockers
           </h2>
           <div className="space-y-4">
-            {(!data?.riskFlags || data.riskFlags.length === 0) && (
+            {(!data?.riskFlags || data?.riskFlags?.length === 0) && (
               <div className="text-slate-400 font-bold italic py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 No major flags detected for this period.
               </div>
@@ -392,15 +392,15 @@ export default function AuditorDashboard() {
                   Total Sales
                 </p>
                 <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                  â‚¹{data?.summary.totalSales.toLocaleString()}
+                  ₹{(data?.summary?.totalSales ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                <p className="text-[10px) text-slate-500 font-bold uppercase tracking-widest">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                   Total GST Liability
                 </p>
                 <p className="text-2xl font-black text-blue-600 tracking-tighter">
-                  â‚¹{data?.summary.totalGST.toLocaleString()}
+                  ₹{(data?.summary?.totalGST ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -408,7 +408,7 @@ export default function AuditorDashboard() {
                   Total Receipts
                 </p>
                 <p className="text-2xl font-black text-emerald-600 tracking-tighter">
-                  â‚¹{data?.summary.totalReceipts.toLocaleString()}
+                  ₹{(data?.summary?.totalReceipts ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -416,7 +416,7 @@ export default function AuditorDashboard() {
                   Total Payments
                 </p>
                 <p className="text-2xl font-black text-rose-600 tracking-tighter">
-                  â‚¹{data?.summary.totalPayments.toLocaleString()}
+                  ₹{(data?.summary?.totalPayments ?? 0).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -427,7 +427,7 @@ export default function AuditorDashboard() {
                   Simulated Net Dr (Receivables)
                 </span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">
-                  â‚¹{data?.summary.netBalanceDr.toLocaleString()}
+                  ₹{(data?.summary?.netBalanceDr ?? 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-6">
@@ -435,7 +435,7 @@ export default function AuditorDashboard() {
                   Simulated Net Cr (Payables)
                 </span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">
-                  â‚¹{data?.summary.netBalanceCr.toLocaleString()}
+                  ₹{(data?.summary?.netBalanceCr ?? 0).toLocaleString()}
                 </span>
               </div>
               <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center justify-between">

@@ -749,8 +749,12 @@ export class AuthService {
       industry: membership.tenant.industry,
       tenantType: membership.tenant.type,
       isMfaVerified: isMfaVerified ?? false,
-      isSuperAdmin: !!userRecord?.isSuperAdmin,
       channel: channel ?? 'MOBILE',
+      role: userRecord?.isSuperAdmin
+        ? 'Owner'
+        : (typeof membership.permissions === 'string'
+          ? membership.permissions
+          : 'Member'),
     };
 
     const refreshToken = this.jwtService.sign(

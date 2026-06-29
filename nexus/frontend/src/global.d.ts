@@ -5,6 +5,7 @@ declare global {
     nexusDesktop?: {
       shell?: {
         isDesktop?: boolean;
+        getNetworkIPs?: () => Promise<string[]>;
       };
       sync?: {
         execute: () => Promise<unknown>;

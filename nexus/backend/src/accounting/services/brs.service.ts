@@ -47,6 +47,18 @@ export class BrsService {
     });
   }
 
+  async getBankStatements(tenantId: string, accountId?: string) {
+    const whereClause: any = { tenantId };
+    if (accountId) {
+      whereClause.accountId = accountId;
+    }
+    return this.prisma.bankStatement.findMany({
+      where: whereClause,
+      include: { account: true, lines: true },
+      orderBy: { uploadDate: 'desc' },
+    });
+  }
+
   async autoMatch(tenantId: string, statementId: string) {
     const statementLines = await this.prisma.bankStatementLine.findMany({
       where: { statementId, tenantId, reconciled: false },

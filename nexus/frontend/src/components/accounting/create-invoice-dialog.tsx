@@ -89,6 +89,7 @@ export function CreateInvoiceDialog({
   const [invoiceDate, setInvoiceDate] = useState(
     new Date().toISOString().split("T")[0],
   );
+  const [billingPrefix, setBillingPrefix] = useState("");
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [productFilter, setProductFilter] = useState("");
@@ -114,6 +115,7 @@ export function CreateInvoiceDialog({
     try {
       await api.post("accounting/invoices", {
         customerId,
+        billingPrefix: billingPrefix.trim() || undefined,
         issueDate: invoiceDate,
         dueDate: dueDate || invoiceDate,
         items: items.map((i) => ({
@@ -136,6 +138,7 @@ export function CreateInvoiceDialog({
         },
       ]);
       setCustomerId("");
+      setBillingPrefix("");
       onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -147,6 +150,7 @@ export function CreateInvoiceDialog({
     }
   }, [
     customerId,
+    billingPrefix,
     invoiceDate,
     dueDate,
     items,
@@ -395,7 +399,16 @@ export function CreateInvoiceDialog({
               Quick Counter Sale (Walk-In)
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Billing Prefix</Label>
+              <Input
+                placeholder="e.g. JDI"
+                className="bg-white/5 border-white/10 text-white"
+                value={billingPrefix}
+                onChange={(e) => setBillingPrefix(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <Label>Invoice Date</Label>
               <Input

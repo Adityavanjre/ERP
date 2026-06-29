@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 import { cn } from "../../../lib/utils";
+import { getCurrencySymbol, formatCurrency } from "../../../lib/currency";
 import {
   BarChart,
   Bar,
@@ -89,6 +90,7 @@ interface IndustryConfig {
   industry: string;
   enabledModules: string[];
   terminology: Record<string, string>;
+  currency?: string; // ISO code e.g. "INR", "USD" — from Tenant.currency in DB
 }
 
 interface SystemStats {
@@ -208,6 +210,11 @@ export default function DashboardPage() {
     cache?.industryConfig ?? null,
   );
 
+  // Derive currency symbol from config (never hardcode)
+  const currencySymbol = getCurrencySymbol(industryConfig?.currency);
+  const fmtCurrency = (amount: number) =>
+    formatCurrency(amount, industryConfig?.currency ?? "INR");
+
   const fetchData = useCallback(async (isInitial = false) => {
     // DEADLINE TIMER: If initial load, force-unblock the loading spinner after 2s
     let deadlineTimer: ReturnType<typeof setTimeout> | null = null;
@@ -315,7 +322,7 @@ export default function DashboardPage() {
     const cards = [
       {
         title: "Gross Revenue",
-        value: `â‚¹${biStats.revenue.toLocaleString("en-IN")}`,
+        value: fmtCurrency(biStats.revenue),
         icon: DollarSign,
         color: "text-emerald-500",
         bg: "bg-emerald-500/10",
@@ -323,7 +330,7 @@ export default function DashboardPage() {
       },
       {
         title: "Total Purchases",
-        value: `â‚¹${biStats.expenses.toLocaleString("en-IN")}`,
+        value: fmtCurrency(biStats.expenses),
         icon: ArrowDownRight,
         color: "text-rose-500",
         bg: "bg-rose-500/10",
@@ -622,7 +629,7 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: "#475569", fontSize: 10, fontWeight: "700" }}
-                    tickFormatter={(val) => `â‚¹${val / 1000}k`}
+                    tickFormatter={(val) => `${currencySymbol}${(val / 1000).toFixed(0)}k`}
                   />
                   <Tooltip
                     cursor={{ fill: "#f8fafc" }}
@@ -716,7 +723,7 @@ export default function DashboardPage() {
                     Monthly MRR
                   </p>
                   <p className="text-xl font-black text-slate-800 tracking-tight">
-                    â‚¹
+                    {currencySymbol}
                     {healthStats.runRate.toLocaleString("en-IN", {
                       maximumFractionDigits: 0,
                     })}
@@ -727,7 +734,7 @@ export default function DashboardPage() {
                     Monthly Burn
                   </p>
                   <p className="text-xl font-black text-rose-600 tracking-tight">
-                    â‚¹
+                    {currencySymbol}
                     {healthStats.burnRate.toLocaleString("en-IN", {
                       maximumFractionDigits: 0,
                     })}

@@ -99,4 +99,20 @@ Path: Accounting -> Reports
 Action: Inspect profitability percentage fully on the fly with live downloadable consolidations.
 
 ==================================================
+
+SECTION 6: MULTI-WORKSPACE (MULTI-TENANT) MANAGEMENT
+Nexus ERP supports managing multiple business entities under a single unified login account.
+
+6.1 TENANT SELECTOR
+Path: Post-Login Screen or Top Navigation -> "Switch Workspace"
+Action: Select which company dashboard to open. Data, invoices, and settings are kept strictly isolated between workspaces.
+
+6.2 CREATING A NEW WORKSPACE
+Path: Post-Login Screen (Tenant Selector) -> "Create New Workspace"
+Action: Click the "Create New Workspace" button to trigger the Onboarding flow. You can register a new company (e.g., a subsidiary like GreatEight Traders) and your existing user account will automatically be granted Owner access to the new isolated dashboard.
+
+6.3 DEVICE LIMITS
+Action: The ERP tracks active sessions across devices. Business groups can configure maximum device limits (e.g., 8 devices) which enforce security and restrict unauthorized concurrent logins.
+
+==================================================
 🛡️ Klypso Nexus Protection Protocol: Standard Audit Integrity Active.

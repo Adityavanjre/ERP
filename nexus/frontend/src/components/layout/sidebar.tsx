@@ -28,6 +28,7 @@ import {
   Calendar,
   ClipboardList,
   Cpu,
+  Layers,
   LucideIcon,
 } from "lucide-react";
 import { KlypsoLogo } from "../brand/logo";
@@ -538,53 +539,31 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
       </div>
 
       <div className="shrink-0 p-6 pt-4 border-t border-slate-100 space-y-4">
-        {user?.isSuperAdmin && (
-          <>
-            <Link
-              href="/admin/monitoring"
-              onClick={onItemClick}
-              className={cn(
-                "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
-                pathname === "/admin/monitoring"
-                  ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
-                  : "text-amber-600",
-              )}
-            >
-              <div className="flex items-center flex-1">
-                <ShieldCheck
-                  className={cn(
-                    "h-4 w-4 mr-3 transition-all duration-500 group-hover:scale-125",
-                    pathname === "/admin/monitoring"
-                      ? "text-blue-600"
-                      : "text-amber-500 group-hover:text-amber-600",
-                  )}
-                />
-                Admin Console
-              </div>
-            </Link>
-            <Link
-              href="/admin/users"
-              onClick={onItemClick}
-              className={cn(
-                "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
-                pathname === "/admin/users"
-                  ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
-                  : "text-amber-600",
-              )}
-            >
-              <div className="flex items-center flex-1">
-                <Users
-                  className={cn(
-                    "h-4 w-4 mr-3 transition-all duration-500 group-hover:scale-125",
-                    pathname === "/admin/users"
-                      ? "text-blue-600"
-                      : "text-amber-500 group-hover:text-amber-600",
-                  )}
-                />
-                User Management
-              </div>
-            </Link>
-          </>
+
+
+        {canAccessSettings && (
+          <Link
+            href="/modules-setup"
+            onClick={onItemClick}
+            className={cn(
+              "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+              pathname === "/modules-setup"
+                ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
+                : "text-slate-500",
+            )}
+          >
+            <div className="flex items-center flex-1">
+              <Layers
+                className={cn(
+                  "h-4 w-4 mr-3 transition-all duration-300 group-hover:scale-110",
+                  pathname === "/modules-setup"
+                    ? "text-blue-600"
+                    : "text-slate-400 group-hover:text-blue-500",
+                )}
+              />
+              Configure Modules
+            </div>
+          </Link>
         )}
 
         {canAccessSettings && (

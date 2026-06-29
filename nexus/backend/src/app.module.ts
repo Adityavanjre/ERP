@@ -2,7 +2,6 @@ import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -24,7 +23,7 @@ import { LogisticsModule } from './logistics/logistics.module';
 import { NbfcModule } from './nbfc/nbfc.module';
 import { SyncModule } from './sync/sync.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 import { IdempotencyInterceptor } from './common/interceptors/idempotency.interceptor';
 import { HealthModule } from './health/health.module';
@@ -80,10 +79,6 @@ import { ScheduleRootModule } from './schedule/schedule-root.module';
         limit: 30000,
       },
     ]),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
   ],
   controllers: [AppController],
   providers: [
@@ -104,7 +99,6 @@ import { ScheduleRootModule } from './schedule/schedule-root.module';
       provide: APP_GUARD,
       useClass: ModuleGuard, // 4th: Module enable/disable — requires req.user.tenantId.
     },
-
     {
       provide: APP_GUARD,
       useClass: PermissionsGuard, // 6th: Mobile Safety Contract — fine-grained permission checks within a role.
@@ -122,10 +116,6 @@ import { ScheduleRootModule } from './schedule/schedule-root.module';
       useClass: CsrfGuard, // 9th: CSRF validation — runs after auth session is verified.
     },
     {
-      provide: APP_GUARD,
-      useClass: RoleThrottlerGuard, // 10th: Rate limiting — always last.
-    },
-    {
       provide: APP_INTERCEPTOR,
       useClass: TenantInterceptor,
     },
@@ -141,8 +131,4 @@ import { ScheduleRootModule } from './schedule/schedule-root.module';
     */
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(TraceMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
