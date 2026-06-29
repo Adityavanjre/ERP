@@ -27,7 +27,7 @@ export default function PermissionsAdminPage() {
 
   // Using static state for now since the API for custom permission templates isn't defined yet
   // This satisfies the "Frontend: Create Admin UI for managing custom permission templates" requirement
-  const [templates, setTemplates] = useState([
+  const templates = [
     {
       id: "1",
       name: "Standard Employee",
@@ -40,7 +40,7 @@ export default function PermissionsAdminPage() {
       description: "Full access to inventory, read access to sales",
       permissions: { inventory: ["read", "write", "delete"], sales: ["read"] },
     }
-  ]);
+  ];
   
 
   const [enabledModules, setEnabledModules] = useState<Set<string>>(new Set(["dashboard", "crm", "settings", "apps", "accounting"]));

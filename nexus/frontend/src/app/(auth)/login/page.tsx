@@ -16,7 +16,6 @@ import Link from "next/link";
 import { api } from "../../../lib/api";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import {
-  createDesktopOfflineSession,
   isDesktopShell,
 } from "../../../lib/desktop-offline";
 
@@ -261,10 +260,6 @@ export default function LoginPage() {
     setError("");
   }, []);
 
-  const toggleAdmin = useCallback(() => {
-    setIsAdmin((prev) => !prev);
-  }, []);
-
   const toggleShowPassword = useCallback(() => {
     setShowPassword((prev) => !prev);
   }, []);
@@ -423,15 +418,6 @@ export default function LoginPage() {
               >
                 Sign in with Google
               </Button>
-            )}
-            {!isDesktopApp && !isLocalNetwork && (
-              <button
-                type="button"
-                onClick={toggleAdmin}
-                className="text-[10px] text-blue-600 font-bold uppercase underline underline-offset-4"
-              >
-                {isAdmin ? "Standard Login" : "Super Admin Mode"}
-              </button>
             )}
           </CardFooter>
         </form>

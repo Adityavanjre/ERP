@@ -27,7 +27,6 @@ import {
   Boxes,
   AlertCircle,
   Upload,
-  Edit3,
   Clock,
   Tags,
   Scale,
@@ -121,7 +120,7 @@ export default function InventoryPage() {
     totalValue: 0,
   });
   const [forecast, setForecast] = useState<InventoryForecast | null>(null);
-  const [productToEdit, setProductToEdit] = useState<any>(null);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -301,25 +300,7 @@ export default function InventoryPage() {
     }
   };
 
-  const startEdit = (p: Product) => {
-    setEditingProduct(p);
-    setFormData({
-      name: p.name || "",
-      sku: p.sku || "",
-      stock: Number(p.stock) || 0,
-      price: Number(p.price) || 0,
-      costPrice: Number(p.costPrice) || 0,
-      category: p.category || "",
-      tags: p.tags || "",
-      brand: p.brand || "",
-      manufacturer: p.manufacturer || "",
-      minStockLevel: Number(p.minStockLevel) || 0,
-      hsnCode: p.hsnCode || "",
-      gstRate: Number(p.gstRate) || 0,
-      description: p.description || "",
-      barcode: p.barcode || "",
-      isService: p.isService || false,
-      warehouseId: "",
+  // Placeholder - startEdit function removed (unused)      warehouseId: "",
     });
     setShowForm(false); // Close add form if open
   };
