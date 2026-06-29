@@ -213,7 +213,8 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
       // If the user isn't onboarded and we aren't already there, go to onboarding
       if (
         decoded.isOnboarded === false &&
-        !pathname?.startsWith("/onboarding")
+        !pathname?.startsWith("/onboarding") &&
+        !pathname?.startsWith("/portal/onboarding")
       ) {
         router.push("/onboarding");
       }

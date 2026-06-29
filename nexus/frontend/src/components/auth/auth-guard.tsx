@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import { hydrateDesktopOfflineSession } from "../../lib/desktop-offline";
+import { hydrateDesktopOfflineSession, isDesktopShell } from "../../lib/desktop-offline";
 
 // Route-level access control matrix
 // Maps path prefixes to allowed roles
@@ -56,6 +56,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     const handleSessionExpired = () => {
+      console.log("[AuthGuard] session-expired event received");
       setAuthorized(false);
       router.push("/login");
     };
@@ -63,14 +64,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     window.addEventListener("session-expired", handleSessionExpired);
 
     const checkAuth = async () => {
-      await hydrateDesktopOfflineSession();
-      const token = localStorage.getItem("k_token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
+      console.log("[AuthGuard] checkAuth started, pathname:", pathname);
       try {
+        await hydrateDesktopOfflineSession();
+        const token = localStorage.getItem("k_token");
+        console.log("[AuthGuard] token found:", !!token);
+        if (!token) {
+          console.log("[AuthGuard] no token, redirecting to /login");
+          router.push("/login");
+          return;
+        }
+
         let decoded: DecodedToken;
         if (token.startsWith("offline_")) {
           const userStr = localStorage.getItem("k_user");
@@ -83,6 +87,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         } else {
           decoded = jwtDecode<DecodedToken>(token);
         }
+        console.log("[AuthGuard] decoded token:", decoded);
         const role = decoded.role;
         const type = decoded.type;
         const isOnboarded = decoded.isOnboarded;
@@ -90,25 +95,28 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         const isDesktopLocal = type === "desktop-local";
 
         // 1. Identity/Admin Token handling (No specific tenant scoped yet)
-        // If it's an admin with a tenantId, it's a Shadow Mode session and should be treated as Scoped.
         if (type === "identity" || (type === "admin" && !tenantId)) {
-          // Allow the onboarding page to render directly even with identity token
+          console.log("[AuthGuard] identity token, pathname:", pathname);
           if (pathname === "/onboarding") {
+            console.log("[AuthGuard] onboarding path, authorizing identity");
             setAuthorized(true);
             return;
           }
+          console.log("[AuthGuard] setting needsTenantSelection = true");
           setNeedsTenantSelection(true);
           setAuthorized(true);
           return;
         }
 
         if (isDesktopLocal) {
-          if (isOnboarded === false && pathname !== "/onboarding") {
-            router.push("/onboarding");
+          console.log("[AuthGuard] desktop-local session, isOnboarded:", isOnboarded);
+          const onboardingPath = isDesktopShell() ? "/onboarding" : "/portal/onboarding";
+          if (isOnboarded === false && pathname !== onboardingPath) {
+            router.push(onboardingPath);
             return;
           }
 
-          if (isOnboarded === true && pathname === "/onboarding") {
+          if (isOnboarded === true && pathname === onboardingPath) {
             router.push("/dashboard");
             return;
           }
@@ -122,32 +130,39 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         // 2. Tenant Scoped handling
         if (!role) {
+          console.log("[AuthGuard] no role in token, redirecting to /login");
           router.push("/login");
           return;
         }
 
         // Onboarding Enforcement
-        if (isOnboarded === false && pathname !== "/onboarding") {
-          router.push("/onboarding");
+        const onboardingPath = isDesktopShell() ? "/onboarding" : "/portal/onboarding";
+        if (isOnboarded === false && pathname !== onboardingPath) {
+          console.log("[AuthGuard] not onboarded, redirecting to:", onboardingPath);
+          router.push(onboardingPath);
           return;
         }
 
         // If onboarded, don't stay on onboarding page
-        if (isOnboarded === true && pathname === "/onboarding") {
+        if (isOnboarded === true && pathname === onboardingPath) {
+          console.log("[AuthGuard] onboarded, redirecting from", onboardingPath, "to /dashboard");
           router.push("/dashboard");
           return;
         }
 
         // Role-based route access
         if (!isRouteAllowed(pathname, role)) {
+          console.log("[AuthGuard] route not allowed for role:", role, "redirecting to /dashboard");
           router.push("/dashboard");
           return;
         }
 
         if (!cancelled) {
+          console.log("[AuthGuard] authorizing access");
           setAuthorized(true);
         }
-      } catch {
+      } catch (err) {
+        console.error("[AuthGuard] checkAuth error:", err);
         router.push("/login");
       }
     };
@@ -156,12 +171,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === "k_token" || e.key === "k_user") {
+        console.log("[AuthGuard] storage key changed:", e.key);
         void checkAuth();
       }
     };
     window.addEventListener("storage", handleStorageEvent);
 
     return () => {
+      console.log("[AuthGuard] cleanup (cancelled = true)");
       cancelled = true;
       window.removeEventListener("session-expired", handleSessionExpired);
       window.removeEventListener("storage", handleStorageEvent);

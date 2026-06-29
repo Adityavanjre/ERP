@@ -37,7 +37,16 @@ interface HttpError extends Error {
 
 async function authFetch(path: string, options: RequestInit = {}) {
   await ensureNetworkConsent();
-  await ensureRecentUserInteraction();
+
+  // Read CSRF token from cookie for mutating requests
+  const method = (options.method || "GET").toUpperCase();
+  const csrfHeaders: Record<string, string> = {};
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const match = document.cookie.match(/(?:^|; )nexus-csrf=([^;]*)/);
+    if (match) {
+      csrfHeaders["X-CSRF-Token"] = decodeURIComponent(match[1]);
+    }
+  }
 
   // SEC-006: Use cookie-based auth (credentials: 'include') instead of Bearer token from localStorage.
   // HttpOnly cookies are sent automatically — no localStorage token reading needed.
@@ -46,6 +55,7 @@ async function authFetch(path: string, options: RequestInit = {}) {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...csrfHeaders,
       ...(options.headers || {}),
     },
   });
@@ -98,6 +108,7 @@ export function TenantSelector() {
   const isMounted = useRef(true);
 
   useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
     };
@@ -124,7 +135,16 @@ export function TenantSelector() {
       if (!isMounted.current) return;
 
       if (data.length === 0) {
-        router.push("/onboarding");
+        // Check if running in desktop environment
+        const isDesktop =
+          typeof window !== "undefined" &&
+          (window as any).nexusDesktop !== undefined;
+        
+        if (isDesktop) {
+          router.push("/onboarding");
+        } else {
+          router.push("/portal/onboarding");
+        }
         return;
       }
 
@@ -161,6 +181,7 @@ export function TenantSelector() {
   }, [router, handleLogout]);
 
   useEffect(() => {
+    console.log("[TenantSelector] useEffect calling fetchTenants");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTenants();
   }, [fetchTenants]);
@@ -168,12 +189,18 @@ export function TenantSelector() {
   const handleSelect = useCallback(async (tenantId: string) => {
     setSelecting(tenantId);
     try {
-      await authFetch("auth/select-tenant", {
+      const data = await authFetch("auth/select-tenant", {
         method: "POST",
         body: JSON.stringify({ tenantId }),
       });
-      // SEC-006: Token is set as HttpOnly cookie by the backend.
-      // No localStorage write needed — cookie is sent automatically on subsequent requests.
+      // Store the new tenant-scoped token so DashboardLayout and AuthGuard
+      // read the correct token type on reload (not the old identity token).
+      if (data.accessToken) {
+        localStorage.setItem("k_token", data.accessToken);
+      }
+      if (data.tenant) {
+        localStorage.setItem("k_tenant", JSON.stringify(data.tenant));
+      }
       // Hard reload to reset all React state with the new scoped token
       window.location.href = "/portal/dashboard";
     } catch {
@@ -183,13 +210,23 @@ export function TenantSelector() {
   }, []);
 
   const navigateToOnboarding = useCallback(() => {
-    router.push("/onboarding");
+    // Check if running in desktop environment
+    const isDesktop =
+      typeof window !== "undefined" &&
+      (window as any).nexusDesktop !== undefined;
+    
+    if (isDesktop) {
+      router.push("/onboarding");
+    } else {
+      router.push("/portal/onboarding");
+    }
   }, [router]);
 
   if (loading) {
     return (
-      <div className="flex bg-slate-50 h-screen w-screen items-center justify-center">
+      <div className="flex flex-col bg-slate-50 h-screen w-screen items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <span className="text-blue-600 font-bold tracking-widest text-[10px] uppercase">Loading Workspaces...</span>
       </div>
     );
   }

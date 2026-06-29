@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
 import {
   Card,
@@ -14,14 +14,24 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { api } from "../../../lib/api";
+import { jwtDecode } from "jwt-decode";
 
-
+interface DecodedToken {
+  tenantId?: string;
+  type?: string;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isDesktopApp, setIsDesktopApp] = useState(false);
+
+  useEffect(() => {
+    setIsDesktopApp(typeof window !== "undefined" && !!window.nexusDesktop);
+  }, []);
 
   const [business, setBusiness] = useState({
     name: "",
@@ -51,16 +61,17 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!owner.fullName || !owner.email || !owner.password) {
-      setError("Owner details are required.");
-      return;
-    }
-
-    setLoading(true);
     setError("");
+    setLoading(true);
 
     try {
-      if (window.nexusDesktop?.auth?.localOnboarding) {
+      if (isDesktopApp) {
+        if (!owner.fullName || !owner.email || !owner.password) {
+          setError("Owner details are required.");
+          setLoading(false);
+          return;
+        }
+
         const result = await window.nexusDesktop.auth.localOnboarding({
           business,
           owner,
@@ -81,14 +92,65 @@ export default function OnboardingPage() {
         if (loginResult?.data?.accessToken) {
           localStorage.setItem("k_token", loginResult.data.accessToken);
           localStorage.setItem("k_user", JSON.stringify(loginResult.data.user));
-          
-          // Route to Module Selection screen
           router.push("/portal/modules-setup");
         } else {
           router.push("/portal/login");
         }
       } else {
-        setError("Desktop bridge not found. Are you running in browser?");
+        // Web Browser Onboarding Flow
+        if (!business.name || !business.country) {
+          setError("Business Name and Country are required.");
+          setLoading(false);
+          return;
+        }
+
+        const token = localStorage.getItem("k_token");
+        if (!token) {
+          router.push("/portal/login");
+          return;
+        }
+
+        let tenantId = "";
+        try {
+          const decoded = jwtDecode<DecodedToken>(token);
+          tenantId = decoded.tenantId || "";
+        } catch {
+          // Token invalid, go to login
+          router.push("/portal/login");
+          return;
+        }
+
+        // 1. Create workspace if we don't have a scoped tenant token yet
+        if (!tenantId) {
+          const createRes = await api.post("auth/create-workspace", {
+            name: business.name,
+            type: business.type,
+          });
+          tenantId = createRes.data.id;
+        }
+
+        // 2. Complete onboarding for the tenant
+        await api.post("auth/onboarding", {
+          tenantId,
+          industry: business.type,
+          businessType: business.type,
+          gstin: business.gst || undefined,
+        });
+
+        // 3. Select the newly onboarded tenant to get a tenant-scoped token
+        const selectRes = await api.post("auth/select-tenant", {
+          tenantId,
+        });
+
+        if (selectRes.data.accessToken) {
+          localStorage.setItem("k_token", selectRes.data.accessToken);
+        }
+        if (selectRes.data.tenant) {
+          localStorage.setItem("k_tenant", JSON.stringify(selectRes.data.tenant));
+        }
+
+        // Redirect to modules setup or dashboard
+        window.location.href = "/portal/dashboard";
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -237,11 +299,13 @@ export default function OnboardingPage() {
             
             {step === 1 ? (
               <Button
-                type="button"
-                onClick={handleNext}
+                type={isDesktopApp ? "button" : "submit"}
+                onClick={isDesktopApp ? handleNext : undefined}
                 className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
+                disabled={loading}
               >
-                Next Step
+                {loading && !isDesktopApp ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
+                {isDesktopApp ? "Next Step" : "Complete Setup"}
               </Button>
             ) : (
               <Button
