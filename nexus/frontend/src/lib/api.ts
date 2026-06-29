@@ -1,4 +1,4 @@
-import axios, { type AxiosAdapter, type AxiosResponse } from "axios";
+import axios, { type AxiosResponse } from "axios";
 import {
   handleDesktopOfflineRequest,
   shouldHandleDesktopOfflineRequest,
@@ -186,12 +186,14 @@ api.interceptors.request.use(
 );
 
 // DEDUPLICATION ADAPTER: Intercepts the low-level adapter call to prevent thundering herds.
-// We cast to any to bypass the complex AxiosAdapter constituent types which can be string|[] in some versions.
-const originalAdapter = api.defaults.adapter as AxiosAdapter;
+const baseAxios = axios.create();
 
 api.defaults.adapter = async (config) => {
+  // Use default adapters for the internal request, and disable transforms to prevent double serialization
+  const requestConfig = { ...config, adapter: ['xhr', 'http'], transformRequest: [], transformResponse: [] };
+
   if (config.method?.toLowerCase() !== "get" || !config.url) {
-    return scheduleNetworkRequest(() => originalAdapter(config));
+    return scheduleNetworkRequest(() => baseAxios.request(requestConfig));
   }
 
   const cacheKey = axios.getUri(config);
@@ -216,7 +218,7 @@ api.defaults.adapter = async (config) => {
   }
 
   // 3. Execute and track
-  const requestPromise = scheduleNetworkRequest(() => originalAdapter(config));
+  const requestPromise = scheduleNetworkRequest(() => baseAxios.request(requestConfig));
   pendingRequests.set(cacheKey, requestPromise);
 
   try {

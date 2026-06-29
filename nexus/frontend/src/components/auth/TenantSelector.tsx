@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { cn } from "../../lib/utils";
 import {
   ensureNetworkConsent,
-  ensureRecentUserInteraction,
   isNetworkConsentError,
   revokeNetworkConsent,
 } from "../../lib/network-consent";
@@ -138,7 +137,7 @@ export function TenantSelector() {
         // Check if running in desktop environment
         const isDesktop =
           typeof window !== "undefined" &&
-          (window as any).nexusDesktop !== undefined;
+          (window as unknown as { nexusDesktop: unknown }).nexusDesktop !== undefined;
         
         if (isDesktop) {
           router.push("/onboarding");
@@ -213,7 +212,7 @@ export function TenantSelector() {
     // Check if running in desktop environment
     const isDesktop =
       typeof window !== "undefined" &&
-      (window as any).nexusDesktop !== undefined;
+      (window as unknown as { nexusDesktop: unknown }).nexusDesktop !== undefined;
     
     if (isDesktop) {
       router.push("/onboarding");
