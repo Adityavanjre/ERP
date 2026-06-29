@@ -228,7 +228,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      const idToken = "sim-google-token";
+      const idToken = "sim-google-token"; // TODO: Implement proper Google OAuth with ID token verification
       const endpoint = isAdmin
         ? "auth/google-login/admin"
         : "auth/google-login/web";
