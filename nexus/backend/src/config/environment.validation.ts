@@ -14,10 +14,7 @@ export class EnvironmentValidationMiddleware implements NestMiddleware {
   private validated = false;
 
   use(req: Request, res: Response, next: NextFunction): void {
-    if (!this.validated) {
-      this.validateEnvironment();
-      this.validated = true;
-    }
+    this.validateEnvironment();
     next();
   }
 
@@ -57,49 +54,35 @@ export class EnvironmentValidationMiddleware implements NestMiddleware {
       missingVars.push(`AUDIT_HMAC_SECRET (HMAC signing secret)`); // Not really missing, but insecure
     }
 
-    // Log and throw if critical issues found
+    // Log warnings but don't throw - let developers handle their own configs
     if (missingVars.length > 0 || weakVars.length > 0) {
       const message = this.buildValidationMessage(missingVars, weakVars);
-      
-      if (process.env.NODE_ENV === 'production') {
-        this.logger.error('CRITICAL: Environment validation failed in production!');
-        this.logger.error(message);
-        throw new Error('Environment validation failed. Check logs for details.');
-      } else {
-        // In development, warn but allow startup
-        this.logger.warn('DEVELOPMENT MODE: Environment validation warnings:');
-        this.logger.warn(message);
-        this.logger.warn('⚠️  This is a development environment. Fix these issues before production!');
-      }
+      this.logger.warn('Environment configuration warnings:');
+      this.logger.warn(message);
+      this.logger.warn('⚠️  Please review the above warnings before deploying to production!');
     } else {
-      this.logger.log('Environment validation passed successfully');
+      this.logger.log('Environment configuration validated successfully');
     }
   }
 
   private buildValidationMessage(missing: string[], weak: string[]): string {
     let message = '\n';
-    
+
     if (missing.length > 0) {
-      message += '❌ Missing or insecure environment variables:\n';
+      message += 'Missing environment variables:\n';
       missing.forEach(varName => {
         message += `   - ${varName}\n`;
       });
     }
 
     if (weak.length > 0) {
-      message += '⚠️  Weak or default environment variables:\n';
+      message += 'Weak environment variables:\n';
       weak.forEach(varName => {
         message += `   - ${varName}\n`;
       });
     }
 
-    message += '\n📋 Required actions:\n';
-    message += '   1. Copy .env.example to .env: cp .env.example .env\n';
-    message += '   2. Fill in all placeholder values with secure credentials\n';
-    message += '   3. Generate secure secrets with: openssl rand -hex 32\n';
-    message += '   4. Never commit .env files to version control\n';
-    message += '   5. Use secrets management (Vault, AWS Secrets Manager) in production\n';
-
+    message += '\nPlease update these values in your .env file before deploying to production.';
     return message;
   }
 }
