@@ -30,6 +30,7 @@ import hpp from 'hpp';
 import helmet from 'helmet';
 import compression from 'compression';
 import { getAllowedOrigins } from './config/cors.config';
+import { EnvironmentValidationMiddleware } from './config/environment.validation';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // PHASE 0 â€” FAIL-FAST ENVIRONMENT VALIDATION
@@ -211,6 +212,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
   app.use(hpp());
+  app.use(new EnvironmentValidationMiddleware().use.bind(new EnvironmentValidationMiddleware()));
 
   // Security Headers with explicit CSP and HSTS
   app.use(
@@ -266,9 +268,7 @@ async function bootstrap() {
     ],
   });
 
-  app.setGlobalPrefix('api', {
-    exclude: ['/'],
-  });
+  app.setGlobalPrefix('api', { exclude: [] });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -327,7 +327,7 @@ const SHOULD_CLUSTER = process.env.NODE_ENV === 'production' && RAM_TIER > 512;
 if (SHOULD_CLUSTER) {
   ClusterService.clusterize(() => {
     bootstrap().catch((err) => {
-      console.error('CRITICAL_BOOT_EXIT (Worker):', err.message);
+      console.error('CRITICAL_BOOT_EXIT (Worker):', err);
       process.exit(1);
     });
   });
@@ -336,7 +336,7 @@ if (SHOULD_CLUSTER) {
     `[BOOT] Scaling Strategy: Single Process (Vertical) â€” ${RAM_TIER}MB Tier Baseline.`,
   );
   bootstrap().catch((err) => {
-    console.error('CRITICAL_BOOT_EXIT (Primary):', err.message);
+    console.error('CRITICAL_BOOT_EXIT (Primary):', err);
     process.exit(1);
   });
 }

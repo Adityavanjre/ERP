@@ -16,6 +16,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { Response, Request as ExpressRequest } from 'express';
+import { randomBytes } from 'crypto';
 import { AuthenticatedRequest } from '../common/interfaces/request.interface';
 import { AuthResponse } from './interfaces/auth-response.interface';
 import { AuthService } from './auth.service';
@@ -161,6 +162,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @AllowIdentity()
+  @AllowUnboarded()
   @MobileAction('VIEW_TENANTS')
   @Get('tenants')
   async getTenants(@Req() req: AuthenticatedRequest) {
@@ -481,7 +483,7 @@ export class AuthController {
     // (e.g., clicking a link from an email). 'lax' allows it on top-level GET navigations
     // while still blocking cross-site POST/PUT/PATCH/DELETE — which is the correct threat model.
     // Non-httpOnly so frontend can read it to send X-CSRF-Token header.
-    const csrfToken = require('crypto').randomBytes(32).toString('hex');
+    const csrfToken = randomBytes(32).toString('hex');
     res.cookie('nexus-csrf', csrfToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
