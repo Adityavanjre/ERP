@@ -1251,7 +1251,7 @@ export class AuthService {
           id: t.id,
           name: t.name,
           slug: t.slug,
-           // Explicitly label shadowed tenants
+          role: membership ? (typeof membership.permissions === 'string' ? membership.permissions : 'Member') : 'Shadow',
           isOnboarded: t.isOnboarded,
         };
       });
@@ -1261,7 +1261,7 @@ export class AuthService {
       id: m.tenant.id,
       name: m.tenant.name,
       slug: m.tenant.slug,
-      
+      role: typeof m.permissions === 'string' ? m.permissions : 'Member',
       isOnboarded: m.tenant.isOnboarded,
     }));
   }
