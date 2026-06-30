@@ -12,8 +12,12 @@ if (!gotTheLock) {
 // Environment configuration
 const isDev = process.argv.includes('--dev');
 const FRONTEND_URL = process.env.NEXUS_FRONTEND_URL || 'http://localhost:3000';
-const BACKEND_URL = process.env.NEXUS_BACKEND_URL || 'http://localhost:4000';
 const PRODUCTION_URL = process.env.NEXUS_PROD_URL || 'https://klypso.in';
+
+// Next.js basePath is /portal — always load with the prefix
+const PORTAL_PATH = '/portal';
+const DEV_PORTAL_URL = `${FRONTEND_URL}${PORTAL_PATH}`;
+const PROD_PORTAL_URL = `${PRODUCTION_URL}${PORTAL_PATH}`;
 
 let mainWindow;
 let tray;
@@ -36,16 +40,16 @@ function createWindow() {
     backgroundColor: '#f8fafc',
   });
 
-  // Load the app
+  // Load the app — always use the /portal basePath prefix
   const startUrl = isDev
-    ? FRONTEND_URL
+    ? DEV_PORTAL_URL
     : url.format({
         pathname: path.join(__dirname, '..', 'frontend', '.next', 'server', 'app', 'index.html'),
         protocol: 'file:',
         slashes: true,
       });
 
-  const productionUrl = isDev ? FRONTEND_URL : PRODUCTION_URL;
+  const productionUrl = isDev ? DEV_PORTAL_URL : PROD_PORTAL_URL;
 
   // CLOUDFLARE BLOCK FIX: Cloudflare Bot Fight Mode blocks explicit "Electron" user agents.
   // We mock a standard Chrome Windows user agent to allow the XHR requests through.
@@ -257,7 +261,12 @@ app.on('window-all-closed', () => {
 app.on('web-contents-created', (_, contents) => {
   contents.on('will-navigate', (event, navigationUrl) => {
     const parsedUrl = new URL(navigationUrl);
-    if (parsedUrl.origin !== 'https://klypso.in' && parsedUrl.origin !== 'http://localhost:3000') {
+    const allowedOrigins = [
+      'https://klypso.in',
+      'http://localhost:3000',
+      'http://localhost:4000',
+    ];
+    if (!allowedOrigins.includes(parsedUrl.origin)) {
       event.preventDefault();
       shell.openExternal(navigationUrl);
     }

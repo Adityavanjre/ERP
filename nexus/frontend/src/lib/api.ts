@@ -136,7 +136,11 @@ api.interceptors.request.use(
 
     if (!handledOfflineRequest) {
       await ensureNetworkConsent();
-      await ensureRecentUserInteraction();
+      // Only enforce recent user interaction on mutating requests (POST/PUT/PATCH/DELETE)
+      // GET requests are background fetches and should never be blocked by interaction check
+      if (config.method && MUTATING_METHODS.has(config.method.toLowerCase())) {
+        await ensureRecentUserInteraction();
+      }
     }
 
     // SEC-006: Authorization header injection from localStorage removed.

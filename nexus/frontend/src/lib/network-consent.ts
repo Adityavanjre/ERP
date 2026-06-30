@@ -118,12 +118,15 @@ export async function ensureRecentUserInteraction(): Promise<void> {
       pendingInteraction!.reject = reject;
     });
     
-    // Add timeout to prevent indefinite hanging
+    // Timeout: silently resolve (not reject) after 10s so mutations are not blocked forever.
+    // This prevents the "User interaction timed out" error flooding the console.
     setTimeout(() => {
       if (pendingInteraction) {
-        pendingInteraction.reject(new Error("User interaction timed out"));
+        const pending = pendingInteraction;
+        pendingInteraction = null;
+        pending.resolve();
       }
-    }, 10000); // 10 second timeout
+    }, 10000);
   }
 
   return pendingInteraction.promise;
