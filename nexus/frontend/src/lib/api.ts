@@ -1,6 +1,7 @@
 import axios, { type AxiosResponse } from "axios";
 import {
   handleDesktopOfflineRequest,
+  isDesktopOfflineMode,
   shouldHandleDesktopOfflineRequest,
 } from "./desktop-offline";
 import {
@@ -111,10 +112,10 @@ api.interceptors.request.use(
     if (handledOfflineRequest) {
       config.adapter = async () => handleDesktopOfflineRequest(config);
     }
-    // DESKTOP-SHELL PROTECTION: If this is the desktop shell and we are NOT in a cloud session,
-    // we must ABORT any request that isn't handled by the bridge above.
-    // This prevents "cloud leakage" that creates unintended usage on Render and triggers 429s.
-    else if (isDesktopShell() && !localStorage.getItem("k_cloud_sync_active")) {
+    // DESKTOP-SHELL PROTECTION: Only block requests in OFFLINE MODE (not cloud mode).
+    // In offline mode, k_desktop_mode is set to "offline" and we should NOT make cloud requests.
+    // In cloud mode (user logged in via web/cloud), allow requests.
+    else if (isDesktopOfflineMode()) {
       const isAuthRoute =
         config.url?.includes("auth/login") ||
         config.url?.includes("auth/mfa") ||
@@ -123,11 +124,11 @@ api.interceptors.request.use(
         config.url?.includes("auth/select-tenant") ||
         config.url?.includes("auth/onboarding");
       if (!isAuthRoute) {
-        // Abort the request as "Forbidden Local Only"
+        // Abort the request as "Forbidden - Offline Mode Only"
         const controller = new AbortController();
         config.signal = controller.signal;
         controller.abort(
-          "Klypso Air-Gap: This request is blocked to prevent unintended cloud usage. Please enable cloud sync to allow network traffic.",
+          "Klypso Air-Gap: This request is blocked because you're in offline mode. Please enable cloud sync in settings.",
         );
         return config;
       }

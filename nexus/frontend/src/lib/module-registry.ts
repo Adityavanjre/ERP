@@ -65,6 +65,36 @@ export const SYSTEM_MODULES: Record<string, ModuleDefinition> = {
     description: "Vehicle tracking, dispatch, and delivery management.",
     category: "Specialized",
   },
+  hr: {
+    id: "hr",
+    name: "Human Resources",
+    description: "Employee management, payroll, leaves, and performance tracking.",
+    category: "Operations",
+  },
+  purchases: {
+    id: "purchases",
+    name: "Purchases",
+    description: "Purchase orders, vendor management, and procurement workflow.",
+    category: "Operations",
+  },
+  nbfc: {
+    id: "nbfc",
+    name: "NBFC & Loans",
+    description: "Loan management, EMI tracking, and financial services.",
+    category: "Finance",
+  },
+  construction: {
+    id: "construction",
+    name: "Construction",
+    description: "Project tracking, site management, and construction workflows.",
+    category: "Specialized",
+  },
+  retail: {
+    id: "retail",
+    name: "Retail Management",
+    description: "Retail-specific features including store management and barcoding.",
+    category: "Operations",
+  },
 };
 
 export const getAllModules = (): ModuleDefinition[] => Object.values(SYSTEM_MODULES);
