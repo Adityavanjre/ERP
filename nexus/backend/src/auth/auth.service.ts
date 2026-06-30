@@ -1338,6 +1338,9 @@ export class AuthService {
         include: { memberships: { include: { tenant: true } } },
       });
 
+      // Rate limiting for MFA verification to prevent brute-force attacks
+      await this.checkBruteForce(user);
+
       if (!user || !user.mfaSecret)
         throw new UnauthorizedException('MFA not configured');
 
@@ -1393,6 +1396,9 @@ export class AuthService {
       );
     } catch (err: unknown) {
       if (err instanceof UnauthorizedException) {
+        // Record failure for brute-force protection
+        await this.recordLoginFailure(user);
+        
         // Already a typed NestJS exception (e.g. 'Invalid MFA token') — rethrow as-is
         // to preserve the original message without losing stack trace info.
         throw err;

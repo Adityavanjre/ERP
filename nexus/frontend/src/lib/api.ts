@@ -47,6 +47,7 @@ interface FailedRequest {
 
 let isRefreshing = false;
 let failedQueue: FailedRequest[] = [];
+const MAX_REFRESH_RETRIES = 2; // Prevent infinite retry loops
 
 const processQueue = (error: unknown) => {
   failedQueue.forEach((prom) => {

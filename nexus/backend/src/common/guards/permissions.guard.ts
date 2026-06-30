@@ -43,7 +43,8 @@ export class PermissionsGuard implements CanActivate {
     // DEFENSE-IN-DEPTH: Treat missing channel as MOBILE (most restricted)
     const channel = user?.channel || 'MOBILE';
 
-    if (!requiredPermissions) {
+    // Null check for requiredPermissions to prevent TypeError
+    if (!requiredPermissions || !Array.isArray(requiredPermissions)) {
       // Fail-Secure: If no permissions defined and on mobile, block to prevent silent bypass
       if (channel === 'MOBILE') {
         const moduleName = this.reflector.getAllAndOverride<string>(
@@ -78,17 +79,19 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    if (!user || (user.type !== 'tenant_scoped' && user.type !== 'admin' && !user.isSuperAdmin)) {
+    if (!user || (!user.tenantId && user.type !== 'admin')) {
       throw new ForbiddenException('User context missing');
     }
 
-    let userRole = 'Biller';
-    if (user.role) {
+    // SEC-007: Consistent role resolution to prevent ambiguity
+    let userRole: string = 'Member'; // Default role
+    if (user.role && typeof user.role === 'string') {
       userRole = user.role;
-    } else if (typeof user.isSuperAdmin === 'string') {
-      userRole = user.isSuperAdmin;
     } else if (user.isSuperAdmin === true || user.type === 'admin') {
       userRole = 'Owner';
+    } else if (user.isSuperAdmin && typeof user.isSuperAdmin === 'string') {
+      // Handle string type for backward compatibility
+      userRole = user.isSuperAdmin;
     }
 
     const userPermissions = (RolePermissions as any)[userRole] || [];

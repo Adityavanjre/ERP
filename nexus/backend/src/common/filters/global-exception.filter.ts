@@ -71,7 +71,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           break;
         case 'P2022':
           status = HttpStatus.INTERNAL_SERVER_ERROR;
-          const missingColumn = prismaErr.meta?.column_name || 'unknown';
+          // SEC-008: Safely access meta property to prevent secondary errors
+          const meta = prismaErr.meta || {};
+          const missingColumn = (meta as { column_name?: string }).column_name || 'unknown';
           message = `Database error (P2022): The column '${missingColumn}' does not exist in the current database. Please contact support.`;
           this.logger.error(
             `P2022 Missing column: ${missingColumn}`,

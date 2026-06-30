@@ -1055,7 +1055,9 @@ function normalizeApiPath(url = ""): URL {
     .replace(/^\/?api\/v1\/?/i, "")
     .replace(/^\/+/, "");
 
-  return new URL(`http://desktop.local/${stripped}`);
+  // Use window.location.protocol if available, otherwise default to http
+  const protocol = typeof window !== 'undefined' && window.location ? window.location.protocol : 'http:';
+  return new URL(`${protocol}//desktop.local/${stripped}`);
 }
 
 function parseBody<T>(config: InternalAxiosRequestConfig): T {
