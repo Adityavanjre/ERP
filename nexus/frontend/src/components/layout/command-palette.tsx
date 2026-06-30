@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -50,7 +50,7 @@ export function CommandPalette(): React.ReactNode {
       }
       setSearching(true);
       try {
-        const res = await api.get(`/system/search?q=${query}`);
+        const res = await api.get(`system/search?q=${query}`);
         setResults(res.data);
       } catch (err) {
         console.error("Search failed", err);
@@ -149,7 +149,7 @@ export function CommandPalette(): React.ReactNode {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
-        <DialogHeader className="p-4 sm:p-6 border-b border-slate-100">
+        <DialogHeader className="p-4 sm:p-3 border-b border-slate-100">
           <div className="flex items-center gap-3 sm:gap-4">
             <DialogTitle className="sr-only">Command Palette</DialogTitle>
             <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
@@ -157,7 +157,7 @@ export function CommandPalette(): React.ReactNode {
               <Input
                 autoFocus
                 placeholder="Search..."
-                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-6 sm:py-8 font-medium px-0 sm:px-3 w-full"
+                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-3 sm:py-4 font-medium px-0 sm:px-3 w-full"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -178,7 +178,7 @@ export function CommandPalette(): React.ReactNode {
           </div>
         </DialogHeader>
 
-        <div className="max-h-[450px] overflow-y-auto p-4 space-y-6 pb-6">
+        <div className="max-h-[450px] overflow-y-auto p-4 space-y-3 pb-3">
           {/* Search Results */}
           {results.length > 0 && (
             <div className="space-y-2">
@@ -269,14 +269,14 @@ export function CommandPalette(): React.ReactNode {
           )}
         </div>
 
-        <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
-          <div className="hidden sm:flex items-center gap-6">
+        <div className="p-4 sm:p-3 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
+          <div className="hidden sm:flex items-center gap-3">
             <div className="flex items-center gap-2">
               <Badge
                 variant="outline"
                 className="border-slate-200 text-slate-400 px-2 py-0.5 font-black"
               >
-                â†µ
+                ↵
               </Badge>
               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                 Select
@@ -287,7 +287,7 @@ export function CommandPalette(): React.ReactNode {
                 variant="outline"
                 className="border-slate-200 text-slate-400 px-2 py-0.5 font-black"
               >
-                â†‘â†“
+                ↑↓
               </Badge>
               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                 Navigate

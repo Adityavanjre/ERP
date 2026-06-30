@@ -64,7 +64,7 @@ export default function WarehousesPage() {
   }, []); // Fire once on mount. Refresh triggered after mutations via onSuccess callback.
 
   return (
-    <div className="p-4 md:p-8 space-y-4 bg-slate-50/50 min-h-screen">
+    <div className="p-4 md:p-4 space-y-4 bg-slate-50/50 min-h-screen">
       <CreateWarehouseDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
@@ -88,13 +88,13 @@ export default function WarehousesPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {loading ? (
           <div className="col-span-full h-64 flex items-center justify-center">
             <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
           </div>
         ) : warehouses.length === 0 ? (
-          <Card className="col-span-full border-dashed border-2 border-slate-200 bg-white/50 py-12 text-center rounded-3xl">
+          <Card className="col-span-full border-dashed border-2 border-slate-200 bg-white/50 py-4 text-center rounded-3xl">
             <CardContent className="space-y-4">
               <div className="bg-blue-50 h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <LayoutGrid className="h-8 w-8 text-blue-500" />
@@ -120,7 +120,7 @@ export default function WarehousesPage() {
               key={w.id}
               className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden hover:scale-[1.02] transition-all group cursor-pointer border-none"
             >
-              <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
+              <CardHeader className="bg-slate-50 border-b border-slate-100 p-3">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <CardTitle className="text-slate-900 font-black text-xl">
@@ -149,7 +149,7 @@ export default function WarehousesPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-3 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">

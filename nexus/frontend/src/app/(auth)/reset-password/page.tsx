@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -89,7 +89,7 @@ function ResetPasswordForm() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent)] pointer-events-none" />
 
       <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-10 rounded-[2.5rem] p-4">
-        <CardHeader className="space-y-1 pb-8 text-center">
+        <CardHeader className="space-y-1 pb-4 text-center">
           <div className="flex justify-center mb-4">
             <ShieldCheck className="text-blue-600" size={40} />
           </div>
@@ -101,7 +101,7 @@ function ResetPasswordForm() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3">
             {error && (
               <div
                 className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider"
@@ -144,7 +144,7 @@ function ResetPasswordForm() {
               />
             </div>
           </CardContent>
-          <CardFooter className="pb-8">
+          <CardFooter className="pb-4">
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
               disabled={loading}

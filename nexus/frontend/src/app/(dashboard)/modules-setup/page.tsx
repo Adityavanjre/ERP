@@ -73,7 +73,7 @@ export default function ModuleSetupPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-4xl shadow-xl border-0 rounded-3xl overflow-hidden">
-        <CardHeader className="bg-slate-900 text-white p-8">
+        <CardHeader className="bg-slate-900 text-white p-4">
           <CardTitle className="text-2xl font-black tracking-tight">
             Configure Your Workspace
           </CardTitle>
@@ -84,7 +84,7 @@ export default function ModuleSetupPage() {
 
         <CardContent className="p-4">
           {error && (
-            <div className="mb-6 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
+            <div className="mb-3 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
               {error}
             </div>
           )}
@@ -97,7 +97,7 @@ export default function ModuleSetupPage() {
                   key={mod.id}
                   onClick={() => toggleModule(mod.id)}
                   className={`
-                    relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-200
+                    relative p-3 rounded-2xl border-2 cursor-pointer transition-all duration-200
                     ${isSelected 
                       ? 'border-blue-600 bg-blue-50/50 shadow-sm' 
                       : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -132,14 +132,14 @@ export default function ModuleSetupPage() {
             })}
           </div>
         </CardContent>
-        <CardFooter className="bg-slate-50 p-8 border-t border-slate-100 flex justify-between items-center">
+        <CardFooter className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center">
           <p className="text-sm font-bold text-slate-500">
             {selected.size} modules selected
           </p>
           <Button
             onClick={handleComplete}
             disabled={loading || initializing || selected.size === 0}
-            className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
+            className="h-12 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
           >
             {(loading || initializing) ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
             {initializing ? "Loading..." : "Finish Setup"}

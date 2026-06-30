@@ -43,7 +43,7 @@ export default function AppDetailPage() {
     async (showLoading = false) => {
       try {
         if (showLoading) setLoading(true);
-        const res = await api.get("/system/apps");
+        const res = await api.get("system/apps");
         const found = res.data.find((a: AppManifest) => a.name === appName);
         setApp(found);
       } catch {
@@ -61,7 +61,7 @@ export default function AppDetailPage() {
 
   const handleInstall = useCallback(async () => {
     try {
-      await api.post(`/system/apps/${appName}/install`);
+      await api.post(`system/apps/${appName}/install`);
       toast.success(`${app?.label} activated successfully`);
       syncAppData(true);
     } catch {
@@ -71,7 +71,7 @@ export default function AppDetailPage() {
 
   const handleUninstall = useCallback(async () => {
     try {
-      await api.post(`/system/apps/${appName}/uninstall`);
+      await api.post(`system/apps/${appName}/uninstall`);
       toast.success(`${app?.label} removed successfully`);
       syncAppData(true);
     } catch {

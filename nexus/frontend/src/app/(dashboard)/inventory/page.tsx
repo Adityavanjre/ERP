@@ -167,7 +167,7 @@ export default function InventoryPage() {
         if (showLoading) setLoading(true);
         setFetchError(null);
         const [prodRes, statsRes, aiRes, whRes] = await Promise.all([
-          api.get(`/inventory/products?page=${page}&limit=50`),
+          api.get(`inventory/products?page=${page}&limit=50`),
           api.get("inventory/stats"),
           api.get("system/ai/inventory-forecast"),
           api.get("inventory/warehouses"),
@@ -273,7 +273,7 @@ export default function InventoryPage() {
         minStockLevel: Number(formData.minStockLevel),
       };
 
-      await api.patch(`/inventory/products/${editingProduct.id}`, payload);
+      await api.patch(`inventory/products/${editingProduct.id}`, payload);
 
       setEditingProduct(null);
       setFormData({
@@ -315,7 +315,7 @@ export default function InventoryPage() {
       onConfirm: async () => {
         try {
           setUILocked(true);
-          await api.delete(`/inventory/products/${id}`);
+          await api.delete(`inventory/products/${id}`);
           toast.success("Product deleted successfully");
           syncInventory(false);
         } catch {
@@ -410,7 +410,7 @@ export default function InventoryPage() {
             </Button>
           </div>
           <Button
-            className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
+            className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
             onClick={() => setShowForm(!showForm)}
           >
             <Plus className="mr-2 h-4 w-4" /> Add Product
@@ -479,7 +479,7 @@ export default function InventoryPage() {
       </div>
 
       {showForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
+        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-4 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               Add Product
@@ -541,9 +541,8 @@ export default function InventoryPage() {
                             warehouseId: e.target.value,
                           })
                         }
-                        required
                       >
-                        <option value="">Choose Warehouse *</option>
+                        <option value="">Choose Warehouse (Optional)</option>
                         {warehouses.map((w) => (
                           <option key={w.id} value={w.id}>
                             {w.name}
@@ -721,7 +720,7 @@ export default function InventoryPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-5"
                 >
                   {isSubmitting ? "Syncing..." : "Register Product"}
                 </Button>
@@ -968,7 +967,7 @@ export default function InventoryPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-10"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl shadow-lg shadow-blue-500/10 px-5"
               >
                 {isSubmitting ? "Syncing..." : "Commit Changes"}
               </Button>
@@ -1002,7 +1001,7 @@ export default function InventoryPage() {
                 .map((rec: ForecastRecommendation, i: number) => (
                   <div
                     key={i}
-                    className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-4 relative overflow-hidden group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all border-b-2 border-b-transparent hover:border-b-blue-500"
+                    className="p-3 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-4 relative overflow-hidden group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all border-b-2 border-b-transparent hover:border-b-blue-500"
                   >
                     <div className="flex justify-between items-start relative z-10">
                       <div className="space-y-1">
@@ -1063,7 +1062,7 @@ export default function InventoryPage() {
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
         <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-4">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
                 Product Inventory
@@ -1299,7 +1298,7 @@ export default function InventoryPage() {
               )}
             </TableBody>
           </Table>
-          <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/50">
+          <div className="flex justify-between items-center px-4 py-5 border-t border-slate-100 bg-slate-50/50">
             <Button
               variant="ghost"
               size="sm"

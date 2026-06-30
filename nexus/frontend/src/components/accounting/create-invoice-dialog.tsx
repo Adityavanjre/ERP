@@ -380,7 +380,7 @@ export function CreateInvoiceDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-6 py-4">
+        <div className="grid grid-cols-2 gap-3 py-4">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Customer</Label>
@@ -618,7 +618,7 @@ export function CreateInvoiceDialog({
           </div>
         </div>
 
-        <DialogFooter className="pt-6">
+        <DialogFooter className="pt-3">
           <Button
             variant="ghost"
             onClick={onClose}
@@ -628,7 +628,7 @@ export function CreateInvoiceDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-amber-600 hover:bg-amber-700 text-white px-8"
+            className="bg-amber-600 hover:bg-amber-700 text-white px-4"
             disabled={loading}
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

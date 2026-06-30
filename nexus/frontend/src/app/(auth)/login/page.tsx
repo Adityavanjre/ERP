@@ -276,8 +276,8 @@ export default function LoginPage() {
 
       <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-10 rounded-[2.5rem] p-4">
         <form onSubmit={handleLogin}>
-          <CardHeader className="space-y-1 pb-8">
-            <div className="flex justify-center mb-6">
+          <CardHeader className="space-y-1 pb-4">
+            <div className="flex justify-center mb-3">
               <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100">
                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-500/20">
                   K
@@ -293,7 +293,7 @@ export default function LoginPage() {
                 : "Welcome back. Enter your details to continue."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3">
             {error && (
               <div
                 className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider animate-in fade-in zoom-in-95"
@@ -401,7 +401,7 @@ export default function LoginPage() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-col gap-4 pb-8">
+          <CardFooter className="flex flex-col gap-4 pb-4">
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl uppercase tracking-widest text-xs"

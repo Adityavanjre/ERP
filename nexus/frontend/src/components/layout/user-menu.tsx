@@ -33,7 +33,7 @@ export const UserMenu = () => {
 
   const handleLogout = useCallback(async () => {
     try {
-      await api.post("/auth/logout");
+      await api.post("auth/logout");
     } catch (e) {
       console.error("Logout API failed", e);
     }

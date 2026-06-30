@@ -147,7 +147,7 @@ export default function ReportsPage() {
         {/* --- TRIAL BALANCE --- */}
         <TabsContent value="trial-balance">
           <Card className="rounded-3xl border-none shadow-xl shadow-slate-200/40">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-6">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle className="text-xl font-black text-slate-900">
@@ -226,7 +226,7 @@ export default function ReportsPage() {
               </Table>
               {/* Totals Row */}
               {trialBalance && (
-                <div className="border-t-2 border-slate-900 py-4 px-8 flex justify-end gap-16 bg-slate-50">
+                <div className="border-t-2 border-slate-900 py-4 px-4 flex justify-end gap-16 bg-slate-50">
                   <div className="text-right">
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
                       Total Dr
@@ -251,11 +251,11 @@ export default function ReportsPage() {
 
         {/* --- PROFIT & LOSS --- */}
         <TabsContent value="profit-loss">
-          <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid lg:grid-cols-3 gap-3 mb-4">
             <Card
               className={`rounded-3xl border-none shadow-xl col-span-1 overflow-hidden ${profitLoss?.isProfitable ? "bg-emerald-600" : "bg-red-600"} text-white`}
             >
-              <CardContent className="p-8 flex flex-col gap-2 h-full justify-center">
+              <CardContent className="p-4 flex flex-col gap-2 h-full justify-center">
                 <div className="text-[10px] font-black uppercase tracking-widest text-white/70">
                   Net Profit / (Loss)
                 </div>
@@ -278,7 +278,7 @@ export default function ReportsPage() {
             <Card className="rounded-3xl border-none shadow-xl lg:col-span-2 overflow-hidden">
               <CardContent className="p-0">
                 {/* Revenue Section */}
-                <div className="p-6 border-b border-slate-100">
+                <div className="p-3 border-b border-slate-100">
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
                     Income / Revenue
                   </div>
@@ -306,7 +306,7 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Expense Section */}
-                <div className="p-6">
+                <div className="p-3">
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
                     Expenses
                   </div>

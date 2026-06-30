@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 selection:bg-blue-500/10">
         <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-10 rounded-[2.5rem] p-4 text-center">
-          <CardHeader className="space-y-4 pb-8">
+          <CardHeader className="space-y-4 pb-4">
             <div className="flex justify-center">
               <div className="p-4 rounded-full bg-blue-50 border border-blue-100 text-blue-600">
                 <MailCheck size={48} strokeWidth={1.5} />
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
               If an account exists for {email}, we've sent a recovery link.
             </CardDescription>
           </CardHeader>
-          <CardFooter className="flex flex-col gap-4 pb-8">
+          <CardFooter className="flex flex-col gap-4 pb-4">
             <Link href="/login" className="w-full">
               <Button
                 variant="outline"
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.03),transparent)] pointer-events-none" />
 
       <Card className="w-full max-w-md bg-white border-slate-200 shadow-2xl relative z-10 rounded-[2.5rem] p-4">
-        <CardHeader className="space-y-1 pb-8 text-center">
+        <CardHeader className="space-y-1 pb-4 text-center">
           <CardTitle className="text-3xl font-extrabold tracking-tight uppercase">
             Recovery
           </CardTitle>
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3">
             {error && (
               <div
                 className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider"
@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4 pb-8">
+          <CardFooter className="flex flex-col gap-4 pb-4">
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-xs"
               disabled={loading}

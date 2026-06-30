@@ -79,7 +79,7 @@ export function ApiKeyManager() {
     )
       return;
     try {
-      await api.delete(`/system/api/keys/${id}`);
+      await api.delete(`system/api/keys/${id}`);
       fetchKeys();
       toast.success("Key revoked");
     } catch {
@@ -95,7 +95,7 @@ export function ApiKeyManager() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <Card className="border-blue-200/50 bg-blue-50/5 backdrop-blur-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -127,7 +127,7 @@ export function ApiKeyManager() {
             </div>
             <Button
               onClick={generateKey}
-              className="h-11 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20"
+              className="h-11 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20"
             >
               <Plus className="w-4 h-4 mr-2" /> Create Secret
             </Button>
@@ -139,7 +139,7 @@ export function ApiKeyManager() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="mt-6 p-6 rounded-2xl bg-slate-900 text-white border-2 border-blue-500/50 shadow-2xl relative overflow-hidden"
+                className="mt-6 p-3 rounded-2xl bg-slate-900 text-white border-2 border-blue-500/50 shadow-2xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-2">
                   <Badge className="bg-blue-500 text-white font-black border-none px-3 py-1 animate-pulse">
@@ -182,7 +182,7 @@ export function ApiKeyManager() {
       </Card>
 
       <Card className="rounded-[32px] overflow-hidden border-none shadow-xl shadow-slate-200/40">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-8 py-6">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 px-4 py-3">
           <CardTitle className="text-lg font-black tracking-tight">
             Active Credentials
           </CardTitle>
@@ -190,20 +190,20 @@ export function ApiKeyManager() {
         <CardContent className="p-0">
           <div className="divide-y divide-slate-50">
             {loading ? (
-              <div className="p-8 text-center animate-pulse text-slate-400 font-bold tracking-widest uppercase text-xs">
+              <div className="p-4 text-center animate-pulse text-slate-400 font-bold tracking-widest uppercase text-xs">
                 Synchronizing Vault...
               </div>
             ) : keys.length === 0 ? (
-              <div className="p-10 text-center text-slate-400 font-medium italic">
+              <div className="p-4 text-center text-slate-400 font-medium italic">
                 No API keys active. Connectivity is offline.
               </div>
             ) : (
               keys.map((key) => (
                 <div
                   key={key.id}
-                  className="p-6 px-8 flex items-center justify-between hover:bg-slate-50 transition-all group"
+                  className="p-3 px-4 flex items-center justify-between hover:bg-slate-50 transition-all group"
                 >
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
                     <div className="p-3.5 bg-slate-900 rounded-2xl shadow-lg shadow-slate-900/10 group-hover:scale-110 transition-transform">
                       <Key className="w-5 h-5 text-blue-400" />
                     </div>

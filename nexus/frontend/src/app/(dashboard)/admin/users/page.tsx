@@ -343,7 +343,7 @@ export default function SuperAdminPage() {
   // ──── Detail View ────
   if (selectedTenant) {
     return (
-      <div className="p-4 md:p-10 space-y-8 bg-slate-50/50 min-h-screen pb-20">
+      <div className="p-4 md:p-4 space-y-4 bg-slate-50/50 min-h-screen pb-20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setSelectedTenant(null)}
@@ -375,7 +375,7 @@ export default function SuperAdminPage() {
 
         {/* Tenant Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px]">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Industry
             </p>
@@ -383,7 +383,7 @@ export default function SuperAdminPage() {
               {selectedTenant.industry || selectedTenant.type || "General"}
             </p>
           </Card>
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px]">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Users
             </p>
@@ -391,7 +391,7 @@ export default function SuperAdminPage() {
               {selectedTenant.users?.length || selectedTenant.userCount}
             </p>
           </Card>
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px]">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               State / GSTIN
             </p>
@@ -402,7 +402,7 @@ export default function SuperAdminPage() {
               {selectedTenant.gstin || "No GSTIN"}
             </p>
           </Card>
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px]">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Created
             </p>
@@ -456,7 +456,7 @@ export default function SuperAdminPage() {
 
         {/* Users Table */}
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight mb-6 flex items-center gap-3">
+          <h2 className="text-xl font-black text-slate-900 tracking-tight mb-3 flex items-center gap-3">
             <Users className="w-6 h-6 text-slate-400" />
             Team Members
           </h2>
@@ -464,7 +464,7 @@ export default function SuperAdminPage() {
             {(selectedTenant.users || []).map((tu: TenantUser) => (
               <Card
                 key={tu.id}
-                className="bg-white border-none shadow-lg shadow-slate-200/30 p-6 rounded-[24px] flex flex-col lg:flex-row items-start lg:items-center gap-6 justify-between"
+                className="bg-white border-none shadow-lg shadow-slate-200/30 p-3 rounded-[24px] flex flex-col lg:flex-row items-start lg:items-center gap-3 justify-between"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 font-black text-lg">
@@ -639,13 +639,13 @@ export default function SuperAdminPage() {
             onClose={() => setShowPasswordModal(false)}
             title="Reset User Password"
           >
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-slate-500 mb-3">
               This will generate a new temporary password for{" "}
               <strong>{modalTarget?.fullName || modalTarget?.email}</strong>.
               The user will need to change it on next login.
             </p>
             {tempPassword ? (
-              <div className="p-6 bg-emerald-50 rounded-2xl border-2 border-emerald-200">
+              <div className="p-3 bg-emerald-50 rounded-2xl border-2 border-emerald-200">
                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">
                   New Temporary Password
                 </p>
@@ -718,7 +718,7 @@ export default function SuperAdminPage() {
             }
           >
             <div
-              className={`p-6 rounded-2xl border-2 mb-6 ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}
+              className={`p-3 rounded-2xl border-2 mb-3 ${modalTarget?.lockoutUntil && new Date(modalTarget.lockoutUntil) > new Date() ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}
             >
               <div className="flex items-center gap-3 mb-3">
                 <AlertTriangle
@@ -773,7 +773,7 @@ export default function SuperAdminPage() {
             onClose={() => setShowModuleModal(false)}
             title="Manage Module Access"
           >
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-slate-500 mb-3">
               Toggle modules for <strong>{modalTarget?.name}</strong>.
               Predefined modules come from the industry config. You can enable
               additional modules here.
@@ -817,9 +817,9 @@ export default function SuperAdminPage() {
 
   // ──── Main List View ────
   return (
-    <div className="p-4 md:p-10 space-y-8 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-20">
+    <div className="p-4 md:p-4 space-y-4 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-20">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-4">
             <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
@@ -843,7 +843,7 @@ export default function SuperAdminPage() {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px] text-center">
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px] text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
               Total
             </p>
@@ -854,7 +854,7 @@ export default function SuperAdminPage() {
           {PLANS.map((plan) => (
             <Card
               key={plan}
-              className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px] text-center"
+              className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px] text-center"
             >
               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                 {plan}
@@ -907,7 +907,7 @@ export default function SuperAdminPage() {
       {/* Tenant List */}
       <div className="space-y-4">
         {tenants.length === 0 ? (
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-12 rounded-[32px] text-center">
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-4 rounded-[32px] text-center">
             <Building2 className="w-12 h-12 text-slate-200 mx-auto mb-4" />
             <p className="text-slate-400 font-black uppercase tracking-widest text-sm">
               No tenants found
@@ -917,10 +917,10 @@ export default function SuperAdminPage() {
           tenants.map((tenant) => (
             <Card
               key={tenant.id}
-              className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 lg:p-8 rounded-[28px] hover:shadow-2xl transition-all cursor-pointer group"
+              className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 lg:p-4 rounded-[28px] hover:shadow-2xl transition-all cursor-pointer group"
               onClick={() => openTenantDetail(tenant)}
             >
-              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 justify-between">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 justify-between">
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black text-lg shrink-0 group-hover:bg-blue-600 transition-colors">
                     {tenant.name.charAt(0).toUpperCase()}
@@ -1033,8 +1033,8 @@ function ModalOverlay({
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-[32px] shadow-2xl max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="relative bg-white rounded-[32px] shadow-2xl max-w-lg w-full p-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-xl font-black text-slate-900 tracking-tight">
             {title}
           </h3>

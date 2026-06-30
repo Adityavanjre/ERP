@@ -128,7 +128,7 @@ export default function WorkOrdersPage() {
           </p>
         </div>
         <CreateWorkOrderDialog refreshData={() => syncExecutionQueues(false)}>
-          <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold px-8 shadow-lg shadow-emerald-500/20 text-white h-11">
+          <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-bold px-4 shadow-lg shadow-emerald-500/20 text-white h-11">
             <Plus className="mr-2 h-4 w-4" /> New Work Order
           </Button>
         </CreateWorkOrderDialog>
@@ -191,7 +191,7 @@ export default function WorkOrdersPage() {
       </div>
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-6">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 md:py-4 px-4 md:px-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">

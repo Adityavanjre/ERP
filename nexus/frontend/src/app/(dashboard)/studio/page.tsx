@@ -107,7 +107,7 @@ export default function StudioPage() {
   }, [appName, modelName, modelLabel, fields]);
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-2 md:pt-6">
+    <div className="flex-1 space-y-4 p-4 md:p-4 pt-2 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
@@ -147,7 +147,7 @@ export default function StudioPage() {
               Select app and define object details.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4 pt-3">
             <div className="space-y-2">
               <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                 App Name
@@ -203,7 +203,7 @@ export default function StudioPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Field
             </Button>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-3 pt-3">
             {fields.map((field, index) => (
               <div
                 key={index}
@@ -266,10 +266,10 @@ export default function StudioPage() {
               </div>
             ))}
 
-            <div className="pt-6 border-t border-slate-100 flex justify-end">
+            <div className="pt-3 border-t border-slate-100 flex justify-end">
               <Button
                 onClick={handleGenerate}
-                className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold px-8 rounded-xl shadow-lg shadow-fuchsia-500/20 py-6"
+                className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold px-4 rounded-xl shadow-lg shadow-fuchsia-500/20 py-3"
               >
                 <Database className="mr-2 h-5 w-5" /> Create Custom Object
               </Button>
@@ -287,7 +287,7 @@ export default function StudioPage() {
               Grant permissions to system roles.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4 pt-3">
             {["Admin", "Manager", "Employee", "Viewer"].map((role) => (
               <div
                 key={role}

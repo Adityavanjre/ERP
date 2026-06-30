@@ -74,8 +74,8 @@ export function BOMDetailsDialog({
     try {
       setLoading(true);
       const [bomRes, costRes] = await Promise.all([
-        api.get(`/manufacturing/boms/${bomId}`),
-        api.get(`/manufacturing/boms/${bomId}/cost`),
+        api.get(`manufacturing/boms/${bomId}`),
+        api.get(`manufacturing/boms/${bomId}/cost`),
       ]);
       setBom(bomRes.data);
       setCostAnalysis(costRes.data);
@@ -108,11 +108,11 @@ export function BOMDetailsDialog({
         </DialogHeader>
 
         {loading ? (
-          <div className="py-12">
+          <div className="py-4">
             <LoadingSpinner text="Loading BOM Structure..." />
           </div>
         ) : bom ? (
-          <div className="space-y-6 py-4">
+          <div className="space-y-3 py-4">
             {/* Header Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-slate-50 border-slate-200 shadow-sm">
@@ -247,7 +247,7 @@ export function BOMDetailsDialog({
             </div>
           </div>
         ) : (
-          <div className="py-12 text-center text-slate-400">
+          <div className="py-4 text-center text-slate-400">
             Failed to load BOM details.
           </div>
         )}

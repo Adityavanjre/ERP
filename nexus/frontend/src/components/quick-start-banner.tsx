@@ -60,7 +60,7 @@ export function QuickStartBanner() {
   if (dismissed) return null;
 
   return (
-    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg mb-6">
+    <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg mb-3">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">

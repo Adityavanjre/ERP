@@ -73,7 +73,7 @@ export default function PharmacyPage() {
     );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-4 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <div className="p-4 bg-emerald-600 rounded-3xl shadow-xl shadow-emerald-500/20">
@@ -93,7 +93,7 @@ export default function PharmacyPage() {
             <TrendingUp className="h-4 w-4 mr-2" />
             Inventory Stats
           </Button>
-          <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 px-8 py-6 h-auto">
+          <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 px-4 py-3 h-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Medicine
           </Button>
@@ -101,25 +101,25 @@ export default function PharmacyPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <Card className="rounded-3xl border-slate-100 bg-emerald-50/20 border-emerald-100 shadow-sm p-6 text-center">
+        <Card className="rounded-3xl border-slate-100 bg-emerald-50/20 border-emerald-100 shadow-sm p-3 text-center">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-2">
             Total SKU
           </h4>
           <h3 className="text-3xl font-black text-emerald-900">1,248</h3>
         </Card>
-        <Card className="rounded-3xl border-slate-100 bg-amber-50/20 border-amber-100 shadow-sm p-6 text-center">
+        <Card className="rounded-3xl border-slate-100 bg-amber-50/20 border-amber-100 shadow-sm p-3 text-center">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2">
             Low Stock Items
           </h4>
           <h3 className="text-3xl font-black text-amber-900">42</h3>
         </Card>
-        <Card className="rounded-3xl border-slate-100 bg-rose-50/20 border-rose-100 shadow-sm p-6 text-center">
+        <Card className="rounded-3xl border-slate-100 bg-rose-50/20 border-rose-100 shadow-sm p-3 text-center">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-2">
             Expired Items
           </h4>
           <h3 className="text-3xl font-black text-rose-900">0</h3>
         </Card>
-        <Card className="rounded-3xl border-slate-100 bg-blue-50/20 border-blue-100 shadow-sm p-6 text-center">
+        <Card className="rounded-3xl border-slate-100 bg-blue-50/20 border-blue-100 shadow-sm p-3 text-center">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">
             Monthly Sales
           </h4>
@@ -128,7 +128,7 @@ export default function PharmacyPage() {
       </div>
 
       <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden border-none bg-white">
-        <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h2 className="font-black text-sm uppercase tracking-widest text-slate-400 shrink-0">
             Warehouse Inventory
           </h2>
@@ -151,11 +151,11 @@ export default function PharmacyPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 text-slate-500 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-8 py-4">Drug Code</th>
-                  <th className="px-8 py-4">Name & Category</th>
-                  <th className="px-8 py-4">Current Stock</th>
-                  <th className="px-8 py-4">Status</th>
-                  <th className="px-8 py-4">Price / Unit</th>
+                  <th className="px-4 py-4">Drug Code</th>
+                  <th className="px-4 py-4">Name & Category</th>
+                  <th className="px-4 py-4">Current Stock</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Price / Unit</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -164,10 +164,10 @@ export default function PharmacyPage() {
                     key={s.id}
                     className="border-t border-slate-50 hover:bg-slate-50/30 transition-all group"
                   >
-                    <td className="px-8 py-6 font-mono font-bold text-slate-400 text-xs">
+                    <td className="px-4 py-3 font-mono font-bold text-slate-400 text-xs">
                       {s.id}
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-3">
                       <div className="flex flex-col">
                         <span className="font-black text-slate-800 text-sm tracking-tight">
                           {s.name}
@@ -177,7 +177,7 @@ export default function PharmacyPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-3">
                       <span className="font-black text-slate-700">
                         {s.stock}
                       </span>
@@ -185,7 +185,7 @@ export default function PharmacyPage() {
                         {s.unit}
                       </span>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-3">
                       <Badge
                         className={cn(
                           "rounded-lg px-2 py-0.5 border-none font-bold text-[10px] uppercase tracking-wider",
@@ -202,7 +202,7 @@ export default function PharmacyPage() {
                         {s.status}
                       </Badge>
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-3">
                       <span className="font-black text-slate-900">
                         {currencySymbol}{s.price.toFixed(2)}
                       </span>
@@ -215,7 +215,7 @@ export default function PharmacyPage() {
         </CardContent>
       </Card>
 
-      <div className="bg-amber-50 border border-amber-100 p-8 rounded-[2.5rem] flex items-center gap-6">
+      <div className="bg-amber-50 border border-amber-100 p-4 rounded-[2.5rem] flex items-center gap-3">
         <div className="p-4 bg-white rounded-3xl shadow-sm">
           <Info className="h-6 w-6 text-amber-500" />
         </div>

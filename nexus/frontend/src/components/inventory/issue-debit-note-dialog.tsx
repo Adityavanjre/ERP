@@ -21,6 +21,8 @@ import {
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Plus, Trash2, FileText, Loader2, IndianRupee } from "lucide-react";
+import { InlineCreateProductDialog } from "../shared/inline-create-product-dialog";
+import { InlineCreateSupplierDialog } from "../shared/inline-create-supplier-dialog";
 
 interface Product {
   id: string;
@@ -55,6 +57,8 @@ export function IssueDebitNoteDialog({
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [isSupplierCreateOpen, setIsSupplierCreateOpen] = useState(false);
+  const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
 
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [selectedPOId, setSelectedPOId] = useState("");
@@ -68,8 +72,8 @@ export function IssueDebitNoteDialog({
     try {
       setLoading(true);
       const [supRes, prodRes] = await Promise.all([
-        api.get("/purchases/suppliers"),
-        api.get("/inventory/products?limit=1000"),
+        api.get("purchases/suppliers"),
+        api.get("inventory/products?limit=1000"),
       ]);
       setSuppliers(supRes.data || []);
       setProducts(prodRes.data?.data || []);
@@ -83,7 +87,7 @@ export function IssueDebitNoteDialog({
   const loadPurchaseOrders = useCallback(async (supplierId: string) => {
     if (!supplierId) return;
     try {
-      const res = await api.get(`/purchases/orders?supplierId=${supplierId}`);
+      const res = await api.get(`purchases/orders?supplierId=${supplierId}`);
       setPurchaseOrders(res.data?.data || []);
     } catch {
       // Optional: fail silently
@@ -147,7 +151,7 @@ export function IssueDebitNoteDialog({
 
     try {
       setSubmitting(true);
-      await api.post("/accounting/debit-notes", {
+      await api.post("accounting/debit-notes", {
         supplierId: selectedSupplierId,
         purchaseOrderId: selectedPOId || undefined,
         date,
@@ -185,8 +189,8 @@ export function IssueDebitNoteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-        <div className="bg-indigo-600 p-8 text-white relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
+        <div className="bg-indigo-600 p-4 text-white relative">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
             <FileText className="h-24 w-24" />
           </div>
           <DialogHeader className="relative z-10">
@@ -199,12 +203,21 @@ export function IssueDebitNoteDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Supplier *
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Supplier *
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setIsSupplierCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+                >
+                  + New Supplier
+                </button>
+              </div>
               <Select
                 value={selectedSupplierId}
                 onValueChange={setSelectedSupplierId}
@@ -267,22 +280,31 @@ export function IssueDebitNoteDialog({
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                Adjustment Items
-              </h4>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addItem}
-                className="rounded-lg h-8 text-[10px] font-black uppercase bg-indigo-50 border-indigo-100 text-indigo-600 hover:bg-indigo-100"
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add Item
-              </Button>
-            </div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                  Adjustment Items
+                </h4>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsProductCreateOpen(true)}
+                    className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+                  >
+                    + New Product
+                  </button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addItem}
+                    className="rounded-lg h-8 text-[10px] font-black uppercase bg-indigo-50 border-indigo-100 text-indigo-600 hover:bg-indigo-100"
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Add Item
+                  </Button>
+                </div>
+              </div>
 
             {items.length === 0 ? (
-              <div className="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+              <div className="text-center py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   No items added yet
                 </p>
@@ -360,7 +382,7 @@ export function IssueDebitNoteDialog({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
               Total Adjustment
@@ -380,7 +402,7 @@ export function IssueDebitNoteDialog({
             <Button
               onClick={handleSubmit}
               disabled={submitting || loading}
-              className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black px-8 shadow-lg shadow-indigo-200 h-12"
+              className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black px-4 shadow-lg shadow-indigo-200 h-12"
             >
               {submitting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -391,6 +413,39 @@ export function IssueDebitNoteDialog({
           </div>
         </div>
       </DialogContent>
+      <InlineCreateSupplierDialog
+        open={isSupplierCreateOpen}
+        onOpenChange={setIsSupplierCreateOpen}
+        onSuccess={(newSupplier) => {
+          loadSuppliersAndProducts();
+          setSelectedSupplierId(newSupplier.id);
+        }}
+      />
+      <InlineCreateProductDialog
+        open={isProductCreateOpen}
+        onOpenChange={setIsProductCreateOpen}
+        onSuccess={(newProd) => {
+          loadSuppliersAndProducts();
+          setItems((prev) => {
+            const copy = [...prev];
+            if (copy.length > 0 && !copy[copy.length - 1].productId) {
+              copy[copy.length - 1].productId = newProd.id;
+              copy[copy.length - 1].price = Number(newProd.price);
+              copy[copy.length - 1].name = newProd.name;
+              return copy;
+            }
+            return [
+              ...copy,
+              {
+                productId: newProd.id,
+                quantity: 1,
+                price: Number(newProd.price),
+                name: newProd.name,
+              },
+            ];
+          });
+        }}
+      />
     </Dialog>
   );
 }

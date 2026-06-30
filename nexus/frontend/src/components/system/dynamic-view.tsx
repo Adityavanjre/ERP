@@ -44,7 +44,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
           // Defer to avoid synchronous setState inside useEffect
           setTimeout(() => setLoading(true), 0);
         }
-        const recordsRes = await api.get(`/system/studio/records/${modelName}`);
+        const recordsRes = await api.get(`system/studio/records/${modelName}`);
         const data = recordsRes.data.data || recordsRes.data || [];
         setRecords(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -66,7 +66,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
     .join(" ");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-white flex items-center">

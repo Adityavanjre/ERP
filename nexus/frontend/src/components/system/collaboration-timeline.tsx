@@ -166,11 +166,11 @@ export function CollaborationTimeline({
 
       <div className="max-h-[500px] overflow-y-auto mb-4 space-y-2 pr-2 custom-scrollbar">
         {loading ? (
-          <div className="text-center py-8 text-muted-foreground animate-pulse">
+          <div className="text-center py-4 text-muted-foreground animate-pulse">
             Loading discussion...
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground italic border-2 border-dashed border-secondary/30 rounded-lg">
+          <div className="text-center py-4 text-muted-foreground italic border-2 border-dashed border-secondary/30 rounded-lg">
             No discussion yet. Start the conversation!
           </div>
         ) : (

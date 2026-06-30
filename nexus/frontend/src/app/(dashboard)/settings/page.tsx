@@ -140,7 +140,7 @@ export default function SettingsPage() {
 
   const handleUpdateRole = useCallback(async (userId: string, role: Role) => {
     try {
-      await api.patch(`/users/${userId}/role`, { role });
+      await api.patch(`users/${userId}/role`, { role });
       toast.success("Role updated successfully");
       const res = await api.get("users");
       setMembers(Array.isArray(res.data) ? res.data : []);
@@ -151,7 +151,7 @@ export default function SettingsPage() {
 
   const handleResetPassword = useCallback(async (userId: string) => {
     try {
-      const res = await api.post(`/users/${userId}/reset-password`);
+      const res = await api.post(`users/${userId}/reset-password`);
       setTempPassword(res.data.temporaryPassword);
       setIsResetOpen(true);
       toast.success("Temporary password generated");
@@ -168,7 +168,7 @@ export default function SettingsPage() {
     )
       return;
     try {
-      await api.delete(`/users/${userId}`);
+      await api.delete(`users/${userId}`);
       toast.success("User removed from tenant");
       const res = await api.get("users");
       setMembers(Array.isArray(res.data) ? res.data : []);
@@ -195,7 +195,7 @@ export default function SettingsPage() {
   if (!mounted) return null; // Prevent hydration mismatch
 
   return (
-    <div className="flex-1 space-y-4 pt-2 md:pt-6">
+    <div className="flex-1 space-y-4 pt-2 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -355,7 +355,7 @@ export default function SettingsPage() {
                 <div className="pt-4">
                   <Button
                     type="submit"
-                    className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-8 rounded-xl"
+                    className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-4 rounded-xl"
                   >
                     Save Changes
                   </Button>
@@ -375,11 +375,11 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-slate-500 mb-3">
                 Turn modules on or off at any time. Disabling a module hides it from your workspace but preserves all your data.
               </p>
               <Link href="/settings/modules">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-8 rounded-xl">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-4 rounded-xl">
                   Configure Modules
                 </Button>
               </Link>
@@ -408,14 +408,14 @@ export default function SettingsPage() {
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardContent className="p-0">
                 {loading ? (
-                  <div className="p-8 flex flex-col items-center justify-center gap-4">
+                  <div className="p-4 flex flex-col items-center justify-center gap-4">
                     <div className="h-8 w-8 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                       Loading team...
                     </p>
                   </div>
                 ) : error ? (
-                  <div className="p-6 text-center space-y-4">
+                  <div className="p-3 text-center space-y-4">
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-500">
                       <ShieldAlert className="h-6 w-6" />
                     </div>
@@ -436,7 +436,7 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                 ) : members.length === 0 ? (
-                  <div className="p-6 text-center text-slate-400 font-medium text-sm">
+                  <div className="p-3 text-center text-slate-400 font-medium text-sm">
                     No team members found.
                   </div>
                 ) : (
@@ -599,7 +599,7 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-6 rounded-2xl bg-slate-900 border-b-4 border-indigo-500 shadow-xl overflow-hidden relative">
+                <div className="p-3 rounded-2xl bg-slate-900 border-b-4 border-indigo-500 shadow-xl overflow-hidden relative">
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
                   <Badge className="mb-2 bg-indigo-600 text-white font-black">
                     {billingInfo?.plan}
@@ -709,7 +709,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="connectivity">
-          <div className="max-w-4xl space-y-6">
+          <div className="max-w-4xl space-y-3">
             <ApiKeyManager />
             
             <Card className="bg-white border-blue-200 shadow-sm overflow-hidden">
@@ -723,10 +723,10 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-3">
-                <p className="text-sm text-slate-600 mb-6">
+                <p className="text-sm text-slate-600 mb-3">
                   Ready to scale? This process will safely copy your local SQLite database to our secure cloud infrastructure. You'll gain global access, automated backups, and higher performance without losing any of your existing data.
                 </p>
-                <Button disabled className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-8 rounded-xl opacity-80">
+                <Button disabled className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-4 rounded-xl opacity-80">
                   Begin Cloud Migration
                 </Button>
                 <p className="text-[10px] text-slate-400 mt-3 font-bold uppercase tracking-widest">
@@ -823,7 +823,7 @@ export default function SettingsPage() {
               </Button>
               <Button
                 type="submit"
-                className="bg-slate-900 hover:bg-black font-black px-8"
+                className="bg-slate-900 hover:bg-black font-black px-4"
               >
                 Add Member
               </Button>
@@ -847,7 +847,7 @@ export default function SettingsPage() {
               change it after logging in.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-6 flex flex-col items-center justify-center gap-4">
+          <div className="py-3 flex flex-col items-center justify-center gap-4">
             <div className="text-2xl font-black font-mono tracking-widest bg-slate-100 p-4 rounded-xl border-b-2 border-slate-200 w-full text-center text-slate-900">
               {tempPassword}
             </div>

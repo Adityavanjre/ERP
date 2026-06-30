@@ -142,7 +142,7 @@ export function TransferStockDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-3 py-4">
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               Select Product
@@ -226,7 +226,7 @@ export function TransferStockDialog({
           </Button>
           <Button
             onClick={handleTransfer}
-            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-8 shadow-lg shadow-blue-500/20 active:scale-95 transition-all gap-2"
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 px-4 shadow-lg shadow-blue-500/20 active:scale-95 transition-all gap-2"
             disabled={loading}
           >
             {loading ? (

@@ -342,17 +342,34 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   const userRole = (user?.role as RoleName) || "Biller";
 
   const { pbac, hasPermission } = useUX();
-  console.log("SIDEBAR PBAC STATE:", JSON.stringify(pbac));
 
   const [terminology, setTerminology] = useState<Record<string, string>>({});
   const [loadingConfig, setLoadingConfig] = useState(true);
 
   const fetchConfig = useCallback(async () => {
+    // Check session cache first — avoid re-fetching on every navigation
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("nexus_sys_config");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setTerminology(parsed.terminology || {});
+          setLoadingConfig(false);
+          return;
+        } catch {
+          // ignore, refetch below
+        }
+      }
+    }
     try {
       setLoadingConfig(true);
       const { data } = await api.get("system/config");
       if (data) {
         setTerminology(data.terminology || {});
+        // Cache for the session so navigation doesn't re-fetch
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("nexus_sys_config", JSON.stringify(data));
+        }
       }
     } catch (err) {
       console.error("SIDEBAR: Failed to fetch industry config", err);
@@ -363,7 +380,8 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
   useEffect(() => {
     fetchConfig();
-  }, [fetchConfig]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount
 
   const enabledModules = useMemo(() => {
     const infrastructure = [
@@ -459,7 +477,17 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
           onClick={onItemClick}
           className="flex items-center transition-all hover:opacity-80"
         >
-          <KlypsoLogo name={user?.tenantName || "KLYPSO"} />
+          {pbac.tenant?.logoUrl ? (
+            <div className="flex items-center gap-3">
+              <img
+                src={pbac.tenant.logoUrl}
+                alt={pbac.tenant.name || "Company Logo"}
+                className="h-9 w-auto max-w-[140px] object-contain rounded-lg"
+              />
+            </div>
+          ) : (
+            <KlypsoLogo name={pbac.tenant?.name || user?.tenantName || "KLYPSO"} />
+          )}
         </Link>
         {user?.isSuperAdmin && (
           <div className="mt-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">

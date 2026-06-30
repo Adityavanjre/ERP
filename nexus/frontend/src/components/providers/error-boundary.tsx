@@ -29,13 +29,13 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-6 text-center">
-          <div className="bg-rose-500/10 border border-rose-500/20 p-8 rounded-3xl max-w-md w-full">
-            <AlertTriangle className="h-16 w-16 text-rose-500 mx-auto mb-6" />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white p-3 text-center">
+          <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-3xl max-w-md w-full">
+            <AlertTriangle className="h-16 w-16 text-rose-500 mx-auto mb-3" />
             <h1 className="text-2xl font-black tracking-tighter mb-2 italic uppercase">
               System Exception
             </h1>
-            <p className="text-zinc-400 text-sm mb-6">
+            <p className="text-zinc-400 text-sm mb-3">
               A critical UI error occurred. Our engineers have been notified.
             </p>
             <div className="flex flex-col gap-3">

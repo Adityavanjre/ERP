@@ -74,8 +74,8 @@ export function IssueCreditNoteDialog({
     try {
       setLoading(true);
       const [custRes, prodRes] = await Promise.all([
-        api.get("/crm/customers"),
-        api.get("/inventory/products?limit=1000"),
+        api.get("crm/customers"),
+        api.get("inventory/products?limit=1000"),
       ]);
       setCustomers(custRes.data?.data || []);
       setProducts(prodRes.data?.data || []);
@@ -90,7 +90,7 @@ export function IssueCreditNoteDialog({
     if (!customerId) return;
     try {
       const res = await api.get(
-        `/accounting/invoices?customerId=${customerId}`,
+        `accounting/invoices?customerId=${customerId}`,
       );
       setInvoices(res.data?.data || []);
     } catch {
@@ -145,7 +145,7 @@ export function IssueCreditNoteDialog({
 
     try {
       setSubmitting(true);
-      await api.post("/accounting/credit-notes", {
+      await api.post("accounting/credit-notes", {
         customerId: selectedCustomerId,
         invoiceId: selectedInvoiceId || undefined,
         date,
@@ -183,8 +183,8 @@ export function IssueCreditNoteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-        <div className="bg-emerald-600 p-8 text-white relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
+        <div className="bg-emerald-600 p-4 text-white relative">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
             <FileText className="h-24 w-24" />
           </div>
           <DialogHeader className="relative z-10">
@@ -197,8 +197,8 @@ export function IssueCreditNoteDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -302,7 +302,7 @@ export function IssueCreditNoteDialog({
             </div>
 
             {items.length === 0 ? (
-              <div className="text-center py-8 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+              <div className="text-center py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   No items added yet
                 </p>
@@ -380,7 +380,7 @@ export function IssueCreditNoteDialog({
           </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
               Total Credit
@@ -400,7 +400,7 @@ export function IssueCreditNoteDialog({
             <Button
               onClick={handleSubmit}
               disabled={submitting || loading}
-              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 shadow-lg shadow-emerald-200 h-12"
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 shadow-lg shadow-emerald-200 h-12"
             >
               {submitting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

@@ -178,12 +178,12 @@ export default function AuditorDashboard() {
     }
   };
 
-  if (loading && !data) return <div className="p-8">Loading Auditor...</div>;
+  if (loading && !data) return <div className="p-4">Loading Auditor...</div>;
 
   if (!mounted) return null;
 
   return (
-    <div className="p-4 md:p-8 pb-24 md:pb-20 space-y-4 bg-slate-50 text-slate-900 min-h-screen">
+    <div className="p-4 md:p-4 pb-24 md:pb-20 space-y-4 bg-slate-50 text-slate-900 min-h-screen">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -233,7 +233,7 @@ export default function AuditorDashboard() {
 
       {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm relative overflow-hidden group">
+        <div className="bg-white border border-slate-200 p-3 rounded-[32px] shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <ShieldCheck className="w-16 h-16 text-slate-900" />
           </div>
@@ -258,7 +258,7 @@ export default function AuditorDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
+        <div className="bg-white border border-slate-200 p-3 rounded-[32px] shadow-sm">
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
             Audit Status
           </p>
@@ -281,7 +281,7 @@ export default function AuditorDashboard() {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
+        <div className="bg-white border border-slate-200 p-3 rounded-[32px] shadow-sm">
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
             Monthly Lock
           </p>
@@ -302,7 +302,7 @@ export default function AuditorDashboard() {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm">
+        <div className="bg-white border border-slate-200 p-3 rounded-[32px] shadow-sm">
           <p className="text-slate-500 text-[10px) font-black uppercase tracking-widest">
             Tax Coverage
           </p>
@@ -322,16 +322,16 @@ export default function AuditorDashboard() {
       </div>
 
       {/* Grid: Risk & Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Risk Flags */}
-        <div className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
-          <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2 tracking-tight">
+        <div className="bg-white border border-slate-200 rounded-[32px] p-4 shadow-sm">
+          <h2 className="text-xl font-black text-slate-900 mb-3 flex items-center gap-2 tracking-tight">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             Account Alerts & Blockers
           </h2>
           <div className="space-y-4">
             {(!data?.riskFlags || data?.riskFlags?.length === 0) && (
-              <div className="text-slate-400 font-bold italic py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <div className="text-slate-400 font-bold italic py-4 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 No major flags detected for this period.
               </div>
             )}
@@ -371,7 +371,7 @@ export default function AuditorDashboard() {
             ))}
           </div>
 
-          <div className="mt-8 space-y-3">
+          <div className="mt-4 space-y-3">
             {data?.errors?.map((err: string, i: number) => (
               <div key={i} className="text-sm text-red-400 flex gap-2">
                 <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -382,8 +382,8 @@ export default function AuditorDashboard() {
         </div>
 
         {/* Financial Summary (Trial Balance Simulation) */}
-        <div className="bg-white border border-slate-200 rounded-[32px] p-8 shadow-sm">
-          <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2 tracking-tight">
+        <div className="bg-white border border-slate-200 rounded-[32px] p-4 shadow-sm">
+          <h2 className="text-xl font-black text-slate-900 mb-3 flex items-center gap-2 tracking-tight">
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Trial Balance Overview
           </h2>
@@ -423,7 +423,7 @@ export default function AuditorDashboard() {
               </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-6">
+            <div className="border-t border-slate-100 pt-3">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-slate-500 font-bold text-sm">
                   Simulated Net Dr (Receivables)
@@ -432,7 +432,7 @@ export default function AuditorDashboard() {
                   {currencySymbol}{(data?.summary?.netBalanceDr ?? 0).toLocaleString()}
                 </span>
               </div>
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-3">
                 <span className="text-slate-500 font-bold text-sm">
                   Simulated Net Cr (Payables)
                 </span>
@@ -457,8 +457,8 @@ export default function AuditorDashboard() {
       </div>
 
       {/* Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 px-4 md:px-8 z-50">
-        <div className="flex items-center gap-6">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 px-4 md:px-4 z-50">
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full ${data?.isLocked ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}
@@ -507,7 +507,7 @@ export default function AuditorDashboard() {
             <button
               onClick={handleLock}
               disabled={data?.status === "BLOCKED"}
-              className={`px-10 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-xl text-xs uppercase tracking-widest ${data?.status === "BLOCKED" ? "bg-slate-100 text-slate-400 cursor-not-allowed mx-auto" : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"}`}
+              className={`px-5 py-3 rounded-2xl font-black flex items-center gap-2 transition-all shadow-xl text-xs uppercase tracking-widest ${data?.status === "BLOCKED" ? "bg-slate-100 text-slate-400 cursor-not-allowed mx-auto" : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"}`}
             >
               <Lock className="w-4 h-4" />
               Close & Lock Month
@@ -519,12 +519,12 @@ export default function AuditorDashboard() {
       {/* Reopen Dialog */}
       {isReopening && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xl flex items-center justify-center z-[100] p-4">
-          <div className="bg-white border border-slate-200 w-full max-w-md rounded-[32px] p-10 shadow-2xl">
+          <div className="bg-white border border-slate-200 w-full max-w-md rounded-[32px] p-4 shadow-2xl">
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3 mb-2 tracking-tighter">
               <Unlock className="w-6 h-6 text-amber-600" />
               Reopen Closed Month
             </h3>
-            <p className="text-slate-500 font-medium text-xs mb-8">
+            <p className="text-slate-500 font-medium text-xs mb-4">
               Reopening a closed month will allow new entries to be made. Please
               provide a reason for reopening.
             </p>
@@ -533,7 +533,7 @@ export default function AuditorDashboard() {
               value={reopenReason}
               onChange={(e) => setReopenReason(e.target.value)}
               placeholder="Reason for reopening (e.g., Late GST invoice from supplier...)"
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-8 text-sm font-semibold"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-4 text-sm font-semibold"
             />
 
             <div className="flex gap-4">
@@ -545,7 +545,7 @@ export default function AuditorDashboard() {
               </button>
               <button
                 onClick={handleUnlock}
-                className="flex-2 px-8 py-3 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl transition-all shadow-lg shadow-amber-600/20 text-sm uppercase tracking-widest"
+                className="flex-2 px-4 py-3 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl transition-all shadow-lg shadow-amber-600/20 text-sm uppercase tracking-widest"
               >
                 Confirm Reopen
               </button>

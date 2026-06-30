@@ -188,7 +188,7 @@ export default function PurchasesPage() {
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      await api.patch(`/purchases/orders/${id}/status`, { status });
+      await api.patch(`purchases/orders/${id}/status`, { status });
       toast.success(`Purchase order marked as ${status}`);
       syncProcurement(true);
     } catch {
@@ -236,7 +236,7 @@ export default function PurchasesPage() {
 
   if (loading)
     return (
-      <div className="p-8 text-center text-slate-500 font-bold">
+      <div className="p-4 text-center text-slate-500 font-bold">
         Synchronizing supply chain data...
       </div>
     );
@@ -268,7 +268,7 @@ export default function PurchasesPage() {
           </Button>
           <Button
             onClick={() => setShowPODialog(true)}
-            className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-8 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap"
+            className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-4 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap"
           >
             New Order
           </Button>
@@ -332,13 +332,13 @@ export default function PurchasesPage() {
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="orders"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Purchase Orders
           </TabsTrigger>
           <TabsTrigger
             value="suppliers"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Suppliers
           </TabsTrigger>
@@ -661,7 +661,7 @@ export default function PurchasesPage() {
               Cancel
             </Button>
             <Button
-              className="rounded-2xl h-12 bg-blue-600 font-bold px-8"
+              className="rounded-2xl h-12 bg-blue-600 font-bold px-4"
               onClick={handleConfirmSubmit}
               disabled={isSubmitting}
             >

@@ -57,7 +57,7 @@ const patients = [
 
 export default function PatientsPage() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-4 animate-in fade-in duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
@@ -157,7 +157,7 @@ export default function PatientsPage() {
       </div>
 
       <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden border-none bg-slate-50/30">
-        <div className="p-6 border-b border-slate-100 bg-white flex items-center justify-between">
+        <div className="p-3 border-b border-slate-100 bg-white flex items-center justify-between">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input

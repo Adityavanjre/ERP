@@ -11,8 +11,8 @@ export default function SalesError({
   reset: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
-      <div className="bg-violet-50 border border-violet-200 p-6 rounded-2xl max-w-md w-full">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 text-center">
+      <div className="bg-violet-50 border border-violet-200 p-3 rounded-2xl max-w-md w-full">
         <AlertTriangle className="h-10 w-10 text-violet-500 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-slate-900 mb-1">
           Sales Module Error

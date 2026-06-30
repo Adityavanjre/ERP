@@ -382,7 +382,7 @@ export default function FixedAssetsPage() {
                         <div className="space-y-4 pt-2">
                           {!asset.depreciationLogs ||
                           asset.depreciationLogs.length === 0 ? (
-                            <p className="text-center py-8 text-slate-400 text-sm">
+                            <p className="text-center py-4 text-slate-400 text-sm">
                               No depreciation logs found.
                             </p>
                           ) : (

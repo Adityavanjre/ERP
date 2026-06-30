@@ -59,7 +59,7 @@ export function CreateWorkOrderDialog({
 
   const fetchBOMs = useCallback(async () => {
     try {
-      const { data } = await api.get("/manufacturing/boms");
+      const { data } = await api.get("manufacturing/boms");
       setBoms(data);
     } catch {
       toast.error("Failed to load BOMs");
@@ -78,7 +78,7 @@ export function CreateWorkOrderDialog({
     setTimeout(() => setChecking(true), 0);
     try {
       const { data } = await api.get(
-        `/manufacturing/boms/${selectedBomId}/shortages?quantity=${quantity}`,
+        `manufacturing/boms/${selectedBomId}/shortages?quantity=${quantity}`,
       );
       setShortages(data);
     } catch {
@@ -104,7 +104,7 @@ export function CreateWorkOrderDialog({
 
     try {
       setLoading(true);
-      await api.post("/manufacturing/work-orders", {
+      await api.post("manufacturing/work-orders", {
         bomId: selectedBomId,
         quantity,
       });

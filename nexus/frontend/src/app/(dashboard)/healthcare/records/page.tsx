@@ -43,7 +43,7 @@ const records = [
 
 export default function MedicalRecordsPage() {
   return (
-    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
+    <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <div className="p-4 bg-slate-900 rounded-3xl shadow-xl shadow-slate-500/10">
@@ -63,7 +63,7 @@ export default function MedicalRecordsPage() {
             <Download className="h-4 w-4 mr-2" />
             Export All
           </Button>
-          <Button className="rounded-2xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-500/20 px-8 py-6 h-auto">
+          <Button className="rounded-2xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-500/20 px-4 py-3 h-auto">
             <Plus className="h-4 w-4 mr-2" />
             Upload Record
           </Button>
@@ -71,7 +71,7 @@ export default function MedicalRecordsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Card className="rounded-[2rem] border-slate-100 bg-emerald-50/30 border-none shadow-none p-6">
+        <Card className="rounded-[2rem] border-slate-100 bg-emerald-50/30 border-none shadow-none p-3">
           <Lock className="h-5 w-5 text-emerald-600 mb-4" />
           <h3 className="text-lg font-black text-emerald-900">
             End-to-End Encrypted
@@ -81,7 +81,7 @@ export default function MedicalRecordsPage() {
             stored in the cloud.
           </p>
         </Card>
-        <Card className="rounded-[2rem] border-slate-100 bg-blue-50/30 border-none shadow-none p-6">
+        <Card className="rounded-[2rem] border-slate-100 bg-blue-50/30 border-none shadow-none p-3">
           <Shield className="h-5 w-5 text-blue-600 mb-4" />
           <h3 className="text-lg font-black text-blue-900">
             Audit Trail Enabled
@@ -91,7 +91,7 @@ export default function MedicalRecordsPage() {
             for compliance.
           </p>
         </Card>
-        <Card className="rounded-[2rem] border-slate-100 bg-slate-50/50 border-none shadow-none p-6">
+        <Card className="rounded-[2rem] border-slate-100 bg-slate-50/50 border-none shadow-none p-3">
           <FileText className="h-5 w-5 text-slate-600 mb-4" />
           <h3 className="text-lg font-black text-slate-900">HIPAA Compliant</h3>
           <p className="text-sm text-slate-700/70 mt-1 font-medium leading-relaxed">
@@ -102,7 +102,7 @@ export default function MedicalRecordsPage() {
       </div>
 
       <Card className="rounded-3xl border-slate-100 shadow-sm overflow-hidden border-none bg-white">
-        <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+        <div className="p-4 border-b border-slate-50 flex items-center justify-between">
           <h2 className="font-black text-sm uppercase tracking-widest text-slate-400">
             Recent Records
           </h2>
@@ -120,12 +120,12 @@ export default function MedicalRecordsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/30 text-slate-500 text-[10px] uppercase tracking-widest font-black">
-                  <th className="px-8 py-4">Record ID</th>
-                  <th className="px-8 py-4">Patient</th>
-                  <th className="px-8 py-4">Type</th>
-                  <th className="px-8 py-4">Date</th>
-                  <th className="px-8 py-4">Doctor</th>
-                  <th className="px-8 py-4 text-right">Actions</th>
+                  <th className="px-4 py-4">Record ID</th>
+                  <th className="px-4 py-4">Patient</th>
+                  <th className="px-4 py-4">Type</th>
+                  <th className="px-4 py-4">Date</th>
+                  <th className="px-4 py-4">Doctor</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -134,13 +134,13 @@ export default function MedicalRecordsPage() {
                     key={r.id}
                     className="border-t border-slate-50 hover:bg-slate-50/20 transition-all group"
                   >
-                    <td className="px-8 py-6 font-mono font-bold text-slate-500 text-xs">
+                    <td className="px-4 py-3 font-mono font-bold text-slate-500 text-xs">
                       {r.id}
                     </td>
-                    <td className="px-8 py-6 font-black text-slate-800">
+                    <td className="px-4 py-3 font-black text-slate-800">
                       {r.patient}
                     </td>
-                    <td className="px-8 py-6">
+                    <td className="px-4 py-3">
                       <Badge
                         variant="outline"
                         className="rounded-lg border-slate-200 text-slate-600 font-bold px-3 py-1 bg-white"
@@ -148,13 +148,13 @@ export default function MedicalRecordsPage() {
                         {r.type}
                       </Badge>
                     </td>
-                    <td className="px-8 py-6 text-slate-500 font-medium uppercase text-[10px] tracking-wider">
+                    <td className="px-4 py-3 text-slate-500 font-medium uppercase text-[10px] tracking-wider">
                       {r.date}
                     </td>
-                    <td className="px-8 py-6 text-slate-700 font-bold">
+                    <td className="px-4 py-3 text-slate-700 font-bold">
                       {r.doctor}
                     </td>
-                    <td className="px-8 py-6 text-right">
+                    <td className="px-4 py-3 text-right">
                       <Button
                         variant="ghost"
                         size="icon"

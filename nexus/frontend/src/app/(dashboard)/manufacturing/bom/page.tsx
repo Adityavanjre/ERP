@@ -88,8 +88,8 @@ export default function BOMPage() {
     try {
       setDetailsLoading(true);
       const [bomRes, costRes] = await Promise.all([
-        api.get(`/manufacturing/boms/${id}`),
-        api.get(`/manufacturing/boms/${id}/cost`),
+        api.get(`manufacturing/boms/${id}`),
+        api.get(`manufacturing/boms/${id}/cost`),
       ]);
       setSelectedBom(bomRes.data);
       setCostAnalysis(costRes.data);
@@ -135,14 +135,14 @@ export default function BOMPage() {
           </p>
         </div>
         <CreateBOMDialog refreshData={() => syncLogicStructs(false)}>
-          <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11">
+          <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-lg shadow-blue-500/20 text-white h-11">
             <Plus className="mr-2 h-4 w-4" /> New BOM
           </Button>
         </CreateBOMDialog>
       </div>
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-6">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 md:py-4 px-4 md:px-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
@@ -264,7 +264,7 @@ export default function BOMPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
           <CardHeader className="border-b border-slate-100">
             <CardTitle className="text-lg font-black flex items-center gap-3">
@@ -277,7 +277,7 @@ export default function BOMPage() {
           </CardHeader>
           <CardContent className="p-0">
             {detailsLoading ? (
-              <div className="p-8 flex justify-center">
+              <div className="p-4 flex justify-center">
                 <LoadingSpinner />
               </div>
             ) : selectedBom ? (
@@ -314,7 +314,7 @@ export default function BOMPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="p-4 flex flex-col items-center justify-center text-center space-y-4">
                 <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300">
                   <Boxes className="h-8 w-8" />
                 </div>

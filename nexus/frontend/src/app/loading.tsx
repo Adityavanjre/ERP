@@ -2,7 +2,7 @@
 
 export default function RootLoading() {
   return (
-    <div className="fixed inset-0 bg-white/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center space-y-6">
+    <div className="fixed inset-0 bg-white/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center space-y-3">
       <div className="relative w-16 h-16">
         <div className="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
         <div className="absolute inset-0 border-4 border-t-blue-600 border-r-blue-600/30 border-b-transparent border-l-transparent rounded-full animate-spin"></div>

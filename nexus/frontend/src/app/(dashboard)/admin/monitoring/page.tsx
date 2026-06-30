@@ -79,16 +79,16 @@ export default function FounderMonitoring() {
 
   if (loading)
     return (
-      <div className="p-8 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">
+      <div className="p-4 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">
         Loading System Overview...
       </div>
     );
   if (!data) return null;
 
   return (
-    <div className="p-4 md:p-10 space-y-8 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-40 md:pb-40">
+    <div className="p-4 md:p-4 space-y-4 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-40 md:pb-40">
       {/* Header Area */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-0">
         <div>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-4">
             <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
@@ -112,9 +112,9 @@ export default function FounderMonitoring() {
       </div>
 
       {/* High Level Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-8 rounded-[32px] relative overflow-hidden group hover:-translate-y-1 transition-all">
-          <div className="absolute top-0 right-0 p-6 opacity-[0.03] group-hover:scale-110 transition-transform">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-4 rounded-[32px] relative overflow-hidden group hover:-translate-y-1 transition-all">
+          <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:scale-110 transition-transform">
             <DollarSign className="w-24 h-24 text-slate-900" />
           </div>
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest font-mono">
@@ -129,7 +129,7 @@ export default function FounderMonitoring() {
           </div>
         </Card>
 
-        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-8 rounded-[32px] group hover:-translate-y-1 transition-all">
+        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-4 rounded-[32px] group hover:-translate-y-1 transition-all">
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest font-mono">
             System Status
           </p>
@@ -144,7 +144,7 @@ export default function FounderMonitoring() {
               {data.systemStatus > 80 ? "EXCELLENT" : "STABILIZING"}
             </Badge>
           </div>
-          <div className="mt-8 w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
+          <div className="mt-4 w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
             <div
               className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-full transition-all duration-1000 shadow-[0_0_10px_rgba(52,211,153,0.3)]"
               style={{ width: `${data.systemStatus}%` }}
@@ -152,7 +152,7 @@ export default function FounderMonitoring() {
           </div>
         </Card>
 
-        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-8 rounded-[32px] group hover:-translate-y-1 transition-all">
+        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-4 rounded-[32px] group hover:-translate-y-1 transition-all">
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest font-mono">
             Live Tenants
           </p>
@@ -165,7 +165,7 @@ export default function FounderMonitoring() {
           </p>
         </Card>
 
-        <Card className="bg-slate-900 border-none shadow-2xl shadow-slate-900/10 p-8 rounded-[32px] flex items-center justify-center group overflow-hidden relative">
+        <Card className="bg-slate-900 border-none shadow-2xl shadow-slate-900/10 p-4 rounded-[32px] flex items-center justify-center group overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="text-center relative z-10">
             <Zap className="w-10 h-10 text-emerald-400 mx-auto mb-3 animate-pulse" />
@@ -180,9 +180,9 @@ export default function FounderMonitoring() {
       </div>
 
       {/* Issue Tracking Desk */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Top At-Risk Tenants */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-4">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end px-2 gap-4 sm:gap-0">
             <div>
               <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -200,9 +200,9 @@ export default function FounderMonitoring() {
             {data.topAtRisk.map((tenant: TopAtRiskTenant) => (
               <Card
                 key={tenant.tenantId}
-                className="bg-white border-none shadow-xl shadow-slate-200/40 p-8 rounded-[40px] hover:shadow-2xl transition-all flex flex-col lg:flex-row gap-8 justify-between items-start md:items-center group border-l-8 border-l-transparent hover:border-l-red-500"
+                className="bg-white border-none shadow-xl shadow-slate-200/40 p-4 rounded-[40px] hover:shadow-2xl transition-all flex flex-col lg:flex-row gap-4 justify-between items-start md:items-center group border-l-8 border-l-transparent hover:border-l-red-500"
               >
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-start sm:items-center">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 items-start sm:items-center">
                   <div
                     className={`w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-[28px] flex items-center justify-center font-black text-xl md:text-2xl transition-all ${tenant.status === "RED" ? "bg-red-50 text-red-600 shadow-lg shadow-red-500/10" : "bg-amber-50 text-amber-600"}`}
                   >
@@ -239,13 +239,13 @@ export default function FounderMonitoring() {
 
                 <div className="flex gap-4 w-full md:w-auto">
                   {tenant.interventions?.action === "SCHEDULE_SUPPORT_CALL" && (
-                    <Button className="flex-1 md:flex-none h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl px-8 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">
+                    <Button className="flex-1 md:flex-none h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl px-4 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Follow Up
                     </Button>
                   )}
                   {tenant.interventions?.action === "SEND_TRAINING_VIDEO" && (
-                    <Button className="flex-1 md:flex-none h-14 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-8 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
+                    <Button className="flex-1 md:flex-none h-14 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl px-4 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-amber-500/20 active:scale-95 transition-all">
                       <PlayCircle className="w-4 h-4 mr-2" />
                       Send Nudge
                     </Button>
@@ -280,7 +280,7 @@ export default function FounderMonitoring() {
             <HistoryFeedIcon />
             Recent Activity
           </h2>
-          <Card className="bg-slate-900 border-none rounded-[3rem] p-10 h-[700px] overflow-y-auto space-y-10 shadow-2xl shadow-slate-900/20">
+          <Card className="bg-slate-900 border-none rounded-[3rem] p-4 h-[700px] overflow-y-auto space-y-4 shadow-2xl shadow-slate-900/20">
             {data.allReports
               .flatMap((r: MonitoringReport) =>
                 r.signals.map((s: string) => ({ ...r, signal: s })),
@@ -312,8 +312,8 @@ export default function FounderMonitoring() {
       </div>
 
       {/* Floating Action Bar */}
-      <div className="fixed bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 bg-white/90 md:bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-4 md:p-6 rounded-[24px] md:rounded-[40px] flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-0 px-6 md:px-12 z-[100] shadow-2xl shadow-slate-300/40 outline outline-1 outline-white/50">
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-10">
+      <div className="fixed bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 bg-white/90 md:bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-4 md:p-3 rounded-[24px] md:rounded-[40px] flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-0 px-6 md:px-6 z-[100] shadow-2xl shadow-slate-300/40 outline outline-1 outline-white/50">
+        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-4">
           <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">
             <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
             System Monitoring Active
@@ -324,20 +324,20 @@ export default function FounderMonitoring() {
           </div>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex gap-3">
           <Button
             onClick={() => (window.location.href = "/portal/onboarding")}
-            className="h-14 px-10 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/20 active:scale-95"
+            className="h-14 px-5 rounded-2xl bg-slate-900 border border-slate-800 text-white font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/20 active:scale-95"
           >
             Provision New Tenant
           </Button>
           <Button
             variant="ghost"
-            className="h-14 px-10 rounded-2xl text-[11px] font-black tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all uppercase"
+            className="h-14 px-5 rounded-2xl text-[11px] font-black tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all uppercase"
           >
             Remind All (Low Risk)
           </Button>
-          <Button className="h-14 px-12 bg-slate-900 text-white rounded-2xl text-[11px] font-black tracking-widest hover:bg-red-600 shadow-2xl shadow-slate-900/20 transition-all uppercase border-none">
+          <Button className="h-14 px-6 bg-slate-900 text-white rounded-2xl text-[11px] font-black tracking-widest hover:bg-red-600 shadow-2xl shadow-slate-900/20 transition-all uppercase border-none">
             Process All Tasks (High Risk)
           </Button>
         </div>

@@ -45,7 +45,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[420px] rounded-[32px] p-8">
+      <DialogContent className="sm:max-w-[420px] rounded-[32px] p-4">
         <DialogHeader className="flex flex-col items-center gap-4">
           <div
             className={`w-16 h-16 rounded-full flex items-center justify-center ${iconStyles[variant]}`}

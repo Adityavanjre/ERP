@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -65,7 +65,7 @@ export function CreateBOMDialog({
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await api.get("/inventory/products");
+      const res = await api.get("inventory/products");
       // Handle both paginated ({ data: [...] }) and flat ([...]) responses
       const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
       setProducts(list);
@@ -120,7 +120,7 @@ export function CreateBOMDialog({
 
     try {
       setLoading(true);
-      await api.post("/manufacturing/boms", {
+      await api.post("manufacturing/boms", {
         name,
         productId: selectedProduct,
         quantity,
@@ -159,7 +159,7 @@ export function CreateBOMDialog({
           <DialogTitle>Create New Bill of Materials</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-3 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>BOM Name</Label>
@@ -313,7 +313,7 @@ export function CreateBOMDialog({
                 </div>
               ))}
               {items.length === 0 && (
-                <div className="text-center py-6 border-2 border-dashed rounded-lg text-muted-foreground text-sm">
+                <div className="text-center py-3 border-2 border-dashed rounded-lg text-muted-foreground text-sm">
                   No items added. Click "Add Item" to start.
                 </div>
               )}

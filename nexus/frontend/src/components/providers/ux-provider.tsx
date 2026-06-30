@@ -30,9 +30,18 @@ interface UserToken {
   isOnboarded?: boolean;
 }
 
+interface TenantProfile {
+  name: string;
+  logoUrl: string;
+  address: string;
+  gstin: string;
+  state: string;
+}
+
 interface PBACState {
   permissions: Record<string, string[]>;
   modules: string[];
+  tenant?: TenantProfile;
 }
 
 interface UXContextType {
@@ -74,7 +83,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         console.warn("Failed to parse cached PBAC", e);
       }
     }
-    return { permissions: {}, modules: [] };
+    return { permissions: {}, modules: [], tenant: { name: "", logoUrl: "", address: "", gstin: "", state: "" } };
   });
 
   const hasPermission = (resource: string, action: string) => {
@@ -153,11 +162,12 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const res = await api.get("/sync/metadata");
+        const res = await api.get("sync/metadata");
         if (res.data) {
           const newState = {
             permissions: res.data.permissions || {},
             modules: res.data.modules || [],
+            tenant: res.data.tenant || { name: "", logoUrl: "", address: "", gstin: "", state: "" },
           };
           setPbac(newState);
           localStorage.setItem("nexus_pbac_cache", JSON.stringify(newState));
@@ -166,11 +176,13 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         console.warn("Failed to fetch PBAC metadata", err);
       }
     };
-    // Don't fetch on auth pages
+    // Only fetch once on mount (not on every pathname change)
+    // Cache in localStorage is already loaded as initial state above
     if (!pathname?.includes("/login") && !pathname?.includes("/forgot-password")) {
       fetchMetadata();
     }
-  }, [pathname]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps = fetch once on mount only
 
   useEffect(() => {
     const markInteraction = () => {
@@ -260,7 +272,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
         open={!!confirmOptions}
         onOpenChange={(open) => !open && setConfirmOptions(null)}
       >
-        <DialogContent className="w-11/12 sm:min-w-fit bg-white border-slate-200 text-slate-900 rounded-[2rem] p-8 shadow-2xl">
+        <DialogContent className="w-11/12 sm:min-w-fit bg-white border-slate-200 text-slate-900 rounded-[2rem] p-4 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-black uppercase tracking-tight">
               {confirmOptions?.variant === "destructive" && (
@@ -309,9 +321,9 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
           }
         }}
       >
-        <DialogContent className="bg-white border-slate-200 text-slate-900 sm:max-w-[460px] rounded-[2.5rem] p-8 shadow-2xl">
+        <DialogContent className="bg-white border-slate-200 text-slate-900 sm:max-w-[460px] rounded-[2.5rem] p-4 shadow-2xl">
           <DialogHeader className="items-center text-center">
-            <div className="h-16 w-16 rounded-3xl bg-blue-50 flex items-center justify-center mb-6">
+            <div className="h-16 w-16 rounded-3xl bg-blue-50 flex items-center justify-center mb-3">
               <ShieldCheck className="h-8 w-8 text-blue-600" />
             </div>
             <DialogTitle className="text-2xl font-black uppercase tracking-tight">
@@ -349,9 +361,9 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
 
       {/* Session Expired Modal */}
       <Dialog open={isSessionExpired} onOpenChange={() => {}}>
-        <DialogContent className="bg-white border-slate-200 text-slate-900 sm:max-w-[400px] rounded-[2.5rem] p-8 shadow-2xl">
+        <DialogContent className="bg-white border-slate-200 text-slate-900 sm:max-w-[400px] rounded-[2.5rem] p-4 shadow-2xl">
           <DialogHeader className="items-center text-center">
-            <div className="h-16 w-16 rounded-3xl bg-rose-50 flex items-center justify-center mb-6">
+            <div className="h-16 w-16 rounded-3xl bg-rose-50 flex items-center justify-center mb-3">
               <LogOut className="h-8 w-8 text-rose-500" />
             </div>
             <DialogTitle className="text-2xl font-black uppercase tracking-tight">

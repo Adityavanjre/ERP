@@ -65,9 +65,6 @@ export function InlineCreateProductDialog({
     if (!formData.price.trim() || Number(formData.price) < 0) {
       errs.price = "Valid price is required";
     }
-    if (Number(formData.stock) > 0 && !formData.warehouseId) {
-      errs.warehouseId = "Warehouse is required when initial stock is positive";
-    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -226,7 +223,7 @@ export function InlineCreateProductDialog({
             </div>
             {Number(formData.stock) > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Warehouse *</Label>
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Warehouse (Optional)</Label>
                 <select
                   value={formData.warehouseId}
                   onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
@@ -237,7 +234,6 @@ export function InlineCreateProductDialog({
                     <option key={w.id} value={w.id}>{w.name}</option>
                   ))}
                 </select>
-                {errors.warehouseId && <p className="text-[10px] text-red-500 font-bold">{errors.warehouseId}</p>}
               </div>
             )}
           </div>

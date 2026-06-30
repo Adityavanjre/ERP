@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { Calendar, Clock, Plus, CheckCircle2, AlertCircle } from "lucide-react";
@@ -44,7 +44,7 @@ const appointments = [
 
 export default function AppointmentsPage() {
   return (
-    <div className="space-y-8 animate-in slide-in-from-bottom duration-500">
+    <div className="space-y-4 animate-in slide-in-from-bottom duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <div className="p-4 bg-blue-600 rounded-3xl shadow-xl shadow-blue-500/20">
@@ -60,16 +60,16 @@ export default function AppointmentsPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 px-8 py-6 h-auto">
+          <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 px-4 py-3 h-auto">
             <Plus className="h-4 w-4 mr-2" />
             Book Appointment
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="rounded-[2.5rem] border-slate-100 shadow-sm border-none bg-white p-2">
-          <CardHeader className="px-8 pt-8">
+          <CardHeader className="px-4 pt-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-black uppercase tracking-widest">
                 Today's Schedule
@@ -79,7 +79,7 @@ export default function AppointmentsPage() {
               </Badge>
             </div>
           </CardHeader>
-          <CardContent className="px-8 pb-8 space-y-4">
+          <CardContent className="px-4 pb-4 space-y-4">
             {appointments.map((apt) => (
               <div
                 key={apt.id}
@@ -103,7 +103,7 @@ export default function AppointmentsPage() {
                       {apt.patient}
                     </span>
                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                      {apt.doctor} â€¢ {apt.type}
+                      {apt.doctor} • {apt.type}
                     </span>
                   </div>
                 </div>
@@ -124,13 +124,13 @@ export default function AppointmentsPage() {
 
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-slate-900 p-2 overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full" />
-          <CardHeader className="px-8 pt-8 relative z-10">
+          <CardHeader className="px-4 pt-4 relative z-10">
             <CardTitle className="text-white text-lg font-black uppercase tracking-widest">
               Quick Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-8 pb-8 relative z-10 grid grid-cols-2 gap-4">
-            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+          <CardContent className="px-4 pb-4 relative z-10 grid grid-cols-2 gap-4">
+            <div className="p-3 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
               <div className="p-3 bg-blue-500/20 rounded-2xl w-fit group-hover:scale-110 transition-all">
                 <Plus className="h-6 w-6 text-blue-400" />
               </div>
@@ -138,7 +138,7 @@ export default function AppointmentsPage() {
                 New Patient
               </h4>
             </div>
-            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+            <div className="p-3 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
               <div className="p-3 bg-emerald-500/20 rounded-2xl w-fit group-hover:scale-110 transition-all">
                 <Calendar className="h-6 w-6 text-emerald-400" />
               </div>
@@ -146,7 +146,7 @@ export default function AppointmentsPage() {
                 Calendar
               </h4>
             </div>
-            <div className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group col-span-2">
+            <div className="p-3 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all cursor-pointer group col-span-2">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-amber-500/20 rounded-2xl w-fit group-hover:scale-110 transition-all">
                   <AlertCircle className="h-6 w-6 text-amber-400" />

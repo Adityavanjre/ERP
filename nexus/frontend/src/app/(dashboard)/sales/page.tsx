@@ -264,7 +264,7 @@ export default function SalesPage() {
         </div>
         <div className="flex gap-4 w-full md:w-auto mt-2 lg:mt-0">
           <Button
-            className="w-full md:w-auto rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-10 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none shrink-0"
+            className="w-full md:w-auto rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-5 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none shrink-0"
             onClick={() => setShowForm(true)}
           >
             <Plus className="mr-2 h-5 w-5" /> New Order
@@ -464,7 +464,7 @@ export default function SalesPage() {
                     colSpan={6}
                     className="text-center py-32 text-slate-300"
                   >
-                    <div className="flex flex-col items-center gap-6">
+                    <div className="flex flex-col items-center gap-3">
                       <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center border-4 border-dashed border-slate-100">
                         <ShoppingCart className="h-10 w-10 opacity-20" />
                       </div>
@@ -493,7 +493,7 @@ export default function SalesPage() {
         }}
       >
         <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-xl bg-white border-none shadow-2xl rounded-[40px] overflow-hidden p-0">
-          <div className="bg-slate-900 p-6 pb-10">
+          <div className="bg-slate-900 p-3 pb-4">
             <DialogTitle className="text-white font-black text-3xl tracking-tight">
               Create New Order
             </DialogTitle>
@@ -503,7 +503,7 @@ export default function SalesPage() {
           </div>
           <form
             onSubmit={handleConfirmSubmit}
-            className="p-6 -mt-8 bg-white rounded-t-[40px] space-y-6"
+            className="p-3 -mt-4 bg-white rounded-t-[40px] space-y-3"
           >
             {/* Customer */}
             <div className="space-y-3">

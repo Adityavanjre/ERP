@@ -71,7 +71,7 @@ export default function ModulesSettingsPage() {
   const modules = getAllModules();
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-3">
       <div>
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Module Configuration</h1>
         <p className="text-slate-500 mt-1">Enable or disable features for your organization. Data is never deleted when a module is disabled.</p>
@@ -97,9 +97,9 @@ export default function ModulesSettingsPage() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-6">
+        <CardContent className="p-3">
           {error && (
-            <div className="mb-6 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
+            <div className="mb-3 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
               {error}
             </div>
           )}

@@ -61,7 +61,7 @@ export default function MachinesPage() {
 
   const fetchMachines = useCallback(async () => {
     try {
-      const res = await api.get("/manufacturing/machines");
+      const res = await api.get("manufacturing/machines");
       // Add mock health data for visual appeal
       const enriched = res.data.map((m: Machine) => ({
         ...m,
@@ -85,7 +85,7 @@ export default function MachinesPage() {
         toast.error("Name and Code are required");
         return;
       }
-      await api.post("/manufacturing/machines", newMachine);
+      await api.post("manufacturing/machines", newMachine);
       toast.success("Machine registered successfully");
       setIsAddOpen(false);
       fetchMachines();
@@ -121,7 +121,7 @@ export default function MachinesPage() {
   );
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-3 space-y-3 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -228,7 +228,7 @@ export default function MachinesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {loading ? (
           [1, 2, 3].map((i) => (
             <div

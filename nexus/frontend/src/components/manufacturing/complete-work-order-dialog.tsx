@@ -115,7 +115,7 @@ export function CompleteWorkOrderDialog({
         return;
       }
 
-      await api.post(`/manufacturing/work-orders/${workOrder.id}/complete`, {
+      await api.post(`manufacturing/work-orders/${workOrder.id}/complete`, {
         producedQuantity: prodQty,
         scrapQuantity: scrQty,
         machineId: machineId || undefined,
@@ -241,12 +241,13 @@ export function CompleteWorkOrderDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label className="text-slate-700 font-bold">Target Warehouse</Label>
+            <Label className="text-slate-700 font-bold">Target Warehouse <span className="text-slate-400 font-normal text-xs">(Optional)</span></Label>
             <Select value={warehouseId} onValueChange={setWarehouseId}>
               <SelectTrigger className="h-10">
-                <SelectValue placeholder="Select warehouse" />
+                <SelectValue placeholder="Select warehouse (optional)" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">No specific warehouse</SelectItem>
                 {warehouses.map((w) => (
                   <SelectItem key={w.id} value={w.id}>
                     {w.name}

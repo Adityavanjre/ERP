@@ -100,7 +100,7 @@ export default function ProjectPage() {
 
   const fetchTasks = async (projectId: string) => {
     try {
-      const res = await api.get(`/projects/tasks/all?projectId=${projectId}`);
+      const res = await api.get(`projects/tasks/all?projectId=${projectId}`);
       setProjectTasks(res.data);
     } catch {
       toast.error("Failed to load tasks");
@@ -154,7 +154,7 @@ export default function ProjectPage() {
         prev.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t)),
       );
 
-      await api.patch(`/projects/tasks/${task.id}/status`, {
+      await api.patch(`projects/tasks/${task.id}/status`, {
         status: newStatus,
       });
       syncProjectData(true); // Refresh global progress
@@ -166,7 +166,7 @@ export default function ProjectPage() {
 
   const handleArchive = async (id: string) => {
     try {
-      await api.delete(`/projects/${id}`);
+      await api.delete(`projects/${id}`);
       toast.success("Project archived successfully");
       syncProjectData(true);
     } catch {
@@ -191,7 +191,7 @@ export default function ProjectPage() {
         </div>
         <div className="flex w-full md:w-auto">
           <Button
-            className="w-full justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
+            className="w-full justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
             onClick={() => setShowForm(!showForm)}
           >
             <Plus className="mr-2 h-4 w-4" /> New Project
@@ -254,7 +254,7 @@ export default function ProjectPage() {
       </div>
 
       {showForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-8 animate-in fade-in slide-in-from-top-4">
+        <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-4 animate-in fade-in slide-in-from-top-4">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               New Project
@@ -263,10 +263,10 @@ export default function ProjectPage() {
               Fill in the details to create a new project
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 md:p-8">
+          <CardContent className="p-4 md:p-4">
             <form
               onSubmit={handleCreate}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 gap-3"
             >
               <div className="md:col-span-2 space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -330,7 +330,7 @@ export default function ProjectPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl h-12 px-8"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl h-12 px-4"
                 >
                   Create Project
                 </Button>
@@ -389,7 +389,7 @@ export default function ProjectPage() {
                   {project.description || "No description provided."}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="space-y-3 pt-3">
                 <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                     <span className="text-slate-400">Progress</span>
@@ -454,7 +454,7 @@ export default function ProjectPage() {
         onOpenChange={(open) => !open && setSelectedProject(null)}
       >
         <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-2xl bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-h-[90vh] flex flex-col">
-          <div className="bg-slate-900 p-6 md:p-6 pb-10 md:pb-12 flex-shrink-0">
+          <div className="bg-slate-900 p-3 md:p-3 pb-4 md:pb-12 flex-shrink-0">
             <DialogTitle className="flex items-center gap-4 text-white text-2xl md:text-3xl font-black tracking-tight">
               <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/40">
                 <ListTodo className="h-5 w-5 md:h-6 md:w-6 text-white" />
@@ -469,7 +469,7 @@ export default function ProjectPage() {
             </p>
           </div>
 
-          <div className="p-6 md:p-6 -mt-10 bg-white rounded-t-[32px] space-y-4 flex-1 overflow-hidden flex flex-col">
+          <div className="p-3 md:p-3 -mt-4 bg-white rounded-t-[32px] space-y-4 flex-1 overflow-hidden flex flex-col">
             <form
               onSubmit={handleCreateTask}
               className="flex flex-col lg:flex-row gap-3 flex-shrink-0"
@@ -482,7 +482,7 @@ export default function ProjectPage() {
               />
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 rounded-2xl h-14 shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full md:w-auto shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black px-4 rounded-2xl h-14 shadow-lg shadow-blue-500/20 active:scale-95 transition-all w-full md:w-auto shrink-0"
               >
                 Add Task
               </Button>

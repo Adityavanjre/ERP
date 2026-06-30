@@ -339,7 +339,7 @@ export default function AccountingPage() {
                             <Plus className="mr-2 h-4 w-4 text-emerald-500" /> Record Tx
                         </Button>
                     </div>
-                    <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-8 shadow-lg shadow-amber-500/20 text-white h-11 w-full sm:w-auto" onClick={() => setShowCreateInvoice(true)}>
+                    <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-4 shadow-lg shadow-amber-500/20 text-white h-11 w-full sm:w-auto" onClick={() => setShowCreateInvoice(true)}>
                         <Plus className="mr-2 h-4 w-4" /> New Invoice
                     </Button>
                 </div>
@@ -396,7 +396,7 @@ export default function AccountingPage() {
                 </Card>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                     <ForecastingWidget />
                 </div>
@@ -408,7 +408,7 @@ export default function AccountingPage() {
             {stats.topDebtors && stats.topDebtors.length > 0 && (
                 <div className="grid gap-3 md:grid-cols-2">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none group">
-                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-8">
+                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-4">
                             <CardTitle className="text-slate-900 text-xl font-black tracking-tight">Top Overdue Customers</CardTitle>
                             <CardDescription className="text-slate-500 font-medium mt-1">Customers with outstanding payments requiring follow-up.</CardDescription>
                         </CardHeader>
@@ -450,8 +450,8 @@ export default function AccountingPage() {
 
                 <TabsContent value="invoices" className="space-y-4">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden">
-                        <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-6">
-                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-3">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Sales Invoices</CardTitle>
                                     <CardDescription className="text-slate-500 font-medium">Track and manage customer invoices and payments.</CardDescription>
@@ -542,7 +542,7 @@ export default function AccountingPage() {
                                     ))}
                                     {filteredInvoices.length === 0 && !loading && (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="py-12 px-6">
+                                            <TableCell colSpan={6} className="py-4 px-6">
                                                 <EmptyState
                                                     icon={Receipt}
                                                     title="No Invoices Found"
@@ -566,7 +566,7 @@ export default function AccountingPage() {
 
                 <TabsContent value="accounts" className="space-y-4">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-8 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4 px-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Chart of Accounts</CardTitle>
@@ -613,7 +613,7 @@ export default function AccountingPage() {
 
                 <TabsContent value="transactions" className="space-y-4">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-8 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4 px-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Transaction Journal</CardTitle>
@@ -668,7 +668,7 @@ export default function AccountingPage() {
                 </TabsContent>
                 <TabsContent value="health" className="space-y-4">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-8 px-8">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4 px-4">
                             <CardTitle className="text-slate-900 text-xl font-black">Store Health Profile</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Financial health and payment discipline overview</CardDescription>
                         </CardHeader>
@@ -676,7 +676,7 @@ export default function AccountingPage() {
                             {healthScore && (
                                 <div className="space-y-12">
                                     <div className="grid gap-3 md:grid-cols-3">
-                                        <div className="p-8 rounded-[32px] bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group">
+                                        <div className="p-4 rounded-[32px] bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group">
                                             <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors" />
                                             <p className="text-[10px] text-slate-600 mb-4 uppercase font-black tracking-[0.2em] relative z-10">Accuracy Rating</p>
                                             <div className="relative z-10">
@@ -688,14 +688,14 @@ export default function AccountingPage() {
                                                 {healthScore.status} STATUS
                                             </Badge>
                                         </div>
-                                        <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
+                                        <div className="p-4 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Entry Delay</p>
                                             <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.avgEntryLag || 0} <span className="text-xs font-bold text-slate-400">MINS</span></p>
                                             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
                                                 <div className="h-full bg-blue-600 w-[40%]" />
                                             </div>
                                         </div>
-                                        <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
+                                        <div className="p-4 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Fulfillment Ratio</p>
                                             <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.taggingRatio || "0%"}</p>
                                             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
@@ -726,7 +726,7 @@ export default function AccountingPage() {
                                         )}
                                     </div>
 
-                                    <div className="grid gap-8 md:grid-cols-2">
+                                    <div className="grid gap-4 md:grid-cols-2">
                                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none">
                                             <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
                                                 <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-3">

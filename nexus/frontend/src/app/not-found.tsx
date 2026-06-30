@@ -22,8 +22,8 @@ export default function NotFound() {
 
     return (
 
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-8 animate-bounce">
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-3 text-center">
+            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
                 <Search className="h-10 w-10 text-blue-600" />
             </div>
 
@@ -31,7 +31,7 @@ export default function NotFound() {
                 404 - Path <span className="text-blue-600">Not Found</span>
             </h1>
 
-            <p className="max-w-md text-slate-600 text-lg mb-12 font-medium">
+            <p className="max-w-md text-slate-600 text-lg mb-4 font-medium">
                 The imperial standard doesn't usually fail, but this route seems to have disappeared. Let's get you back to the platform.
             </p>
 
@@ -43,8 +43,8 @@ export default function NotFound() {
             </Link>
             </div>
 
-            <div className="mt-20 pt-10 border-t border-slate-200 w-full max-w-2xl">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 italic">Quick Solution Links</h3>
+            <div className="mt-20 pt-4 border-t border-slate-200 w-full max-w-2xl">
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 italic">Quick Solution Links</h3>
                 <div className="flex flex-wrap justify-center gap-4">
                     {["Manufacturing", "Healthcare", "Construction", "Logistics", "Retail"].map((industry) => (
                         <Link

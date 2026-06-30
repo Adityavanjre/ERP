@@ -220,7 +220,7 @@ export function TenantSelector() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,130,246,0.05),transparent)]" />
 
       <div className="w-full max-w-lg relative z-10">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-500/20">
               K
@@ -239,7 +239,7 @@ export function TenantSelector() {
         </div>
 
         <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-          <CardHeader className="bg-slate-900 text-white p-8 pb-10">
+          <CardHeader className="bg-slate-900 text-white p-4 pb-4">
             <CardTitle className="text-3xl font-black tracking-tight mb-2 italic">
               Select Workspace
             </CardTitle>
@@ -247,9 +247,9 @@ export function TenantSelector() {
               Choose a company to access your dashboard
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-8 -mt-6 bg-white rounded-t-[2.5rem]">
+          <CardContent className="p-4 -mt-6 bg-white rounded-t-[2.5rem]">
             {shouldRetry && (
-              <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
                 <p className="text-xs font-black uppercase tracking-widest text-amber-700">
                   Server Wake-Up Paused
                 </p>
@@ -271,7 +271,7 @@ export function TenantSelector() {
             )}
             <div className="space-y-3">
               {tenants.length > 10 && (
-                <div className="mb-6 relative">
+                <div className="mb-3 relative">
                   <Input
                     placeholder="Search Workspaces..."
                     className="h-12 rounded-2xl bg-slate-50 border-slate-100 pl-10 text-[11px] font-bold uppercase tracking-widest text-slate-900 focus:ring-blue-500/10 placeholder:text-slate-400"

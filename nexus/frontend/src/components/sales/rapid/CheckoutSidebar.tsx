@@ -36,6 +36,7 @@ interface CheckoutSidebarProps {
   isSubmitting: boolean;
   completeInvoice: () => void;
   userRole: string | null;
+  canBill: boolean;
 }
 
 export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
@@ -62,14 +63,15 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
   isSubmitting,
   completeInvoice,
   userRole,
+  canBill,
 }) => {
   const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
   const [showAddresses, setShowAddresses] = useState(false);
 
   return (
-    <div className="w-[420px] bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl relative z-30">
+    <div className="w-full h-full bg-white border-l border-slate-200 flex flex-col overflow-hidden shadow-2xl">
       {/* Identity Header / Customer Selector */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-2.5 shrink-0">
+      <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-1.5 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-slate-400" />
@@ -95,7 +97,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
               setCustomerName(found ? `${found.firstName} ${found.lastName || ""}`.trim() : "Walk-in Customer");
             }
           }}
-          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full h-8 px-3 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Walk-in Customer / Guest</option>
           {customers.map((c) => (
@@ -106,9 +108,9 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
         </select>
       </div>
 
-      <div className="p-6 flex-1 overflow-y-auto space-y-6">
+      <div className="px-3 py-2 flex-1 overflow-y-auto space-y-3">
         {/* Collapsible Address Section */}
-        <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+        <div className="border border-slate-100 rounded-xl p-3 bg-slate-50/50">
           <button
             type="button"
             onClick={() => setShowAddresses(!showAddresses)}
@@ -154,79 +156,71 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
 
         {/* Payment Modes */}
         <div>
-          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
             Select Payment Type
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setPaymentMode("CASH")}
               className={cn(
-                "h-24 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all active:scale-95",
+                "h-14 rounded-xl flex flex-row items-center justify-center gap-2 border-2 transition-all active:scale-95",
                 paymentMode === "CASH"
                   ? "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-inner"
                   : "bg-white border-slate-100 text-slate-500 hover:border-emerald-200",
               )}
             >
-              <Banknote className="w-8 h-8 mb-1" />
-              <span className="font-black text-xs uppercase tracking-tight">
-                Cash Pay
-              </span>
+              <Banknote className="w-4 h-4" />
+              <span className="font-black text-xs uppercase tracking-tight">Cash</span>
             </button>
             <button
               onClick={() => setPaymentMode("UPI")}
               className={cn(
-                "h-24 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all active:scale-95",
+                "h-14 rounded-xl flex flex-row items-center justify-center gap-2 border-2 transition-all active:scale-95",
                 paymentMode === "UPI"
                   ? "bg-blue-50 border-blue-500 text-blue-700 shadow-inner"
                   : "bg-white border-slate-100 text-slate-500 hover:border-blue-200",
               )}
             >
-              <Smartphone className="w-8 h-8 mb-1" />
-              <span className="font-black text-xs uppercase tracking-tight">
-                Digital UPI
-              </span>
+              <Smartphone className="w-4 h-4" />
+              <span className="font-black text-xs uppercase tracking-tight">UPI</span>
             </button>
             <button
               onClick={() => setPaymentMode("CREDIT")}
               className={cn(
-                "h-24 col-span-2 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all active:scale-95",
+                "h-14 rounded-xl flex flex-row items-center justify-center gap-2 border-2 transition-all active:scale-95",
                 paymentMode === "CREDIT"
                   ? "bg-purple-50 border-purple-500 text-purple-700 shadow-inner"
                   : "bg-white border-slate-100 text-slate-500 hover:border-purple-200",
               )}
             >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-6 h-6" />
-                <span className="font-black text-xs uppercase tracking-tight">
-                  Credit / Debit Card
-                </span>
-              </div>
+              <CreditCard className="w-4 h-4" />
+              <span className="font-black text-xs uppercase tracking-tight">Card</span>
             </button>
           </div>
         </div>
 
         {/* Amount Entry */}
         <div>
-          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
             Amount Received
           </p>
-          <div className="flex items-center gap-3 px-5 py-4 bg-slate-50 rounded-2xl border-2 border-slate-100 focus-within:border-blue-600 focus-within:bg-white transition-all shadow-inner">
-            <span className="text-slate-400 font-black text-2xl">₹</span>
+          <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border-2 border-slate-100 focus-within:border-blue-600 focus-within:bg-white transition-all">
+            <span className="text-slate-400 font-black text-lg">₹</span>
             <NumericInput
               value={customAmountPaid}
               onChange={(val) => setCustomAmountPaid(val)}
               placeholder={total.toFixed(2)}
-              className="w-full bg-transparent text-3xl font-black text-slate-900 outline-none tabular-nums placeholder:text-slate-200 border-none shadow-none p-0 focus-visible:ring-0"
+              className="w-full bg-transparent text-2xl font-black text-slate-900 outline-none tabular-nums placeholder:text-slate-200 border-none shadow-none p-0 focus-visible:ring-0"
             />
           </div>
         </div>
 
         {/* Invoice Summary */}
-        <div className="pt-4">
-          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
             Order Summary
           </p>
-          <div className="space-y-3 bg-slate-50 rounded-2xl p-5 border border-slate-100">
+          <div className="space-y-2 bg-slate-50 rounded-xl p-3 border border-slate-100">
             <div className="flex justify-between text-sm font-bold text-slate-500 uppercase tracking-tight">
               <span>Subtotal</span>
               <span className="tabular-nums">
@@ -246,7 +240,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
               <span className="font-black text-slate-900 text-lg uppercase tracking-tight">
                 Final Amount
               </span>
-              <span className="font-black text-slate-900 text-4xl tabular-nums">
+              <span className="font-black text-slate-900 text-2xl tabular-nums">
                 ₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -255,40 +249,32 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
       </div>
 
       {/* Checkout Action */}
-      <div className="p-6 border-t border-slate-200 bg-white">
-        {["Owner", "Manager", "Storekeeper"].includes(userRole || "") ? (
+      <div className="px-3 pb-3 pt-2 border-t border-slate-200 bg-white">
+        {canBill ? (
           <button
             disabled={itemsCount === 0 || isSubmitting}
             onClick={completeInvoice}
-            className="w-full bg-blue-600 text-white h-24 rounded-[32px] text-2xl font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale shadow-xl shadow-blue-500/20 flex flex-col items-center justify-center gap-1 group"
+            className="w-full bg-blue-600 text-white h-14 rounded-2xl text-base font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group"
           >
             {isSubmitting ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <span>Syncing...</span>
-                <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span>Finalize Bill</span>
-                  <CheckCircle2 className="w-6 h-6" />
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-bold opacity-60">
-                  Ready to Print [F1]
-                </span>
+                <span className="text-[9px] font-bold opacity-60">[F1]</span>
               </>
             )}
           </button>
         ) : (
-          <div className="p-5 bg-rose-50 border-2 border-rose-100 rounded-3xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-rose-600" />
-            </div>
-            <span className="text-sm font-black text-rose-900 uppercase leading-tight">
-              Terminal Locked:
-              <br />
-              Manager Required
-            </span>
+          <div className="p-3 bg-rose-50 border-2 border-rose-100 rounded-2xl flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span className="text-xs font-black text-rose-900 uppercase leading-tight">Terminal Locked — Manager Required</span>
           </div>
         )}
       </div>

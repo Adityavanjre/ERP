@@ -166,7 +166,7 @@ export default function CrmPage() {
       try {
         if (showLoading) setLoading(true);
         const [custRes, statsRes, oppRes] = await Promise.all([
-          api.get(`/crm/customers?page=${custPage}&limit=50`),
+          api.get(`crm/customers?page=${custPage}&limit=50`),
           api.get("crm/stats"),
           api.get("crm/opportunities").catch(() => ({ data: [] })),
         ]);
@@ -272,7 +272,7 @@ export default function CrmPage() {
       onConfirm: async () => {
         try {
           setUILocked(true);
-          await api.delete(`/crm/customers/${id}`);
+          await api.delete(`crm/customers/${id}`);
           toast.success("Customer deleted successfully");
           syncRelations(true);
         } catch (err: unknown) {
@@ -318,7 +318,7 @@ export default function CrmPage() {
         ),
       );
 
-      await api.post(`/crm/opportunities/${editingDeal.id}`, {
+      await api.post(`crm/opportunities/${editingDeal.id}`, {
         title: editingDeal.title,
         value: Number(editingDeal.value),
         stage: editingDeal.stage,
@@ -339,7 +339,7 @@ export default function CrmPage() {
       setOpportunities((prev) =>
         prev.map((o) => (o.id === id ? { ...o, stage: newStage } : o)),
       );
-      await api.post(`/crm/opportunities/${id}`, { stage: newStage });
+      await api.post(`crm/opportunities/${id}`, { stage: newStage });
       toast.success(`Deal moved to ${newStage}`);
       syncRelations(true);
     } catch {
@@ -400,7 +400,7 @@ export default function CrmPage() {
             <Sparkles className="mr-2 h-4 w-4" /> Add Deal
           </Button>
           <Button
-            className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
+            className="flex-1 sm:flex-none justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap"
             onClick={() => setShowForm(!showForm)}
           >
             <UserPlus className="mr-2 h-4 w-4" />{" "}
@@ -411,7 +411,7 @@ export default function CrmPage() {
 
       {/* Forms Section */}
       {showForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
+        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-4 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               {activeTab === "leads" ? "Add New Lead" : "Add New Customer"}
@@ -546,7 +546,7 @@ export default function CrmPage() {
       )}
 
       {showDealForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-amber-500">
+        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-4 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-amber-500">
           <CardHeader className="bg-amber-50/50 border-b border-amber-100 py-3 px-4">
             <CardTitle className="text-amber-900 flex items-center gap-3 font-black text-xl">
               <Sparkles className="h-5 w-5 text-amber-500" />
@@ -556,7 +556,7 @@ export default function CrmPage() {
           <CardContent>
             <form
               onSubmit={handleCreateDeal}
-              className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-6"
+              className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-3"
             >
               <div className="md:col-span-2 space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -698,7 +698,7 @@ export default function CrmPage() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-slate-900 hover:bg-black text-white px-8 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-900/10"
+                  className="bg-slate-900 hover:bg-black text-white px-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-900/10"
                 >
                   <Save className="mr-2 h-4 w-4" /> Save Changes
                 </Button>
@@ -712,13 +712,13 @@ export default function CrmPage() {
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="pipeline"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Pipeline
           </TabsTrigger>
           <TabsTrigger
             value="customers"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Customers
           </TabsTrigger>
@@ -752,7 +752,7 @@ export default function CrmPage() {
             </Card>
           </div>
 
-          <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
             {stages.map((stage) => {
               const stageOpps = opportunities.filter((o) => o.stage === stage);
               const total = stageOpps.reduce(
@@ -1033,7 +1033,7 @@ export default function CrmPage() {
               </Table>
               {/* BUG-018 FIX: hide pagination when search is active — search filters client-side */}
               {!searchQuery && (
-                <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/50">
+                <div className="flex justify-between items-center px-4 py-5 border-t border-slate-100 bg-slate-50/50">
                   <Button
                     variant="ghost"
                     size="sm"

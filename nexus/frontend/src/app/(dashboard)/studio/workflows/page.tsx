@@ -44,7 +44,7 @@ export default function WorkflowBuilder() {
     async (showLoading = false) => {
       try {
         if (showLoading) setLoading(true);
-        const res = await api.get(`/system/workflows/${modelName}`);
+        const res = await api.get(`system/workflows/${modelName}`);
         setWorkflows(res.data);
       } catch {
         // silent
@@ -80,7 +80,7 @@ export default function WorkflowBuilder() {
     if (!selectedWorkflow) return;
     try {
       const res = await api.post(
-        `/system/workflows/${selectedWorkflow.id}/nodes`,
+        `system/workflows/${selectedWorkflow.id}/nodes`,
         {
           name: "New State",
           type: "state",
@@ -99,13 +99,13 @@ export default function WorkflowBuilder() {
 
   if (loading && workflows.length === 0)
     return (
-      <div className="p-8 text-center text-slate-500 font-bold">
+      <div className="p-4 text-center text-slate-500 font-bold">
         Synchronizing lifecycle engines...
       </div>
     );
 
   return (
-    <div className="flex-1 p-4 md:p-8 space-y-4 pt-2 md:pt-6">
+    <div className="flex-1 p-4 md:p-4 space-y-4 pt-2 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
@@ -213,14 +213,14 @@ export default function WorkflowBuilder() {
                 </p>
               </div>
             ) : (
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {selectedWorkflow.nodes?.map((node: WorkflowNode) => (
                   <Card
                     key={node.id}
                     className="bg-indigo-950 border-none shadow-2xl relative group overflow-hidden rounded-[32px]"
                   >
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 shadow-[2px_0_10px_rgba(16,185,129,0.3)] transition-all group-hover:w-2" />
-                    <CardHeader className="pb-4 pt-6 px-6">
+                    <CardHeader className="pb-4 pt-3 px-6">
                       <div className="flex justify-between items-start mb-4">
                         <Badge className="bg-white/10 text-emerald-400 border-none font-black text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-md">
                           {node.type}
@@ -231,7 +231,7 @@ export default function WorkflowBuilder() {
                         {node.name}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="px-6 pb-6 pt-0">
+                    <CardContent className="px-6 pb-3 pt-0">
                       <div className="space-y-3">
                         <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between group-hover:border-emerald-500/30 transition-all">
                           <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ export default function WorkflowBuilder() {
 
                 <div
                   onClick={addNode}
-                  className="border-4 border-dashed border-slate-200 rounded-[32px] flex items-center justify-center cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all text-slate-200 hover:text-emerald-500 py-12"
+                  className="border-4 border-dashed border-slate-200 rounded-[32px] flex items-center justify-center cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all text-slate-200 hover:text-emerald-500 py-4"
                 >
                   <Plus className="h-12 w-12" />
                 </div>
@@ -266,7 +266,7 @@ export default function WorkflowBuilder() {
 
             {/* Legend / Stats overlay */}
             <div className="absolute bottom-6 right-6 p-4 rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-x-auto max-w-[90vw]">
-              <div className="flex items-center gap-6 text-[10px] font-black tracking-widest uppercase flex-wrap">
+              <div className="flex items-center gap-3 text-[10px] font-black tracking-widest uppercase flex-wrap">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />
                   <span className="text-slate-500">

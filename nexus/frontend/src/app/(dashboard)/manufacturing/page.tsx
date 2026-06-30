@@ -151,9 +151,9 @@ export default function ManufacturingDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* WIP Work Orders */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -165,12 +165,12 @@ export default function ManufacturingDashboard() {
             {workOrders.map((wo: WorkOrder) => (
               <div
                 key={wo.id}
-                className="bg-white border border-slate-200 p-8 rounded-[32px] hover:border-emerald-300 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative border-none shadow-xl shadow-slate-200/40"
+                className="bg-white border border-slate-200 p-4 rounded-[32px] hover:border-emerald-300 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative border-none shadow-xl shadow-slate-200/40"
               >
                 <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-50 opacity-0 group-hover:opacity-100 blur-[80px] transition-all -z-0"></div>
 
                 <div className="flex flex-col sm:flex-row justify-between items-start relative z-10 gap-4 sm:gap-0">
-                  <div className="flex gap-4 sm:gap-8 items-start sm:items-center">
+                  <div className="flex gap-4 sm:gap-4 items-start sm:items-center">
                     <div
                       className={cn(
                         "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all shrink-0",
@@ -218,7 +218,7 @@ export default function ManufacturingDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
+                <div className="mt-6 sm:mt-4 pt-4 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
                   <div className="flex gap-3 sm:gap-5 items-center pl-[4rem] sm:pl-0">
                     <div className="flex -space-x-3">
                       {Array.from({
@@ -247,7 +247,7 @@ export default function ManufacturingDashboard() {
                       workOrder={wo}
                       refreshData={() => syncManufacturingData(false)}
                     >
-                      <button className="w-full sm:w-auto justify-center px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95">
+                      <button className="w-full sm:w-auto justify-center px-4 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-xl shadow-slate-900/10 hover:shadow-emerald-500/20 active:scale-95">
                         Mark Complete
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -262,7 +262,7 @@ export default function ManufacturingDashboard() {
                   ) : (
                     <button
                       onClick={() => setStartingWo(wo)}
-                      className="w-full sm:w-auto justify-center px-8 py-3 bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-600 transition-all flex items-center gap-3 shadow-xl shadow-amber-500/20 active:scale-95"
+                      className="w-full sm:w-auto justify-center px-4 py-3 bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-amber-600 transition-all flex items-center gap-3 shadow-xl shadow-amber-500/20 active:scale-95"
                     >
                       Start Production
                       <Play className="w-4 h-4" />
@@ -280,8 +280,8 @@ export default function ManufacturingDashboard() {
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
               Production Stats
             </h2>
-            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 p-8 rounded-[40px] border-none group relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
+            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 p-4 rounded-[40px] border-none group relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform">
                 <TrendingUp className="h-24 w-24 text-emerald-900" />
               </div>
               <div className="space-y-4 relative z-10">

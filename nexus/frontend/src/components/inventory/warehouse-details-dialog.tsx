@@ -51,8 +51,8 @@ export function WarehouseDetailsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[700px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden">
-        <div className="bg-slate-900 p-8 text-white relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
+        <div className="bg-slate-900 p-4 text-white relative">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
             <Boxes className="h-32 w-32" />
           </div>
           <DialogHeader className="relative z-10">
@@ -70,7 +70,7 @@ export function WarehouseDetailsDialog({
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6 mt-6 pt-6 border-t border-white/10">
+            <div className="flex flex-col md:flex-row gap-3 mt-6 pt-3 border-t border-white/10">
               <div className="flex items-center gap-3">
                 <MapPin className="h-4 w-4 text-slate-400" />
                 <span className="text-sm font-medium text-slate-300">
@@ -87,8 +87,8 @@ export function WarehouseDetailsDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-8">
-          <div className="space-y-6">
+        <div className="p-4">
+          <div className="space-y-3">
             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-4">
               Current Stock List
               <div className="h-px flex-1 bg-slate-100" />

@@ -26,7 +26,7 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await api.get("/inventory/products?limit=100"); // Load top 100 for POS
+      const res = await api.get("inventory/products?limit=100"); // No leading slash - api baseURL already has /v1
       const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
       setProducts(list);
     } catch (err) {
@@ -67,8 +67,8 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 border-r border-slate-200 w-full lg:w-[45%] shrink-0">
-      <div className="p-4 bg-white border-b border-slate-200 space-y-3">
+    <div className="flex flex-col h-full w-full bg-slate-50">
+      <div className="p-3 bg-white border-b border-slate-200 space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -88,12 +88,12 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors ${selectedCategory === cat ? "bg-slate-900 text-white shadow-md" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-bold whitespace-nowrap transition-colors ${selectedCategory === cat ? "bg-slate-900 text-white shadow-md" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
             >
               {cat}
             </button>
@@ -101,32 +101,32 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="flex-1 overflow-y-auto p-3">
+        <div className="grid grid-cols-2 gap-2">
           {filteredProducts.map((product) => (
             <button
               key={product.id}
               onClick={() => onProductClick(product)}
-              className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-md transition-all text-left flex flex-col group active:scale-95"
+              className="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-md transition-all text-left flex flex-col group active:scale-95"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
-                <Package className="h-5 w-5 text-blue-600" />
+              <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center mb-2 group-hover:bg-blue-100 transition-colors">
+                <Package className="h-3.5 w-3.5 text-blue-600" />
               </div>
-              <span className="font-bold text-slate-900 text-sm line-clamp-2 leading-tight mb-1">
+              <span className="font-bold text-slate-900 text-xs line-clamp-2 leading-tight mb-1">
                 {product.name}
               </span>
               <div className="mt-auto flex items-center justify-between w-full">
-                <span className="text-emerald-600 font-black text-sm">
+                <span className="text-emerald-600 font-black text-xs">
                   ₹{parseFloat(product.price as string).toFixed(2)}
                 </span>
-                <span className="text-[10px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md">
-                  {Number(product.stock)} left
+                <span className="text-[9px] text-slate-400 font-bold bg-slate-100 px-1 py-0.5 rounded">
+                  {Number(product.stock)}
                 </span>
               </div>
             </button>
           ))}
           {filteredProducts.length === 0 && (
-            <div className="col-span-full py-12 text-center text-slate-400">
+            <div className="col-span-full py-4 text-center text-slate-400">
               No products found matching your search.
             </div>
           )}

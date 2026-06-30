@@ -166,7 +166,7 @@ export function EditWarehouseDialog({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 px-8 font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 px-4 font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

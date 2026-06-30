@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect } from "react";
@@ -44,7 +44,7 @@ export default function DebitNotesPage() {
   const fetchNotes = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get("/accounting/debit-notes");
+      const res = await api.get("accounting/debit-notes");
       setNotes(res.data);
     } catch {
       // Suppressed in prod
@@ -64,7 +64,7 @@ export default function DebitNotesPage() {
   );
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50/50 min-h-screen">
+    <div className="p-3 space-y-3 bg-slate-50/50 min-h-screen">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -98,7 +98,7 @@ export default function DebitNotesPage() {
       </div>
 
       <Card className="border-none shadow-xl shadow-slate-200/50 rounded-3xl overflow-hidden">
-        <CardHeader className="bg-white border-b border-slate-100 p-6">
+        <CardHeader className="bg-white border-b border-slate-100 p-3">
           <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

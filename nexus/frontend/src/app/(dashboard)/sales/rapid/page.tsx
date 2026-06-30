@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { BarcodeSearch } from "../../../../components/sales/rapid/BarcodeSearch";
 import { CartTable } from "../../../../components/sales/rapid/CartTable";
 import { CheckoutSidebar } from "../../../../components/sales/rapid/CheckoutSidebar";
-import { ProductGrid } from "../../../../components/sales/rapid/ProductGrid";
 import { ConfirmationDialog } from "../../../../components/shared/ConfirmationDialog";
+import { InlineCreateProductDialog } from "../../../../components/shared/inline-create-product-dialog";
 
 const generateId = () =>
   Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
@@ -37,6 +37,8 @@ interface SyncBatchResult {
   error?: string;
 }
 
+const ALLOWED_ROLES = ["owner", "manager", "storekeeper", "admin", "cashier"];
+
 export default function RapidBillingPage() {
   const currencySymbol = getCurrencySymbol();
   const [items, setItems] = useState<Item[]>([]);
@@ -54,15 +56,14 @@ export default function RapidBillingPage() {
   const [elapsed, setElapsed] = useState(0);
   const [isOffline, setIsOffline] = useState(false);
   const [pendingSync, setPendingSync] = useState(0);
-  const [paymentMode, setPaymentMode] = useState<"CASH" | "UPI" | "CREDIT">(
-    "CASH",
-  );
+  const [paymentMode, setPaymentMode] = useState<"CASH" | "UPI" | "CREDIT">("CASH");
   const [lastScanFailed, setLastScanFailed] = useState(false);
   const [customAmountPaid, setCustomAmountPaid] = useState<number>(0);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
 
   const isSyncingRef = useRef(false);
 
@@ -86,9 +87,7 @@ export default function RapidBillingPage() {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
         return prev.map((i) =>
-          i.productId === product.id
-            ? { ...i, quantity: i.quantity + quantity }
-            : i,
+          i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i,
         );
       }
       return [
@@ -97,10 +96,7 @@ export default function RapidBillingPage() {
           productId: product.id,
           name: product.name,
           sku: product.sku,
-          price:
-            typeof product.price === "string"
-              ? parseFloat(product.price)
-              : product.price,
+          price: typeof product.price === "string" ? parseFloat(product.price) : product.price,
           quantity: quantity,
           gstRate: product.gstRate || 0,
         },
@@ -120,13 +116,16 @@ export default function RapidBillingPage() {
     const loadMetadata = () => {
       const queue = JSON.parse(localStorage.getItem("billing_queue") || "[]");
       setPendingSync(queue.length);
-      const userData = localStorage.getItem("k_user");
-      if (userData) {
-        try {
-          const u = JSON.parse(userData);
-          setUserRole(u.role);
-        } catch {
-          // Ignore empty catch
+      const keysToTry = ["k_user", "user", "auth_user", "nexus_user"];
+      for (const key of keysToTry) {
+        const userData = localStorage.getItem(key);
+        if (userData) {
+          try {
+            const u = JSON.parse(userData);
+            const role = (u.role || u.userRole || "").toLowerCase();
+            setUserRole(role);
+            break;
+          } catch {}
         }
       }
     };
@@ -165,9 +164,7 @@ export default function RapidBillingPage() {
 
     setIsSearching(true);
     try {
-      const res = await api.get(
-        `/inventory/products/find-by-code?code=${finalCode}`,
-      );
+      const res = await api.get(`inventory/products/find-by-code?code=${finalCode}`);
       if (res.data) {
         addItem(res.data, multiplier);
         setLastScanFailed(false);
@@ -185,16 +182,10 @@ export default function RapidBillingPage() {
     }
   };
 
-  // BUG-007 FIX: manualSearch dead code removed.
-  // The manualSearch state had no setter so the debounce effect below could never fire.
-  // The ProductGrid component handles its own product browsing.
-
   const updateQty = (id: string, delta: number) => {
     setItems((prev) =>
       prev
-        .map((i) =>
-          i.productId === id ? { ...i, quantity: i.quantity + delta } : i,
-        )
+        .map((i) => (i.productId === id ? { ...i, quantity: i.quantity + delta } : i))
         .filter((i) => i.quantity > 0),
     );
   };
@@ -203,8 +194,7 @@ export default function RapidBillingPage() {
     setItems((prev) => prev.filter((i) => i.productId !== id));
   };
 
-  const round2 = (val: number) =>
-    Math.round((val + Number.EPSILON) * 100) / 100;
+  const round2 = (val: number) => Math.round((val + Number.EPSILON) * 100) / 100;
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const taxTotal = items.reduce((sum, i) => {
@@ -236,11 +226,7 @@ export default function RapidBillingPage() {
     const invoiceNumber = `INV-${Date.now()}-${generateId().substring(0, 4).toUpperCase()}`;
 
     const amountPaid =
-      customAmountPaid > 0
-        ? customAmountPaid
-        : paymentMode === "CREDIT"
-          ? 0
-          : total;
+      customAmountPaid > 0 ? customAmountPaid : paymentMode === "CREDIT" ? 0 : total;
 
     const invoiceData = {
       customerId: customerId || undefined,
@@ -288,24 +274,12 @@ export default function RapidBillingPage() {
       setIsSubmitting(false);
     }
   }, [
-    items,
-    isSubmitting,
-    total,
-    customAmountPaid,
-    paymentMode,
-    customerId,
-    elapsed,
-    isOffline,
-    reset,
-    billingAddress,
-    shippingAddress,
-    supplierAddress,
+    items, isSubmitting, total, customAmountPaid, paymentMode,
+    customerId, elapsed, isOffline, reset, billingAddress, shippingAddress, supplierAddress,
   ]);
 
   const handleCompletePress = useCallback(() => {
     if (items.length === 0 || isSubmitting) return;
-
-    // Show confirmation for large amounts
     if (total > 100000) {
       setShowConfirm(true);
     } else {
@@ -313,8 +287,6 @@ export default function RapidBillingPage() {
     }
   }, [items.length, isSubmitting, total, completeInvoice]);
 
-  // BUG-014 FIX: use isSyncingRef to prevent concurrent queue syncs.
-  // Previously isSubmitting in deps caused this to fire during its own execution.
   const syncQueue = useCallback(async () => {
     if (isOffline || isSyncingRef.current) return;
     const queue = JSON.parse(localStorage.getItem("billing_queue") || "[]");
@@ -326,25 +298,18 @@ export default function RapidBillingPage() {
       const res = await api.post("accounting/invoices/bulk", queue);
       const results: SyncBatchResult[] = res.data.results;
       const successful = new Set(
-        results
-          .filter((r) => r.status === "SUCCESS")
-          .map((r) => r.invoiceNumber),
+        results.filter((r) => r.status === "SUCCESS").map((r) => r.invoiceNumber),
       );
       const alreadyDone = new Set(
-        results
-          .filter((r) => r.error === "ALREADY_SYNCED")
-          .map((r) => r.invoiceNumber),
+        results.filter((r) => r.error === "ALREADY_SYNCED").map((r) => r.invoiceNumber),
       );
-
       const remaining = queue.filter(
         (inv: { invoiceNumber: string }) =>
-          !successful.has(inv.invoiceNumber) &&
-          !alreadyDone.has(inv.invoiceNumber),
+          !successful.has(inv.invoiceNumber) && !alreadyDone.has(inv.invoiceNumber),
       );
       localStorage.setItem("billing_queue", JSON.stringify(remaining));
       setPendingSync(remaining.length);
-      if (successful.size > 0 || alreadyDone.size > 0)
-        toast.success("Sync complete");
+      if (successful.size > 0 || alreadyDone.size > 0) toast.success("Sync complete");
     } catch {
       toast.error("Sync failed");
     } finally {
@@ -353,17 +318,9 @@ export default function RapidBillingPage() {
     }
   }, [isOffline]);
 
-  // MANUAL-ONLY: Auto-sync on reconnect is disabled per strict request policy.
-  // useEffect(() => {
-  //     if (!isOffline && pendingSync > 0) void syncQueue();
-  // }, [isOffline, pendingSync, syncQueue]);
-
   useEffect(() => {
     const handleKeys = (e: KeyboardEvent) => {
-      if (e.key === "F1") {
-        e.preventDefault();
-        handleCompletePress();
-      }
+      if (e.key === "F1") { e.preventDefault(); handleCompletePress(); }
       if (e.key === "F2") {
         e.preventDefault();
         const modes = ["CASH", "UPI", "CREDIT"] as const;
@@ -377,14 +334,20 @@ export default function RapidBillingPage() {
     return () => window.removeEventListener("keydown", handleKeys);
   }, [handleCompletePress, paymentMode, reset]);
 
+  // Permissive role check — allow if role is unknown/null or matches any billing role
+  const canBill =
+    !userRole ||
+    ALLOWED_ROLES.some((r) => userRole.includes(r));
+
   return (
     <div className="h-[calc(100vh-64px)] bg-slate-50 flex flex-col overflow-hidden font-sans antialiased text-slate-900">
-      <header className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm relative z-20 shrink-0 h-16">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Zap className="w-5 h-5 text-white" />
+      {/* POS Toolbar */}
+      <header className="px-4 py-2 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
+            <Zap className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-xl font-black tracking-tighter uppercase">
+          <span className="text-sm font-black tracking-tighter uppercase">
             Rapid <span className="text-blue-600">Commerce</span>
           </span>
         </div>
@@ -394,81 +357,86 @@ export default function RapidBillingPage() {
             <button
               onClick={() => void syncQueue()}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
             >
-              <Zap className="w-3.5 h-3.5" />
+              <Zap className="w-3 h-3" />
               <span>Sync {pendingSync} Records</span>
             </button>
           )}
-          <div className="flex gap-4 items-center bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+          <div className="flex gap-2 items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
             {isOffline ? (
-              <WifiOff className="w-4 h-4 text-amber-500" />
+              <WifiOff className="w-3.5 h-3.5 text-amber-500" />
             ) : (
-              <Wifi className="w-4 h-4 text-emerald-500" />
+              <Wifi className="w-3.5 h-3.5 text-emerald-500" />
             )}
             <span className="text-[10px] font-black uppercase tracking-widest">
-              {isOffline ? "Offline Mode" : "Online System"}
+              {isOffline ? "Offline" : "Online"}
             </span>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden overflow-y-auto lg:overflow-hidden">
-        <section className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 bg-white relative">
-          <ProductGrid
-            onProductClick={(product) => {
-              addItem(product as unknown as POSProduct);
-              toast.success(`Sent ${product.name} to cart`);
-            }}
-          />
-        </section>
-
-        <section className="flex-1 flex flex-col h-full bg-slate-50 relative min-w-0 pb-20 lg:pb-0 border-r border-slate-200">
-          <BarcodeSearch
-            search={search}
-            setSearch={setSearch}
-            onSubmit={handleSearch}
-            isSearching={isSearching}
-            lastScanFailed={lastScanFailed}
-            inputRef={searchRef}
-          />
-          <CartTable
-            items={items}
-            updateQty={updateQty}
-            removeItem={removeItem}
-            setItems={setItems}
-          />
-        </section>
-
-        <CheckoutSidebar
-          customerId={customerId}
-          setCustomerId={setCustomerId}
-          customerName={customerName}
-          setCustomerName={setCustomerName}
-          customers={customers}
-          onAddCustomerSuccess={(newCust) => {
-            fetchCustomers();
-            setCustomerId(newCust.id);
-            setCustomerName(`${newCust.firstName} ${newCust.lastName || ""}`.trim());
-          }}
-          paymentMode={paymentMode}
-          setPaymentMode={setPaymentMode}
-          customAmountPaid={customAmountPaid}
-          setCustomAmountPaid={setCustomAmountPaid}
-          billingAddress={billingAddress}
-          setBillingAddress={setBillingAddress}
-          shippingAddress={shippingAddress}
-          setShippingAddress={setShippingAddress}
-          supplierAddress={supplierAddress}
-          setSupplierAddress={setSupplierAddress}
-          subtotal={subtotal}
-          taxTotal={taxTotal}
-          total={total}
-          itemsCount={items.length}
-          isSubmitting={isSubmitting}
-          completeInvoice={handleCompletePress}
-          userRole={userRole}
+      {/* Scanner Row — full width, single prominent row */}
+      <div className="shrink-0 border-b border-slate-200 bg-white">
+        <BarcodeSearch
+          search={search}
+          setSearch={setSearch}
+          onSubmit={handleSearch}
+          isSearching={isSearching}
+          lastScanFailed={lastScanFailed}
+          inputRef={searchRef}
+          onAddProduct={() => setIsProductCreateOpen(true)}
         />
+      </div>
+
+      {/* 2-column POS body */}
+      <main className="flex-1 flex overflow-hidden min-h-0">
+
+        {/* LEFT — Cart table only */}
+        <div className="flex-1 flex flex-col min-w-0 border-r border-slate-200 bg-white overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <CartTable
+              items={items}
+              updateQty={updateQty}
+              removeItem={removeItem}
+              setItems={setItems}
+            />
+          </div>
+        </div>
+
+        {/* RIGHT — Checkout sidebar */}
+        <div className="w-[360px] xl:w-[400px] shrink-0 overflow-hidden flex flex-col">
+          <CheckoutSidebar
+            customerId={customerId}
+            setCustomerId={setCustomerId}
+            customerName={customerName}
+            setCustomerName={setCustomerName}
+            customers={customers}
+            onAddCustomerSuccess={(newCust) => {
+              fetchCustomers();
+              setCustomerId(newCust.id);
+              setCustomerName(`${newCust.firstName} ${newCust.lastName || ""}`.trim());
+            }}
+            paymentMode={paymentMode}
+            setPaymentMode={setPaymentMode}
+            customAmountPaid={customAmountPaid}
+            setCustomAmountPaid={setCustomAmountPaid}
+            billingAddress={billingAddress}
+            setBillingAddress={setBillingAddress}
+            shippingAddress={shippingAddress}
+            setShippingAddress={setShippingAddress}
+            supplierAddress={supplierAddress}
+            setSupplierAddress={setSupplierAddress}
+            subtotal={subtotal}
+            taxTotal={taxTotal}
+            total={total}
+            itemsCount={items.length}
+            isSubmitting={isSubmitting}
+            completeInvoice={handleCompletePress}
+            userRole={userRole}
+            canBill={canBill}
+          />
+        </div>
       </main>
 
       <ConfirmationDialog
@@ -476,12 +444,25 @@ export default function RapidBillingPage() {
         onClose={() => setShowConfirm(false)}
         onConfirm={completeInvoice}
         title="High Value Invoice"
-        description={`You are about to generate an invoice for {currencySymbol}${total.toLocaleString("en-IN")}. Are you sure you want to proceed?`}
+        description={`You are about to generate an invoice for ${currencySymbol}${total.toLocaleString("en-IN")}. Are you sure?`}
         confirmLabel="Yes, Generate"
         cancelLabel="Review"
         variant="warning"
       />
+
+      <InlineCreateProductDialog
+        open={isProductCreateOpen}
+        onOpenChange={setIsProductCreateOpen}
+        onSuccess={(newProd) => {
+          addItem({
+            id: newProd.id,
+            name: newProd.name,
+            sku: newProd.sku,
+            price: newProd.price,
+            gstRate: newProd.gstRate || 0,
+          });
+        }}
+      />
     </div>
   );
 }
-

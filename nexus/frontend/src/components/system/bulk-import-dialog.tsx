@@ -146,7 +146,7 @@ export function BulkImportDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="py-6 flex flex-col items-center justify-center">
+        <div className="py-3 flex flex-col items-center justify-center">
           <input
             type="file"
             accept=".csv"
@@ -157,7 +157,7 @@ export function BulkImportDialog({
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`w-full border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer hover:bg-slate-50 ${
+            className={`w-full border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center transition-all cursor-pointer hover:bg-slate-50 ${
               file ? "border-blue-500 bg-blue-50/30" : "border-slate-200"
             }`}
           >

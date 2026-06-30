@@ -180,7 +180,7 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg shadow-xl border-0 rounded-3xl overflow-hidden">
-        <CardHeader className="bg-slate-900 text-white p-8">
+        <CardHeader className="bg-slate-900 text-white p-4">
           {/* Progress indicator for resume support */}
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="h-1 flex-1 max-w-[160px] bg-slate-700 rounded-full overflow-hidden">
@@ -203,9 +203,9 @@ export default function OnboardingPage() {
         </CardHeader>
         
         <form onSubmit={handleSubmit}>
-          <CardContent className="p-8">
+          <CardContent className="p-4">
             {error && (
-              <div className="mb-6 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
+              <div className="mb-3 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
                 {error}
               </div>
             )}
@@ -311,7 +311,7 @@ export default function OnboardingPage() {
               </div>
             )}
           </CardContent>
-          <CardFooter className="bg-slate-50 p-8 border-t border-slate-100 flex justify-end gap-4">
+          <CardFooter className="bg-slate-50 p-4 border-t border-slate-100 flex justify-end gap-4">
             {step === 2 && (
               <Button
                 type="button"
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
               <Button
                 type={isDesktopApp ? "button" : "submit"}
                 onClick={isDesktopApp ? handleNext : undefined}
-                className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
+                className="h-12 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
                 disabled={loading}
               >
                 {loading && !isDesktopApp ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
@@ -337,7 +337,7 @@ export default function OnboardingPage() {
             ) : (
               <Button
                 type="submit"
-                className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
+                className="h-12 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider text-xs"
                 disabled={loading}
               >
                 {loading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}

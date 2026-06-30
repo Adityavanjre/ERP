@@ -72,7 +72,7 @@ export default function AppsMarketplace() {
         variant: "destructive",
         onConfirm: async () => {
           try {
-            await api.post(`/system/apps/${name}/uninstall`);
+            await api.post(`system/apps/${name}/uninstall`);
             toast.success(`Module [${name}] removed successfully`);
             syncAppData(true);
             window.dispatchEvent(new CustomEvent("system-apps-updated"));
@@ -88,7 +88,7 @@ export default function AppsMarketplace() {
   const handleInstall = useCallback(
     async (name: string) => {
       try {
-        await api.post(`/system/apps/${name}/install`);
+        await api.post(`system/apps/${name}/install`);
         toast.success(`Module [${name}] installed successfully`);
         syncAppData(true);
         window.dispatchEvent(new CustomEvent("system-apps-updated"));
@@ -120,7 +120,7 @@ export default function AppsMarketplace() {
         </Button>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
@@ -131,7 +131,7 @@ export default function AppsMarketplace() {
               Windows Application • Build 1.0.0
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
+          <CardContent className="pt-4 flex flex-col md:flex-row gap-4">
             <div className="flex-1 space-y-4">
               <p className="text-slate-600 font-medium leading-relaxed">
                 Full-featured Windows desktop application with offline support.
@@ -171,7 +171,7 @@ export default function AppsMarketplace() {
         </Card>
 
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-emerald-500">
-          <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-6">
+          <CardHeader className="bg-emerald-50/50 border-b border-emerald-100 py-3">
             <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
               <Smartphone className="h-5 w-5 text-emerald-600" />
               Klypso Mobile Gateway
@@ -180,7 +180,7 @@ export default function AppsMarketplace() {
               Android Application • Build 1.0.0
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
+          <CardContent className="pt-4 flex flex-col md:flex-row gap-4">
             <div className="flex-1 space-y-4">
               <p className="text-slate-600 font-medium leading-relaxed">
                 Native Android app for shop floor operations. Securely anchored
@@ -217,7 +217,7 @@ export default function AppsMarketplace() {
         </Card>
 
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-purple-500">
-          <CardHeader className="bg-purple-50/50 border-b border-purple-100 py-6">
+          <CardHeader className="bg-purple-50/50 border-b border-purple-100 py-3">
             <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
               <Zap className="h-5 w-5 text-purple-600" />
               Business Blueprints
@@ -226,7 +226,7 @@ export default function AppsMarketplace() {
               Quick Setup Profiles
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-4 pt-8">
+          <CardContent className="flex flex-wrap gap-4 pt-4">
             {["Manufacturing", "Retail", "Wholesale", "Services"].map(
               (type) => (
                 <Button
@@ -254,7 +254,7 @@ export default function AppsMarketplace() {
         </Card>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {apps.map((app) => (
           <Card
             key={app.id}
@@ -263,8 +263,8 @@ export default function AppsMarketplace() {
             <div
               className={`h-2.5 w-full transition-colors ${app.installed ? "bg-emerald-500" : "bg-slate-100"}`}
             />
-            <CardHeader className="flex-1 px-8 pt-8">
-              <div className="flex justify-between items-start mb-6">
+            <CardHeader className="flex-1 px-4 pt-4">
+              <div className="flex justify-between items-start mb-3">
                 <Badge
                   variant="secondary"
                   className="bg-slate-100 text-slate-500 font-black text-[9px] rounded-lg border-none uppercase tracking-widest"
@@ -287,8 +287,8 @@ export default function AppsMarketplace() {
                 {app.description}
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-8 pb-8 pt-0">
-              <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-tighter mb-6 bg-slate-50 p-2 rounded-xl">
+            <CardContent className="px-4 pb-4 pt-0">
+              <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-tighter mb-3 bg-slate-50 p-2 rounded-xl">
                 <span>BUILD_{app.version}</span>
                 <span>CREATED BY {app.author.toUpperCase()}</span>
               </div>
@@ -327,7 +327,7 @@ export default function AppsMarketplace() {
 
         {apps.length === 0 && !loading && (
           <div className="col-span-full py-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-            <Package className="h-20 w-20 text-slate-200 mb-6" />
+            <Package className="h-20 w-20 text-slate-200 mb-3" />
             <h3 className="text-xl font-black text-slate-400 uppercase tracking-widest">
               No Apps Installed
             </h3>

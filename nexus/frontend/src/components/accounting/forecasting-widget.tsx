@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useCallback } from "react";
 import {
@@ -104,14 +104,14 @@ export function ForecastingWidget() {
           Predictive settlement modeling based on historical customer behavior.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-3">
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-2xl bg-white border border-amber-100 shadow-sm">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">
               Expected Inflow
             </span>
             <div className="text-2xl font-black text-slate-900">
-              â‚¹{data.totalExpected.toLocaleString()}
+              ₹{data.totalExpected.toLocaleString()}
             </div>
             <span className="text-[10px] text-green-600 font-bold flex items-center gap-1 mt-1">
               +{data.trendPercentage || 12}% vs last period{" "}
@@ -147,13 +147,13 @@ export function ForecastingWidget() {
               <div className="flex-1">
                 <div className="text-sm font-bold">{proj.customerName}</div>
                 <div className="text-[10px] text-slate-500">
-                  Invoice #{proj.invoiceNumber} â€¢ Expected{" "}
+                  Invoice #{proj.invoiceNumber} • Expected{" "}
                   {new Date(proj.expectedDate).toLocaleDateString()}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm font-black text-slate-900">
-                  â‚¹{proj.amount.toLocaleString()}
+                  ₹{proj.amount.toLocaleString()}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Progress

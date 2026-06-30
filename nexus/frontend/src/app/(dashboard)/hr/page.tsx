@@ -201,7 +201,7 @@ export default function HrPage() {
     }
     try {
       setAddLoading(true);
-      await api.post("/hr/employees", {
+      await api.post("hr/employees", {
         ...empForm,
         salary: empForm.salary ? Number(empForm.salary) : 0,
       });
@@ -233,7 +233,7 @@ export default function HrPage() {
     }
     try {
       setEditLoading(true);
-      await api.patch(`/hr/employees/${editEmpId}`, editForm);
+      await api.patch(`hr/employees/${editEmpId}`, editForm);
       toast.success("Employee details updated");
       setEditOpen(false);
       syncEmployeeData(true);
@@ -252,7 +252,7 @@ export default function HrPage() {
     }
     try {
       setAddDeptLoading(true);
-      await api.post("/hr/departments", { name: deptName });
+      await api.post("hr/departments", { name: deptName });
       toast.success("Department created successfully");
       setAddDeptOpen(false);
       setDeptName("");
@@ -272,7 +272,7 @@ export default function HrPage() {
     action: "Approved" | "Rejected",
   ) => {
     try {
-      await api.patch(`/hr/leaves/${leaveId}/status`, { status: action });
+      await api.patch(`hr/leaves/${leaveId}/status`, { status: action });
       toast.success(`Leave ${action.toLowerCase()} successfully`);
       syncEmployeeData(false);
     } catch (err: unknown) {
@@ -284,7 +284,7 @@ export default function HrPage() {
   if (!mounted) return null;
   if (loading)
     return (
-      <div className="p-8 text-center text-slate-500 font-bold">
+      <div className="p-4 text-center text-slate-500 font-bold">
         Synchronizing personnel data...
       </div>
     );
@@ -304,7 +304,7 @@ export default function HrPage() {
         <div className="flex gap-3 w-full md:w-auto">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full md:w-auto justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-8 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap">
+              <Button className="w-full md:w-auto justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap">
                 <Plus className="mr-2 h-4 w-4" /> Add Employee
               </Button>
             </DialogTrigger>
@@ -529,25 +529,25 @@ export default function HrPage() {
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="employees"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Employee Directory
           </TabsTrigger>
           <TabsTrigger
             value="departments"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Departments
           </TabsTrigger>
           <TabsTrigger
             value="leaves"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Leaves & Absence
           </TabsTrigger>
           <TabsTrigger
             value="payroll"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-8 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
           >
             Payroll Ledger
           </TabsTrigger>
@@ -786,7 +786,7 @@ export default function HrPage() {
                 </Dialog>
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-8">
+            <CardContent className="p-4 md:p-4">
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {Array.isArray(departments) &&
                   departments.map((dept) => (
@@ -794,7 +794,7 @@ export default function HrPage() {
                       key={dept.id}
                       className="bg-slate-50/50 border-slate-100 hover:border-blue-500/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all group rounded-2xl"
                     >
-                      <CardHeader className="pb-6">
+                      <CardHeader className="pb-3">
                         <div className="p-3 bg-white w-fit rounded-xl shadow-sm mb-4 border border-slate-100 group-hover:border-blue-100 transition-all">
                           <Building2 className="h-6 w-6 text-blue-600" />
                         </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button } from "../../components/ui/button";
 import { AlertTriangle, RefreshCcw, ArrowLeft } from "lucide-react";
@@ -11,13 +11,13 @@ export default function DashboardError({
   reset: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-      <div className="bg-amber-50 border border-amber-200 p-8 rounded-2xl max-w-lg w-full">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
+      <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl max-w-lg w-full">
         <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-slate-900 mb-2">
           Something went wrong
         </h2>
-        <p className="text-slate-500 text-sm mb-6">
+        <p className="text-slate-500 text-sm mb-3">
           This section encountered an error. You can try again or go back to the
           dashboard.
         </p>

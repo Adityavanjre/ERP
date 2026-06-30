@@ -211,7 +211,7 @@ export function EditSupplierDialog({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11 px-8 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11 px-4 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -151,11 +151,11 @@ export function BankStatementsTab() {
   };
 
   if (loading) {
-    return <div className="p-8 flex justify-center"><Loader2 className="animate-spin" /></div>;
+    return <div className="p-4 flex justify-center"><Loader2 className="animate-spin" /></div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Bank Statements</h2>
@@ -209,7 +209,7 @@ export function BankStatementsTab() {
           </Card>
         ))}
         {statements.length === 0 && (
-          <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-dashed">
+          <div className="text-center py-4 text-slate-500 bg-white rounded-xl border border-dashed">
             No bank statements found. Add a manual entry or upload a CSV to get started.
           </div>
         )}

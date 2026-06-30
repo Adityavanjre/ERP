@@ -65,7 +65,7 @@ export default function PermissionsAdminPage() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-6">
+    <div className="p-4 max-w-6xl mx-auto space-y-3">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">

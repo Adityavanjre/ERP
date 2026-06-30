@@ -104,9 +104,9 @@ export default function StockMovementsPage() {
     try {
       setLoading(true);
       const [prodRes, whRes, movRes] = await Promise.all([
-        api.get("/inventory/products?limit=1000"),
-        api.get("/inventory/warehouses"),
-        api.get("/inventory/movements").catch(() => ({ data: [] })),
+        api.get("inventory/products?limit=1000"),
+        api.get("inventory/warehouses"),
+        api.get("inventory/movements").catch(() => ({ data: [] })),
       ]);
       setProducts(prodRes.data.data || []);
       setWarehouses(whRes.data || []);
@@ -141,7 +141,7 @@ export default function StockMovementsPage() {
             );
             return;
           }
-          await api.post("/inventory/transfers", {
+          await api.post("inventory/transfers", {
             productId,
             fromWarehouseId: fromWarehouse,
             toWarehouseId: toWarehouse,
@@ -153,7 +153,7 @@ export default function StockMovementsPage() {
             toast.error("Please select a warehouse.");
             return;
           }
-          await api.post("/inventory/movements", {
+          await api.post("inventory/movements", {
             productId,
             warehouseId: toWarehouse,
             quantity: Number(quantity),
@@ -202,10 +202,10 @@ export default function StockMovementsPage() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-4">
         {/* Form Column */}
         <Card className="lg:col-span-2 border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none bg-white">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-6 md:px-8">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-6 md:px-4">
             <CardTitle className="text-xl font-black text-slate-900">
               Record Movement
             </CardTitle>
@@ -213,7 +213,7 @@ export default function StockMovementsPage() {
               Select movement type and details
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-6 md:p-8">
+          <CardContent className="p-3 md:p-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Type Selection */}
               <div className="grid grid-cols-3 gap-4">
@@ -390,7 +390,7 @@ export default function StockMovementsPage() {
         {/* Info Column */}
         <div className="space-y-3">
           <Card className="bg-slate-900 text-white rounded-3xl border-none shadow-xl shadow-slate-900/10 overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-6 opacity-10">
+            <div className="absolute top-0 right-0 p-3 opacity-10">
               <PackageSearch className="h-32 w-32" />
             </div>
             <CardHeader className="relative z-10 pb-2">
@@ -442,7 +442,7 @@ export default function StockMovementsPage() {
             </CardContent>
           </Card>
 
-          <div className="bg-amber-50 rounded-3xl p-6 border-2 border-amber-200 flex items-start gap-4">
+          <div className="bg-amber-50 rounded-3xl p-3 border-2 border-amber-200 flex items-start gap-4">
             <AlertCircle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-amber-900 text-sm font-medium">
               <strong className="block text-amber-950 font-black mb-1">
@@ -458,7 +458,7 @@ export default function StockMovementsPage() {
 
       {/* BUG-015 FIX: Date-filtered movement history */}
       <Card className="border-none shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden bg-white">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-6 md:px-8">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-6 md:px-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl font-black text-slate-900">

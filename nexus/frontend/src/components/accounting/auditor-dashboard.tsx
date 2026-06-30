@@ -133,15 +133,15 @@ export function AuditorDashboard() {
 
   if (loading)
     return (
-      <div className="p-8 text-center font-bold text-slate-400">
+      <div className="p-4 text-center font-bold text-slate-400">
         Auditing books...
       </div>
     );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Date Selectors */}
-      <div className="flex flex-col md:flex-row gap-4 items-end mb-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 items-end mb-4 bg-white p-3 rounded-3xl border border-slate-100 shadow-sm">
         <div className="space-y-2 flex-grow">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
             Review Period
@@ -182,11 +182,11 @@ export function AuditorDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Verification Status */}
         <Card className="lg:col-span-2 bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
           <CardHeader
-            className={`${data?.isLocked ? "bg-slate-900 text-white" : "bg-amber-600 text-white"} p-8 transition-colors`}
+            className={`${data?.isLocked ? "bg-slate-900 text-white" : "bg-amber-600 text-white"} p-4 transition-colors`}
           >
             <div className="flex justify-between items-start">
               <div className="space-y-1">
@@ -210,8 +210,8 @@ export function AuditorDashboard() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-8 space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <CardContent className="p-4 space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 {
                   label: "Tally Readiness",
@@ -271,7 +271,7 @@ export function AuditorDashboard() {
                   </div>
                 ))}
                 {data?.errors?.length === 0 && (
-                  <div className="flex items-start gap-4 p-6 rounded-3xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-bold">
+                  <div className="flex items-start gap-4 p-3 rounded-3xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-bold">
                     <CheckCircle2 className="h-5 w-5 mt-0.5" />
                     All vouchers are balanced and ready for Tally export. No
                     drift detected.
@@ -284,7 +284,7 @@ export function AuditorDashboard() {
 
         {/* Audit Sidecard */}
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-          <CardHeader className="p-8 border-b border-slate-100">
+          <CardHeader className="p-4 border-b border-slate-100">
             <CardTitle className="text-xl font-black">
               Risk Parameters
             </CardTitle>
@@ -292,7 +292,7 @@ export function AuditorDashboard() {
               Automated audit checkpoints
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-8 space-y-6">
+          <CardContent className="p-4 space-y-3">
             {data?.riskFlags?.map((flag, i) => (
               <div
                 key={i}
@@ -317,7 +317,7 @@ export function AuditorDashboard() {
               </div>
             ))}
             {!data?.riskFlags?.length && (
-              <div className="text-center py-12">
+              <div className="text-center py-4">
                 <ShieldCheck className="mx-auto h-12 w-12 text-emerald-100 mb-4" />
                 <p className="text-sm font-bold text-slate-400">
                   Zero Critical Risks
@@ -325,7 +325,7 @@ export function AuditorDashboard() {
               </div>
             )}
 
-            <div className="pt-6 border-t border-slate-100">
+            <div className="pt-3 border-t border-slate-100">
               <Button
                 variant="ghost"
                 className="w-full justify-between hover:bg-slate-50 rounded-2xl p-4 font-bold text-slate-600 transition-all group"

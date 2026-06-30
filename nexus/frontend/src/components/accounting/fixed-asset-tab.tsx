@@ -86,7 +86,7 @@ export function FixedAssetTab() {
 
   return (
     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden">
-      <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-6">
+      <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-3">
         <div className="flex justify-between items-center">
           <div>
             <CardTitle className="text-slate-900 text-xl font-black">

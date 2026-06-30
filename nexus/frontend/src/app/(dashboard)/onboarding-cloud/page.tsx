@@ -130,7 +130,7 @@ export default function OnboardingPage() {
   return (
     <div className="flex items-center justify-center min-h-[80vh]">
       <Card className="w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border-slate-200">
-        <CardHeader className="p-8 pb-4">
+        <CardHeader className="p-4 pb-4">
           {/* Progress indicator for resume support */}
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="h-1 flex-1 max-w-[80px] bg-slate-200 rounded-full overflow-hidden">
@@ -145,7 +145,7 @@ export default function OnboardingPage() {
             Complete your company profile to activate your workspace.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-8 pt-4">
+        <CardContent className="p-4 pt-4">
           <form
             id="onboarding-form"
             onSubmit={handleSubmit(onSubmit)}
@@ -214,7 +214,7 @@ export default function OnboardingPage() {
             </div>
           </form>
         </CardContent>
-        <CardFooter className="p-8 pt-0">
+        <CardFooter className="p-4 pt-0">
           <Button
             type="submit"
             form="onboarding-form"

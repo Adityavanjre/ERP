@@ -161,7 +161,7 @@ export function OpeningBalanceDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 py-4">
+        <div className="grid gap-3 py-4">
           {productId && (
             <div className="grid gap-2">
               <Label className="font-bold text-slate-700 uppercase text-[10px] tracking-widest">

@@ -61,8 +61,8 @@ export function StartProductionDialog({
   const fetchInitialData = async () => {
     try {
       const [wRes, mRes] = await Promise.all([
-        api.get<WarehouseItem[]>("/inventory/warehouses"),
-        api.get<MachineItem[]>("/manufacturing/machines"),
+        api.get<WarehouseItem[]>("inventory/warehouses"),
+        api.get<MachineItem[]>("manufacturing/machines"),
       ]);
       setWarehouses(wRes.data || []);
       setMachines(mRes.data || []);
@@ -83,15 +83,12 @@ export function StartProductionDialog({
 
   const handleStart = async () => {
     if (!workOrder) return;
-    if (!selectedWarehouseId) {
-      toast.error("Please select a source warehouse");
-      return;
-    }
+    // Warehouse is optional — production can proceed without selecting one
 
     try {
       setLoading(true);
-      await api.post(`/manufacturing/work-orders/${workOrder.id}/start`, {
-        warehouseId: selectedWarehouseId,
+      await api.post(`manufacturing/work-orders/${workOrder.id}/start`, {
+        warehouseId: selectedWarehouseId || undefined,
         machineId: selectedMachineId || undefined,
         idempotencyKey: `start-${workOrder.id}-${Date.now()}`,
       });
@@ -113,8 +110,8 @@ export function StartProductionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-        <div className="bg-amber-500 p-8 text-white relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
+        <div className="bg-amber-500 p-4 text-white relative">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
             <Play className="h-24 w-24" />
           </div>
           <DialogHeader className="relative z-10">
@@ -127,7 +124,7 @@ export function StartProductionDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-4 space-y-3">
           <div className="space-y-4">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-white shadow-sm flex items-center justify-center">
@@ -145,16 +142,17 @@ export function StartProductionDialog({
 
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Warehouse Location
+                Warehouse Location (Optional)
               </Label>
               <Select
                 value={selectedWarehouseId}
                 onValueChange={setSelectedWarehouseId}
               >
-                <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-slate-50 font-semibold focus:ring-amber-500 text-slate-700">
-                  <SelectValue placeholder="Select Warehouse" />
+                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50 font-semibold focus:ring-amber-500 text-slate-700">
+                  <SelectValue placeholder="Select Warehouse (Optional)" />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl border-slate-100">
+                <SelectContent className="rounded-xl border-slate-100">
+                  <SelectItem value="" className="rounded-xl text-slate-400">No warehouse</SelectItem>
                   {warehouses.map((w) => (
                     <SelectItem key={w.id} value={w.id} className="rounded-xl">
                       {w.name}
@@ -196,7 +194,7 @@ export function StartProductionDialog({
           </div>
         </div>
 
-        <DialogFooter className="p-8 bg-slate-50 border-t border-slate-100 flex gap-3">
+        <DialogFooter className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
@@ -207,7 +205,7 @@ export function StartProductionDialog({
           <Button
             onClick={handleStart}
             disabled={loading}
-            className="rounded-xl bg-slate-900 hover:bg-amber-600 text-white font-black px-8 shadow-xl shadow-slate-900/10 h-12 transition-all"
+            className="rounded-xl bg-slate-900 hover:bg-amber-600 text-white font-black px-4 shadow-xl shadow-slate-900/10 h-12 transition-all"
           >
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

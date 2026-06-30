@@ -1,5 +1,5 @@
 import React from "react";
-import { Barcode } from "lucide-react";
+import { Barcode, Loader2 } from "lucide-react";
 
 interface BarcodeSearchProps {
   search: string;
@@ -8,6 +8,7 @@ interface BarcodeSearchProps {
   isSearching: boolean;
   lastScanFailed: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  onAddProduct?: () => void;
 }
 
 export const BarcodeSearch: React.FC<BarcodeSearchProps> = ({
@@ -17,34 +18,58 @@ export const BarcodeSearch: React.FC<BarcodeSearchProps> = ({
   isSearching,
   lastScanFailed,
   inputRef,
+  onAddProduct,
 }) => {
   return (
-    <div className="p-6 pb-4 shrink-0">
-      <form onSubmit={onSubmit} className="max-w-full mx-auto relative group">
-        <input
-          ref={inputRef}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Scan or enter code..."
-          className={`w-full bg-slate-50 border-4 ${
-            lastScanFailed
-              ? "border-rose-500 shadow-2xl shadow-rose-500/20 animate-shake"
-              : "border-blue-100"
-          } group-focus-within:border-blue-600 group-focus-within:bg-white rounded-[24px] h-32 pl-8 pr-8 text-5xl font-black text-slate-900 placeholder:text-slate-200 outline-none transition-all shadow-inner focus:shadow-2xl focus:shadow-blue-500/10 tracking-tight`}
-        />
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-4 pointer-events-none">
-          {isSearching ? (
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <div className="flex items-center gap-2 p-2 bg-slate-100 rounded-xl">
-              <Barcode className="w-8 h-8 text-slate-400" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Scanner Ready
-              </span>
-            </div>
-          )}
-        </div>
-      </form>
-    </div>
+    <form
+      onSubmit={onSubmit}
+      className={`flex items-center gap-3 px-4 py-2 transition-colors ${
+        lastScanFailed ? "bg-rose-50" : "bg-slate-50"
+      }`}
+    >
+      {/* Icon */}
+      <div className={`shrink-0 ${lastScanFailed ? "text-rose-500" : "text-slate-400"}`}>
+        {isSearching ? (
+          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+        ) : (
+          <Barcode className="w-4 h-4" />
+        )}
+      </div>
+
+      {/* Input */}
+      <input
+        ref={inputRef}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Scan barcode or type SKU… (e.g. 2*SKU-01 for qty)"
+        className={`flex-1 h-9 bg-transparent text-sm font-semibold text-slate-900 placeholder:text-slate-300 outline-none border-none focus:ring-0 ${
+          lastScanFailed ? "placeholder:text-rose-300" : ""
+        }`}
+      />
+
+      {/* Inline Create Product Button */}
+      {onAddProduct && (
+        <button
+          type="button"
+          onClick={onAddProduct}
+          className="shrink-0 text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200 transition-colors shadow-sm"
+        >
+          + Product
+        </button>
+      )}
+
+      {/* Status badge */}
+      <span
+        className={`shrink-0 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${
+          lastScanFailed
+            ? "bg-rose-100 text-rose-600"
+            : isSearching
+            ? "bg-blue-50 text-blue-600"
+            : "bg-slate-100 text-slate-400"
+        }`}
+      >
+        {lastScanFailed ? "Not Found" : isSearching ? "Searching..." : "Ready"}
+      </span>
+    </form>
   );
 };

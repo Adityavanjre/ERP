@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -72,35 +72,35 @@ export default function RecoveryMemoryDashboard() {
   }, []); // Fire once on mount.
 
   if (loading)
-    return <div className="p-8 text-zinc-400">Loading Profit Insights...</div>;
+    return <div className="p-4 text-zinc-400">Loading Profit Insights...</div>;
   if (!data) return null;
 
   return (
-    <div className="p-4 md:p-8 space-y-8 md:space-y-10 bg-slate-50 text-slate-900 min-h-screen pb-32">
+    <div className="p-4 md:p-4 space-y-4 md:space-y-4 bg-slate-50 text-slate-900 min-h-screen pb-32">
       {/* Dashboard Overview */}
-      <div className="relative overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 border border-blue-500/20 p-8 md:p-16 shadow-2xl shadow-blue-500/20">
-        <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
+      <div className="relative overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 border border-blue-500/20 p-4 md:p-16 shadow-2xl shadow-blue-500/20">
+        <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
           <Zap className="w-80 h-80 text-white" />
         </div>
 
         <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-8">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-4">
             <Sparkles className="w-4 h-4" />
             Insights
           </div>
-          <h1 className="text-6xl font-black tracking-tighter mb-6 text-white leading-[1.1]">
+          <h1 className="text-6xl font-black tracking-tighter mb-3 text-white leading-[1.1]">
             System Protected{" "}
             <span className="text-emerald-300">
               {currencySymbol}{data.anchors.monthlyProtection.toLocaleString()}
             </span>{" "}
             This Month.
           </h1>
-          <p className="text-xl text-blue-50 font-medium leading-relaxed mb-10 opacity-90">
+          <p className="text-xl text-blue-50 font-medium leading-relaxed mb-4 opacity-90">
             Your business is protected. We automatically find missed payments,
             prevent disputes, and help you collect faster.
           </p>
 
-          <div className="flex flex-col lg:flex-row gap-8 md:gap-12">
+          <div className="flex flex-col lg:flex-row gap-4 md:gap-4">
             <div>
               <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">
                 Lifetime Protection
@@ -110,7 +110,7 @@ export default function RecoveryMemoryDashboard() {
                 <Trophy className="w-7 h-7 text-amber-300" />
               </p>
             </div>
-            <div className="border-t md:border-t-0 md:border-l border-white/20 pt-6 md:pt-0 pl-0 md:pl-12">
+            <div className="border-t md:border-t-0 md:border-l border-white/20 pt-3 md:pt-0 pl-0 md:pl-12">
               <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em] mb-2">
                 Issue-free Days
               </p>
@@ -124,9 +124,9 @@ export default function RecoveryMemoryDashboard() {
       </div>
 
       {/* Grid: Metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Money Found Counter */}
-        <div className="bg-white border border-slate-200 p-10 rounded-[2.5rem] space-y-8 shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 rounded-[2.5rem] space-y-4 shadow-sm">
           <div className="flex justify-between items-start">
             <div className="bg-emerald-50 p-4 rounded-2xl">
               <Wallet className="w-8 h-8 text-emerald-600" />
@@ -166,7 +166,7 @@ export default function RecoveryMemoryDashboard() {
         </div>
 
         {/* Collection Efficiency */}
-        <div className="bg-white border border-slate-200 p-10 rounded-[2.5rem] space-y-8 shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 rounded-[2.5rem] space-y-4 shadow-sm">
           <div className="flex justify-between items-start">
             <div className="bg-blue-50 p-4 rounded-2xl">
               <TrendingUp className="w-8 h-8 text-blue-600" />
@@ -183,7 +183,7 @@ export default function RecoveryMemoryDashboard() {
               Real-time velocity from Invoice to Settlement.
             </p>
           </div>
-          <div className="pt-4 space-y-8">
+          <div className="pt-4 space-y-4">
             <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
               <div
                 className="absolute left-0 top-0 bg-blue-600 h-full transition-all duration-1000"
@@ -214,7 +214,7 @@ export default function RecoveryMemoryDashboard() {
         </div>
 
         {/* Operational Time Saved */}
-        <div className="bg-white border border-slate-200 p-10 rounded-[2.5rem] space-y-8 shadow-sm">
+        <div className="bg-white border border-slate-200 p-4 rounded-[2.5rem] space-y-4 shadow-sm">
           <div className="flex justify-between items-start">
             <div className="bg-indigo-50 p-4 rounded-2xl">
               <Clock className="w-8 h-8 text-indigo-600" />
@@ -231,7 +231,7 @@ export default function RecoveryMemoryDashboard() {
               Tasks handled automatically, so you don't have to.
             </p>
           </div>
-          <div className="flex items-center gap-8 pt-4">
+          <div className="flex items-center gap-4 pt-4">
             <div className="space-y-1">
               <p className="text-5xl font-black text-slate-900">
                 {data.timeSaved.hours}
@@ -258,8 +258,8 @@ export default function RecoveryMemoryDashboard() {
       </div>
 
       {/* Recovery Opportunities Section */}
-      <div className="bg-white border border-slate-200 rounded-[3rem] p-12 shadow-sm">
-        <div className="flex flex-col lg:flex-row justify-between items-center lg:items-end mb-12 gap-8">
+      <div className="bg-white border border-slate-200 rounded-[3rem] p-4 shadow-sm">
+        <div className="flex flex-col lg:flex-row justify-between items-center lg:items-end mb-4 gap-4">
           <div className="text-center md:text-left">
             <h2 className="text-4xl font-black mb-3 tracking-tighter flex items-center justify-center md:justify-start gap-4">
               <History className="w-10 h-10 text-blue-600" />
@@ -270,19 +270,19 @@ export default function RecoveryMemoryDashboard() {
               them back.
             </p>
           </div>
-          <button className="flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95">
+          <button className="flex items-center gap-3 bg-slate-900 hover:bg-black text-white px-4 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-slate-900/10 active:scale-95">
             Bulk Export Target Leads
             <ArrowRight className="w-5 h-5 text-blue-400" />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {data.opportunities.map((opp: RecoveryOpportunity) => (
             <div
               key={opp.id}
-              className="bg-slate-50/50 border border-slate-100 p-8 rounded-[2rem] hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all group"
+              className="bg-slate-50/50 border border-slate-100 p-4 rounded-[2rem] hover:bg-white hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all group"
             >
-              <div className="flex justify-between mb-6">
+              <div className="flex justify-between mb-3">
                 <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center font-black text-slate-400 border border-slate-100 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all shadow-sm">
                   {opp.name.charAt(0)}
                 </div>
@@ -298,7 +298,7 @@ export default function RecoveryMemoryDashboard() {
               <h3 className="font-black text-xl mb-2 text-slate-900 truncate">
                 {opp.name}
               </h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
                 Delta: {currencySymbol}{opp.lastTransaction.toLocaleString()}
               </p>
               <button className="w-full py-3 bg-white border border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
@@ -307,7 +307,7 @@ export default function RecoveryMemoryDashboard() {
             </div>
           ))}
           {data.opportunities.length === 0 && (
-            <div className="col-span-full py-24 text-center space-y-6 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+            <div className="col-span-full py-24 text-center space-y-3 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
               <p className="text-slate-500 font-black uppercase tracking-widest">
                 Retention Optimized: 100% Activity
@@ -319,7 +319,7 @@ export default function RecoveryMemoryDashboard() {
 
       {/* Upsell Banner (Psychological Trigger) */}
       {data.anchors.lifetimeRecovery > 50000 && (
-        <div className="bg-slate-900 border border-slate-800 p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] flex flex-col lg:flex-row justify-between items-center gap-8 md:gap-12 shadow-2xl relative overflow-hidden text-center lg:text-left">
+        <div className="bg-slate-900 border border-slate-800 p-4 md:p-4 rounded-[2.5rem] md:rounded-[3.5rem] flex flex-col lg:flex-row justify-between items-center gap-4 md:gap-4 shadow-2xl relative overflow-hidden text-center lg:text-left">
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
           <div className="space-y-4 text-center lg:text-left relative z-10">
             <h2 className="text-4xl font-black text-white tracking-tighter">
@@ -331,7 +331,7 @@ export default function RecoveryMemoryDashboard() {
               advanced overdue detection and automated follow-ups.
             </p>
           </div>
-          <button className="bg-blue-600 text-white px-12 py-6 rounded-[2.5rem] font-black text-xl hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/20 flex items-center gap-4 relative z-10 active:scale-95 group">
+          <button className="bg-blue-600 text-white px-6 py-3 rounded-[2.5rem] font-black text-xl hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/20 flex items-center gap-4 relative z-10 active:scale-95 group">
             Annual Plan Upgrade
             <Rocket className="w-7 h-7 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </button>

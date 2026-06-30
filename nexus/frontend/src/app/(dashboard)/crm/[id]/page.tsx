@@ -66,13 +66,13 @@ export default function CustomerDetailPage() {
       if (!params.id) return;
       try {
         if (showLoading) setLoading(true);
-        const custRes = await api.get("/crm/customers");
+        const custRes = await api.get("crm/customers");
         const found = custRes.data.find(
           (c: CustomerDetail) => c.id === params.id,
         );
         setCustomer(found || null);
 
-        const ledgerRes = await api.get(`/accounting/ledger/${params.id}`);
+        const ledgerRes = await api.get(`accounting/ledger/${params.id}`);
         setLedger(ledgerRes.data || []);
       } catch {
         // silent

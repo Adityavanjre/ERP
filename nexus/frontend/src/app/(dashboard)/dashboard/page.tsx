@@ -393,7 +393,7 @@ export default function DashboardPage() {
 
   if (!mounted || loading)
     return (
-      <div className="p-8 text-center text-slate-500 font-bold">
+      <div className="p-4 text-center text-slate-500 font-bold">
         Synchronizing business intelligence...
       </div>
     );
@@ -763,7 +763,7 @@ export default function DashboardPage() {
                 Recent Activity
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-6">
+            <CardContent className="space-y-4 pt-3">
               {activity.length > 0 ? (
                 activity.map((log) => (
                   <div
@@ -794,7 +794,7 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <div className="p-8 text-center text-zinc-600 text-xs italic">
+                <div className="p-4 text-center text-zinc-600 text-xs italic">
                   No recent business activity recorded.
                 </div>
               )}
