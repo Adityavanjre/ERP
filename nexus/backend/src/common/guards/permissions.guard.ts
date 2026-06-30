@@ -79,19 +79,21 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    if (!user || (!user.tenantId && user.type !== 'admin')) {
+    if (!user || (user.type !== 'tenant_scoped' && user.type !== 'admin' && !user.isSuperAdmin)) {
       throw new ForbiddenException('User context missing');
     }
 
     // SEC-007: Consistent role resolution to prevent ambiguity
-    let userRole: string = 'Member'; // Default role
-    if (user.role && typeof user.role === 'string') {
+    let userRole: string = 'Biller'; // Default to most restricted named role
+    if (user.role && typeof user.role === 'string' && user.role in RolePermissions) {
       userRole = user.role;
     } else if (user.isSuperAdmin === true || user.type === 'admin') {
       userRole = 'Owner';
-    } else if (user.isSuperAdmin && typeof user.isSuperAdmin === 'string') {
-      // Handle string type for backward compatibility
+    } else if (user.isSuperAdmin && typeof user.isSuperAdmin === 'string' && user.isSuperAdmin in RolePermissions) {
       userRole = user.isSuperAdmin;
+    } else if (user.role && typeof user.role === 'string') {
+      // Role exists but not in RolePermissions table — treat as Biller (minimum access)
+      userRole = 'Biller';
     }
 
     const userPermissions = (RolePermissions as any)[userRole] || [];
