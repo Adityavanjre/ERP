@@ -342,6 +342,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   const userRole = (user?.role as RoleName) || "Biller";
 
   const { pbac, hasPermission } = useUX();
+  console.log("SIDEBAR PBAC STATE:", JSON.stringify(pbac));
 
   const [terminology, setTerminology] = useState<Record<string, string>>({});
   const [loadingConfig, setLoadingConfig] = useState(true);
@@ -367,10 +368,8 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   const enabledModules = useMemo(() => {
     const infrastructure = [
       "dashboard",
-      "crm",
       "settings",
       "apps",
-      "accounting",
     ];
     return Array.from(new Set([...infrastructure, ...pbac.modules]));
   }, [pbac.modules]);

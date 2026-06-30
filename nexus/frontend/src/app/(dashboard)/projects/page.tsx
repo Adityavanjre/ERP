@@ -454,7 +454,7 @@ export default function ProjectPage() {
         onOpenChange={(open) => !open && setSelectedProject(null)}
       >
         <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-2xl bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-h-[90vh] flex flex-col">
-          <div className="bg-slate-900 p-6 md:p-10 pb-12 md:pb-16 flex-shrink-0">
+          <div className="bg-slate-900 p-6 md:p-6 pb-10 md:pb-12 flex-shrink-0">
             <DialogTitle className="flex items-center gap-4 text-white text-2xl md:text-3xl font-black tracking-tight">
               <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/40">
                 <ListTodo className="h-5 w-5 md:h-6 md:w-6 text-white" />
@@ -469,7 +469,7 @@ export default function ProjectPage() {
             </p>
           </div>
 
-          <div className="p-6 md:p-10 -mt-10 bg-white rounded-t-[32px] space-y-4 flex-1 overflow-hidden flex flex-col">
+          <div className="p-6 md:p-6 -mt-10 bg-white rounded-t-[32px] space-y-4 flex-1 overflow-hidden flex flex-col">
             <form
               onSubmit={handleCreateTask}
               className="flex flex-col lg:flex-row gap-3 flex-shrink-0"

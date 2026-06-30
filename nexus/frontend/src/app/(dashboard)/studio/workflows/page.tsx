@@ -118,7 +118,7 @@ export default function WorkflowBuilder() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-4">
+      <div className="grid gap-4 lg:grid-cols-4">
         <Card className="bg-white border-slate-200 shadow-sm lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-slate-900 text-[10px] font-black uppercase tracking-widest flex items-center">
@@ -213,7 +213,7 @@ export default function WorkflowBuilder() {
                 </p>
               </div>
             ) : (
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {selectedWorkflow.nodes?.map((node: WorkflowNode) => (
                   <Card
                     key={node.id}

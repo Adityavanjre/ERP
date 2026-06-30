@@ -415,7 +415,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                 ) : error ? (
-                  <div className="p-12 text-center space-y-4">
+                  <div className="p-6 text-center space-y-4">
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-500">
                       <ShieldAlert className="h-6 w-6" />
                     </div>
@@ -436,7 +436,7 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                 ) : members.length === 0 ? (
-                  <div className="p-12 text-center text-slate-400 font-medium text-sm">
+                  <div className="p-6 text-center text-slate-400 font-medium text-sm">
                     No team members found.
                   </div>
                 ) : (

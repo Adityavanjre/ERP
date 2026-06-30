@@ -190,11 +190,11 @@ export function ApiKeyManager() {
         <CardContent className="p-0">
           <div className="divide-y divide-slate-50">
             {loading ? (
-              <div className="p-12 text-center animate-pulse text-slate-400 font-bold tracking-widest uppercase text-xs">
+              <div className="p-8 text-center animate-pulse text-slate-400 font-bold tracking-widest uppercase text-xs">
                 Synchronizing Vault...
               </div>
             ) : keys.length === 0 ? (
-              <div className="p-16 text-center text-slate-400 font-medium italic">
+              <div className="p-10 text-center text-slate-400 font-medium italic">
                 No API keys active. Connectivity is offline.
               </div>
             ) : (

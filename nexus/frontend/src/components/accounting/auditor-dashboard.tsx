@@ -133,7 +133,7 @@ export function AuditorDashboard() {
 
   if (loading)
     return (
-      <div className="p-12 text-center font-bold text-slate-400">
+      <div className="p-8 text-center font-bold text-slate-400">
         Auditing books...
       </div>
     );
@@ -210,7 +210,7 @@ export function AuditorDashboard() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-8 space-y-8">
+          <CardContent className="p-8 space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 {

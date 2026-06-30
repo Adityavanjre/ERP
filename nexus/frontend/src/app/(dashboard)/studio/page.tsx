@@ -136,7 +136,7 @@ export default function StudioPage() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl lg:col-span-1 overflow-hidden">
           <CardHeader className="bg-slate-50 border-b border-slate-100">
             <CardTitle className="text-slate-900 flex items-center font-black text-lg">

@@ -52,7 +52,7 @@ export function WarehouseDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[700px] rounded-[3rem] border-none shadow-2xl p-0 overflow-hidden">
         <div className="bg-slate-900 p-8 text-white relative">
-          <div className="absolute top-0 right-0 p-12 opacity-10">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
             <Boxes className="h-32 w-32" />
           </div>
           <DialogHeader className="relative z-10">

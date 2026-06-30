@@ -79,7 +79,7 @@ export default function LogisticsConsignments() {
         </Card>
       </div>
 
-      <div className="p-12 border-2 border-dashed border-slate-200 rounded-[3rem] text-center space-y-4">
+      <div className="p-8 border-2 border-dashed border-slate-200 rounded-[3rem] text-center space-y-4">
         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
           <ShieldCheck className="text-slate-300 w-8 h-8" />
         </div>

@@ -220,7 +220,7 @@ export function TenantSelector() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(59,130,246,0.05),transparent)]" />
 
       <div className="w-full max-w-lg relative z-10">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-500/20">
               K
@@ -239,7 +239,7 @@ export function TenantSelector() {
         </div>
 
         <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-          <CardHeader className="bg-slate-900 text-white p-10 pb-12">
+          <CardHeader className="bg-slate-900 text-white p-8 pb-10">
             <CardTitle className="text-3xl font-black tracking-tight mb-2 italic">
               Select Workspace
             </CardTitle>
@@ -350,7 +350,7 @@ export function TenantSelector() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-8">
+        <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6">
           Secure Enterprise Managed Access • Klypso ERP
         </p>
       </div>

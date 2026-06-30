@@ -182,26 +182,6 @@ export default function DashboardPage() {
   });
 
   const [localIPs, setLocalIPs] = useState<string[]>([]);
-
-  useEffect(() => {
-    setMounted(true);
-    if (isDesktopShell()) {
-      window.nexusDesktop?.shell?.getNetworkIPs?.().then((ips) => {
-        setLocalIPs(ips || []);
-      });
-    }
-  }, []);
-
-  // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a
-  // brief simulated check. This prevents the "Loading Hang" while ensuring
-  // we don't trigger automatic network requests.
-  useEffect(() => {
-    if (mounted && !cache) {
-      const timer = setTimeout(() => setLoading(false), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [mounted, cache]);
-
   const [syncDegraded, setSyncDegraded] = useState(false);
   const [enabledModules, setEnabledModules] = useState<string[]>(
     cache?.enabledModules ?? [],
@@ -312,9 +292,26 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // MANUALLY-TRIGGERED SYNC ONLY
-  // Removed automatic useEffect fetch on mount to follow 'Interaction-Only' strict rule.
-  // Data will only be fetched when the user clicks the manual refresh/sync button.
+  useEffect(() => {
+    setMounted(true);
+    if (isDesktopShell()) {
+      window.nexusDesktop?.shell?.getNetworkIPs?.().then((ips) => {
+        setLocalIPs(ips || []);
+      });
+    }
+    // Automatically trigger initial fetch on mount
+    fetchData(true);
+  }, [fetchData]);
+
+  // AUTO-UNBLOCK: If no cache is present, allow the UI to render after a
+  // brief simulated check. This prevents the "Loading Hang" while ensuring
+  // we don't trigger automatic network requests.
+  useEffect(() => {
+    if (mounted && !cache) {
+      const timer = setTimeout(() => setLoading(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, cache]);
 
   const term = useMemo<Record<string, string>>(
     () => industryConfig?.terminology ?? {},
@@ -402,7 +399,7 @@ export default function DashboardPage() {
     );
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-0.5 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-950 flex items-center">
@@ -412,7 +409,7 @@ export default function DashboardPage() {
                 ? `${industryConfig.industry} Console`
                 : "Klypso Dashboard")}
           </h2>
-          <p className="text-slate-500 mt-1 text-xs font-medium">
+          <p className="text-slate-500 mt-0.5 text-xs font-medium">
             Business intelligence and operational metrics for{" "}
             {user?.tenantName || "your business"}.
           </p>
@@ -430,7 +427,7 @@ export default function DashboardPage() {
           </div>
           <Badge
             variant="outline"
-            className={`px-4 py-2 rounded-2xl shadow-sm ${syncDegraded ? "border-amber-200 text-amber-600 bg-amber-50/50" : "border-blue-200 text-blue-600 bg-blue-50/50"}`}
+            className="px-4 py-2 rounded-2xl shadow-sm border-blue-200 text-blue-600 bg-blue-50/50"
           >
             <Activity className="h-3 w-3 mr-2 animate-pulse" />{" "}
             {syncDegraded ? "Degraded" : "Live Data"}
@@ -454,9 +451,9 @@ export default function DashboardPage() {
           {(valueChain || []).map((step) => (
             <div
               key={step.label}
-              className="relative group overflow-hidden p-6 rounded-2xl bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-200 transition-all cursor-default"
+              className="relative group overflow-hidden p-3.5 rounded-2xl bg-slate-50 border border-slate-100/50 hover:bg-white hover:border-blue-200 transition-all cursor-default"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
                   {step.label}
                 </span>

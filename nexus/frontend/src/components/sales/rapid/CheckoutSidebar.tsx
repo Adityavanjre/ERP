@@ -62,7 +62,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
         </button>
       </div>
 
-      <div className="p-6 flex-1 overflow-y-auto space-y-8">
+      <div className="p-6 flex-1 overflow-y-auto space-y-6">
         {/* Payment Modes */}
         <div>
           <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">

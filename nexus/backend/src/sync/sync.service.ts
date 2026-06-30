@@ -182,9 +182,8 @@ export class SyncService {
   async getMetadata(tenantId: string, userId: string) {
     if (!tenantId) {
       return {
-        pbac: {},
-        permissions: [],
-        enabledModules: [],
+        modules: [],
+        permissions: {},
       };
     }
     
@@ -198,9 +197,33 @@ export class SyncService {
       select: { permissions: true },
     });
 
+    const rawRole = tenantUser?.permissions;
+    const permissions: Record<string, string[]> = {};
+
+    if (rawRole) {
+      const roleKey = String(rawRole).toUpperCase();
+      if (roleKey === 'OWNER' || roleKey === 'SUPERADMIN' || roleKey === 'MANAGER') {
+        permissions['*'] = ['*'];
+      } else if (roleKey === 'ACCOUNTANT') {
+        permissions['accounting'] = ['read', 'write'];
+        permissions['sales'] = ['read'];
+      } else if (roleKey === 'OPERATOR') {
+        permissions['sales'] = ['read', 'write'];
+        permissions['crm'] = ['read', 'write'];
+      } else if (roleKey === 'BILLER') {
+        permissions['sales'] = ['read', 'write'];
+      } else if (roleKey === 'STOREKEEPER') {
+        permissions['inventory'] = ['read', 'write'];
+      } else if (roleKey === 'CA') {
+        permissions['accounting'] = ['read', 'write'];
+      } else {
+        permissions[rawRole.toLowerCase()] = ['read', 'write'];
+      }
+    }
+
     return {
       modules: tenant?.enabledModules || [],
-      permissions: tenantUser?.permissions || {},
+      permissions: permissions,
     };
   }
 

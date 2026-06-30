@@ -170,9 +170,9 @@ export default function InvoicePrintPage() {
       </div>
 
       {/* Invoice Paper */}
-      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 md:p-12 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
+      <div className="max-w-4xl mx-auto bg-white p-6 sm:p-6 md:p-8 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-8 lg:gap-0 border-b-2 border-zinc-100 pb-8 mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 lg:gap-0 border-b-2 border-zinc-100 pb-6 mb-6">
           <div className="w-full">
             <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">
               KLYPSO INVOICE
@@ -225,7 +225,7 @@ export default function InvoicePrintPage() {
         </div>
 
         {/* Items Table */}
-        <div className="overflow-x-auto mb-8 max-w-[100vw]">
+        <div className="overflow-x-auto mb-6 max-w-[100vw]">
           <table className="w-full text-sm min-w-[500px]">
             <thead className="border-b-2 border-zinc-900">
               <tr>

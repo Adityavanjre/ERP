@@ -151,7 +151,7 @@ export default function ManufacturingDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* WIP Work Orders */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export default function ManufacturingDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
+                <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
                   <div className="flex gap-3 sm:gap-5 items-center pl-[4rem] sm:pl-0">
                     <div className="flex -space-x-3">
                       {Array.from({
@@ -284,7 +284,7 @@ export default function ManufacturingDashboard() {
               <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:scale-110 transition-transform">
                 <TrendingUp className="h-24 w-24 text-emerald-900" />
               </div>
-              <div className="space-y-8 relative z-10">
+              <div className="space-y-4 relative z-10">
                 <div>
                   <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">
                     Pending Production

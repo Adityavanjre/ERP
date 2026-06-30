@@ -489,7 +489,7 @@ export default function SalesPage() {
         }}
       >
         <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-xl bg-white border-none shadow-2xl rounded-[40px] overflow-hidden p-0">
-          <div className="bg-slate-900 p-10 pb-16">
+          <div className="bg-slate-900 p-6 pb-10">
             <DialogTitle className="text-white font-black text-3xl tracking-tight">
               Create New Order
             </DialogTitle>
@@ -499,7 +499,7 @@ export default function SalesPage() {
           </div>
           <form
             onSubmit={handleConfirmSubmit}
-            className="p-10 -mt-8 bg-white rounded-t-[40px] space-y-6"
+            className="p-6 -mt-8 bg-white rounded-t-[40px] space-y-6"
           >
             {/* Customer */}
             <div className="space-y-3">

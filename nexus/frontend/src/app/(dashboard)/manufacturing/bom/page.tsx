@@ -264,7 +264,7 @@ export default function BOMPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
           <CardHeader className="border-b border-slate-100">
             <CardTitle className="text-lg font-black flex items-center gap-3">
@@ -277,7 +277,7 @@ export default function BOMPage() {
           </CardHeader>
           <CardContent className="p-0">
             {detailsLoading ? (
-              <div className="p-12 flex justify-center">
+              <div className="p-8 flex justify-center">
                 <LoadingSpinner />
               </div>
             ) : selectedBom ? (
@@ -314,7 +314,7 @@ export default function BOMPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="p-12 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
                 <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300">
                   <Boxes className="h-8 w-8" />
                 </div>

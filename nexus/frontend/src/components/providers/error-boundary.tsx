@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 className="text-2xl font-black tracking-tighter mb-2 italic uppercase">
               System Exception
             </h1>
-            <p className="text-zinc-400 text-sm mb-8">
+            <p className="text-zinc-400 text-sm mb-6">
               A critical UI error occurred. Our engineers have been notified.
             </p>
             <div className="flex flex-col gap-3">
@@ -54,7 +54,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Button>
             </div>
             {process.env.NODE_ENV === "development" && (
-              <pre className="mt-8 text-[10px] text-rose-400 text-left bg-black/50 p-4 rounded-xl overflow-auto max-h-40">
+              <pre className="mt-6 text-[10px] text-rose-400 text-left bg-black/50 p-4 rounded-xl overflow-auto max-h-40">
                 {this.state.error?.message}
                 {this.state.error?.stack}
               </pre>

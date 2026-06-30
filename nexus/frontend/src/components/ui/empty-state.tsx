@@ -19,12 +19,12 @@ export function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-12 bg-white/5 border border-dashed border-white/10 rounded-2xl text-center">
-      <div className="p-4 bg-white/5 rounded-full mb-6">
-        <Icon className="h-10 w-10 text-zinc-500" />
+    <div className="flex flex-col items-center justify-center p-8 bg-white/5 border border-dashed border-white/10 rounded-2xl text-center">
+      <div className="p-3 bg-white/5 rounded-full mb-4">
+        <Icon className="h-8 w-8 text-zinc-500" />
       </div>
       <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-      <p className="text-zinc-400 text-sm max-w-xs mb-8">{description}</p>
+      <p className="text-zinc-400 text-sm max-w-xs mb-6">{description}</p>
       {actionText && onAction && (
         <Button
           onClick={onAction}

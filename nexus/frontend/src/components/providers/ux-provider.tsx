@@ -63,7 +63,19 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
   const [isNetworkConsentOpen, setIsNetworkConsentOpen] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [isUILocked, setIsUILocked] = useState(false);
-  const [pbac, setPbac] = useState<PBACState>({ permissions: {}, modules: [] });
+  const [pbac, setPbac] = useState<PBACState>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("nexus_pbac_cache");
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (e) {
+        console.warn("Failed to parse cached PBAC", e);
+      }
+    }
+    return { permissions: {}, modules: [] };
+  });
 
   const hasPermission = (resource: string, action: string) => {
     if (pbac.permissions["*"]?.includes("*")) return true;
@@ -143,10 +155,12 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await api.get("/sync/metadata");
         if (res.data) {
-          setPbac({
+          const newState = {
             permissions: res.data.permissions || {},
             modules: res.data.modules || [],
-          });
+          };
+          setPbac(newState);
+          localStorage.setItem("nexus_pbac_cache", JSON.stringify(newState));
         }
       } catch (err) {
         console.warn("Failed to fetch PBAC metadata", err);
@@ -308,7 +322,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
               sent until you explicitly approve network access for this session.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-8 gap-3 sm:gap-3">
+          <DialogFooter className="mt-6 gap-3 sm:gap-3">
             <Button
               variant="ghost"
               className="w-full sm:w-auto rounded-xl font-black uppercase tracking-widest text-[10px]"
@@ -348,7 +362,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
               locked the session. Please re-authenticate to continue.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="mt-8">
+          <DialogFooter className="mt-6">
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-12 rounded-xl transition-all shadow-lg shadow-blue-500/20 uppercase tracking-widest text-[10px]"
               onClick={handleLoginRedirect}
