@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { api } from "../../../../lib/api";
@@ -104,10 +104,10 @@ export default function ReportsPage() {
     );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <BarChart2 className="mr-4 h-9 w-9 text-violet-600" />
             Financial Reports
           </h2>
@@ -128,7 +128,7 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="trial-balance" className="space-y-6">
+      <Tabs defaultValue="trial-balance" className="space-y-3">
         <TabsList className="bg-slate-100 p-1.5 rounded-2xl h-auto">
           <TabsTrigger
             value="trial-balance"

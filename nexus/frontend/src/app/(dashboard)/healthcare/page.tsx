@@ -80,9 +80,9 @@ export default function PatientsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Card className="rounded-3xl border-slate-100 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-blue-50 rounded-2xl">
                 <Users className="h-6 w-6 text-blue-600" />
@@ -101,7 +101,7 @@ export default function PatientsPage() {
         </Card>
 
         <Card className="rounded-3xl border-slate-100 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-amber-50 rounded-2xl">
                 <Activity className="h-6 w-6 text-amber-600" />
@@ -120,7 +120,7 @@ export default function PatientsPage() {
         </Card>
 
         <Card className="rounded-3xl border-slate-100 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-emerald-50 rounded-2xl">
                 <Calendar className="h-6 w-6 text-emerald-600" />
@@ -137,7 +137,7 @@ export default function PatientsPage() {
         </Card>
 
         <Card className="rounded-3xl border-slate-100 shadow-sm hover:shadow-md transition-all">
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="flex items-center justify-between">
               <div className="p-3 bg-rose-50 rounded-2xl">
                 <FileText className="h-6 w-6 text-rose-600" />

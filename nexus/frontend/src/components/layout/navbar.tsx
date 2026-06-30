@@ -13,7 +13,7 @@ export const Navbar = () => {
   });
 
   return (
-    <div className="flex items-center p-4 md:p-6 border-b border-slate-200 bg-white/80 backdrop-blur-xl sticky top-0 z-[60]">
+    <div className="flex items-center p-3 md:p-4 border-b border-slate-200 bg-white/80 backdrop-blur-xl sticky top-0 z-[60]">
       <MobileSidebar />
       <div className="flex-1 flex items-center">
         <div

@@ -66,6 +66,9 @@ export default function OnboardingPage() {
 
   const onSubmit = useCallback(
     async (data: OnboardingFormData) => {
+      // Mark onboarding as started for resume support
+      localStorage.setItem("k_onboarding_started", "true");
+
       if (!user?.tenantId) {
         toast.error("Session error", {
           description:
@@ -128,6 +131,13 @@ export default function OnboardingPage() {
     <div className="flex items-center justify-center min-h-[80vh]">
       <Card className="w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-blue-500/5 border-slate-200">
         <CardHeader className="p-8 pb-4">
+          {/* Progress indicator for resume support */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="h-1 flex-1 max-w-[80px] bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-600 w-1/3" />
+            </div>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 2 of 2</span>
+          </div>
           <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">
             Finalize Setup
           </CardTitle>
@@ -139,7 +149,7 @@ export default function OnboardingPage() {
           <form
             id="onboarding-form"
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-6"
+            className="space-y-3"
           >
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -114,11 +114,11 @@ export default function ManufacturingDashboard() {
     );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8">
+    <div className="flex-1 space-y-4">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
             Manufacturing
           </h2>
@@ -275,7 +275,7 @@ export default function ManufacturingDashboard() {
         </div>
 
         {/* BOM Registry & Stats */}
-        <div className="space-y-8">
+        <div className="space-y-4">
           <section className="space-y-4">
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
               Production Stats

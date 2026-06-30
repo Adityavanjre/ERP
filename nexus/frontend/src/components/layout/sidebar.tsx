@@ -454,7 +454,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
-      <div className="px-6 py-10 pb-4 shrink-0">
+      <div className="px-4 py-5 pb-3 shrink-0">
         <Link
           href="/dashboard"
           onClick={onItemClick}
@@ -472,13 +472,13 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-6 py-6 space-y-8 min-h-0">
-        <div className="space-y-1 mb-6">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3 space-y-4 min-h-0">
+        <div className="space-y-0.5 mb-3">
           <Link
             href="/dashboard"
             onClick={onItemClick}
             className={cn(
-              "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+              "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
               pathname === "/dashboard"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -500,7 +500,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
         {visibleStreams.map((stream) => (
           <div key={stream.label} className="space-y-1">
-            <div className="text-[9px] font-black text-slate-400 mb-4 px-4 tracking-[0.25em] uppercase">
+            <div className="text-[9px] font-black text-slate-400 mb-1.5 px-3 tracking-[0.2em] uppercase">
               {stream.label}
             </div>
             {stream.items.map((item) => {
@@ -514,7 +514,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                   prefetch={false}
                   onClick={onItemClick}
                   className={cn(
-                    "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+                    "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
                     isActive
                       ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                       : "text-slate-500",
@@ -538,7 +538,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         ))}
       </div>
 
-      <div className="shrink-0 p-6 pt-4 border-t border-slate-100 space-y-4">
+      <div className="shrink-0 p-3 pt-2 border-t border-slate-100 space-y-1">
 
 
         {canAccessSettings && (
@@ -546,7 +546,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             href="/modules-setup"
             onClick={onItemClick}
             className={cn(
-              "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+              "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
               pathname === "/modules-setup"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -571,7 +571,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             href="/settings"
             onClick={onItemClick}
             className={cn(
-              "text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98]",
+              "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
               pathname === "/settings"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -597,7 +597,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
               "Use the workspace selector to switch between workspaces",
             );
           }}
-          className="text-xs group flex p-4 w-full justify-start font-black cursor-pointer hover:bg-white rounded-2xl transition-all duration-300 uppercase tracking-widest text-slate-500 hover:scale-[1.02] active:scale-[0.98]"
+          className="text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider text-slate-500 hover:scale-[1.01] active:scale-[0.98]"
         >
           <div className="flex items-center flex-1">
             <RefreshCw className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:rotate-180" />
@@ -605,7 +605,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
           </div>
         </button>
 
-        <div className="p-5 rounded-[2rem] bg-white border border-slate-100 shadow-sm">
+        <div className="p-3 rounded-2xl bg-white border border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter">
               Auto-Sync

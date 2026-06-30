@@ -212,8 +212,11 @@ export default function DashboardPage() {
 
   // Derive currency symbol from config (never hardcode)
   const currencySymbol = getCurrencySymbol(industryConfig?.currency);
-  const fmtCurrency = (amount: number) =>
-    formatCurrency(amount, industryConfig?.currency ?? "INR");
+  const fmtCurrency = useCallback(
+    (amount: number) =>
+      formatCurrency(amount, industryConfig?.currency ?? "INR"),
+    [industryConfig?.currency],
+  );
 
   const fetchData = useCallback(async (isInitial = false) => {
     // DEADLINE TIMER: If initial load, force-unblock the loading spinner after 2s
@@ -389,7 +392,7 @@ export default function DashboardPage() {
       });
     }
     return cards;
-  }, [biStats, enabledModules, term]);
+  }, [biStats, enabledModules, term, fmtCurrency]);
 
   if (!mounted || loading)
     return (
@@ -399,17 +402,17 @@ export default function DashboardPage() {
     );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-950 flex items-center">
-            <Cpu className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
+          <h2 className="text-2xl font-black tracking-tight text-slate-950 flex items-center">
+            <Cpu className="mr-3 h-6 w-6 text-blue-600 shadow-sm" />
             {user?.tenantName ||
               (industryConfig?.industry
                 ? `${industryConfig.industry} Console`
                 : "Klypso Dashboard")}
           </h2>
-          <p className="text-slate-600 mt-2 font-medium">
+          <p className="text-slate-500 mt-1 text-xs font-medium">
             Business intelligence and operational metrics for{" "}
             {user?.tenantName || "your business"}.
           </p>
@@ -469,7 +472,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black font-mono text-slate-900 tracking-tighter">
+                <span className="text-2xl font-black font-mono text-slate-900 tracking-tighter">
                   {step.count.toLocaleString()}
                 </span>
                 <span className="text-[10px] text-slate-600 font-black uppercase tracking-tight">
@@ -482,7 +485,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
         {[
           {
             label: "Quick Invoice",
@@ -551,10 +554,10 @@ export default function DashboardPage() {
             <button
               key={action.label}
               onClick={() => router.push(action.href)}
-              className="flex flex-col items-center justify-center p-4 sm:p-6 rounded-[1.5rem] sm:rounded-3xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
+              className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/10 transition-all group scale-100 active:scale-95"
             >
               <div
-                className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}
+                className={`p-2.5 sm:p-3 rounded-xl mb-2 sm:mb-3 ${action.color} group-hover:scale-110 transition-transform shadow-sm`}
               >
                 <action.icon className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
@@ -568,7 +571,7 @@ export default function DashboardPage() {
       {/* Top Level KPIs */}
       <div
         className={cn(
-          "grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4",
+          "grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4",
           kpiCards.length > 4 && "lg:grid-cols-5",
         )}
       >
@@ -586,10 +589,10 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-black text-slate-900 tracking-tighter">
+              <div className="text-2xl font-black text-slate-900 tracking-tighter">
                 {kpi.value}
               </div>
-              <p className="text-[10px] text-slate-600 mt-2 font-bold uppercase tracking-tight">
+              <p className="text-[10px] text-slate-500 mt-1 font-bold uppercase tracking-tight">
                 {kpi.desc}
               </p>
             </CardContent>
@@ -598,11 +601,11 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {/* Big Chart */}
         <Card className="col-span-4 bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden relative border-none">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
-            <CardTitle className="text-slate-900 flex items-center gap-3 text-xl font-black">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
+            <CardTitle className="text-slate-900 flex items-center gap-2 text-base font-black">
               <TrendingUp className="h-5 w-5 text-blue-600" />
               Revenue This Year
             </CardTitle>
@@ -610,8 +613,8 @@ export default function DashboardPage() {
               Monthly sales revenue across all orders.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-8">
-            <div className="h-[300px] w-full">
+          <CardContent className="pt-4 px-3">
+            <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid
@@ -660,16 +663,16 @@ export default function DashboardPage() {
         </Card>
 
         {/* System Activity */}
-        <div className="col-span-3 space-y-6">
+        <div className="col-span-3 space-y-3">
           {localIPs.length > 0 && (
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-              <CardHeader className="bg-emerald-50 border-b border-emerald-100 py-6">
+              <CardHeader className="bg-emerald-50 border-b border-emerald-100 py-3 px-4">
                 <CardTitle className="text-emerald-950 text-base flex items-center uppercase tracking-widest font-black">
                   <Activity className="mr-3 h-5 w-5 text-emerald-600 shadow-sm" />
                   Local Network Access
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 pt-6">
+              <CardContent className="space-y-3 pt-3 px-3">
                 <p className="text-[11px] font-black text-slate-600 leading-normal">
                   Your store's local server is running. Employees can connect using the IP below:
                 </p>
@@ -686,14 +689,14 @@ export default function DashboardPage() {
           )}
 
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-950 text-base flex items-center uppercase tracking-widest font-black">
                 <Zap className="mr-3 h-5 w-5 text-amber-500 shadow-sm" />
                 Business Growth
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div className="flex items-center justify-between p-6 rounded-3xl border border-blue-100 bg-blue-50/20">
+            <CardContent className="space-y-3 pt-3 px-3">
+              <div className="flex items-center justify-between p-3 rounded-2xl border border-blue-100 bg-blue-50/20">
                 <div>
                   <p className="text-[10px] text-slate-600 font-black uppercase mb-1 tracking-widest">
                     Health Score
@@ -757,7 +760,7 @@ export default function DashboardPage() {
           </Card>
 
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-950 text-base flex items-center uppercase tracking-widest font-black">
                 <Activity className="mr-3 h-5 w-5 text-blue-500 shadow-sm" />
                 Recent Activity

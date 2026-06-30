@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -29,9 +30,10 @@ import {
 } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { FieldInfo } from "../../../components/ui/field-info";
 import {
   ShoppingBag,
-  DollarSign,
+  IndianRupee,
   Package,
   CheckCircle2,
   ShoppingCart,
@@ -87,6 +89,7 @@ export default function PurchasesPage() {
     totalSpent: 0,
     pendingPOs: 0,
   });
+  const currencySymbol = getCurrencySymbol();
   const [loading, setLoading] = useState(true);
   const [showPODialog, setShowPODialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -239,7 +242,7 @@ export default function PurchasesPage() {
     );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
       <CreateSupplierDialog
         open={isAddSupplierOpen}
         onOpenChange={setIsAddSupplierOpen}
@@ -247,7 +250,7 @@ export default function PurchasesPage() {
       />
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center gap-3">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center gap-3">
             <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-indigo-600" />{" "}
             Purchases & Suppliers
           </h2>
@@ -272,18 +275,17 @@ export default function PurchasesPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Total Spent
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
+            <IndianRupee className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              â‚¹
-              {Number(stats?.totalSpent || 0).toLocaleString("en-IN", {
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
+              {currencySymbol}{Number(stats?.totalSpent || 0).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -300,7 +302,7 @@ export default function PurchasesPage() {
             <ShoppingBag className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-amber-600 tracking-tighter">
+            <div className="text-2xl font-black text-amber-600 tracking-tighter">
               {stats?.pendingPOs || 0}
             </div>
             <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
@@ -316,7 +318,7 @@ export default function PurchasesPage() {
             <Truck className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {suppliers.length}
             </div>
             <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
@@ -326,7 +328,7 @@ export default function PurchasesPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="orders" className="space-y-6 md:space-y-8">
+      <Tabs defaultValue="orders" className="space-y-4">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="orders"
@@ -344,7 +346,7 @@ export default function PurchasesPage() {
 
         <TabsContent value="orders">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none text-slate-900">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-900 text-xl font-black">
                 Purchase Register
               </CardTitle>
@@ -394,8 +396,7 @@ export default function PurchasesPage() {
                         {new Date(po.orderDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-black text-slate-900">
-                        â‚¹
-                        {Number(po.totalAmount).toLocaleString("en-IN", {
+                        {currencySymbol}{Number(po.totalAmount).toLocaleString("en-IN", {
                           minimumFractionDigits: 0,
                         })}
                       </TableCell>
@@ -441,7 +442,7 @@ export default function PurchasesPage() {
 
         <TabsContent value="suppliers">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none text-slate-900">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-900 text-xl font-black">
                 Suppliers
               </CardTitle>
@@ -449,8 +450,8 @@ export default function PurchasesPage() {
                 List of approved suppliers
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-8">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <CardContent className="p-4">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {suppliers.map((s) => (
                   <Card
                     key={s.id}
@@ -534,7 +535,7 @@ export default function PurchasesPage() {
               Start a new order with a verified supplier.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-6 py-6">
+          <div className="grid gap-3 py-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="supplier"
@@ -612,7 +613,8 @@ export default function PurchasesPage() {
                   htmlFor="unitPrice"
                   className="text-slate-700 font-black text-[10px] uppercase tracking-widest pl-1"
                 >
-                  Unit Cost (â‚¹)
+                  Unit Cost (${currencySymbol})
+                  <FieldInfo content="The price per single unit of the product paid to the supplier, excluding GST." />
                 </Label>
                 <NumericInput
                   id="unitPrice"
@@ -645,7 +647,7 @@ export default function PurchasesPage() {
               <div className="flex justify-between items-center text-blue-900 font-black tracking-tight">
                 <span className="text-[10px] uppercase">Total Amount</span>
                 <span className="text-xl">
-                  â‚¹{(newPO.quantity * newPO.unitPrice).toLocaleString("en-IN")}
+                  {currencySymbol}{(newPO.quantity * newPO.unitPrice).toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
@@ -674,7 +676,7 @@ export default function PurchasesPage() {
         onClose={() => setShowConfirm(false)}
         onConfirm={createPO}
         title="Confirm Purchase"
-        description={`You are creating a purchase order for â‚¹${(newPO.quantity * newPO.unitPrice).toLocaleString("en-IN")}. Verify supplier and pricing before proceeding.`}
+        description={`You are creating a purchase order for ${currencySymbol}${(newPO.quantity * newPO.unitPrice).toLocaleString("en-IN")}. Verify supplier and pricing before proceeding.`}
         confirmLabel="Yes, Create PO"
         cancelLabel="Review"
         variant="warning"

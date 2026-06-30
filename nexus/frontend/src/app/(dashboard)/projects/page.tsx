@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -178,10 +178,10 @@ export default function ProjectPage() {
     return <LoadingSpinner className="h-full" text="Loading Projects..." />;
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <ClipboardList className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
             Projects
           </h2>
@@ -199,7 +199,7 @@ export default function ProjectPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -208,7 +208,7 @@ export default function ProjectPage() {
             <LayoutGrid className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {stats.total}
             </div>
             <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
@@ -224,7 +224,7 @@ export default function ProjectPage() {
             <Activity className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-emerald-600 tracking-tighter">
+            <div className="text-2xl font-black text-emerald-600 tracking-tighter">
               {stats.active}
             </div>
             <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
@@ -255,7 +255,7 @@ export default function ProjectPage() {
 
       {showForm && (
         <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-8 animate-in fade-in slide-in-from-top-4">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               New Project
             </CardTitle>
@@ -340,7 +340,7 @@ export default function ProjectPage() {
         </Card>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => {
           const progress =
             project.tasks?.length > 0
@@ -469,7 +469,7 @@ export default function ProjectPage() {
             </p>
           </div>
 
-          <div className="p-6 md:p-10 -mt-10 bg-white rounded-t-[32px] space-y-6 md:space-y-8 flex-1 overflow-hidden flex flex-col">
+          <div className="p-6 md:p-10 -mt-10 bg-white rounded-t-[32px] space-y-4 flex-1 overflow-hidden flex flex-col">
             <form
               onSubmit={handleCreateTask}
               className="flex flex-col lg:flex-row gap-3 flex-shrink-0"

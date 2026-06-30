@@ -195,10 +195,10 @@ export default function SettingsPage() {
   if (!mounted) return null; // Prevent hydration mismatch
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6">
+    <div className="flex-1 space-y-4 pt-2 md:pt-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Settings className="mr-3 h-8 w-8 text-slate-400" />
             Settings
           </h2>
@@ -208,7 +208,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs defaultValue="general" className="space-y-3">
         <TabsList className="bg-slate-100 border border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="general"
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                 Update your company name and workspace details.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3">
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div className="grid gap-2">
                   <Label
@@ -291,6 +291,66 @@ export default function SettingsPage() {
                   <p className="text-[11px] text-slate-400 italic font-medium">
                     This ID is fixed and cannot be changed.
                   </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="tenantId"
+                    className="text-slate-500 font-bold uppercase text-[10px] tracking-wider"
+                  >
+                    Tenant ID
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="tenantId"
+                      defaultValue={currentUser?.tenantId}
+                      disabled
+                      className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-3 text-xs font-bold border-slate-200"
+                      onClick={() => {
+                        if (currentUser?.tenantId) {
+                          navigator.clipboard.writeText(currentUser.tenantId);
+                          toast.success("Tenant ID copied to clipboard");
+                        }
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label
+                    htmlFor="userId"
+                    className="text-slate-500 font-bold uppercase text-[10px] tracking-wider"
+                  >
+                    User / Employee ID
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="userId"
+                      defaultValue={currentUser?.id}
+                      disabled
+                      className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-3 text-xs font-bold border-slate-200"
+                      onClick={() => {
+                        if (currentUser?.id) {
+                          navigator.clipboard.writeText(currentUser.id);
+                          toast.success("User ID copied to clipboard");
+                        }
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
                 </div>
                 <div className="pt-4">
                   <Button
@@ -527,7 +587,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="billing">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-slate-900 font-black flex items-center">
@@ -538,7 +598,7 @@ export default function SettingsPage() {
                   Your current plan and usage limits.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-3">
                 <div className="p-6 rounded-2xl bg-slate-900 border-b-4 border-indigo-500 shadow-xl overflow-hidden relative">
                   <div className="absolute -right-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
                   <Badge className="mb-2 bg-indigo-600 text-white font-black">
@@ -662,7 +722,7 @@ export default function SettingsPage() {
                   Upgrade your local peer-to-peer setup to a fully managed cloud workspace.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="pt-3">
                 <p className="text-sm text-slate-600 mb-6">
                   Ready to scale? This process will safely copy your local SQLite database to our secure cloud infrastructure. You'll gain global access, automated backups, and higher performance without losing any of your existing data.
                 </p>
@@ -788,7 +848,7 @@ export default function SettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-6 flex flex-col items-center justify-center gap-4">
-            <div className="text-3xl font-black font-mono tracking-widest bg-slate-100 p-4 rounded-xl border-b-2 border-slate-200 w-full text-center text-slate-900">
+            <div className="text-2xl font-black font-mono tracking-widest bg-slate-100 p-4 rounded-xl border-b-2 border-slate-200 w-full text-center text-slate-900">
               {tempPassword}
             </div>
             <Button

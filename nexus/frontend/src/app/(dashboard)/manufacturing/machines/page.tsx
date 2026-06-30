@@ -1,4 +1,5 @@
 "use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -47,6 +48,7 @@ interface Machine {
 export default function MachinesPage() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
   const [search, setSearch] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newMachine, setNewMachine] = useState({
@@ -192,7 +194,7 @@ export default function MachinesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Hourly Rate (â‚¹)</label>
+                  <label className="text-sm font-medium">Hourly Rate ({currencySymbol})</label>
                   <Input
                     type="number"
                     placeholder="1200.00"
@@ -291,7 +293,7 @@ export default function MachinesPage() {
                       <Clock className="w-3 h-3 mr-1" /> Rate/Hr
                     </p>
                     <p className="font-semibold text-slate-800">
-                      â‚¹{Number(m.hourlyRate || 0).toFixed(2)}
+                      {currencySymbol}{Number(m.hourlyRate || 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="space-y-1">

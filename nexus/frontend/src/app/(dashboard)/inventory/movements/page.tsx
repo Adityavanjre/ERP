@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -191,9 +191,9 @@ export default function StockMovementsPage() {
     );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div>
-        <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+        <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
           <ArrowLeftRight className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
           Stock Movements
         </h2>
@@ -214,7 +214,7 @@ export default function StockMovementsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 md:p-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Type Selection */}
               <div className="grid grid-cols-3 gap-4">
                 <button
@@ -388,7 +388,7 @@ export default function StockMovementsPage() {
         </Card>
 
         {/* Info Column */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           <Card className="bg-slate-900 text-white rounded-3xl border-none shadow-xl shadow-slate-900/10 overflow-hidden relative">
             <div className="absolute top-0 right-0 p-6 opacity-10">
               <PackageSearch className="h-32 w-32" />
@@ -567,7 +567,7 @@ export default function StockMovementsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-bold text-slate-900 text-sm">
-                        {m.product?.name || "â€”"}
+                        {m.product?.name || "—"}
                         {m.product?.sku && (
                           <span className="text-slate-400 font-mono text-[10px] ml-2">
                             {m.product.sku}
@@ -576,8 +576,8 @@ export default function StockMovementsPage() {
                       </TableCell>
                       <TableCell className="text-slate-500 text-sm font-medium">
                         {m.type === "TRANSFER"
-                          ? `${m.fromWarehouse?.name || "?"} â†’ ${m.toWarehouse?.name || "?"}`
-                          : m.warehouse?.name || "â€”"}
+                          ? `${m.fromWarehouse?.name || "?"} → ${m.toWarehouse?.name || "?"}`
+                          : m.warehouse?.name || "—"}
                       </TableCell>
                       <TableCell className="text-right pr-8 font-black text-slate-900 tabular-nums">
                         {m.quantity}

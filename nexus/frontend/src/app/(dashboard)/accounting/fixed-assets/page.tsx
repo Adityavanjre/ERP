@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../../../lib/api";
@@ -47,6 +48,7 @@ interface FixedAsset {
 export default function FixedAssetsPage() {
   const [assets, setAssets] = useState<FixedAsset[]>([]);
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
@@ -116,7 +118,7 @@ export default function FixedAssetsPage() {
         `accounting/fixed-assets/${assetId}/depreciate`,
       );
       toast.success(
-        `Depreciation of â‚¹${res.data.monthlyDepreciation} posted for ${assetName}`,
+        `Depreciation of {currencySymbol}${res.data.monthlyDepreciation} posted for ${assetName}`,
       );
       fetchAssets();
     } catch (err: unknown) {
@@ -139,7 +141,7 @@ export default function FixedAssetsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900">
@@ -195,7 +197,7 @@ export default function FixedAssetsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Purchase Value (â‚¹)</Label>
+                  <Label>Purchase Value ({currencySymbol})</Label>
                   <Input
                     type="number"
                     value={form.purchaseValue || ""}
@@ -211,7 +213,7 @@ export default function FixedAssetsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Salvage Value (â‚¹)</Label>
+                  <Label>Salvage Value ({currencySymbol})</Label>
                   <Input
                     type="number"
                     value={form.salvageValue}
@@ -327,16 +329,16 @@ export default function FixedAssetsPage() {
                     {asset.assetCode}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    â‚¹{parseFloat(asset.purchaseValue).toLocaleString("en-IN")}
+                    {currencySymbol}{parseFloat(asset.purchaseValue).toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell className="text-right text-slate-500">
-                    â‚¹
+                    {currencySymbol}
                     {parseFloat(asset.accumulatedDepreciation).toLocaleString(
                       "en-IN",
                     )}
                   </TableCell>
                   <TableCell className="text-right font-bold text-blue-600">
-                    â‚¹{parseFloat(bookValue(asset)).toLocaleString("en-IN")}
+                    {currencySymbol}{parseFloat(bookValue(asset)).toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {asset.usefulLife}
@@ -392,7 +394,7 @@ export default function FixedAssetsPage() {
                                 >
                                   <div>
                                     <p className="font-bold text-slate-900">
-                                      â‚¹
+                                      {currencySymbol}
                                       {parseFloat(log.amount).toLocaleString(
                                         "en-IN",
                                       )}

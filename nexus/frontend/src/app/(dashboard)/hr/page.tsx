@@ -1,4 +1,5 @@
 "use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -122,6 +123,7 @@ export default function HrPage() {
     totalPayroll: 0,
   });
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
   const [mounted, setMounted] = useState(false);
 
   // Add Employee Dialog State
@@ -288,10 +290,10 @@ export default function HrPage() {
     );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
             Employees & HR
           </h2>
@@ -469,7 +471,7 @@ export default function HrPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -478,7 +480,7 @@ export default function HrPage() {
             <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {stats.activeEmployees}
             </div>
             <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
@@ -494,7 +496,7 @@ export default function HrPage() {
             <Calendar className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-amber-600 tracking-tighter">
+            <div className="text-2xl font-black text-amber-600 tracking-tighter">
               {stats.pendingLeaves}
             </div>
             <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
@@ -510,8 +512,8 @@ export default function HrPage() {
             <Banknote className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              â‚¹
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
+              {currencySymbol}
               {Number(stats.totalPayroll).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
@@ -523,7 +525,7 @@ export default function HrPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="employees" className="space-y-6 md:space-y-8">
+      <Tabs defaultValue="employees" className="space-y-4">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="employees"
@@ -553,7 +555,7 @@ export default function HrPage() {
 
         <TabsContent value="employees">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-900 text-xl font-black">
                 Employee List
               </CardTitle>
@@ -730,7 +732,7 @@ export default function HrPage() {
 
         <TabsContent value="departments">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <div className="flex justify-between items-center w-full">
                 <div>
                   <CardTitle className="text-slate-900 text-xl font-black">
@@ -785,7 +787,7 @@ export default function HrPage() {
               </div>
             </CardHeader>
             <CardContent className="p-4 md:p-8">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {Array.isArray(departments) &&
                   departments.map((dept) => (
                     <Card
@@ -817,7 +819,7 @@ export default function HrPage() {
 
         <TabsContent value="leaves">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-900 text-xl font-black">
                 Absence Records
               </CardTitle>
@@ -925,7 +927,7 @@ export default function HrPage() {
 
         <TabsContent value="payroll">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-4 md:px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <CardTitle className="text-slate-900 text-xl font-black">
                 Compensation Ledger
               </CardTitle>
@@ -965,7 +967,7 @@ export default function HrPage() {
                         {p.employee.firstName} {p.employee.lastName}
                       </TableCell>
                       <TableCell className="font-black text-slate-900">
-                        â‚¹
+                        {currencySymbol}
                         {Number(p.netPay).toLocaleString("en-IN", {
                           minimumFractionDigits: 0,
                         })}

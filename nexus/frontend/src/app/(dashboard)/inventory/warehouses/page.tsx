@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { api } from "../../../../lib/api";
@@ -64,7 +64,7 @@ export default function WarehousesPage() {
   }, []); // Fire once on mount. Refresh triggered after mutations via onSuccess callback.
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8 bg-slate-50/50 min-h-screen">
+    <div className="p-4 md:p-8 space-y-4 bg-slate-50/50 min-h-screen">
       <CreateWarehouseDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}

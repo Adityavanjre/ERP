@@ -1,4 +1,5 @@
 ﻿"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export default function CreditNotesPage() {
   const [mounted, setMounted] = useState(false);
   const [notes, setNotes] = useState<CreditNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
   const [searchTerm, setSearchTerm] = useState("");
   const [isIssuing, setIsIssuing] = useState(false);
 
@@ -221,7 +223,7 @@ export default function CreditNotesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-6 font-black text-rose-600 tabular-nums">
-                      â‚¹
+                      {currencySymbol}
                       {Number(note.totalAmount).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}

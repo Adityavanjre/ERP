@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../../lib/api";
@@ -105,7 +105,7 @@ export default function WorkflowBuilder() {
     );
 
   return (
-    <div className="flex-1 p-4 md:p-8 space-y-6 md:space-y-8 pt-2 md:pt-6">
+    <div className="flex-1 p-4 md:p-8 space-y-4 pt-2 md:pt-6">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">

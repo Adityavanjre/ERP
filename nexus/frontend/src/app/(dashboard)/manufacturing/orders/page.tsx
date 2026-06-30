@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import {
@@ -116,10 +116,10 @@ export default function WorkOrdersPage() {
     return <LoadingSpinner className="h-full" text="Loading work orders..." />;
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
             Work Orders
           </h2>
@@ -134,7 +134,7 @@ export default function WorkOrdersPage() {
         </CreateWorkOrderDialog>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-emerald-500">
           <CardHeader className="pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
@@ -142,7 +142,7 @@ export default function WorkOrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {workOrders.filter((wo) => wo.status !== "Completed").length}
             </div>
           </CardContent>
@@ -154,7 +154,7 @@ export default function WorkOrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {workOrders.filter((wo) => wo.status === "Completed").length}
             </div>
           </CardContent>
@@ -166,7 +166,7 @@ export default function WorkOrdersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {(() => {
                 const completedOrders = workOrders.filter(
                   (wo) =>

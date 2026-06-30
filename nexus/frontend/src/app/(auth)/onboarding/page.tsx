@@ -33,6 +33,12 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     setIsDesktopApp(typeof window !== "undefined" && !!window.nexusDesktop);
+    // Check if onboarding was already started (resume support)
+    const hasStartedOnboarding = localStorage.getItem("k_onboarding_started");
+    if (hasStartedOnboarding) {
+      // Resume at step 2 if already started
+      setStep(2);
+    }
   }, []);
 
   const [business, setBusiness] = useState({
@@ -66,6 +72,9 @@ export default function OnboardingPage() {
     setError("");
     setLoading(true);
 
+    // Mark onboarding as started for resume support
+    localStorage.setItem("k_onboarding_started", "true");
+
     try {
       if (isDesktopApp) {
         if (!owner.fullName || !owner.email || !owner.password) {
@@ -74,6 +83,7 @@ export default function OnboardingPage() {
           return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const desktop = (window as any).nexusDesktop;
         const result = await desktop.auth.localOnboarding({
           business,
@@ -171,6 +181,19 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg shadow-xl border-0 rounded-3xl overflow-hidden">
         <CardHeader className="bg-slate-900 text-white p-8">
+          {/* Progress indicator for resume support */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="h-1 flex-1 max-w-[160px] bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className={`h-full bg-blue-500 transition-all duration-500 ${
+                  step === 1 ? "w-1/3" : "w-full"
+                }`}
+              />
+            </div>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              {step === 1 ? "Step 1 of 2" : "Step 2 of 2"}
+            </span>
+          </div>
           <CardTitle className="text-2xl font-black tracking-tight">
             Welcome to Klypso ERP
           </CardTitle>

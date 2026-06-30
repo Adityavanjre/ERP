@@ -1,4 +1,5 @@
 ﻿"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "../../../../components/ui/card";
@@ -36,6 +37,7 @@ interface DebitNote {
 export default function DebitNotesPage() {
   const [notes, setNotes] = useState<DebitNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
   const [searchTerm, setSearchTerm] = useState("");
   const [isIssuing, setIsIssuing] = useState(false);
 
@@ -194,7 +196,7 @@ export default function DebitNotesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right pr-6 font-black text-blue-600 tabular-nums">
-                      â‚¹
+                      {currencySymbol}
                       {Number(note.totalAmount).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}

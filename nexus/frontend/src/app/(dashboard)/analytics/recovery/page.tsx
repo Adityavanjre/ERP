@@ -1,4 +1,5 @@
 ﻿"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -51,6 +52,7 @@ interface RecoveryData {
 export default function RecoveryMemoryDashboard() {
   const [data, setData] = useState<RecoveryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
 
   const syncRecoveryData = useCallback(async (showLoading = false) => {
     try {
@@ -89,7 +91,7 @@ export default function RecoveryMemoryDashboard() {
           <h1 className="text-6xl font-black tracking-tighter mb-6 text-white leading-[1.1]">
             System Protected{" "}
             <span className="text-emerald-300">
-              â‚¹{data.anchors.monthlyProtection.toLocaleString()}
+              {currencySymbol}{data.anchors.monthlyProtection.toLocaleString()}
             </span>{" "}
             This Month.
           </h1>
@@ -104,7 +106,7 @@ export default function RecoveryMemoryDashboard() {
                 Lifetime Protection
               </p>
               <p className="text-3xl md:text-4xl font-black flex items-center gap-3 text-white">
-                â‚¹{data.anchors.lifetimeRecovery.toLocaleString()}
+                {currencySymbol}{data.anchors.lifetimeRecovery.toLocaleString()}
                 <Trophy className="w-7 h-7 text-amber-300" />
               </p>
             </div>
@@ -130,7 +132,7 @@ export default function RecoveryMemoryDashboard() {
               <Wallet className="w-8 h-8 text-emerald-600" />
             </div>
             <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full uppercase tracking-widest">
-              +â‚¹{data.moneyFound.total.toLocaleString()} FOUND
+              +{currencySymbol}{data.moneyFound.total.toLocaleString()} FOUND
             </span>
           </div>
           <div>
@@ -145,19 +147,19 @@ export default function RecoveryMemoryDashboard() {
             <div className="flex justify-between items-center text-sm font-medium">
               <span className="text-slate-500">Overdue Reminders</span>
               <span className="font-black text-slate-900">
-                â‚¹{data.moneyFound.overdueRecovered.toLocaleString()}
+                {currencySymbol}{data.moneyFound.overdueRecovered.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm font-medium">
               <span className="text-slate-500">Dispute Verification Logs</span>
               <span className="font-black text-slate-900">
-                â‚¹{data.moneyFound.disputesPrevented.toLocaleString()}
+                {currencySymbol}{data.moneyFound.disputesPrevented.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm font-medium">
               <span className="text-slate-500">Inventory Loss Prevention</span>
               <span className="font-black text-slate-900">
-                â‚¹{data.moneyFound.shrinkageAvoided.toLocaleString()}
+                {currencySymbol}{data.moneyFound.shrinkageAvoided.toLocaleString()}
               </span>
             </div>
           </div>
@@ -241,7 +243,7 @@ export default function RecoveryMemoryDashboard() {
             <div className="h-16 w-px bg-slate-100"></div>
             <div className="space-y-1">
               <p className="text-5xl font-black text-blue-600">
-                â‚¹{data.timeSaved.monetaryValue.toLocaleString()}
+                {currencySymbol}{data.timeSaved.monetaryValue.toLocaleString()}
               </p>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                 Saved Labor Cost
@@ -297,7 +299,7 @@ export default function RecoveryMemoryDashboard() {
                 {opp.name}
               </h3>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8">
-                Delta: â‚¹{opp.lastTransaction.toLocaleString()}
+                Delta: {currencySymbol}{opp.lastTransaction.toLocaleString()}
               </p>
               <button className="w-full py-3 bg-white border border-slate-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
                 Send Reminder

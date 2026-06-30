@@ -1,4 +1,5 @@
 "use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,7 @@ export default function AuditorDashboard() {
     setMounted(true);
   }, []);
   const [loading, setLoading] = useState(false);
+  const currencySymbol = getCurrencySymbol();
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [reopenReason, setReopenReason] = useState("");
@@ -181,7 +183,7 @@ export default function AuditorDashboard() {
   if (!mounted) return null;
 
   return (
-    <div className="p-4 md:p-8 pb-24 md:pb-20 space-y-6 md:space-y-8 bg-slate-50 text-slate-900 min-h-screen">
+    <div className="p-4 md:p-8 pb-24 md:pb-20 space-y-4 bg-slate-50 text-slate-900 min-h-screen">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -230,7 +232,7 @@ export default function AuditorDashboard() {
       </div>
 
       {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-200 p-6 rounded-[32px] shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <ShieldCheck className="w-16 h-16 text-slate-900" />
@@ -385,14 +387,14 @@ export default function AuditorDashboard() {
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Trial Balance Overview
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                   Total Sales
                 </p>
                 <p className="text-2xl font-black text-slate-900 tracking-tighter">
-                  ₹{(data?.summary?.totalSales ?? 0).toLocaleString()}
+                  {currencySymbol}{(data?.summary?.totalSales ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -400,7 +402,7 @@ export default function AuditorDashboard() {
                   Total GST Liability
                 </p>
                 <p className="text-2xl font-black text-blue-600 tracking-tighter">
-                  ₹{(data?.summary?.totalGST ?? 0).toLocaleString()}
+                  {currencySymbol}{(data?.summary?.totalGST ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -408,7 +410,7 @@ export default function AuditorDashboard() {
                   Total Receipts
                 </p>
                 <p className="text-2xl font-black text-emerald-600 tracking-tighter">
-                  ₹{(data?.summary?.totalReceipts ?? 0).toLocaleString()}
+                  {currencySymbol}{(data?.summary?.totalReceipts ?? 0).toLocaleString()}
                 </p>
               </div>
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
@@ -416,7 +418,7 @@ export default function AuditorDashboard() {
                   Total Payments
                 </p>
                 <p className="text-2xl font-black text-rose-600 tracking-tighter">
-                  ₹{(data?.summary?.totalPayments ?? 0).toLocaleString()}
+                  {currencySymbol}{(data?.summary?.totalPayments ?? 0).toLocaleString()}
                 </p>
               </div>
             </div>
@@ -427,7 +429,7 @@ export default function AuditorDashboard() {
                   Simulated Net Dr (Receivables)
                 </span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">
-                  ₹{(data?.summary?.netBalanceDr ?? 0).toLocaleString()}
+                  {currencySymbol}{(data?.summary?.netBalanceDr ?? 0).toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center mb-6">
@@ -435,7 +437,7 @@ export default function AuditorDashboard() {
                   Simulated Net Cr (Payables)
                 </span>
                 <span className="font-black text-slate-900 text-lg tracking-tight">
-                  ₹{(data?.summary?.netBalanceCr ?? 0).toLocaleString()}
+                  {currencySymbol}{(data?.summary?.netBalanceCr ?? 0).toLocaleString()}
                 </span>
               </div>
               <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center justify-between">

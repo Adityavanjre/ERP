@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -83,6 +84,7 @@ interface ApiError {
 
 export default function SalesPage() {
   const router = useRouter();
+  const currencySymbol = getCurrencySymbol();
   const { setUILocked } = useUX();
   const [orders, setOrders] = useState<SalesOrder[]>([]);
   const [stats, setStats] = useState<SalesStats>({
@@ -243,10 +245,10 @@ export default function SalesPage() {
     return <LoadingSpinner className="h-full" text="Loading Sales Data..." />;
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-10 pt-2 md:pt-8 px-4 md:px-8 bg-slate-50/30 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 bg-slate-50/30 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mr-4 md:mr-5 shrink-0">
               <ShoppingCart className="h-6 w-6 md:h-7 md:w-7 text-white" />
             </div>
@@ -266,7 +268,7 @@ export default function SalesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4 w-full">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 w-full">
         <Card className="bg-white border-none shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden group hover:-translate-y-1 transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
@@ -277,9 +279,8 @@ export default function SalesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
-              â‚¹
-              {Number(stats.totalRevenue).toLocaleString("en-IN", {
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
+              {currencySymbol}{Number(stats.totalRevenue).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -296,7 +297,7 @@ export default function SalesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {stats.orderCount.toString().padStart(3, "0")}
             </div>
             <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">
@@ -315,7 +316,7 @@ export default function SalesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-black text-amber-600 tracking-tighter italic">
+            <div className="text-2xl font-black text-amber-600 tracking-tighter">
               {stats.pendingOrders.toString().padStart(2, "0")}
             </div>
             <p className="text-[10px] text-amber-600/60 font-black mt-4 uppercase tracking-widest bg-amber-50 w-fit px-2 py-1 rounded-lg animate-pulse">
@@ -334,9 +335,8 @@ export default function SalesPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-black text-slate-900 tracking-tighter italic">
-              â‚¹
-              {stats.orderCount > 0
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
+              {currencySymbol}{stats.orderCount > 0
                 ? (stats.totalRevenue / stats.orderCount).toLocaleString(
                     "en-IN",
                     { maximumFractionDigits: 0 },
@@ -351,7 +351,7 @@ export default function SalesPage() {
       </div>
 
       <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[40px] overflow-hidden">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-10 px-10">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-2xl font-black tracking-tight">
@@ -433,8 +433,7 @@ export default function SalesPage() {
                   </TableCell>
                   <TableCell>
                     <span className="font-black text-slate-900 text-lg tabular-nums">
-                      â‚¹
-                      {Number(order.total).toLocaleString("en-IN", {
+                      {currencySymbol}{Number(order.total).toLocaleString("en-IN", {
                         minimumFractionDigits: 0,
                       })}
                     </span>
@@ -564,7 +563,7 @@ export default function SalesPage() {
                             <div className="flex justify-between items-center w-full min-w-[260px]">
                               <span>{p.name}</span>
                               <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-lg text-[9px] ml-4">
-                                â‚¹{p.price}
+                                {currencySymbol}{p.price.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                               </span>
                             </div>
                           </SelectItem>
@@ -627,7 +626,7 @@ export default function SalesPage() {
         onClose={() => setShowConfirm(false)}
         onConfirm={submitOrder}
         title="Large Order Alert"
-        description="This order exceeds â‚¹1,00,000. Please verify the customer and quantities before finalizing."
+        description="This order exceeds ${currencySymbol}1,00,000. Please verify the customer and quantities before finalizing."
         confirmLabel="Confirm Order"
         cancelLabel="Review Changes"
         variant="warning"

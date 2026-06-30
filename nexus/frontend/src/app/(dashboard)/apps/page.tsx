@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -100,10 +100,10 @@ export default function AppsMarketplace() {
   );
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <LayoutGrid className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
             Apps & Modules
           </h2>
@@ -122,13 +122,13 @@ export default function AppsMarketplace() {
 
       <div className="grid gap-8 lg:grid-cols-2 xl:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
               <Monitor className="h-5 w-5 text-blue-600" />
               Klypso Desktop
             </CardTitle>
             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-              Windows Application â€¢ Build 1.0.0
+              Windows Application • Build 1.0.0
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-8 flex flex-col md:flex-row gap-8">
@@ -177,7 +177,7 @@ export default function AppsMarketplace() {
               Klypso Mobile Gateway
             </CardTitle>
             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">
-              Android Application â€¢ Build 1.0.0
+              Android Application • Build 1.0.0
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-8 flex flex-col md:flex-row gap-8">

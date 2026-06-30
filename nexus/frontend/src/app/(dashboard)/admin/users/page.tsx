@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -27,7 +27,7 @@ import { api } from "../../../../lib/api";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────── Types ──────────────────
 
 interface TenantUser {
   id: string;
@@ -80,7 +80,7 @@ interface ModalTargetProperties {
   lockoutUntil?: string | null;
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────── Constants ──────────────────
 
 const PLANS = ["Free", "Starter", "Growth", "Business", "Enterprise"];
 const STATUSES = ["Active", "GracePeriod", "ReadOnly", "Suspended"];
@@ -114,7 +114,7 @@ const STATUS_COLORS: Record<string, string> = {
   Suspended: "bg-red-50 text-red-600",
 };
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────── Component ──────────────────
 
 export default function SuperAdminPage() {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function SuperAdminPage() {
   const [moduleList, setModuleList] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€ Data Fetching â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──────── Data Fetching ────────
 
   const fetchTenants = useCallback(async () => {
     try {
@@ -194,7 +194,7 @@ export default function SuperAdminPage() {
     }
   };
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──────── Actions ────────
 
   const handleUpdatePlan = async () => {
     try {
@@ -328,7 +328,7 @@ export default function SuperAdminPage() {
     setShowModuleModal(true);
   };
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€
+  // ──────── Render ────────
 
   if (loading) {
     return (
@@ -340,7 +340,7 @@ export default function SuperAdminPage() {
     );
   }
 
-  // â”€â”€â”€â”€ Detail View â”€â”€â”€â”€
+  // ──── Detail View ────
   if (selectedTenant) {
     return (
       <div className="p-4 md:p-10 space-y-8 bg-slate-50/50 min-h-screen pb-20">
@@ -374,7 +374,7 @@ export default function SuperAdminPage() {
         </div>
 
         {/* Tenant Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-6 rounded-[28px]">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Industry
@@ -559,7 +559,7 @@ export default function SuperAdminPage() {
           </div>
         </div>
 
-        {/* â”€â”€â”€â”€ Modals â”€â”€â”€â”€ */}
+        {/* ──── Modals ──── */}
 
         {/* Plan Modal */}
         {showPlanModal && (
@@ -815,7 +815,7 @@ export default function SuperAdminPage() {
     );
   }
 
-  // â”€â”€â”€â”€ Main List View â”€â”€â”€â”€
+  // ──── Main List View ────
   return (
     <div className="p-4 md:p-10 space-y-8 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-20">
       {/* Header */}
@@ -1016,7 +1016,7 @@ export default function SuperAdminPage() {
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Modal Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────── Modal Overlay ──────────────────
 
 function ModalOverlay({
   children,

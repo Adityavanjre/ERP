@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { FieldInfo } from "../../../components/ui/field-info";
 import {
   Table,
   TableBody,
@@ -104,6 +106,7 @@ interface ApiError {
 export default function CrmPage() {
   const router = useRouter();
   const { showConfirm, setUILocked } = useUX();
+  const currencySymbol = getCurrencySymbol();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -367,10 +370,10 @@ export default function CrmPage() {
     return <LoadingSpinner className="h-full" text="Loading CRM data..." />;
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm shrink-0" />
             <span className="truncate">Customers & Deals</span>
           </h2>
@@ -409,15 +412,15 @@ export default function CrmPage() {
       {/* Forms Section */}
       {showForm && (
         <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               {activeTab === "leads" ? "Add New Lead" : "Add New Customer"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-8">
+          <CardContent className="pt-4">
             <form
               onSubmit={handleCreateCustomer}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-3 gap-3"
             >
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -500,6 +503,7 @@ export default function CrmPage() {
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   State / Province
+                  <FieldInfo content="Used to calculate domestic taxation. Determines IGST vs CGST/SGST routing." />
                 </Label>
                 <Input
                   className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
@@ -513,6 +517,7 @@ export default function CrmPage() {
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Tax ID (GSTIN)
+                  <FieldInfo content="15-digit Goods and Services Tax Identification Number of the client organization." />
                 </Label>
                 <Input
                   className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20 uppercase"
@@ -542,7 +547,7 @@ export default function CrmPage() {
 
       {showDealForm && (
         <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-amber-500">
-          <CardHeader className="bg-amber-50/50 border-b border-amber-100 py-6">
+          <CardHeader className="bg-amber-50/50 border-b border-amber-100 py-3 px-4">
             <CardTitle className="text-amber-900 flex items-center gap-3 font-black text-xl">
               <Sparkles className="h-5 w-5 text-amber-500" />
               Create New Deal
@@ -551,7 +556,7 @@ export default function CrmPage() {
           <CardContent>
             <form
               onSubmit={handleCreateDeal}
-              className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-6"
+              className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-6"
             >
               <div className="md:col-span-2 space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -569,7 +574,8 @@ export default function CrmPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Estimated Value (â‚¹)
+                  Estimated Value ({currencySymbol})
+                  <FieldInfo content="The projected value of the sale / quote being negotiated." />
                 </Label>
                 <NumericInput
                   value={Number(dealData.value)}
@@ -648,7 +654,7 @@ export default function CrmPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest pl-1">
-                  Value (â‚¹)
+                  Value ({currencySymbol})
                 </Label>
                 <NumericInput
                   value={Number(editingDeal.value)}
@@ -681,7 +687,7 @@ export default function CrmPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-3 pt-6">
+              <div className="flex justify-end gap-3 pt-3">
                 <Button
                   type="button"
                   variant="ghost"
@@ -702,7 +708,7 @@ export default function CrmPage() {
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="pipeline" className="space-y-6 md:space-y-8">
+      <Tabs defaultValue="pipeline" className="space-y-4">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="pipeline"
@@ -718,8 +724,8 @@ export default function CrmPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pipeline" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <TabsContent value="pipeline" className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -727,8 +733,8 @@ export default function CrmPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-black text-slate-900 tracking-tighter">
-                  â‚¹{Number(stats.pipelineValue || 0).toLocaleString("en-IN")}
+                <div className="text-2xl font-black text-slate-900 tracking-tighter">
+                  {currencySymbol}{Number(stats.pipelineValue || 0).toLocaleString("en-IN")}
                 </div>
               </CardContent>
             </Card>
@@ -739,7 +745,7 @@ export default function CrmPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-black text-amber-600 tracking-tighter">
+                <div className="text-2xl font-black text-amber-600 tracking-tighter">
                   {stats.openDeals ?? 0}
                 </div>
               </CardContent>
@@ -772,7 +778,7 @@ export default function CrmPage() {
                       </Badge>
                     </div>
                     <div className="text-[11px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
-                      â‚¹{(total / 1000).toFixed(1)}K
+                      {currencySymbol}{(total / 1000).toFixed(1)}K
                     </div>
                   </div>
                   <div className="p-4 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
@@ -790,7 +796,7 @@ export default function CrmPage() {
                             {opp.title}
                           </h4>
                           <div className="text-[11px] font-black text-emerald-600">
-                            â‚¹{Number(opp.value).toLocaleString("en-IN")}
+                            {currencySymbol}{Number(opp.value).toLocaleString("en-IN")}
                           </div>
                         </div>
                         <div className="flex items-center gap-3 mb-4">
@@ -811,7 +817,7 @@ export default function CrmPage() {
                             className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg disabled:opacity-30 text-slate-400 hover:text-blue-600 transition-all"
                             disabled={stages.indexOf(stage) === 0}
                           >
-                            â†
+                            ←
                           </button>
                           <span className="text-[9px] text-slate-300 font-black uppercase tracking-widest px-4">
                             Move
@@ -828,7 +834,7 @@ export default function CrmPage() {
                               stages.indexOf(stage) === stages.length - 1
                             }
                           >
-                            â†’
+                            →
                           </button>
                         </div>
                       </div>
@@ -849,7 +855,7 @@ export default function CrmPage() {
 
         <TabsContent value="customers">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 md:py-8 px-4 md:px-8">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mt-4 md:mt-0">
                 <div>
                   <div className="flex gap-4 mb-4">
@@ -961,8 +967,7 @@ export default function CrmPage() {
                         <div
                           className={`text-sm font-black ${c.receivable > 0 ? "text-rose-600" : "text-emerald-600"}`}
                         >
-                          â‚¹
-                          {Number(c.receivable || 0).toLocaleString("en-IN", {
+                          {currencySymbol}{Number(c.receivable || 0).toLocaleString("en-IN", {
                             minimumFractionDigits: 0,
                           })}
                         </div>
@@ -1026,7 +1031,7 @@ export default function CrmPage() {
                   )}
                 </TableBody>
               </Table>
-              {/* BUG-018 FIX: hide pagination when search is active â€” search filters client-side */}
+              {/* BUG-018 FIX: hide pagination when search is active — search filters client-side */}
               {!searchQuery && (
                 <div className="flex justify-between items-center px-8 py-5 border-t border-slate-100 bg-slate-50/50">
                   <Button

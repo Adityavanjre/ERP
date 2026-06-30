@@ -70,7 +70,7 @@ export default function MedicalRecordsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="rounded-[2rem] border-slate-100 bg-emerald-50/30 border-none shadow-none p-6">
           <Lock className="h-5 w-5 text-emerald-600 mb-4" />
           <h3 className="text-lg font-black text-emerald-900">

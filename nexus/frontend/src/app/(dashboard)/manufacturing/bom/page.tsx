@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -61,6 +62,7 @@ interface BOM {
 export default function BOMPage() {
   const [boms, setBoms] = useState<BOM[]>([]);
   const [loading, setLoading] = useState(true);
+  const currencySymbol = getCurrencySymbol();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBomId, setSelectedBomId] = useState<string | null>(null);
   const [selectedBom, setSelectedBom] = useState<BOM | null>(null);
@@ -119,11 +121,11 @@ export default function BOMPage() {
     return <LoadingSpinner className="h-full" text="Loading BOM Catalog..." />;
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       {/* Removed BAMDetailsDialog as we are now using on-page cards for details */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Command className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
             Bill of Materials
           </h2>
@@ -335,19 +337,19 @@ export default function BOMPage() {
               Total manufacturing value projection
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-4">
             {detailsLoading ? (
               <div className="flex justify-center">
                 <LoadingSpinner />
               </div>
             ) : selectedBom && costAnalysis ? (
-              <div className="space-y-6">
+              <div className="space-y-3">
                 <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     Base Material Cost
                   </span>
                   <span className="text-2xl font-black">
-                    â‚¹{costAnalysis.materialCost.toLocaleString()}
+                    {currencySymbol}{costAnalysis.materialCost.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between items-center bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
@@ -355,7 +357,7 @@ export default function BOMPage() {
                     Estimated Unit Cost
                   </span>
                   <span className="text-2xl font-black text-emerald-400">
-                    â‚¹{costAnalysis.estimatedUnitCost.toLocaleString()}
+                    {currencySymbol}{costAnalysis.estimatedUnitCost.toLocaleString()}
                   </span>
                 </div>
                 <div className="pt-2">

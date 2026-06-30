@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import {
   Landmark,
@@ -17,11 +18,12 @@ import {
 import { Button } from "../../../components/ui/button";
 
 export default function NBFCDashboard() {
+  const currencySymbol = getCurrencySymbol();
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 flex items-center gap-4">
+          <h1 className="text-xl font-black tracking-tight text-slate-900 flex items-center gap-4">
             <Landmark className="w-10 h-10 text-indigo-600" />
             FinServ Console
           </h1>
@@ -31,7 +33,7 @@ export default function NBFCDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="bg-white border-slate-200 shadow-xl rounded-[2rem] overflow-hidden">
           <CardHeader className="p-8 pb-4">
             <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4">
@@ -45,7 +47,7 @@ export default function NBFCDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 pt-0">
-            <p className="text-4xl font-black text-slate-900">â‚¹1.2 Cr</p>
+            <p className="text-4xl font-black text-slate-900">{currencySymbol}1.2 Cr</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 tracking-widest">
               Active AUM
             </p>

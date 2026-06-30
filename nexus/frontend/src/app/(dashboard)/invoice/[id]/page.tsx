@@ -1,5 +1,6 @@
 "use client";
 
+import { getCurrencySymbol } from "../../../../lib/currency";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "../../../../lib/api";
@@ -55,6 +56,7 @@ interface TaxSummaryData {
 }
 
 export default function InvoicePrintPage() {
+  const currencySymbol = getCurrencySymbol();
   const params = useParams();
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -261,13 +263,13 @@ export default function InvoicePrintPage() {
                       {item.quantity}
                     </td>
                     <td className="py-4 text-right text-zinc-700">
-                      ₹
+                      {currencySymbol}
                       {Number(item.price).toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
                     <td className="py-4 text-right font-bold text-zinc-900">
-                      ₹
+                      {currencySymbol}
                       {(
                         Number(item.price) * Number(item.quantity)
                       ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -316,14 +318,14 @@ export default function InvoicePrintPage() {
                         {rate}% Tax Subtotal
                       </td>
                       <td className="py-2 px-4 text-right text-zinc-700">
-                        ₹
+                        {currencySymbol}
                         {data.taxableAmount.toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                         })}
                       </td>
                       {totalCGST > 0 && (
                         <td className="py-2 px-4 text-right text-zinc-700">
-                          ₹
+                          {currencySymbol}
                           {data.cgstAmount.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                           })}
@@ -331,7 +333,7 @@ export default function InvoicePrintPage() {
                       )}
                       {totalSGST > 0 && (
                         <td className="py-2 px-4 text-right text-zinc-700">
-                          ₹
+                          {currencySymbol}
                           {data.sgstAmount.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                           })}
@@ -339,7 +341,7 @@ export default function InvoicePrintPage() {
                       )}
                       {totalIGST > 0 && (
                         <td className="py-2 px-4 text-right text-zinc-700">
-                          ₹
+                          {currencySymbol}
                           {data.igstAmount.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                           })}
@@ -358,7 +360,7 @@ export default function InvoicePrintPage() {
             <div className="flex justify-between text-sm text-zinc-600">
               <span>Subtotal</span>
               <span className="font-medium">
-                ₹
+                {currencySymbol}
                 {(totalAmount - totalTax).toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                 })}
@@ -368,7 +370,7 @@ export default function InvoicePrintPage() {
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>CGST</span>
                 <span className="font-medium">
-                  ₹
+                  {currencySymbol}
                   {totalCGST.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                   })}
@@ -379,7 +381,7 @@ export default function InvoicePrintPage() {
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>SGST</span>
                 <span className="font-medium">
-                  ₹
+                  {currencySymbol}
                   {totalSGST.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                   })}
@@ -390,7 +392,7 @@ export default function InvoicePrintPage() {
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>IGST</span>
                 <span className="font-medium">
-                  ₹
+                  {currencySymbol}
                   {totalIGST.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                   })}
@@ -400,7 +402,7 @@ export default function InvoicePrintPage() {
             <div className="flex justify-between text-xl font-bold text-zinc-900 border-t-2 border-zinc-900 pt-4 mt-4">
               <span>Total</span>
               <span>
-                ₹
+                {currencySymbol}
                 {totalAmount.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                 })}

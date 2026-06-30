@@ -1,5 +1,6 @@
 "use client";
 
+import { getCurrencySymbol } from "../../../../lib/currency";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "../../../../lib/api";
@@ -53,6 +54,7 @@ interface LedgerEntry {
 }
 
 export default function CustomerDetailPage() {
+  const currencySymbol = getCurrencySymbol();
   const params = useParams();
   const router = useRouter();
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
@@ -137,7 +139,7 @@ export default function CustomerDetailPage() {
                 <div
                   className={`text-3xl font-black tracking-tighter ${currentBalance > 0 ? "text-rose-600" : "text-emerald-600"}`}
                 >
-                  ₹
+                  {currencySymbol}
                   {currentBalance.toLocaleString("en-IN", {
                     minimumFractionDigits: 0,
                   })}
@@ -248,7 +250,7 @@ export default function CustomerDetailPage() {
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell className="text-right pr-8 font-black text-slate-900">
-                    ₹0.00
+                    {currencySymbol}0.00
                   </TableCell>
                 </TableRow>
 
@@ -274,16 +276,16 @@ export default function CustomerDetailPage() {
                     </TableCell>
                     <TableCell className="text-right text-rose-600 font-black text-sm">
                       {Number(entry.debit) > 0
-                        ? `₹${Number(entry.debit).toLocaleString("en-IN")}`
+                        ? `${currencySymbol}${Number(entry.debit).toLocaleString("en-IN")}`
                         : ""}
                     </TableCell>
                     <TableCell className="text-right text-emerald-600 font-black text-sm">
                       {Number(entry.credit) > 0
-                        ? `₹${Number(entry.credit).toLocaleString("en-IN")}`
+                        ? `${currencySymbol}${Number(entry.credit).toLocaleString("en-IN")}`
                         : ""}
                     </TableCell>
                     <TableCell className="text-right pr-8 font-black text-slate-900">
-                      ₹{Number(entry.balance).toLocaleString("en-IN")}
+                      {currencySymbol}{Number(entry.balance).toLocaleString("en-IN")}
                       <span className="text-[9px] ml-1 text-slate-400 font-normal uppercase tracking-widest">
                         {entry.balance >= 0 ? "Dr" : "Cr"}
                       </span>

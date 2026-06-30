@@ -65,11 +65,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   const [step, setStep] = useState<"identity" | "mfa">("identity");
-  const [isAdmin, setIsAdmin] = useState(false);
   const [tempToken, setTempToken] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [isDesktopApp, setIsDesktopApp] = useState(false);
   const [isLocalNetwork, setIsLocalNetwork] = useState(false);
+  const isAdmin = false;
 
   useEffect(() => {
     const isShell = isDesktopShell();
@@ -223,7 +223,6 @@ export default function LoginPage() {
       step,
       email,
       password,
-      isAdmin,
       tempToken,
       mfaCode,
       completeLogin,
@@ -259,7 +258,7 @@ export default function LoginPage() {
       setError(err.response?.data?.message || "Google Authentication Failed");
       setLoading(false);
     }
-  }, [isAdmin, completeLogin]);
+  }, [completeLogin]);
 
   const goBack = useCallback(() => {
     setStep("identity");

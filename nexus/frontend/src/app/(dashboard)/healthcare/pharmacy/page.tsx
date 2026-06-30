@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,7 @@ const stock = [
 
 export default function PharmacyPage() {
   const [mounted, setMounted] = React.useState(false);
+  const currencySymbol = getCurrencySymbol();
 
   React.useEffect(() => {
     setMounted(true);
@@ -98,7 +100,7 @@ export default function PharmacyPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Card className="rounded-3xl border-slate-100 bg-emerald-50/20 border-emerald-100 shadow-sm p-6 text-center">
           <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-2">
             Total SKU
@@ -121,7 +123,7 @@ export default function PharmacyPage() {
           <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-2">
             Monthly Sales
           </h4>
-          <h3 className="text-3xl font-black text-blue-900">â‚¹2.4L</h3>
+          <h3 className="text-3xl font-black text-blue-900">{currencySymbol}2.4L</h3>
         </Card>
       </div>
 
@@ -202,7 +204,7 @@ export default function PharmacyPage() {
                     </td>
                     <td className="px-8 py-6">
                       <span className="font-black text-slate-900">
-                        â‚¹{s.price.toFixed(2)}
+                        {currencySymbol}{s.price.toFixed(2)}
                       </span>
                     </td>
                   </tr>

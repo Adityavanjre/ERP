@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
@@ -57,6 +58,7 @@ export default function FounderMonitoring() {
   const [data, setData] = useState<MonitoringData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const currencySymbol = getCurrencySymbol();
 
   const syncDashboardStats = useCallback(async (showLoading = false) => {
     try {
@@ -119,7 +121,7 @@ export default function FounderMonitoring() {
             MRR At Risk
           </p>
           <p className="text-4xl font-black mt-3 text-red-600 tracking-tighter italic">
-            â‚¹{data.mrrAtRisk.toLocaleString()}
+            {currencySymbol}{data.mrrAtRisk.toLocaleString()}
           </p>
           <div className="mt-6 flex items-center gap-2 text-[9px] bg-red-50 text-red-600 w-fit px-3 py-1 rounded-lg font-black uppercase tracking-widest">
             <TrendingDown className="w-3 h-3" />
@@ -194,7 +196,7 @@ export default function FounderMonitoring() {
             <BarChart2 className="w-6 h-6 text-slate-200" />
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             {data.topAtRisk.map((tenant: TopAtRiskTenant) => (
               <Card
                 key={tenant.tenantId}
@@ -218,7 +220,7 @@ export default function FounderMonitoring() {
                         {tenant.plan} PHASE
                       </Badge>
                       <span className="text-xl font-black text-slate-900 tracking-tighter italic">
-                        â‚¹{tenant.mrr.toLocaleString()}
+                        {currencySymbol}{tenant.mrr.toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -273,7 +275,7 @@ export default function FounderMonitoring() {
         </div>
 
         {/* Global Signals Feed */}
-        <div className="space-y-8">
+        <div className="space-y-4">
           <h2 className="text-xl font-black flex items-center gap-3 px-2">
             <HistoryFeedIcon />
             Recent Activity

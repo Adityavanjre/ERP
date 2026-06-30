@@ -1,4 +1,5 @@
 "use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "../../../hooks/use-auth";
@@ -123,6 +124,7 @@ const CACHE_TTL = 300000; // 5 minutes
 export default function AccountingPage() {
     const { user } = useAuth();
     const { setUILocked, showConfirm } = useUX();
+    const currencySymbol = getCurrencySymbol();
 
     // Rehydrate from cache if available and fresh - wrapped in state initializer for purity
     const [initialData] = useState(() => {
@@ -289,10 +291,10 @@ export default function AccountingPage() {
     if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><RefreshCw className="h-8 w-8 animate-spin text-amber-500" /></div>;
 
     return (
-        <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+        <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-0">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+                    <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
                         <Landmark className="mr-4 h-9 w-9 text-amber-500 shadow-sm" />
                         Accounting
                     </h2>
@@ -343,7 +345,7 @@ export default function AccountingPage() {
                 </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-emerald-500 border-none group">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Total Income</CardTitle>
@@ -352,7 +354,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-slate-900 tracking-tighter">â‚¹{Number(stats.income || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
+                        <div className="text-2xl font-black text-slate-900 tracking-tighter">{currencySymbol}{Number(stats.income || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-emerald-600 mt-2 font-black uppercase tracking-widest bg-emerald-50 w-fit px-2 py-0.5 rounded-lg">Accelerating</p>
                     </CardContent>
                 </Card>
@@ -364,7 +366,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-amber-600 tracking-tighter">â‚¹{Number(stats.receivable || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
+                        <div className="text-2xl font-black text-amber-600 tracking-tighter">{currencySymbol}{Number(stats.receivable || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">Pending Collection</p>
                     </CardContent>
                 </Card>
@@ -376,7 +378,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-rose-600 tracking-tighter">â‚¹{Number(stats.overdueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
+                        <div className="text-2xl font-black text-rose-600 tracking-tighter">{currencySymbol}{Number(stats.overdueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest bg-rose-50 w-fit px-2 py-0.5 rounded-lg">Critical Alert</p>
                     </CardContent>
                 </Card>
@@ -388,7 +390,7 @@ export default function AccountingPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-black text-blue-600 tracking-tighter">â‚¹{Number(stats.gstLiability || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
+                        <div className="text-2xl font-black text-blue-600 tracking-tighter">{currencySymbol}{Number(stats.gstLiability || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
                         <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">GST Obligation</p>
                     </CardContent>
                 </Card>
@@ -404,14 +406,14 @@ export default function AccountingPage() {
             </div>
 
             {stats.topDebtors && stats.topDebtors.length > 0 && (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none group">
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-8">
                             <CardTitle className="text-slate-900 text-xl font-black tracking-tight">Top Overdue Customers</CardTitle>
                             <CardDescription className="text-slate-500 font-medium mt-1">Customers with outstanding payments requiring follow-up.</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-8">
-                            <div className="space-y-6">
+                        <CardContent className="p-4">
+                            <div className="space-y-3">
                                 {stats.topDebtors.map((d, i) => (
                                     <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-5 last:border-0 hover:translate-x-1 transition-transform">
                                         <div className="flex items-center gap-5">
@@ -424,7 +426,7 @@ export default function AccountingPage() {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-rose-600 font-black text-xl italic tracking-tighter block">â‚¹{d.amount.toLocaleString('en-IN')}</span>
+                                            <span className="text-rose-600 font-black text-xl italic tracking-tighter block">{currencySymbol}{d.amount.toLocaleString('en-IN', { minimumFractionDigits: 0 })}</span>
                                             <Badge variant="secondary" className="bg-rose-50 text-rose-500 font-black text-[9px] border-none uppercase tracking-widest px-2 py-0.5 mt-1">Aging: {d.aging || 30}+ Days</Badge>
                                         </div>
                                     </div>
@@ -435,7 +437,7 @@ export default function AccountingPage() {
                 </div>
             )}
 
-            <Tabs defaultValue="invoices" className="space-y-6">
+            <Tabs defaultValue="invoices" className="space-y-3">
                 <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto flex justify-start w-full scrollbar-hide h-auto p-1.5 rounded-2xl snap-x">
                     <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
                     <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
@@ -483,7 +485,7 @@ export default function AccountingPage() {
                                             <TableCell className="font-mono text-slate-600 text-xs pl-6 font-bold">#{inv.invoiceNumber}</TableCell>
                                             <TableCell className="font-black text-slate-800 tracking-tight">{[inv.customer?.firstName, inv.customer?.lastName].filter(Boolean).join(" ")}</TableCell>
                                             <TableCell className="text-slate-500 text-sm font-semibold">{new Date(inv.issueDate).toLocaleDateString()}</TableCell>
-                                            <TableCell className="font-black text-slate-900">â‚¹{Number(inv.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
+                                            <TableCell className="font-black text-slate-900">{currencySymbol}{Number(inv.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
                                             <TableCell>
                                                 <Badge variant={inv.status === 'Paid' ? 'default' : 'outline'} className={inv.status === 'Paid' ? "bg-emerald-100 text-emerald-700 border-none font-bold shadow-sm" : "border-slate-200 text-slate-500 font-bold"}>
                                                     {inv.status.toUpperCase()}
@@ -506,7 +508,7 @@ export default function AccountingPage() {
                                                         className="h-9 w-9 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-all"
                                                         onClick={() => {
                                                             const phone = inv.customer?.phone?.replace(/[^0-9]/g, '') || "";
-                                                            const text = `Invoice #${inv.invoiceNumber} for â‚¹${Number(inv.totalAmount).toLocaleString('en-IN')}. View here: ${window.location.origin}/invoice/${inv.id}`;
+                                                            const text = `Invoice #${inv.invoiceNumber} for ${currencySymbol}${Number(inv.totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 0 })}. View here: ${window.location.origin}/invoice/${inv.id}`;
                                                             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
                                                         }}
                                                         title="Share on WhatsApp"
@@ -594,7 +596,7 @@ export default function AccountingPage() {
                                                 <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-semibold text-xs rounded-lg border-none">{acc.type}</Badge>
                                             </TableCell>
                                             <TableCell className="text-right pr-8 font-black text-slate-900 text-lg">
-                                                â‚¹{Number(acc.balance).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+                                                {currencySymbol}{Number(acc.balance).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -639,7 +641,7 @@ export default function AccountingPage() {
                                             <TableCell className="font-black text-slate-900 tracking-tight">{tx.account?.name}</TableCell>
                                             <TableCell className="text-slate-500 font-bold text-xs italic">"{tx.description}"</TableCell>
                                             <TableCell className={`text-right pr-8 font-black text-lg ${tx.type === 'Credit' ? "text-emerald-600" : "text-rose-600"}`}>
-                                                {tx.type === 'Credit' ? 'â–²' : 'â–¼'} â‚¹{Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+                                                {tx.type === 'Credit' ? 'â–²' : 'â–¼'} {currencySymbol}{Number(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -670,10 +672,10 @@ export default function AccountingPage() {
                             <CardTitle className="text-slate-900 text-xl font-black">Store Health Profile</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Financial health and payment discipline overview</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-8">
+                        <CardContent className="p-4">
                             {healthScore && (
                                 <div className="space-y-12">
-                                    <div className="grid gap-6 md:grid-cols-3">
+                                    <div className="grid gap-3 md:grid-cols-3">
                                         <div className="p-8 rounded-[32px] bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group">
                                             <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors" />
                                             <p className="text-[10px] text-slate-600 mb-4 uppercase font-black tracking-[0.2em] relative z-10">Accuracy Rating</p>
@@ -702,7 +704,7 @@ export default function AccountingPage() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
+                                    <div className="space-y-3">
                                         <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-4">
                                             Health Alerts
                                             <div className="h-px flex-1 bg-slate-100" />
@@ -726,7 +728,7 @@ export default function AccountingPage() {
 
                                     <div className="grid gap-8 md:grid-cols-2">
                                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none">
-                                            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                                            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
                                                 <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-3">
                                                     <div className="p-2 bg-blue-50 rounded-xl">
                                                         <Users className="h-5 w-5 text-blue-600" />
@@ -734,8 +736,8 @@ export default function AccountingPage() {
                                                     Staff Efficiency Index
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-8">
-                                                <div className="space-y-6">
+                                            <CardContent className="p-4">
+                                                <div className="space-y-3">
                                                     {leaderboard.map((u: LeaderboardUser, i: number) => (
                                                         <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-4 last:border-0 hover:translate-x-1 transition-transform">
                                                             <div className="flex items-center gap-4">
@@ -753,7 +755,7 @@ export default function AccountingPage() {
                                         </Card>
 
                                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none">
-                                            <CardHeader className="bg-slate-50 border-b border-slate-100 py-6 px-8">
+                                            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
                                                 <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-3">
                                                     <div className="p-2 bg-amber-50 rounded-xl">
                                                         <Activity className="h-5 w-5 text-amber-600" />
@@ -761,8 +763,8 @@ export default function AccountingPage() {
                                                     Inactive Customers
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-8">
-                                                <div className="space-y-6">
+                                            <CardContent className="p-4">
+                                                <div className="space-y-3">
                                                     {recoveryMemory?.opportunities?.map((c, i: number) => (
                                                         <div key={i} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-blue-500/5 group">
                                                             <div>

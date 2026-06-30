@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+import { getCurrencySymbol } from "../../../../lib/currency";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Zap, Wifi, WifiOff } from "lucide-react";
@@ -37,6 +38,7 @@ interface SyncBatchResult {
 }
 
 export default function RapidBillingPage() {
+  const currencySymbol = getCurrencySymbol();
   const [items, setItems] = useState<Item[]>([]);
   const [search, setSearch] = useState("");
   // BUG-006 FIX: add setters so customer can be changed (not permanently Walk-in)
@@ -432,7 +434,7 @@ export default function RapidBillingPage() {
         onClose={() => setShowConfirm(false)}
         onConfirm={completeInvoice}
         title="High Value Invoice"
-        description={`You are about to generate an invoice for â‚¹${total.toLocaleString("en-IN")}. Are you sure you want to proceed?`}
+        description={`You are about to generate an invoice for {currencySymbol}${total.toLocaleString("en-IN")}. Are you sure you want to proceed?`}
         confirmLabel="Yes, Generate"
         cancelLabel="Review"
         variant="warning"

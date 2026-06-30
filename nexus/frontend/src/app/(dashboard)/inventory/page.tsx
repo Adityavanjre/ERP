@@ -1,4 +1,5 @@
 "use client";
+import { getCurrencySymbol } from "../../../lib/currency";
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
@@ -38,6 +39,7 @@ import { OpeningBalanceDialog } from "../../../components/accounting/opening-bal
 import { Input } from "../../../components/ui/input";
 import { NumericInput } from "../../../components/ui/numeric-input";
 import { Label } from "../../../components/ui/label";
+import { FieldInfo } from "../../../components/ui/field-info";
 import {
   Table,
   TableBody,
@@ -114,6 +116,7 @@ interface ApiError {
 
 export default function InventoryPage() {
   const { showConfirm, setUILocked } = useUX();
+  const currencySymbol = getCurrencySymbol();
   const [products, setProducts] = useState<Product[]>([]);
   const [stats, setStats] = useState<InventoryStats>({
     totalProducts: 0,
@@ -123,6 +126,7 @@ export default function InventoryPage() {
   const [forecast, setForecast] = useState<InventoryForecast | null>(null);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -369,7 +373,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 md:space-y-8 pt-2 md:pt-6 px-4 md:px-8 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       {fetchError && (
         <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 font-bold text-sm mb-4">
           <AlertCircle className="w-5 h-5" />
@@ -385,7 +389,7 @@ export default function InventoryPage() {
       )}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
-          <h2 className="text-4xl font-black tracking-tight text-slate-900 flex items-center">
+          <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Boxes className="mr-4 h-9 w-9 text-blue-600 shadow-sm shrink-0" />
             <span className="truncate">Products & Inventory</span>
           </h2>
@@ -414,7 +418,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -446,7 +450,7 @@ export default function InventoryPage() {
             <AlertCircle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-orange-600 tracking-tighter">
+            <div className="text-2xl font-black text-orange-600 tracking-tighter">
               {stats.lowStock ?? 0} Items
             </div>
             <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">
@@ -462,9 +466,8 @@ export default function InventoryPage() {
             <Package className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black text-slate-900 tracking-tighter">
-              ₹
-              {Number(stats.totalValue).toLocaleString("en-IN", {
+            <div className="text-2xl font-black text-slate-900 tracking-tighter">
+              {currencySymbol}{Number(stats.totalValue).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
             </div>
@@ -477,7 +480,7 @@ export default function InventoryPage() {
 
       {showForm && (
         <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-8 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               Add Product
             </CardTitle>
@@ -485,9 +488,9 @@ export default function InventoryPage() {
               Add a new product to your inventory
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-8">
-            <form onSubmit={handleCreate} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardContent className="pt-4">
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-2 lg:col-span-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Product Name <span className="text-rose-500">*</span>
@@ -503,7 +506,8 @@ export default function InventoryPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                    Product SKU (Unique)
+                  Product SKU (Unique)
+                  <FieldInfo content="Stock Keeping Unit. A unique code identifier for system integration." />
                   </Label>
                   <Input
                     className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono"
@@ -517,6 +521,7 @@ export default function InventoryPage() {
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Stock Control <span className="text-rose-500">*</span>
+                    <FieldInfo content="Initial inventory count for this product. Updates generate stock ledger adjustment entries." />
                   </Label>
                   <div className="flex flex-col gap-2">
                     <NumericInput
@@ -584,6 +589,7 @@ export default function InventoryPage() {
                 <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
                   <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">
                     Low Stock Alert Level
+                    <FieldInfo content="When warehouse quantity drops below this level, the dashboard and reports will highlight this product as Low Stock." />
                   </Label>
                   <NumericInput
                     className="bg-white/50 border-rose-100 text-rose-900 rounded-xl h-9 text-xs font-black"
@@ -636,7 +642,7 @@ export default function InventoryPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                    Selling Price (₹) <span className="text-rose-500">*</span>
+                    Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
                   </Label>
                   <NumericInput
                     decimal
@@ -661,6 +667,7 @@ export default function InventoryPage() {
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     HSN Classification
+                    <FieldInfo content="Harmonized System of Nomenclature code. Used for classifying goods for domestic GST tax filing." />
                   </Label>
                   <Input
                     className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 font-mono uppercase"
@@ -674,6 +681,7 @@ export default function InventoryPage() {
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Tax (GST %) Rate
+                    <FieldInfo content="The standard Goods and Services Tax percentage rate applicable to this product." />
                   </Label>
                   <NumericInput
                     decimal
@@ -699,7 +707,7 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-2">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 mt-1">
                 <Button
                   type="button"
                   variant="ghost"
@@ -761,7 +769,7 @@ export default function InventoryPage() {
                 : ""}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-6 pt-4">
+          <form onSubmit={handleUpdate} className="space-y-3 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="space-y-2 lg:col-span-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -888,7 +896,7 @@ export default function InventoryPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Selling Price (₹) <span className="text-rose-500">*</span>
+                  Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
                 </Label>
                 <NumericInput
                   decimal
@@ -977,7 +985,7 @@ export default function InventoryPage() {
       />
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-amber-500">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-6">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
           <CardTitle className="text-slate-900 flex items-center gap-3 font-black">
             <Brain className="h-5 w-5 text-amber-600" />
             Inventory Forecast
@@ -986,8 +994,8 @@ export default function InventoryPage() {
             Predictions and trends for stock levels
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="pt-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {Array.isArray(forecast?.recommendations) &&
               forecast.recommendations
                 .slice(0, 4)
@@ -1054,7 +1062,7 @@ export default function InventoryPage() {
       </Card>
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-8">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-4">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
@@ -1213,16 +1221,14 @@ export default function InventoryPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-slate-600 font-bold">
-                    ₹
-                    {Number(p.price).toLocaleString("en-IN", {
+                    {currencySymbol}{Number(p.price).toLocaleString("en-IN", {
                       minimumFractionDigits: 0,
                     })}
                   </TableCell>
                   <TableCell className="text-right pr-8">
                     <div className="flex items-center justify-end gap-2">
                       <div className="font-black text-slate-900 tracking-tighter">
-                        ₹
-                        {(Number(p.price) * Number(p.stock)).toLocaleString(
+                        {currencySymbol}{(Number(p.price) * Number(p.stock)).toLocaleString(
                           "en-IN",
                           { minimumFractionDigits: 0 },
                         )}

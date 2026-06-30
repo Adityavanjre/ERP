@@ -82,7 +82,7 @@ export default function ModuleSetupPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="p-8">
+        <CardContent className="p-4">
           {error && (
             <div className="mb-6 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
               {error}
