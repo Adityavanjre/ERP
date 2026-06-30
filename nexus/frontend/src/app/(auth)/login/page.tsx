@@ -18,6 +18,8 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import {
   isDesktopShell,
 } from "../../../lib/desktop-offline";
+import { resolvePortalPath } from "../../../lib/utils";
+
 
 interface AuthUser {
   id: string;
@@ -89,12 +91,14 @@ export default function LoginPage() {
       localStorage.setItem("k_token", data.accessToken);
     }
 
-    const SAFE_FALLBACK = "/portal/dashboard";
+    // basePath is /portal, so /dashboard becomes /portal/dashboard
+    const SAFE_FALLBACK = "/dashboard";
     const returnTo = localStorage.getItem("return_to");
     localStorage.removeItem("return_to");
 
     if (data.user?.isSuperAdmin) {
-      window.location.href = "/portal/admin/monitoring";
+      // basePath is /portal, so /admin/monitoring becomes /portal/admin/monitoring
+      window.location.href = resolvePortalPath("/admin/monitoring");
       return;
     }
 
@@ -102,7 +106,8 @@ export default function LoginPage() {
       if (!raw) return SAFE_FALLBACK;
       if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)) return SAFE_FALLBACK;
       if (raw.startsWith("//")) return SAFE_FALLBACK;
-      if (!raw.startsWith("/portal")) return SAFE_FALLBACK;
+      // Allow any relative path starting with /
+      if (!raw.startsWith("/")) return SAFE_FALLBACK;
       try {
         const parsed = new URL(raw, window.location.origin);
         if (parsed.origin !== window.location.origin) return SAFE_FALLBACK;
@@ -112,7 +117,7 @@ export default function LoginPage() {
       }
     };
 
-    window.location.href = safeRedirect(returnTo);
+    window.location.href = resolvePortalPath(safeRedirect(returnTo));
   }, []);
 
   const handleLogin = useCallback(
@@ -161,11 +166,13 @@ export default function LoginPage() {
               try {
                 await nexusDesktop.session.set(desktopRes.data);
                 // Removed auto-sync to strictly adhere to the manual "User-Initiated Only" policy.
-                window.location.href = "/portal/dashboard";
+                // Desktop loads at /portal, basePath is /portal, so /dashboard becomes /portal/dashboard
+                window.location.href = resolvePortalPath("/dashboard");
               } catch (syncErr: unknown) {
                 const err = syncErr as { message?: string };
                 console.error("[DESKTOP_SYNC_FAIL]", err);
-                window.location.href = "/portal/dashboard";
+                // Desktop loads at /portal, basePath is /portal, so /dashboard becomes /portal/dashboard
+                window.location.href = resolvePortalPath("/dashboard");
               }
               return;
             } catch (err: unknown) {

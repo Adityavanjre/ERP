@@ -16,6 +16,8 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "../../../lib/api";
 import { jwtDecode } from "jwt-decode";
+import { resolvePortalPath } from "../../../lib/utils";
+
 
 interface DecodedToken {
   tenantId?: string;
@@ -72,7 +74,8 @@ export default function OnboardingPage() {
           return;
         }
 
-        const result = await window.nexusDesktop.auth.localOnboarding({
+        const desktop = (window as any).nexusDesktop;
+        const result = await desktop.auth.localOnboarding({
           business,
           owner,
         });
@@ -84,7 +87,7 @@ export default function OnboardingPage() {
         }
 
         // Onboarding success, we need to log them in automatically
-        const loginResult = await window.nexusDesktop.auth.login?.({
+        const loginResult = await desktop.auth.login?.({
           email: owner.email,
           password: owner.password,
         });
@@ -150,7 +153,8 @@ export default function OnboardingPage() {
         }
 
         // Redirect to modules setup or dashboard
-        window.location.href = "/portal/dashboard";
+        // basePath is /portal, so /dashboard becomes /portal/dashboard
+        window.location.href = resolvePortalPath("/dashboard");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

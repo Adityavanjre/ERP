@@ -13,7 +13,7 @@ import { Input } from "../../components/ui/input";
 import { LogOut, Building2, ChevronRight, Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { cn } from "../../lib/utils";
+import { cn, resolvePortalPath } from "../../lib/utils";
 import {
   ensureNetworkConsent,
   isNetworkConsentError,
@@ -134,16 +134,8 @@ export function TenantSelector() {
       if (!isMounted.current) return;
 
       if (data.length === 0) {
-        // Check if running in desktop environment
-        const isDesktop =
-          typeof window !== "undefined" &&
-          (window as unknown as { nexusDesktop: unknown }).nexusDesktop !== undefined;
-        
-        if (isDesktop) {
-          router.push("/onboarding");
-        } else {
-          router.push("/portal/onboarding");
-        }
+        // Both desktop and cloud use the same routes; basePath is handled by Next.js
+        router.push("/onboarding");
         return;
       }
 
@@ -201,7 +193,8 @@ export function TenantSelector() {
         localStorage.setItem("k_tenant", JSON.stringify(data.tenant));
       }
       // Hard reload to reset all React state with the new scoped token
-      window.location.href = "/portal/dashboard";
+      // basePath is /portal, so /dashboard becomes /portal/dashboard
+      window.location.href = resolvePortalPath("/dashboard");
     } catch {
       toast.error("Failed to select workspace");
       setSelecting(null);
@@ -209,16 +202,8 @@ export function TenantSelector() {
   }, []);
 
   const navigateToOnboarding = useCallback(() => {
-    // Check if running in desktop environment
-    const isDesktop =
-      typeof window !== "undefined" &&
-      (window as unknown as { nexusDesktop: unknown }).nexusDesktop !== undefined;
-    
-    if (isDesktop) {
-      router.push("/onboarding");
-    } else {
-      router.push("/portal/onboarding");
-    }
+    // Both desktop and cloud use the same routes; basePath is handled by Next.js
+    router.push("/onboarding");
   }, [router]);
 
   if (loading) {

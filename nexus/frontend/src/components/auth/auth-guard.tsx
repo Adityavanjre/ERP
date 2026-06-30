@@ -110,7 +110,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
         if (isDesktopLocal) {
           console.log("[AuthGuard] desktop-local session, isOnboarded:", isOnboarded);
-          const onboardingPath = isDesktopShell() ? "/onboarding" : "/portal/onboarding";
+          // Desktop app loads at /portal which matches Next.js basePath
+          // Both desktop and cloud use the same routes; basePath is handled by Next.js
+          const onboardingPath = "/onboarding";
           if (isOnboarded === false && pathname !== onboardingPath) {
             router.push(onboardingPath);
             return;
@@ -136,7 +138,9 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
 
         // Onboarding Enforcement
-        const onboardingPath = isDesktopShell() ? "/onboarding" : "/portal/onboarding";
+        // Desktop app loads at /portal which matches Next.js basePath
+        // Both desktop and cloud use the same routes; basePath is handled by Next.js
+        const onboardingPath = "/onboarding";
         if (isOnboarded === false && pathname !== onboardingPath) {
           console.log("[AuthGuard] not onboarded, redirecting to:", onboardingPath);
           router.push(onboardingPath);
