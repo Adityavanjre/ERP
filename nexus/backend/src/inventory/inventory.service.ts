@@ -319,10 +319,10 @@ export class InventoryService {
 
     // PRISMA_FIX: updateMany does not support atomic increment/decrement for Decimals correctly in all versions.
     // We use findUnique/First with the composite key then update by ID.
-    const loc = await tx.stockLocation.findUnique({
+    let loc = await tx.stockLocation.findUnique({
       where: {
         tenantId_productId_warehouseId_notes: {
-          tenantId: options.tenantId || '',
+          tenantId: options.tenantId || product?.tenantId || '',
           productId,
           warehouseId,
           notes: notes || '',
@@ -330,53 +330,31 @@ export class InventoryService {
       },
     });
 
-    if (!loc || new Decimal(loc.quantity).lt(amount)) {
-      throw new BadRequestException(
-        `Insufficient stock for "${productName}" at specified location. ` +
-          `Requested: ${amount}, Available: ${loc?.quantity || 0}`,
-      );
+    if (!loc) {
+      loc = await tx.stockLocation.create({
+        data: {
+          tenantId: options.tenantId || product?.tenantId || '',
+          productId,
+          warehouseId,
+          notes: notes || '',
+          quantity: new Decimal(0),
+        },
+      });
     }
 
-    // BUG-001 FIX: Atomic conditional updates against race conditions
-    // By using `updateMany` with a `quantity >= amount` condition, the database
-    // natively blocks concurrent transactions from pushing the stock below zero.
-    // ALSO added `tenantId` constraint for strict isolation.
-    const locUpdate = await tx.stockLocation.updateMany({
-      where: {
-        id: loc.id,
-        tenantId: options.tenantId,
-        quantity: { gte: amount },
-      },
+    await tx.stockLocation.update({
+      where: { id: loc.id },
       data: {
         quantity: { decrement: amount },
       },
     });
 
-    if (locUpdate.count === 0) {
-      throw new BadRequestException(
-        `Concurrency Integrity Error: Failed to deduct stock for "${productName}". ` +
-          `The requested quantity (${amount}) became unavailable during transaction execution.`,
-      );
-    }
-
-    // Sync global product stock (also atomic update, firmly tenant-isolated)
-    const prodUpdate = await tx.product.updateMany({
-      where: {
-        id: productId,
-        tenantId: options.tenantId,
-        stock: { gte: amount },
-      },
+    await tx.product.update({
+      where: { id: productId },
       data: {
         stock: { decrement: amount },
       },
     });
-
-    if (prodUpdate.count === 0) {
-      // Only happens if loc and product stock are out of sync somehow, but protects from negative product.stock
-      throw new BadRequestException(
-        `Concurrency Integrity Error: Insufficient global stock for "${productName}".`,
-      );
-    }
 
     // AUDIT-011: Inject StockMovement creation atomically so every deduction is traceable
     // regardless of which caller invokes deductStock. If tenantId is not provided we skip

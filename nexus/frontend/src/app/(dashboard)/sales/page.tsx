@@ -43,6 +43,8 @@ import {
 } from "../../../components/ui/select";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { InlineCreateCustomerDialog } from "../../../components/shared/inline-create-customer-dialog";
+import { InlineCreateProductDialog } from "../../../components/shared/inline-create-product-dialog";
 
 interface SalesOrder {
   id: string;
@@ -104,6 +106,8 @@ export default function SalesPage() {
     { productId: "", quantity: 1 },
   ]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
+  const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
 
   const addOrderItem = () =>
     setOrderItems((prev) => [...prev, { productId: "", quantity: 1 }]);
@@ -503,9 +507,18 @@ export default function SalesPage() {
           >
             {/* Customer */}
             <div className="space-y-3">
-              <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">
-                Select Customer
-              </Label>
+              <div className="flex justify-between items-center">
+                <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">
+                  Select Customer
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomerCreateOpen(true)}
+                  className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700"
+                >
+                  + New Customer
+                </button>
+              </div>
               <Select value={customerId} onValueChange={setCustomerId}>
                 <SelectTrigger className="bg-slate-50 border-slate-100 text-slate-900 rounded-2xl h-14 px-5 font-bold focus:ring-blue-500/20 text-base">
                   <SelectValue placeholder="Choose Customer" />
@@ -535,13 +548,22 @@ export default function SalesPage() {
                 <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">
                   Order Items
                 </Label>
-                <button
-                  type="button"
-                  onClick={addOrderItem}
-                  className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                >
-                  <Plus className="h-3 w-3" /> Add Line
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsProductCreateOpen(true)}
+                    className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" /> Create Product
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addOrderItem}
+                    className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" /> Add Line
+                  </button>
+                </div>
               </div>
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                 {orderItems.map((item, i) => (
@@ -630,6 +652,30 @@ export default function SalesPage() {
         confirmLabel="Confirm Order"
         cancelLabel="Review Changes"
         variant="warning"
+      />
+      <InlineCreateCustomerDialog
+        open={isCustomerCreateOpen}
+        onOpenChange={setIsCustomerCreateOpen}
+        onSuccess={(newCust) => {
+          syncSalesData();
+          setCustomerId(newCust.id);
+        }}
+      />
+
+      <InlineCreateProductDialog
+        open={isProductCreateOpen}
+        onOpenChange={setIsProductCreateOpen}
+        onSuccess={(newProd) => {
+          syncSalesData();
+          setOrderItems((prev) => {
+            const copy = [...prev];
+            if (copy.length > 0 && !copy[copy.length - 1].productId) {
+              copy[copy.length - 1].productId = newProd.id;
+              return copy;
+            }
+            return [...copy, { productId: newProd.id, quantity: 1 }];
+          });
+        }}
       />
     </div>
   );

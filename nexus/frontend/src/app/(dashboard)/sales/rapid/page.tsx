@@ -41,11 +41,15 @@ export default function RapidBillingPage() {
   const currencySymbol = getCurrencySymbol();
   const [items, setItems] = useState<Item[]>([]);
   const [search, setSearch] = useState("");
-  // BUG-006 FIX: add setters so customer can be changed (not permanently Walk-in)
 
-  const [customerId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState("Walk-in Customer");
+  const [customers, setCustomers] = useState<any[]>([]);
 
-  const [customerName] = useState("Walk-in Customer");
+  const [billingAddress, setBillingAddress] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [supplierAddress, setSupplierAddress] = useState("");
+
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [isOffline, setIsOffline] = useState(false);
@@ -59,8 +63,20 @@ export default function RapidBillingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  // BUG-014 FIX: use a ref to prevent syncQueue from being called concurrently
+
   const isSyncingRef = useRef(false);
+
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const res = await api.get("crm/customers");
+      const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setCustomers(list);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   const searchRef = useRef<HTMLInputElement>(null!);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -204,6 +220,11 @@ export default function RapidBillingPage() {
     setElapsed(0);
     setSearch("");
     setCustomAmountPaid(0);
+    setCustomerId(null);
+    setCustomerName("Walk-in Customer");
+    setBillingAddress("");
+    setShippingAddress("");
+    setSupplierAddress("");
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
@@ -236,6 +257,9 @@ export default function RapidBillingPage() {
       issueDate: new Date().toISOString(),
       dueDate: new Date().toISOString(),
       invoiceNumber,
+      billingAddress: billingAddress || undefined,
+      shippingAddress: shippingAddress || undefined,
+      supplierAddress: supplierAddress || undefined,
     };
 
     if (isOffline) {
@@ -273,6 +297,9 @@ export default function RapidBillingPage() {
     elapsed,
     isOffline,
     reset,
+    billingAddress,
+    shippingAddress,
+    supplierAddress,
   ]);
 
   const handleCompletePress = useCallback(() => {
@@ -414,11 +441,26 @@ export default function RapidBillingPage() {
         </section>
 
         <CheckoutSidebar
+          customerId={customerId}
+          setCustomerId={setCustomerId}
           customerName={customerName}
+          setCustomerName={setCustomerName}
+          customers={customers}
+          onAddCustomerSuccess={(newCust) => {
+            fetchCustomers();
+            setCustomerId(newCust.id);
+            setCustomerName(`${newCust.firstName} ${newCust.lastName || ""}`.trim());
+          }}
           paymentMode={paymentMode}
           setPaymentMode={setPaymentMode}
           customAmountPaid={customAmountPaid}
           setCustomAmountPaid={setCustomAmountPaid}
+          billingAddress={billingAddress}
+          setBillingAddress={setBillingAddress}
+          shippingAddress={shippingAddress}
+          setShippingAddress={setShippingAddress}
+          supplierAddress={supplierAddress}
+          setSupplierAddress={setSupplierAddress}
           subtotal={subtotal}
           taxTotal={taxTotal}
           total={total}

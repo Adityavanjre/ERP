@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { api } from "../../../lib/api";
 import { Package, Search } from "lucide-react";
+import { InlineCreateProductDialog } from "../../shared/inline-create-product-dialog";
 
 interface Product {
   id: string;
@@ -21,6 +22,7 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -67,15 +69,23 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
   return (
     <div className="flex flex-col h-full bg-slate-50 border-r border-slate-200 w-full lg:w-[45%] shrink-0">
       <div className="p-4 bg-white border-b border-slate-200 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search product catalog..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search product catalog..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold whitespace-nowrap shadow-sm shadow-blue-500/10 flex items-center gap-1"
+          >
+            + Product
+          </button>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -122,6 +132,14 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
           )}
         </div>
       </div>
+      <InlineCreateProductDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onSuccess={(newProduct) => {
+          fetchProducts();
+          onProductClick(newProduct);
+        }}
+      />
     </div>
   );
 }

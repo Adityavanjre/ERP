@@ -189,7 +189,14 @@ export class SyncService {
     
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { enabledModules: true },
+      select: {
+        enabledModules: true,
+        name: true,
+        logoUrl: true,
+        address: true,
+        gstin: true,
+        state: true,
+      },
     });
 
     const tenantUser = await this.prisma.tenantUser.findUnique({
@@ -224,6 +231,13 @@ export class SyncService {
     return {
       modules: tenant?.enabledModules || [],
       permissions: permissions,
+      tenant: {
+        name: tenant?.name || '',
+        logoUrl: tenant?.logoUrl || '',
+        address: tenant?.address || '',
+        gstin: tenant?.gstin || '',
+        state: tenant?.state || '',
+      },
     };
   }
 

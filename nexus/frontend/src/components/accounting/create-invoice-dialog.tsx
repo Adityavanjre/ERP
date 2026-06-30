@@ -31,6 +31,8 @@ import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useUX } from "../../components/providers/ux-provider";
+import { InlineCreateCustomerDialog } from "../shared/inline-create-customer-dialog";
+import { InlineCreateProductDialog } from "../shared/inline-create-product-dialog";
 
 interface CreateInvoiceDialogProps {
   isOpen: boolean;
@@ -82,6 +84,8 @@ export function CreateInvoiceDialog({
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const { setUILocked, showConfirm } = useUX();
+  const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
+  const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
 
   // Form State
   const [customerId, setCustomerId] = useState("");
@@ -378,7 +382,16 @@ export function CreateInvoiceDialog({
 
         <div className="grid grid-cols-2 gap-6 py-4">
           <div className="space-y-2">
-            <Label>Customer</Label>
+            <div className="flex justify-between items-center">
+              <Label>Customer</Label>
+              <button
+                type="button"
+                onClick={() => setIsCustomerCreateOpen(true)}
+                className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+              >
+                + New Customer
+              </button>
+            </div>
             <Select value={customerId} onValueChange={setCustomerId}>
               <SelectTrigger className="bg-white/5 border-white/10 text-white">
                 <SelectValue placeholder="Select Customer" />
@@ -436,7 +449,16 @@ export function CreateInvoiceDialog({
               <TableRow className="border-white/5 hover:bg-transparent">
                 <TableHead className="text-zinc-400 w-[300px]">
                   <div className="flex flex-col gap-1">
-                    <span>Item Details</span>
+                    <div className="flex justify-between items-center">
+                      <span>Item Details</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsProductCreateOpen(true)}
+                        className="text-[9px] font-bold text-blue-400 hover:text-blue-300"
+                      >
+                        + Create Product
+                      </button>
+                    </div>
                     <Input
                       ref={searchRef}
                       placeholder="Fuzzy search..."
@@ -614,6 +636,43 @@ export function CreateInvoiceDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <InlineCreateCustomerDialog
+        open={isCustomerCreateOpen}
+        onOpenChange={setIsCustomerCreateOpen}
+        onSuccess={(newCust) => {
+          fetchData();
+          setCustomerId(newCust.id);
+        }}
+      />
+      <InlineCreateProductDialog
+        open={isProductCreateOpen}
+        onOpenChange={setIsProductCreateOpen}
+        onSuccess={(newProd) => {
+          fetchData();
+          setItems((prev) => {
+            const copy = [...prev];
+            if (copy.length > 0 && !copy[copy.length - 1].productId) {
+              copy[copy.length - 1].productId = newProd.id;
+              copy[copy.length - 1].price = Number(newProd.price);
+              copy[copy.length - 1].gstRate = Number(newProd.gstRate || 0);
+              copy[copy.length - 1].hsnCode = newProd.hsnCode || "";
+              copy[copy.length - 1].total = Number(newProd.price);
+              return copy;
+            }
+            return [
+              ...copy,
+              {
+                productId: newProd.id,
+                quantity: 1,
+                price: Number(newProd.price),
+                gstRate: Number(newProd.gstRate || 0),
+                hsnCode: newProd.hsnCode || "",
+                total: Number(newProd.price),
+              },
+            ];
+          });
+        }}
+      />
     </Dialog>
   );
 }

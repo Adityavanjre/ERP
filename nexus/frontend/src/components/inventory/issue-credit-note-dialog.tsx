@@ -21,6 +21,8 @@ import {
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Plus, Trash2, FileText, Loader2, IndianRupee } from "lucide-react";
+import { InlineCreateCustomerDialog } from "../shared/inline-create-customer-dialog";
+import { InlineCreateProductDialog } from "../shared/inline-create-product-dialog";
 
 interface Product {
   id: string;
@@ -57,6 +59,8 @@ export function IssueCreditNoteDialog({
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
+  const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
 
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState("");
@@ -196,9 +200,18 @@ export function IssueCreditNoteDialog({
         <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Customer *
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Customer *
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomerCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+                >
+                  + New Customer
+                </button>
+              </div>
               <Select
                 value={selectedCustomerId}
                 onValueChange={setSelectedCustomerId}
@@ -269,14 +282,23 @@ export function IssueCreditNoteDialog({
               <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
                 Return Items
               </h4>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addItem}
-                className="rounded-lg h-8 text-[10px] font-black uppercase bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100"
-              >
-                <Plus className="h-3 w-3 mr-1" /> Add Item
-              </Button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsProductCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+                >
+                  + New Product
+                </button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addItem}
+                  className="rounded-lg h-8 text-[10px] font-black uppercase bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100"
+                >
+                  <Plus className="h-3 w-3 mr-1" /> Add Item
+                </Button>
+              </div>
             </div>
 
             {items.length === 0 ? (
@@ -389,6 +411,39 @@ export function IssueCreditNoteDialog({
           </div>
         </div>
       </DialogContent>
+      <InlineCreateCustomerDialog
+        open={isCustomerCreateOpen}
+        onOpenChange={setIsCustomerCreateOpen}
+        onSuccess={(newCust) => {
+          loadData();
+          setSelectedCustomerId(newCust.id);
+        }}
+      />
+      <InlineCreateProductDialog
+        open={isProductCreateOpen}
+        onOpenChange={setIsProductCreateOpen}
+        onSuccess={(newProd) => {
+          loadData();
+          setItems((prev) => {
+            const copy = [...prev];
+            if (copy.length > 0 && !copy[copy.length - 1].productId) {
+              copy[copy.length - 1].productId = newProd.id;
+              copy[copy.length - 1].price = Number(newProd.price);
+              copy[copy.length - 1].name = newProd.name;
+              return copy;
+            }
+            return [
+              ...copy,
+              {
+                productId: newProd.id,
+                quantity: 1,
+                price: Number(newProd.price),
+                name: newProd.name,
+              },
+            ];
+          });
+        }}
+      />
     </Dialog>
   );
 }

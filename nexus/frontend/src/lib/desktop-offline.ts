@@ -835,11 +835,15 @@ function deriveWorkspaceName(
   return company.charAt(0).toUpperCase() + company.slice(1);
 }
 
-function safeParseJson<T>(value: string | null): T | null {
+function safeParseJson<T>(value: string | null, context: string = ""): T | null {
   if (!value) return null;
   try {
     return JSON.parse(value) as T;
-  } catch {
+  } catch (error) {
+    // Log JSON parsing errors for debugging
+    if (typeof window !== "undefined" && context) {
+      console.warn(`JSON parse error (${context}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
     return null;
   }
 }
@@ -1015,7 +1019,7 @@ async function saveLocalState(
 
 function currentStoredUser(): DesktopUserProfile | null {
   if (typeof window === "undefined") return null;
-  return safeParseJson<DesktopUserProfile>(localStorage.getItem("k_user"));
+  return safeParseJson<DesktopUserProfile>(localStorage.getItem("k_user"), "k_user");
 }
 
 function pushActivity(
@@ -1498,6 +1502,11 @@ export async function hydrateDesktopOfflineSession(): Promise<boolean> {
   }
 
   // Fallback: Generate a "Guest Admin" session to bypass login
+  // Validate workspace has required fields before creating session
+  if (!state.workspace?.id || !state.workspace?.name) {
+    throw new Error("Invalid workspace state: missing required fields");
+  }
+  
   const guestSession: DesktopOfflineSession = {
     mode: "offline",
     userId: "local-admin-1",
@@ -1506,7 +1515,7 @@ export async function hydrateDesktopOfflineSession(): Promise<boolean> {
     role: "Admin",
     tenantId: state.workspace.id,
     tenantName: state.workspace.name,
-    industry: state.workspace.industry,
+    industry: state.workspace.industry || "General",
     createdAt: nowIso(),
     lastOpenedAt: nowIso(),
   };

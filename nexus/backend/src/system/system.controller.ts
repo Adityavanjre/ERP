@@ -159,6 +159,46 @@ export class SystemController {
     return { success: true, enabledModules: body.modules };
   }
 
+  @Patch('tenant-profile')
+  async updateTenantProfile(
+    @Req() req: any,
+    @Body() body: { name?: string; logoUrl?: string; address?: string; state?: string; gstin?: string },
+  ) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) {
+      throw new ForbiddenException('No workspace context.');
+    }
+
+    const membership = await this.prisma.tenantUser.findUnique({
+      where: {
+        userId_tenantId: {
+          userId: req.user.sub,
+          tenantId,
+        },
+      },
+    });
+
+    if (!membership || (membership.role !== 'Owner' && membership.role !== 'Admin')) {
+      throw new ForbiddenException('Only a workspace administrator can update company details.');
+    }
+
+    const updated = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        name: body.name,
+        logoUrl: body.logoUrl,
+        address: body.address,
+        state: body.state,
+        gstin: body.gstin,
+      },
+    });
+
+    // Invalidate config cache
+    await this.cacheManager.del(`nexus:system:config:${tenantId}`);
+
+    return { success: true, data: updated };
+  }
+
   @Get('audit')
   @Permissions(Permission.VIEW_REPORTS)
   async getIntegrityAudit(@Req() req: any) {

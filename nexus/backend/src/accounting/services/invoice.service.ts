@@ -176,6 +176,9 @@ export class InvoiceService {
               ? InvoiceStatus.Partial
               : InvoiceStatus.Unpaid,
           billingTimeSeconds: data.billingTimeSeconds,
+          billingAddress: data.billingAddress || null,
+          shippingAddress: data.shippingAddress || null,
+          supplierAddress: data.supplierAddress || null,
           items: {
             create: invoiceItemsData,
           },
@@ -792,25 +795,44 @@ export class InvoiceService {
       );
     }
 
-    const tenantState = normalizeState(tenant.state || undefined); // Changed '' to undefined
-    const customerState = normalizeState(customer.state || undefined); // Changed '' to undefined
+    const tenantState = normalizeState(tenant.state || undefined);
+    const customerState = customer?.state ? normalizeState(customer.state) : tenantState;
     const isInterState =
       tenantState.toLowerCase() !== customerState.toLowerCase();
 
-    if (customer.gstin && !this.validateGstin(customer.gstin)) {
+    if (customer && customer.gstin && !this.validateGstin(customer.gstin)) {
       throw new BadRequestException(
         `Compliance Error: Invalid GSTIN format for customer ${customer.company || customer.firstName}. Statutory reporting requires valid GSTIN.`,
       );
     }
 
     const sortedItems = [...items].sort((a, b) =>
-      a.productId.localeCompare(b.productId),
+      String(a.productId).localeCompare(String(b.productId)),
     );
 
     for (const item of sortedItems) {
-      const product = await tx.product.findFirst({
+      let product = await tx.product.findFirst({
         where: { id: item.productId, tenantId, isDeleted: false },
       });
+
+      if (!product && item.name) {
+        const sku = `UNLISTED-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        product = await tx.product.create({
+          data: {
+            tenantId,
+            name: item.name,
+            sku,
+            price: new Decimal(item.price || 0),
+            costPrice: new Decimal(item.costPrice || 0),
+            gstRate: Number(item.gstRate) || 0,
+            hsnCode: item.hsnCode || '998311',
+            baseUnit: item.unit || 'pcs',
+            isService: true,
+          },
+        });
+        item.productId = product.id;
+      }
+
       if (!product)
         throw new NotFoundException(`Product ${item.productId} not found`);
 
@@ -903,6 +925,13 @@ export class InvoiceService {
   ) {
     for (const item of invoiceItems) {
       const qty = new Decimal(item.quantity);
+
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+      });
+      if (product?.isService) {
+        continue;
+      }
 
       const warehouse = await tx.warehouse.findFirst({
         where: { tenantId },

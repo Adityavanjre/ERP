@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   User,
   Settings,
@@ -10,13 +10,25 @@ import {
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { NumericInput } from "../../ui/numeric-input";
+import { InlineCreateCustomerDialog } from "../../shared/inline-create-customer-dialog";
 
 interface CheckoutSidebarProps {
+  customerId: string | null;
+  setCustomerId: (id: string | null) => void;
   customerName: string;
+  setCustomerName: (name: string) => void;
+  customers: any[];
+  onAddCustomerSuccess: (newCust: any) => void;
   paymentMode: "CASH" | "UPI" | "CREDIT";
   setPaymentMode: (mode: "CASH" | "UPI" | "CREDIT") => void;
   customAmountPaid: number;
   setCustomAmountPaid: (val: number) => void;
+  billingAddress: string;
+  setBillingAddress: (val: string) => void;
+  shippingAddress: string;
+  setShippingAddress: (val: string) => void;
+  supplierAddress: string;
+  setSupplierAddress: (val: string) => void;
   subtotal: number;
   taxTotal: number;
   total: number;
@@ -27,11 +39,22 @@ interface CheckoutSidebarProps {
 }
 
 export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
+  customerId,
+  setCustomerId,
   customerName,
+  setCustomerName,
+  customers,
+  onAddCustomerSuccess,
   paymentMode,
   setPaymentMode,
   customAmountPaid,
   setCustomAmountPaid,
+  billingAddress,
+  setBillingAddress,
+  shippingAddress,
+  setShippingAddress,
+  supplierAddress,
+  setSupplierAddress,
   subtotal,
   taxTotal,
   total,
@@ -40,29 +63,95 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
   completeInvoice,
   userRole,
 }) => {
+  const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
+  const [showAddresses, setShowAddresses] = useState(false);
+
   return (
     <div className="w-[420px] bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl relative z-30">
-      {/* Identity Header */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-md">
-            <User className="w-5 h-5" />
+      {/* Identity Header / Customer Selector */}
+      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-2.5 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-slate-400" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Customer Selection</span>
           </div>
-          <div>
-            <p className="font-bold text-slate-900 leading-none">
-              {customerName}
-            </p>
-            <p className="text-[10px] text-blue-600 font-extrabold mt-1 uppercase tracking-widest">
-              Premium Member
-            </p>
-          </div>
+          <button
+            onClick={() => setIsCustomerCreateOpen(true)}
+            className="text-xs text-blue-600 hover:text-blue-700 font-bold"
+          >
+            + New Customer
+          </button>
         </div>
-        <button className="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-900 transition-colors">
-          <Settings className="w-5 h-5" />
-        </button>
+        <select
+          value={customerId || ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "") {
+              setCustomerId(null);
+              setCustomerName("Walk-in Customer");
+            } else {
+              setCustomerId(val);
+              const found = customers.find((c) => c.id === val);
+              setCustomerName(found ? `${found.firstName} ${found.lastName || ""}`.trim() : "Walk-in Customer");
+            }
+          }}
+          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Walk-in Customer / Guest</option>
+          {customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.company ? `${c.company} (${c.firstName})` : `${c.firstName} ${c.lastName || ""}`.trim()}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="p-6 flex-1 overflow-y-auto space-y-6">
+        {/* Collapsible Address Section */}
+        <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
+          <button
+            type="button"
+            onClick={() => setShowAddresses(!showAddresses)}
+            className="w-full flex items-center justify-between text-xs font-black text-slate-500 uppercase tracking-widest outline-none"
+          >
+            <span>Address Details</span>
+            <span className="text-[10px] font-bold text-blue-600">
+              {showAddresses ? "Hide" : "Show"}
+            </span>
+          </button>
+          {showAddresses && (
+            <div className="space-y-3 pt-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Billing Address</label>
+                <textarea
+                  value={billingAddress}
+                  onChange={(e) => setBillingAddress(e.target.value)}
+                  placeholder="Enter billing address..."
+                  className="w-full h-16 p-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Shipping Address</label>
+                <textarea
+                  value={shippingAddress}
+                  onChange={(e) => setShippingAddress(e.target.value)}
+                  placeholder="Enter shipping address..."
+                  className="w-full h-16 p-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Supplier Address (Our Details)</label>
+                <textarea
+                  value={supplierAddress}
+                  onChange={(e) => setSupplierAddress(e.target.value)}
+                  placeholder="Override our company address on invoice..."
+                  className="w-full h-16 p-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none font-mono"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Payment Modes */}
         <div>
           <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
@@ -203,6 +292,12 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
           </div>
         )}
       </div>
+
+      <InlineCreateCustomerDialog
+        open={isCustomerCreateOpen}
+        onOpenChange={setIsCustomerCreateOpen}
+        onSuccess={onAddCustomerSuccess}
+      />
     </div>
   );
 };
