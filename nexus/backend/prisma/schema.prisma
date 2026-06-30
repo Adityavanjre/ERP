@@ -521,6 +521,9 @@ model Invoice {
   isLocked           Boolean       @default(false)
   idempotencyKey     String?
   tallyExported      Boolean       @default(false)
+  billingAddress     String?
+  shippingAddress    String?
+  supplierAddress    String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   cancellationReason String?

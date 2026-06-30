@@ -453,7 +453,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
-      <div className="px-4 py-5 pb-3 shrink-0">
+      <div className="px-3 py-3 pb-1 shrink-0">
         <Link
           href="/dashboard"
           onClick={onItemClick}
@@ -462,7 +462,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
           <KlypsoLogo name={user?.tenantName || "KLYPSO"} />
         </Link>
         {user?.isSuperAdmin && (
-          <div className="mt-4 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">
+          <div className="mt-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">
             <ShieldCheck className="w-3 h-3 text-amber-500" />
             <span className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em]">
               System Sovereign
@@ -471,13 +471,13 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3 space-y-4 min-h-0">
-        <div className="space-y-0.5 mb-3">
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-2 py-2 space-y-2.5 min-h-0">
+        <div className="space-y-0.5 mb-1.5">
           <Link
             href="/dashboard"
             onClick={onItemClick}
             className={cn(
-              "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
+              "text-xs group flex px-2.5 py-1.5 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
               pathname === "/dashboard"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -499,7 +499,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
         {visibleStreams.map((stream) => (
           <div key={stream.label} className="space-y-1">
-            <div className="text-[9px] font-black text-slate-400 mb-1.5 px-3 tracking-[0.2em] uppercase">
+            <div className="text-[9px] font-black text-slate-400 mb-1 px-2.5 tracking-[0.2em] uppercase">
               {stream.label}
             </div>
             {stream.items.map((item) => {
@@ -513,7 +513,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                   prefetch={false}
                   onClick={onItemClick}
                   className={cn(
-                    "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
+                    "text-xs group flex px-2.5 py-1.5 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
                     isActive
                       ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                       : "text-slate-500",

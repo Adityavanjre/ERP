@@ -78,6 +78,13 @@ export async function ensureNetworkConsent(): Promise<void> {
       pendingConsent!.reject = reject;
     });
     window.dispatchEvent(new CustomEvent(NETWORK_CONSENT_REQUESTED_EVENT));
+    
+    // Add timeout to prevent indefinite hanging
+    setTimeout(() => {
+      if (pendingConsent) {
+        pendingConsent.reject(new Error("Network consent request timed out"));
+      }
+    }, 30000); // 30 second timeout
   }
 
   return pendingConsent.promise;
@@ -110,6 +117,13 @@ export async function ensureRecentUserInteraction(): Promise<void> {
       pendingInteraction!.resolve = resolve;
       pendingInteraction!.reject = reject;
     });
+    
+    // Add timeout to prevent indefinite hanging
+    setTimeout(() => {
+      if (pendingInteraction) {
+        pendingInteraction.reject(new Error("User interaction timed out"));
+      }
+    }, 10000); // 10 second timeout
   }
 
   return pendingInteraction.promise;

@@ -73,14 +73,25 @@ export class PermissionsGuard implements CanActivate {
           );
         }
       }
+      
+      // If no required permissions and not blocked, allow access but log for audit
       return true;
     }
 
-    if (!user || (!user.isSuperAdmin && user.type !== 'admin')) {
+    if (!user || (user.type !== 'tenant_scoped' && user.type !== 'admin' && !user.isSuperAdmin)) {
       throw new ForbiddenException('User context missing');
     }
 
-    const userPermissions = (RolePermissions as any)[user.isSuperAdmin] || [];
+    let userRole = 'Biller';
+    if (user.role) {
+      userRole = user.role;
+    } else if (typeof user.isSuperAdmin === 'string') {
+      userRole = user.isSuperAdmin;
+    } else if (user.isSuperAdmin === true || user.type === 'admin') {
+      userRole = 'Owner';
+    }
+
+    const userPermissions = (RolePermissions as any)[userRole] || [];
 
     // Channel-Aware Gating (Rule 5: Prevents touch-based disasters)
     let hasPermission = requiredPermissions.every((p) =>
@@ -90,8 +101,7 @@ export class PermissionsGuard implements CanActivate {
     // Special Case: Staff on Mobile cannot DELETE or LOCK_MONTH even if role has it usually
     if (
       channel === 'MOBILE' &&
-      user.isSuperAdmin !== "Owner" &&
-      user.isSuperAdmin !== "Owner"
+      userRole !== 'Owner'
     ) {
       const restrictedOnMobile = [
         Permission.DELETE_INVOICE,
@@ -112,7 +122,7 @@ export class PermissionsGuard implements CanActivate {
         channel: channel,
         details: {
           required: requiredPermissions,
-          userRole: user.isSuperAdmin,
+          userRole: userRole,
           handler: context.getHandler().name,
           reason: 'Insufficient permissions for role/channel',
         },

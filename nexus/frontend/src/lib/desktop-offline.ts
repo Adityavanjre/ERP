@@ -1715,6 +1715,12 @@ export async function handleDesktopOfflineRequest(
   const method = (config.method?.toLowerCase() || "get") as HttpMethod;
   const url = normalizeApiPath(config.url);
   const path = url.pathname.replace(/^\/+/, "");
+  
+  // Validate path is safe before processing
+  if (!path || path.includes("..") || path.startsWith("/")) {
+    throw new Error("Invalid path in desktop offline request");
+  }
+  
   const state = await getLocalState();
 
   if (method === "get" && path === "auth/profile") {

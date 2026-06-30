@@ -362,11 +362,14 @@ api.interceptors.response.use(
         originalRequest.url?.includes("/auth/tenants") ||
         originalRequest.url?.includes("/auth/select-tenant");
 
+      // Prevent retry loops by tracking retry attempts
+      originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+      
       if (
         typeof window !== "undefined" &&
         !isLoginRequest &&
         !isIdentityFlowRequest &&
-        !originalRequest._retry
+        originalRequest._retryCount <= 1
       ) {
         const authPages = [
           "/login",
@@ -394,13 +397,11 @@ api.interceptors.response.use(
               failedQueue.push({ resolve, reject });
             })
               .then(() => {
-                originalRequest._retry = true;
                 return api(originalRequest);
               })
               .catch((_err) => Promise.reject(_err));
           }
 
-          originalRequest._retry = true;
           isRefreshing = true;
 
           return new Promise((resolve, reject) => {
@@ -436,6 +437,12 @@ api.interceptors.response.use(
             window.dispatchEvent(new CustomEvent("session-expired"));
           }
         }
+      } else {
+        // Max retry attempts exceeded, reject with error
+        return Promise.reject({
+          message: 'Authentication retry limit exceeded',
+          isAuthRetryLimit: true,
+        });
       }
     }
     return Promise.reject(error);
