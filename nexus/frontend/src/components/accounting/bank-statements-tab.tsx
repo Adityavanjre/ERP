@@ -34,7 +34,7 @@ interface BankStatement {
 export function BankStatementsTab() {
   const [statements, setStatements] = useState<BankStatement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [accounts, setAccounts] = useState<{ type: string }[]>([]);
+  const [accounts, setAccounts] = useState<{ id: string; name: string; type: string }[]>([]);
   
   // Modal states
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);

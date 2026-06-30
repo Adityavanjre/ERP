@@ -69,6 +69,7 @@ interface Product {
   description: string;
   barcode: string;
   isService: boolean;
+  baseUnit: string;
   updatedAt: string;
   updatedBy?: {
     fullName: string;
@@ -298,11 +299,6 @@ export default function InventoryPage() {
       setIsSubmitting(false);
       setUILocked(false);
     }
-  };
-
-  // Placeholder - startEdit function removed (unused)      warehouseId: "",
-    });
-    setShowForm(false); // Close add form if open
   };
 
   const handleDelete = (id: string) => {
