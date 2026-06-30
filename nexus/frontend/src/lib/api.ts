@@ -124,13 +124,12 @@ api.interceptors.request.use(
         config.url?.includes("auth/select-tenant") ||
         config.url?.includes("auth/onboarding");
       if (!isAuthRoute) {
-        // Abort the request as "Forbidden - Offline Mode Only"
-        const controller = new AbortController();
-        config.signal = controller.signal;
-        controller.abort(
-          "Klypso Air-Gap: This request is blocked because you're in offline mode. Please enable cloud sync in settings.",
-        );
-        return config;
+        // Return a custom error object that will be caught by response interceptor
+        return Promise.reject({
+          message: "Klypso Air-Gap: This request is blocked because you're in offline mode. Please enable cloud sync in settings.",
+          isOfflineBlock: true,
+          config,
+        });
       }
     }
 
@@ -291,6 +290,14 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // DESKTOP-OFFLINE-BLOCK: Handle custom abort errors from desktop offline mode
+    if (error?.isOfflineBlock) {
+      return Promise.reject({
+        message: error.message,
+        isOfflineBlock: true,
+      });
+    }
+
     if (isNetworkConsentError(error)) {
       return Promise.reject({
         code: "NETWORK_CONSENT_REQUIRED",
