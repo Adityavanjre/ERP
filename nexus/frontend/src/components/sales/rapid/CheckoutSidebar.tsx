@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   User,
   Settings,
@@ -11,6 +11,7 @@ import {
 import { cn } from "../../../lib/utils";
 import { NumericInput } from "../../ui/numeric-input";
 import { InlineCreateCustomerDialog } from "../../shared/inline-create-customer-dialog";
+import { fuzzySearch, fuzzySearchWeighted } from "../../../lib/fuzzy-search";
 
 interface CheckoutSidebarProps {
   customerId: string | null;
@@ -67,6 +68,41 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
 }) => {
   const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
   const [showAddresses, setShowAddresses] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+
+  // Use fuzzy search for better customer matching
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return [];
+
+    // Create searchable format: "firstName lastName company phone"
+    const searchableCustomers = customers.map((c) => ({
+      ...c,
+      searchText: `${c.firstName} ${c.lastName || ""} ${c.company || ""} ${c.phone || ""}`,
+    }));
+
+    // Use fuzzy search with weighted fields
+    const results = fuzzySearchWeighted(
+      searchableCustomers,
+      customerSearch,
+      {
+        firstName: 0.3,
+        lastName: 0.2,
+        company: 0.25,
+        phone: 0.25,
+      } as any,
+      0.2 // Lower threshold for typo tolerance
+    );
+
+    return results.map((match) => match.item);
+  }, [customers, customerSearch]);
+
+  const handleSelectCustomer = (customer: any) => {
+    setCustomerId(customer.id);
+    setCustomerName(`${customer.firstName} ${customer.lastName || ""}`.trim());
+    setCustomerSearch("");
+    setShowCustomerDropdown(false);
+  };
 
   return (
     <div className="w-full h-full bg-white border-l border-slate-200 flex flex-col overflow-hidden shadow-2xl">
@@ -84,28 +120,56 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
             + New Customer
           </button>
         </div>
-        <select
-          value={customerId || ""}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === "") {
-              setCustomerId(null);
-              setCustomerName("Walk-in Customer");
-            } else {
-              setCustomerId(val);
-              const found = customers.find((c) => c.id === val);
-              setCustomerName(found ? `${found.firstName} ${found.lastName || ""}`.trim() : "Walk-in Customer");
-            }
-          }}
-          className="w-full h-8 px-3 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Walk-in Customer / Guest</option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.company ? `${c.company} (${c.firstName})` : `${c.firstName} ${c.lastName || ""}`.trim()}
-            </option>
-          ))}
-        </select>
+        
+        {/* Searchable Customer Input */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={customerId ? customerName : "Search customer by name or phone..."}
+            value={customerSearch}
+            onChange={(e) => {
+              setCustomerSearch(e.target.value);
+              setShowCustomerDropdown(true);
+            }}
+            onFocus={() => setShowCustomerDropdown(true)}
+            className="w-full h-8 px-3 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          
+          {showCustomerDropdown && customerSearch && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelectCustomer(c)}
+                    className="w-full text-left px-3 py-2 hover:bg-blue-50 border-b border-slate-50 last:border-b-0 text-xs font-medium text-slate-700 flex justify-between items-center"
+                  >
+                    <div>
+                      <div className="font-bold">{`${c.firstName} ${c.lastName || ""}`.trim()}</div>
+                      {c.company && <div className="text-slate-400 text-[10px]">{c.company}</div>}
+                      {c.phone && <div className="text-slate-400 text-[10px]">{c.phone}</div>}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-xs text-slate-400 text-center">No customers found</div>
+              )}
+            </div>
+          )}
+          
+          {customerId && (
+            <button
+              onClick={() => {
+                setCustomerId(null);
+                setCustomerName("Walk-in Customer");
+                setCustomerSearch("");
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-red-500 font-bold"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="px-3 py-2 flex-1 overflow-y-auto space-y-3">
