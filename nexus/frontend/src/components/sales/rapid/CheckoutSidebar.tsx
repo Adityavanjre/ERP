@@ -15,10 +15,10 @@ import { InlineCreateCustomerDialog } from "../../shared/inline-create-customer-
 interface CheckoutSidebarProps {
   customerId: string | null;
   setCustomerId: (id: string | null) => void;
-  customerName: string;
+  customerName?: string;
   setCustomerName: (name: string) => void;
-  customers: any[];
-  onAddCustomerSuccess: (newCust: any) => void;
+  customers: Record<string, unknown>[];
+  onAddCustomerSuccess: (newCust: Record<string, unknown>) => void;
   paymentMode: "CASH" | "UPI" | "CREDIT";
   setPaymentMode: (mode: "CASH" | "UPI" | "CREDIT") => void;
   customAmountPaid: number;
@@ -41,7 +41,7 @@ interface CheckoutSidebarProps {
 export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
   customerId,
   setCustomerId,
-  customerName,
+  /* customerName, */
   setCustomerName,
   customers,
   onAddCustomerSuccess,

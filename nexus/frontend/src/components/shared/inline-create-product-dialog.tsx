@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 interface InlineCreateProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newProduct: any) => void;
+  onSuccess?: (newProduct: Record<string, unknown>) => void;
 }
 
 export function InlineCreateProductDialog({
@@ -28,7 +28,7 @@ export function InlineCreateProductDialog({
   onSuccess,
 }: InlineCreateProductDialogProps) {
   const [loading, setLoading] = useState(false);
-  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<Record<string, unknown>[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -106,7 +106,7 @@ export function InlineCreateProductDialog({
       });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
-    } catch (error: any) {
+    } catch (error: Record<string, unknown>) {
       toast.error(error.response?.data?.message || "Failed to create product");
     } finally {
       setLoading(false);

@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 interface InlineCreateDepartmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newDept: any) => void;
+  onSuccess?: (newDept: Record<string, unknown>) => void;
 }
 
 export function InlineCreateDepartmentDialog({
@@ -44,7 +44,7 @@ export function InlineCreateDepartmentDialog({
       setName("");
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
-    } catch (error: any) {
+    } catch (error: Record<string, unknown>) {
       toast.error(error.response?.data?.message || "Failed to create department");
     } finally {
       setLoading(false);

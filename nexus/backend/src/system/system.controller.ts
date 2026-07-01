@@ -178,7 +178,7 @@ export class SystemController {
       },
     });
 
-    if (!membership || (membership.role !== 'Owner' && membership.role !== 'Admin')) {
+    if (!membership || (req.user.role !== 'Owner' && req.user.role !== 'Admin')) {
       throw new ForbiddenException('Only a workspace administrator can update company details.');
     }
 

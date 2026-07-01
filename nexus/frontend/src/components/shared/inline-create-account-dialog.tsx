@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 interface InlineCreateAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newAccount: any) => void;
+  onSuccess?: (newAccount: Record<string, unknown>) => void;
 }
 
 export function InlineCreateAccountDialog({
@@ -56,7 +56,7 @@ export function InlineCreateAccountDialog({
       setFormData({ name: "", code: "", type: "Asset" });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
-    } catch (error: any) {
+    } catch (error: Record<string, unknown>) {
       toast.error(error.response?.data?.message || "Failed to create account");
     } finally {
       setLoading(false);

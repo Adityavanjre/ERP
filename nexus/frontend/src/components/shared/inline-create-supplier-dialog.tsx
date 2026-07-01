@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 interface InlineCreateSupplierDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newSupplier: any) => void;
+  onSuccess?: (newSupplier: Record<string, unknown>) => void;
 }
 
 export function InlineCreateSupplierDialog({
@@ -90,7 +90,7 @@ export function InlineCreateSupplierDialog({
       });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
-    } catch (error: any) {
+    } catch (error: Record<string, unknown>) {
       toast.error(error.response?.data?.message || "Failed to create supplier");
     } finally {
       setLoading(false);

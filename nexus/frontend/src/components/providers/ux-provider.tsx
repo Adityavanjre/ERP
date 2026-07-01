@@ -33,6 +33,7 @@ interface UserToken {
 interface PBACState {
   permissions: Record<string, string[]>;
   modules: string[];
+  tenantProfile?: { name?: string; logoUrl?: string };
 }
 
 interface UXContextType {
@@ -158,6 +159,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
           const newState = {
             permissions: res.data.permissions || {},
             modules: res.data.modules || [],
+            tenantProfile: res.data.tenantProfile || undefined,
           };
           setPbac(newState);
           localStorage.setItem("nexus_pbac_cache", JSON.stringify(newState));

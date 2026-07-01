@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 interface InlineCreateWarehouseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newWarehouse: any) => void;
+  onSuccess?: (newWarehouse: Record<string, unknown>) => void;
 }
 
 export function InlineCreateWarehouseDialog({
@@ -52,7 +52,7 @@ export function InlineCreateWarehouseDialog({
       setFormData({ name: "", location: "", manager: "" });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
-    } catch (error: any) {
+    } catch (error: Record<string, unknown>) {
       toast.error(error.response?.data?.message || "Failed to create warehouse");
     } finally {
       setLoading(false);

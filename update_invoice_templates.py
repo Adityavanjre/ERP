@@ -1,159 +1,10 @@
-"use client";
-import React from "react";
+import re
 
-import { getCurrencySymbol } from "../../../../lib/currency";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { api } from "../../../../lib/api";
-import { Button } from "../../../../components/ui/button";
-import { Printer, Mail } from "lucide-react";
-import { toast } from "sonner";
-import { useUX } from "../../../../components/providers/ux-provider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
+with open('nexus/frontend/src/app/(dashboard)/invoice/[id]/page.tsx', 'r') as f:
+    content = f.read()
 
-interface InvoiceItem {
-  productName?: string;
-  product?: {
-    name: string;
-    sku: string;
-    gstRate?: number;
-    hsnCode?: string;
-  };
-  gstRate?: number;
-  hsnCode?: string;
-  quantity: number;
-  price: number;
-  unitPrice?: number;
-  taxableAmount?: number;
-  cgstAmount?: number;
-  sgstAmount?: number;
-  igstAmount?: number;
-}
-
-interface InvoiceDetail {
-  invoiceNumber: string;
-  subtotal?: number;
-  totalAmount: number;
-  taxAmount?: number;
-  totalGST?: number;
-  totalCGST?: number;
-  totalSGST?: number;
-  totalIGST?: number;
-  issueDate: string;
-  dueDate: string;
-  customer: {
-    firstName: string;
-    lastName: string;
-    company: string;
-    address?: string;
-    gstin?: string;
-  };
-  items: InvoiceItem[];
-}
-
-interface TaxSummaryData {
-  taxableAmount: number;
-  cgstAmount: number;
-  sgstAmount: number;
-  igstAmount: number;
-}
-
-export default function InvoicePrintPage() {
-  const currencySymbol = getCurrencySymbol();
-  const params = useParams();
-  const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [template, setTemplate] = useState("classic");
-  const { pbac } = useUX();
-  const logoUrl = pbac.tenantProfile?.logoUrl;
-
-  useEffect(() => {
-    const fetchInvoice = async () => {
-      try {
-        const res = await api.get(`/accounting/invoices/${params.id}`);
-        setInvoice(res.data);
-      } catch {
-        toast.error("Failed to load invoice");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInvoice();
-  }, [params.id]);
-
-  if (loading)
-    return (
-      <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest italic">
-        Loading invoice...
-      </div>
-    );
-  if (!invoice)
-    return (
-      <div className="p-8 text-slate-900 bg-slate-50 min-h-screen flex items-center justify-center font-black uppercase tracking-widest">
-        Invoice not found
-      </div>
-    );
-
-  const totalTax = Number(invoice.totalGST || invoice.taxAmount || 0);
-  const totalCGST = Number(invoice.totalCGST || 0);
-  const totalSGST = Number(invoice.totalSGST || 0);
-  const totalIGST = Number(invoice.totalIGST || 0);
-  const totalAmount = Number(invoice.totalAmount);
-
-  // Helper for date formatting
-  const fmtDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  // GST-005: Consolidate mixed tax rates (5%, 12%, 18%) subtotal roll-ups reliably
-  const taxSummary = (invoice.items || []).reduce<
-    Record<number, TaxSummaryData>
-  >((acc, item) => {
-    const rate = Number(item.gstRate || item.product?.gstRate || 0);
-    if (rate === 0) return acc;
-    if (!acc[rate])
-      acc[rate] = {
-        taxableAmount: 0,
-        cgstAmount: 0,
-        sgstAmount: 0,
-        igstAmount: 0,
-      };
-    acc[rate].taxableAmount += Number(
-      item.taxableAmount ||
-        Number(item.price || item.unitPrice) * Number(item.quantity),
-    );
-    acc[rate].cgstAmount += Number(item.cgstAmount || 0);
-    acc[rate].sgstAmount += Number(item.sgstAmount || 0);
-    acc[rate].igstAmount += Number(item.igstAmount || 0);
-    return acc;
-  }, {});
-
-  return (
-    <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
-      <style jsx global>{`
-        @media print {
-          @page {
-            margin: 20mm;
-          }
-          thead {
-            display: table-header-group;
-          }
-          tfoot {
-            display: table-footer-group;
-          }
-          tr {
-            page-break-inside: avoid;
-          }
-          .print-header {
-            position: running(header);
-          }
-        }
-      `}</style>
-      {/* Action Bar (Hidden in Print) */}
+# Add logic for templates
+template_selector = '''      {/* Action Bar (Hidden in Print) */}
       <div className="max-w-4xl mx-auto mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
         <h1 className="text-2xl font-black text-white tracking-tighter flex items-center gap-4">
           Invoice
@@ -168,24 +19,17 @@ export default function InvoicePrintPage() {
             </SelectContent>
           </Select>
         </h1>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all"
-            onClick={() => window.print()}
-          >
-            <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
-          </Button>
-          <Button
-            variant="outline"
-            className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all"
-          >
-            <Mail className="mr-2 h-4 w-4" /> Email Client
-          </Button>
-        </div>
-      </div>
+        <div className="flex gap-3">'''
 
-      {template === "tax" && (
+content = content.replace('''      {/* Action Bar (Hidden in Print) */}
+      <div className="max-w-4xl mx-auto mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
+        <h1 className="text-2xl font-black text-white tracking-tighter">
+          Invoice
+        </h1>
+        <div className="flex gap-3">''', template_selector)
+
+# Define templates
+tax_template = '''{template === "tax" && (
         <div className="max-w-4xl mx-auto bg-white p-6 sm:p-6 md:p-8 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip print:rounded-none">
           <div className="border border-zinc-300">
             {/* Tax Header */}
@@ -211,7 +55,7 @@ export default function InvoicePrintPage() {
                 {logoUrl && <img src={logoUrl} alt="Logo" className="absolute top-4 right-4 h-12 object-contain" />}
                 <div className="font-bold text-sm uppercase">{pbac.tenantProfile?.name || "Klypso Ecosystems"}</div>
                 <div className="text-xs text-zinc-600">
-                  {pbac.tenantProfile?.name ? "Company Address..." : "123 Business Park, Tech City\nMaharashtra, India - 400001"}
+                  {pbac.tenantProfile?.name ? "Company Address..." : "123 Business Park, Tech City\\nMaharashtra, India - 400001"}
                 </div>
                 <div className="text-xs"><span className="font-bold">GSTIN/UIN:</span> 27AABCU9603R1ZN</div>
                 <div className="text-xs"><span className="font-bold">State Name:</span> Maharashtra, Code: 27</div>
@@ -329,8 +173,9 @@ export default function InvoicePrintPage() {
           </div>
           <div className="text-center text-[10px] text-zinc-400 mt-2">This is a Computer Generated Invoice</div>
         </div>
-      )}
-{template === "minimal" && (
+      )}'''
+
+minimal_template = '''{template === "minimal" && (
         <div className="max-w-4xl mx-auto bg-white p-10 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip print:rounded-none min-h-[800px] flex flex-col font-sans">
           <div className="flex justify-between items-center mb-12">
             <div className="flex items-center gap-4">
@@ -401,8 +246,9 @@ export default function InvoicePrintPage() {
             </div>
           </div>
         </div>
-      )}
-{template === "classic" && (
+      )}'''
+
+classic_template = '''{template === "classic" && (
       <div className="max-w-4xl mx-auto bg-white p-6 sm:p-6 md:p-8 shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start gap-4 lg:gap-0 border-b-2 border-zinc-100 pb-6 mb-6">
@@ -629,7 +475,18 @@ export default function InvoicePrintPage() {
           </div>
         )}
       </div>
-      )}
-</div>
-  );
-}
+      )}'''
+
+# We need to replace everything starting from `{/* Invoice Paper */}` to the end, but before the closing `</div>` of the page.
+content_to_replace_start = content.find('{/* Invoice Paper */}')
+content_to_replace_end = content.rfind('</div>') # second to last closing div
+
+new_content = content[:content_to_replace_start] + tax_template + '\n' + minimal_template + '\n' + classic_template + '\n' + content[content_to_replace_end:]
+new_content = new_content.replace('import React, { useEffect', 'import React, { useEffect')
+
+if 'import React' not in new_content:
+    new_content = new_content.replace('"use client";\n', '"use client";\nimport React from "react";\n')
+
+
+with open('nexus/frontend/src/app/(dashboard)/invoice/[id]/page.tsx', 'w') as f:
+    f.write(new_content)

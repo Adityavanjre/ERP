@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 interface InlineCreateCustomerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (newCustomer: any) => void;
+  onSuccess?: (newCustomer: Record<string, unknown>) => void;
 }
 
 export function InlineCreateCustomerDialog({
@@ -90,7 +90,7 @@ export function InlineCreateCustomerDialog({
       });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
-    } catch (error: any) {
+    } catch (error: Record<string, unknown>) {
       toast.error(error.response?.data?.message || "Failed to create customer");
     } finally {
       setLoading(false);
