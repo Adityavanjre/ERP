@@ -5,7 +5,6 @@ import { LedgerService } from './ledger.service';
 import { BadRequestException } from '@nestjs/common';
 import { HsnService } from '../../inventory/services/hsn.service';
 import { TraceService } from '../../common/services/trace.service';
-import { BillingService } from '../../system/services/billing.service';
 import { InventoryService } from '../../inventory/inventory.service';
 
 describe('InvoiceService (Compliance)', () => {
@@ -51,7 +50,6 @@ describe('InvoiceService (Compliance)', () => {
         { provide: LedgerService, useValue: mockLedger },
         { provide: HsnService, useValue: mockHsn },
         { provide: TraceService, useValue: mockTrace },
-        { provide: BillingService, useValue: mockBilling },
         { provide: InventoryService, useValue: mockInventory },
       ],
     }).compile();

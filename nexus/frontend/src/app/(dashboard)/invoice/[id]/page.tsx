@@ -42,6 +42,22 @@ interface InvoiceDetail {
   billingAddress?: string;
   shippingAddress?: string;
   supplierAddress?: string;
+  billingMode?: string;
+  itemSections?: any;
+  bankAccountId?: string;
+  bankAccount?: {
+    id: string;
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    branch: string;
+    accountHolderName: string;
+  };
+  termsOfPayment?: string;
+  termsOfDelivery?: string;
+  vehicleNumber?: string;
+  buyersOrderNo?: string;
+  eWayBillNo?: string;
   customer: {
     firstName: string;
     lastName: string;
@@ -133,7 +149,13 @@ export default function InvoicePrintPage() {
     address: "123 Business Park, Tech City, Maharashtra, India - 400001",
     gstin: "27AABCU9603R1ZN",
     state: "Maharashtra",
+    panNumber: "",
+    phone: "",
+    email: "",
+    authorizedSignatory: "",
   };
+
+  const bankAccount = invoice?.bankAccount || null;
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -200,7 +222,7 @@ export default function InvoicePrintPage() {
 
   // Template 1: Classic
   const renderClassic = () => (
-    <div className="bg-white p-6 sm:p-8 rounded-2xl print:p-0 print:rounded-none">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl print:p-0 print:rounded-none">
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start gap-4 lg:gap-0 border-b-2 border-zinc-100 pb-6 mb-6">
         <div className="w-full">
@@ -264,58 +286,97 @@ export default function InvoicePrintPage() {
 
       {/* Items Table */}
       <div className="overflow-x-auto mb-6 max-w-[100vw]">
-        <table className="w-full text-sm min-w-[500px]">
-          <thead className="border-b-2 border-zinc-999">
-            <tr className="border-b-2 border-zinc-900">
-              <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">
-                Description
-              </th>
-              <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">
-                HSN
-              </th>
-              <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">
-                Qty
-              </th>
-              <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
-                Rate
-              </th>
-              <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
-                Amount
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {invoice.items &&
-              invoice.items.map((item, i) => (
-                <tr key={i}>
-                  <td className="py-4 text-zinc-700 font-medium">
-                    {item.productName || item.product?.name || "Product Item"}
-                    <div className="text-[10px] text-zinc-400 mt-0.5">
-                      {item.product?.sku}
-                    </div>
-                  </td>
-                  <td className="py-4 text-right text-zinc-500 font-mono">
-                    {item.hsnCode || item.product?.hsnCode || "-"}
-                  </td>
-                  <td className="py-4 text-right text-zinc-700">
-                    {item.quantity}
-                  </td>
-                  <td className="py-4 text-right text-zinc-700">
-                    {currencySymbol}
-                    {Number(item.price).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </td>
-                  <td className="py-4 text-right font-bold text-zinc-900">
-                    {currencySymbol}
-                    {(
-                      Number(item.price) * Number(item.quantity)
-                    ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </td>
+        {(() => {
+          // Group items by category for section headers
+          const items = invoice.items || [];
+          const itemSectionsMap: Record<string, any> = invoice.itemSections || {};
+          const hasAreaItems = items.some((item: any) => {
+            const meta = itemSectionsMap[item.productId] || item.itemSections || {};
+            return meta.pricingMode === "area";
+          });
+          
+          return (
+            <table className="w-full text-sm min-w-[500px]">
+              <thead className="border-b-2 border-zinc-999">
+                <tr className="border-b-2 border-zinc-900">
+                  <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">
+                    Description
+                  </th>
+                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">
+                    HSN
+                  </th>
+                  {hasAreaItems ? (
+                    <>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">W(m)</th>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">L(m)</th>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">Sheets</th>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">SQM</th>
+                    </>
+                  ) : (
+                    <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">
+                      Qty
+                    </th>
+                  )}
+                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
+                    Rate
+                  </th>
+                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
+                    Amount
+                  </th>
                 </tr>
-              ))}
-          </tbody>
-        </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {items.map((item: any, i: number) => {
+                  const meta = itemSectionsMap[item.productId] || item.itemSections || {};
+                  const isArea = meta.pricingMode === "area";
+                  const width = meta.width || 0;
+                  const length = meta.length || 0;
+                  const sheets = meta.sheets || 0;
+                  const sqm = width * length * sheets;
+                  const ratePerSqm = meta.ratePerSqm || 0;
+                  const itemAmount = isArea ? sqm * ratePerSqm : Number(item.price) * Number(item.quantity);
+
+                  return (
+                    <tr key={i}>
+                      <td className="py-4 text-zinc-700 font-medium">
+                        {item.productName || item.product?.name || "Product Item"}
+                        <div className="text-[10px] text-zinc-400 mt-0.5">
+                          {item.product?.sku}
+                        </div>
+                      </td>
+                      <td className="py-4 text-right text-zinc-500 font-mono">
+                        {item.hsnCode || item.product?.hsnCode || "-"}
+                      </td>
+                      {hasAreaItems ? (
+                        <>
+                          <td className="py-4 text-right text-zinc-700">{isArea ? width : "-"}</td>
+                          <td className="py-4 text-right text-zinc-700">{isArea ? length : "-"}</td>
+                          <td className="py-4 text-right text-zinc-700">{isArea ? sheets : item.quantity}</td>
+                          <td className="py-4 text-right text-zinc-700">{isArea ? sqm.toFixed(2) : "-"}</td>
+                        </>
+                      ) : (
+                        <td className="py-4 text-right text-zinc-700">
+                          {item.quantity}
+                        </td>
+                      )}
+                      <td className="py-4 text-right text-zinc-700">
+                        {currencySymbol}
+                        {isArea
+                          ? ratePerSqm.toLocaleString("en-IN", { minimumFractionDigits: 2 })
+                          : Number(item.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })
+                        }
+                      </td>
+                      <td className="py-4 text-right font-bold text-zinc-900">
+                        {currencySymbol}
+                        {itemAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
 
       {/* GST Summary */}
@@ -441,11 +502,37 @@ export default function InvoicePrintPage() {
 
       {/* Footer */}
       <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col lg:flex-row justify-between items-start md:items-end gap-16 lg:gap-0">
-        <div className="text-[10px] text-zinc-400 max-w-sm w-full">
-          <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
-          <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>
-          <p>2. Please quote the invoice number in all correspondence.</p>
-          <p>3. Make payment to "{tenantProfile.name}".</p>
+        <div className="text-[10px] text-zinc-400 max-w-sm w-full space-y-4">
+          <div>
+            <p className="font-bold text-zinc-900 mb-1">Payment Terms:</p>
+            <p>1. Payment due within {Math.ceil((new Date(invoice.dueDate).getTime() - new Date(invoice.issueDate).getTime()) / (1000 * 3600 * 24))} days.</p>
+            <p>2. Please quote the invoice number in all correspondence.</p>
+            <p>3. Make payment to "{tenantProfile.name}".</p>
+          </div>
+          {bankAccount && (
+            <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+              <p className="font-bold text-zinc-900 mb-1 uppercase text-[10px] tracking-wider">Bank Details</p>
+              <p><span className="font-bold">Bank:</span> {bankAccount.bankName}</p>
+              <p><span className="font-bold">A/c No:</span> {bankAccount.accountNumber}</p>
+              <p><span className="font-bold">IFSC:</span> {bankAccount.ifscCode}</p>
+              <p><span className="font-bold">Branch:</span> {bankAccount.branch}</p>
+            </div>
+          )}
+          {invoice.termsOfPayment && (
+            <p><span className="font-bold text-zinc-900">Terms of Payment:</span> {invoice.termsOfPayment}</p>
+          )}
+          {invoice.termsOfDelivery && (
+            <p><span className="font-bold text-zinc-900">Terms of Delivery:</span> {invoice.termsOfDelivery}</p>
+          )}
+          {invoice.vehicleNumber && (
+            <p><span className="font-bold text-zinc-900">Vehicle No:</span> {invoice.vehicleNumber}</p>
+          )}
+          {invoice.buyersOrderNo && (
+            <p><span className="font-bold text-zinc-900">Buyer's Order No:</span> {invoice.buyersOrderNo}</p>
+          )}
+          {invoice.eWayBillNo && (
+            <p><span className="font-bold text-zinc-900">E-Way Bill No:</span> {invoice.eWayBillNo}</p>
+          )}
         </div>
         <div className="text-left md:text-right w-full md:w-auto">
           <div className="h-16 mb-2 flex justify-start md:justify-end">
@@ -455,8 +542,13 @@ export default function InvoicePrintPage() {
           </div>
           <div className="border-t border-zinc-300 w-48 ml-auto"></div>
           <div className="text-[10px] text-zinc-500 mt-1 font-bold uppercase tracking-wider">
-            Authorized Signatory
+            {tenantProfile.authorizedSignatory || "Authorized Signatory"}
           </div>
+          {tenantProfile.panNumber && (
+            <div className="text-[10px] text-zinc-400 mt-1 font-mono">
+              PAN: {tenantProfile.panNumber}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -898,6 +990,157 @@ export default function InvoicePrintPage() {
     </div>
   );
 
+  const renderDimensional = () => {
+    const sections = (invoice.itemSections as any[]) || [];
+    const grandTotal = sections.reduce((sum, s) => {
+      const sectionTotal = (s.items || []).reduce((s2: number, i: any) => s2 + Number(i.amount || 0), 0);
+      return sum + sectionTotal;
+    }, 0);
+
+    return (
+      <div className="bg-white p-4 sm:p-6 rounded-2xl print:p-0 print:rounded-none text-slate-900">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-4 lg:gap-0 border-b-2 border-zinc-100 pb-6 mb-6">
+          <div className="w-full">
+            <div className="flex items-center gap-4">
+              {tenantProfile.logoUrl && (
+                <img src={tenantProfile.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+              )}
+              <div>
+                <div className="text-4xl font-extrabold text-zinc-900 tracking-tight">
+                  {tenantProfile.name.toUpperCase()} INVOICE
+                </div>
+                <div className="text-sm text-zinc-500 mt-1 font-medium italic tracking-widest uppercase">
+                  Invoice No: #{invoice.invoiceNumber}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 space-y-1 text-sm text-zinc-600">
+              <p className="font-bold text-zinc-900 uppercase text-[10px] tracking-widest mb-1">Bill To:</p>
+              <p className="font-black text-zinc-900">{invoice.customer.firstName} {invoice.customer.lastName}</p>
+              <p>{invoice.customer.company}</p>
+              {invoice.billingAddress ? (
+                <p className="whitespace-pre-line">{invoice.billingAddress}</p>
+              ) : (
+                invoice.customer.address && <p>{invoice.customer.address}</p>
+              )}
+              {invoice.customer.gstin && <p>GSTIN: {invoice.customer.gstin}</p>}
+            </div>
+          </div>
+          <div className="text-left md:text-right w-full md:w-auto">
+            <div className="text-xl font-black text-zinc-900 uppercase tracking-tighter italic">
+              {tenantProfile.name}
+            </div>
+            <div className="text-sm text-zinc-500 mt-1 whitespace-pre-line">
+              {tenantProfile.address}
+              {tenantProfile.gstin && <><br />GSTIN: {tenantProfile.gstin}</>}
+            </div>
+            <div className="mt-6 flex flex-col items-end gap-1">
+              <div className="bg-zinc-100 px-4 py-2 rounded-lg text-right">
+                <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Issue Date</div>
+                <div className="font-bold text-zinc-900">{fmtDate(invoice.issueDate)}</div>
+              </div>
+              <div className="bg-zinc-100 px-4 py-2 rounded-lg text-right mt-1">
+                <div className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Due Date</div>
+                <div className="font-bold text-zinc-900">{fmtDate(invoice.dueDate)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {sections.map((section: any, sIdx: number) => {
+          const isDim = section.type === "dimensional";
+          const sectionItems = section.items || [];
+          const sectionTotal = sectionItems.reduce((s2: number, i: any) => s2 + Number(i.amount || 0), 0);
+          const sectionQty = sectionItems.reduce((s2: number, i: any) => s2 + Number(i.qty || 0), 0);
+
+          return (
+            <div key={sIdx} className="mb-8">
+              <div className="border-2 border-zinc-200 rounded-xl overflow-hidden">
+                <div className="bg-zinc-50 px-4 py-2 border-b border-zinc-200">
+                  <span className="text-sm font-black text-zinc-900 uppercase tracking-wider">{section.label || `Section ${String.fromCharCode(65 + sIdx)}`}</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-200 bg-zinc-50 font-bold uppercase text-[9px] text-zinc-700">
+                        <th className="px-2 py-2 text-center w-8 border-r border-zinc-200">No</th>
+                        <th className="px-2 py-2 border-r border-zinc-200 text-left">Description</th>
+                        <th className="px-2 py-2 text-center border-r border-zinc-200 w-20">HSN/SAC</th>
+                        {isDim ? (
+                          <>
+                            <th className="px-2 py-2 text-center border-r border-zinc-200 w-16">{section.dim1Label || "WIDTH"}</th>
+                            <th className="px-2 py-2 text-center border-r border-zinc-200 w-16">{section.dim2Label || "LENGTH"}</th>
+                            <th className="px-2 py-2 text-center border-r border-zinc-200 w-20">{section.dim3Label || "No of Sheets"}</th>
+                            <th className="px-2 py-2 text-center border-r border-zinc-200 w-16">Qty</th>
+                          </>
+                        ) : (
+                          <>
+                            <th className="px-2 py-2 text-center border-r border-zinc-200 w-20">Size</th>
+                            <th className="px-2 py-2 text-center border-r border-zinc-200 w-16">Qty</th>
+                          </>
+                        )}
+                        <th className="px-2 py-2 text-right border-r border-zinc-200 w-20">Rate</th>
+                        <th className="px-2 py-2 text-right w-24">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {sectionItems.map((item: any, idx: number) => (
+                        <tr key={idx} className="align-top">
+                          <td className="px-2 py-2 text-center border-r border-zinc-100 font-bold text-zinc-500">{idx + 1}</td>
+                          <td className="px-2 py-2 border-r border-zinc-100 font-medium text-zinc-800">{item.description || "-"}</td>
+                          <td className="px-2 py-2 text-center border-r border-zinc-100 font-mono text-zinc-600">{item.hsnSac || "-"}</td>
+                          {isDim ? (
+                            <>
+                              <td className="px-2 py-2 text-center border-r border-zinc-100 tabular-nums">{item.dim1 ?? "-"}</td>
+                              <td className="px-2 py-2 text-center border-r border-zinc-100 tabular-nums">{item.dim2 ?? "-"}</td>
+                              <td className="px-2 py-2 text-center border-r border-zinc-100 tabular-nums">{item.dim3 ?? "-"}</td>
+                              <td className="px-2 py-2 text-center border-r border-zinc-100 font-bold tabular-nums">{Number(item.qty || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-2 py-2 text-center border-r border-zinc-100">{item.size || "-"}</td>
+                              <td className="px-2 py-2 text-center border-r border-zinc-100 tabular-nums">{Number(item.qty || 0).toLocaleString("en-IN")}</td>
+                            </>
+                          )}
+                          <td className="px-2 py-2 text-right border-r border-zinc-100 font-mono tabular-nums">{Number(item.rate || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                          <td className="px-2 py-2 text-right font-black text-zinc-900 tabular-nums">{Number(item.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      ))}
+                      {sectionItems.length === 0 && (
+                        <tr>
+                          <td colSpan={isDim ? 9 : 8} className="px-2 py-3 text-center text-zinc-400 text-[10px]">No items</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="bg-zinc-50 px-4 py-2 border-t border-zinc-200 flex justify-between items-center">
+                  <span className="text-xs font-black text-zinc-900 uppercase tracking-wider">{section.label || `Section ${String.fromCharCode(65 + sIdx)}`} Total ({section.letter || String.fromCharCode(65 + sIdx)})</span>
+                  <div className="flex gap-4 text-xs font-bold text-zinc-900">
+                    {isDim && <span>Qty: {sectionQty.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>}
+                    <span>{currencySymbol}{sectionTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="mt-8 flex justify-end border-t-2 border-zinc-900 pt-4">
+          <div className="w-64 space-y-3">
+            <div className="flex justify-between text-sm text-zinc-600">
+              <span>Grand Total</span>
+              <span className="font-black text-zinc-900 text-xl">
+                {currencySymbol}
+                {grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 p-2 sm:p-4 md:p-8 print:p-0 print:bg-white text-slate-900 print:text-black">
       <style jsx global>{`
@@ -956,9 +1199,15 @@ export default function InvoicePrintPage() {
 
       {/* Invoice Paper Wrapper */}
       <div className="max-w-4xl mx-auto bg-white shadow-2xl print:shadow-none print:w-full overflow-hidden text-clip rounded-2xl print:rounded-none">
-        {template === "classic" && renderClassic()}
-        {template === "gst" && renderGST()}
-        {template === "minimal" && renderMinimal()}
+        {invoice.billingMode === "dimensional"
+          ? renderDimensional()
+          : (
+            <>
+              {template === "classic" && renderClassic()}
+              {template === "gst" && renderGST()}
+              {template === "minimal" && renderMinimal()}
+            </>
+          )}
       </div>
     </div>
   );

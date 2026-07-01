@@ -4,7 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AccountType, Prisma, TransactionType } from '@prisma/client';
 import { Industry } from '@nexus/shared';
 import { StandardAccounts } from '../constants/account-names';
-import { BillingService } from '../../system/services/billing.service';
+// REMOVED: BillingService - subscription system removed
 import { CreateJournalEntryDto } from '../dto/create-journal.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TraceService } from '../../common/services/trace.service';
@@ -15,7 +15,7 @@ export class LedgerService {
     private prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: any,
     private readonly traceService: TraceService,
-    private billing: BillingService,
+    // REMOVED: billing service - subscription system removed
   ) {}
 
   round2(val: number | string | Decimal): Decimal {
@@ -486,8 +486,8 @@ export class LedgerService {
 
     const execute = async (client: Prisma.TransactionClient) => {
       await this.checkPeriodLock(tenantId, data.date || new Date(), client);
-      // SECURITY (BILL-001): Atomic Quota Check with row-level lock
-      await this.billing.checkQuota(tenantId, 'maxLedgerEntries', client);
+      // REMOVED: Quota check - subscription system removed
+      // await this.billing.checkQuota(tenantId, 'maxLedgerEntries', client);
 
       const journal = await client.journalEntry.create({
         data: {
@@ -562,7 +562,7 @@ export class LedgerService {
       await Promise.all(
         Array.from(balanceDeltas.entries()).map(([accountId, delta]) =>
           client.account.update({
-            where: { id: accountId, tenantId },
+            where: { id: accountId },
             data: { balance: { increment: delta } },
           }),
         ),

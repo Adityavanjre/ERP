@@ -77,6 +77,15 @@ export function InlineCreateCustomerDialog({
       };
 
       const res = await api.post("crm/customers", payload);
+      
+      // After successful creation, clear cache to force refresh
+      // This ensures the new customer appears immediately in list views
+      if (window && typeof window !== 'undefined') {
+        // Signal that customer data is stale and needs refresh
+        localStorage.setItem('k_customer_data_stale', 'true');
+        localStorage.removeItem('k_customer_data_stale'); // Clear immediately to use as signal
+      }
+      
       toast.success("Customer created successfully");
       setFormData({
         firstName: "",
@@ -108,7 +117,7 @@ export function InlineCreateCustomerDialog({
             Add a new customer on-the-spot. Optional fields can be left blank.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4 pt-4">
+        <form onSubmit={onSubmit} className="space-y-3 pt-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">First Name *</Label>

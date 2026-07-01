@@ -89,7 +89,7 @@ export default function ModulesSettingsPage() {
             <Button
               onClick={handleSave}
               disabled={saving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 px-6 font-bold uppercase tracking-wider text-[10px]"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-10 px-4 font-bold uppercase tracking-wider text-[10px]"
             >
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Save Configuration

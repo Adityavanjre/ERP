@@ -341,7 +341,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   const { user } = useAuth();
   const userRole = (user?.role as RoleName) || "Biller";
 
-  const { pbac, hasPermission } = useUX();
+  const { pbac, hasPermission, tenantProfile } = useUX();
 
   const [terminology, setTerminology] = useState<Record<string, string>>({});
   const [loadingConfig, setLoadingConfig] = useState(true);
@@ -477,16 +477,16 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
           onClick={onItemClick}
           className="flex items-center transition-all hover:opacity-80"
         >
-          {pbac.tenant?.logoUrl ? (
+          {tenantProfile?.logoUrl ? (
             <div className="flex items-center gap-3">
               <img
-                src={pbac.tenant.logoUrl}
-                alt={pbac.tenant.name || "Company Logo"}
+                src={tenantProfile.logoUrl}
+                alt={tenantProfile.name || "Company Logo"}
                 className="h-9 w-auto max-w-[140px] object-contain rounded-lg"
               />
             </div>
           ) : (
-            <KlypsoLogo name={pbac.tenant?.name || user?.tenantName || "KLYPSO"} />
+            <KlypsoLogo name={tenantProfile?.name || user?.tenantName || "KLYPSO"} />
           )}
         </Link>
         {user?.isSuperAdmin && (

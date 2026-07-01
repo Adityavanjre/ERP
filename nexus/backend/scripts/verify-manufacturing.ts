@@ -106,9 +106,11 @@ async function runVerification() {
   
   await prisma.stockLocation.create({
     data: {
+      tenantId,
       warehouseId: warehouse.id,
       productId: rawMaterial.id,
-      quantity: 100
+      quantity: 100,
+      notes: ''
     }
   });
 
@@ -127,13 +129,13 @@ async function runVerification() {
   console.log('Work Order Completed.');
 
   // 4. Verify Stock
-  const fgStock = await prisma.stockLocation.findUnique({
-    where: { productId_warehouseId: { productId: finishedGood.id, warehouseId: warehouse.id } }
+  const fgStock = await prisma.stockLocation.findFirst({
+    where: { tenantId, productId: finishedGood.id, warehouseId: warehouse.id }
   });
   if (!fgStock || Number(fgStock.quantity) !== 10) throw new Error('MFG-02 Fail: FG Stock not updated');
   
-  const rmStock = await prisma.stockLocation.findUnique({
-    where: { productId_warehouseId: { productId: rawMaterial.id, warehouseId: warehouse.id } }
+  const rmStock = await prisma.stockLocation.findFirst({
+    where: { tenantId, productId: rawMaterial.id, warehouseId: warehouse.id }
   });
   // Started with 100. Consumed 10 * 2 = 20. Remaining = 80.
   if (!rmStock || Number(rmStock.quantity) !== 80) throw new Error(`MFG-02 Fail: RM Stock incorrect. Expected 80, got ${rmStock?.quantity}`);

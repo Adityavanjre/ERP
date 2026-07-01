@@ -140,8 +140,8 @@ export function EditCustomerDialog({
             Modify customer profile and business details.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="firstName"
@@ -174,7 +174,7 @@ export function EditCustomerDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="email"
@@ -271,14 +271,14 @@ export function EditCustomerDialog({
               type="button"
               variant="ghost"
               onClick={handleCancel}
-              className="rounded-xl font-bold h-11 px-6"
+              className="rounded-xl font-bold h-11 px-3"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 px-4 font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
+              className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 px-3 font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

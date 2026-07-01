@@ -60,7 +60,7 @@ export default function Home() {
       />
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 h-20">
-        <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto h-full px-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <KlypsoLogo size={32} />
             <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded-lg ml-2 uppercase tracking-widest">
@@ -176,9 +176,9 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-24 sm:py-32 bg-slate-50/50">
-          <div className="max-w-[1400px] mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section id="features" className="py-20 sm:py-24 bg-slate-50/50">
+          <div className="max-w-[1400px] mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="p-4 bg-white rounded-[2.5rem] shadow-sm hover:shadow-xl transition-all group border border-slate-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 h-32 w-32 bg-blue-50 rounded-bl-[4rem] group-hover:scale-110 transition-transform" />
                 <BarChart3 className="h-10 w-10 text-blue-600 mb-4 relative z-10" />
@@ -218,9 +218,9 @@ export default function Home() {
         </section>
 
         {/* Industry Solutions */}
-        <section id="solutions" className="py-24 sm:py-32">
-          <div className="max-w-[1400px] mx-auto px-6">
-            <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-3">
+        <section id="solutions" className="py-20 sm:py-24">
+          <div className="max-w-[1400px] mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-2">
               <div className="max-w-2xl">
                 <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight italic uppercase">
                   Specialized Solutions
@@ -270,8 +270,8 @@ export default function Home() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_100%,rgba(59,130,246,0.15),transparent)]" />
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/5 blur-[120px] rounded-full" />
 
-          <div className="max-w-[1400px] mx-auto px-6 w-full relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="max-w-[1400px] mx-auto px-4 w-full relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-5xl font-black text-white tracking-tight italic leading-tight">
                   THE KLYPSO APP
@@ -319,9 +319,9 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-100 py-4">
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="bg-white border-t border-slate-100 py-3">
+        <div className="max-w-[1400px] mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2">
             <div className="flex items-center gap-3">
               <KlypsoLogo size={24} />
               <span className="text-[10px] font-black text-slate-400 ml-2">

@@ -12,7 +12,7 @@ export const KlypsoLogo = ({
   className?: string;
 }) => {
   return (
-    <div className={`group flex items-center gap-4 select-none ${className}`}>
+    <div className={`group flex items-center gap-3 select-none ${className}`}>
       <div
         style={{ width: size, height: size }}
         className="bg-[#C5A059] rounded-xl flex items-center justify-center font-black text-black shadow-lg shadow-[#C5A059]/10 transition-transform"

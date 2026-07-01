@@ -101,10 +101,10 @@ export default function FounderMonitoring() {
           </p>
         </div>
         <div className="flex gap-4">
-          <button className="h-12 px-6 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
+          <button className="h-12 px-4 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
             <Search className="w-4 h-4" /> Global Search
           </button>
-          <div className="h-12 px-6 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-slate-200">
+          <div className="h-12 px-4 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-slate-200">
             <Zap className="w-4 h-4 text-blue-500 animate-pulse" /> Auto-Sync
             Active
           </div>
@@ -337,7 +337,7 @@ export default function FounderMonitoring() {
           >
             Remind All (Low Risk)
           </Button>
-          <Button className="h-14 px-6 bg-slate-900 text-white rounded-2xl text-[11px] font-black tracking-widest hover:bg-red-600 shadow-2xl shadow-slate-900/20 transition-all uppercase border-none">
+          <Button className="h-14 px-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black tracking-widest hover:bg-red-600 shadow-2xl shadow-slate-900/20 transition-all uppercase border-none">
             Process All Tasks (High Risk)
           </Button>
         </div>

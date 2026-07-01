@@ -51,6 +51,7 @@ import {
 } from "../../../components/ui/dialog";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { InlineCreateDepartmentDialog } from "../../../components/shared/inline-create-department-dialog";
 
 interface Employee {
   id: string;
@@ -144,6 +145,7 @@ export default function HrPage() {
   const [addDeptOpen, setAddDeptOpen] = useState(false);
   const [addDeptLoading, setAddDeptLoading] = useState(false);
   const [deptName, setDeptName] = useState("");
+  const [isInlineDeptOpen, setIsInlineDeptOpen] = useState(false);
 
   // Edit Employee Dialog State
   const [editOpen, setEditOpen] = useState(false);
@@ -290,7 +292,7 @@ export default function HrPage() {
     );
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -422,9 +424,18 @@ export default function HrPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                      Department
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                        Department
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={() => setIsInlineDeptOpen(true)}
+                        className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+                      >
+                        + New Dept
+                      </button>
+                    </div>
                     <Select
                       value={empForm.departmentId}
                       onValueChange={(v) =>
@@ -744,7 +755,7 @@ export default function HrPage() {
                 </div>
                 <Dialog open={addDeptOpen} onOpenChange={setAddDeptOpen}>
                   <DialogTrigger asChild>
-                    <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-6 shadow-sm text-white h-10">
+                    <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-sm text-white h-10">
                       <Plus className="mr-2 h-4 w-4" /> New Dept
                     </Button>
                   </DialogTrigger>
@@ -995,6 +1006,14 @@ export default function HrPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <InlineCreateDepartmentDialog
+        open={isInlineDeptOpen}
+        onOpenChange={setIsInlineDeptOpen}
+        onSuccess={(newDept) => {
+          syncEmployeeData(false);
+          setEmpForm((p) => ({ ...p, departmentId: newDept.id }));
+        }}
+      />
     </div>
   );
 }

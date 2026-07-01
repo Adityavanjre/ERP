@@ -157,8 +157,8 @@ export default function MachinesPage() {
                   Add a machine to the factory floor tracking system.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3 py-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Machine Name</label>
                     <Input

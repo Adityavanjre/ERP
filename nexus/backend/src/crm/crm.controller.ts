@@ -115,20 +115,6 @@ export class CrmController {
     return this.crmService.updateOpportunity(req.user.tenantId, id, data);
   }
 
-  @Patch('customers/:id')
-  @Permissions(Permission.MANAGE_CUSTOMERS)
-  update(
-    @Req() req: any,
-    @Param('id') id: string,
-    @Body() updateCustomerDto: UpdateCustomerDto,
-  ) {
-    return this.crmService.updateCustomer(
-      req.user.tenantId,
-      id,
-      updateCustomerDto,
-    );
-  }
-
   @Post('customers/:id/opening-balance')
   @Permissions(Permission.MANAGE_CUSTOMERS)
   addOpeningBalance(

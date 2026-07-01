@@ -20,7 +20,8 @@ import {
   OnboardingDto,
   CreateWorkspaceDto,
 } from './dto/auth.dto';
-import { TenantType, PlanType, Prisma, User, AuthProvider, SubscriptionStatus } from '@prisma/client';
+import { TenantType, Prisma, User, AuthProvider } from '@prisma/client';
+// REMOVED: PlanType, SubscriptionStatus - subscription system removed
 import { AccessChannel } from '@nexus/shared';
 import { TenantContextService } from '../prisma/tenant-context.service';
 import { AccountingService } from '../accounting/accounting.service';
@@ -99,7 +100,7 @@ export class AuthService {
             slug: finalSlug,
             type: tenantType,
             industry: dto.type,
-            plan: PlanType.Free,
+            // REMOVED: plan assignment - subscription system removed
             isOnboarded: false,
           },
         });
@@ -213,8 +214,7 @@ export class AuthService {
               slug: finalSlug,
               type: tenantType,
               industry: dto.companyType, // PERSIST_INDUSTRY_FIX
-              plan: PlanType.Free,
-              subscriptionStatus: SubscriptionStatus.Active, // Explicitly Active
+              // REMOVED: plan and subscriptionStatus - subscription system removed
               isOnboarded: false,
             },
           });
@@ -707,12 +707,11 @@ export class AuthService {
       throw new UnauthorizedException('You do not have access to this tenant.');
     }
 
-    // 1.1 Enforcement (TEN-003): Block access if workspace is suspended
-    if (membership.tenant.subscriptionStatus === SubscriptionStatus.Suspended) {
-      throw new GoneException(
-        'This workspace has been suspended due to billing or compliance issues. Please contact support.',
-      );
-    }
+    // REMOVED: Subscription status check - subscription system removed
+    // All tenants are now active by default
+    // if (membership.tenant.subscriptionStatus === SubscriptionStatus.Suspended) {
+    //   throw new GoneException('Workspace suspended...');
+    // }
 
     // 2. B2B Context (Keep existing logic)
     const [customer, supplier] = await this.tenantContext.run(
@@ -784,6 +783,7 @@ export class AuthService {
       tenant: {
         id: membership.tenant.id,
         name: membership.tenant.name,
+        slug: membership.tenant.slug,
         isOnboarded: membership.tenant.isOnboarded,
         enabledModules: membership.tenant.enabledModules || [],
       },
@@ -1328,18 +1328,19 @@ export class AuthService {
   }
 
   async verifyMfaLogin(tempToken: string, totpCode: string) {
+    let user: any = null;
     try {
       const payload = this.jwtService.verify(tempToken);
       if (payload.type !== 'mfa_challenge')
         throw new UnauthorizedException('Invalid challenge token');
 
-      const user = await this.prisma.user.findUnique({
+      user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
         include: { memberships: { include: { tenant: true } } },
       });
 
       // Rate limiting for MFA verification to prevent brute-force attacks
-      await this.checkBruteForce(user);
+      if (user) await this.checkBruteForce(user);
 
       if (!user || !user.mfaSecret)
         throw new UnauthorizedException('MFA not configured');
@@ -1359,8 +1360,8 @@ export class AuthService {
             await this.prisma.user.update({
               where: { id: user.id },
               data: {
-                mfaRecoveryCodes: user.mfaRecoveryCodes.filter(
-                  (c) => c !== hashed,
+                mfaRecoveryCodes: (user.mfaRecoveryCodes as string[]).filter(
+                  (c: string) => c !== hashed,
                 ),
               },
             });

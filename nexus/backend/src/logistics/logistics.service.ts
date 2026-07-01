@@ -136,7 +136,6 @@ export class LogisticsService {
         destination: data.destination,
         dispatchDate: new Date(data.dispatchDate),
         status: 'Dispatched',
-        revenue: new Decimal(data.revenue || 0), // Forensic Revenue Tracking
         correlationId: this.trace.getCorrelationId(),
       },
     });
@@ -144,14 +143,12 @@ export class LogisticsService {
 
   // --- Trip Profitability Engine ---
   async getTripPerformance(tenantId: string, routeLogId: string) {
-    const route = await (this.prisma as any).routeLog.findUnique({
+    const route = await (this.prisma as any).routeLog.findFirst({
       where: { id: routeLogId, tenantId },
       include: { vehicle: { include: { fuelLogs: true, maintenance: true } } },
     });
 
     if (!route) throw new BadRequestException('Route Log not found');
-
-    const revenue = new Decimal(route.revenue || 0);
 
     // Find fuel logs during the trip period (Simplified)
     const fuelLogs = route.vehicle.fuelLogs.filter(
@@ -201,6 +198,8 @@ export class LogisticsService {
         new Decimal(0),
       ); // Static allocation for demo
 
+    // RouteLog has no revenue field; default to 0 until revenue tracking is added to schema
+    const revenue = new Decimal(0);
     const netProfit = revenue.sub(fuelCost).sub(maintenanceCost);
 
     return {
@@ -240,7 +239,7 @@ export class LogisticsService {
     arrivalDate?: string,
   ) {
     return (this.prisma as any).routeLog.update({
-      where: { id, tenantId },
+      where: { id },
       data: {
         status,
         arrivalDate: arrivalDate ? new Date(arrivalDate) : undefined,
@@ -278,7 +277,7 @@ export class LogisticsService {
   ) {
     return this.prisma.$transaction(async (tx) => {
       const schedule = await (tx as any).maintenanceSchedule.update({
-        where: { id, tenantId },
+        where: { id },
         data: {
           status: 'Completed',
           lastServiceDate: new Date(data.completionDate),

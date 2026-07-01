@@ -150,7 +150,7 @@ export function CommandPalette(): React.ReactNode {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
         <DialogHeader className="p-4 sm:p-3 border-b border-slate-100">
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-3">
             <DialogTitle className="sr-only">Command Palette</DialogTitle>
             <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
             <div className="relative flex-1">
@@ -198,7 +198,7 @@ export function CommandPalette(): React.ReactNode {
                     onClick={() => runCommand(res.path)}
                     className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 transition-colors">
                         <Icon className="h-5 w-5 text-blue-600" />
                       </div>
@@ -239,7 +239,7 @@ export function CommandPalette(): React.ReactNode {
                         onClick={() => runCommand(command.path)}
                         className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                           <div className="p-3 rounded-2xl bg-slate-100 border border-slate-200 group-hover:border-blue-500/50 transition-colors">
                             <command.icon className="h-5 w-5 text-slate-500 group-hover:text-blue-600" />
                           </div>
@@ -247,7 +247,7 @@ export function CommandPalette(): React.ReactNode {
                             {command.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                             Go
                           </span>

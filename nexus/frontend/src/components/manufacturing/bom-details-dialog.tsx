@@ -112,9 +112,9 @@ export function BOMDetailsDialog({
             <LoadingSpinner text="Loading BOM Structure..." />
           </div>
         ) : bom ? (
-          <div className="space-y-3 py-4">
+          <div className="space-y-3 py-3">
             {/* Header Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Card className="bg-slate-50 border-slate-200 shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">

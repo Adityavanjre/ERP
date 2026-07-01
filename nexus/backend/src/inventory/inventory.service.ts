@@ -13,7 +13,7 @@ import { TraceService } from '../common/services/trace.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { Industry } from '@nexus/shared';
 
-import { BillingService } from '../system/services/billing.service';
+// REMOVED: BillingService - subscription system removed
 import {
   AccountSelectors,
   StandardAccounts,
@@ -34,7 +34,7 @@ export class InventoryService {
   constructor(
     private prisma: PrismaService,
     private ledger: LedgerService,
-    private billing: BillingService,
+    // REMOVED: billing service - subscription system removed
     private hsn: HsnService,
     private readonly traceService: TraceService,
   ) {}
@@ -67,7 +67,7 @@ export class InventoryService {
       );
     }
 
-    const { stock, warehouseId, ...productData } = data;
+    const { stock, warehouseId, basePrice, uom, correlationId: _, pricingMode, width, length, ...productData } = data;
 
     // HSN/GST Rate Validation
     if (productData.hsnCode && productData.gstRate !== undefined) {
@@ -98,108 +98,108 @@ export class InventoryService {
     }
 
     return this.prisma.$transaction(async (tx: any) => {
-      // SECURITY (BILL-001): Atomic Quota Check with row-level lock
-      await this.billing.checkQuota(tenantId, 'maxProducts', tx);
+      // REMOVED: Quota check - subscription system removed
+      // await this.billing.checkQuota(tenantId, 'maxProducts', tx);
 
       const product = await tx.product.create({
         data: {
           ...productData,
-          correlationId:
-            data.correlationId || this.traceService.getCorrelationId(),
-          stock: 0, // Initial stock is handled via movement logic
+          price: basePrice !== undefined ? basePrice : 0,
+          baseUnit: uom || 'pcs',
+          pricingMode: (pricingMode as any) || 'piece',
+          width: width ?? null,
+          length: length ?? null,
+          stock: 0,
           tenantId,
         },
       });
 
       if (stock && stock > 0) {
-        if (!warehouseId) {
-          throw new BadRequestException(
-            'Warehouse ID is required for initial stock.',
-          );
+        let resolvedWarehouseId = warehouseId;
+        if (!resolvedWarehouseId) {
+          const defaultWh = await tx.warehouse.findFirst({ where: { tenantId } });
+          resolvedWarehouseId = defaultWh?.id;
         }
 
-        // Log movement through WarehouseService (which now has tracing too)
-        // Note: WarehouseService is not directly available here to avoid circularity if possible,
-        // but it's usually better to just use prisma/tx here.
-
-        await tx.stockMovement.create({
-          data: {
-            tenantId,
-            productId: product.id,
-            warehouseId,
-            quantity: stock,
-            type: 'IN',
-            reference: 'INITIAL-STOCK',
-            notes: 'Initial stock on product creation',
-            correlationId:
-              data.correlationId || this.traceService.getCorrelationId(),
-          },
-        });
-
-        await tx.stockLocation.upsert({
-          where: {
-            tenantId_productId_warehouseId_notes: {
+        if (resolvedWarehouseId) {
+          await tx.stockMovement.create({
+            data: {
               tenantId,
               productId: product.id,
-              warehouseId,
-              notes: '',
-            },
-          },
-          create: {
-            tenantId,
-            productId: product.id,
-            warehouseId,
-            quantity: stock,
-            notes: '',
-          },
-          update: {
-            quantity: { increment: stock },
-          },
-        });
-
-        await tx.product.update({
-          where: { id: product.id, tenantId },
-          data: { stock },
-        });
-
-        // 4. Ledger Sync for Initial Stock
-        const invAccount = await tx.account.findFirst({
-          where: { tenantId, name: { in: AccountSelectors.INVENTORY } },
-        });
-        const equityAccount = await tx.account.findFirst({
-          where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
-        });
-
-        if (invAccount && equityAccount) {
-          const movementValue = new Decimal(product.costPrice || 0).mul(
-            new Decimal(stock),
-          );
-          await this.ledger.createJournalEntry(
-            tenantId,
-            {
-              date: new Date().toISOString(),
-              description: `Initial Stock: ${product.name}`,
-              reference: `OB-${product.sku}`,
+              warehouseId: resolvedWarehouseId,
+              quantity: stock,
+              type: 'IN',
+              reference: 'INITIAL-STOCK',
+              notes: 'Initial stock on product creation',
               correlationId:
                 data.correlationId || this.traceService.getCorrelationId(),
-              transactions: [
-                {
-                  accountId: invAccount.id,
-                  type: 'Debit',
-                  amount: movementValue.toNumber(),
-                  description: 'Opening Stock Entry',
-                },
-                {
-                  accountId: equityAccount.id,
-                  type: 'Credit',
-                  amount: movementValue.toNumber(),
-                  description: 'Opening Stock Entry',
-                },
-              ],
             },
-            tx,
-          );
+          });
+
+          await tx.stockLocation.upsert({
+            where: {
+              tenantId_productId_warehouseId_notes: {
+                tenantId,
+                productId: product.id,
+                warehouseId: resolvedWarehouseId,
+                notes: '',
+              },
+            },
+            create: {
+              tenantId,
+              productId: product.id,
+              warehouseId: resolvedWarehouseId,
+              quantity: stock,
+              notes: '',
+            },
+            update: {
+              quantity: { increment: stock },
+            },
+          });
+
+          const invAccount = await tx.account.findFirst({
+            where: { tenantId, name: { in: AccountSelectors.INVENTORY } },
+          });
+          const equityAccount = await tx.account.findFirst({
+            where: { tenantId, name: StandardAccounts.OPENING_BALANCE_EQUITY },
+          });
+
+          if (invAccount && equityAccount) {
+            const movementValue = new Decimal(product.costPrice || 0).mul(
+              new Decimal(stock),
+            );
+            await this.ledger.createJournalEntry(
+              tenantId,
+              {
+                date: new Date().toISOString(),
+                description: `Initial Stock: ${product.name}`,
+                reference: `OB-${product.sku}`,
+                correlationId:
+                  data.correlationId || this.traceService.getCorrelationId(),
+                transactions: [
+                  {
+                    accountId: invAccount.id,
+                    type: 'Debit',
+                    amount: movementValue.toNumber(),
+                    description: 'Opening Stock Entry',
+                  },
+                  {
+                    accountId: equityAccount.id,
+                    type: 'Credit',
+                    amount: movementValue.toNumber(),
+                    description: 'Opening Stock Entry',
+                  },
+                ],
+              },
+              tx,
+            );
+          }
         }
+
+        await tx.product.update({
+          where: { id: product.id },
+          data: { stock },
+        });
       }
 
       return product;
@@ -254,6 +254,7 @@ export class InventoryService {
         OR: [
           { sku: code },
           { barcode: code },
+          { skuAlias: code },
           { name: { contains: code, mode: 'insensitive' } },
         ],
       },
@@ -271,13 +272,19 @@ export class InventoryService {
     data: any,
     userId?: string,
   ) {
+    const { basePrice, uom, correlationId: _, pricingMode, width, length, ...productData } = data;
+    const updateData: any = {
+      ...productData,
+    };
+    if (basePrice !== undefined) updateData.price = basePrice;
+    if (uom !== undefined) updateData.baseUnit = uom;
+    if (pricingMode !== undefined) updateData.pricingMode = pricingMode;
+    if (width !== undefined) updateData.width = width;
+    if (length !== undefined) updateData.length = length;
+
     return this.prisma.product.update({
-      where: { id, tenantId } as any,
-      data: {
-        ...data,
-        correlationId:
-          data.correlationId || this.traceService.getCorrelationId(),
-      },
+      where: { id },
+      data: updateData,
     });
   }
 
@@ -310,7 +317,7 @@ export class InventoryService {
   ) {
     const amount = new Decimal(quantity);
 
-    const product = await tx.product.findUnique({
+    const product = await tx.product.findFirst({
       where: options.tenantId
         ? { id: productId, tenantId: options.tenantId }
         : { id: productId },
@@ -458,9 +465,7 @@ export class InventoryService {
             costPrice: Number(data.cost || data.costprice) || 0,
             gstRate: Number(data.gstrate || data.tax) || 18,
             hsnCode: data.hsncode || data.hsn,
-            uom: data.uom || 'Unit',
-            correlationId:
-              options.correlationId || this.traceService.getCorrelationId(),
+            baseUnit: data.uom || 'Unit',
           };
 
           if (existing) {
@@ -515,7 +520,7 @@ export class InventoryService {
             });
 
             await tx.product.update({
-              where: { id: product.id, tenantId },
+              where: { id: product.id },
               data: { stock: { increment: importStock } },
             });
 
@@ -569,8 +574,8 @@ export class InventoryService {
               },
               tx,
             );
-          }
         }
+      }
 
         if (isDryRun) {
           dryRunResults = results;

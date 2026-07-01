@@ -104,7 +104,7 @@ export default function ReportsPage() {
     );
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">

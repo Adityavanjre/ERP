@@ -31,7 +31,7 @@ async function runSuperSeeder() {
   await prisma.workflowNode.deleteMany({});
   await prisma.workflowDefinition.deleteMany({});
   await prisma.fieldDefinition.deleteMany({});
-  await prisma.modelAccess.deleteMany({});
+  await prisma.accessRight.deleteMany({});
   await prisma.modelDefinition.deleteMany({});
 
   // 1. HR: Departments & Employees
@@ -111,7 +111,7 @@ async function runSuperSeeder() {
   if (app) {
     const md = await prisma.modelDefinition.create({ data: { moduleId: app.id, name: 'DynamicAsset', label: 'Dynamic Asset' } });
     await prisma.fieldDefinition.create({ data: { modelId: md.id, name: 'tag', label: 'Tag', type: 'Char' } });
-    await prisma.modelAccess.create({ data: { modelId: md.id, role: 'Owner', permRead: true, permWrite: true, permCreate: true, permUnlink: true } });
+    await prisma.accessRight.create({ data: { modelId: md.id, role: 'Owner', permRead: true, permWrite: true, permCreate: true, permUnlink: true } });
     await prisma.record.create({ data: { tenantId, modelName: 'DynamicAsset', data: { tag: 'TEST-001' } } });
   }
   const wf = await prisma.workflowDefinition.create({ data: { name: 'Auto Pipeline', modelName: 'Order' } });

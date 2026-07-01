@@ -116,7 +116,7 @@ export default function WorkOrdersPage() {
     return <LoadingSpinner className="h-full" text="Loading work orders..." />;
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -191,7 +191,7 @@ export default function WorkOrdersPage() {
       </div>
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 md:py-4 px-4 md:px-6">
+        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 md:py-3 px-4 md:px-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
@@ -216,7 +216,7 @@ export default function WorkOrdersPage() {
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow className="border-slate-100 hover:bg-transparent">
-                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-8">
+                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest pl-4">
                   Order ID
                 </TableHead>
                 <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -231,7 +231,7 @@ export default function WorkOrdersPage() {
                 <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Timeline
                 </TableHead>
-                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-8">
+                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-4">
                   Actions
                 </TableHead>
               </TableRow>
@@ -242,7 +242,7 @@ export default function WorkOrdersPage() {
                   key={wo.id}
                   className="border-slate-100 hover:bg-slate-50/50 transition-all group"
                 >
-                  <TableCell className="pl-8">
+                  <TableCell className="pl-4">
                     <div className="font-black text-blue-600 tracking-widest text-[11px]">
                       WO-{wo.orderNumber}
                     </div>
@@ -283,7 +283,7 @@ export default function WorkOrdersPage() {
                         : "Pending Time"}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right pr-8">
+                  <TableCell className="text-right pr-4">
                     {wo.status !== "Completed" ? (
                       <CompleteWorkOrderDialog
                         workOrder={wo}

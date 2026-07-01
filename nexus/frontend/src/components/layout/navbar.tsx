@@ -34,7 +34,7 @@ export const Navbar = () => {
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {offlineMode && (
           <div className="hidden lg:flex items-center gap-1.5 p-1 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm">
             <div

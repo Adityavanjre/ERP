@@ -24,6 +24,7 @@ import {
 import { Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { InlineCreateProductDialog } from "../shared/inline-create-product-dialog";
 
 interface Product {
   id: string;
@@ -54,6 +55,7 @@ export function CreateBOMDialog({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
 
   // Form State
   const [name, setName] = useState("");
@@ -159,8 +161,8 @@ export function CreateBOMDialog({
           <DialogTitle>Create New Bill of Materials</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-3 py-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-3 py-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>BOM Name</Label>
               <Input
@@ -170,7 +172,16 @@ export function CreateBOMDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Finished Good (Output)</Label>
+              <div className="flex justify-between items-center">
+                <Label>Finished Good (Output)</Label>
+                <button
+                  type="button"
+                  onClick={() => setIsProductCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-700"
+                >
+                  + New Product
+                </button>
+              </div>
               <Select
                 value={selectedProduct}
                 onValueChange={setSelectedProduct}
@@ -209,7 +220,7 @@ export function CreateBOMDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label>Output Quantity</Label>
               <NumericInput value={quantity} onChange={setQuantity} />
@@ -243,9 +254,18 @@ export function CreateBOMDialog({
                   finished items this recipe produces.
                 </p>
               </div>
-              <Button size="sm" variant="outline" onClick={addItem}>
-                <Plus className="w-4 h-4 mr-1" /> Add Component
-              </Button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsProductCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-700"
+                >
+                  + New Product
+                </button>
+                <Button size="sm" variant="outline" onClick={addItem}>
+                  <Plus className="w-4 h-4 mr-1" /> Add Component
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-3">

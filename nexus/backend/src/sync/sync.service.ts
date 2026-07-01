@@ -196,7 +196,17 @@ export class SyncService {
         address: true,
         gstin: true,
         state: true,
+        slug: true,
+        panNumber: true,
+        phone: true,
+        email: true,
+        authorizedSignatory: true,
       },
+    });
+
+    const bankAccounts = await this.prisma.bankAccount.findMany({
+      where: { tenantId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
     });
 
     const tenantUser = await this.prisma.tenantUser.findUnique({
@@ -224,7 +234,7 @@ export class SyncService {
       } else if (roleKey === 'CA') {
         permissions['accounting'] = ['read', 'write'];
       } else {
-        permissions[rawRole.toLowerCase()] = ['read', 'write'];
+        permissions[String(rawRole).toLowerCase()] = ['read', 'write'];
       }
     }
 
@@ -237,7 +247,13 @@ export class SyncService {
         address: tenant?.address || '',
         gstin: tenant?.gstin || '',
         state: tenant?.state || '',
+        slug: tenant?.slug || '',
+        panNumber: tenant?.panNumber || '',
+        phone: tenant?.phone || '',
+        email: tenant?.email || '',
+        authorizedSignatory: tenant?.authorizedSignatory || '',
       },
+      bankAccounts,
     };
   }
 

@@ -191,7 +191,7 @@ export default function StockMovementsPage() {
     );
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div>
         <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
           <ArrowLeftRight className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />

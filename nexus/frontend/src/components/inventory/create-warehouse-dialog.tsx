@@ -82,7 +82,7 @@ export function CreateWarehouseDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3 pt-4">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"
@@ -141,14 +141,14 @@ export function CreateWarehouseDialog({
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-2xl font-bold h-12 px-6"
+              className="rounded-2xl font-bold h-12 px-3"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-12 px-4 font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-12 px-3 font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

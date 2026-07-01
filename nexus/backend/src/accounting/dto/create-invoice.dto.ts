@@ -27,9 +27,9 @@ class InvoiceItemDto {
 }
 
 export class CreateInvoiceDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  customerId: string;
+  customerId?: string;
 
   @IsOptional()
   @IsString()
@@ -52,4 +52,46 @@ export class CreateInvoiceDto {
   @ValidateNested({ each: true })
   @Type(() => InvoiceItemDto)
   items: InvoiceItemDto[];
+
+  @IsOptional()
+  @IsString()
+  bankAccountId?: string;
+
+  @IsOptional()
+  @IsString()
+  termsOfPayment?: string;
+
+  @IsOptional()
+  @IsString()
+  termsOfDelivery?: string;
+
+  @IsOptional()
+  @IsString()
+  vehicleNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  buyersOrderNo?: string;
+
+  @IsOptional()
+  @IsString()
+  eWayBillNo?: string;
+
+  @IsOptional()
+  billingAddress?: string;
+
+  @IsOptional()
+  shippingAddress?: string;
+
+  @IsOptional()
+  supplierAddress?: string;
+
+  @IsOptional()
+  billingMode?: string;
+
+  @IsOptional()
+  itemSections?: any;
+
+  @IsOptional()
+  projectId?: string;
 }

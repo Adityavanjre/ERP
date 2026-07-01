@@ -107,7 +107,7 @@ export default function StudioPage() {
   }, [appName, modelName, modelLabel, fields]);
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-4 pt-2 md:pt-3">
+    <div className="flex-1 space-y-3 p-4 md:p-4 pt-2 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
@@ -121,14 +121,14 @@ export default function StudioPage() {
         <div className="flex flex-wrap w-full md:w-auto gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
           <Button
             variant="ghost"
-            className="flex-1 md:flex-none bg-fuchsia-50 text-fuchsia-700 font-bold rounded-lg px-6"
+            className="flex-1 md:flex-none bg-fuchsia-50 text-fuchsia-700 font-bold rounded-lg px-4"
           >
             <Database className="mr-2 h-4 w-4" /> Object Builder
           </Button>
           <Link href="/studio/workflows" className="flex-1 md:flex-none">
             <Button
               variant="ghost"
-              className="w-full text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-bold rounded-lg px-6"
+              className="w-full text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-bold rounded-lg px-4"
             >
               <GitBranch className="mr-2 h-4 w-4" /> Workflows
             </Button>
@@ -147,7 +147,7 @@ export default function StudioPage() {
               Select app and define object details.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-3">
+          <CardContent className="space-y-3 pt-3">
             <div className="space-y-2">
               <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                 App Name
@@ -287,7 +287,7 @@ export default function StudioPage() {
               Grant permissions to system roles.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 pt-3">
+          <CardContent className="space-y-3 pt-3">
             {["Admin", "Manager", "Employee", "Viewer"].map((role) => (
               <div
                 key={role}

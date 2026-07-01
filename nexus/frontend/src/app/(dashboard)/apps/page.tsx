@@ -100,7 +100,7 @@ export default function AppsMarketplace() {
   );
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">

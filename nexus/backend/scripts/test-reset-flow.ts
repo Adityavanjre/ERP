@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 // Simulating UsersService.resetPassword logic

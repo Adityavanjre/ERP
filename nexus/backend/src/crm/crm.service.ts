@@ -258,13 +258,6 @@ export class CrmService {
     });
   }
 
-  async updateCustomer(tenantId: string, id: string, data: any) {
-    return this.prisma.customer.update({
-      where: { id, tenantId },
-      data,
-    });
-  }
-
   async exportCustomers(tenantId: string) {
     const customers = await this.prisma.customer.findMany({
       where: { tenantId, isDeleted: false },

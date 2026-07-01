@@ -73,7 +73,7 @@ export default function PatientsPage() {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 px-6">
+          <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 px-4">
             <Plus className="h-4 w-4 mr-2" />
             Add New Patient
           </Button>

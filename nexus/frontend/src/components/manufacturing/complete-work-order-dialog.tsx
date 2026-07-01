@@ -13,7 +13,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
-import { CheckCircle2, Factory, User } from "lucide-react";
+import { CheckCircle2, Factory, User, Plus } from "lucide-react";
 import { LoadingSpinner } from "../../components/ui/loading-spinner";
 import {
   Select,
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import { InlineCreateWarehouseDialog } from "../shared/inline-create-warehouse-dialog";
 
 interface MinimalWorkOrder {
   id: string;
@@ -76,6 +77,7 @@ export function CompleteWorkOrderDialog({
   const [warehouseId, setWarehouseId] = useState("");
   const [machines, setMachines] = useState<Machine[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [isWarehouseCreateOpen, setIsWarehouseCreateOpen] = useState(false);
 
   const fetchMachinesAndWarehouses = useCallback(async () => {
     try {
@@ -161,7 +163,7 @@ export function CompleteWorkOrderDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-3 py-3">
           <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               Product Details
@@ -241,7 +243,16 @@ export function CompleteWorkOrderDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label className="text-slate-700 font-bold">Target Warehouse <span className="text-slate-400 font-normal text-xs">(Optional)</span></Label>
+            <div className="flex justify-between items-center">
+              <Label className="text-slate-700 font-bold">Target Warehouse <span className="text-slate-400 font-normal text-xs">(Optional)</span></Label>
+              <button
+                type="button"
+                onClick={() => setIsWarehouseCreateOpen(true)}
+                className="text-[9px] font-bold text-blue-500 hover:text-blue-700 hover:underline flex items-center gap-1"
+              >
+                <Plus className="h-3 w-3" /> New Warehouse
+              </button>
+            </div>
             <Select value={warehouseId} onValueChange={setWarehouseId}>
               <SelectTrigger className="h-10">
                 <SelectValue placeholder="Select warehouse (optional)" />
@@ -297,6 +308,14 @@ export function CompleteWorkOrderDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <InlineCreateWarehouseDialog
+        open={isWarehouseCreateOpen}
+        onOpenChange={setIsWarehouseCreateOpen}
+        onSuccess={(newWarehouse) => {
+          setWarehouses((prev) => [...prev, newWarehouse]);
+          setWarehouseId(newWarehouse.id);
+        }}
+      />
     </Dialog>
   );
 }

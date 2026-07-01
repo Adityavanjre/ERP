@@ -31,7 +31,7 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { Module } from '../common/decorators/module.decorator';
 import { MfaGuard } from '../common/guards/mfa.guard';
 import { MfaRequired } from '../common/decorators/mfa-required.decorator';
-import { PlanLimit } from '../common/guards/plan.guard';
+// REMOVED: PlanLimit decorator - subscription system removed
 
 
 import { Gstr1ExportService } from './services/gstr1-export.service';
@@ -70,13 +70,19 @@ export class AccountingController {
   }
 
   @Post('bank-statements')
-  @Permissions(Permission.CREATE_PAYMENT)
+  @Permissions(Permission.RECORD_PAYMENT)
   uploadBankStatement(@Req() req: AuthenticatedRequest, @Body() data: any) {
     return this.brsService.uploadStatement(req.user.tenantId as string, data.accountId, data);
   }
 
+  @Get('bank-statements/lines/:lineId/payments')
+  @Permissions(Permission.VIEW_REPORTS)
+  getLinePayments(@Req() req: AuthenticatedRequest, @Param('lineId') lineId: string) {
+    return this.brsService.getPaymentsForLine(req.user.tenantId as string, lineId);
+  }
+
   @Post('bank-statements/:id/auto-match')
-  @Permissions(Permission.CREATE_PAYMENT)
+  @Permissions(Permission.RECORD_PAYMENT)
   autoMatchBankStatement(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.brsService.autoMatch(req.user.tenantId as string, id);
   }
@@ -117,7 +123,7 @@ export class AccountingController {
 
   @Post('journals')
   @Permissions(Permission.LOCK_MONTH)
-  @PlanLimit('maxLedgerEntries')
+  // REMOVED: @PlanLimit('maxLedgerEntries') - subscription system removed
   createJournal(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateJournalEntryDto,
@@ -130,7 +136,7 @@ export class AccountingController {
 
   @Post('invoices')
   @Permissions(Permission.CREATE_INVOICE)
-  @PlanLimit('maxInvoicesPerMonth')
+  // REMOVED: @PlanLimit('maxInvoicesPerMonth') - subscription system removed
   createInvoice(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateInvoiceDto,
@@ -143,7 +149,7 @@ export class AccountingController {
 
   @Post('invoices/bulk')
   @Permissions(Permission.CREATE_INVOICE)
-  @PlanLimit('maxInvoicesPerMonth')
+  // REMOVED: @PlanLimit('maxInvoicesPerMonth') - subscription system removed
   createInvoicesBulk(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateInvoiceDto[],
@@ -179,7 +185,7 @@ export class AccountingController {
 
   @Post('payments')
   @Permissions(Permission.RECORD_PAYMENT)
-  @PlanLimit('maxLedgerEntries')
+  // REMOVED: @PlanLimit('maxLedgerEntries') - subscription system removed
   createPayment(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreatePaymentDto,
@@ -203,7 +209,7 @@ export class AccountingController {
 
   @Post('credit-notes')
   @Permissions(Permission.CREATE_INVOICE)
-  @PlanLimit('maxLedgerEntries')
+  // REMOVED: @PlanLimit('maxLedgerEntries') - subscription system removed
   createCreditNote(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateCreditNoteDto,
@@ -222,7 +228,7 @@ export class AccountingController {
 
   @Post('debit-notes')
   @Permissions(Permission.CREATE_INVOICE)
-  @PlanLimit('maxLedgerEntries')
+  // REMOVED: @PlanLimit('maxLedgerEntries') - subscription system removed
   createDebitNote(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateDebitNoteDto,
@@ -290,7 +296,7 @@ export class AccountingController {
 
   @Get('transactions/export-csv')
   @Permissions(Permission.VIEW_REPORTS)
-  @PlanLimit('maxExportsPerDay')
+  // REMOVED: @PlanLimit('maxExportsPerDay') - subscription system removed
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename=general_ledger.csv')
   exportTransactionsCsv(@Req() req: AuthenticatedRequest) {
@@ -310,7 +316,7 @@ export class AccountingController {
 
   @Get('export/tally')
   @Permissions(Permission.EXPORT_TALLY)
-  @PlanLimit('maxExportsPerDay')
+  // REMOVED: @PlanLimit('maxExportsPerDay') - subscription system removed
   @Header('Content-Type', 'application/xml')
   @Header('Content-Disposition', 'attachment; filename=tally_export.xml')
   getTallyExport(
@@ -347,7 +353,7 @@ export class AccountingController {
 
   @Get('export/masters')
   @Permissions(Permission.EXPORT_TALLY)
-  @PlanLimit('maxExportsPerDay')
+  // REMOVED: @PlanLimit('maxExportsPerDay') - subscription system removed
   @Header('Content-Type', 'application/xml')
   @Header('Content-Disposition', 'attachment; filename=tally_masters.xml')
   getLedgerMasters(@Req() req: AuthenticatedRequest) {
@@ -547,7 +553,7 @@ export class AccountingController {
 
   @Get('export/gstr1')
   @Permissions(Permission.EXPORT_TALLY)
-  @PlanLimit('maxExportsPerDay')
+  // REMOVED: @PlanLimit('maxExportsPerDay') - subscription system removed
   exportGstr1(
     @Req() req: AuthenticatedRequest,
     @Query('month') month?: number,

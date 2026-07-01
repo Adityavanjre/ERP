@@ -3,7 +3,7 @@ import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { JwtService } from '@nestjs/jwt';
-import { Role, SubscriptionStatus } from '@prisma/client';
+import { SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Audit Rectification Verification (e2e)', () => {
@@ -29,7 +29,7 @@ describe('Audit Rectification Verification (e2e)', () => {
   const createToken = (
     userId: string,
     tenantId?: string,
-    role = Role.Owner,
+    role = 'Owner',
     isSuperAdmin = false,
   ) => {
     return jwtService.sign({
@@ -57,7 +57,7 @@ describe('Audit Rectification Verification (e2e)', () => {
         data: {
           userId: user!.id,
           tenantId: tenant.id,
-          role: Role.Owner,
+          permissions: { role: 'Owner' },
         },
       });
 

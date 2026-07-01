@@ -36,6 +36,10 @@ interface TenantProfile {
   address: string;
   gstin: string;
   state: string;
+  panNumber?: string;
+  phone?: string;
+  email?: string;
+  authorizedSignatory?: string;
 }
 
 interface PBACState {
@@ -51,6 +55,8 @@ interface UXContextType {
   pbac: PBACState;
   hasPermission: (resource: string, action: string) => boolean;
   hasModule: (moduleName: string) => boolean;
+  tenantProfile: TenantProfile;
+  refreshMetadata: () => Promise<void>;
 }
 
 interface ConfirmOptions {
@@ -159,27 +165,31 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("session-expired", handleSessionExpiry);
   }, [pathname]);
 
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const res = await api.get("sync/metadata");
-        if (res.data) {
-          const newState = {
-            permissions: res.data.permissions || {},
-            modules: res.data.modules || [],
-            tenant: res.data.tenant || { name: "", logoUrl: "", address: "", gstin: "", state: "" },
-          };
-          setPbac(newState);
-          localStorage.setItem("nexus_pbac_cache", JSON.stringify(newState));
-        }
-      } catch (err) {
-        console.warn("Failed to fetch PBAC metadata", err);
+  const emptyProfile: TenantProfile = { name: "", logoUrl: "", address: "", gstin: "", state: "" };
+  const tenantProfile: TenantProfile = pbac.tenant || emptyProfile;
+
+  const refreshMetadata = async () => {
+    try {
+      const res = await api.get("sync/metadata");
+      if (res.data) {
+        const newState = {
+          permissions: res.data.permissions || {},
+          modules: res.data.modules || [],
+          tenant: res.data.tenant || emptyProfile,
+        };
+        setPbac(newState);
+        localStorage.setItem("nexus_pbac_cache", JSON.stringify(newState));
       }
-    };
+    } catch (err) {
+      console.warn("Failed to fetch PBAC metadata", err);
+    }
+  };
+
+  useEffect(() => {
     // Only fetch once on mount (not on every pathname change)
     // Cache in localStorage is already loaded as initial state above
     if (!pathname?.includes("/login") && !pathname?.includes("/forgot-password")) {
-      fetchMetadata();
+      void refreshMetadata();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps = fetch once on mount only
@@ -251,14 +261,14 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UXContext.Provider
-      value={{ showConfirm, triggerSessionExpiry, setUILocked, pbac, hasPermission, hasModule }}
+      value={{ showConfirm, triggerSessionExpiry, setUILocked, pbac, hasPermission, hasModule, tenantProfile, refreshMetadata }}
     >
       {children}
 
       {/* UI Lock Overlay */}
       {isUILocked && (
         <div className="fixed inset-0 z-[99999] bg-white/80 backdrop-blur-md flex items-center justify-center cursor-wait animate-in fade-in duration-300">
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-3">
             <div className="h-12 w-12 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
             <div className="text-slate-900 font-bold text-[10px] tracking-widest uppercase animate-pulse">
               Processing Request...
@@ -299,7 +309,7 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
                   : "default"
               }
               className={cn(
-                "rounded-xl font-black uppercase tracking-wider text-[10px] h-11 px-6",
+                "rounded-xl font-black uppercase tracking-wider text-[10px] h-11 px-4",
                 confirmOptions?.variant !== "destructive"
                   ? "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20"
                   : "",

@@ -181,8 +181,11 @@ export class PrismaService
                                     }
                                   } else {
                                     queryArgs.where = queryArgs.where || {};
+                                    if (op === 'findUnique') {
+                                      queryArgs.where = PrismaService.flattenCompoundUnique(queryArgs.where);
+                                      op = 'findFirst';
+                                    }
                                     enforceIsolation(queryArgs.where);
-                                    if (op === 'findUnique') op = 'findFirst';
                                   }
 
                                   return modelTarget[op](queryArgs);
@@ -218,6 +221,23 @@ export class PrismaService
         return target[prop];
       },
     });
+  }
+
+  private static flattenCompoundUnique(where: any): any {
+    if (!where || typeof where !== 'object') return where;
+    const keys = Object.keys(where);
+    if (keys.length === 1) {
+      const compoundKey = keys[0];
+      if (
+        compoundKey.includes('_') &&
+        typeof where[compoundKey] === 'object' &&
+        where[compoundKey] !== null &&
+        !Array.isArray(where[compoundKey])
+      ) {
+        return { ...where[compoundKey] };
+      }
+    }
+    return where;
   }
 
   private hasCreatedById(modelName: string): boolean {
@@ -330,11 +350,12 @@ export class PrismaService
                 }
               } else {
                 args.where = args.where || {};
-                enforceIsolation(args.where);
                 // Handle findUnique isolation - Prisma doesn't allow extra fields in findUnique
                 if (operation === 'findUnique') {
+                  args.where = PrismaService.flattenCompoundUnique(args.where);
                   return this._isolatedClient[model].findFirst(args);
                 }
+                enforceIsolation(args.where);
               }
 
               return query(args);

@@ -4,7 +4,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { LedgerService } from './ledger.service';
 import { HsnService } from '../../inventory/services/hsn.service';
 import { TraceService } from '../../common/services/trace.service';
-import { BillingService } from '../../system/services/billing.service';
 import { InventoryService } from '../../inventory/inventory.service';
 import { NotFoundException } from '@nestjs/common';
 
@@ -26,7 +25,6 @@ describe('TEN-001: IDOR Isolation Audit (Unit Tests)', () => {
         { provide: LedgerService, useValue: {} },
         { provide: HsnService, useValue: {} },
         { provide: TraceService, useValue: {} },
-        { provide: BillingService, useValue: {} },
         { provide: InventoryService, useValue: {} },
       ],
     }).compile();

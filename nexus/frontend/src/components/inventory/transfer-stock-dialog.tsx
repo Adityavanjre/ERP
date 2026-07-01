@@ -22,6 +22,7 @@ import {
 } from "../../components/ui/select";
 import { toast } from "sonner";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
+import { InlineCreateWarehouseDialog } from "../shared/inline-create-warehouse-dialog";
 
 interface Product {
   id: string;
@@ -65,6 +66,7 @@ export function TransferStockDialog({
   const [selectedProduct, setSelectedProduct] = useState("");
   const [destinationWarehouseId, setDestinationWarehouseId] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [isWarehouseCreateOpen, setIsWarehouseCreateOpen] = useState(false);
 
   const fetchWarehouses = useCallback(async () => {
     try {
@@ -177,9 +179,15 @@ export function TransferStockDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Destination Warehouse
-            </Label>
+            <div className="flex justify-between items-center">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Destination Warehouse
+              </Label>
+              <button type="button" onClick={() => setIsWarehouseCreateOpen(true)}
+                className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline">
+                + New Warehouse
+              </button>
+            </div>
             <Select
               value={destinationWarehouseId}
               onValueChange={setDestinationWarehouseId}
@@ -237,6 +245,11 @@ export function TransferStockDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <InlineCreateWarehouseDialog
+        open={isWarehouseCreateOpen}
+        onOpenChange={setIsWarehouseCreateOpen}
+        onSuccess={(w) => { fetchWarehouses(); setDestinationWarehouseId(w.id); }}
+      />
     </Dialog>
   );
 }

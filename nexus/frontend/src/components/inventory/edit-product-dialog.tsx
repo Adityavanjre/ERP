@@ -92,7 +92,13 @@ export function EditProductDialog({
       if (!product) return;
       setLoading(true);
       try {
-        await api.patch(`inventory/products/${product.id}`, data);
+        const { price, baseUnit, category, ...rest } = data;
+        const payload = {
+          ...rest,
+          basePrice: price,
+          uom: baseUnit,
+        };
+        await api.patch(`inventory/products/${product.id}`, payload);
         toast.success("Product updated successfully");
         onOpenChange(false);
         onSuccess?.();
@@ -122,8 +128,8 @@ export function EditProductDialog({
             Modify the product catalog details. Note: Stock levels cannot be edited here.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"
@@ -161,7 +167,7 @@ export function EditProductDialog({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="category"
@@ -242,14 +248,14 @@ export function EditProductDialog({
               type="button"
               variant="ghost"
               onClick={handleCancel}
-              className="rounded-xl font-bold h-11 px-6"
+              className="rounded-xl font-bold h-11 px-3"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 px-4 font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
+              className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-11 px-3 font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -20,7 +20,8 @@ import {
 import { Label } from "../ui/label";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
-import { Play, Loader2, Warehouse } from "lucide-react";
+import { Play, Loader2, Warehouse, Plus } from "lucide-react";
+import { InlineCreateWarehouseDialog } from "../shared/inline-create-warehouse-dialog";
 
 interface WarehouseItem {
   id: string;
@@ -57,6 +58,7 @@ export function StartProductionDialog({
   const [machines, setMachines] = useState<MachineItem[]>([]);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState("");
   const [selectedMachineId, setSelectedMachineId] = useState("");
+  const [isWarehouseCreateOpen, setIsWarehouseCreateOpen] = useState(false);
 
   const fetchInitialData = async () => {
     try {
@@ -124,11 +126,11 @@ export function StartProductionDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-4 space-y-3">
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                <Warehouse className="h-6 w-6 text-amber-500" />
+        <div className="p-3 space-y-3">
+          <div className="space-y-3">
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-white shadow-sm flex items-center justify-center">
+                <Warehouse className="h-5 w-5 text-amber-500" />
               </div>
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -141,14 +143,23 @@ export function StartProductionDialog({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                Warehouse Location (Optional)
-              </Label>
+              <div className="flex justify-between items-center">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  Warehouse Location (Optional)
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => setIsWarehouseCreateOpen(true)}
+                  className="text-[9px] font-bold text-blue-500 hover:text-blue-700 hover:underline flex items-center gap-1"
+                >
+                  <Plus className="h-3 w-3" /> New Warehouse
+                </button>
+              </div>
               <Select
                 value={selectedWarehouseId}
                 onValueChange={setSelectedWarehouseId}
               >
-                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50 font-semibold focus:ring-amber-500 text-slate-700">
+                <SelectTrigger className="h-10 rounded-xl border-slate-200 bg-slate-50 font-semibold focus:ring-amber-500 text-slate-700">
                   <SelectValue placeholder="Select Warehouse (Optional)" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-slate-100">
@@ -162,7 +173,7 @@ export function StartProductionDialog({
               </Select>
             </div>
 
-            <div className="space-y-2 pt-2">
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                 Assigned Machine (Optional)
               </Label>
@@ -170,7 +181,7 @@ export function StartProductionDialog({
                 value={selectedMachineId}
                 onValueChange={setSelectedMachineId}
               >
-                <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-slate-50 font-semibold focus:ring-amber-500 text-slate-700">
+                <SelectTrigger className="h-11 rounded-2xl border-slate-200 bg-slate-50 font-semibold focus:ring-amber-500 text-slate-700">
                   <SelectValue placeholder="Select Machine" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-slate-100">
@@ -184,7 +195,7 @@ export function StartProductionDialog({
             </div>
           </div>
 
-          <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+          <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
             <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
               <strong>Note:</strong> Starting production will automatically
               deduct the required raw materials from the selected warehouse and
@@ -194,7 +205,7 @@ export function StartProductionDialog({
           </div>
         </div>
 
-        <DialogFooter className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+        <DialogFooter className="p-3 bg-slate-50 border-t border-slate-100 flex gap-2">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
@@ -215,6 +226,14 @@ export function StartProductionDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <InlineCreateWarehouseDialog
+        open={isWarehouseCreateOpen}
+        onOpenChange={setIsWarehouseCreateOpen}
+        onSuccess={(newWarehouse) => {
+          setWarehouses((prev) => [...prev, newWarehouse]);
+          setSelectedWarehouseId(newWarehouse.id);
+        }}
+      />
     </Dialog>
   );
 }

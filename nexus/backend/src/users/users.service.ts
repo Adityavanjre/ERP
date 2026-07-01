@@ -10,13 +10,13 @@ import { CreateUserDto, UpdateRoleDto } from './dto/users.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@nexus/shared';
 import { Prisma } from '@prisma/client';
-import { BillingService } from '../system/services/billing.service';
+// REMOVED: BillingService - subscription system removed
 
 @Injectable()
 export class UsersService {
   constructor(
     private prisma: PrismaService,
-    private billing: BillingService,
+    // REMOVED: billing service - subscription system removed
   ) {}
 
   async findById(id: string) {
@@ -57,8 +57,8 @@ export class UsersService {
 
     // 2. Transact: Create user (if new) and membership
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // SECURITY (BILL-001): Atomic Quota Check with row-level lock
-      await this.billing.checkQuota(tenantId, 'maxUsers', tx);
+      // REMOVED: Quota check - subscription system removed
+      // await this.billing.checkQuota(tenantId, 'maxUsers', tx);
 
       if (!user) {
         const rawPassword = require('crypto').randomBytes(12).toString('hex');

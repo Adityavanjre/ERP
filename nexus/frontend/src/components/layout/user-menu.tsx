@@ -49,7 +49,7 @@ export const UserMenu = () => {
   }, [router]);
 
   return (
-    <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 p-1.5 pl-4 rounded-2xl shadow-sm">
+    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-1.5 pl-4 rounded-2xl shadow-sm">
       <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
         <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)] shrink-0" />
         <span className="truncate max-w-[80px] sm:max-w-[200px]">

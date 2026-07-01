@@ -1926,22 +1926,17 @@ export async function handleDesktopOfflineRequest(
     return buildResponse(config, { success: true });
   }
 
-  if (method === "get" && path === "system/billing/status") {
-    return buildResponse(config, {
-      plan: "Local Offline",
-      quotas: {
-        maxUsers: 25,
-        maxProducts: 5000,
-        aiEnabled: false,
-      },
-    });
-  }
+  // REMOVED: Billing status endpoint - subscription system removed
+  // if (method === "get" && path === "system/billing/status") {
+  //   return buildResponse(config, { plan: "Local Offline", quotas: { ... } });
+  // }
 
-  if (method === "post" && path === "system/billing/upgrade") {
-    queueForSync(state, "POST", path, parseBody(config));
-    await saveLocalState(state);
-    return buildResponse(config, { success: true });
-  }
+  // REMOVED: Billing upgrade endpoint - subscription system removed
+  // if (method === "post" && path === "system/billing/upgrade") {
+  //   queueForSync(state, "POST", path, parseBody(config));
+  //   await saveLocalState(state);
+  //   return buildResponse(config, { success: true });
+  // }
 
   if (method === "get" && path === "inventory/products/find-by-code") {
     const code = (url.searchParams.get("code") || "").toLowerCase();

@@ -38,7 +38,7 @@ export class ConstructionService {
 
   async updateBOQStatus(tenantId: string, id: string, status: string) {
     // Simple hierarchy: Draft -> UnderReview -> Approved
-    const boq = await (this.prisma as any).bOQ.findUnique({
+    const boq = await (this.prisma as any).bOQ.findFirst({
       where: { id, tenantId },
     });
     if (!boq) throw new BadRequestException('BOQ not found');
@@ -66,7 +66,7 @@ export class ConstructionService {
     itemId: string,
     data: { qty: number; rate: number },
   ) {
-    const item = await (this.prisma as any).bOQItem.findUnique({
+    const item = await (this.prisma as any).bOQItem.findFirst({
       where: { id: itemId, tenantId },
     });
     if (!item) throw new BadRequestException('BOQ Item not found');
@@ -132,7 +132,7 @@ export class ConstructionService {
       advanceRecoveryAccountId?: string;
     },
   ) {
-    const project = await (this.prisma as any).project.findUnique({
+    const project = await (this.prisma as any).project.findFirst({
       where: { id: projectId, tenantId },
     });
     if (!project) throw new BadRequestException('Project not found');

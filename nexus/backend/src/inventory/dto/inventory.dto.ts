@@ -90,6 +90,24 @@ export class CreateProductDto {
   @IsBoolean()
   @IsOptional()
   isGstOverride?: boolean;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @IsString()
+  @IsOptional()
+  pricingMode?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  width?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  length?: number;
 }
 
 export class UpdateProductDto {
@@ -132,6 +150,24 @@ export class UpdateProductDto {
   @IsString()
   @IsOptional()
   uom?: string;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @IsString()
+  @IsOptional()
+  pricingMode?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  width?: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  length?: number;
 }
 
 export class LogMovementDto {

@@ -28,7 +28,7 @@ export function EmptyState({
       {actionText && onAction && (
         <Button
           onClick={onAction}
-          className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl px-6"
+          className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl px-4"
         >
           <Plus className="mr-2 h-4 w-4" /> {actionText}
         </Button>

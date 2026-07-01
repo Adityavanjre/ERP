@@ -21,7 +21,7 @@ import { normalizeState } from '../constants/states';
 import { TraceService } from '../../common/services/trace.service';
 import { InventoryService } from '../../inventory/inventory.service';
 
-import { BillingService } from '../../system/services/billing.service';
+// REMOVED: BillingService - subscription system removed
 
 @Injectable()
 export class InvoiceService {
@@ -30,7 +30,7 @@ export class InvoiceService {
     private ledger: LedgerService,
     private hsn: HsnService,
     private traceService: TraceService,
-    private billing: BillingService,
+    // REMOVED: billing service - subscription system removed
     @Inject(forwardRef(() => InventoryService))
     private inventoryService: InventoryService,
   ) {}
@@ -83,8 +83,8 @@ export class InvoiceService {
         tx,
       );
 
-      // SECURITY (SUB-001): Atomic Quota Check with Row-Level Lock
-      await this.billing.checkQuota(tenantId, 'maxInvoicesPerMonth', tx);
+      // REMOVED: Quota check - subscription system removed
+      // await this.billing.checkQuota(tenantId, 'maxInvoicesPerMonth', tx);
 
       const calculation = await this.calculateTotals(
         tenantId,
@@ -170,6 +170,8 @@ export class InvoiceService {
           amountPaid: amountPaidAtStart,
           idempotencyKey: data.idempotencyKey,
           correlationId: this.traceService.getCorrelationId(), // Forensic Trace
+          billingMode: data.billingMode || 'standard',
+          itemSections: data.itemSections || null,
           status: amountPaidAtStart.greaterThanOrEqualTo(grandTotal)
             ? InvoiceStatus.Paid
             : amountPaidAtStart.greaterThan(0)
@@ -179,6 +181,12 @@ export class InvoiceService {
           billingAddress: data.billingAddress || null,
           shippingAddress: data.shippingAddress || null,
           supplierAddress: data.supplierAddress || null,
+          bankAccountId: data.bankAccountId || null,
+          termsOfPayment: data.termsOfPayment || null,
+          termsOfDelivery: data.termsOfDelivery || null,
+          vehicleNumber: data.vehicleNumber || null,
+          buyersOrderNo: data.buyersOrderNo || null,
+          eWayBillNo: data.eWayBillNo || null,
           items: {
             create: invoiceItemsData,
           },

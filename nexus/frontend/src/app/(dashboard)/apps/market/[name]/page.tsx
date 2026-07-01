@@ -105,7 +105,7 @@ export default function AppDetailPage() {
       <div className="flex flex-col xl:flex-row gap-12">
         <div className="flex-1 space-y-10">
           <div className="flex flex-col lg:flex-row items-start justify-between gap-8 md:gap-0">
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
               <div className="h-24 w-24 sm:h-28 sm:w-28 shrink-0 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center border-none shadow-2xl shadow-blue-500/30">
                 <Package className="h-12 w-12 text-white" />
               </div>
@@ -190,7 +190,7 @@ export default function AppDetailPage() {
                 {app.description ||
                   "No extended details found for this module."}
               </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="p-8 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-slate-200/40 space-y-3">
                   <div className="text-[10px] text-slate-400 uppercase tracking-widest font-black">
                     Response Time
@@ -225,7 +225,7 @@ export default function AppDetailPage() {
             </TabsContent>
             <TabsContent value="technical" className="mt-10">
               <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[32px] overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6 px-10">
+                <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-10">
                   <CardTitle className="text-slate-900 text-base font-black uppercase tracking-widest">
                     System Dependencies
                   </CardTitle>
@@ -259,7 +259,7 @@ export default function AppDetailPage() {
 
         <div className="w-full lg:w-96 space-y-8">
           <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[32px] overflow-hidden">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
               <CardTitle className="text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] text-center">
                 Module Info
               </CardTitle>
@@ -297,7 +297,7 @@ export default function AppDetailPage() {
           </Card>
 
           <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[32px] overflow-hidden">
-            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-6">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
               <CardTitle className="text-slate-900 text-[10px] font-black uppercase tracking-[0.2em] text-center">
                 Sync Status
               </CardTitle>

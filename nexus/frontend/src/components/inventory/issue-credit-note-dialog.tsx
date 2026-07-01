@@ -389,7 +389,7 @@ export function IssueCreditNoteDialog({
               ₹{totalAmount.toLocaleString("en-IN")}
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <Button
               variant="ghost"
               onClick={() => onOpenChange(false)}

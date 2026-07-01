@@ -12,6 +12,7 @@ import {
   IsPhoneNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { CustomerStatus } from '@prisma/client';
 
 export enum OpportunityStage {
   New = 'New',
@@ -123,6 +124,10 @@ export class UpdateCustomerDto {
   @IsString()
   @MaxLength(15)
   gstin?: string;
+
+  @IsOptional()
+  @IsEnum(CustomerStatus)
+  status?: CustomerStatus;
 }
 
 export class AddOpeningBalanceDto {

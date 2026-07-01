@@ -11,6 +11,7 @@ export interface User {
   role: string;
   tenantId: string;
   tenantName?: string;
+  tenantSlug?: string;
   industry?: string;
   type?: string;
   isSuperAdmin?: boolean;

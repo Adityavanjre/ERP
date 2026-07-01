@@ -97,8 +97,8 @@ export function CreateSupplierDialog({
             Register a new vendor or supplier for your procurement needs.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-          <div className="space-y-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-4">
+          <div className="space-y-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"
@@ -193,14 +193,14 @@ export function CreateSupplierDialog({
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl font-bold h-11 px-6"
+              className="rounded-xl font-bold h-11 px-3"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11 px-4 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-11 px-3 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -105,7 +105,7 @@ export default function WorkflowBuilder() {
     );
 
   return (
-    <div className="flex-1 p-4 md:p-4 space-y-4 pt-2 md:pt-3">
+    <div className="flex-1 p-4 md:p-4 space-y-3 pt-2 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
@@ -126,7 +126,7 @@ export default function WorkflowBuilder() {
               Active Streams
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="space-y-2">
               <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                 Object Class
@@ -220,8 +220,8 @@ export default function WorkflowBuilder() {
                     className="bg-indigo-950 border-none shadow-2xl relative group overflow-hidden rounded-[32px]"
                   >
                     <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500 shadow-[2px_0_10px_rgba(16,185,129,0.3)] transition-all group-hover:w-2" />
-                    <CardHeader className="pb-4 pt-3 px-6">
-                      <div className="flex justify-between items-start mb-4">
+                    <CardHeader className="pb-2 py-2 px-4">
+                      <div className="flex justify-between items-start mb-2">
                         <Badge className="bg-white/10 text-emerald-400 border-none font-black text-[8px] uppercase tracking-widest px-2 py-0.5 rounded-md">
                           {node.type}
                         </Badge>
@@ -231,9 +231,9 @@ export default function WorkflowBuilder() {
                         {node.name}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="px-6 pb-3 pt-0">
-                      <div className="space-y-3">
-                        <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between group-hover:border-emerald-500/30 transition-all">
+                    <CardContent className="px-4 pb-2 pt-0">
+                      <div className="space-y-2">
+                        <div className="p-2 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between group-hover:border-emerald-500/30 transition-all">
                           <div className="flex items-center gap-2">
                             <Zap className="h-3 w-3 text-emerald-400" />
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">

@@ -36,7 +36,7 @@ import { MobileWhitelistGuard } from './common/guards/mobile-whitelist.guard';
 import { RoleThrottlerGuard } from './common/guards/role-throttler.guard';
 import { TraceMiddleware } from './common/services/trace.middleware';
 import { CsrfGuard } from './common/guards/csrf.guard';
-import { PlanGuard } from './common/guards/plan.guard';
+// REMOVED: PlanGuard - subscription system removed
 
 import { TenantMembershipGuard } from './common/guards/tenant-membership.guard';
 import { HttpCacheInterceptor } from './common/interceptors/cache.interceptor';
@@ -107,10 +107,11 @@ import { ScheduleRootModule } from './schedule/schedule-root.module';
       provide: APP_GUARD,
       useClass: MobileWhitelistGuard, // 7th: Channel whitelist — prevents unauthorized mobile access.
     },
-    {
-      provide: APP_GUARD,
-      useClass: PlanGuard, // 8th: Subscription enforcement — requires tenantId.
-    },
+    // REMOVED: PlanGuard - subscription system removed
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: PlanGuard, // 8th: Subscription enforcement
+    // },
     {
       provide: APP_GUARD,
       useClass: CsrfGuard, // 9th: CSRF validation — runs after auth session is verified.

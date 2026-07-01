@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
@@ -32,11 +32,11 @@ async function main() {
         tenantId: tenant.id,
       },
     },
-    update: { role: Role.Biller },
+    update: { permissions: { role: 'Biller' } },
     create: {
       userId: user.id,
       tenantId: tenant.id,
-      role: Role.Biller,
+      permissions: { role: 'Biller' },
     },
   });
 

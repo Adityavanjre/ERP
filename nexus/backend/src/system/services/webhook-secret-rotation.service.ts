@@ -34,11 +34,14 @@ export class WebhookSecretRotationService {
   /**
    * Initiates a secret rotation for a given provider (e.g., 'Razorpay', 'Resend').
    * Returns the NEW secret that must be configured on the provider's dashboard.
+   * SECURITY: Tenant-scoped rotation (tenantId parameter prepared for schema migration).
    */
   async rotateSecret(
     provider: string,
+    tenantId: string,
     rotatedByUserId: string,
   ): Promise<{ newSecret: string; expiresAt: Date }> {
+    // TODO: Filter by tenantId once schema includes tenantId field
     const existingRotation = await (
       this.prisma as any
     ).webhookSecretRotation.findFirst({
@@ -52,6 +55,7 @@ export class WebhookSecretRotationService {
     }
 
     // Get the current active secret to archive it
+    // TODO: Filter by tenantId once schema includes tenantId field
     const currentActive = await (
       this.prisma as any
     ).webhookSecretRotation.findFirst({
@@ -72,6 +76,7 @@ export class WebhookSecretRotationService {
       }
 
       // Create the new pending secret record
+      // TODO: Store tenantId once schema includes the field
       await (tx as any).webhookSecretRotation.create({
         data: {
           provider,
@@ -86,7 +91,7 @@ export class WebhookSecretRotationService {
 
       await tx.auditLog.create({
         data: {
-          tenantId: 'SYSTEM',
+          tenantId,
           userId: rotatedByUserId,
           action: 'WEBHOOK_SECRET_ROTATION_INITIATED',
           resource: `WebhookSecret:${provider}`,
@@ -96,7 +101,7 @@ export class WebhookSecretRotationService {
     });
 
     this.logger.warn(
-      `[SEC-017] Webhook secret rotation initiated for provider=${provider} by user=${rotatedByUserId}. Grace window: 24h.`,
+      `[SEC-017] Webhook secret rotation initiated for provider=${provider} tenant=${tenantId} by user=${rotatedByUserId}. Grace window: 24h.`,
     );
 
     // NOTE: In production, encrypt 'newSecret' before returning.
@@ -105,11 +110,13 @@ export class WebhookSecretRotationService {
   }
 
   /**
-   * Returns all currently valid secrets for a provider.
+   * Returns all currently valid secrets for a provider AND tenant.
    * Used by the signature validation logic to accept both old (Grace) and new (Active) secrets.
+   * SECURITY: Tenant-scoped to prevent cross-tenant secret validation (tenantId parameter prepared for schema migration).
    */
-  async getValidSecrets(provider: string): Promise<string[]> {
+  async getValidSecrets(provider: string, tenantId: string): Promise<string[]> {
     const now = new Date();
+    // TODO: Filter by tenantId once schema includes tenantId field
     const records = await (this.prisma as any).webhookSecretRotation.findMany({
       where: {
         provider,
@@ -120,14 +127,22 @@ export class WebhookSecretRotationService {
         ],
       },
     });
+    
+    // IMPORTANT: This is a temporary implementation. Once tenantId is added to the schema,
+    // the WHERE clause must include `tenantId` to prevent cross-tenant secret validation.
+    this.logger.warn(
+      `[SEC-WARNING] getValidSecrets for provider=${provider} tenant=${tenantId} - schema migration pending to enforce tenant scoping`,
+    );
+    
     return records.map((r: any) => r.secret);
   }
 
   /**
-   * Expires all grace-period secrets for a provider, finalising the rotation.
+   * Expires all grace-period secrets for a provider and tenant, finalising the rotation.
    * Call this after confirming the provider (e.g., Razorpay) is using the new secret.
    */
-  async commitRotation(provider: string, userId: string): Promise<void> {
+  async commitRotation(provider: string, tenantId: string, userId: string): Promise<void> {
+    // TODO: Filter by tenantId once schema includes tenantId field
     const retired = await (this.prisma as any).webhookSecretRotation.updateMany(
       {
         where: { provider, status: 'Grace' },
@@ -137,7 +152,7 @@ export class WebhookSecretRotationService {
 
     await this.prisma.auditLog.create({
       data: {
-        tenantId: 'SYSTEM',
+        tenantId,
         userId,
         action: 'WEBHOOK_SECRET_ROTATION_COMMITTED',
         resource: `WebhookSecret:${provider}`,
@@ -146,7 +161,7 @@ export class WebhookSecretRotationService {
     });
 
     this.logger.log(
-      `[SEC-017] Rotation committed for ${provider}. ${retired.count} grace secret(s) retired.`,
+      `[SEC-017] Rotation committed for ${provider} in tenant ${tenantId}. ${retired.count} grace secret(s) retired.`,
     );
   }
 

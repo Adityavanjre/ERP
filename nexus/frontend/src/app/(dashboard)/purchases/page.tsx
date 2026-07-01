@@ -49,6 +49,8 @@ import { EditSupplierDialog } from "../../../components/purchases/edit-supplier-
 import { OpeningBalanceDialog } from "../../../components/accounting/opening-balance-dialog";
 import { NumericInput } from "../../../components/ui/numeric-input";
 import { ConfirmationDialog } from "../../../components/shared/ConfirmationDialog";
+import { InlineCreateSupplierDialog } from "../../../components/shared/inline-create-supplier-dialog";
+import { InlineCreateProductDialog } from "../../../components/shared/inline-create-product-dialog";
 
 interface Supplier {
   id: string;
@@ -100,6 +102,8 @@ export default function PurchasesPage() {
     name: string;
   } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isInlineSupplierOpen, setIsInlineSupplierOpen] = useState(false);
+  const [isInlineProductOpen, setIsInlineProductOpen] = useState(false);
 
   // Form state
   const [newPO, setNewPO] = useState({
@@ -242,7 +246,7 @@ export default function PurchasesPage() {
     );
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
       <CreateSupplierDialog
         open={isAddSupplierOpen}
         onOpenChange={setIsAddSupplierOpen}
@@ -262,13 +266,13 @@ export default function PurchasesPage() {
           <Button
             variant="outline"
             onClick={() => setIsAddSupplierOpen(true)}
-            className="flex-1 sm:flex-none justify-center rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-6 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
+            className="flex-1 sm:flex-none justify-center rounded-2xl border-slate-200 bg-white text-slate-600 font-bold h-12 px-4 shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center gap-2 whitespace-nowrap"
           >
             <UserPlus className="h-4 w-4" /> Add Supplier
           </Button>
           <Button
             onClick={() => setShowPODialog(true)}
-            className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-6 md:px-4 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap"
+            className="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-4 md:px-3 h-12 font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all whitespace-nowrap"
           >
             New Order
           </Button>
@@ -328,7 +332,7 @@ export default function PurchasesPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="orders" className="space-y-4">
+      <Tabs defaultValue="orders" className="space-y-3">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="orders"
@@ -543,6 +547,16 @@ export default function PurchasesPage() {
               >
                 Supplier <span className="text-red-500">*</span>
               </Label>
+              <div className="flex justify-between items-center px-1">
+                <span className="text-[9px] text-slate-400">Select from list</span>
+                <button
+                  type="button"
+                  onClick={() => setIsInlineSupplierOpen(true)}
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                >
+                  + New Supplier
+                </button>
+              </div>
               <select
                 id="supplier"
                 value={newPO.supplierId}
@@ -569,6 +583,15 @@ export default function PurchasesPage() {
                 >
                   Product <span className="text-red-500">*</span>
                 </Label>
+                <div className="flex justify-end px-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsInlineProductOpen(true)}
+                    className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                  >
+                    + New Product
+                  </button>
+                </div>
                 <select
                   id="product"
                   value={newPO.productId}
@@ -687,6 +710,22 @@ export default function PurchasesPage() {
         supplierId={openingBalanceTarget?.id}
         targetName={openingBalanceTarget?.name || ""}
         onSuccess={() => syncProcurement(true)}
+      />
+      <InlineCreateSupplierDialog
+        open={isInlineSupplierOpen}
+        onOpenChange={setIsInlineSupplierOpen}
+        onSuccess={(newSupplier) => {
+          syncProcurement(false);
+          setNewPO((prev) => ({ ...prev, supplierId: newSupplier.id }));
+        }}
+      />
+      <InlineCreateProductDialog
+        open={isInlineProductOpen}
+        onOpenChange={setIsInlineProductOpen}
+        onSuccess={(newProd) => {
+          syncProcurement(false);
+          setNewPO((prev) => ({ ...prev, productId: newProd.id, unitPrice: Number(newProd.costPrice || newProd.price || 0) }));
+        }}
       />
     </div>
   );

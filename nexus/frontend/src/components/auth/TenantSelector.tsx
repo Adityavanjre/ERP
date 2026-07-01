@@ -208,7 +208,7 @@ export function TenantSelector() {
 
   if (loading) {
     return (
-      <div className="flex flex-col bg-slate-50 h-screen w-screen items-center justify-center gap-4">
+      <div className="flex flex-col bg-slate-50 h-screen w-screen items-center justify-center gap-3">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
         <span className="text-blue-600 font-bold tracking-widest text-[10px] uppercase">Loading Workspaces...</span>
       </div>

@@ -291,7 +291,7 @@ export default function AccountingPage() {
     if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><RefreshCw className="h-8 w-8 animate-spin text-amber-500" /></div>;
 
     return (
-        <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+        <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-0">
                 <div>
                     <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -439,13 +439,13 @@ export default function AccountingPage() {
 
             <Tabs defaultValue="invoices" className="space-y-3">
                 <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto flex justify-start w-full scrollbar-hide h-auto p-1.5 rounded-2xl snap-x">
-                    <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
-                    <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
-                    <TabsTrigger value="transactions" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Transactions</TabsTrigger>
-                    <TabsTrigger value="bank-statements" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Bank Statements</TabsTrigger>
-                    <TabsTrigger value="assets" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Fixed Assets</TabsTrigger>
-                    <TabsTrigger value="auditor" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Auditor</TabsTrigger>
-                    <TabsTrigger value="health" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold transition-all whitespace-nowrap">Store Health</TabsTrigger>
+                    <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
+                    <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
+                    <TabsTrigger value="transactions" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Transactions</TabsTrigger>
+                    <TabsTrigger value="bank-statements" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Bank Statements</TabsTrigger>
+                    <TabsTrigger value="assets" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Fixed Assets</TabsTrigger>
+                    <TabsTrigger value="auditor" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Auditor</TabsTrigger>
+                    <TabsTrigger value="health" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Store Health</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="invoices" className="space-y-4">

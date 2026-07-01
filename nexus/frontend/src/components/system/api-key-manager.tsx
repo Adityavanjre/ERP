@@ -113,7 +113,7 @@ export function ApiKeyManager() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4 items-end bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
+          <div className="flex gap-3 items-end bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
             <div className="flex-1 space-y-1.5">
               <label className="text-xs font-black uppercase text-slate-500 tracking-widest pl-1">
                 Key Description
@@ -223,7 +223,7 @@ export function ApiKeyManager() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="flex gap-2">
                       {key.scopes.map((s) => (
                         <Badge

@@ -137,7 +137,7 @@ export function CollaborationTimeline({
               <p className="text-sm mt-1 text-foreground/80">
                 {comment.content}
               </p>
-              <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-3 mt-2">
                 {!isReply && (
                   <button
                     onClick={() => setReplyTo(comment)}

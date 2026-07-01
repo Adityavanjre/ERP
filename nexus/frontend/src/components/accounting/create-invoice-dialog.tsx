@@ -33,6 +33,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useUX } from "../../components/providers/ux-provider";
 import { InlineCreateCustomerDialog } from "../shared/inline-create-customer-dialog";
 import { InlineCreateProductDialog } from "../shared/inline-create-product-dialog";
+import { DimensionalBillingEditor, BillingSection } from "./dimensional-billing-editor";
 
 interface CreateInvoiceDialogProps {
   isOpen: boolean;
@@ -94,7 +95,11 @@ export function CreateInvoiceDialog({
     new Date().toISOString().split("T")[0],
   );
   const [billingPrefix, setBillingPrefix] = useState("");
+  const [billingMode, setBillingMode] = useState<"standard" | "dimensional">("standard");
+  const [amountPaid, setAmountPaid] = useState("");
+  const [paymentMode, setPaymentMode] = useState<"Cash" | "UPI" | "Card" | "Bank" | "Cheque">("Cash");
   const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [sections, setSections] = useState<BillingSection[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [productFilter, setProductFilter] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -117,16 +122,32 @@ export function CreateInvoiceDialog({
     setLoading(true);
     setUILocked(true);
     try {
+      const flatItems =
+        billingMode === "dimensional"
+          ? sections.flatMap((s) =>
+              s.items.map((i) => ({
+                name: i.description,
+                hsnCode: i.hsnSac,
+                quantity: i.qty,
+                price: i.rate,
+              })),
+            )
+          : items.map((i) => ({
+              productId: i.productId,
+              quantity: Number(i.quantity),
+              price: Number(i.price),
+            }));
+
       await api.post("accounting/invoices", {
         customerId,
         billingPrefix: billingPrefix.trim() || undefined,
         issueDate: invoiceDate,
         dueDate: dueDate || invoiceDate,
-        items: items.map((i) => ({
-          productId: i.productId,
-          quantity: Number(i.quantity),
-          price: Number(i.price),
-        })),
+        billingMode,
+        itemSections: billingMode === "dimensional" ? sections : undefined,
+        items: flatItems,
+        amountPaid: Number(amountPaid) || 0,
+        paymentMode,
       });
 
       toast.success("Invoice issued successfully");
@@ -141,8 +162,10 @@ export function CreateInvoiceDialog({
           total: 0,
         },
       ]);
+      setSections([]);
       setCustomerId("");
       setBillingPrefix("");
+      setBillingMode("standard");
       onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -158,6 +181,8 @@ export function CreateInvoiceDialog({
     invoiceDate,
     dueDate,
     items,
+    sections,
+    billingMode,
     onSuccess,
     onClose,
     setUILocked,
@@ -170,23 +195,48 @@ export function CreateInvoiceDialog({
       toast.error("Please select a valid customer");
       return;
     }
-    if (items.some((i) => !i.productId)) {
-      toast.error("Please select products for all lines");
-      return;
+
+    if (billingMode === "standard") {
+      if (items.some((i) => !i.productId)) {
+        toast.error("Please select products for all lines");
+        return;
+      }
+    } else {
+      const hasEmptyDescription = sections.some((s) =>
+        s.items.some((i) => !i.description.trim())
+      );
+      if (hasEmptyDescription) {
+        toast.error("Please fill in description for all dimensional rows");
+        return;
+      }
+      const hasItems = sections.some((s) => s.items.length > 0);
+      if (!hasItems) {
+        toast.error("Please add at least one item in dimensional mode");
+        return;
+      }
     }
 
     const customerName =
       customers.find((c) => c.id === customerId)?.company ||
       "Selected Customer";
 
-    const subtotalValue = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-    const totalTaxValue = items.reduce(
-      (sum, item) => sum + item.price * item.quantity * (item.gstRate / 100),
-      0,
-    );
+    let subtotalValue: number;
+    let totalTaxValue: number;
+
+    if (billingMode === "dimensional") {
+      subtotalValue = sections.reduce((sum, s) => sum + s.items.reduce((s2, i) => s2 + i.amount, 0), 0);
+      totalTaxValue = 0;
+    } else {
+      subtotalValue = items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      );
+      totalTaxValue = items.reduce(
+        (sum, item) => sum + item.price * item.quantity * (item.gstRate / 100),
+        0,
+      );
+    }
+
     const grandTotalValue = subtotalValue + totalTaxValue;
 
     showConfirm({
@@ -198,7 +248,7 @@ export function CreateInvoiceDialog({
         await executeSubmit();
       },
     });
-  }, [loading, customerId, items, customers, showConfirm, executeSubmit]);
+  }, [loading, customerId, items, sections, billingMode, customers, showConfirm, executeSubmit]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -365,6 +415,11 @@ export function CreateInvoiceDialog({
   );
   const grandTotal = subtotal + totalTax;
 
+  const dimensionalGrandTotal = sections.reduce(
+    (sum, s) => sum + s.items.reduce((s2, i) => s2 + i.amount, 0),
+    0,
+  );
+
   const onQuickCounterSale = useCallback(() => {
     const walkIn = customers.find((c) => c.email === "walkin@system.local");
     if (walkIn) setCustomerId(walkIn.id);
@@ -380,7 +435,7 @@ export function CreateInvoiceDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3 py-4">
+         <div className="grid grid-cols-2 gap-3 py-4">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Customer</Label>
@@ -440,182 +495,269 @@ export function CreateInvoiceDialog({
                 onChange={(e) => setDueDate(e.target.value)}
               />
             </div>
-          </div>
-        </div>
-
-        <div className="border rounded-md border-white/10 overflow-hidden">
-          <Table>
-            <TableHeader className="bg-white/5">
-              <TableRow className="border-white/5 hover:bg-transparent">
-                <TableHead className="text-zinc-400 w-[300px]">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex justify-between items-center">
-                      <span>Item Details</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsProductCreateOpen(true)}
-                        className="text-[9px] font-bold text-blue-400 hover:text-blue-300"
-                      >
-                        + Create Product
-                      </button>
-                    </div>
-                    <Input
-                      ref={searchRef}
-                      placeholder="Fuzzy search..."
-                      className="h-6 text-[10px] bg-white/5 border-white/10"
-                      value={productFilter}
-                      onChange={(e) => setProductFilter(e.target.value)}
-                    />
-                  </div>
-                </TableHead>
-                <TableHead className="text-zinc-400 w-[100px]">Qty</TableHead>
-                <TableHead className="text-zinc-400 text-right">
-                  Price
-                </TableHead>
-                <TableHead className="text-zinc-400 text-right">
-                  Tax (%)
-                </TableHead>
-                <TableHead className="text-zinc-400 text-right">
-                  Total
-                </TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item, index) => (
-                <TableRow
-                  key={index}
-                  className="border-white/5 hover:bg-white/5"
-                >
-                  <TableCell>
-                    <Select
-                      value={item.productId}
-                      onValueChange={(val) => handleProductChange(index, val)}
-                    >
-                      <SelectTrigger className="h-8 bg-transparent border-transparent focus:bg-white/10 text-white">
-                        <SelectValue placeholder="Select Product" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-white/10 text-white">
-                        {products
-                          .filter(
-                            (p) =>
-                              p.name
-                                .toLowerCase()
-                                .includes(productFilter.toLowerCase()) ||
-                              p.sku
-                                .toLowerCase()
-                                .includes(productFilter.toLowerCase()) ||
-                              (p.category &&
-                                p.category
-                                  .toLowerCase()
-                                  .includes(productFilter.toLowerCase())),
-                          )
-                          .map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{p.name}</span>
-                                <span className="text-[10px] opacity-50">
-                                  {p.sku} | {p.category || "General"}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    {item.hsnCode && (
-                      <div className="text-[10px] text-zinc-500 px-3">
-                        HSN: {item.hsnCode}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min="0"
-                      className="h-8 bg-transparent border-white/10 text-white w-20"
-                      value={item.quantity || ""}
-                      onChange={(e) => {
-                        const val =
-                          e.target.value === ""
-                            ? 0
-                            : parseFloat(e.target.value);
-                        handleQuantityChange(index, isNaN(val) ? 0 : val);
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right text-white font-mono">
-                    ₹
-                    {item.price.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell className="text-right text-zinc-500 font-mono">
-                    {item.gstRate}%
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-white font-mono truncate max-w-[120px]">
-                    ₹
-                    {item.total.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveItem(index)}
-                      className="h-8 w-8 text-zinc-500 hover:text-rose-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="sticky bottom-0 bg-[#09090b] pt-4 pb-2 border-t border-white/10 mt-4 z-20">
-          <div className="flex justify-between items-start">
-            <Button
-              variant="outline"
-              onClick={handleAddItem}
-              className="border-dashed border-white/20 text-zinc-400 hover:text-white hover:bg-white/5"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Line Item
-            </Button>
-
-            <div className="w-[200px] space-y-2 text-right">
-              <div className="flex justify-between text-sm text-zinc-400">
-                <span>Subtotal:</span>
-                <span>
-                  ₹
-                  {subtotal.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm text-zinc-400">
-                <span>Total Tax:</span>
-                <span>
-                  ₹
-                  {totalTax.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-white/10">
-                <span>Total:</span>
-                <span>
-                  ₹
-                  {grandTotal.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
+            <div className="space-y-2">
+              <Label>Amount Paid</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                className="bg-white/5 border-white/10 text-white"
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Payment Mode</Label>
+              <Select value={paymentMode} onValueChange={(v: any) => setPaymentMode(v)}>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="Card">Card</SelectItem>
+                  <SelectItem value="Bank">Bank Transfer</SelectItem>
+                  <SelectItem value="Cheque">Cheque</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Billing Mode</span>
+            <div className="flex bg-white/5 rounded-lg border border-white/10 p-1">
+              <button
+                type="button"
+                onClick={() => setBillingMode("standard")}
+                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${
+                  billingMode === "standard"
+                    ? "bg-blue-600 text-white"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Standard
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingMode("dimensional")}
+                className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-colors ${
+                  billingMode === "dimensional"
+                    ? "bg-blue-600 text-white"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Dimensional
+              </button>
+            </div>
+          </div>
+          <div className="text-[10px] text-zinc-500">
+            {billingMode === "standard"
+              ? "Standard line-item billing"
+              : "Categorical / dimensional billing"}
+          </div>
+        </div>
+
+        {billingMode === "standard" ? (
+          <div className="border rounded-md border-white/10 overflow-hidden">
+            <Table>
+              <TableHeader className="bg-white/5">
+                <TableRow className="border-white/5 hover:bg-transparent">
+                  <TableHead className="text-zinc-400 w-[300px]">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between items-center">
+                        <span>Item Details</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsProductCreateOpen(true)}
+                          className="text-[9px] font-bold text-blue-400 hover:text-blue-300"
+                        >
+                          + Create Product
+                        </button>
+                      </div>
+                      <Input
+                        ref={searchRef}
+                        placeholder="Fuzzy search..."
+                        className="h-6 text-[10px] bg-white/5 border-white/10"
+                        value={productFilter}
+                        onChange={(e) => setProductFilter(e.target.value)}
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-zinc-400 w-[100px]">Qty</TableHead>
+                  <TableHead className="text-zinc-400 text-right">
+                    Price
+                  </TableHead>
+                  <TableHead className="text-zinc-400 text-right">
+                    Tax (%)
+                  </TableHead>
+                  <TableHead className="text-zinc-400 text-right">
+                    Total
+                  </TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow
+                    key={index}
+                    className="border-white/5 hover:bg-white/5"
+                  >
+                    <TableCell>
+                      <Select
+                        value={item.productId}
+                        onValueChange={(val) => handleProductChange(index, val)}
+                      >
+                        <SelectTrigger className="h-8 bg-transparent border-transparent focus:bg-white/10 text-white">
+                          <SelectValue placeholder="Select Product" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                          {products
+                            .filter(
+                              (p) =>
+                                p.name
+                                  .toLowerCase()
+                                  .includes(productFilter.toLowerCase()) ||
+                                p.sku
+                                  .toLowerCase()
+                                  .includes(productFilter.toLowerCase()) ||
+                                (p.category &&
+                                  p.category
+                                    .toLowerCase()
+                                    .includes(productFilter.toLowerCase())),
+                            )
+                            .map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{p.name}</span>
+                                  <span className="text-[10px] opacity-50">
+                                    {p.sku} | {p.category || "General"}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      {item.hsnCode && (
+                        <div className="text-[10px] text-zinc-500 px-3">
+                          HSN: {item.hsnCode}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min="0"
+                        className="h-8 bg-transparent border-white/10 text-white w-20"
+                        value={item.quantity || ""}
+                        onChange={(e) => {
+                          const val =
+                            e.target.value === ""
+                              ? 0
+                              : parseFloat(e.target.value);
+                          handleQuantityChange(index, isNaN(val) ? 0 : val);
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right text-white font-mono">
+                      ₹
+                      {item.price.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell className="text-right text-zinc-500 font-mono">
+                      {item.gstRate}%
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-white font-mono truncate max-w-[120px]">
+                      ₹
+                      {item.total.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveItem(index)}
+                        className="h-8 w-8 text-zinc-500 hover:text-rose-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <DimensionalBillingEditor
+            sections={sections}
+            onChange={setSections}
+          />
+        )}
+
+        <div className="sticky bottom-0 bg-[#09090b] pt-4 pb-2 border-t border-white/10 mt-4 z-20">
+          {billingMode === "standard" && (
+            <div className="flex justify-between items-start">
+              <Button
+                variant="outline"
+                onClick={handleAddItem}
+                className="border-dashed border-white/20 text-zinc-400 hover:text-white hover:bg-white/5"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Line Item
+              </Button>
+
+              <div className="w-[200px] space-y-2 text-right">
+                <div className="flex justify-between text-sm text-zinc-400">
+                  <span>Subtotal:</span>
+                  <span>
+                    ₹
+                    {subtotal.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm text-zinc-400">
+                  <span>Total Tax:</span>
+                  <span>
+                    ₹
+                    {totalTax.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-white/10">
+                  <span>Total:</span>
+                  <span>
+                    ₹
+                    {grandTotal.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {billingMode === "dimensional" && (
+            <div className="flex justify-end">
+              <div className="w-56 space-y-2 text-right">
+                <div className="flex justify-between text-lg font-bold text-white pt-2 border-t border-white/10">
+                  <span>Grand Total:</span>
+                  <span>
+                    ₹
+                    {dimensionalGrandTotal.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="pt-3">

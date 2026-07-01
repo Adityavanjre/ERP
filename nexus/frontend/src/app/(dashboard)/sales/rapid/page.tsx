@@ -21,6 +21,11 @@ interface Item {
   price: number;
   quantity: number;
   gstRate: number;
+  pricingMode?: string;
+  width?: number | null;
+  length?: number | null;
+  sheets?: number;
+  ratePerSqm?: number;
 }
 
 interface POSProduct {
@@ -29,6 +34,9 @@ interface POSProduct {
   sku: string;
   price: string | number;
   gstRate: number;
+  pricingMode?: string;
+  width?: number | null;
+  length?: number | null;
 }
 
 interface SyncBatchResult {
@@ -83,6 +91,7 @@ export default function RapidBillingPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const addItem = useCallback((product: POSProduct, quantity: number = 1) => {
+    const isArea = product.pricingMode === "area";
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
@@ -99,6 +108,11 @@ export default function RapidBillingPage() {
           price: typeof product.price === "string" ? parseFloat(product.price) : product.price,
           quantity: quantity,
           gstRate: product.gstRate || 0,
+          pricingMode: product.pricingMode || "piece",
+          width: product.width ?? null,
+          length: product.length ?? null,
+          sheets: isArea ? 1 : 0,
+          ratePerSqm: isArea ? 0 : 0,
         },
       ];
     });
@@ -190,15 +204,28 @@ export default function RapidBillingPage() {
     );
   };
 
+  const updateAreaField = (id: string, field: "sheets" | "ratePerSqm", value: number) => {
+    setItems((prev) =>
+      prev.map((i) => (i.productId === id ? { ...i, [field]: value } : i)),
+    );
+  };
+
   const removeItem = (id: string) => {
     setItems((prev) => prev.filter((i) => i.productId !== id));
   };
 
   const round2 = (val: number) => Math.round((val + Number.EPSILON) * 100) / 100;
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const getItemAmount = (item: Item) => {
+    if (item.pricingMode === "area" && item.width && item.length && item.sheets && item.ratePerSqm) {
+      return item.width * item.length * item.sheets * item.ratePerSqm;
+    }
+    return item.price * item.quantity;
+  };
+
+  const subtotal = items.reduce((sum, i) => sum + getItemAmount(i), 0);
   const taxTotal = items.reduce((sum, i) => {
-    const itemTaxable = i.price * i.quantity;
+    const itemTaxable = getItemAmount(i);
     const itemTax = (itemTaxable * (i.gstRate || 0)) / 100;
     return sum + itemTax;
   }, 0);
@@ -230,12 +257,30 @@ export default function RapidBillingPage() {
 
     const invoiceData = {
       customerId: customerId || undefined,
-      items: items.map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity,
-        price: i.price,
-        gstRate: i.gstRate,
-      })),
+      items: items.map((i) => {
+        const isArea = i.pricingMode === "area";
+        const effectivePrice = isArea && i.width && i.length && i.sheets && i.ratePerSqm
+          ? i.width * i.length * i.sheets * i.ratePerSqm
+          : i.price * i.quantity;
+        return {
+          productId: i.productId,
+          quantity: i.quantity,
+          price: isArea ? effectivePrice / i.quantity : i.price,
+          gstRate: i.gstRate,
+        };
+      }),
+      itemSections: items.reduce((acc: any, i) => {
+        if (i.pricingMode === "area") {
+          acc[i.productId] = {
+            pricingMode: "area",
+            width: i.width,
+            length: i.length,
+            sheets: i.sheets,
+            ratePerSqm: i.ratePerSqm,
+          };
+        }
+        return acc;
+      }, {}),
       billingTimeSeconds: elapsed,
       paymentMode,
       amountPaid,
@@ -377,7 +422,7 @@ export default function RapidBillingPage() {
       </header>
 
       {/* Scanner Row — full width, single prominent row */}
-      <div className="shrink-0 border-b border-slate-200 bg-white">
+      <div className="shrink-0 border-b border-slate-200 bg-white space-y-2 p-2">
         <BarcodeSearch
           search={search}
           setSearch={setSearch}
@@ -386,7 +431,39 @@ export default function RapidBillingPage() {
           lastScanFailed={lastScanFailed}
           inputRef={searchRef}
           onAddProduct={() => setIsProductCreateOpen(true)}
+          onProductSelect={(product) => addItem(product)}
         />
+        
+        {/* Recently Added Products Quick Access */}
+        {items.length > 0 && (
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-2">
+            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1.5">
+              📦 Items in Cart ({items.length})
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {items.map((item) => (
+                <button
+                  key={item.productId}
+                  onClick={() => addItem({
+                    id: item.productId,
+                    name: item.name,
+                    sku: item.sku,
+                    price: item.price,
+                    gstRate: item.gstRate,
+                    pricingMode: item.pricingMode,
+                    width: item.width,
+                    length: item.length,
+                  })}
+                  className="px-2.5 py-1.5 bg-white border border-blue-200 rounded-lg text-[10px] font-bold text-slate-700 hover:bg-blue-100 hover:border-blue-300 transition-colors active:scale-95 flex items-center gap-1"
+                >
+                  <span className="text-sm">+</span>
+                  <span className="truncate max-w-[100px]">{item.name}</span>
+                  <span className="text-blue-500 font-black">×{item.quantity}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2-column POS body */}
@@ -400,6 +477,9 @@ export default function RapidBillingPage() {
               updateQty={updateQty}
               removeItem={removeItem}
               setItems={setItems}
+              updateAreaField={updateAreaField}
+              currencySymbol={currencySymbol}
+              getItemAmount={getItemAmount}
             />
           </div>
         </div>

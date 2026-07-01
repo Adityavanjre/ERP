@@ -331,7 +331,7 @@ export default function RecoveryMemoryDashboard() {
               advanced overdue detection and automated follow-ups.
             </p>
           </div>
-          <button className="bg-blue-600 text-white px-6 py-3 rounded-[2.5rem] font-black text-xl hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/20 flex items-center gap-4 relative z-10 active:scale-95 group">
+          <button className="bg-blue-600 text-white px-4 py-3 rounded-[2.5rem] font-black text-xl hover:bg-blue-500 transition-all shadow-2xl shadow-blue-600/20 flex items-center gap-4 relative z-10 active:scale-95 group">
             Annual Plan Upgrade
             <Rocket className="w-7 h-7 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
           </button>

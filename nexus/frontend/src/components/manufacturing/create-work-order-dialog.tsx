@@ -22,6 +22,7 @@ import {
 import { Save, Loader2, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { CreateBOMDialog } from "./create-bom-dialog";
 
 interface BOM {
   id: string;
@@ -134,9 +135,16 @@ export function CreateWorkOrderDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-3 py-3">
           <div className="space-y-2">
-            <Label>Product Recipe (BOM)</Label>
+            <div className="flex justify-between items-center">
+              <Label>Product Recipe (BOM)</Label>
+              <CreateBOMDialog refreshData={fetchBOMs}>
+                <button type="button" className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline">
+                  + New BOM
+                </button>
+              </CreateBOMDialog>
+            </div>
             <Select value={selectedBomId} onValueChange={setSelectedBomId}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Product to Make" />

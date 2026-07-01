@@ -99,8 +99,8 @@ export function EditWarehouseDialog({
             Update storage information for {warehouse?.name}.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 pt-4">
+          <div className="space-y-3">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"
@@ -159,14 +159,14 @@ export function EditWarehouseDialog({
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl font-bold h-11 px-6"
+              className="rounded-xl font-bold h-11 px-3"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 px-4 font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-11 px-3 font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

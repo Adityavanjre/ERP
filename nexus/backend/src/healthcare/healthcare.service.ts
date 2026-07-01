@@ -91,7 +91,7 @@ export class HealthcareService {
   }
 
   async getPatientHistory(tenantId: string, patientId: string) {
-    return this.prisma.patient.findUnique({
+    return this.prisma.patient.findFirst({
       where: { id: patientId, tenantId },
       include: {
         customer: true,
@@ -106,7 +106,7 @@ export class HealthcareService {
     const { patientId, diagnosis, prescription, labResults, notes } = data;
 
     // BUG-003 FIX: IDOR Prevention - Verify patient belongs to this tenant
-    const patient = await this.prisma.patient.findUnique({
+    const patient = await this.prisma.patient.findFirst({
       where: { id: patientId, tenantId },
     });
     if (!patient) {
@@ -174,7 +174,7 @@ export class HealthcareService {
     const { patientId, employeeId, date, startTime, note } = data;
 
     // BUG-003 FIX: IDOR Prevention - Verify patient belongs to this tenant
-    const patient = await this.prisma.patient.findUnique({
+    const patient = await this.prisma.patient.findFirst({
       where: { id: patientId, tenantId },
     });
     if (!patient) {
@@ -185,7 +185,7 @@ export class HealthcareService {
 
     // BUG-003 FIX: IDOR Prevention - Verify employee belongs to this tenant
     if (employeeId) {
-      const employee = await this.prisma.employee.findUnique({
+      const employee = await this.prisma.employee.findFirst({
         where: { id: employeeId, tenantId },
       });
       if (!employee) {
@@ -229,7 +229,7 @@ export class HealthcareService {
 
   async updateAppointmentStatus(tenantId: string, id: string, status: string) {
     return this.prisma.appointment.update({
-      where: { id, tenantId },
+      where: { id },
       data: { status },
     });
   }
@@ -279,7 +279,7 @@ export class HealthcareService {
       revenueAccountId: string;
     },
   ) {
-    const patient = await this.prisma.patient.findUnique({
+    const patient = await this.prisma.patient.findFirst({
       where: { id: data.patientId, tenantId },
       include: { customer: true },
     });

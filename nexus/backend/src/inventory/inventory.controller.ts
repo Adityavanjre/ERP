@@ -140,6 +140,18 @@ export class InventoryController {
     return this.inventoryService.findProductByCode(req.user.tenantId, code);
   }
 
+  @Get('categories')
+  @Permissions(Permission.VIEW_PRODUCTS)
+  async getCategories(@Req() req: any) {
+    const categories = await (this.inventoryService as any).prisma.product.findMany({
+      where: { tenantId: req.user.tenantId, isDeleted: false, category: { not: null } },
+      select: { category: true },
+      distinct: ['category'],
+      orderBy: { category: 'asc' },
+    });
+    return categories.map((c: any) => c.category).filter(Boolean);
+  }
+
   @Get('products/:id')
   @Permissions(Permission.VIEW_PRODUCTS)
   findOne(@Req() req: any, @Param('id') id: string) {

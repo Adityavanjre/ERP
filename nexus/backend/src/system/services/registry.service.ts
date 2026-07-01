@@ -86,17 +86,25 @@ export class RegistryService implements OnModuleInit {
     });
   }
 
-  async getInstalledApps() {
+  async getInstalledApps(tenantId: string) {
+    // NOTE: Global app registry not yet tenant-scoped in schema.
+    // Returns installed apps available to the tenant (currently shared globally).
+    // TODO: Add tenantId field to App model after schema migration.
     return this.prisma.app.findMany({
       where: { installed: true },
     });
   }
 
-  async getAllApps() {
+  async getAllApps(tenantId: string) {
+    // NOTE: Global app registry not yet tenant-scoped in schema.
+    // Returns all available apps (currently shared globally).
+    // TODO: Add tenantId field to App model after schema migration.
     return this.prisma.app.findMany({ take: 1000 });
   }
 
-  async installApp(name: string) {
+  async installApp(name: string, tenantId: string) {
+    // NOTE: tenantId parameter prepared for future schema changes.
+    // Currently operates on global app registry.
     this.logger.log(`Klypso Kernel: Installing app [${name}]...`);
     return this.prisma.app.update({
       where: { name },
@@ -104,7 +112,9 @@ export class RegistryService implements OnModuleInit {
     });
   }
 
-  async uninstallApp(name: string) {
+  async uninstallApp(name: string, tenantId: string) {
+    // NOTE: tenantId parameter prepared for future schema changes.
+    // Currently operates on global app registry.
     this.logger.log(`Klypso Kernel: Uninstalling app [${name}]...`);
     return this.prisma.app.update({
       where: { name },
@@ -114,8 +124,9 @@ export class RegistryService implements OnModuleInit {
 
   /**
    * Rapid Deployment: Configures the kernel for a specific industry by auto-installing relevant apps.
+   * NOTE: tenantId parameter prepared for future schema changes.
    */
-  async applyIndustryPreset(type: string) {
+  async applyIndustryPreset(type: string, tenantId: string) {
     const presets: Record<string, string[]> = {
       manufacturing: ['inventory', 'manufacturing', 'purchase'],
       retail: ['crm', 'inventory', 'sales'],

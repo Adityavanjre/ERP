@@ -56,7 +56,7 @@ export function WarehouseDetailsDialog({
             <Boxes className="h-32 w-32" />
           </div>
           <DialogHeader className="relative z-10">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-3 mb-4">
               <div className="h-14 w-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <Package className="h-8 w-8 text-white" />
               </div>
@@ -70,7 +70,7 @@ export function WarehouseDetailsDialog({
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-3 mt-6 pt-3 border-t border-white/10">
+            <div className="flex flex-col md:flex-row gap-3 mt-4 pt-3 border-t border-white/10">
               <div className="flex items-center gap-3">
                 <MapPin className="h-4 w-4 text-slate-400" />
                 <span className="text-sm font-medium text-slate-300">
@@ -89,7 +89,7 @@ export function WarehouseDetailsDialog({
 
         <div className="p-4">
           <div className="space-y-3">
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-3">
               Current Stock List
               <div className="h-px flex-1 bg-slate-100" />
             </h4>
@@ -115,7 +115,7 @@ export function WarehouseDetailsDialog({
                       key={stock.id}
                       className="border-slate-50 hover:bg-slate-50/50 transition-colors group"
                     >
-                      <TableCell className="pl-6 py-4">
+                      <TableCell className="pl-6 py-3">
                         <div className="flex flex-col">
                           <span className="text-slate-900 font-black text-sm tracking-tight">
                             {stock.product.name}
@@ -144,9 +144,9 @@ export function WarehouseDetailsDialog({
                     <TableRow>
                       <TableCell
                         colSpan={3}
-                        className="text-center py-20 bg-slate-50/50"
+                        className="text-center py-16 bg-slate-50/50"
                       >
-                        <div className="flex flex-col items-center gap-4">
+                        <div className="flex flex-col items-center gap-3">
                           <Boxes className="h-10 w-10 text-slate-200" />
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                             No stock records found

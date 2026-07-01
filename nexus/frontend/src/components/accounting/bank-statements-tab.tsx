@@ -3,14 +3,31 @@
 import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
-import { api } from "../../lib/api";
-import { toast } from "sonner";
-import { Loader2, Plus, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
+import { api } from "../../lib/api";
+import { toast } from "sonner";
+import { Loader2, Plus, Upload, History } from "lucide-react";
+import { InlineCreateAccountDialog } from "../shared/inline-create-account-dialog";
+
+interface Payment {
+  id: string;
+  amount: number;
+  date: string;
+  mode: string;
+  reference?: string;
+  invoice?: { invoiceNumber: string; totalAmount: number };
+  customer?: { firstName: string; lastName: string; company?: string };
+}
 
 interface BankStatement {
   id: string;
@@ -28,6 +45,7 @@ interface BankStatement {
     reference?: string;
     type: string;
     reconciled: boolean;
+    payments?: Payment[];
   }>;
 }
 
@@ -39,6 +57,13 @@ export function BankStatementsTab() {
   // Modal states
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [isAccountCreateOpen, setIsAccountCreateOpen] = useState(false);
+  
+  // Payment History Modal
+  const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
+  const [selectedLine, setSelectedLine] = useState<any>(null);
+  const [paymentHistory, setPaymentHistory] = useState<Payment[]>([]);
+  const [loadingPaymentHistory, setLoadingPaymentHistory] = useState(false);
 
   // Manual Form
   const [accountId, setAccountId] = useState("");
@@ -46,7 +71,7 @@ export function BankStatementsTab() {
   const [manualAmount, setManualAmount] = useState("");
   const [manualDesc, setManualDesc] = useState("");
   const [manualRef, setManualRef] = useState("");
-  const [manualType, setManualType] = useState("Debit");
+  const [manualType, setManualType] = useState("Credit");
 
   const fetchData = async () => {
     try {
@@ -61,6 +86,19 @@ export function BankStatementsTab() {
       toast.error("Failed to load bank statements");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPaymentHistory = async (lineId: string) => {
+    setLoadingPaymentHistory(true);
+    try {
+      const res = await api.get(`accounting/bank-statements/lines/${lineId}/payments`);
+      setPaymentHistory(res.data || []);
+    } catch {
+      toast.error("Failed to load payment history");
+      setPaymentHistory([]);
+    } finally {
+      setLoadingPaymentHistory(false);
     }
   };
 
@@ -180,30 +218,42 @@ export function BankStatementsTab() {
             </CardHeader>
             <CardContent>
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description / Tags</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stmt.lines.map(line => (
-                    <TableRow key={line.id}>
-                      <TableCell>{new Date(line.date).toLocaleDateString()}</TableCell>
-                      <TableCell className="font-medium">{line.description}</TableCell>
-                      <TableCell>{line.reference || "-"}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${line.type === 'Credit' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                          {line.type}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-bold">₹{Number(line.amount).toLocaleString('en-IN')}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+<TableHeader>
+                   <TableRow>
+                     <TableHead>Date</TableHead>
+                     <TableHead>Description / Tags</TableHead>
+                     <TableHead>Reference</TableHead>
+                     <TableHead>Type</TableHead>
+                     <TableHead className="text-right">Amount</TableHead>
+                     <TableHead className="text-center">History</TableHead>
+                   </TableRow>
+                 </TableHeader>
+<TableBody>
+                   {stmt.lines.map(line => (
+                     <TableRow 
+                       key={line.id} 
+                       className="cursor-pointer hover:bg-zinc-800/50"
+                       onClick={() => {
+                         setSelectedLine(line);
+                         setIsPaymentHistoryOpen(true);
+                         fetchPaymentHistory(line.id);
+                       }}
+                     >
+                       <TableCell>{new Date(line.date).toLocaleDateString()}</TableCell>
+                       <TableCell className="font-medium">{line.description}</TableCell>
+                       <TableCell>{line.reference || "-"}</TableCell>
+                       <TableCell>
+                         <span className={`px-2 py-1 rounded text-xs font-bold ${line.type === 'Credit' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                           {line.type}
+                         </span>
+                       </TableCell>
+                       <TableCell className="text-right font-bold">₹{Number(line.amount).toLocaleString('en-IN')}</TableCell>
+                       <TableCell className="text-center">
+                         <History className="h-4 w-4 mx-auto text-zinc-400" />
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                 </TableBody>
               </Table>
             </CardContent>
           </Card>
@@ -222,7 +272,16 @@ export function BankStatementsTab() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Bank Account</Label>
+              <div className="flex justify-between items-center">
+                <Label>Bank Account</Label>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                >
+                  + New Account
+                </button>
+              </div>
               <Select value={accountId} onValueChange={setAccountId}>
                 <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
                 <SelectContent>
@@ -275,7 +334,16 @@ export function BankStatementsTab() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Target Bank Account</Label>
+              <div className="flex justify-between items-center">
+                <Label>Target Bank Account</Label>
+                <button
+                  type="button"
+                  onClick={() => setIsAccountCreateOpen(true)}
+                  className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                >
+                  + New Account
+                </button>
+              </div>
               <Select value={accountId} onValueChange={setAccountId}>
                 <SelectTrigger><SelectValue placeholder="Select Account" /></SelectTrigger>
                 <SelectContent>
@@ -289,6 +357,88 @@ export function BankStatementsTab() {
               <p className="text-xs text-slate-500 mt-2">Format: Date, Description, Amount, Reference, Type(Credit/Debit)</p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+      <InlineCreateAccountDialog
+        open={isAccountCreateOpen}
+        onOpenChange={setIsAccountCreateOpen}
+        onSuccess={(newAccount) => {
+          fetchData();
+          setAccountId(newAccount.id);
+        }}
+      />
+
+      {/* Payment History Detail Panel */}
+      <Dialog open={isPaymentHistoryOpen} onOpenChange={setIsPaymentHistoryOpen}>
+        <DialogContent className="sm:max-w-[700px] bg-[#09090b] text-white border-white/10 max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Payment History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {selectedLine && (
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <span className="text-zinc-400">Date:</span> {new Date(selectedLine.date).toLocaleDateString()}
+                </div>
+                <div className="text-sm">
+                  <span className="text-zinc-400">Description:</span> {selectedLine.description}
+                </div>
+                <div className="text-sm">
+                  <span className="text-zinc-400">Amount:</span> ₹{Number(selectedLine.amount).toLocaleString('en-IN')}
+                </div>
+                <div className="text-sm">
+                  <span className="text-zinc-400">Reference:</span> {selectedLine.reference || "-"}
+                </div>
+                <hr className="border-white/10 my-3" />
+              </div>
+            )}
+            {loadingPaymentHistory ? (
+              <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+            ) : paymentHistory.length > 0 ? (
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold text-zinc-300">Linked Payments & Outstanding History</h4>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10">
+                      <TableHead className="text-zinc-400">Date</TableHead>
+                      <TableHead className="text-zinc-400">Customer</TableHead>
+                      <TableHead className="text-zinc-400">Invoice</TableHead>
+                      <TableHead className="text-zinc-400">Mode</TableHead>
+                      <TableHead className="text-zinc-400 text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paymentHistory.map((p) => (
+                      <TableRow key={p.id} className="border-white/10">
+                        <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {p.customer 
+                            ? `${p.customer.firstName} ${p.customer.lastName || ''}` 
+                            : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {p.invoice?.invoiceNumber 
+                            ? `#${p.invoice.invoiceNumber} (₹${p.invoice.totalAmount?.toLocaleString('en-IN')})` 
+                            : "-"}
+                        </TableCell>
+                        <TableCell>{p.mode}</TableCell>
+                        <TableCell className="text-right font-mono">₹{p.amount.toLocaleString('en-IN')}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-zinc-400">
+                No linked payments found for this transaction.
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsPaymentHistoryOpen(false)} className="text-zinc-400">
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

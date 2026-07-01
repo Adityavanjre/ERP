@@ -97,9 +97,9 @@ async function runVerification() {
   await purchases.updatePOStatus(tenantId, poMulti.id, POStatus.Received, warehouseB.id);
 
   // 4. Verify Stock Location
-  const stockLoc = await prisma.stockLocation.findUnique({
+  const stockLoc = await prisma.stockLocation.findFirst({
     where: {
-      productId_warehouseId: { productId: product.id, warehouseId: warehouseB.id }
+      tenantId, productId: product.id, warehouseId: warehouseB.id
     }
   });
 

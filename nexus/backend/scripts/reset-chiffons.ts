@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role, TenantType, PlanType } from '@prisma/client';
+import { PrismaClient, TenantType, PlanType } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -39,11 +39,11 @@ async function resetChiffons() {
   // 3. Ensure Membership
   await prisma.tenantUser.upsert({
     where: { userId_tenantId: { userId: user.id, tenantId: tenant.id } },
-    update: { role: Role.Owner },
+    update: { permissions: { role: 'Owner' } },
     create: {
       userId: user.id,
       tenantId: tenant.id,
-      role: Role.Owner
+      permissions: { role: 'Owner' }
     }
   });
 

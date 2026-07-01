@@ -57,6 +57,7 @@ import {
 import { EditCustomerDialog } from "../../../components/crm/edit-customer-dialog";
 import { OpeningBalanceDialog } from "../../../components/accounting/opening-balance-dialog";
 import { NumericInput } from "../../../components/ui/numeric-input";
+import { InlineCreateCustomerDialog } from "../../../components/shared/inline-create-customer-dialog";
 
 import { useRouter } from "next/navigation";
 import { useUnsavedChanges } from "../../../hooks/use-unsaved-changes";
@@ -132,6 +133,7 @@ export default function CrmPage() {
 
   // Edit Mode
   const [editingDeal, setEditingDeal] = useState<Opportunity | null>(null);
+  const [isCustomerCreateOpen, setIsCustomerCreateOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -162,13 +164,17 @@ export default function CrmPage() {
   const [custTotalPages, setCustTotalPages] = useState(1);
 
   const syncRelations = useCallback(
-    async (showLoading = false) => {
+    async (showLoading = false, skipCache = false) => {
       try {
         if (showLoading) setLoading(true);
+        
+        // Add skipCache parameter to force fresh data
+        const params = skipCache ? { params: { _t: Date.now() } } : {};
+        
         const [custRes, statsRes, oppRes] = await Promise.all([
-          api.get(`crm/customers?page=${custPage}&limit=50`),
-          api.get("crm/stats"),
-          api.get("crm/opportunities").catch(() => ({ data: [] })),
+          api.get(`crm/customers?page=${custPage}&limit=50`, params),
+          api.get("crm/stats", params),
+          api.get("crm/opportunities", params).catch(() => ({ data: [] })),
         ]);
 
         if (custRes.data.data) {
@@ -234,9 +240,9 @@ export default function CrmPage() {
     try {
       setIsSubmitting(true);
       setUILocked(true);
+      // REMOVED: status field - not part of customer creation schema
       await api.post("crm/customers", {
         ...formData,
-        status: activeTab === "leads" ? "Lead" : "Customer",
       });
       setShowForm(false);
       setFormData({
@@ -370,7 +376,7 @@ export default function CrmPage() {
     return <LoadingSpinner className="h-full" text="Loading CRM data..." />;
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -591,6 +597,15 @@ export default function CrmPage() {
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Associated Client
                 </Label>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomerCreateOpen(true)}
+                    className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                  >
+                    + New Customer
+                  </button>
+                </div>
                 <Select
                   value={dealData.customerId}
                   onValueChange={(v) =>
@@ -1077,6 +1092,19 @@ export default function CrmPage() {
         customerId={openingBalanceTarget?.id}
         targetName={openingBalanceTarget?.name || ""}
         onSuccess={() => syncRelations(true)}
+      />
+
+      <InlineCreateCustomerDialog
+        open={isCustomerCreateOpen}
+        onOpenChange={setIsCustomerCreateOpen}
+        onSuccess={(newCustomer) => {
+          // Optimistic update: Add new customer to list immediately
+          setCustomers((prev) => [newCustomer, ...prev]);
+          // Then verify with server (skip cache to get fresh data)
+          syncRelations(false, true);
+          syncRelations(false);
+          setDealData({ ...dealData, customerId: newCustomer.id });
+        }}
       />
     </div>
   );

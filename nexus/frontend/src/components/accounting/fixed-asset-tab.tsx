@@ -106,25 +106,25 @@ export function FixedAssetTab() {
         <Table>
           <TableHeader className="bg-slate-50/50">
             <TableRow className="hover:bg-transparent border-slate-100">
-              <TableHead className="font-bold text-slate-900 px-6 h-14">
+              <TableHead className="font-bold text-slate-900 px-4 h-12">
                 Asset
               </TableHead>
-              <TableHead className="font-bold text-slate-900 px-6 h-14">
+              <TableHead className="font-bold text-slate-900 px-4 h-12">
                 Type
               </TableHead>
-              <TableHead className="font-bold text-slate-900 px-6 h-14">
+              <TableHead className="font-bold text-slate-900 px-4 h-12">
                 Purchase Value
               </TableHead>
-              <TableHead className="font-bold text-slate-900 px-6 h-14">
+              <TableHead className="font-bold text-slate-900 px-4 h-12">
                 Accumulated Depr.
               </TableHead>
-              <TableHead className="font-bold text-slate-900 px-6 h-14">
+              <TableHead className="font-bold text-slate-900 px-4 h-12">
                 Net Value
               </TableHead>
-              <TableHead className="font-bold text-slate-900 px-6 h-14">
+              <TableHead className="font-bold text-slate-900 px-4 h-12">
                 Status
               </TableHead>
-              <TableHead className="text-right px-6 h-14">Actions</TableHead>
+              <TableHead className="text-right px-4 h-12">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -133,7 +133,7 @@ export function FixedAssetTab() {
                 key={asset.id}
                 className="hover:bg-slate-50/50 border-slate-100 transition-colors"
               >
-                <TableCell className="px-6 py-4">
+                <TableCell className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 font-bold">
                       <Landmark className="h-5 w-5" />
@@ -148,23 +148,23 @@ export function FixedAssetTab() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-4 font-bold text-slate-600">
+                <TableCell className="px-4 py-3 font-bold text-slate-600">
                   {asset.type}
                 </TableCell>
-                <TableCell className="px-6 py-4 font-black text-slate-900">
+                <TableCell className="px-4 py-3 font-black text-slate-900">
                   ₹{Number(asset.purchaseValue).toLocaleString()}
                 </TableCell>
-                <TableCell className="px-6 py-4 font-bold text-rose-500">
+                <TableCell className="px-4 py-3 font-bold text-rose-500">
                   -₹{Number(asset.accumulatedDepreciation).toLocaleString()}
                 </TableCell>
-                <TableCell className="px-6 py-4 font-black text-emerald-600">
+                <TableCell className="px-4 py-3 font-black text-emerald-600">
                   ₹
                   {(
                     Number(asset.purchaseValue) -
                     Number(asset.accumulatedDepreciation)
                   ).toLocaleString()}
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="px-4 py-3">
                   <Badge
                     className={
                       asset.status === "Active"
@@ -175,7 +175,7 @@ export function FixedAssetTab() {
                     {asset.status.toUpperCase()}
                   </Badge>
                 </TableCell>
-                <TableCell className="px-6 py-4 text-right">
+                <TableCell className="px-4 py-3 text-right">
                   <Button
                     variant="ghost"
                     size="sm"

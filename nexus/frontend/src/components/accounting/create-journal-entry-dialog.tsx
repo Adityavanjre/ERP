@@ -16,6 +16,7 @@ import { Textarea } from "../../components/ui/textarea";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
+import { InlineCreateAccountDialog } from "../shared/inline-create-account-dialog";
 
 interface Account {
   id: string;
@@ -28,6 +29,7 @@ interface CreateJournalEntryDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
   accounts: Account[];
+  onAccountsRefresh?: () => void;
 }
 
 interface JournalLine {
@@ -49,6 +51,7 @@ export function CreateJournalEntryDialog({
   onOpenChange,
   onSuccess,
   accounts,
+  onAccountsRefresh,
 }: CreateJournalEntryDialogProps) {
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState("");
@@ -57,6 +60,8 @@ export function CreateJournalEntryDialog({
     { accountId: "", type: "Debit", amount: "" },
     { accountId: "", type: "Credit", amount: "" },
   ]);
+  const [isAccountCreateOpen, setIsAccountCreateOpen] = useState(false);
+  const [pendingLineIndex, setPendingLineIndex] = useState<number | null>(null);
 
   const addLine = useCallback(() => {
     setLines((prev) => [...prev, { accountId: "", type: "Debit", amount: "" }]);
@@ -226,7 +231,16 @@ export function CreateJournalEntryDialog({
                   className="grid grid-cols-12 gap-2 items-end bg-slate-50 p-3 rounded-lg"
                 >
                   <div className="col-span-5">
-                    <Label className="text-xs">Account</Label>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-xs">Account</Label>
+                      <button
+                        type="button"
+                        onClick={() => { setPendingLineIndex(index); setIsAccountCreateOpen(true); }}
+                        className="text-[9px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                      >
+                        + New Account
+                      </button>
+                    </div>
                     <select
                       value={line.accountId}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -338,6 +352,17 @@ export function CreateJournalEntryDialog({
             </Button>
           </DialogFooter>
         </form>
+        <InlineCreateAccountDialog
+          open={isAccountCreateOpen}
+          onOpenChange={setIsAccountCreateOpen}
+          onSuccess={(newAccount) => {
+            onAccountsRefresh?.();
+            if (pendingLineIndex !== null) {
+              updateLine(pendingLineIndex, "accountId", newAccount.id);
+              setPendingLineIndex(null);
+            }
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -203,7 +203,7 @@ export class SystemAuditService {
         where: { tenantId, correlationId: null } as any,
       }),
       this.prisma.purchaseOrder.count({
-        where: { tenantId, correlationId: null } as any,
+        where: { tenantId },
       }),
       this.prisma.transaction.count({
         where: { tenantId, correlationId: null } as any,

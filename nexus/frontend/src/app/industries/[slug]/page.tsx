@@ -239,7 +239,7 @@ export default async function IndustryLandingPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(sourceCodeJsonLd) }}
       />
 
-      <header className="px-6 h-20 flex items-center border-b bg-white border-slate-100 sticky top-0 z-50">
+      <header className="px-4 h-20 flex items-center border-b bg-white border-slate-100 sticky top-0 z-50">
         <div className="container mx-auto flex items-center justify-between">
           <nav className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
             <Link
@@ -267,7 +267,7 @@ export default async function IndustryLandingPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-20">
+      <main className="container mx-auto px-4 py-12">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
           <div className="p-4 bg-white rounded-2xl shadow-xl shadow-slate-200/50 scale-110 mb-4">
             {Icon}
@@ -296,35 +296,35 @@ export default async function IndustryLandingPage({ params }: Props) {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-16 w-full text-left">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-16 w-full text-left">
             {theme.features.map((feature: string) => (
               <div
                 key={feature}
-                className="group flex items-start gap-4 p-8 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all active:scale-[0.98]"
+                className="group flex items-start gap-4 p-4 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all active:scale-[0.98]"
               >
                 <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
                   <CheckCircle2 className="h-5 w-5" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <h3 className="font-bold text-slate-900 text-lg">
                     {feature}
                   </h3>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                  <p className="text-slate-500 text-sm font-medium leading-snug">
                     <SmartContent>{`Industrial-grade automation for the modern ${theme.name} enterprise. Built to scale with your business.`}</SmartContent>
                   </p>
                 </div>
               </div>
             ))}
           </div>
-          <div className="w-full pt-32 max-w-3xl">
-            <h2 className="text-3xl font-black text-slate-900 mb-12 text-left uppercase tracking-tighter">
+          <div className="w-full pt-24 max-w-3xl">
+            <h2 className="text-3xl font-black text-slate-900 mb-8 text-left uppercase tracking-tighter">
               Frequently Asked <span className="text-blue-600">Questions</span>
             </h2>
-            <div className="space-y-6 text-left">
+            <div className="space-y-3 text-left">
               {theme.faqs.map((faq: { q: string; a: string }) => (
                 <div
                   key={faq.q}
-                  className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm hover:border-blue-100 transition-colors"
+                  className="p-4 bg-white border border-slate-100 rounded-3xl shadow-sm hover:border-blue-100 transition-colors"
                 >
                   <h4 className="font-bold text-slate-900 text-lg mb-2">
                     {faq.q}
@@ -337,18 +337,18 @@ export default async function IndustryLandingPage({ params }: Props) {
             </div>
           </div>
           {/* Topic Cluster - Related Solutions */}
-          <div className="w-full pt-40 border-t border-slate-100 italic">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-8">
+          <div className="w-full pt-24 border-t border-slate-100 italic">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">
               Related Industry Solutions
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {relatedIndustries.map((relSlug) => {
                 const relTheme = industryThemes[relSlug];
                 return (
                   <Link
                     key={relSlug}
                     href={`/industries/${relSlug}`}
-                    className="group p-6 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-lg transition-all text-left"
+                    className="group p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-lg transition-all text-left"
                   >
                     <div className="text-blue-600 font-black mb-2 uppercase text-[10px]">
                       Solution

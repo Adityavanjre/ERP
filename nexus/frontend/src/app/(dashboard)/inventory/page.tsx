@@ -53,6 +53,7 @@ import { Badge } from "../../../components/ui/badge";
 import { useUX } from "../../../components/providers/ux-provider";
 import { useUnsavedChanges } from "../../../hooks/use-unsaved-changes";
 import { EditProductDialog } from "../../../components/inventory/edit-product-dialog";
+import { InlineCreateWarehouseDialog } from "../../../components/shared/inline-create-warehouse-dialog";
 
 interface Product {
   id: string;
@@ -72,6 +73,9 @@ interface Product {
   barcode: string;
   isService: boolean;
   baseUnit: string;
+  pricingMode: string;
+  width: number | null;
+  length: number | null;
   updatedAt: string;
   updatedBy?: {
     fullName: string;
@@ -137,6 +141,7 @@ export default function InventoryPage() {
   const [obProduct, setObProduct] = useState<Product | null>(null);
   const [mounted, setMounted] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isWarehouseCreateOpen, setIsWarehouseCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -154,6 +159,10 @@ export default function InventoryPage() {
     description: "",
     barcode: "",
     isService: false,
+    uom: "Kgs",
+    pricingMode: "piece",
+    width: 0,
+    length: 0,
   });
 
   useUnsavedChanges(showForm || formData.name !== "" || formData.sku !== "");
@@ -216,13 +225,21 @@ export default function InventoryPage() {
         formData.sku.trim() || `PRD-${Date.now().toString().slice(-6)}`;
 
       const payload = {
-        ...formData,
+        name: formData.name.trim(),
         sku: finalSku,
-        stock: Number(formData.stock),
-        price: Number(formData.price),
+        basePrice: Number(formData.price),
         costPrice: Number(formData.costPrice),
         gstRate: Number(formData.gstRate),
-        minStockLevel: Number(formData.minStockLevel),
+        hsnCode: formData.hsnCode.trim() || undefined,
+        uom: formData.uom,
+        stock: Number(formData.stock),
+        warehouseId: Number(formData.stock) > 0 ? formData.warehouseId : undefined,
+        description: formData.description.trim() || undefined,
+        barcode: formData.barcode.trim() || undefined,
+        category: formData.category.trim() || undefined,
+        pricingMode: formData.pricingMode,
+        width: formData.pricingMode === "area" ? formData.width : undefined,
+        length: formData.pricingMode === "area" ? formData.length : undefined,
       };
 
       await api.post("inventory/products", payload);
@@ -245,6 +262,10 @@ export default function InventoryPage() {
         description: "",
         barcode: "",
         isService: false,
+        uom: "Kgs",
+        pricingMode: "piece",
+        width: 0,
+        length: 0,
       });
       toast.success("Product details updated");
       syncInventory(false);
@@ -265,12 +286,19 @@ export default function InventoryPage() {
       setUILocked(true);
 
       const payload = {
-        ...formData,
-        stock: Number(formData.stock),
-        price: Number(formData.price),
+        name: formData.name.trim() || undefined,
+        sku: formData.sku.trim() || undefined,
+        basePrice: Number(formData.price),
         costPrice: Number(formData.costPrice),
         gstRate: Number(formData.gstRate),
-        minStockLevel: Number(formData.minStockLevel),
+        hsnCode: formData.hsnCode.trim() || undefined,
+        uom: formData.uom,
+        description: formData.description.trim() || undefined,
+        barcode: formData.barcode.trim() || undefined,
+        category: formData.category.trim() || undefined,
+        pricingMode: formData.pricingMode,
+        width: formData.pricingMode === "area" ? formData.width : null,
+        length: formData.pricingMode === "area" ? formData.length : null,
       };
 
       await api.patch(`inventory/products/${editingProduct.id}`, payload);
@@ -293,6 +321,10 @@ export default function InventoryPage() {
         description: "",
         barcode: "",
         isService: false,
+        uom: "Kgs",
+        pricingMode: "piece",
+        width: 0,
+        length: 0,
       });
       toast.success("Product updated");
       syncInventory(false);
@@ -373,7 +405,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       {fetchError && (
         <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 font-bold text-sm mb-4">
           <AlertCircle className="w-5 h-5" />
@@ -532,23 +564,35 @@ export default function InventoryPage() {
                       }
                     />
                     {formData.stock > 0 && (
-                      <select
-                        className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl h-9 px-3 text-[10px] font-black uppercase appearance-none"
-                        value={formData.warehouseId}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            warehouseId: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="">Choose Warehouse (Optional)</option>
-                        {warehouses.map((w) => (
-                          <option key={w.id} value={w.id}>
-                            {w.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center px-1">
+                          <span className="text-[9px] text-slate-400 font-bold">Assign to warehouse</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsWarehouseCreateOpen(true)}
+                            className="text-[10px] font-bold text-blue-500 hover:text-blue-700 hover:underline"
+                          >
+                            + New Warehouse
+                          </button>
+                        </div>
+                        <select
+                          className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl h-9 px-3 text-[10px] font-black uppercase appearance-none"
+                          value={formData.warehouseId}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              warehouseId: e.target.value,
+                            })
+                          }
+                        >
+                          <option value="">Choose Warehouse (Optional)</option>
+                          {warehouses.map((w) => (
+                            <option key={w.id} value={w.id}>
+                              {w.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                     <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-11">
                       <input
@@ -572,6 +616,69 @@ export default function InventoryPage() {
                     </div>
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                    Unit of Measurement (UoM)
+                    <FieldInfo content="The unit in which this product is measured and sold." />
+                  </Label>
+                  <select
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl h-11 px-4 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    value={formData.uom}
+                    onChange={(e) =>
+                      setFormData({ ...formData, uom: e.target.value })
+                    }
+                  >
+                    <option value="Kgs">Kgs</option>
+                    <option value="Tons">Tons</option>
+                    <option value="Bags">Bags</option>
+                    <option value="Pieces">Pieces</option>
+                    <option value="Sq Meter">Sq Meter</option>
+                    <option value="Litres">Litres</option>
+                    <option value="Metres">Metres</option>
+                    <option value="Boxes">Boxes</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                    Pricing Mode
+                  </Label>
+                  <select
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl h-11 px-4 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    value={formData.pricingMode}
+                    onChange={(e) =>
+                      setFormData({ ...formData, pricingMode: e.target.value })
+                    }
+                  >
+                    <option value="piece">Piece-Based (Qty x Rate)</option>
+                    <option value="area">Area-Based (Width x Length x Sheets x Rate)</option>
+                  </select>
+                </div>
+                {formData.pricingMode === "area" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                        Width (metres)
+                      </Label>
+                      <NumericInput
+                        decimal
+                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                        value={formData.width}
+                        onChange={(val) => setFormData({ ...formData, width: val })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                        Length (metres)
+                      </Label>
+                      <NumericInput
+                        decimal
+                        className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                        value={formData.length}
+                        onChange={(val) => setFormData({ ...formData, length: val })}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Brand / Manufacturer
@@ -753,6 +860,10 @@ export default function InventoryPage() {
               description: "",
               barcode: "",
               isService: false,
+              uom: "Kgs",
+              pricingMode: "piece",
+              width: 0,
+              length: 0,
             });
           }
         }}
@@ -881,6 +992,43 @@ export default function InventoryPage() {
                   }
                 />
               </div>
+              <div className="space-y-2">
+                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
+                  Pricing Mode
+                </Label>
+                <select
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl h-11 px-4 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  value={formData.pricingMode}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pricingMode: e.target.value })
+                  }
+                >
+                  <option value="piece">Piece-Based (Qty x Rate)</option>
+                  <option value="area">Area-Based (W x L x Sheets x Rate)</option>
+                </select>
+              </div>
+              {formData.pricingMode === "area" && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Width (metres)</Label>
+                    <NumericInput
+                      decimal
+                      className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                      value={formData.width}
+                      onChange={(val) => setFormData({ ...formData, width: val })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Length (metres)</Label>
+                    <NumericInput
+                      decimal
+                      className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                      value={formData.length}
+                      onChange={(val) => setFormData({ ...formData, length: val })}
+                    />
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Manufacturer
@@ -1330,7 +1478,16 @@ export default function InventoryPage() {
         targetName={obProduct?.name || ""}
         onSuccess={() => syncInventory(false)}
       />
+      <InlineCreateWarehouseDialog
+        open={isWarehouseCreateOpen}
+        onOpenChange={setIsWarehouseCreateOpen}
+        onSuccess={(newWarehouse) => {
+          syncInventory(false);
+          setFormData({ ...formData, warehouseId: newWarehouse.id });
+        }}
+      />
     </div>
   );
 }
+
 

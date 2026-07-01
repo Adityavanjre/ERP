@@ -24,8 +24,15 @@ export class WorkflowService {
   async getWorkflowsByModel(tenantId: string, modelName: string) {
     return this.prisma.workflowDefinition.findMany({
       where: {
-        modelName,
-        OR: [{ tenantId }, { tenantId: null }],
+        AND: [
+          { modelName },
+          { 
+            OR: [
+              { tenantId }, // Tenant-specific workflows
+              { tenantId: null }, // Global workflows available to all tenants
+            ]
+          },
+        ],
       },
       include: { nodes: true, transitions: true },
     });

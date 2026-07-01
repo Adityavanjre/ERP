@@ -127,15 +127,20 @@ export default function SalesPage() {
     setOrderItems([{ productId: "", quantity: 1 }]);
   };
 
-  const syncSalesData = useCallback(async (showLoading = false) => {
+  const syncSalesData = useCallback(async (showLoading = false, skipCache = false) => {
     try {
       if (showLoading) setLoading(true);
+      
+      // Add skipCache parameter to force fresh data
+      const params = skipCache ? { params: { _t: Date.now() } } : {};
+      
       const [orderRes, statsRes, prodRes, custRes] = await Promise.all([
-        api.get("sales/orders"),
-        api.get("sales/stats"),
-        api.get("inventory/products"),
-        api.get("crm/customers"),
+        api.get("sales/orders", params),
+        api.get("sales/stats", params),
+        api.get("inventory/products?page=1&limit=200", params),  // Fixed: Add pagination to match inventory page
+        api.get("crm/customers?page=1&limit=200", params),       // Fixed: Add pagination to match CRM page
       ]);
+      
       setOrders(
         Array.isArray(orderRes.data) ? orderRes.data : orderRes.data.data || [],
       );
@@ -249,7 +254,7 @@ export default function SalesPage() {
     return <LoadingSpinner className="h-full" text="Loading Sales Data..." />;
 
   return (
-    <div className="flex-1 space-y-4 pt-1 md:pt-3 bg-slate-50/30 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-3 pt-1 md:pt-3 bg-slate-50/30 w-full max-w-full overflow-hidden">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -447,7 +452,7 @@ export default function SalesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-10 px-6 font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 rounded-2xl transition-all active:scale-95"
+                      className="h-10 px-4 font-black text-[10px] uppercase tracking-widest border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50 rounded-2xl transition-all active:scale-95"
                       onClick={(e) => {
                         e.stopPropagation();
                         router.push(`/invoice/${order.id}`);
@@ -657,8 +662,11 @@ export default function SalesPage() {
         open={isCustomerCreateOpen}
         onOpenChange={setIsCustomerCreateOpen}
         onSuccess={(newCust) => {
-          syncSalesData();
+          // Optimistic update: Add new customer to list immediately
+          setCustomers((prev) => [newCust, ...prev]);
           setCustomerId(newCust.id);
+          // Then verify with server (skip cache to get fresh data)
+          syncSalesData(false, true);
         }}
       />
 
@@ -666,7 +674,8 @@ export default function SalesPage() {
         open={isProductCreateOpen}
         onOpenChange={setIsProductCreateOpen}
         onSuccess={(newProd) => {
-          syncSalesData();
+          // Optimistic update: Add new product to list immediately
+          setProducts((prev) => [newProd, ...prev]);
           setOrderItems((prev) => {
             const copy = [...prev];
             if (copy.length > 0 && !copy[copy.length - 1].productId) {

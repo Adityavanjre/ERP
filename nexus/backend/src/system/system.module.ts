@@ -4,10 +4,10 @@ import { AutomationWorkerService } from './services/automation-worker.service';
 import { AiService } from './services/ai.service';
 import { AuditService } from './services/audit.service';
 import { AuditVerificationService } from './services/audit-verification.service';
-import { BillingService } from './services/billing.service';
+// REMOVED: BillingService - subscription system removed
 import { RegistryController } from './controllers/registry.controller';
 import { AiController } from './controllers/ai.controller';
-import { BillingController } from './controllers/billing.controller';
+// REMOVED: BillingController - subscription system removed
 import { PrismaModule } from '../prisma/prisma.module';
 import { SaasAnalyticsService } from './services/saas-analytics.service';
 import { SearchService } from './services/search.service';
@@ -25,7 +25,7 @@ import { MailService } from './services/mail.service';
 import { SystemAuditService } from './services/system-audit.service';
 import { SystemController } from './system.controller';
 import { AnomalyAlertService } from '../common/services/anomaly-alert.service';
-import { WebhookController } from './controllers/webhook.controller';
+// REMOVED: WebhookController - subscription/payment webhooks removed
 import { OrmService } from './services/orm.service';
 import { StudioController } from './controllers/studio.controller';
 import { WorkflowService } from './services/workflow.service';
@@ -62,14 +62,14 @@ import {
   controllers: [
     RegistryController,
     AiController,
-    BillingController,
+    // REMOVED: BillingController - subscription system removed
     SystemController,
     SearchController,
     CollaborationController,
     ApiKeyController,
     B2BController,
     PluginController,
-    WebhookController,
+    // REMOVED: WebhookController - subscription/payment webhooks removed
     StudioController,
     WorkflowController,
     SuperAdminController,
@@ -79,7 +79,7 @@ import {
     AiService,
     AuditService,
     AuditVerificationService,
-    BillingService,
+    // REMOVED: BillingService - subscription system removed
     SearchService,
     CollaborationService,
     ApiKeyService,
@@ -101,7 +101,7 @@ import {
     RegistryService,
     AiService,
     AuditService,
-    BillingService,
+    // REMOVED: BillingService - subscription system removed
     SaasAnalyticsService,
     SearchService,
     CollaborationService,

@@ -40,7 +40,7 @@ export class NbfcService {
 
   async approveLoan(tenantId: string, id: string) {
     return this.prisma.loan.update({
-      where: { id, tenantId },
+      where: { id },
       data: { status: 'Approved' },
     });
   }
@@ -50,7 +50,7 @@ export class NbfcService {
     id: string,
     data: { bankAccountId: string; loanAssetAccountId: string },
   ) {
-    const loan = await this.prisma.loan.findUnique({ where: { id, tenantId } });
+    const loan = await this.prisma.loan.findFirst({ where: { id, tenantId } });
     if (!loan) throw new BadRequestException('Loan not found');
     if (loan.status !== 'Approved')
       throw new BadRequestException(
@@ -58,7 +58,7 @@ export class NbfcService {
       );
 
     // Check KYC status
-    const kyc = await this.prisma.kYCRecord.findUnique({
+    const kyc = await this.prisma.kYCRecord.findFirst({
       where: { loanId: id, tenantId },
     });
     if (!kyc || kyc.verificationStatus !== 'Verified') {
@@ -149,7 +149,7 @@ export class NbfcService {
 
       // 3. Update Loan Status
       return tx.loan.update({
-        where: { id, tenantId },
+        where: { id },
         data: {
           status: 'Active',
           disbursedDate: new Date(),
@@ -297,7 +297,7 @@ export class NbfcService {
 
   async updateKYCStatus(tenantId: string, loanId: string, status: string) {
     return this.prisma.kYCRecord.update({
-      where: { loanId, tenantId },
+      where: { loanId },
       data: {
         verificationStatus: status,
         verifiedAt: status === 'Verified' ? new Date() : undefined,
@@ -310,7 +310,7 @@ export class NbfcService {
     loanId: string,
     newRate: number,
   ) {
-    const loan = await this.prisma.loan.findUnique({
+    const loan = await this.prisma.loan.findFirst({
       where: { id: loanId, tenantId },
       include: { emiSchedule: { where: { status: 'Pending' } } },
     });
@@ -333,7 +333,7 @@ export class NbfcService {
       await this.ledger.checkPeriodLock(tenantId, new Date(), tx);
 
       await tx.loan.update({
-        where: { id: loanId, tenantId },
+        where: { id: loanId },
         data: { interestRate: newRate },
       });
 

@@ -34,27 +34,15 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 import { useAuth } from "../../../hooks/use-auth";
+import { useUX } from "../../../components/providers/ux-provider";
 import { ApiKeyManager } from "../../../components/system/api-key-manager";
 import { Role } from "@nexus/shared";
 
 // Use shared Role enum instead of local string literals
 
-interface Tenant {
-  id: string;
-  name: string;
-  slug: string;
-}
+// REMOVED: BillingQuota interface - subscription system removed
 
-interface BillingQuota {
-  maxUsers: number;
-  maxProducts: number;
-  aiEnabled: boolean;
-}
-
-interface BillingInfo {
-  plan: string;
-  quotas: BillingQuota;
-}
+// REMOVED: BillingInfo interface - subscription system removed
 
 interface Member {
   id: string;
@@ -74,10 +62,11 @@ interface ApiError {
 }
 
 export default function SettingsPage() {
-  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(true);
-  const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [slug, setSlug] = useState<string>("");
+  const [logoUploading, setLogoUploading] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [newUser, setNewUser] = useState({
@@ -89,22 +78,48 @@ export default function SettingsPage() {
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Company details fields
+  const [address, setAddress] = useState("");
+  const [state, setState] = useState("");
+  const [gstin, setGstin] = useState("");
+  const [panNumber, setPanNumber] = useState("");
+  const [phone, setPhone] = useState("");
+  const [companyEmail, setCompanyEmail] = useState("");
+  const [authorizedSignatory, setAuthorizedSignatory] = useState("");
+
+  // Bank accounts
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [isBankDialogOpen, setIsBankDialogOpen] = useState(false);
+  const [editingBankId, setEditingBankId] = useState<string | null>(null);
+  const [bankForm, setBankForm] = useState({
+    bankName: "",
+    accountNumber: "",
+    ifscCode: "",
+    branch: "",
+    accountHolderName: "",
+    isDefault: false,
+  });
   const { user: currentUser } = useAuth();
+  const { refreshMetadata } = useUX();
   const isOwner = currentUser?.role === "Owner";
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [profRes, billRes, usersRes] = await Promise.all([
-        api.get("auth/profile"),
-        api.get("system/billing/status"),
-        api.get("users"),
-      ]);
-      setTenant(profRes.data?.tenant || null);
-      setOrgName(profRes.data?.tenant?.name || "");
-      setBillingInfo(billRes.data || null);
-      setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
+      const profileRes = await api.get("sync/metadata");
+      setOrgName(profileRes.data?.tenant?.name || "");
+      setLogoUrl(profileRes.data?.tenant?.logoUrl || "");
+      setSlug(profileRes.data?.tenant?.slug || "");
+      setAddress(profileRes.data?.tenant?.address || "");
+      setState(profileRes.data?.tenant?.state || "");
+      setGstin(profileRes.data?.tenant?.gstin || "");
+      setPanNumber(profileRes.data?.tenant?.panNumber || "");
+      setPhone(profileRes.data?.tenant?.phone || "");
+      setCompanyEmail(profileRes.data?.tenant?.email || "");
+      setAuthorizedSignatory(profileRes.data?.tenant?.authorizedSignatory || "");
+      setBankAccounts(profileRes.data?.bankAccounts || []);
     } catch (err: unknown) {
       const apiError = err as ApiError;
       setError(
@@ -114,6 +129,13 @@ export default function SettingsPage() {
       );
     } finally {
       setLoading(false);
+    }
+
+    try {
+      const usersRes = await api.get("users");
+      setMembers(Array.isArray(usersRes.data) ? usersRes.data : []);
+    } catch {
+      setMembers([]);
     }
   }, []);
 
@@ -179,23 +201,91 @@ export default function SettingsPage() {
 
   const handleUpdate = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info("Profile updates restricted in current version");
-  }, []);
-
-  const handleUpgrade = useCallback(async (plan: string) => {
+    if (!orgName.trim()) { toast.error("Company name is required"); return; }
     try {
-      await api.post("system/billing/upgrade", { plan });
-      toast.success(`Successfully upgraded to ${plan} plan`);
-      location.reload();
+      await api.patch("system/tenant-profile", { name: orgName.trim() });
+      toast.success("Company name updated");
+      fetchSettings();
     } catch {
-      toast.error("Upgrade failed. Please try again.");
+      toast.error("Failed to update company name");
     }
-  }, []);
+  }, [orgName, fetchSettings]);
+
+  const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/jpg", "image/svg+xml"].includes(file.type)) {
+      toast.error("Only PNG, JPG, or SVG files are accepted");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Logo must be under 10MB"); return; }
+    setLogoUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const base64 = ev.target?.result as string;
+        await api.patch("system/tenant-profile", { logoUrl: base64 });
+        setLogoUrl(base64);
+        await refreshMetadata(); // Refresh sidebar logo
+        toast.success("Logo uploaded successfully");
+        setLogoUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      toast.error("Failed to upload logo");
+      setLogoUploading(false);
+    }
+  }, [refreshMetadata]);
+
+  // ── Bank Account Handlers ──────────────────────────────────────
+
+  const openAddBank = () => {
+    setEditingBankId(null);
+    setBankForm({ bankName: "", accountNumber: "", ifscCode: "", branch: "", accountHolderName: "", isDefault: bankAccounts.length === 0 });
+    setIsBankDialogOpen(true);
+  };
+
+  const openEditBank = (acc: any) => {
+    setEditingBankId(acc.id);
+    setBankForm({ bankName: acc.bankName, accountNumber: acc.accountNumber, ifscCode: acc.ifscCode, branch: acc.branch, accountHolderName: acc.accountHolderName, isDefault: acc.isDefault });
+    setIsBankDialogOpen(true);
+  };
+
+  const handleSaveBank = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingBankId) {
+        await api.patch(`system/bank-accounts/${editingBankId}`, bankForm);
+        toast.success("Bank account updated");
+      } else {
+        await api.post("system/bank-accounts", bankForm);
+        toast.success("Bank account added");
+      }
+      setIsBankDialogOpen(false);
+      const res = await api.get("system/bank-accounts");
+      setBankAccounts(res.data?.data || []);
+    } catch {
+      toast.error("Failed to save bank account");
+    }
+  };
+
+  const handleDeleteBank = async (id: string) => {
+    if (!confirm("Delete this bank account?")) return;
+    try {
+      await api.delete(`system/bank-accounts/${id}`);
+      toast.success("Bank account removed");
+      setBankAccounts((prev) => prev.filter((a) => a.id !== id));
+    } catch {
+      toast.error("Failed to delete bank account");
+    }
+  };
+
+  // REMOVED: handleUpgrade function - subscription system removed
 
   if (!mounted) return null; // Prevent hydration mismatch
 
   return (
-    <div className="flex-1 space-y-4 pt-2 md:pt-3">
+    <div className="flex-1 space-y-3 pt-2 md:pt-3">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -249,6 +339,7 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="general">
+          {/* Company Profile */}
           <Card className="bg-white border-slate-200 shadow-sm max-w-2xl">
             <CardHeader>
               <CardTitle className="text-slate-900 font-black flex items-center">
@@ -256,139 +347,155 @@ export default function SettingsPage() {
                 Company Profile
               </CardTitle>
               <CardDescription className="text-slate-500">
-                Update your company name and workspace details.
+                Update your company name, logo, and workspace details.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <form onSubmit={handleUpdate} className="space-y-4">
+              <form onSubmit={handleUpdate} className="space-y-3">
+                {/* Logo Upload */}
                 <div className="grid gap-2">
-                  <Label
-                    htmlFor="name"
-                    className="text-slate-500 font-bold uppercase text-[10px] tracking-wider"
-                  >
-                    Organization Name
-                  </Label>
-                  <Input
-                    id="name"
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="slug"
-                    className="text-slate-500 font-bold uppercase text-[10px] tracking-wider"
-                  >
-                    Workspace Identifier (Slug)
-                  </Label>
-                  <Input
-                    id="slug"
-                    defaultValue={tenant?.slug}
-                    disabled
-                    className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10"
-                  />
-                  <p className="text-[11px] text-slate-400 italic font-medium">
-                    This ID is fixed and cannot be changed.
-                  </p>
-                </div>
-                <div className="grid gap-2">
-                  <Label
-                    htmlFor="tenantId"
-                    className="text-slate-500 font-bold uppercase text-[10px] tracking-wider"
-                  >
-                    Tenant ID
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="tenantId"
-                      defaultValue={currentUser?.tenantId}
-                      disabled
-                      className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-10 px-3 text-xs font-bold border-slate-200"
-                      onClick={() => {
-                        if (currentUser?.tenantId) {
-                          navigator.clipboard.writeText(currentUser.tenantId);
-                          toast.success("Tenant ID copied to clipboard");
-                        }
-                      }}
-                    >
-                      Copy
-                    </Button>
+                  <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Company Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Company logo" className="h-14 w-14 object-contain rounded-xl border border-slate-200 bg-slate-50 p-1" />
+                    ) : (
+                      <div className="h-14 w-14 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs font-bold">LOGO</div>
+                    )}
+                    <div className="flex flex-col gap-1">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                        {logoUploading ? "Uploading..." : "Upload Logo"}
+                        <input type="file" accept=".png,.jpg,.jpeg,.svg" onChange={handleLogoUpload} className="hidden" disabled={logoUploading} />
+                      </label>
+                      <span className="text-[10px] text-slate-400">PNG, JPG or SVG · max 10MB</span>
+                    </div>
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label
-                    htmlFor="userId"
-                    className="text-slate-500 font-bold uppercase text-[10px] tracking-wider"
-                  >
-                    User / Employee ID
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="userId"
-                      defaultValue={currentUser?.id}
-                      disabled
-                      className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-10 px-3 text-xs font-bold border-slate-200"
-                      onClick={() => {
-                        if (currentUser?.id) {
-                          navigator.clipboard.writeText(currentUser.id);
-                          toast.success("User ID copied to clipboard");
-                        }
-                      }}
-                    >
-                      Copy
-                    </Button>
-                  </div>
+                  <Label htmlFor="name" className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Organization Name</Label>
+                  <Input id="name" value={orgName} onChange={(e) => setOrgName(e.target.value)} className="bg-slate-50 border-slate-200 text-slate-900 focus:ring-blue-500 h-10" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="slug" className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Workspace Identifier (Slug)</Label>
+                  <Input id="slug" value={slug} disabled className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10" />
+                  <p className="text-[11px] text-slate-400 italic font-medium">This ID is fixed and cannot be changed.</p>
                 </div>
                 <div className="pt-4">
-                  <Button
-                    type="submit"
-                    className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-4 rounded-xl"
-                  >
-                    Save Changes
-                  </Button>
+                  <Button type="submit" className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-4 rounded-xl">Save Changes</Button>
                 </div>
               </form>
             </CardContent>
           </Card>
 
+          {/* Company Details */}
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
+            <CardHeader>
+              <CardTitle className="text-slate-900 font-black flex items-center">
+                <Shield className="mr-2 h-5 w-5 text-violet-600" />
+                Company Details
+              </CardTitle>
+              <CardDescription className="text-slate-500">Tax registration, contact info, and authorized signatory.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <form onSubmit={handleUpdate} className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">GSTIN</Label>
+                    <Input value={gstin} onChange={(e) => setGstin(e.target.value)} placeholder="22AAAAA0000A1Z5" className="bg-slate-50 border-slate-200 text-slate-900 h-10 font-mono" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">PAN Number</Label>
+                    <Input value={panNumber} onChange={(e) => setPanNumber(e.target.value)} placeholder="ABCDE1234F" className="bg-slate-50 border-slate-200 text-slate-900 h-10 font-mono" />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Registered Address</Label>
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address with PIN code" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">State</Label>
+                    <Input value={state} onChange={(e) => setState(e.target.value)} placeholder="e.g. Maharashtra" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Phone</Label>
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Email</Label>
+                    <Input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} placeholder="info@company.com" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Authorized Signatory</Label>
+                    <Input value={authorizedSignatory} onChange={(e) => setAuthorizedSignatory(e.target.value)} placeholder="Name for invoice signing" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Button type="submit" className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-4 rounded-xl">Save Details</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Bank Accounts */}
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-slate-900 font-black flex items-center">
+                  <CreditCard className="mr-2 h-5 w-5 text-emerald-600" />
+                  Bank Accounts
+                </CardTitle>
+                <CardDescription className="text-slate-500">Manage bank accounts shown on invoices.</CardDescription>
+              </div>
+              <Button onClick={openAddBank} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 px-3 rounded-xl text-xs">+ Add Account</Button>
+            </CardHeader>
+            <CardContent>
+              {bankAccounts.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-sm">No bank accounts added yet. Add one to display on invoices.</div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {bankAccounts.map((acc: any) => (
+                    <div key={acc.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-slate-900">{acc.bankName}</span>
+                          {acc.isDefault && <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full">Default</span>}
+                        </div>
+                        <div className="text-xs text-slate-500 font-mono mt-1">{acc.accountNumber} · IFSC: {acc.ifscCode}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">{acc.branch} · {acc.accountHolderName}</div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs font-bold" onClick={() => openEditBank(acc)}>Edit</Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDeleteBank(acc.id)}>Delete</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Modules & Features */}
           <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
             <CardHeader>
               <CardTitle className="text-slate-900 font-black flex items-center">
                 <Box className="mr-2 h-5 w-5 text-emerald-600" />
                 Modules & Features
               </CardTitle>
-              <CardDescription className="text-slate-500">
-                Configure which modules are enabled for your workspace.
-              </CardDescription>
+              <CardDescription className="text-slate-500">Configure which modules are enabled for your workspace.</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-500 mb-3">
-                Turn modules on or off at any time. Disabling a module hides it from your workspace but preserves all your data.
-              </p>
+              <p className="text-sm text-slate-500 mb-3">Turn modules on or off at any time. Disabling a module hides it from your workspace but preserves all your data.</p>
               <Link href="/settings/modules">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-4 rounded-xl">
-                  Configure Modules
-                </Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 px-4 rounded-xl">Configure Modules</Button>
               </Link>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="team">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200">
               <div>
                 <h3 className="font-black text-slate-900">Team Members</h3>
@@ -549,7 +656,7 @@ export default function SettingsPage() {
                 Manage authentication methods and audit logging.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <div>
                   <div className="text-sm font-bold text-slate-900 tracking-tight">
@@ -586,107 +693,24 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
+        {/* REMOVED: Billing tab content - subscription system removed */}
         <TabsContent value="billing">
-          <div className="grid gap-3 md:grid-cols-2">
-            <Card className="bg-white border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-900 font-black flex items-center">
-                  <CreditCard className="mr-2 h-5 w-5 text-amber-600" />
-                  Active Plan
-                </CardTitle>
-                <CardDescription className="text-slate-500">
-                  Your current plan and usage limits.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="p-3 rounded-2xl bg-slate-900 border-b-4 border-indigo-500 shadow-xl overflow-hidden relative">
-                  <div className="absolute -right-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
-                  <Badge className="mb-2 bg-indigo-600 text-white font-black">
-                    {billingInfo?.plan}
-                  </Badge>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter">
-                    {billingInfo?.plan === "Free"
-                      ? "Free Plan"
-                      : "Enterprise Plan"}
-                  </h3>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">
-                    Status: Active
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500 font-bold uppercase tracking-tight text-[11px]">
-                      User Seats
-                    </span>
-                    <span className="text-slate-900 font-black font-mono">
-                      {billingInfo?.quotas?.maxUsers}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500 font-bold uppercase tracking-tight text-[11px]">
-                      SKU Capacity
-                    </span>
-                    <span className="text-slate-900 font-black font-mono">
-                      {billingInfo?.quotas?.maxProducts.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500 font-bold uppercase tracking-tight text-[11px]">
-                      AI Engine
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={
-                        billingInfo?.quotas?.aiEnabled
-                          ? "border-emerald-500/20 text-emerald-600 font-black bg-emerald-50"
-                          : "border-slate-100 text-slate-400"
-                      }
-                    >
-                      {billingInfo?.quotas?.aiEnabled ? "ENABLED" : "DISABLED"}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-slate-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-900 font-black flex items-center">
-                  <Zap className="mr-2 h-5 w-5 text-amber-600" />
-                  Upgrade Plan
-                </CardTitle>
-                <CardDescription className="text-slate-500">
-                  Unlock more features and higher limits.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {["Pro", "Enterprise"].map((tier) => (
-                  <div
-                    key={tier}
-                    className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between hover:border-indigo-500 transition-all group cursor-pointer hover:bg-white"
-                  >
-                    <div>
-                      <div className="text-sm font-black text-slate-900 tracking-tight">
-                        {tier} Configuration
-                      </div>
-                      <div className="text-[10px] text-slate-500 font-medium font-mono uppercase tracking-widest">
-                        More features & higher limits
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="border-slate-200 text-slate-900 font-bold hover:bg-slate-900 hover:text-white transition-all px-6"
-                      onClick={() => handleUpgrade(tier)}
-                      disabled={billingInfo?.plan === tier}
-                    >
-                      {billingInfo?.plan === tier ? "Active" : "Upgrade"}
-                    </Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl">
+            <CardHeader>
+              <CardTitle className="text-slate-900 font-black flex items-center">
+                <CreditCard className="mr-2 h-5 w-5 text-amber-600" />
+                Subscription Management
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                Subscription and billing are managed externally.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-600 text-sm">
+                Your subscription is managed by your administrator. Please contact support for any billing-related inquiries.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="notifications">
@@ -750,7 +774,7 @@ export default function SettingsPage() {
               access role.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddUser} className="space-y-4 py-4">
+          <form onSubmit={handleAddUser} className="space-y-3 py-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
                 Full Name
@@ -861,6 +885,51 @@ export default function SettingsPage() {
               Copy to Clipboard
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      {/* Bank Account Dialog */}
+      <Dialog open={isBankDialogOpen} onOpenChange={setIsBankDialogOpen}>
+        <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black text-slate-900">
+              {editingBankId ? "Edit Bank Account" : "Add Bank Account"}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              This account details will appear on your invoices.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveBank} className="space-y-3 py-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Bank Name</Label>
+              <Input placeholder="e.g. HDFC Bank" className="bg-slate-50 border-slate-200 h-11" required value={bankForm.bankName} onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Account Number</Label>
+                <Input placeholder="1234567890" className="bg-slate-50 border-slate-200 h-11 font-mono" required value={bankForm.accountNumber} onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">IFSC Code</Label>
+                <Input placeholder="HDFC0001234" className="bg-slate-50 border-slate-200 h-11 font-mono" required value={bankForm.ifscCode} onChange={(e) => setBankForm({ ...bankForm, ifscCode: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Branch</Label>
+              <Input placeholder="e.g. Andheri West, Mumbai" className="bg-slate-50 border-slate-200 h-11" required value={bankForm.branch} onChange={(e) => setBankForm({ ...bankForm, branch: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Account Holder Name</Label>
+              <Input placeholder="As per bank records" className="bg-slate-50 border-slate-200 h-11" required value={bankForm.accountHolderName} onChange={(e) => setBankForm({ ...bankForm, accountHolderName: e.target.value })} />
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <input type="checkbox" id="isDefault" checked={bankForm.isDefault} onChange={(e) => setBankForm({ ...bankForm, isDefault: e.target.checked })} className="rounded" />
+              <Label htmlFor="isDefault" className="text-sm font-bold text-slate-700">Set as default account</Label>
+            </div>
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="ghost" className="font-bold" onClick={() => setIsBankDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" className="bg-slate-900 hover:bg-black font-black px-4">{editingBankId ? "Update" : "Add Account"}</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

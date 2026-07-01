@@ -183,7 +183,7 @@ export class BrsService {
     endDateStr: string,
   ) {
     const endDate = new Date(endDateStr);
-    const account = await this.prisma.account.findUnique({
+    const account = await this.prisma.account.findFirst({
       where: { id: accountId, tenantId },
     });
 
@@ -230,7 +230,7 @@ export class BrsService {
   }
 
   async getStatementDetails(tenantId: string, statementId: string) {
-    return this.prisma.bankStatement.findUnique({
+    return this.prisma.bankStatement.findFirst({
       where: { id: statementId, tenantId },
       include: {
         lines: {
@@ -244,5 +244,87 @@ export class BrsService {
         },
       },
     });
+  }
+
+  async getPaymentsForLine(tenantId: string, lineId: string) {
+    // Find payments that match this bank statement line via correlationId or reference
+    const line = await this.prisma.bankStatementLine.findFirst({
+      where: { id: lineId, tenantId },
+    });
+
+    if (!line) return [];
+
+    // Look for payments with matching date, amount, or description patterns
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        tenantId,
+        date: {
+          gte: new Date(line.date),
+          lte: new Date(line.date),
+        },
+        amount: Number(line.amount),
+      },
+      include: {
+        customer: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+          },
+        },
+        invoice: {
+          select: {
+            invoiceNumber: true,
+            totalAmount: true,
+          },
+        },
+      },
+    });
+
+    // Also check payments linked via reconciliations to transactions with this description/date
+    const additionalPayments = await this.prisma.payment.findMany({
+      where: {
+        tenantId,
+        OR: [
+          {
+            reference: {
+              contains: line.reference || '',
+              mode: 'insensitive',
+            },
+          },
+          {
+            notes: {
+              contains: line.description || '',
+              mode: 'insensitive',
+            },
+          },
+        ],
+      },
+      include: {
+        customer: {
+          select: {
+            firstName: true,
+            lastName: true,
+            company: true,
+          },
+        },
+        invoice: {
+          select: {
+            invoiceNumber: true,
+            totalAmount: true,
+          },
+        },
+      },
+    });
+
+    // Merge and deduplicate
+    const allPayments = [...payments];
+    for (const p of additionalPayments) {
+      if (!allPayments.find((ap) => ap.id === p.id)) {
+        allPayments.push(p);
+      }
+    }
+
+    return allPayments;
   }
 }

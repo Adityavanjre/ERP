@@ -18,7 +18,6 @@ const nodeProfilingIntegration = (() => {
     return undefined;
   }
 })();
-import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -175,7 +174,7 @@ async function bootstrap() {
   }
 
   console.log('[BOOT] Initializing NestJS App Instance...');
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+  const app = await NestFactory.create(AppModule, {
     logger: loggerConfig,
   });
 
@@ -242,6 +241,12 @@ async function bootstrap() {
 
   // Compression for performance
   app.use(compression());
+
+  // Increase body parser limit for base64 image uploads (logo upload, document attachments, etc.)
+  // Default Express limit is 100kb which is too small for base64-encoded images
+  const express = require('express');
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
   // PRD-002: Production-Grade CORS Strategy (Gateway-First)
   // In our Proxy model, the browser on klypso.in calls /portal/api (Same-Origin).

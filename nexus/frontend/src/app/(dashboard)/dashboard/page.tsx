@@ -75,6 +75,7 @@ interface ChartData {
 }
 
 interface ActivityLog {
+  id?: string; // Unique identifier for activity log entry
   message: string;
   user: string;
   time: string | Date;
@@ -765,9 +766,9 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4 pt-3">
               {activity.length > 0 ? (
-                activity.map((log) => (
+                activity.map((log, index) => (
                   <div
-                    key={`${log.time}-${log.user}`}
+                    key={log.id || `activity-${index}`}
                     className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 hover:bg-slate-50 transition-all cursor-default"
                   >
                     <div className="space-y-1 max-w-[70%]">

@@ -39,6 +39,9 @@ export function InlineCreateProductDialog({
     hsnCode: "",
     stock: "0",
     warehouseId: "",
+    pricingMode: "piece",
+    width: "",
+    length: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -62,7 +65,8 @@ export function InlineCreateProductDialog({
     if (!formData.name.trim()) {
       errs.name = "Product name is required";
     }
-    if (!formData.price.trim() || Number(formData.price) < 0) {
+    const priceNum = Number(formData.price);
+    if (!formData.price.trim() || isNaN(priceNum) || priceNum < 0) {
       errs.price = "Valid price is required";
     }
     setErrors(errs);
@@ -79,16 +83,28 @@ export function InlineCreateProductDialog({
       const payload = {
         name: formData.name.trim(),
         sku: generatedSku,
-        price: Number(formData.price),
+        basePrice: Number(formData.price),
         costPrice: formData.costPrice ? Number(formData.costPrice) : 0,
-        baseUnit: formData.baseUnit,
+        uom: formData.baseUnit,
         gstRate: Number(formData.gstRate),
         hsnCode: formData.hsnCode.trim() || undefined,
         stock: Number(formData.stock),
         warehouseId: Number(formData.stock) > 0 ? formData.warehouseId : undefined,
+        pricingMode: formData.pricingMode,
+        width: formData.pricingMode === "area" && formData.width ? Number(formData.width) : undefined,
+        length: formData.pricingMode === "area" && formData.length ? Number(formData.length) : undefined,
       };
 
       const res = await api.post("inventory/products", payload);
+      
+      // After successful creation, clear cache to force refresh
+      // This ensures the new product appears immediately in list views
+      if (window && typeof window !== 'undefined') {
+        // Signal that product data is stale and needs refresh
+        localStorage.setItem('k_product_data_stale', 'true');
+        localStorage.removeItem('k_product_data_stale'); // Clear immediately to use as signal
+      }
+      
       toast.success("Product created successfully");
       setFormData({
         name: "",
@@ -100,6 +116,9 @@ export function InlineCreateProductDialog({
         hsnCode: "",
         stock: "0",
         warehouseId: warehouses.length > 0 ? warehouses[0].id : "",
+        pricingMode: "piece",
+        width: "",
+        length: "",
       });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
@@ -121,7 +140,7 @@ export function InlineCreateProductDialog({
             Register a new product on-the-spot. Optional fields can be left blank.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4 pt-4">
+        <form onSubmit={onSubmit} className="space-y-3 pt-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Product Name *</Label>
             <Input
@@ -160,6 +179,45 @@ export function InlineCreateProductDialog({
               </select>
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Pricing Mode</Label>
+              <select
+                value={formData.pricingMode}
+                onChange={(e) => setFormData({ ...formData, pricingMode: e.target.value })}
+                className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="piece">Piece-Based</option>
+                <option value="area">Area-Based</option>
+              </select>
+            </div>
+          </div>
+
+          {formData.pricingMode === "area" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Width (m)</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={formData.width}
+                  onChange={(e) => setFormData({ ...formData, width: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Length (m)</Label>
+                <Input
+                  type="number"
+                  step="any"
+                  value={formData.length}
+                  onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

@@ -84,7 +84,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
           >
             <ArrowRightLeft className="mr-2 h-4 w-4" /> Import/Export
           </Button>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-full px-6">
+          <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-full px-4">
             <Plus className="mr-2 h-4 w-4" /> New Record
           </Button>
         </div>
@@ -92,7 +92,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
 
       <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
         <CardHeader className="bg-white/5 border-b border-white/5 flex flex-row items-center justify-between py-4">
-          <div className="flex items-center gap-4 flex-1 max-w-sm">
+          <div className="flex items-center gap-3 flex-1 max-w-sm">
             <div className="relative w-full">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
               <input

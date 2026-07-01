@@ -2,7 +2,10 @@ import {
   Controller,
   Get,
   Patch,
+  Post,
+  Delete,
   Body,
+  Param,
   UseGuards,
   Req,
   Query,
@@ -162,7 +165,17 @@ export class SystemController {
   @Patch('tenant-profile')
   async updateTenantProfile(
     @Req() req: any,
-    @Body() body: { name?: string; logoUrl?: string; address?: string; state?: string; gstin?: string },
+    @Body() body: {
+      name?: string;
+      logoUrl?: string;
+      address?: string;
+      state?: string;
+      gstin?: string;
+      panNumber?: string;
+      phone?: string;
+      email?: string;
+      authorizedSignatory?: string;
+    },
   ) {
     const tenantId = req.user.tenantId;
     if (!tenantId) {
@@ -178,25 +191,134 @@ export class SystemController {
       },
     });
 
-    if (!membership || (membership.role !== 'Owner' && membership.role !== 'Admin')) {
+    const userRole = req.user.role as string;
+    const isSuperAdmin = req.user.isSuperAdmin;
+
+    if (!membership && !isSuperAdmin) {
+      throw new ForbiddenException('Only a workspace administrator can update company details.');
+    }
+
+    if (!isSuperAdmin && userRole !== 'Owner' && userRole !== 'Admin' && userRole !== 'Manager') {
       throw new ForbiddenException('Only a workspace administrator can update company details.');
     }
 
     const updated = await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
-        name: body.name,
-        logoUrl: body.logoUrl,
-        address: body.address,
-        state: body.state,
-        gstin: body.gstin,
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.logoUrl !== undefined && { logoUrl: body.logoUrl }),
+        ...(body.address !== undefined && { address: body.address }),
+        ...(body.state !== undefined && { state: body.state }),
+        ...(body.gstin !== undefined && { gstin: body.gstin }),
+        ...(body.panNumber !== undefined && { panNumber: body.panNumber }),
+        ...(body.phone !== undefined && { phone: body.phone }),
+        ...(body.email !== undefined && { email: body.email }),
+        ...(body.authorizedSignatory !== undefined && { authorizedSignatory: body.authorizedSignatory }),
       },
     });
 
-    // Invalidate config cache
     await this.cacheManager.del(`nexus:system:config:${tenantId}`);
 
     return { success: true, data: updated };
+  }
+
+  // ── Bank Accounts CRUD ──────────────────────────────────────────
+
+  @Get('bank-accounts')
+  async listBankAccounts(@Req() req: any) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) throw new ForbiddenException('No workspace context.');
+
+    const accounts = await this.prisma.bankAccount.findMany({
+      where: { tenantId },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
+    });
+    return { success: true, data: accounts };
+  }
+
+  @Post('bank-accounts')
+  async createBankAccount(
+    @Req() req: any,
+    @Body() body: {
+      bankName: string;
+      accountNumber: string;
+      ifscCode: string;
+      branch: string;
+      accountHolderName: string;
+      isDefault?: boolean;
+    },
+  ) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) throw new ForbiddenException('No workspace context.');
+
+    if (body.isDefault) {
+      await this.prisma.bankAccount.updateMany({
+        where: { tenantId, isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+
+    const account = await this.prisma.bankAccount.create({
+      data: {
+        tenantId,
+        bankName: body.bankName,
+        accountNumber: body.accountNumber,
+        ifscCode: body.ifscCode,
+        branch: body.branch,
+        accountHolderName: body.accountHolderName,
+        isDefault: body.isDefault ?? false,
+      },
+    });
+
+    return { success: true, data: account };
+  }
+
+  @Patch('bank-accounts/:id')
+  async updateBankAccount(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: {
+      bankName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      branch?: string;
+      accountHolderName?: string;
+      isDefault?: boolean;
+    },
+  ) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) throw new ForbiddenException('No workspace context.');
+
+    if (body.isDefault) {
+      await this.prisma.bankAccount.updateMany({
+        where: { tenantId, isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+
+    const account = await this.prisma.bankAccount.update({
+      where: { id },
+      data: {
+        ...(body.bankName !== undefined && { bankName: body.bankName }),
+        ...(body.accountNumber !== undefined && { accountNumber: body.accountNumber }),
+        ...(body.ifscCode !== undefined && { ifscCode: body.ifscCode }),
+        ...(body.branch !== undefined && { branch: body.branch }),
+        ...(body.accountHolderName !== undefined && { accountHolderName: body.accountHolderName }),
+        ...(body.isDefault !== undefined && { isDefault: body.isDefault }),
+      },
+    });
+
+    return { success: true, data: account };
+  }
+
+  @Delete('bank-accounts/:id')
+  async deleteBankAccount(@Req() req: any, @Param('id') id: string) {
+    const tenantId = req.user.tenantId;
+    if (!tenantId) throw new ForbiddenException('No workspace context.');
+
+    await this.prisma.bankAccount.deleteMany({ where: { id, tenantId } });
+
+    return { success: true };
   }
 
   @Get('audit')
