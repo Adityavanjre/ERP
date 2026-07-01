@@ -500,6 +500,75 @@ export default function InvoicePrintPage() {
         </div>
       </div>
 
+      {/* Amount in Words */}
+      <div className="mt-4 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Amount in Words</p>
+        <p className="text-sm font-bold text-zinc-900 italic">{numberToWords(totalAmount)}</p>
+      </div>
+
+      {/* HSN Summary */}
+      {(() => {
+        const hsnMap: Record<string, { qty: number; taxable: number; cgst: number; sgst: number; igst: number }> = {};
+        (invoice.items || []).forEach((item: any) => {
+          const hsn = item.hsnCode || item.product?.hsnCode || "N/A";
+          if (!hsnMap[hsn]) hsnMap[hsn] = { qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0 };
+          const meta = (invoice.itemSections || {})[item.productId] || {};
+          const isArea = meta.pricingMode === "area";
+          const amt = isArea ? (meta.width || 0) * (meta.length || 0) * (meta.sheets || 0) * (meta.ratePerSqm || 0) : Number(item.price) * Number(item.quantity);
+          hsnMap[hsn].qty += Number(item.quantity);
+          hsnMap[hsn].taxable += Number(item.taxableAmount || amt);
+          hsnMap[hsn].cgst += Number(item.cgstAmount || 0);
+          hsnMap[hsn].sgst += Number(item.sgstAmount || 0);
+          hsnMap[hsn].igst += Number(item.igstAmount || 0);
+        });
+        const entries = Object.entries(hsnMap);
+        if (entries.length === 0) return null;
+        return (
+          <div className="mt-6 border border-zinc-200 rounded-xl overflow-hidden print:border-zinc-300">
+            <table className="w-full text-xs">
+              <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
+                <tr>
+                  <th className="text-left py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">HSN Code</th>
+                  <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">Qty</th>
+                  <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">Taxable</th>
+                  {totalCGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">CGST</th>}
+                  {totalSGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">SGST</th>}
+                  {totalIGST > 0 && <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">IGST</th>}
+                  <th className="text-right py-2 px-4 font-bold text-zinc-900 uppercase tracking-widest text-[10px]">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {entries.map(([hsn, data]) => (
+                  <tr key={hsn}>
+                    <td className="py-2 px-4 text-zinc-700 font-mono font-bold">{hsn}</td>
+                    <td className="py-2 px-4 text-right text-zinc-700">{data.qty}</td>
+                    <td className="py-2 px-4 text-right text-zinc-700">{currencySymbol}{data.taxable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                    {totalCGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">{currencySymbol}{data.cgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>}
+                    {totalSGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">{currencySymbol}{data.sgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>}
+                    {totalIGST > 0 && <td className="py-2 px-4 text-right text-zinc-700">{currencySymbol}{data.igst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>}
+                    <td className="py-2 px-4 text-right font-bold text-zinc-900">{currencySymbol}{(data.taxable + data.cgst + data.sgst + data.igst).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
+      {/* Declaration */}
+      <div className="mt-8 p-4 border border-zinc-200 rounded-xl">
+        <p className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider mb-2">Declaration</p>
+        <p className="text-[10px] text-zinc-500 leading-relaxed">
+          1. We hereby certify that this invoice shows the actual price of the goods described and that all statements are true and correct.
+        </p>
+        <p className="text-[10px] text-zinc-500 leading-relaxed">
+          2. The goods are intended for use within the meaning of Section 17 of the CGST Act, 2017.
+        </p>
+        <p className="text-[10px] text-zinc-500 leading-relaxed">
+          3. Subject to jurisdiction of courts at {tenantProfile.state || "Mumbai"} only.
+        </p>
+      </div>
+
       {/* Footer */}
       <div className="mt-16 pt-8 border-t border-zinc-100 flex flex-col lg:flex-row justify-between items-start md:items-end gap-16 lg:gap-0">
         <div className="text-[10px] text-zinc-400 max-w-sm w-full space-y-4">
