@@ -275,22 +275,21 @@ export class InvoiceService {
           await this.ledger.initializeTenantAccounts(tenantId, tx);
           console.log('[Invoice Creation] Chart of accounts initialized successfully');
           // Re-fetch accounts after initialization
-          const newArAccount = await tx.account.findFirst({
+          arAccount = await tx.account.findFirst({
             where: {
               tenantId,
               type: AccountType.Asset,
               name: StandardAccounts.ACCOUNTS_RECEIVABLE,
             },
           });
-          const newRevenueAccount = await tx.account.findFirst({
+          revenueAccount = await tx.account.findFirst({
             where: {
               tenantId,
               type: AccountType.Revenue,
               name: StandardAccounts.SALES,
             },
           });
-          if (newArAccount) arAccount = newArAccount;
-          if (newRevenueAccount) revenueAccount = newRevenueAccount;
+          console.log('[Invoice Creation] After re-fetch - AR:', arAccount?.id, 'Revenue:', revenueAccount?.id);
         } catch (initError: any) {
           console.error('[Invoice Creation] Failed to initialize accounts:', initError?.message);
           throw new BadRequestException(
@@ -299,10 +298,12 @@ export class InvoiceService {
         }
       }
 
-      if (!arAccount || !revenueAccount)
+      if (!arAccount || !revenueAccount) {
+        console.error('[Invoice Creation] Missing AR Account:', !arAccount, 'Missing Revenue Account:', !revenueAccount);
         throw new BadRequestException(
-          'Ledger Configuration Error: Missing Accounts after initialization.',
+          'Ledger Configuration Error: Essential accounts are missing. Please contact support.',
         );
+      }
 
       // Split tax ledgers
       const cgstAccount = await tx.account.findFirst({
