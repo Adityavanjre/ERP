@@ -900,6 +900,13 @@ export class InvoiceService {
 
       const qty = new Decimal(item.quantity);
       const itemPrice = item.price ?? product?.price ?? 0;
+      
+      if (!itemPrice || itemPrice <= 0) {
+        throw new BadRequestException(
+          `Validation Error: Item "${item.name || item.productId}" has invalid price: ${itemPrice}. Price must be greater than 0.`,
+        );
+      }
+      
       const unitPrice = this.ledger.round2(itemPrice);
       const gstRate = new Decimal(item.gstRate ?? product.gstRate ?? 0);
 
