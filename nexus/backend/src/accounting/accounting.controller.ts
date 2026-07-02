@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   UseGuards,
   Req,
@@ -137,14 +138,25 @@ export class AccountingController {
   @Post('invoices')
   @Permissions(Permission.CREATE_INVOICE)
   // REMOVED: @PlanLimit('maxInvoicesPerMonth') - subscription system removed
-  createInvoice(
+  async createInvoice(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateInvoiceDto,
   ) {
-    return this.accountingService.createInvoice(
-      req.user.tenantId as string,
-      dto,
-    );
+    try {
+      return await this.accountingService.createInvoice(
+        req.user.tenantId as string,
+        dto,
+      );
+    } catch (error: any) {
+      console.error('[Invoice Creation Error]', {
+        message: error?.message,
+        stack: error?.stack,
+        code: error?.code,
+        detail: error?.detail,
+        meta: error?.meta,
+      });
+      throw error;
+    }
   }
 
   @Post('invoices/bulk')
@@ -180,6 +192,20 @@ export class AccountingController {
     return this.accountingService.getInvoiceById(
       req.user.tenantId as string,
       id,
+    );
+  }
+
+  @Patch('invoices/:id')
+  @Permissions(Permission.CREATE_INVOICE)
+  updateInvoice(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: any,
+  ) {
+    return this.accountingService.updateInvoice(
+      req.user.tenantId as string,
+      id,
+      dto,
     );
   }
 
