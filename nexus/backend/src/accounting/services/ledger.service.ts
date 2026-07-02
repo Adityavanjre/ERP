@@ -412,10 +412,25 @@ export class LedgerService {
       balance: 0,
     }));
 
-    await client.account.createMany({
-      data: accountData,
-      skipDuplicates: true,
+    // Check which accounts already exist
+    const existingAccounts = await client.account.findMany({
+      where: { tenantId },
+      select: { name: true },
     });
+    const existingNames = new Set(existingAccounts.map(a => a.name));
+
+    // Only create accounts that don't exist
+    const accountsToCreate = accountData.filter(acc => !existingNames.has(acc.name));
+
+    if (accountsToCreate.length > 0) {
+      await client.account.createMany({
+        data: accountsToCreate,
+        skipDuplicates: true,
+      });
+      console.log(`[initializeTenantAccounts] Created ${accountsToCreate.length} accounts for tenant ${tenantId}`);
+    } else {
+      console.log(`[initializeTenantAccounts] All accounts already exist for tenant ${tenantId}`);
+    }
   }
 
   async getTransactions(
