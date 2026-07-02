@@ -384,10 +384,13 @@ export function CreateInvoiceDialog({
     setUILocked(true);
     try {
       const apiItems = items.map((i) => {
+        const product = products.find(p => p.id === i.productId);
+        const itemPrice = i.price || Number(product?.price) || 0;
+        
         const baseItem: Record<string, any> = {
           productId: i.productId,
-          quantity: Number(i.quantity),
-          price: Number(i.price),
+          quantity: Number(i.quantity) || 1,
+          price: itemPrice,
           gstRate: igstRate + cgstRate + sgstRate,
           gstType: igstRate > 0 ? "IGST" : "CGST_SGST",
           hsnCode: i.hsnCode || undefined,
@@ -574,6 +577,10 @@ export function CreateInvoiceDialog({
       const item = items[i];
       if (!item.productId) {
         toast.error(`Please select a product for item ${i + 1}`);
+        return;
+      }
+      if (!item.price || item.price <= 0) {
+        toast.error(`Please set a valid price (> 0) for item ${i + 1}`);
         return;
       }
       if (item.type === "dimensional" && (!item.width || !item.length || !item.sheets || !item.ratePerSqm)) {
