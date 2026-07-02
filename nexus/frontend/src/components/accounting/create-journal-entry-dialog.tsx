@@ -146,7 +146,7 @@ export function CreateJournalEntryDialog({
           })),
         };
 
-        await api.post("accounting/journal-entries", journalData);
+        await api.post("accounting/journals", journalData);
         toast.success("Journal entry created successfully");
         setDescription("");
         setDate(new Date().toISOString().split("T")[0]);
@@ -182,8 +182,8 @@ export function CreateJournalEntryDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-3 py-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2 py-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label htmlFor="date" className="font-semibold">
                   Date <span className="text-red-500">*</span>
@@ -212,7 +212,7 @@ export function CreateJournalEntryDialog({
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label className="font-semibold">Journal Lines</Label>
                 <Button
@@ -228,7 +228,7 @@ export function CreateJournalEntryDialog({
               {lines.map((line, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-2 items-end bg-slate-50 p-3 rounded-lg"
+                  className="grid grid-cols-12 gap-2 items-end bg-slate-50 p-2 rounded-lg"
                 >
                   <div className="col-span-5">
                     <div className="flex justify-between items-center mb-1">
@@ -305,7 +305,7 @@ export function CreateJournalEntryDialog({
                 </div>
               ))}
 
-              <div className="grid grid-cols-2 gap-4 p-3 bg-slate-900 text-white rounded-lg font-bold">
+              <div className="grid grid-cols-2 gap-2 p-2 bg-slate-900 text-white rounded-lg font-bold">
                 <div>
                   <div className="text-xs opacity-70">Total Debits</div>
                   <div className="text-lg">

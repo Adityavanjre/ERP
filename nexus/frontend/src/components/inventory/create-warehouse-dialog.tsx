@@ -81,8 +81,8 @@ export function CreateWarehouseDialog({
             Create a new storage location for your stock and distribution.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3 pt-4">
-          <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-2 pt-2">
+          <div className="space-y-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"
@@ -136,7 +136,7 @@ export function CreateWarehouseDialog({
               />
             </div>
           </div>
-          <DialogFooter className="pt-2">
+          <DialogFooter className="pt-1">
             <Button
               type="button"
               variant="ghost"

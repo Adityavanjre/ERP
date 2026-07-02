@@ -394,14 +394,14 @@ export default function DashboardPage() {
 
   if (!mounted || loading)
     return (
-      <div className="p-4 text-center text-slate-500 font-bold">
+      <div className="p-2.5 text-center text-slate-500 font-bold">
         Synchronizing business intelligence...
       </div>
     );
 
   return (
-    <div className="flex-1 space-y-3 pt-0.5 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-2 pt-0.5 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-950 flex items-center">
             <Cpu className="mr-3 h-6 w-6 text-blue-600 shadow-sm" />
@@ -415,7 +415,7 @@ export default function DashboardPage() {
             {user?.tenantName || "your business"}.
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="text-right hidden md:block">
             <p className="text-[10px] text-slate-600 uppercase tracking-widest font-black">
               System Status
@@ -436,7 +436,7 @@ export default function DashboardPage() {
           <Button
             onClick={() => fetchData()}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-6 shadow-lg shadow-blue-500/20"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-black h-11 rounded-xl uppercase tracking-widest text-[10px] px-3 shadow-lg shadow-blue-500/20"
           >
             <Zap
               className={cn("h-3.5 w-3.5 mr-2", loading && "animate-spin")}
@@ -483,7 +483,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-2">
         {[
           {
             label: "Quick Invoice",
@@ -569,7 +569,7 @@ export default function DashboardPage() {
       {/* Top Level KPIs */}
       <div
         className={cn(
-          "grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4",
+          "grid gap-2 sm:gap-2 md:grid-cols-2 lg:grid-cols-4",
           kpiCards.length > 4 && "lg:grid-cols-5",
         )}
       >
@@ -599,7 +599,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
         {/* Big Chart */}
         <Card className="col-span-4 bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl overflow-hidden relative border-none">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
@@ -611,7 +611,7 @@ export default function DashboardPage() {
               Monthly sales revenue across all orders.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4 px-3">
+          <CardContent className="pt-2 px-3">
             <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
@@ -661,7 +661,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* System Activity */}
-        <div className="col-span-3 space-y-3">
+        <div className="col-span-3 space-y-2">
           {localIPs.length > 0 && (
             <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
               <CardHeader className="bg-emerald-50 border-b border-emerald-100 py-3 px-4">
@@ -670,12 +670,12 @@ export default function DashboardPage() {
                   Local Network Access
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 pt-3 px-3">
+              <CardContent className="space-y-2 pt-3 px-3">
                 <p className="text-[11px] font-black text-slate-600 leading-normal">
                   Your store's local server is running. Employees can connect using the IP below:
                 </p>
                 {localIPs.map(ip => (
-                  <div key={ip} className="flex flex-col p-4 rounded-2xl border border-emerald-100 bg-emerald-50/50">
+                  <div key={ip} className="flex flex-col p-2.5 rounded-2xl border border-emerald-100 bg-emerald-50/50">
                     <p className="text-[10px] text-emerald-600 font-black uppercase mb-1 tracking-widest">WIFI URL</p>
                     <p className="text-xl font-black text-emerald-800 tracking-tight select-all cursor-pointer">
                       http://{ip}:3130/portal
@@ -693,7 +693,7 @@ export default function DashboardPage() {
                 Business Growth
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pt-3 px-3">
+            <CardContent className="space-y-2 pt-3 px-3">
               <div className="flex items-center justify-between p-3 rounded-2xl border border-blue-100 bg-blue-50/20">
                 <div>
                   <p className="text-[10px] text-slate-600 font-black uppercase mb-1 tracking-widest">
@@ -718,8 +718,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-2xl border border-slate-100 bg-slate-50">
                   <p className="text-[10px] text-slate-600 font-black uppercase mb-1 tracking-widest">
                     Monthly MRR
                   </p>
@@ -730,7 +730,7 @@ export default function DashboardPage() {
                     })}
                   </p>
                 </div>
-                <div className="p-4 rounded-2xl border border-rose-50 bg-rose-50/30">
+                <div className="p-2.5 rounded-2xl border border-rose-50 bg-rose-50/30">
                   <p className="text-[10px] text-slate-600 font-black uppercase mb-1 tracking-widest">
                     Monthly Burn
                   </p>
@@ -764,12 +764,12 @@ export default function DashboardPage() {
                 Recent Activity
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-3">
+            <CardContent className="space-y-2 pt-3">
               {activity.length > 0 ? (
                 activity.map((log, index) => (
                   <div
                     key={log.id || `activity-${index}`}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 hover:bg-slate-50 transition-all cursor-default"
+                    className="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-100 hover:bg-slate-50 transition-all cursor-default"
                   >
                     <div className="space-y-1 max-w-[70%]">
                       <p className="text-[11px] font-black text-slate-900 tracking-tight leading-normal">
@@ -795,7 +795,7 @@ export default function DashboardPage() {
                   </div>
                 ))
               ) : (
-                <div className="p-4 text-center text-zinc-600 text-xs italic">
+                <div className="p-2.5 text-center text-zinc-600 text-xs italic">
                   No recent business activity recorded.
                 </div>
               )}

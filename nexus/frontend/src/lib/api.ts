@@ -143,9 +143,15 @@ api.interceptors.request.use(
       }
     }
 
-    // SEC-006: Authorization header injection from localStorage removed.
-    // The backend now relies on HttpOnly cookies (nexus_token) sent via withCredentials: true.
-    // This dramatically reduces XSS risk by keeping tokens out of reach of client-side JS.
+    // SEC-006: HttpOnly cookies (nexus_token) preferred for production.
+    // DEV-AUTH: In local dev, cookies don't cross ports (3000→3001), so we inject
+    // the Bearer token from localStorage as a fallback.
+    if (typeof window !== "undefined") {
+      const kToken = window.localStorage.getItem("k_token");
+      if (kToken) {
+        config.headers["Authorization"] = `Bearer ${kToken}`;
+      }
+    }
 
     // FE-004: Attach the CSRF token on mutating requests so the backend CsrfGuard
     // double-submit cookie check can pass for web-channel cookie-based sessions.

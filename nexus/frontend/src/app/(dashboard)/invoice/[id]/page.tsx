@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api } from "../../../../lib/api";
 import { Button } from "../../../../components/ui/button";
-import { Printer, Mail } from "lucide-react";
+import { Printer, Mail, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUX } from "../../../../components/providers/ux-provider";
 
@@ -37,6 +37,9 @@ interface InvoiceDetail {
   totalCGST?: number;
   totalSGST?: number;
   totalIGST?: number;
+  amountPaid?: number;
+  amountDue?: number;
+  status?: string;
   issueDate: string;
   dueDate: string;
   billingAddress?: string;
@@ -58,6 +61,23 @@ interface InvoiceDetail {
   vehicleNumber?: string;
   buyersOrderNo?: string;
   eWayBillNo?: string;
+  placeOfSupply?: string;
+  referenceNumber?: string;
+  otherReferences?: string;
+  lrRrNumber?: string;
+  salesPerson?: string;
+  warehouse?: string;
+  paymentTerms?: string;
+  discount?: number;
+  freight?: number;
+  packingCharges?: number;
+  loadingCharges?: number;
+  insurance?: number;
+  otherCharges?: number;
+  roundOff?: number;
+  cessAmount?: number;
+  notes?: string;
+  declaration?: string;
   customer: {
     firstName: string;
     lastName: string;
@@ -73,6 +93,7 @@ interface TaxSummaryData {
   cgstAmount: number;
   sgstAmount: number;
   igstAmount: number;
+  hsnCodes: string[];
 }
 
 function numberToWords(num: number): string {
@@ -148,7 +169,7 @@ export default function InvoicePrintPage() {
     logoUrl: "",
     address: "123 Business Park, Tech City, Maharashtra, India - 400001",
     gstin: "27AABCU9603R1ZN",
-    state: "Maharashtra",
+    state: "Karnataka",
     panNumber: "",
     phone: "",
     email: "",
@@ -209,6 +230,7 @@ export default function InvoicePrintPage() {
         cgstAmount: 0,
         sgstAmount: 0,
         igstAmount: 0,
+        hsnCodes: [],
       };
     acc[rate].taxableAmount += Number(
       item.taxableAmount ||
@@ -217,6 +239,8 @@ export default function InvoicePrintPage() {
     acc[rate].cgstAmount += Number(item.cgstAmount || 0);
     acc[rate].sgstAmount += Number(item.sgstAmount || 0);
     acc[rate].igstAmount += Number(item.igstAmount || 0);
+    const hsn = item.hsnCode || item.product?.hsnCode;
+    if (hsn && !acc[rate].hsnCodes.includes(hsn)) acc[rate].hsnCodes.push(hsn);
     return acc;
   }, {});
 
@@ -284,93 +308,120 @@ export default function InvoicePrintPage() {
         </div>
       </div>
 
-      {/* Items Table */}
+      {/* Items Table with Category Grouping */}
       <div className="overflow-x-auto mb-6 max-w-[100vw]">
         {(() => {
-          // Group items by category for section headers
           const items = invoice.items || [];
           const itemSectionsMap: Record<string, any> = invoice.itemSections || {};
           const hasAreaItems = items.some((item: any) => {
             const meta = itemSectionsMap[item.productId] || item.itemSections || {};
             return meta.pricingMode === "area";
           });
-          
+
+          // Group items by category
+          const categoryGroups: Record<string, { items: any[]; total: number; qty: number }> = {};
+          items.forEach((item: any, i: number) => {
+            const cat = item.product?.category || item.product?.name || "General";
+            if (!categoryGroups[cat]) categoryGroups[cat] = { items: [], total: 0, qty: 0 };
+            const meta = itemSectionsMap[item.productId] || item.itemSections || {};
+            const isArea = meta.pricingMode === "area";
+            const width = meta.width || 0;
+            const length = meta.length || 0;
+            const sheets = meta.sheets || 0;
+            const sqm = width * length * sheets;
+            const ratePerSqm = meta.ratePerSqm || 0;
+            const itemAmount = isArea ? sqm * ratePerSqm : Number(item.price) * Number(item.quantity);
+            categoryGroups[cat].items.push({ ...item, _index: i, _meta: meta, _isArea: isArea, _amount: itemAmount, _sqm: sqm, _width: width, _length: length, _sheets: sheets, _ratePerSqm: ratePerSqm });
+            categoryGroups[cat].total += itemAmount;
+            categoryGroups[cat].qty += Number(item.quantity);
+          });
+
+          const categoryEntries = Object.entries(categoryGroups);
+          const showCategoryHeaders = categoryEntries.length > 1;
+          let globalIndex = 0;
+
           return (
             <table className="w-full text-sm min-w-[500px]">
-              <thead className="border-b-2 border-zinc-999">
-                <tr className="border-b-2 border-zinc-900">
-                  <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">
-                    Description
-                  </th>
-                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">
-                    HSN
-                  </th>
+              <thead className="border-b-2 border-zinc-900">
+                <tr>
+                  <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-10">No</th>
+                  <th className="text-left py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px]">Description</th>
+                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-24">HSN/SAC</th>
                   {hasAreaItems ? (
                     <>
-                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">W(m)</th>
-                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">L(m)</th>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">Width</th>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">Length</th>
                       <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-16">Sheets</th>
-                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">SQM</th>
+                      <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">QTY</th>
                     </>
                   ) : (
-                    <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">
-                      Qty
-                    </th>
+                    <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-20">Quantity</th>
                   )}
-                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
-                    Rate
-                  </th>
-                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">
-                    Amount
-                  </th>
+                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Rate</th>
+                  <th className="text-right py-3 font-bold text-zinc-900 uppercase tracking-wider text-[11px] w-32">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {items.map((item: any, i: number) => {
-                  const meta = itemSectionsMap[item.productId] || item.itemSections || {};
-                  const isArea = meta.pricingMode === "area";
-                  const width = meta.width || 0;
-                  const length = meta.length || 0;
-                  const sheets = meta.sheets || 0;
-                  const sqm = width * length * sheets;
-                  const ratePerSqm = meta.ratePerSqm || 0;
-                  const itemAmount = isArea ? sqm * ratePerSqm : Number(item.price) * Number(item.quantity);
-
+              <tbody>
+                {categoryEntries.map(([category, group]) => {
+                  const catKey = category;
+                  const sectionQty = group.items.reduce((sum: number, item: any) => {
+                    return sum + (item._isArea ? item._sheets : Number(item.quantity));
+                  }, 0);
                   return (
-                    <tr key={i}>
-                      <td className="py-4 text-zinc-700 font-medium">
-                        {item.productName || item.product?.name || "Product Item"}
-                        <div className="text-[10px] text-zinc-400 mt-0.5">
-                          {item.product?.sku}
-                        </div>
-                      </td>
-                      <td className="py-4 text-right text-zinc-500 font-mono">
-                        {item.hsnCode || item.product?.hsnCode || "-"}
-                      </td>
-                      {hasAreaItems ? (
-                        <>
-                          <td className="py-4 text-right text-zinc-700">{isArea ? width : "-"}</td>
-                          <td className="py-4 text-right text-zinc-700">{isArea ? length : "-"}</td>
-                          <td className="py-4 text-right text-zinc-700">{isArea ? sheets : item.quantity}</td>
-                          <td className="py-4 text-right text-zinc-700">{isArea ? sqm.toFixed(2) : "-"}</td>
-                        </>
-                      ) : (
-                        <td className="py-4 text-right text-zinc-700">
-                          {item.quantity}
-                        </td>
+                    <React.Fragment key={catKey}>
+                      {showCategoryHeaders && (
+                        <tr className="bg-zinc-100 border-t-2 border-b border-zinc-300">
+                          <td colSpan={hasAreaItems ? 8 : 5} className="py-2 px-4 font-black text-zinc-900 uppercase text-xs tracking-widest">
+                            {category}
+                          </td>
+                        </tr>
                       )}
-                      <td className="py-4 text-right text-zinc-700">
-                        {currencySymbol}
-                        {isArea
-                          ? ratePerSqm.toLocaleString("en-IN", { minimumFractionDigits: 2 })
-                          : Number(item.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })
-                        }
-                      </td>
-                      <td className="py-4 text-right font-bold text-zinc-900">
-                        {currencySymbol}
-                        {itemAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
+                      {group.items.map((item: any) => {
+                        globalIndex++;
+                        return (
+                          <tr key={item._index} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                            <td className="py-3 text-center text-zinc-500 font-mono text-xs">{globalIndex}</td>
+                            <td className="py-3 text-zinc-700 font-medium">
+                              {item.productName || item.product?.name || "Product Item"}
+                              <div className="text-[10px] text-zinc-400 mt-0.5">{item.product?.sku}</div>
+                            </td>
+                            <td className="py-3 text-right text-zinc-500 font-mono text-xs">
+                              {item.hsnCode || item.product?.hsnCode || "-"}
+                            </td>
+                            {hasAreaItems ? (
+                              <>
+                                <td className="py-3 text-right text-zinc-700">{item._isArea ? item._width : "-"}</td>
+                                <td className="py-3 text-right text-zinc-700">{item._isArea ? item._length : "-"}</td>
+                                <td className="py-3 text-right text-zinc-700">{item._isArea ? item._sheets : item.quantity}</td>
+                                <td className="py-3 text-right text-zinc-700">{item._isArea ? item._sqm.toFixed(3) : item.quantity}</td>
+                              </>
+                            ) : (
+                              <td className="py-3 text-right text-zinc-700">{item.quantity}</td>
+                            )}
+                            <td className="py-3 text-right text-zinc-700">
+                              {currencySymbol}{item._isArea
+                                ? item._ratePerSqm.toLocaleString("en-IN", { minimumFractionDigits: 2 })
+                                : Number(item.price).toLocaleString("en-IN", { minimumFractionDigits: 2 })
+                              }
+                            </td>
+                            <td className="py-3 text-right font-bold text-zinc-900">
+                              {currencySymbol}{item._amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {showCategoryHeaders && (
+                        <tr className="bg-zinc-50 border-b border-zinc-200">
+                          <td colSpan={hasAreaItems ? 6 : 3} className="py-2 px-4 text-right font-black text-zinc-700 text-xs uppercase tracking-wider">
+                            {category} Total
+                          </td>
+                          <td className="py-2 text-right font-bold text-zinc-700 text-xs">{sectionQty}</td>
+                          <td className="py-2 text-right font-black text-zinc-900 text-xs">
+                            {currencySymbol}{group.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -497,6 +548,26 @@ export default function InvoicePrintPage() {
               {totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
+          {invoice.amountPaid !== undefined && invoice.amountPaid > 0 && (
+            <>
+              <div className="flex justify-between text-sm text-zinc-600">
+                <span>Amount Paid</span>
+                <span className="font-medium text-emerald-600">
+                  {currencySymbol}
+                  {Number(invoice.amountPaid).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm font-bold">
+                <span className={invoice.status === "Paid" ? "text-emerald-600" : "text-rose-600"}>
+                  {invoice.status === "Paid" ? "Paid in Full" : "Amount Due"}
+                </span>
+                <span className={invoice.status === "Paid" ? "text-emerald-600" : "text-rose-600"}>
+                  {currencySymbol}
+                  {Number(invoice.amountDue ?? totalAmount - Number(invoice.amountPaid)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -677,8 +748,9 @@ export default function InvoicePrintPage() {
             </div>
             <p className="text-slate-600 leading-tight whitespace-pre-line">{tenantProfile.address}</p>
             <div className="pt-1.5 space-y-0.5 text-[9px] font-bold">
-              <div>GSTIN/UIN: <span className="font-mono text-slate-800">{tenantProfile.gstin}</span></div>
-              <div>State Name: <span className="text-slate-800">{tenantProfile.state}</span></div>
+              <div>GSTIN/UIN: <span className="font-mono text-slate-800">{tenantProfile.gstin || "-"}</span></div>
+              <div>State Name: <span className="text-slate-800">{tenantProfile.state || "-"}</span></div>
+              {tenantProfile.email && <div>E-Mail: <span className="text-slate-800">{tenantProfile.email}</span></div>}
             </div>
           </div>
           <div className="col-span-6 grid grid-cols-2 text-[9px] leading-tight">
@@ -692,20 +764,44 @@ export default function InvoicePrintPage() {
             </div>
             <div className="p-2 border-r border-b border-slate-300">
               <span className="block font-bold text-slate-400 uppercase text-[8px]">e-Way Bill No.</span>
-              <span className="font-mono text-slate-900">592013167431</span>
+              <span className="font-mono text-slate-900">{invoice.eWayBillNo || "-"}</span>
             </div>
             <div className="p-2 border-b border-slate-300">
-              <span className="block font-bold text-slate-400 uppercase text-[8px]">Terms of Payment</span>
-              <span className="font-bold text-slate-900">Against Loading</span>
+              <span className="block font-bold text-slate-400 uppercase text-[8px]">Mode/Terms of Payment</span>
+              <span className="font-bold text-slate-900">{invoice.termsOfPayment || "Against Delivery"}</span>
             </div>
             <div className="p-2 border-r border-slate-300">
               <span className="block font-bold text-slate-400 uppercase text-[8px]">Buyer's Order No.</span>
-              <span className="font-mono text-slate-900">86/SO/26-27</span>
+              <span className="font-mono text-slate-900">{invoice.buyersOrderNo || "-"}</span>
             </div>
             <div className="p-2">
               <span className="block font-bold text-slate-400 uppercase text-[8px]">Terms of Delivery</span>
-              <span className="font-bold text-slate-900">Ex Site</span>
+              <span className="font-bold text-slate-900">{invoice.termsOfDelivery || "Ex Site"}</span>
             </div>
+            {invoice.vehicleNumber && (
+              <div className="p-2 border-r border-t border-slate-300 col-span-2">
+                <span className="block font-bold text-slate-400 uppercase text-[8px]">Motor Vehicle No.</span>
+                <span className="font-mono text-slate-900 font-black">{invoice.vehicleNumber}</span>
+              </div>
+            )}
+            {invoice.lrRrNumber && (
+              <div className="p-2 border-r border-t border-slate-300">
+                <span className="block font-bold text-slate-400 uppercase text-[8px]">LR/RR No.</span>
+                <span className="font-mono text-slate-900">{invoice.lrRrNumber}</span>
+              </div>
+            )}
+            {invoice.referenceNumber && (
+              <div className="p-2 border-t border-slate-300">
+                <span className="block font-bold text-slate-400 uppercase text-[8px]">Reference No.</span>
+                <span className="font-mono text-slate-900">{invoice.referenceNumber}</span>
+              </div>
+            )}
+            {invoice.otherReferences && (
+              <div className="p-2 border-t border-slate-300">
+                <span className="block font-bold text-slate-400 uppercase text-[8px]">Other References</span>
+                <span className="font-mono text-slate-900">{invoice.otherReferences}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -723,6 +819,11 @@ export default function InvoicePrintPage() {
             {invoice.customer.gstin && (
               <div className="text-[9px] font-bold mt-1">
                 GSTIN/UIN: <span className="font-mono text-slate-950">{invoice.customer.gstin}</span>
+              </div>
+            )}
+            {invoice.placeOfSupply && (
+              <div className="text-[9px] font-bold mt-1">
+                Place of Supply: <span className="text-slate-950">{invoice.placeOfSupply}</span>
               </div>
             )}
           </div>
@@ -842,6 +943,84 @@ export default function InvoicePrintPage() {
           <span className="font-black text-slate-900 text-xs tracking-tight">{numberToWords(totalAmount)}</span>
         </div>
 
+        {/* Charges Summary */}
+        {(() => {
+          const hasCharges = (invoice.discount || 0) > 0 || (invoice.freight || 0) > 0 || (invoice.packingCharges || 0) > 0 || (invoice.loadingCharges || 0) > 0 || (invoice.insurance || 0) > 0 || (invoice.otherCharges || 0) > 0 || (invoice.cessAmount || 0) > 0 || (invoice.roundOff || 0) !== 0;
+          if (!hasCharges) return null;
+          return (
+            <div className="grid grid-cols-4 border-b border-slate-300 text-[9px]">
+              {(invoice.discount || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Discount</span>
+                  <span className="font-black text-rose-700">-{currencySymbol}{Number(invoice.discount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.freight || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Freight</span>
+                  <span className="font-black text-slate-900">{currencySymbol}{Number(invoice.freight).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.packingCharges || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Packing</span>
+                  <span className="font-black text-slate-900">{currencySymbol}{Number(invoice.packingCharges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.loadingCharges || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Loading</span>
+                  <span className="font-black text-slate-900">{currencySymbol}{Number(invoice.loadingCharges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.insurance || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Insurance</span>
+                  <span className="font-black text-slate-900">{currencySymbol}{Number(invoice.insurance).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.otherCharges || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Other Charges</span>
+                  <span className="font-black text-slate-900">{currencySymbol}{Number(invoice.otherCharges).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.cessAmount || 0) > 0 && (
+                <div className="p-2 border-r border-slate-300">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">CESS</span>
+                  <span className="font-black text-slate-900">{currencySymbol}{Number(invoice.cessAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {(invoice.roundOff || 0) !== 0 && (
+                <div className="p-2">
+                  <span className="font-bold text-slate-400 uppercase text-[8px] block">Round Off</span>
+                  <span className="font-black text-slate-900">{Number(invoice.roundOff) > 0 ? "+" : ""}{currencySymbol}{Number(invoice.roundOff).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Payment Summary */}
+        {invoice.amountPaid !== undefined && Number(invoice.amountPaid) > 0 && (
+          <div className="grid grid-cols-3 border-b border-slate-300 text-[9px]">
+            <div className="p-2 border-r border-slate-300">
+              <span className="font-bold text-slate-400 uppercase text-[8px] block">Amount Paid</span>
+              <span className="font-black text-emerald-700">{currencySymbol}{Number(invoice.amountPaid).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="p-2 border-r border-slate-300">
+              <span className="font-bold text-slate-400 uppercase text-[8px] block">Amount Due</span>
+              <span className="font-black text-rose-700">{currencySymbol}{Number(invoice.amountDue ?? totalAmount - Number(invoice.amountPaid)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+            <div className="p-2">
+              <span className="font-bold text-slate-400 uppercase text-[8px] block">Status</span>
+              <span className={`font-black ${invoice.status === "Paid" ? "text-emerald-700" : invoice.status === "Partial" ? "text-amber-700" : "text-rose-700"}`}>
+                {invoice.status || "Unpaid"}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* GST Tax Breakdown Summary Table */}
         {Object.keys(taxSummary).length > 0 && totalTax > 0 && (
           <div className="p-3 border-b border-slate-900">
@@ -883,7 +1062,7 @@ export default function InvoicePrintPage() {
 
                   return (
                     <tr key={rate} className="border-b border-slate-200 font-mono">
-                      <td className="p-1 border-r border-slate-300 font-sans font-bold">39041090</td>
+                      <td className="p-1 border-r border-slate-300 font-sans font-bold">{data.hsnCodes.join(", ") || rate + "%"}</td>
                       <td className="p-1 border-r border-slate-300 text-right tabular-nums">{data.taxableAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                       {totalCGST > 0 && (
                         <>
@@ -945,18 +1124,30 @@ export default function InvoicePrintPage() {
           <div className="col-span-6 p-3 border-r-2 border-slate-900 space-y-1.5">
             <div>
               <span className="font-bold text-slate-400 uppercase text-[8px] block">Company's PAN</span>
-              <span className="font-mono font-bold text-slate-900">ABEFR7073F</span>
+              <span className="font-mono font-bold text-slate-900">{tenantProfile.panNumber || "-"}</span>
             </div>
             <div className="text-[8px] text-slate-500 leading-tight">
               <span className="font-bold text-slate-800 uppercase block mb-0.5">Declaration</span>
-              We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.
+              {invoice.declaration || "We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct."}
             </div>
+            {invoice.notes && (
+              <div className="text-[8px] text-slate-500 leading-tight">
+                <span className="font-bold text-slate-800 uppercase block mb-0.5">Notes</span>
+                {invoice.notes}
+              </div>
+            )}
           </div>
           <div className="col-span-6 p-3 space-y-1 text-[9px]">
             <span className="font-bold text-slate-400 uppercase text-[8px] block">Company's Bank Details</span>
-            <div><span className="font-bold">Bank Name:</span> KOTAK MAHINDRA BANK</div>
-            <div><span className="font-bold">Account No:</span> 0546113516</div>
-            <div><span className="font-bold">Branch & IFS Code:</span> Yeshwanthpur, Bangalore - KKBK0008062</div>
+            {bankAccount ? (
+              <>
+                <div><span className="font-bold">Bank Name:</span> {bankAccount.bankName}</div>
+                <div><span className="font-bold">Account No:</span> {bankAccount.accountNumber}</div>
+                <div><span className="font-bold">Branch & IFS Code:</span> {bankAccount.branch}, {bankAccount.ifscCode}</div>
+              </>
+            ) : (
+              <div className="text-slate-400 italic">No bank details configured</div>
+            )}
           </div>
         </div>
 
@@ -1250,6 +1441,16 @@ export default function InvoicePrintPage() {
           </select>
         </div>
         <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all"
+            onClick={() => {
+              window.opener?.postMessage({ type: 'EDIT_INVOICE', invoiceId: params.id }, '*');
+              toast.info("Switch to accounting tab to edit this invoice");
+            }}
+          >
+            <Edit2 className="mr-2 h-4 w-4" /> Edit Invoice
+          </Button>
           <Button
             variant="outline"
             className="text-white border-white/20 hover:bg-white/10 rounded-2xl font-bold px-6 h-11 transition-all"

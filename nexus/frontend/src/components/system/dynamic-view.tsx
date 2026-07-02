@@ -66,7 +66,7 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
     .join(" ");
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-white flex items-center">
@@ -91,8 +91,8 @@ export const DynamicView = ({ modelName }: DynamicViewProps) => {
       </div>
 
       <Card className="bg-white/5 border-white/10 backdrop-blur-md overflow-hidden">
-        <CardHeader className="bg-white/5 border-b border-white/5 flex flex-row items-center justify-between py-4">
-          <div className="flex items-center gap-3 flex-1 max-w-sm">
+        <CardHeader className="bg-white/5 border-b border-white/5 flex flex-row items-center justify-between py-2">
+          <div className="flex items-center gap-2 flex-1 max-w-sm">
             <div className="relative w-full">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
               <input

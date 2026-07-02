@@ -58,6 +58,9 @@ interface MinimalProduct {
   id: string;
   name: string;
   sku: string;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface StockLocation {
@@ -108,7 +111,7 @@ export default function StockMovementsPage() {
         api.get("inventory/warehouses"),
         api.get("inventory/movements").catch(() => ({ data: [] })),
       ]);
-      setProducts(prodRes.data.data || []);
+      setProducts(prodRes.data?.items || prodRes.data?.data || (Array.isArray(prodRes.data) ? prodRes.data : []));
       setWarehouses(whRes.data || []);
       setMovements(
         Array.isArray(movRes.data) ? movRes.data : movRes.data?.data || [],
@@ -191,7 +194,7 @@ export default function StockMovementsPage() {
     );
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div>
         <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
           <ArrowLeftRight className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
@@ -202,10 +205,10 @@ export default function StockMovementsPage() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-3 gap-2">
         {/* Form Column */}
         <Card className="lg:col-span-2 border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none bg-white">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-6 md:px-4">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-3 md:px-4">
             <CardTitle className="text-xl font-black text-slate-900">
               Record Movement
             </CardTitle>
@@ -214,13 +217,13 @@ export default function StockMovementsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-3 md:p-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-2">
               {/* Type Selection */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setMovementType("TRANSFER")}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all ${
                     movementType === "TRANSFER"
                       ? "border-blue-600 bg-blue-50/50 text-blue-700 shadow-inner"
                       : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
@@ -234,7 +237,7 @@ export default function StockMovementsPage() {
                 <button
                   type="button"
                   onClick={() => setMovementType("IN")}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all ${
                     movementType === "IN"
                       ? "border-emerald-600 bg-emerald-50/50 text-emerald-700 shadow-inner"
                       : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
@@ -248,7 +251,7 @@ export default function StockMovementsPage() {
                 <button
                   type="button"
                   onClick={() => setMovementType("OUT")}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all ${
                     movementType === "OUT"
                       ? "border-red-600 bg-red-50/50 text-red-700 shadow-inner"
                       : "border-slate-100 hover:border-slate-300 text-slate-500 bg-white"
@@ -262,7 +265,7 @@ export default function StockMovementsPage() {
               </div>
 
               {/* Product Selection */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                     Product
@@ -288,7 +291,7 @@ export default function StockMovementsPage() {
                   </Select>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-2">
                   {movementType === "TRANSFER" && (
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -341,7 +344,7 @@ export default function StockMovementsPage() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-2">
                   <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                       Quantity
@@ -388,7 +391,7 @@ export default function StockMovementsPage() {
         </Card>
 
         {/* Info Column */}
-        <div className="space-y-3">
+        <div className="space-y-1.5">
           <Card className="bg-slate-900 text-white rounded-3xl border-none shadow-xl shadow-slate-900/10 overflow-hidden relative">
             <div className="absolute top-0 right-0 p-3 opacity-10">
               <PackageSearch className="h-32 w-32" />
@@ -404,7 +407,7 @@ export default function StockMovementsPage() {
                 all your registered warehouses.
               </p>
               {productId && (
-                <div className="mt-6 space-y-4">
+                <div className="mt-3 space-y-2">
                   {warehouses.map((w) => {
                     // Find stock for selected product in this warehouse
                     const stockLoc = w.stocks?.find(
@@ -416,7 +419,7 @@ export default function StockMovementsPage() {
                     return (
                       <div
                         key={w.id}
-                        className="bg-slate-800/50 p-4 rounded-2xl flex justify-between items-center border border-slate-700/50"
+                        className="bg-slate-800/50 p-2.5 rounded-2xl flex justify-between items-center border border-slate-700/50"
                       >
                         <span className="font-bold text-slate-100 text-sm">
                           {w.name}
@@ -433,7 +436,7 @@ export default function StockMovementsPage() {
                         s.productId === productId && Number(s.quantity) > 0,
                     ),
                   ) && (
-                    <div className="text-xs font-bold text-rose-400 uppercase tracking-widest bg-rose-500/10 p-4 rounded-xl text-center">
+                    <div className="text-xs font-bold text-rose-400 uppercase tracking-widest bg-rose-500/10 p-2.5 rounded-xl text-center">
                       No stock available in any warehouse
                     </div>
                   )}
@@ -442,7 +445,7 @@ export default function StockMovementsPage() {
             </CardContent>
           </Card>
 
-          <div className="bg-amber-50 rounded-3xl p-3 border-2 border-amber-200 flex items-start gap-4">
+          <div className="bg-amber-50 rounded-3xl p-3 border-2 border-amber-200 flex items-start gap-2">
             <AlertCircle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-amber-900 text-sm font-medium">
               <strong className="block text-amber-950 font-black mb-1">
@@ -458,8 +461,8 @@ export default function StockMovementsPage() {
 
       {/* BUG-015 FIX: Date-filtered movement history */}
       <Card className="border-none shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden bg-white">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-6 md:px-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-3 md:px-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <CardTitle className="text-xl font-black text-slate-900">
                 Movement History

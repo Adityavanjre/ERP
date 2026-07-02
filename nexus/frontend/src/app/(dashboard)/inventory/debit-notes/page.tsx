@@ -64,8 +64,8 @@ export default function DebitNotesPage() {
   );
 
   return (
-    <div className="p-3 space-y-3 bg-slate-50/50 min-h-screen">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-3 space-y-1.5 bg-slate-50/50 min-h-screen">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <Truck className="w-8 h-8 text-indigo-600" />
@@ -99,7 +99,7 @@ export default function DebitNotesPage() {
 
       <Card className="border-none shadow-xl shadow-slate-200/50 rounded-3xl overflow-hidden">
         <CardHeader className="bg-white border-b border-slate-100 p-3">
-          <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+          <div className="flex flex-col md:flex-row md:items-center gap-2 justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
@@ -156,7 +156,7 @@ export default function DebitNotesPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-48 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="p-4 bg-slate-100 rounded-full">
+                      <div className="p-2.5 bg-slate-100 rounded-full">
                         <FileText className="w-8 h-8 text-slate-300" />
                       </div>
                       <p className="text-slate-400 font-bold">
@@ -171,7 +171,7 @@ export default function DebitNotesPage() {
                     key={note.id}
                     className="hover:bg-indigo-50/30 transition-colors group cursor-pointer"
                   >
-                    <TableCell className="pl-6 py-4">
+                    <TableCell className="pl-6 py-2">
                       <div className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
                         {note.noteNumber}
                       </div>

@@ -41,7 +41,7 @@ export function CollaborationTimeline({
           setTimeout(() => setLoading(true), 0);
         }
         const { data } = await api.get(
-          `/system/collaboration/comments/${resourceType}/${resourceId}`,
+          `collaboration/comments/${resourceType}/${resourceId}`,
         );
         setComments(data);
       } catch (err) {
@@ -60,7 +60,7 @@ export function CollaborationTimeline({
   const addComment = useCallback(async () => {
     if (!newComment.trim()) return;
     try {
-      await api.post("system/collaboration/comments", {
+      await api.post("collaboration/comments", {
         resourceType,
         resourceId,
         content: newComment,
@@ -87,7 +87,7 @@ export function CollaborationTimeline({
 
       try {
         const { data } = await api.post(
-          "/system/collaboration/upload",
+          "collaboration/upload",
           formData,
           {
             headers: { "Content-Type": "multipart/form-data" },
@@ -117,9 +117,9 @@ export function CollaborationTimeline({
           key={comment.id}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`${isReply ? "ml-8 mt-2" : "mt-4"}`}
+          className={`${isReply ? "ml-8 mt-2" : "mt-2"}`}
         >
-          <div className="flex gap-3 p-3 rounded-lg bg-secondary/20 border border-secondary/30">
+          <div className="flex gap-2 p-3 rounded-lg bg-secondary/20 border border-secondary/30">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
               {comment.userId.substring(0, 2).toUpperCase()}
             </div>
@@ -137,7 +137,7 @@ export function CollaborationTimeline({
               <p className="text-sm mt-1 text-foreground/80">
                 {comment.content}
               </p>
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-2 mt-2">
                 {!isReply && (
                   <button
                     onClick={() => setReplyTo(comment)}
@@ -158,19 +158,19 @@ export function CollaborationTimeline({
   );
 
   return (
-    <Card className="p-4 bg-background/50 backdrop-blur-sm border-primary/20 shadow-xl lg:sticky lg:top-24">
-      <div className="flex items-center gap-2 mb-4">
+    <Card className="p-2.5 bg-background/50 backdrop-blur-sm border-primary/20 shadow-xl lg:sticky lg:top-24">
+      <div className="flex items-center gap-2 mb-2">
         <MessageSquare className="w-5 h-5 text-primary" />
         <h3 className="font-bold text-lg">Comments & Discussion</h3>
       </div>
 
-      <div className="max-h-[500px] overflow-y-auto mb-4 space-y-2 pr-2 custom-scrollbar">
+      <div className="max-h-[500px] overflow-y-auto mb-2 space-y-2 pr-2 custom-scrollbar">
         {loading ? (
-          <div className="text-center py-4 text-muted-foreground animate-pulse">
+          <div className="text-center py-2 text-muted-foreground animate-pulse">
             Loading discussion...
           </div>
         ) : comments.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground italic border-2 border-dashed border-secondary/30 rounded-lg">
+          <div className="text-center py-2 text-muted-foreground italic border-2 border-dashed border-secondary/30 rounded-lg">
             No discussion yet. Start the conversation!
           </div>
         ) : (

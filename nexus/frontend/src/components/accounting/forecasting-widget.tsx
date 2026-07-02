@@ -46,7 +46,7 @@ export function ForecastingWidget() {
     try {
       setLoading(true);
       setHasFetched(true);
-      const resp = await api.get("system/health/forecast");
+      const resp = await api.get("health/forecast");
       setData(resp.data);
     } catch (err) {
       console.error("Forecast failed", err);
@@ -60,7 +60,7 @@ export function ForecastingWidget() {
   if (!hasFetched)
     return (
       <Card className="border-amber-200/50 bg-amber-50/10 backdrop-blur-sm">
-        <CardContent className="h-[200px] flex flex-col items-center justify-center gap-4">
+        <CardContent className="h-[200px] flex flex-col items-center justify-center gap-2">
           <TrendingUp className="w-8 h-8 text-amber-400" />
           <p className="text-sm text-slate-500 font-medium">
             Cashflow forecast is not loaded automatically.
@@ -104,9 +104,9 @@ export function ForecastingWidget() {
           Predictive settlement modeling based on historical customer behavior.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-2xl bg-white border border-amber-100 shadow-sm">
+      <CardContent className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2.5 rounded-2xl bg-white border border-amber-100 shadow-sm">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">
               Expected Inflow
             </span>
@@ -118,7 +118,7 @@ export function ForecastingWidget() {
               <TrendingUp className="w-3 h-3" />
             </span>
           </div>
-          <div className="p-4 rounded-2xl bg-white border border-amber-100 shadow-sm">
+          <div className="p-2.5 rounded-2xl bg-white border border-amber-100 shadow-sm">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">
               Avg. Settlement
             </span>
@@ -131,7 +131,7 @@ export function ForecastingWidget() {
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-1.5">
           <h4 className="text-sm font-bold flex items-center gap-2">
             <Calendar className="w-4 h-4 text-amber-500" /> High-Probability
             Settlements
@@ -170,7 +170,7 @@ export function ForecastingWidget() {
         </div>
 
         <div className="pt-2">
-          <div className="bg-amber-900/5 p-3 rounded-xl flex gap-3 border border-amber-900/10">
+          <div className="bg-amber-900/5 p-3 rounded-xl flex gap-2 border border-amber-900/10">
             <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
             <div className="text-[11px] font-medium text-amber-800 leading-relaxed">
               <strong>Insight:</strong> 3 invoices from "Aura

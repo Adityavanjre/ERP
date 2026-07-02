@@ -100,8 +100,8 @@ export default function AppsMarketplace() {
   );
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <LayoutGrid className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
@@ -120,7 +120,7 @@ export default function AppsMarketplace() {
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 flex items-center gap-3 font-black text-xl">
@@ -131,15 +131,15 @@ export default function AppsMarketplace() {
               Windows Application • Build 1.0.0
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4 flex flex-col md:flex-row gap-4">
-            <div className="flex-1 space-y-4">
+          <CardContent className="pt-2 flex flex-col md:flex-row gap-2">
+            <div className="flex-1 space-y-2">
               <p className="text-slate-600 font-medium leading-relaxed">
                 Full-featured Windows desktop application with offline support.
                 Auto-syncs when connection is restored.
               </p>
-              <div className="flex gap-4 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-blue-500/20"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-12 px-3 shadow-lg shadow-blue-500/20"
                   onClick={() => {
                     toast.success("Downloading Klypso Desktop...");
                     window.open("/portal/Klypso-ERP-setup.exe", "_blank");
@@ -161,7 +161,7 @@ export default function AppsMarketplace() {
                 </Button>
               </div>
             </div>
-            <div className="hidden md:flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="hidden md:flex flex-col items-center justify-center p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
               <Monitor className="h-20 w-20 text-slate-200 mb-2" />
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
                 Windows 10+
@@ -180,15 +180,15 @@ export default function AppsMarketplace() {
               Android Application • Build 1.0.0
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4 flex flex-col md:flex-row gap-4">
-            <div className="flex-1 space-y-4">
+          <CardContent className="pt-2 flex flex-col md:flex-row gap-2">
+            <div className="flex-1 space-y-2">
               <p className="text-slate-600 font-medium leading-relaxed">
                 Native Android app for shop floor operations. Securely anchored
                 to your enterprise identity.
               </p>
-              <div className="flex gap-4 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-12 px-6 shadow-lg shadow-emerald-500/20"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl h-12 px-3 shadow-lg shadow-emerald-500/20"
                   onClick={() => {
                     toast.success("Downloading Klypso Mobile APK...");
                     window.open("/klypso-gateway.apk", "_blank");
@@ -207,7 +207,7 @@ export default function AppsMarketplace() {
                 </Button>
               </div>
             </div>
-            <div className="hidden md:flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="hidden md:flex flex-col items-center justify-center p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
               <QrCode className="h-20 w-20 text-slate-200 mb-2" />
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
                 Scan to Install
@@ -226,12 +226,12 @@ export default function AppsMarketplace() {
               Quick Setup Profiles
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-4 pt-4">
+          <CardContent className="flex flex-wrap gap-2 pt-2">
             {["Manufacturing", "Retail", "Wholesale", "Services"].map(
               (type) => (
                 <Button
                   key={type}
-                  className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-purple-500/50 rounded-2xl h-12 px-6 font-bold shadow-sm transition-all"
+                  className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-purple-500/50 rounded-2xl h-12 px-3 font-bold shadow-sm transition-all"
                   variant="outline"
                   onClick={async () => {
                     try {
@@ -254,7 +254,7 @@ export default function AppsMarketplace() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
         {apps.map((app) => (
           <Card
             key={app.id}
@@ -263,7 +263,7 @@ export default function AppsMarketplace() {
             <div
               className={`h-2.5 w-full transition-colors ${app.installed ? "bg-emerald-500" : "bg-slate-100"}`}
             />
-            <CardHeader className="flex-1 px-4 pt-4">
+            <CardHeader className="flex-1 px-4 pt-2">
               <div className="flex justify-between items-start mb-3">
                 <Badge
                   variant="secondary"
@@ -283,11 +283,11 @@ export default function AppsMarketplace() {
                   {app.label}
                 </CardTitle>
               </Link>
-              <CardDescription className="text-slate-500 mt-4 text-sm leading-relaxed font-medium">
+              <CardDescription className="text-slate-500 mt-2 text-sm leading-relaxed font-medium">
                 {app.description}
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-4 pb-4 pt-0">
+            <CardContent className="px-4 pb-2 pt-0">
               <div className="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-tighter mb-3 bg-slate-50 p-2 rounded-xl">
                 <span>BUILD_{app.version}</span>
                 <span>CREATED BY {app.author.toUpperCase()}</span>

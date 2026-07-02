@@ -79,18 +79,18 @@ export default function FounderMonitoring() {
 
   if (loading)
     return (
-      <div className="p-4 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">
+      <div className="p-2.5 text-slate-400 font-black uppercase tracking-widest italic animate-pulse flex items-center justify-center min-h-screen">
         Loading System Overview...
       </div>
     );
   if (!data) return null;
 
   return (
-    <div className="p-4 md:p-4 space-y-4 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-40 md:pb-40">
+    <div className="p-2.5 md:p-4 space-y-2 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-40 md:pb-40">
       {/* Header Area */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 lg:gap-0">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-4">
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-2">
             <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
               <HeartPulse className="h-7 w-7 text-emerald-400" />
             </div>
@@ -100,7 +100,7 @@ export default function FounderMonitoring() {
             Critical Business Alerts & Automatic Protection
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <button className="h-12 px-4 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm">
             <Search className="w-4 h-4" /> Global Search
           </button>
@@ -112,8 +112,8 @@ export default function FounderMonitoring() {
       </div>
 
       {/* High Level Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-4 rounded-[32px] relative overflow-hidden group hover:-translate-y-1 transition-all">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-2.5 rounded-[32px] relative overflow-hidden group hover:-translate-y-1 transition-all">
           <div className="absolute top-0 right-0 p-3 opacity-[0.03] group-hover:scale-110 transition-transform">
             <DollarSign className="w-24 h-24 text-slate-900" />
           </div>
@@ -123,13 +123,13 @@ export default function FounderMonitoring() {
           <p className="text-4xl font-black mt-3 text-red-600 tracking-tighter italic">
             {currencySymbol}{data.mrrAtRisk.toLocaleString()}
           </p>
-          <div className="mt-6 flex items-center gap-2 text-[9px] bg-red-50 text-red-600 w-fit px-3 py-1 rounded-lg font-black uppercase tracking-widest">
+          <div className="mt-3 flex items-center gap-2 text-[9px] bg-red-50 text-red-600 w-fit px-3 py-1 rounded-lg font-black uppercase tracking-widest">
             <TrendingDown className="w-3 h-3" />
             Requires Action
           </div>
         </Card>
 
-        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-4 rounded-[32px] group hover:-translate-y-1 transition-all">
+        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-2.5 rounded-[32px] group hover:-translate-y-1 transition-all">
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest font-mono">
             System Status
           </p>
@@ -144,7 +144,7 @@ export default function FounderMonitoring() {
               {data.systemStatus > 80 ? "EXCELLENT" : "STABILIZING"}
             </Badge>
           </div>
-          <div className="mt-4 w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
+          <div className="mt-2 w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
             <div
               className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-full transition-all duration-1000 shadow-[0_0_10px_rgba(52,211,153,0.3)]"
               style={{ width: `${data.systemStatus}%` }}
@@ -152,20 +152,20 @@ export default function FounderMonitoring() {
           </div>
         </Card>
 
-        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-4 rounded-[32px] group hover:-translate-y-1 transition-all">
+        <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 p-2.5 rounded-[32px] group hover:-translate-y-1 transition-all">
           <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest font-mono">
             Live Tenants
           </p>
           <p className="text-4xl font-black mt-3 tracking-tighter text-slate-900">
             {data.totalTenants.toString().padStart(3, "0")}
           </p>
-          <p className="text-[10px] text-slate-400 mt-6 font-black uppercase tracking-widest flex items-center gap-2 bg-slate-50 w-fit px-3 py-1 rounded-lg">
+          <p className="text-[10px] text-slate-400 mt-3 font-black uppercase tracking-widest flex items-center gap-2 bg-slate-50 w-fit px-3 py-1 rounded-lg">
             <Users className="w-3 h-3" />
             Active Users
           </p>
         </Card>
 
-        <Card className="bg-slate-900 border-none shadow-2xl shadow-slate-900/10 p-4 rounded-[32px] flex items-center justify-center group overflow-hidden relative">
+        <Card className="bg-slate-900 border-none shadow-2xl shadow-slate-900/10 p-2.5 rounded-[32px] flex items-center justify-center group overflow-hidden relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="text-center relative z-10">
             <Zap className="w-10 h-10 text-emerald-400 mx-auto mb-3 animate-pulse" />
@@ -180,10 +180,10 @@ export default function FounderMonitoring() {
       </div>
 
       {/* Issue Tracking Desk */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
         {/* Top At-Risk Tenants */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end px-2 gap-4 sm:gap-0">
+        <div className="lg:col-span-2 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end px-2 gap-2 sm:gap-0">
             <div>
               <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
                 <ShieldAlert className="w-8 h-8 text-red-500" />
@@ -196,13 +196,13 @@ export default function FounderMonitoring() {
             <BarChart2 className="w-6 h-6 text-slate-200" />
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-1.5">
             {data.topAtRisk.map((tenant: TopAtRiskTenant) => (
               <Card
                 key={tenant.tenantId}
-                className="bg-white border-none shadow-xl shadow-slate-200/40 p-4 rounded-[40px] hover:shadow-2xl transition-all flex flex-col lg:flex-row gap-4 justify-between items-start md:items-center group border-l-8 border-l-transparent hover:border-l-red-500"
+                className="bg-white border-none shadow-xl shadow-slate-200/40 p-2.5 rounded-[40px] hover:shadow-2xl transition-all flex flex-col lg:flex-row gap-2 justify-between items-start md:items-center group border-l-8 border-l-transparent hover:border-l-red-500"
               >
-                <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 items-start sm:items-center">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start sm:items-center">
                   <div
                     className={`w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-[28px] flex items-center justify-center font-black text-xl md:text-2xl transition-all ${tenant.status === "RED" ? "bg-red-50 text-red-600 shadow-lg shadow-red-500/10" : "bg-amber-50 text-amber-600"}`}
                   >
@@ -212,7 +212,7 @@ export default function FounderMonitoring() {
                     <h3 className="font-black text-2xl text-slate-900 tracking-tight">
                       {tenant.tenantName}
                     </h3>
-                    <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-2 mt-2">
                       <Badge
                         variant="outline"
                         className="text-[9px] font-black border-slate-100 text-slate-400 uppercase tracking-widest px-3"
@@ -237,7 +237,7 @@ export default function FounderMonitoring() {
                   ))}
                 </div>
 
-                <div className="flex gap-4 w-full md:w-auto">
+                <div className="flex gap-2 w-full md:w-auto">
                   {tenant.interventions?.action === "SCHEDULE_SUPPORT_CALL" && (
                     <Button className="flex-1 md:flex-none h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl px-4 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">
                       <MessageSquare className="w-4 h-4 mr-2" />
@@ -275,12 +275,12 @@ export default function FounderMonitoring() {
         </div>
 
         {/* Global Signals Feed */}
-        <div className="space-y-4">
+        <div className="space-y-2">
           <h2 className="text-xl font-black flex items-center gap-3 px-2">
             <HistoryFeedIcon />
             Recent Activity
           </h2>
-          <Card className="bg-slate-900 border-none rounded-[3rem] p-4 h-[700px] overflow-y-auto space-y-4 shadow-2xl shadow-slate-900/20">
+          <Card className="bg-slate-900 border-none rounded-[3rem] p-2.5 h-[700px] overflow-y-auto space-y-2 shadow-2xl shadow-slate-900/20">
             {data.allReports
               .flatMap((r: MonitoringReport) =>
                 r.signals.map((s: string) => ({ ...r, signal: s })),
@@ -312,8 +312,8 @@ export default function FounderMonitoring() {
       </div>
 
       {/* Floating Action Bar */}
-      <div className="fixed bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 bg-white/90 md:bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-4 md:p-3 rounded-[24px] md:rounded-[40px] flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-0 px-6 md:px-6 z-[100] shadow-2xl shadow-slate-300/40 outline outline-1 outline-white/50">
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-4">
+      <div className="fixed bottom-4 md:bottom-10 left-4 md:left-10 right-4 md:right-10 bg-white/90 md:bg-white/80 backdrop-blur-2xl border border-slate-200/50 p-2.5 md:p-3 rounded-[24px] md:rounded-[40px] flex flex-col lg:flex-row justify-between items-center gap-2 lg:gap-0 px-3 md:px-6 z-[100] shadow-2xl shadow-slate-300/40 outline outline-1 outline-white/50">
+        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
           <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 tracking-[0.2em] uppercase">
             <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
             System Monitoring Active

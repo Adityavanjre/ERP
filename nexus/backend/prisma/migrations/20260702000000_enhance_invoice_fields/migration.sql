@@ -1,0 +1,18 @@
+-- AlterTable: Add enhanced invoice fields
+ALTER TABLE "Invoice" ADD COLUMN "placeOfSupply" TEXT,
+ADD COLUMN "referenceNumber" TEXT,
+ADD COLUMN "lrRrNumber" TEXT,
+ADD COLUMN "salesPerson" TEXT,
+ADD COLUMN "warehouse" TEXT,
+ADD COLUMN "paymentTerms" TEXT,
+ADD COLUMN "discount" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "freight" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "packingCharges" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "loadingCharges" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "insurance" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "otherCharges" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "roundOff" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "cessAmount" DECIMAL(65,30) DEFAULT 0,
+ADD COLUMN "notes" TEXT,
+ADD COLUMN "declaration" TEXT,
+ADD COLUMN "qrCodeUrl" TEXT;

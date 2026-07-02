@@ -823,6 +823,8 @@ export class InvoiceService {
     items: any[],
     tx: any,
   ) {
+    console.log('[calculateTotals] Starting - items count:', items.length, 'items:', items);
+    
     let totalTaxable = new Decimal(0);
     let totalGST = new Decimal(0);
     let totalCGST = new Decimal(0);
@@ -863,11 +865,13 @@ export class InvoiceService {
     );
 
     for (const item of sortedItems) {
-      let product = await tx.product.findFirst({
-        where: { id: item.productId, tenantId, isDeleted: false },
-      });
+      try {
+        console.log('[calculateTotals] Processing item:', JSON.stringify(item, null, 2));
+        let product = await tx.product.findFirst({
+          where: { id: item.productId, tenantId, isDeleted: false },
+        });
 
-      if (!product && item.name) {
+        if (!product && item.name) {
         const sku = `UNLISTED-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         product = await tx.product.create({
           data: {
@@ -956,7 +960,28 @@ export class InvoiceService {
         igstAmount: itemIgstAmount,
         totalAmount: this.ledger.round2(taxable.add(taxAmount)),
       });
+      } catch (itemError: any) {
+        console.error('[calculateTotals] Error processing item:', {
+          item: JSON.stringify(item, null, 2),
+          errorMessage: itemError?.message,
+          errorStack: itemError?.stack,
+          errorCode: itemError?.code,
+        });
+        throw new BadRequestException(
+          `Failed to calculate totals for item "${item.name || item.productId}": ${itemError?.message || 'Unknown error'}`,
+        );
+      }
     }
+
+    console.log('[calculateTotals] Calculation complete:', {
+      totalTaxable: totalTaxable.toString(),
+      totalGST: totalGST.toString(),
+      totalCGST: totalCGST.toString(),
+      totalSGST: totalSGST.toString(),
+      totalIGST: totalIGST.toString(),
+      grandTotal: totalTaxable.add(totalGST).toString(),
+      itemCount: invoiceItemsData.length,
+    });
 
     return {
       totalTaxable,

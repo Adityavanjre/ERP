@@ -14,6 +14,7 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Settings, Shield, CreditCard, Bell, Globe, Box, Cloud, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { INDIAN_STATES } from "../../../lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import Link from "next/link";
 import { Badge } from "../../../components/ui/badge";
@@ -113,7 +114,7 @@ export default function SettingsPage() {
       setLogoUrl(profileRes.data?.tenant?.logoUrl || "");
       setSlug(profileRes.data?.tenant?.slug || "");
       setAddress(profileRes.data?.tenant?.address || "");
-      setState(profileRes.data?.tenant?.state || "");
+      setState(profileRes.data?.tenant?.state || "Karnataka");
       setGstin(profileRes.data?.tenant?.gstin || "");
       setPanNumber(profileRes.data?.tenant?.panNumber || "");
       setPhone(profileRes.data?.tenant?.phone || "");
@@ -211,6 +212,25 @@ export default function SettingsPage() {
     }
   }, [orgName, fetchSettings]);
 
+  const handleUpdateCompanyDetails = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.patch("system/tenant-profile", {
+        gstin: gstin.trim() || undefined,
+        panNumber: panNumber.trim() || undefined,
+        address: address.trim() || undefined,
+        state: state.trim() || undefined,
+        phone: phone.trim() || undefined,
+        email: companyEmail.trim() || undefined,
+        authorizedSignatory: authorizedSignatory.trim() || undefined,
+      });
+      toast.success("Company details updated");
+      fetchSettings();
+    } catch {
+      toast.error("Failed to update company details");
+    }
+  }, [gstin, panNumber, address, state, phone, companyEmail, authorizedSignatory, fetchSettings]);
+
   const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -285,8 +305,8 @@ export default function SettingsPage() {
   if (!mounted) return null; // Prevent hydration mismatch
 
   return (
-    <div className="flex-1 space-y-3 pt-2 md:pt-3">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-1.5 pt-2 md:pt-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Settings className="mr-3 h-8 w-8 text-slate-400" />
@@ -298,41 +318,41 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-3">
+      <Tabs defaultValue="general" className="space-y-1.5">
         <TabsList className="bg-slate-100 border border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="general"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2 font-bold transition-all snap-start"
           >
             General
           </TabsTrigger>
           <TabsTrigger
             value="team"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2 font-bold transition-all snap-start"
           >
             Company Team
           </TabsTrigger>
           <TabsTrigger
             value="security"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2 font-bold transition-all snap-start"
           >
             Security
           </TabsTrigger>
           <TabsTrigger
             value="billing"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2 font-bold transition-all snap-start"
           >
             Billing
           </TabsTrigger>
           <TabsTrigger
             value="notifications"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2 font-bold transition-all snap-start"
           >
             Notifications
           </TabsTrigger>
           <TabsTrigger
             value="connectivity"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm rounded-xl px-4 md:px-6 py-2 font-bold transition-all snap-start"
           >
             Connectivity
           </TabsTrigger>
@@ -350,12 +370,12 @@ export default function SettingsPage() {
                 Update your company name, logo, and workspace details.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <form onSubmit={handleUpdate} className="space-y-3">
+            <CardContent className="space-y-1.5">
+              <form onSubmit={handleUpdate} className="space-y-1.5">
                 {/* Logo Upload */}
                 <div className="grid gap-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Company Logo</Label>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
                     {logoUrl ? (
                       <img src={logoUrl} alt="Company logo" className="h-14 w-14 object-contain rounded-xl border border-slate-200 bg-slate-50 p-1" />
                     ) : (
@@ -379,7 +399,7 @@ export default function SettingsPage() {
                   <Input id="slug" value={slug} disabled className="bg-slate-100 border-slate-200 text-slate-400 font-mono h-10" />
                   <p className="text-[11px] text-slate-400 italic font-medium">This ID is fixed and cannot be changed.</p>
                 </div>
-                <div className="pt-4">
+                <div className="pt-2">
                   <Button type="submit" className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-4 rounded-xl">Save Changes</Button>
                 </div>
               </form>
@@ -387,7 +407,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Company Details */}
-          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-3">
             <CardHeader>
               <CardTitle className="text-slate-900 font-black flex items-center">
                 <Shield className="mr-2 h-5 w-5 text-violet-600" />
@@ -395,8 +415,8 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription className="text-slate-500">Tax registration, contact info, and authorized signatory.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <form onSubmit={handleUpdate} className="space-y-3">
+            <CardContent className="space-y-1.5">
+              <form onSubmit={handleUpdateCompanyDetails} className="space-y-1.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="grid gap-2">
                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">GSTIN</Label>
@@ -411,14 +431,30 @@ export default function SettingsPage() {
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Registered Address</Label>
                   <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Full address with PIN code" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid gap-2">
+                    <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Country</Label>
+                    <Input value="India" disabled className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                  </div>
                   <div className="grid gap-2">
                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">State</Label>
-                    <Input value={state} onChange={(e) => setState(e.target.value)} placeholder="e.g. Maharashtra" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                    <select
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-slate-900 h-10 rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Select State</option>
+                      {INDIAN_STATES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="grid gap-2">
                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">Phone</Label>
-                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
+                    <div className="flex">
+                      <span className="bg-slate-100 border border-r-0 border-slate-200 text-slate-500 h-10 flex items-center px-2 rounded-l-md text-xs font-bold">+91</span>
+                      <Input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="98765 43210" className="bg-slate-50 border-slate-200 text-slate-900 h-10 rounded-l-none font-mono" />
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -431,7 +467,7 @@ export default function SettingsPage() {
                     <Input value={authorizedSignatory} onChange={(e) => setAuthorizedSignatory(e.target.value)} placeholder="Name for invoice signing" className="bg-slate-50 border-slate-200 text-slate-900 h-10" />
                   </div>
                 </div>
-                <div className="pt-4">
+                <div className="pt-2">
                   <Button type="submit" className="bg-slate-900 hover:bg-slate-950 text-white font-bold h-11 px-4 rounded-xl">Save Details</Button>
                 </div>
               </form>
@@ -439,7 +475,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Bank Accounts */}
-          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-3">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="text-slate-900 font-black flex items-center">
@@ -452,11 +488,11 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               {bankAccounts.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm">No bank accounts added yet. Add one to display on invoices.</div>
+                <div className="text-center py-2 text-slate-400 text-sm">No bank accounts added yet. Add one to display on invoices.</div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {bankAccounts.map((acc: any) => (
-                    <div key={acc.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div key={acc.id} className="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold text-slate-900">{acc.bankName}</span>
@@ -477,7 +513,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Modules & Features */}
-          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-6">
+          <Card className="bg-white border-slate-200 shadow-sm max-w-2xl mt-3">
             <CardHeader>
               <CardTitle className="text-slate-900 font-black flex items-center">
                 <Box className="mr-2 h-5 w-5 text-emerald-600" />
@@ -495,8 +531,8 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="team">
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200">
+          <div className="space-y-1.5">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
               <div>
                 <h3 className="font-black text-slate-900">Team Members</h3>
                 <p className="text-xs text-slate-500 font-medium">
@@ -515,14 +551,14 @@ export default function SettingsPage() {
             <Card className="bg-white border-slate-200 shadow-sm">
               <CardContent className="p-0">
                 {loading ? (
-                  <div className="p-4 flex flex-col items-center justify-center gap-4">
+                  <div className="p-2.5 flex flex-col items-center justify-center gap-2">
                     <div className="h-8 w-8 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin" />
                     <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
                       Loading team...
                     </p>
                   </div>
                 ) : error ? (
-                  <div className="p-3 text-center space-y-4">
+                  <div className="p-3 text-center space-y-2">
                     <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-500">
                       <ShieldAlert className="h-6 w-6" />
                     </div>
@@ -551,7 +587,7 @@ export default function SettingsPage() {
                     {(members || []).map((member) => (
                       <div
                         key={member.id}
-                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
+                        className="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 group"
                       >
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-400">
@@ -567,7 +603,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Badge
                             className={`font-black ${
                               member.role === "Owner"
@@ -656,8 +692,8 @@ export default function SettingsPage() {
                 Manage authentication methods and audit logging.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <CardContent className="space-y-1.5">
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <div>
                   <div className="text-sm font-bold text-slate-900 tracking-tight">
                     Multi-Factor Authentication
@@ -673,7 +709,7 @@ export default function SettingsPage() {
                   Configure
                 </Button>
               </div>
-              <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
                 <div>
                   <div className="text-sm font-bold text-slate-900 tracking-tight">
                     Active Sessions
@@ -733,7 +769,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="connectivity">
-          <div className="max-w-4xl space-y-3">
+          <div className="max-w-4xl space-y-1.5">
             <ApiKeyManager />
             
             <Card className="bg-white border-blue-200 shadow-sm overflow-hidden">
@@ -774,7 +810,7 @@ export default function SettingsPage() {
               access role.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleAddUser} className="space-y-3 py-4">
+          <form onSubmit={handleAddUser} className="space-y-1.5 py-2">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
                 Full Name
@@ -836,7 +872,7 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-2">
               <Button
                 type="button"
                 variant="ghost"
@@ -871,8 +907,8 @@ export default function SettingsPage() {
               change it after logging in.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-3 flex flex-col items-center justify-center gap-4">
-            <div className="text-2xl font-black font-mono tracking-widest bg-slate-100 p-4 rounded-xl border-b-2 border-slate-200 w-full text-center text-slate-900">
+          <div className="py-3 flex flex-col items-center justify-center gap-2">
+            <div className="text-2xl font-black font-mono tracking-widest bg-slate-100 p-2.5 rounded-xl border-b-2 border-slate-200 w-full text-center text-slate-900">
               {tempPassword}
             </div>
             <Button
@@ -898,7 +934,7 @@ export default function SettingsPage() {
               This account details will appear on your invoices.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSaveBank} className="space-y-3 py-4">
+          <form onSubmit={handleSaveBank} className="space-y-1.5 py-2">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Bank Name</Label>
               <Input placeholder="e.g. HDFC Bank" className="bg-slate-50 border-slate-200 h-11" required value={bankForm.bankName} onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })} />
@@ -925,7 +961,7 @@ export default function SettingsPage() {
               <input type="checkbox" id="isDefault" checked={bankForm.isDefault} onChange={(e) => setBankForm({ ...bankForm, isDefault: e.target.checked })} className="rounded" />
               <Label htmlFor="isDefault" className="text-sm font-bold text-slate-700">Set as default account</Label>
             </div>
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-2">
               <Button type="button" variant="ghost" className="font-bold" onClick={() => setIsBankDialogOpen(false)}>Cancel</Button>
               <Button type="submit" className="bg-slate-900 hover:bg-black font-black px-4">{editingBankId ? "Update" : "Add Account"}</Button>
             </DialogFooter>

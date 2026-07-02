@@ -7,7 +7,9 @@ interface Item {
   sku: string;
   price: number;
   quantity: number;
-  gstRate: number;
+  igstRate: number;
+  cgstRate: number;
+  sgstRate: number;
   pricingMode?: string;
   width?: number | null;
   length?: number | null;
@@ -21,6 +23,9 @@ interface CartTableProps {
   removeItem: (id: string) => void;
   setItems: React.Dispatch<React.SetStateAction<Item[]>>;
   updateAreaField?: (id: string, field: "sheets" | "ratePerSqm", value: number) => void;
+  updateIgstRate?: (id: string, rate: number) => void;
+  updateCgstRate?: (id: string, rate: number) => void;
+  updateSgstRate?: (id: string, rate: number) => void;
   currencySymbol?: string;
   getItemAmount?: (item: Item) => number;
 }
@@ -31,13 +36,16 @@ export const CartTable: React.FC<CartTableProps> = ({
   removeItem,
   setItems,
   updateAreaField,
+  updateIgstRate,
+  updateCgstRate,
+  updateSgstRate,
   currencySymbol = "₹",
   getItemAmount,
 }) => {
   const calcAmount = getItemAmount || ((item: Item) => item.price * item.quantity);
 
   return (
-    <div className="flex-1 px-4 pb-4 pt-2">
+    <div className="flex-1 px-3 pb-2 pt-2">
       <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead className="bg-slate-50 border-b border-slate-200">
@@ -54,7 +62,7 @@ export const CartTable: React.FC<CartTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {items.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-4 text-center text-slate-300">
+                <td colSpan={5} className="px-3 py-2 text-center text-slate-300">
                   <div className="flex flex-col items-center gap-2">
                     <Search className="w-6 h-6 opacity-20 text-slate-400" />
                     <p className="text-sm font-bold text-slate-400">Scan items to begin</p>
@@ -83,6 +91,71 @@ export const CartTable: React.FC<CartTableProps> = ({
                         {item.width}m × {item.length}m = {(item.width * item.length).toFixed(2)} SQM/sheet
                       </p>
                     )}
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={item.igstRate > 0}
+                          onChange={(e) => updateIgstRate?.(item.productId, e.target.checked ? 18 : 0)}
+                          className="w-2.5 h-2.5"
+                        />
+                        <span className="text-[8px] font-bold text-slate-500 w-6">IGST</span>
+                        <input
+                          type="number"
+                          min="0" max="100" step="0.5"
+                          value={item.igstRate || ""}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val) && val >= 0) updateIgstRate?.(item.productId, val);
+                          }}
+                          disabled={item.igstRate === 0}
+                          className="w-8 text-center text-[9px] font-bold tabular-nums text-slate-700 bg-slate-50 rounded px-0.5 py-0 outline-none border border-slate-200 focus:border-blue-500 disabled:opacity-40"
+                        />
+                        <span className="text-[8px] text-slate-400">%</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={item.cgstRate > 0}
+                          onChange={(e) => updateCgstRate?.(item.productId, e.target.checked ? 9 : 0)}
+                          className="w-2.5 h-2.5"
+                        />
+                        <span className="text-[8px] font-bold text-slate-500 w-6">CGST</span>
+                        <input
+                          type="number"
+                          min="0" max="100" step="0.5"
+                          value={item.cgstRate || ""}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val) && val >= 0) updateCgstRate?.(item.productId, val);
+                          }}
+                          disabled={item.cgstRate === 0}
+                          className="w-8 text-center text-[9px] font-bold tabular-nums text-slate-700 bg-slate-50 rounded px-0.5 py-0 outline-none border border-slate-200 focus:border-blue-500 disabled:opacity-40"
+                        />
+                        <span className="text-[8px] text-slate-400">%</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={item.sgstRate > 0}
+                          onChange={(e) => updateSgstRate?.(item.productId, e.target.checked ? 9 : 0)}
+                          className="w-2.5 h-2.5"
+                        />
+                        <span className="text-[8px] font-bold text-slate-500 w-6">SGST</span>
+                        <input
+                          type="number"
+                          min="0" max="100" step="0.5"
+                          value={item.sgstRate || ""}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            if (!isNaN(val) && val >= 0) updateSgstRate?.(item.productId, val);
+                          }}
+                          disabled={item.sgstRate === 0}
+                          className="w-8 text-center text-[9px] font-bold tabular-nums text-slate-700 bg-slate-50 rounded px-0.5 py-0 outline-none border border-slate-200 focus:border-blue-500 disabled:opacity-40"
+                        />
+                        <span className="text-[8px] text-slate-400">%</span>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-3 py-2">
                     {isArea ? (

@@ -71,7 +71,7 @@ export default function ModulesSettingsPage() {
   const modules = getAllModules();
 
   return (
-    <div className="max-w-6xl mx-auto space-y-3">
+    <div className="max-w-6xl mx-auto space-y-1.5">
       <div>
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Module Configuration</h1>
         <p className="text-slate-500 mt-1">Enable or disable features for your organization. Data is never deleted when a module is disabled.</p>
@@ -99,12 +99,12 @@ export default function ModulesSettingsPage() {
 
         <CardContent className="p-3">
           {error && (
-            <div className="mb-3 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
+            <div className="mb-3 p-2.5 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {modules.map((mod) => {
               const isSelected = selected.has(mod.id);
               return (
@@ -112,7 +112,7 @@ export default function ModulesSettingsPage() {
                   key={mod.id}
                   onClick={() => toggleModule(mod.id)}
                   className={`
-                    relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200
+                    relative p-3 rounded-2xl border-2 cursor-pointer transition-all duration-200
                     ${isSelected 
                       ? 'border-emerald-600 bg-emerald-50/30' 
                       : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'

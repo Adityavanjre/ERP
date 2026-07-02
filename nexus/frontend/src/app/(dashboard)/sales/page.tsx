@@ -68,6 +68,9 @@ interface SalesProduct {
   name: string;
   sku: string;
   price: number | string;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface SalesCustomer {
@@ -254,8 +257,8 @@ export default function SalesPage() {
     return <LoadingSpinner className="h-full" text="Loading Sales Data..." />;
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 bg-slate-50/30 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 bg-slate-50/30 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/20 mr-4 md:mr-5 shrink-0">
@@ -267,7 +270,7 @@ export default function SalesPage() {
             All orders, revenue & customer transactions
           </p>
         </div>
-        <div className="flex gap-4 w-full md:w-auto mt-2 lg:mt-0">
+        <div className="flex gap-2 w-full md:w-auto mt-2 lg:mt-0">
           <Button
             className="w-full md:w-auto rounded-2xl bg-slate-900 hover:bg-blue-600 font-black px-5 shadow-xl shadow-slate-900/10 text-white h-12 transition-all active:scale-95 border-none shrink-0"
             onClick={() => setShowForm(true)}
@@ -309,7 +312,7 @@ export default function SalesPage() {
             <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {stats.orderCount.toString().padStart(3, "0")}
             </div>
-            <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">
+            <p className="text-[10px] text-slate-400 font-black mt-2 uppercase tracking-widest">
               Completed Orders
             </p>
           </CardContent>
@@ -328,7 +331,7 @@ export default function SalesPage() {
             <div className="text-2xl font-black text-amber-600 tracking-tighter">
               {stats.pendingOrders.toString().padStart(2, "0")}
             </div>
-            <p className="text-[10px] text-amber-600/60 font-black mt-4 uppercase tracking-widest bg-amber-50 w-fit px-2 py-1 rounded-lg animate-pulse">
+            <p className="text-[10px] text-amber-600/60 font-black mt-2 uppercase tracking-widest bg-amber-50 w-fit px-2 py-1 rounded-lg animate-pulse">
               Awaiting Confirmation
             </p>
           </CardContent>
@@ -352,7 +355,7 @@ export default function SalesPage() {
                   )
                 : "0"}
             </div>
-            <p className="text-[10px] text-slate-400 font-black mt-4 uppercase tracking-widest">
+            <p className="text-[10px] text-slate-400 font-black mt-2 uppercase tracking-widest">
               Per Transaction Average
             </p>
           </CardContent>
@@ -361,7 +364,7 @@ export default function SalesPage() {
 
       <Card className="bg-white border-none shadow-2xl shadow-slate-200/40 rounded-[40px] overflow-hidden">
         <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-2xl font-black tracking-tight">
                 Sales Orders
@@ -498,7 +501,7 @@ export default function SalesPage() {
         }}
       >
         <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-xl bg-white border-none shadow-2xl rounded-[40px] overflow-hidden p-0">
-          <div className="bg-slate-900 p-3 pb-4">
+          <div className="bg-slate-900 p-3 pb-2">
             <DialogTitle className="text-white font-black text-3xl tracking-tight">
               Create New Order
             </DialogTitle>
@@ -508,10 +511,10 @@ export default function SalesPage() {
           </div>
           <form
             onSubmit={handleConfirmSubmit}
-            className="p-3 -mt-4 bg-white rounded-t-[40px] space-y-3"
+            className="p-3 -mt-2 bg-white rounded-t-[40px] space-y-1.5"
           >
             {/* Customer */}
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">
                   Select Customer
@@ -539,7 +542,7 @@ export default function SalesPage() {
                     </SelectItem>
                   ))}
                   {(!customers || customers.length === 0) && (
-                    <div className="p-4 text-center text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                    <div className="p-2.5 text-center text-[10px] font-black text-slate-600 uppercase tracking-widest">
                       No Customers Found
                     </div>
                   )}
@@ -548,7 +551,7 @@ export default function SalesPage() {
             </div>
 
             {/* BUG-017 FIX: Multi-item line rows */}
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <Label className="text-slate-600 font-black uppercase text-[10px] tracking-widest ml-1">
                   Order Items
@@ -570,7 +573,7 @@ export default function SalesPage() {
                   </button>
                 </div>
               </div>
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                 {orderItems.map((item, i) => (
                   <div key={i} className="flex gap-2 items-center">
                     <Select
@@ -624,7 +627,7 @@ export default function SalesPage() {
               </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-2 pt-2">
               <Button
                 type="button"
                 variant="ghost"

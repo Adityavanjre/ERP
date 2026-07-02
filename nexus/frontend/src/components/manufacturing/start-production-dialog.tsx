@@ -112,8 +112,8 @@ export function StartProductionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-        <div className="bg-amber-500 p-4 text-white relative">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
+        <div className="bg-amber-500 p-2.5 text-white relative">
+          <div className="absolute top-0 right-0 p-2.5 opacity-10">
             <Play className="h-24 w-24" />
           </div>
           <DialogHeader className="relative z-10">
@@ -126,9 +126,9 @@ export function StartProductionDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-3 space-y-3">
-          <div className="space-y-3">
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+        <div className="p-3 space-y-1.5">
+          <div className="space-y-1.5">
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-2">
               <div className="h-10 w-10 rounded-xl bg-white shadow-sm flex items-center justify-center">
                 <Warehouse className="h-5 w-5 text-amber-500" />
               </div>

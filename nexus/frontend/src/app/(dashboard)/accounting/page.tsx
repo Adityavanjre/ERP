@@ -141,6 +141,7 @@ export default function AccountingPage() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<AccountingInvoice | null>(null);
     const [showCreateInvoice, setShowCreateInvoice] = useState(false);
+    const [isResumingDraft, setIsResumingDraft] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
     const [invoicePage, setInvoicePage] = useState(1);
@@ -176,8 +177,10 @@ export default function AccountingPage() {
                 api.get(`accounting/invoices?page=${invoicePage}&limit=50`).catch(() => ({ data: { data: [] } }))
             ]);
 
-            setAccounts(accRes.data || []);
-            setTransactions(txRes.data?.data || txRes.data || []);
+            const normalizedAccounts = Array.isArray(accRes.data?.data) ? accRes.data.data : Array.isArray(accRes.data) ? accRes.data : [];
+            const normalizedTransactions = Array.isArray(txRes.data?.data) ? txRes.data.data : Array.isArray(txRes.data) ? txRes.data : [];
+            setAccounts(normalizedAccounts);
+            setTransactions(normalizedTransactions);
 
             if (invRes.data?.data) {
                 setInvoices(invRes.data.data);
@@ -211,8 +214,8 @@ export default function AccountingPage() {
                 // Update global session cache
                 _accountingCache = {
                     data: {
-                        accounts: accRes.data || [],
-                        transactions: txRes.data?.data || txRes.data || [],
+                        accounts: normalizedAccounts,
+                        transactions: normalizedTransactions,
                         invoices: invRes.data?.data || invRes.data || [],
                         stats: s,
                         healthScore: h,
@@ -291,21 +294,21 @@ export default function AccountingPage() {
     if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50"><RefreshCw className="h-8 w-8 animate-spin text-amber-500" /></div>;
 
     return (
-        <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 xl:gap-0">
+        <div className="flex-1 space-y-1 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2 xl:gap-0">
                 <div>
                     <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
                         <Landmark className="mr-4 h-9 w-9 text-amber-500 shadow-sm" />
                         Accounting
                     </h2>
-                    <p className="text-slate-500 mt-2 font-medium">Manage invoices, accounts, transactions, and financial reports.</p>
+                    <p className="text-slate-500 mt-1 font-medium">Manage invoices, accounts, transactions, and financial reports.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                     {pendingDraft && !showCreateInvoice && (
                         <Button
                             variant="outline"
                             className="bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100 text-xs h-11 px-5 rounded-2xl animate-pulse font-black uppercase tracking-widest w-full sm:w-auto"
-                            onClick={() => setShowCreateInvoice(true)}
+                            onClick={() => { setIsResumingDraft(true); setShowCreateInvoice(true); }}
                         >
                             <ShoppingCart className="mr-2 h-4 w-4" /> Resume Transaction
                         </Button>
@@ -339,13 +342,13 @@ export default function AccountingPage() {
                             <Plus className="mr-2 h-4 w-4 text-emerald-500" /> Record Tx
                         </Button>
                     </div>
-                    <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-4 shadow-lg shadow-amber-500/20 text-white h-11 w-full sm:w-auto" onClick={() => setShowCreateInvoice(true)}>
+                    <Button className="rounded-2xl bg-amber-500 hover:bg-amber-600 font-bold px-4 shadow-lg shadow-amber-500/20 text-white h-11 w-full sm:w-auto" onClick={() => { setIsResumingDraft(false); setShowCreateInvoice(true); }}>
                         <Plus className="mr-2 h-4 w-4" /> New Invoice
                     </Button>
                 </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-emerald-500 border-none group">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">Total Income</CardTitle>
@@ -355,7 +358,7 @@ export default function AccountingPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-black text-slate-900 tracking-tighter">{currencySymbol}{Number(stats.income || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-[10px] text-emerald-600 mt-2 font-black uppercase tracking-widest bg-emerald-50 w-fit px-2 py-0.5 rounded-lg">Accelerating</p>
+                        <p className="text-[10px] text-emerald-600 mt-1 font-black uppercase tracking-widest bg-emerald-50 w-fit px-2 py-0.5 rounded-lg">Accelerating</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-amber-500 border-none group">
@@ -367,7 +370,7 @@ export default function AccountingPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-black text-amber-600 tracking-tighter">{currencySymbol}{Number(stats.receivable || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">Pending Collection</p>
+                        <p className="text-[10px] text-slate-600 mt-1 font-black uppercase tracking-widest">Pending Collection</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-rose-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-rose-500 border-none group">
@@ -379,7 +382,7 @@ export default function AccountingPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-black text-rose-600 tracking-tighter">{currencySymbol}{Number(stats.overdueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest bg-rose-50 w-fit px-2 py-0.5 rounded-lg">Critical Alert</p>
+                        <p className="text-[10px] text-rose-500 mt-1 font-black uppercase tracking-widest bg-rose-50 w-fit px-2 py-0.5 rounded-lg">Critical Alert</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-white border-slate-200 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all rounded-3xl overflow-hidden border-b-4 border-b-blue-500 border-none group">
@@ -391,12 +394,12 @@ export default function AccountingPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-black text-blue-600 tracking-tighter">{currencySymbol}{Number(stats.gstLiability || 0).toLocaleString('en-IN', { minimumFractionDigits: 0 })}</div>
-                        <p className="text-[10px] text-slate-600 mt-2 font-black uppercase tracking-widest">GST Obligation</p>
+                        <p className="text-[10px] text-slate-600 mt-1 font-black uppercase tracking-widest">GST Obligation</p>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-3">
+            <div className="grid gap-2 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                     <ForecastingWidget />
                 </div>
@@ -406,17 +409,17 @@ export default function AccountingPage() {
             </div>
 
             {stats.topDebtors && stats.topDebtors.length > 0 && (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-2 md:grid-cols-2">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none group">
                         <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-3 px-4">
                             <CardTitle className="text-slate-900 text-xl font-black tracking-tight">Top Overdue Customers</CardTitle>
                             <CardDescription className="text-slate-500 font-medium mt-1">Customers with outstanding payments requiring follow-up.</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-4">
-                            <div className="space-y-3">
+                        <CardContent className="p-2">
+                            <div className="space-y-1">
                                 {stats.topDebtors.map((d, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-5 last:border-0 hover:translate-x-1 transition-transform">
-                                        <div className="flex items-center gap-5">
+                                    <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 hover:translate-x-1 transition-transform">
+                                        <div className="flex items-center gap-3">
                                             <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center text-xs font-black text-white shadow-lg shadow-slate-900/10">
                                                 {String(i + 1).padStart(2, '0')}
                                             </div>
@@ -437,21 +440,21 @@ export default function AccountingPage() {
                 </div>
             )}
 
-            <Tabs defaultValue="invoices" className="space-y-3">
+            <Tabs defaultValue="invoices" className="space-y-1">
                 <TabsList className="bg-slate-100 border-slate-200 overflow-x-auto flex justify-start w-full scrollbar-hide h-auto p-1.5 rounded-2xl snap-x">
-                    <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
-                    <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
-                    <TabsTrigger value="transactions" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Transactions</TabsTrigger>
-                    <TabsTrigger value="bank-statements" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Bank Statements</TabsTrigger>
-                    <TabsTrigger value="assets" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Fixed Assets</TabsTrigger>
-                    <TabsTrigger value="auditor" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Auditor</TabsTrigger>
-                    <TabsTrigger value="health" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2.5 font-bold transition-all whitespace-nowrap">Store Health</TabsTrigger>
+                    <TabsTrigger value="invoices" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Invoices</TabsTrigger>
+                    <TabsTrigger value="accounts" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Accounts</TabsTrigger>
+                    <TabsTrigger value="transactions" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Transactions</TabsTrigger>
+                    <TabsTrigger value="bank-statements" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Bank Statements</TabsTrigger>
+                    <TabsTrigger value="assets" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Fixed Assets</TabsTrigger>
+                    <TabsTrigger value="auditor" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Auditor</TabsTrigger>
+                    <TabsTrigger value="health" className="snap-start data-[state=active]:bg-white data-[state=active]:text-amber-600 data-[state=active]:shadow-sm rounded-xl px-4 py-2 font-bold transition-all whitespace-nowrap">Store Health</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="invoices" className="space-y-4">
+                <TabsContent value="invoices" className="space-y-1">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden">
                         <CardHeader className="border-b border-slate-100 bg-slate-50/50 py-3">
-                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Sales Invoices</CardTitle>
                                     <CardDescription className="text-slate-500 font-medium">Track and manage customer invoices and payments.</CardDescription>
@@ -542,7 +545,7 @@ export default function AccountingPage() {
                                     ))}
                                     {filteredInvoices.length === 0 && !loading && (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="py-4 px-6">
+                                            <TableCell colSpan={6} className="py-2 px-3">
                                                 <EmptyState
                                                     icon={Receipt}
                                                     title="No Invoices Found"
@@ -555,7 +558,7 @@ export default function AccountingPage() {
                                     )}
                                 </TableBody>
                             </Table>
-                            <div className="flex justify-between items-center p-4 border-t border-slate-100 bg-slate-50/50">
+                            <div className="flex justify-between items-center p-2 border-t border-slate-100 bg-slate-50/50">
                                 <Button variant="outline" size="sm" onClick={() => setInvoicePage(p => Math.max(1, p - 1))} disabled={invoicePage === 1} className="text-slate-500 border-slate-200 hover:bg-white">Previous</Button>
                                 <span className="text-xs text-slate-500 font-medium tracking-tight">Page {invoicePage} of {invoiceTotalPages}</span>
                                 <Button variant="outline" size="sm" onClick={() => setInvoicePage(p => Math.min(invoiceTotalPages, p + 1))} disabled={invoicePage === invoiceTotalPages} className="text-slate-500 border-slate-200 hover:bg-white">Next</Button>
@@ -564,9 +567,9 @@ export default function AccountingPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="accounts" className="space-y-4">
+                <TabsContent value="accounts" className="space-y-1">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4 px-4">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Chart of Accounts</CardTitle>
@@ -588,7 +591,7 @@ export default function AccountingPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {accounts.map((acc) => (
+                                    {(Array.isArray(accounts) ? accounts : []).map((acc) => (
                                         <TableRow key={acc.id} className="border-slate-100 hover:bg-slate-50/50 transition-all group">
                                             <TableCell className="pl-8 font-mono text-sm text-slate-600 font-semibold">{acc.code}</TableCell>
                                             <TableCell className="font-semibold text-slate-900">{acc.name}</TableCell>
@@ -611,9 +614,9 @@ export default function AccountingPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="transactions" className="space-y-4">
+                <TabsContent value="transactions" className="space-y-1">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4 px-4">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <CardTitle className="text-slate-900 text-xl font-black">Transaction Journal</CardTitle>
@@ -666,81 +669,81 @@ export default function AccountingPage() {
                 <TabsContent value="auditor">
                     <AuditorDashboard />
                 </TabsContent>
-                <TabsContent value="health" className="space-y-4">
+                <TabsContent value="health" className="space-y-1">
                     <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
-                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4 px-4">
+                        <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
                             <CardTitle className="text-slate-900 text-xl font-black">Store Health Profile</CardTitle>
                             <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Financial health and payment discipline overview</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-4">
+                        <CardContent className="p-2">
                             {healthScore && (
-                                <div className="space-y-12">
-                                    <div className="grid gap-3 md:grid-cols-3">
-                                        <div className="p-4 rounded-[32px] bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group">
+                                <div className="space-y-3">
+                                        <div className="grid gap-2 md:grid-cols-3">
+                                        <div className="p-2 rounded-[32px] bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group">
                                             <div className="absolute inset-0 bg-blue-600/5 group-hover:bg-blue-600/10 transition-colors" />
-                                            <p className="text-[10px] text-slate-600 mb-4 uppercase font-black tracking-[0.2em] relative z-10">Accuracy Rating</p>
+                                            <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-[0.2em] relative z-10">Accuracy Rating</p>
                                             <div className="relative z-10">
                                                 <span className={`text-6xl font-black tracking-tighter ${healthScore.status === 'RED' ? 'text-rose-500' : healthScore.status === 'YELLOW' ? 'text-amber-500' : 'text-blue-500'}`}>
                                                     {100 - healthScore.riskScore}%
                                                 </span>
                                             </div>
-                                            <Badge className={`mt-6 rounded-xl font-black text-[10px] uppercase tracking-widest px-4 py-1.5 border-none relative z-10 ${healthScore.status === 'RED' ? 'bg-rose-500/20 text-rose-400' : healthScore.status === 'YELLOW' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                                            <Badge className={`mt-3 rounded-xl font-black text-[10px] uppercase tracking-widest px-4 py-1.5 border-none relative z-10 ${healthScore.status === 'RED' ? 'bg-rose-500/20 text-rose-400' : healthScore.status === 'YELLOW' ? 'bg-amber-500/20 text-amber-500' : 'bg-blue-500/20 text-blue-400'}`}>
                                                 {healthScore.status} STATUS
                                             </Badge>
                                         </div>
-                                        <div className="p-4 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
+                                        <div className="p-2 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Entry Delay</p>
                                             <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.avgEntryLag || 0} <span className="text-xs font-bold text-slate-400">MINS</span></p>
-                                            <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
+                                            <div className="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
                                                 <div className="h-full bg-blue-600 w-[40%]" />
                                             </div>
                                         </div>
-                                        <div className="p-4 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
+                                        <div className="p-2 rounded-[32px] bg-white border border-slate-100 shadow-sm flex flex-col justify-center">
                                             <p className="text-[10px] text-slate-600 mb-2 uppercase font-black tracking-widest">Fulfillment Ratio</p>
                                             <p className="text-4xl font-black text-slate-900 tracking-tighter">{healthScore.metrics?.taggingRatio || "0%"}</p>
-                                            <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
+                                            <div className="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
                                                 <div className="h-full bg-emerald-500 w-[85%]" />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-3">
-                                        <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-4">
+                                    <div className="space-y-1">
+                                        <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2">
                                             Health Alerts
                                             <div className="h-px flex-1 bg-slate-100" />
                                         </h4>
                                         {healthScore.signals?.length > 0 ? (
-                                            <div className="grid gap-3">
+                                                <div className="grid gap-2">
                                                 {healthScore.signals.map((s: string, i: number) => (
-                                                    <div key={i} className="flex items-center gap-4 p-5 rounded-2xl bg-slate-50/50 border border-slate-100 group hover:border-blue-500/20 transition-all">
+                                                    <div key={i} className="flex items-center gap-2 p-3 rounded-2xl bg-slate-50/50 border border-slate-100 group hover:border-blue-500/20 transition-all">
                                                         <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
                                                         <span className="text-xs text-slate-600 font-bold uppercase tracking-tight">{s}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-16 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
+                                                <div className="text-center py-10 bg-slate-50 rounded-[32px] border border-dashed border-slate-200">
                                                 <p className="text-blue-600 font-black text-sm uppercase tracking-widest">All Good!</p>
-                                                <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase">No issues found in the current period</p>
+                                                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase">No issues found in the current period</p>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="grid gap-2 md:grid-cols-2">
                                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none">
                                             <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
-                                                <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-3">
+                                                <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-2">
                                                     <div className="p-2 bg-blue-50 rounded-xl">
                                                         <Users className="h-5 w-5 text-blue-600" />
                                                     </div>
                                                     Staff Efficiency Index
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-4">
-                                                <div className="space-y-3">
+                                            <CardContent className="p-2">
+                                                <div className="space-y-1">
                                                     {leaderboard.map((u: LeaderboardUser, i: number) => (
-                                                        <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-4 last:border-0 hover:translate-x-1 transition-transform">
-                                                            <div className="flex items-center gap-4">
+                                                        <div key={i} className="flex items-center justify-between border-b border-slate-50 pb-2 last:border-0 hover:translate-x-1 transition-transform">
+                                                            <div className="flex items-center gap-2">
                                                                 <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 text-xs">{(i + 1).toString().padStart(2, '0')}</div>
                                                                 <span className="text-slate-900 font-black tracking-tight">{u.name}</span>
                                                             </div>
@@ -756,17 +759,17 @@ export default function AccountingPage() {
 
                                         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none">
                                             <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
-                                                <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-3">
+                                                <CardTitle className="text-slate-900 text-lg font-black tracking-tight flex items-center gap-2">
                                                     <div className="p-2 bg-amber-50 rounded-xl">
                                                         <Activity className="h-5 w-5 text-amber-600" />
                                                     </div>
                                                     Inactive Customers
                                                 </CardTitle>
                                             </CardHeader>
-                                            <CardContent className="p-4">
-                                                <div className="space-y-3">
+                                            <CardContent className="p-2">
+                                                <div className="space-y-1">
                                                     {recoveryMemory?.opportunities?.map((c, i: number) => (
-                                                        <div key={i} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-blue-500/5 group">
+                                                        <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-white hover:shadow-lg hover:shadow-blue-500/5 group">
                                                             <div>
                                                                 <p className="text-slate-900 font-black tracking-tight">{c.name}</p>
                                                                 <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">{c.daysSilent} DAYS SINCE LAST ORDER</p>
@@ -782,7 +785,7 @@ export default function AccountingPage() {
                                                         </div>
                                                     ))}
                                                     {(!recoveryMemory || recoveryMemory?.opportunities?.length === 0) && (
-                                                        <div className="text-center py-16 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                                                        <div className="text-center py-10 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                                                             <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">All caught up</p>
                                                         </div>
                                                     )}
@@ -806,8 +809,9 @@ export default function AccountingPage() {
 
             <CreateInvoiceDialog
                 isOpen={showCreateInvoice}
-                onClose={() => setShowCreateInvoice(false)}
+                onClose={() => { setShowCreateInvoice(false); setIsResumingDraft(false); }}
                 onSuccess={syncLedgers}
+                restoreDraft={isResumingDraft}
             />
 
             <CreateAccountDialog

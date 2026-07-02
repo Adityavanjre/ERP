@@ -121,8 +121,8 @@ export default function MachinesPage() {
   );
 
   return (
-    <div className="p-3 space-y-3 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-3 space-y-1.5 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Smart Factory Floor
@@ -157,7 +157,7 @@ export default function MachinesPage() {
                   Add a machine to the factory floor tracking system.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-3 py-3">
+              <div className="space-y-1.5 py-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Machine Name</label>
@@ -238,7 +238,7 @@ export default function MachinesPage() {
           ))
         ) : filtered.length === 0 ? (
           <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white">
-            <Cpu className="w-12 h-12 mx-auto text-slate-300 mb-4" />
+            <Cpu className="w-12 h-12 mx-auto text-slate-300 mb-2" />
             <h3 className="text-lg font-medium text-slate-400">
               No assets found
             </h3>
@@ -252,7 +252,7 @@ export default function MachinesPage() {
               key={m.id}
               className="bg-white border-slate-200/60 shadow-sm hover:shadow-md transition-all group overflow-hidden relative"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <div className="absolute top-0 right-0 p-2.5 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Cpu className="w-16 h-16" />
               </div>
               <CardHeader className="pb-2">
@@ -286,8 +286,8 @@ export default function MachinesPage() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm mt-2">
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-sm mt-2">
                   <div className="space-y-1">
                     <p className="text-slate-400 flex items-center">
                       <Clock className="w-3 h-3 mr-1" /> Rate/Hr

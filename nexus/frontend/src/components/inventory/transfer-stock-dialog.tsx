@@ -27,6 +27,9 @@ import { InlineCreateWarehouseDialog } from "../shared/inline-create-warehouse-d
 interface Product {
   id: string;
   name: string;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface Stock {
@@ -129,7 +132,7 @@ export function TransferStockDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-[425px] rounded-[2rem] border-none shadow-2xl">
         <DialogHeader>
-          <div className="bg-blue-50 h-12 w-12 rounded-2xl flex items-center justify-center mb-4">
+          <div className="bg-blue-50 h-12 w-12 rounded-2xl flex items-center justify-center mb-2">
             <ArrowRightLeft className="h-6 w-6 text-blue-600" />
           </div>
           <DialogTitle className="text-2xl font-black text-slate-900">
@@ -144,7 +147,7 @@ export function TransferStockDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 py-4">
+        <div className="grid gap-3 py-2">
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
               Select Product
@@ -223,7 +226,7 @@ export function TransferStockDialog({
           </div>
         </div>
 
-        <DialogFooter className="pt-4 mt-2 border-t border-slate-50">
+        <DialogFooter className="pt-2 mt-2 border-t border-slate-50">
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}

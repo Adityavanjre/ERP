@@ -30,8 +30,14 @@ interface CheckoutSidebarProps {
   setShippingAddress: (val: string) => void;
   supplierAddress: string;
   setSupplierAddress: (val: string) => void;
+  bankAccountId: string;
+  setBankAccountId: (val: string) => void;
+  bankAccounts: any[];
   subtotal: number;
   taxTotal: number;
+  igstTotal?: number;
+  cgstTotal?: number;
+  sgstTotal?: number;
   total: number;
   itemsCount: number;
   isSubmitting: boolean;
@@ -57,8 +63,14 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
   setShippingAddress,
   supplierAddress,
   setSupplierAddress,
+  bankAccountId,
+  setBankAccountId,
+  bankAccounts,
   subtotal,
   taxTotal,
+  igstTotal = 0,
+  cgstTotal = 0,
+  sgstTotal = 0,
   total,
   itemsCount,
   isSubmitting,
@@ -172,7 +184,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
         </div>
       </div>
 
-      <div className="px-3 py-2 flex-1 overflow-y-auto space-y-3">
+      <div className="px-3 py-2 flex-1 overflow-y-auto space-y-1.5">
         {/* Collapsible Address Section */}
         <div className="border border-slate-100 rounded-xl p-3 bg-slate-50/50">
           <button
@@ -186,7 +198,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
             </span>
           </button>
           {showAddresses && (
-            <div className="space-y-3 pt-3">
+            <div className="space-y-1.5 pt-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Billing Address</label>
                 <textarea
@@ -263,6 +275,26 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
           </div>
         </div>
 
+        {/* Bank Account (only if multiple accounts exist) */}
+        {bankAccounts.length > 1 && (
+          <div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+              Receive In
+            </p>
+            <select
+              value={bankAccountId}
+              onChange={(e) => setBankAccountId(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-xs font-bold text-slate-900 focus:outline-none focus:border-blue-600"
+            >
+              {bankAccounts.map((acc: any) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.bankName} - {acc.accountNumber}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Amount Entry */}
         <div>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
@@ -284,7 +316,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
             Order Summary
           </p>
-          <div className="space-y-2 bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div className="space-y-1.5 bg-slate-50 rounded-xl p-3 border border-slate-100">
             <div className="flex justify-between text-sm font-bold text-slate-500 uppercase tracking-tight">
               <span>Subtotal</span>
               <span className="tabular-nums">
@@ -292,14 +324,39 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
                 {subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
             </div>
-            <div className="flex justify-between text-sm font-bold text-slate-500 uppercase tracking-tight">
-              <span>Tax (GST)</span>
-              <span className="tabular-nums">
-                ₹
-                {taxTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div className="h-px bg-slate-200/50 my-2" />
+            {igstTotal > 0 && (
+              <div className="flex justify-between text-xs font-bold text-slate-500">
+                <span>IGST</span>
+                <span className="tabular-nums">
+                  ₹{igstTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            {cgstTotal > 0 && (
+              <div className="flex justify-between text-xs font-bold text-slate-500">
+                <span>CGST</span>
+                <span className="tabular-nums">
+                  ₹{cgstTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            {sgstTotal > 0 && (
+              <div className="flex justify-between text-xs font-bold text-slate-500">
+                <span>SGST</span>
+                <span className="tabular-nums">
+                  ₹{sgstTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            {taxTotal > 0 && (
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>Total Tax</span>
+                <span className="tabular-nums">
+                  ₹{taxTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            <div className="h-px bg-slate-200/50 my-1" />
             <div className="flex justify-between items-center">
               <span className="font-black text-slate-900 text-lg uppercase tracking-tight">
                 Final Amount

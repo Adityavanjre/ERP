@@ -12,9 +12,17 @@ import {
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { INDIAN_STATES, COUNTRY_CODES } from "../../lib/constants";
 
 interface InlineCreateCustomerDialogProps {
   open: boolean;
@@ -35,8 +43,9 @@ export function InlineCreateCustomerDialog({
     phone: "",
     email: "",
     address: "",
-    state: "",
+        state: "Karnataka",
     gstin: "",
+    countryCode: "+91",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,15 +74,19 @@ export function InlineCreateCustomerDialog({
 
     setLoading(true);
     try {
+      const fullPhone = formData.phone.trim()
+        ? `${formData.countryCode} ${formData.phone.trim()}`
+        : undefined;
       const payload = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim() || undefined,
         company: formData.company.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
+        phone: fullPhone,
         email: formData.email.trim() || undefined,
         address: formData.address.trim() || undefined,
         state: formData.state.trim() || undefined,
         gstin: formData.gstin.trim() || undefined,
+        status: "Customer",
       };
 
       const res = await api.post("crm/customers", payload);
@@ -94,8 +107,9 @@ export function InlineCreateCustomerDialog({
         phone: "",
         email: "",
         address: "",
-        state: "",
+    state: "Karnataka",
         gstin: "",
+        countryCode: "+91",
       });
       onOpenChange(false);
       onSuccess?.(res.data?.data || res.data);
@@ -117,8 +131,8 @@ export function InlineCreateCustomerDialog({
             Add a new customer on-the-spot. Optional fields can be left blank.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3 pt-3">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={onSubmit} className="space-y-1 pt-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">First Name *</Label>
               <Input
@@ -139,7 +153,7 @@ export function InlineCreateCustomerDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Company</Label>
               <Input
@@ -150,12 +164,31 @@ export function InlineCreateCustomerDialog({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Phone</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="e.g. 9876543210"
-                className={errors.phone ? "border-red-500" : ""}
-              />
+              <div className="flex gap-2">
+                <Select
+                  value={formData.countryCode}
+                  onValueChange={(val) => setFormData({ ...formData, countryCode: val })}
+                >
+                  <SelectTrigger className="w-[100px] shrink-0 h-10 text-sm font-bold">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRY_CODES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 15) })}
+                  placeholder="e.g. 9876543210"
+                  inputMode="numeric"
+                  maxLength={15}
+                  className={errors.phone ? "border-red-500" : ""}
+                />
+              </div>
               {errors.phone && <p className="text-[10px] text-red-500 font-bold">{errors.phone}</p>}
             </div>
           </div>
@@ -181,14 +214,19 @@ export function InlineCreateCustomerDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">State / Province</Label>
-              <Input
+              <select
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                placeholder="e.g. Maharashtra"
-              />
+                className="flex h-11 w-full rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-sm font-bold ring-offset-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">GSTIN</Label>
@@ -202,7 +240,7 @@ export function InlineCreateCustomerDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"

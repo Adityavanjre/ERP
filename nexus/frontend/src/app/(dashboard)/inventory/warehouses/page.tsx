@@ -64,13 +64,13 @@ export default function WarehousesPage() {
   }, []); // Fire once on mount. Refresh triggered after mutations via onSuccess callback.
 
   return (
-    <div className="p-4 md:p-4 space-y-4 bg-slate-50/50 min-h-screen">
+    <div className="p-2.5 md:p-4 space-y-2 bg-slate-50/50 min-h-screen">
       <CreateWarehouseDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onSuccess={() => syncWarehouses(false)}
       />
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <LayoutGrid className="h-10 w-10 text-blue-600" />
@@ -82,7 +82,7 @@ export default function WarehousesPage() {
         </div>
         <Button
           onClick={() => setIsAddDialogOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-3 h-12 font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 gap-2"
         >
           <Plus className="h-5 w-5" /> Add Warehouse
         </Button>
@@ -94,9 +94,9 @@ export default function WarehousesPage() {
             <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
           </div>
         ) : warehouses.length === 0 ? (
-          <Card className="col-span-full border-dashed border-2 border-slate-200 bg-white/50 py-4 text-center rounded-3xl">
-            <CardContent className="space-y-4">
-              <div className="bg-blue-50 h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Card className="col-span-full border-dashed border-2 border-slate-200 bg-white/50 py-2 text-center rounded-3xl">
+            <CardContent className="space-y-2">
+              <div className="bg-blue-50 h-16 w-16 rounded-2xl flex items-center justify-center mx-auto mb-2">
                 <LayoutGrid className="h-8 w-8 text-blue-500" />
               </div>
               <h3 className="text-lg font-black text-slate-900">
@@ -149,7 +149,7 @@ export default function WarehousesPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 space-y-3">
+              <CardContent className="p-3 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -173,7 +173,7 @@ export default function WarehousesPage() {
 
                 <div className="h-px bg-slate-100" />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

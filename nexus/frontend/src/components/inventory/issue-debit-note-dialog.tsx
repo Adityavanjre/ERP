@@ -29,6 +29,9 @@ interface Product {
   name: string;
   sku: string;
   price: number;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface Supplier {
@@ -189,8 +192,8 @@ export function IssueDebitNoteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-        <div className="bg-indigo-600 p-4 text-white relative">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
+        <div className="bg-indigo-600 p-2.5 text-white relative">
+          <div className="absolute top-0 right-0 p-2.5 opacity-10">
             <FileText className="h-24 w-24" />
           </div>
           <DialogHeader className="relative z-10">
@@ -203,7 +206,7 @@ export function IssueDebitNoteDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+        <div className="p-2.5 space-y-1.5 max-h-[70vh] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -279,7 +282,7 @@ export function IssueDebitNoteDialog({
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
                   Adjustment Items
@@ -304,17 +307,17 @@ export function IssueDebitNoteDialog({
               </div>
 
             {items.length === 0 ? (
-              <div className="text-center py-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
+              <div className="text-center py-2 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   No items added yet
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {items.map((item, index) => (
                   <div
                     key={index}
-                    className="flex gap-3 items-end p-4 bg-slate-50 rounded-2xl border border-slate-100 group"
+                    className="flex gap-3 items-end p-2.5 bg-slate-50 rounded-2xl border border-slate-100 group"
                   >
                     <div className="flex-1 space-y-2">
                       <Label className="text-[9px] font-black uppercase text-slate-400">
@@ -382,7 +385,7 @@ export function IssueDebitNoteDialog({
           </div>
         </div>
 
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="p-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
           <div>
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
               Total Adjustment

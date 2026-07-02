@@ -104,7 +104,7 @@ export default function ManufacturingDashboard() {
   if (loading)
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-2">
           <div className="h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-slate-600 font-black text-[10px] uppercase tracking-widest">
             Loading Manufacturing Data...
@@ -114,9 +114,9 @@ export default function ManufacturingDashboard() {
     );
 
   return (
-    <div className="flex-1 space-y-3">
+    <div className="flex-1 space-y-1.5">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
@@ -129,21 +129,21 @@ export default function ManufacturingDashboard() {
         <div className="flex flex-wrap gap-3 w-full md:w-auto">
           <button
             onClick={() => router.push("/manufacturing/bom")}
-            className="flex-1 md:flex-none justify-center px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
+            className="flex-1 md:flex-none justify-center px-3 py-2 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
           >
             <Settings className="w-4 h-4" />
             Bill of Materials
           </button>
           <button
             onClick={() => router.push("/manufacturing/machines")}
-            className="flex-1 md:flex-none justify-center px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
+            className="flex-1 md:flex-none justify-center px-3 py-2 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 text-slate-600 transition-all flex items-center gap-2 shadow-sm whitespace-nowrap"
           >
             <Cpu className="w-4 h-4 shadow-sm" />
             Machines
           </button>
           <button
             onClick={() => router.push("/manufacturing/orders")}
-            className="flex-1 md:flex-none justify-center px-6 py-2.5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 whitespace-nowrap"
+            className="flex-1 md:flex-none justify-center px-3 py-2 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             New Work Order
@@ -153,7 +153,7 @@ export default function ManufacturingDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* WIP Work Orders */}
-        <div className="lg:col-span-2 space-y-3">
+        <div className="lg:col-span-2 space-y-1.5">
           <div className="flex items-center justify-between">
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -161,16 +161,16 @@ export default function ManufacturingDashboard() {
             </h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {workOrders.map((wo: WorkOrder) => (
               <div
                 key={wo.id}
-                className="bg-white border border-slate-200 p-4 rounded-[32px] hover:border-emerald-300 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative border-none shadow-xl shadow-slate-200/40"
+                className="bg-white border border-slate-200 p-2.5 rounded-[32px] hover:border-emerald-300 hover:shadow-2xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative border-none shadow-xl shadow-slate-200/40"
               >
                 <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-50 opacity-0 group-hover:opacity-100 blur-[80px] transition-all -z-0"></div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-start relative z-10 gap-4 sm:gap-0">
-                  <div className="flex gap-4 sm:gap-4 items-start sm:items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start relative z-10 gap-2 sm:gap-0">
+                  <div className="flex gap-2 sm:gap-4 items-start sm:items-center">
                     <div
                       className={cn(
                         "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all shrink-0",
@@ -218,7 +218,7 @@ export default function ManufacturingDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-6 sm:mt-4 pt-4 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-4 sm:gap-0">
+                <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center relative z-10 gap-2 sm:gap-0">
                   <div className="flex gap-3 sm:gap-5 items-center pl-[4rem] sm:pl-0">
                     <div className="flex -space-x-3">
                       {Array.from({
@@ -253,7 +253,7 @@ export default function ManufacturingDashboard() {
                       </button>
                     </CompleteWorkOrderDialog>
                   ) : wo.status === "Completed" ? (
-                    <div className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+                    <div className="w-full sm:w-auto justify-center flex items-center gap-2 px-5 py-2 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
                       <CheckCircle2 className="w-4 h-4" />
                       <span className="text-[9px] font-black uppercase tracking-widest">
                         Production Completed
@@ -275,16 +275,16 @@ export default function ManufacturingDashboard() {
         </div>
 
         {/* BOM Registry & Stats */}
-        <div className="space-y-4">
-          <section className="space-y-4">
+        <div className="space-y-2">
+          <section className="space-y-2">
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
               Production Stats
             </h2>
-            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 p-4 rounded-[40px] border-none group relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:scale-110 transition-transform">
+            <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 p-2.5 rounded-[40px] border-none group relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-2.5 opacity-[0.03] group-hover:scale-110 transition-transform">
                 <TrendingUp className="h-24 w-24 text-emerald-900" />
               </div>
-              <div className="space-y-4 relative z-10">
+              <div className="space-y-2 relative z-10">
                 <div>
                   <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2">
                     Pending Production
@@ -313,7 +313,7 @@ export default function ManufacturingDashboard() {
             </Card>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-2">
             <div className="flex items-center justify-between">
               <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
                 Bill of Materials
@@ -322,14 +322,14 @@ export default function ManufacturingDashboard() {
                 {boms.length} BOMs
               </span>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {boms.map((bom: BOM) => (
                 <div
                   key={bom.id}
                   onClick={() => router.push(`/manufacturing/bom/${bom.id}`)}
-                  className="bg-white border border-slate-100 p-5 rounded-3xl flex justify-between items-center group hover:bg-slate-50 cursor-pointer transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 shadow-sm"
+                  className="bg-white border border-slate-100 p-3 rounded-3xl flex justify-between items-center group hover:bg-slate-50 cursor-pointer transition-all hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 shadow-sm"
                 >
-                  <div className="flex gap-5 items-center">
+                  <div className="flex gap-3 items-center">
                     <div className="p-2.5 bg-slate-50 rounded-xl group-hover:bg-white group-hover:shadow-inner group-hover:scale-110 transition-all">
                       <Package className="w-5 h-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                     </div>
@@ -350,7 +350,7 @@ export default function ManufacturingDashboard() {
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-2">
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
               Machine Load
             </h2>
@@ -358,7 +358,7 @@ export default function ManufacturingDashboard() {
               {machines.map((m) => (
                 <div
                   key={m.id}
-                  className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2"
+                  className="bg-white p-2.5 rounded-2xl border border-slate-100 flex flex-col gap-2"
                 >
                   <div className="flex justify-between items-center">
                     <div
@@ -381,14 +381,14 @@ export default function ManufacturingDashboard() {
                 </div>
               ))}
               {machines.length === 0 && (
-                <p className="col-span-2 text-[10px] text-slate-400 italic text-center py-4">
+                <p className="col-span-2 text-[10px] text-slate-400 italic text-center py-2">
                   No machines registered
                 </p>
               )}
             </div>
           </section>
 
-          <section className="space-y-4">
+          <section className="space-y-2">
             <h2 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
               Recent Activity
             </h2>
@@ -412,7 +412,7 @@ export default function ManufacturingDashboard() {
                 </div>
               ))}
               {activity.length === 0 && (
-                <p className="text-[10px] text-slate-400 text-center py-4">
+                <p className="text-[10px] text-slate-400 text-center py-2">
                   No recent activity
                 </p>
               )}

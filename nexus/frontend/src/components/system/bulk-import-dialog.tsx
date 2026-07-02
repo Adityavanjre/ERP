@@ -146,7 +146,7 @@ export function BulkImportDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="py-3 flex flex-col items-center justify-center">
+        <div className="py-2 flex flex-col items-center justify-center">
           <input
             type="file"
             accept=".csv"
@@ -157,24 +157,24 @@ export function BulkImportDialog({
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`w-full border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center transition-all cursor-pointer hover:bg-slate-50 ${
+            className={`w-full border-2 border-dashed rounded-2xl p-2.5 flex flex-col items-center justify-center transition-all cursor-pointer hover:bg-slate-50 ${
               file ? "border-blue-500 bg-blue-50/30" : "border-slate-200"
             }`}
           >
             {file ? (
               <>
-                <FileSpreadsheet className="h-12 w-12 text-blue-500 mb-4" />
+                <FileSpreadsheet className="h-12 w-12 text-blue-500 mb-2" />
                 <p className="text-sm font-bold text-slate-900">{file.name}</p>
                 <p className="text-xs text-slate-500 mt-1">
                   {(file.size / 1024).toFixed(2)} KB
                 </p>
-                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-4">
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-2">
                   Click to replace
                 </p>
               </>
             ) : (
               <>
-                <UploadCloud className="h-12 w-12 text-slate-400 mb-4 group-hover:text-blue-500 transition-colors" />
+                <UploadCloud className="h-12 w-12 text-slate-400 mb-2 group-hover:text-blue-500 transition-colors" />
                 <p className="text-sm font-bold text-slate-700">
                   Click to browse or drag and drop
                 </p>
@@ -184,7 +184,7 @@ export function BulkImportDialog({
           </div>
 
           {importResults && (
-            <div className="w-full mt-4 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+            <div className="w-full mt-2 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
               <div className="p-3 border-b border-slate-200 bg-slate-100/50 flex justify-between items-center">
                 <span className="text-xs font-bold text-slate-700">
                   Import Summary
@@ -223,7 +223,7 @@ export function BulkImportDialog({
           )}
 
           {!importResults && (
-            <div className="w-full mt-4 bg-amber-50 rounded-xl p-4 border border-amber-200 flex items-start gap-3">
+            <div className="w-full mt-2 bg-amber-50 rounded-xl p-2.5 border border-amber-200 flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="text-xs text-amber-900 font-medium">
                 Make sure your CSV headers exactly match the template format.

@@ -65,7 +65,7 @@ export default function PermissionsAdminPage() {
   }
 
   return (
-    <div className="p-4 max-w-6xl mx-auto space-y-3">
+    <div className="p-2.5 max-w-6xl mx-auto space-y-1.5">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-3">
@@ -82,7 +82,7 @@ export default function PermissionsAdminPage() {
       </div>
 
       <Card className="rounded-3xl shadow-sm border-slate-200/60 overflow-hidden">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-2">
           <CardTitle className="text-lg">Permission Templates</CardTitle>
           <CardDescription>
             Templates apply standardized policy-based access control (PBAC) to users.

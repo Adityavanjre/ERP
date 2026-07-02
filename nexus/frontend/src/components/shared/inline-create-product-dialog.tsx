@@ -35,7 +35,6 @@ export function InlineCreateProductDialog({
     price: "",
     costPrice: "",
     baseUnit: "Kgs",
-    gstRate: "18",
     hsnCode: "",
     stock: "0",
     warehouseId: "",
@@ -86,7 +85,6 @@ export function InlineCreateProductDialog({
         basePrice: Number(formData.price),
         costPrice: formData.costPrice ? Number(formData.costPrice) : 0,
         uom: formData.baseUnit,
-        gstRate: Number(formData.gstRate),
         hsnCode: formData.hsnCode.trim() || undefined,
         stock: Number(formData.stock),
         warehouseId: Number(formData.stock) > 0 ? formData.warehouseId : undefined,
@@ -112,7 +110,6 @@ export function InlineCreateProductDialog({
         price: "",
         costPrice: "",
         baseUnit: "Kgs",
-        gstRate: "18",
         hsnCode: "",
         stock: "0",
         warehouseId: warehouses.length > 0 ? warehouses[0].id : "",
@@ -140,7 +137,7 @@ export function InlineCreateProductDialog({
             Register a new product on-the-spot. Optional fields can be left blank.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3 pt-3">
+        <form onSubmit={onSubmit} className="space-y-1.5 pt-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Product Name *</Label>
             <Input
@@ -246,25 +243,19 @@ export function InlineCreateProductDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">GST Rate (%)</Label>
-              <select
-                value={formData.gstRate}
-                onChange={(e) => setFormData({ ...formData, gstRate: e.target.value })}
-                className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="0">0%</option>
-                <option value="5">5%</option>
-                <option value="12">12%</option>
-                <option value="18">18%</option>
-                <option value="28">28%</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">HSN Code</Label>
               <Input
                 value={formData.hsnCode}
                 onChange={(e) => setFormData({ ...formData, hsnCode: e.target.value })}
                 placeholder="e.g. 6802"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Category</Label>
+              <Input
+                value={(formData as any).category || ""}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value } as any)}
+                placeholder="e.g. Marble"
               />
             </div>
           </div>
@@ -296,7 +287,7 @@ export function InlineCreateProductDialog({
             )}
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"

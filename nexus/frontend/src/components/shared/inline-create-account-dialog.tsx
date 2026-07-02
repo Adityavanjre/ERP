@@ -74,7 +74,7 @@ export function InlineCreateAccountDialog({
             Add a new ledger or bank account on-the-spot.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3 pt-3">
+        <form onSubmit={onSubmit} className="space-y-1.5 pt-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Account Name *</Label>
             <Input
@@ -106,7 +106,7 @@ export function InlineCreateAccountDialog({
             </select>
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"

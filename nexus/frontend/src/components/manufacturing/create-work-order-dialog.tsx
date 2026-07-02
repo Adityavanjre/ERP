@@ -135,7 +135,7 @@ export function CreateWorkOrderDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 py-3">
+        <div className="grid gap-2 py-3">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Product Recipe (BOM)</Label>

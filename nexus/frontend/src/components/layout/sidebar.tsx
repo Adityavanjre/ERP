@@ -35,6 +35,8 @@ import { KlypsoLogo } from "../brand/logo";
 import { toast } from "sonner";
 import { api } from "../../lib/api";
 import { cn } from "../../lib/utils";
+import { useSidebar } from "../providers/sidebar-provider";
+import { PanelLeftClose, PanelLeft } from "lucide-react";
 
 // Role-based access matrix
 // Owner = all, Manager = all except settings, others = scoped
@@ -90,6 +92,12 @@ const businessStreams: BusinessStream[] = [
         allowedRoles: SALES_ROLES,
       },
       { label: "CRM", href: "/crm", icon: Users, allowedRoles: SALES_ROLES },
+      {
+        label: "Invoices",
+        href: "/accounting",
+        icon: Receipt,
+        allowedRoles: INVOICE_VIEWERS,
+      },
       {
         label: "Sales Orders",
         href: "/sales",
@@ -340,6 +348,7 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
   const pathname = usePathname();
   const { user } = useAuth();
   const userRole = (user?.role as RoleName) || "Biller";
+  const { collapsed, toggle } = useSidebar();
 
   const { pbac, hasPermission, tenantProfile } = useUX();
 
@@ -471,30 +480,54 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
 
   return (
     <div className="flex flex-col h-full bg-slate-50/50 border-r border-slate-100 text-slate-700">
-      <div className="px-3 py-3 pb-1 shrink-0">
-        <Link
-          href="/dashboard"
-          onClick={onItemClick}
-          className="flex items-center transition-all hover:opacity-80"
-        >
-          {tenantProfile?.logoUrl ? (
-            <div className="flex items-center gap-3">
-              <img
-                src={tenantProfile.logoUrl}
-                alt={tenantProfile.name || "Company Logo"}
-                className="h-9 w-auto max-w-[140px] object-contain rounded-lg"
-              />
-            </div>
-          ) : (
-            <KlypsoLogo name={tenantProfile?.name || user?.tenantName || "KLYPSO"} />
-          )}
-        </Link>
-        {user?.isSuperAdmin && (
+      <div className={`${collapsed ? "px-2 py-2" : "px-3 py-3 pb-1"} shrink-0 transition-all duration-300`}>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            onClick={onItemClick}
+            className="flex items-center transition-all hover:opacity-80"
+          >
+            {collapsed ? (
+              tenantProfile?.logoUrl ? (
+                <img src={tenantProfile.logoUrl} alt="Logo" className="h-7 w-7 object-contain rounded" />
+              ) : (
+                <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center">
+                  <span className="text-white text-[10px] font-black">{(tenantProfile?.name || user?.tenantName || "K").charAt(0)}</span>
+                </div>
+              )
+            ) : (
+              tenantProfile?.logoUrl ? (
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={tenantProfile.logoUrl}
+                    alt={tenantProfile.name || "Company Logo"}
+                    className="h-9 w-auto max-w-[140px] object-contain rounded-lg"
+                  />
+                </div>
+              ) : (
+                <KlypsoLogo name={tenantProfile?.name || user?.tenantName || "KLYPSO"} />
+              )
+            )}
+          </Link>
+          <button
+            onClick={toggle}
+            className="p-1 rounded-md hover:bg-slate-200/60 text-slate-400 hover:text-slate-600 transition-colors"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </button>
+        </div>
+        {user?.isSuperAdmin && !collapsed && (
           <div className="mt-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">
             <ShieldCheck className="w-3 h-3 text-amber-500" />
             <span className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em]">
               System Sovereign
             </span>
+          </div>
+        )}
+        {user?.isSuperAdmin && collapsed && (
+          <div className="mt-1 flex justify-center" title="System Sovereign">
+            <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
           </div>
         )}
       </div>
@@ -504,8 +537,10 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
           <Link
             href="/dashboard"
             onClick={onItemClick}
+            title="Dashboard"
             className={cn(
               "text-xs group flex px-2.5 py-1.5 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
+              collapsed ? "justify-center px-1" : "",
               pathname === "/dashboard"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -514,22 +549,26 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             <div className="flex items-center flex-1">
               <LayoutDashboard
                 className={cn(
-                  "h-4 w-4 mr-3 transition-all duration-300 group-hover:rotate-12",
+                  "h-4 w-4 transition-all duration-300 group-hover:rotate-12",
+                  collapsed ? "" : "mr-3",
                   pathname === "/dashboard"
                     ? "text-blue-600"
                     : "text-slate-400 group-hover:text-blue-500",
                 )}
               />
-              Dashboard
+              {!collapsed && "Dashboard"}
             </div>
           </Link>
         </div>
 
         {visibleStreams.map((stream) => (
           <div key={stream.label} className="space-y-1">
-            <div className="text-[9px] font-black text-slate-400 mb-1 px-2.5 tracking-[0.2em] uppercase">
-              {stream.label}
-            </div>
+            {!collapsed && (
+              <div className="text-[9px] font-black text-slate-400 mb-1 px-2.5 tracking-[0.2em] uppercase">
+                {stream.label}
+              </div>
+            )}
+            {collapsed && <div className="border-t border-slate-200 mx-1 mb-1" />}
             {stream.items.map((item) => {
               const isActive =
                 pathname === item.href ||
@@ -540,8 +579,10 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                   href={item.href}
                   prefetch={false}
                   onClick={onItemClick}
+                  title={collapsed ? item.label : undefined}
                   className={cn(
                     "text-xs group flex px-2.5 py-1.5 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
+                    collapsed ? "justify-center px-1" : "",
                     isActive
                       ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                       : "text-slate-500",
@@ -550,13 +591,14 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
                   <div className="flex items-center flex-1">
                     <item.icon
                       className={cn(
-                        "h-4 w-4 mr-3 transition-all duration-500 group-hover:rotate-[20deg] group-hover:scale-125",
+                        "h-4 w-4 transition-all duration-500 group-hover:rotate-[20deg] group-hover:scale-125",
+                        collapsed ? "" : "mr-3",
                         isActive
                           ? "text-blue-600"
                           : "text-slate-400 group-hover:text-blue-500",
                       )}
                     />
-                    {item.label}
+                    {!collapsed && item.label}
                   </div>
                 </Link>
               );
@@ -565,15 +607,17 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
         ))}
       </div>
 
-      <div className="shrink-0 p-3 pt-2 border-t border-slate-100 space-y-1">
+      <div className={`shrink-0 ${collapsed ? "p-1.5" : "p-2.5 pt-2"} border-t border-slate-100 space-y-1 transition-all duration-300`}>
 
 
         {canAccessSettings && (
           <Link
             href="/modules-setup"
             onClick={onItemClick}
+            title="Configure Modules"
             className={cn(
               "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
+              collapsed ? "justify-center px-1" : "",
               pathname === "/modules-setup"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -582,13 +626,14 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             <div className="flex items-center flex-1">
               <Layers
                 className={cn(
-                  "h-4 w-4 mr-3 transition-all duration-300 group-hover:scale-110",
+                  "h-4 w-4 transition-all duration-300 group-hover:scale-110",
+                  collapsed ? "" : "mr-3",
                   pathname === "/modules-setup"
                     ? "text-blue-600"
                     : "text-slate-400 group-hover:text-blue-500",
                 )}
               />
-              Configure Modules
+              {!collapsed && "Configure Modules"}
             </div>
           </Link>
         )}
@@ -597,8 +642,10 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
           <Link
             href="/settings"
             onClick={onItemClick}
+            title="Settings"
             className={cn(
               "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider hover:scale-[1.01] active:scale-[0.98]",
+              collapsed ? "justify-center px-1" : "",
               pathname === "/settings"
                 ? "bg-white text-blue-600 shadow-lg shadow-blue-500/5"
                 : "text-slate-500",
@@ -607,13 +654,14 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
             <div className="flex items-center flex-1">
               <Settings
                 className={cn(
-                  "h-4 w-4 mr-3 transition-all duration-500 group-hover:rotate-90 group-hover:scale-125",
+                  "h-4 w-4 transition-all duration-500 group-hover:rotate-90 group-hover:scale-125",
+                  collapsed ? "" : "mr-3",
                   pathname === "/settings"
                     ? "text-blue-600"
                     : "text-slate-400 group-hover:text-blue-500",
                 )}
               />
-              Settings
+              {!collapsed && "Settings"}
             </div>
           </Link>
         )}
@@ -624,25 +672,36 @@ export const Sidebar = ({ onItemClick }: { onItemClick?: () => void }) => {
               "Use the workspace selector to switch between workspaces",
             );
           }}
-          className="text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider text-slate-500 hover:scale-[1.01] active:scale-[0.98]"
+          title="Switch Workspace"
+          className={cn(
+            "text-xs group flex px-3 py-2 w-full justify-start font-bold cursor-pointer hover:bg-white rounded-xl transition-all duration-200 uppercase tracking-wider text-slate-500 hover:scale-[1.01] active:scale-[0.98]",
+            collapsed ? "justify-center px-1" : "",
+          )}
         >
           <div className="flex items-center flex-1">
-            <RefreshCw className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:rotate-180" />
-            Switch Workspace
+            <RefreshCw className={cn("h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-all duration-300 group-hover:rotate-180", collapsed ? "" : "mr-3")} />
+            {!collapsed && "Switch Workspace"}
           </div>
         </button>
 
-        <div className="p-3 rounded-2xl bg-white border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter">
-              Auto-Sync
+        {!collapsed && (
+          <div className="p-2.5 rounded-2xl bg-white border border-slate-100 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-tighter">
+                Auto-Sync
+              </p>
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            </div>
+            <p className="text-[10px] text-slate-900 font-black uppercase tracking-widest">
+              {loadingConfig ? "Syncing..." : "Live Sync"}
             </p>
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           </div>
-          <p className="text-[10px] text-slate-900 font-black uppercase tracking-widest">
-            {loadingConfig ? "Syncing..." : "Live Sync"}
-          </p>
-        </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center py-1">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" title="Live Sync" />
+          </div>
+        )}
       </div>
     </div>
   );

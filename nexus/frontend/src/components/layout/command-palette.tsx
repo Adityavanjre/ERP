@@ -149,15 +149,15 @@ export function CommandPalette(): React.ReactNode {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="w-[95vw] sm:w-full max-w-2xl bg-white/95 border-slate-200 backdrop-blur-2xl p-0 overflow-hidden shadow-2xl shadow-blue-500/5 rounded-3xl sm:rounded-[2.5rem]">
-        <DialogHeader className="p-4 sm:p-3 border-b border-slate-100">
-          <div className="flex items-center gap-3 sm:gap-3">
+        <DialogHeader className="p-2.5 sm:p-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 sm:gap-2">
             <DialogTitle className="sr-only">Command Palette</DialogTitle>
             <Terminal className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 hidden sm:block" />
             <div className="relative flex-1">
               <Input
                 autoFocus
                 placeholder="Search..."
-                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-3 sm:py-4 font-medium px-0 sm:px-3 w-full"
+                className="bg-transparent border-none text-slate-900 focus-visible:ring-0 placeholder:text-slate-400 text-lg sm:text-xl py-2 sm:py-2 font-medium px-0 sm:px-3 w-full"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -178,7 +178,7 @@ export function CommandPalette(): React.ReactNode {
           </div>
         </DialogHeader>
 
-        <div className="max-h-[450px] overflow-y-auto p-4 space-y-3 pb-3">
+        <div className="max-h-[450px] overflow-y-auto p-2.5 space-y-1.5 pb-3">
           {/* Search Results */}
           {results.length > 0 && (
             <div className="space-y-2">
@@ -196,9 +196,9 @@ export function CommandPalette(): React.ReactNode {
                   <button
                     key={`res-${i}`}
                     onClick={() => runCommand(res.path)}
-                    className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
+                    className="w-full flex items-center justify-between p-2.5 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 transition-colors">
                         <Icon className="h-5 w-5 text-blue-600" />
                       </div>
@@ -237,9 +237,9 @@ export function CommandPalette(): React.ReactNode {
                       <button
                         key={i}
                         onClick={() => runCommand(command.path)}
-                        className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
+                        className="w-full flex items-center justify-between p-2.5 rounded-[1.5rem] hover:bg-slate-50 transition-all group text-left border border-transparent hover:border-slate-100"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <div className="p-3 rounded-2xl bg-slate-100 border border-slate-200 group-hover:border-blue-500/50 transition-colors">
                             <command.icon className="h-5 w-5 text-slate-500 group-hover:text-blue-600" />
                           </div>
@@ -260,7 +260,7 @@ export function CommandPalette(): React.ReactNode {
               })}
             </>
           ) : (
-            <div className="p-16 text-center space-y-4">
+            <div className="p-16 text-center space-y-2">
               <Search className="h-16 w-16 text-slate-100 mx-auto" />
               <p className="text-slate-400 text-sm font-medium">
                 No results found for "{query}"
@@ -269,8 +269,8 @@ export function CommandPalette(): React.ReactNode {
           )}
         </div>
 
-        <div className="p-4 sm:p-3 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
-          <div className="hidden sm:flex items-center gap-3">
+        <div className="p-2.5 sm:p-3 border-t border-slate-100 bg-slate-50/50 flex justify-center sm:justify-between items-center">
+          <div className="hidden sm:flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Badge
                 variant="outline"
@@ -294,7 +294,7 @@ export function CommandPalette(): React.ReactNode {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
             <span className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">
               v2.10

@@ -71,9 +71,9 @@ export default function ModuleSetupPage() {
   const modules = getAllModules();
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-2.5">
       <Card className="w-full max-w-4xl shadow-xl border-0 rounded-3xl overflow-hidden">
-        <CardHeader className="bg-slate-900 text-white p-4">
+        <CardHeader className="bg-slate-900 text-white p-2.5">
           <CardTitle className="text-2xl font-black tracking-tight">
             Configure Your Workspace
           </CardTitle>
@@ -82,14 +82,14 @@ export default function ModuleSetupPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="p-4">
+        <CardContent className="p-2.5">
           {error && (
-            <div className="mb-3 p-4 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
+            <div className="mb-3 p-2.5 bg-rose-50 text-rose-600 text-sm font-bold rounded-xl border border-rose-100">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {modules.map((mod) => {
               const isSelected = selected.has(mod.id);
               return (
@@ -132,7 +132,7 @@ export default function ModuleSetupPage() {
             })}
           </div>
         </CardContent>
-        <CardFooter className="bg-slate-50 p-4 border-t border-slate-100 flex justify-between items-center">
+        <CardFooter className="bg-slate-50 p-2.5 border-t border-slate-100 flex justify-between items-center">
           <p className="text-sm font-bold text-slate-500">
             {selected.size} modules selected
           </p>

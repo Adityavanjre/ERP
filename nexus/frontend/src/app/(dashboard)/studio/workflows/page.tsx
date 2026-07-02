@@ -99,14 +99,14 @@ export default function WorkflowBuilder() {
 
   if (loading && workflows.length === 0)
     return (
-      <div className="p-4 text-center text-slate-500 font-bold">
+      <div className="p-2.5 text-center text-slate-500 font-bold">
         Synchronizing lifecycle engines...
       </div>
     );
 
   return (
-    <div className="flex-1 p-4 md:p-4 space-y-3 pt-2 md:pt-3">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 p-2.5 md:p-4 space-y-1.5 pt-2 md:pt-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
             <GitBranch className="mr-3 h-8 w-8 text-emerald-600" />
@@ -118,7 +118,7 @@ export default function WorkflowBuilder() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid gap-2 lg:grid-cols-4">
         <Card className="bg-white border-slate-200 shadow-sm lg:col-span-1">
           <CardHeader className="pb-3">
             <CardTitle className="text-slate-900 text-[10px] font-black uppercase tracking-widest flex items-center">
@@ -126,7 +126,7 @@ export default function WorkflowBuilder() {
               Active Streams
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-1.5">
             <div className="space-y-2">
               <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
                 Object Class
@@ -138,7 +138,7 @@ export default function WorkflowBuilder() {
               />
             </div>
 
-            <div className="pt-4 space-y-2">
+            <div className="pt-2 space-y-2">
               {workflows.map((w) => (
                 <div
                   key={w.id}
@@ -156,7 +156,7 @@ export default function WorkflowBuilder() {
               ))}
             </div>
 
-            <div className="pt-4 border-t border-slate-100 space-y-2">
+            <div className="pt-2 border-t border-slate-100 space-y-2">
               <Input
                 placeholder="New Workflow Name..."
                 value={workflowName}
@@ -175,7 +175,7 @@ export default function WorkflowBuilder() {
 
         <Card className="bg-white border-slate-200 shadow-xl lg:col-span-3 min-h-[600px] flex flex-col rounded-3xl overflow-hidden">
           <CardHeader className="border-b border-slate-100 bg-slate-50/30">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
               <div>
                 <CardTitle className="text-slate-900 font-black text-xl tracking-tight">
                   {selectedWorkflow
@@ -206,7 +206,7 @@ export default function WorkflowBuilder() {
           </CardHeader>
           <CardContent className="flex-1 p-0 relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat bg-slate-50/50">
             {!selectedWorkflow ? (
-              <div className="h-full flex items-center justify-center text-slate-400 italic flex-col gap-4">
+              <div className="h-full flex items-center justify-center text-slate-400 italic flex-col gap-2">
                 <GitBranch className="h-16 w-16 opacity-10 text-slate-900" />
                 <p className="font-bold text-lg opacity-40">
                   Ready to Architecture
@@ -257,7 +257,7 @@ export default function WorkflowBuilder() {
 
                 <div
                   onClick={addNode}
-                  className="border-4 border-dashed border-slate-200 rounded-[32px] flex items-center justify-center cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all text-slate-200 hover:text-emerald-500 py-4"
+                  className="border-4 border-dashed border-slate-200 rounded-[32px] flex items-center justify-center cursor-pointer hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all text-slate-200 hover:text-emerald-500 py-2"
                 >
                   <Plus className="h-12 w-12" />
                 </div>
@@ -265,7 +265,7 @@ export default function WorkflowBuilder() {
             )}
 
             {/* Legend / Stats overlay */}
-            <div className="absolute bottom-6 right-6 p-4 rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-x-auto max-w-[90vw]">
+            <div className="absolute bottom-6 right-6 p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-x-auto max-w-[90vw]">
               <div className="flex items-center gap-3 text-[10px] font-black tracking-widest uppercase flex-wrap">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500" />

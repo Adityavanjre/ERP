@@ -65,6 +65,9 @@ interface Product {
   name: string;
   sku: string;
   costPrice: number;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface PurchaseOrder {
@@ -240,19 +243,19 @@ export default function PurchasesPage() {
 
   if (loading)
     return (
-      <div className="p-4 text-center text-slate-500 font-bold">
+      <div className="p-2.5 text-center text-slate-500 font-bold">
         Synchronizing supply chain data...
       </div>
     );
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 bg-slate-50/30 min-h-screen w-full max-w-full overflow-hidden">
       <CreateSupplierDialog
         open={isAddSupplierOpen}
         onOpenChange={setIsAddSupplierOpen}
         onSuccess={() => syncProcurement(false)}
       />
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center gap-3">
             <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 text-indigo-600" />{" "}
@@ -332,17 +335,17 @@ export default function PurchasesPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="orders" className="space-y-3">
+      <Tabs defaultValue="orders" className="space-y-1.5">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="orders"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Purchase Orders
           </TabsTrigger>
           <TabsTrigger
             value="suppliers"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Suppliers
           </TabsTrigger>
@@ -433,7 +436,7 @@ export default function PurchasesPage() {
                         colSpan={6}
                         className="text-center py-20 text-slate-400 font-bold italic"
                       >
-                        <ShoppingBag className="mx-auto h-16 w-16 mb-4 opacity-10" />
+                        <ShoppingBag className="mx-auto h-16 w-16 mb-2 opacity-10" />
                         No purchase orders found.
                       </TableCell>
                     </TableRow>
@@ -454,7 +457,7 @@ export default function PurchasesPage() {
                 List of approved suppliers
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="p-2.5">
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {suppliers.map((s) => (
                   <Card
@@ -462,7 +465,7 @@ export default function PurchasesPage() {
                     className="bg-slate-50/50 border-slate-100 hover:border-blue-500/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all group rounded-2xl overflow-hidden"
                   >
                     <CardHeader>
-                      <div className="flex justify-between items-start mb-4">
+                      <div className="flex justify-between items-start mb-2">
                         <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 group-hover:border-blue-100 transition-all">
                           <Truck className="h-6 w-6 text-blue-600 transition-transform group-hover:rotate-12" />
                         </div>
@@ -575,7 +578,7 @@ export default function PurchasesPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label
                   htmlFor="product"
@@ -630,7 +633,7 @@ export default function PurchasesPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label
                   htmlFor="unitPrice"
@@ -666,7 +669,7 @@ export default function PurchasesPage() {
               </div>
             </div>
 
-            <div className="bg-blue-50/50 p-4 rounded-3xl border border-blue-100 mt-2">
+            <div className="bg-blue-50/50 p-2.5 rounded-3xl border border-blue-100 mt-2">
               <div className="flex justify-between items-center text-blue-900 font-black tracking-tight">
                 <span className="text-[10px] uppercase">Total Amount</span>
                 <span className="text-xl">

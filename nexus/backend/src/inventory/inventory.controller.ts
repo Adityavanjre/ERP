@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { WarehouseService } from './warehouse.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 import { Permission } from '../common/constants/permissions';
@@ -39,6 +40,7 @@ export class InventoryController {
   constructor(
     private readonly inventoryService: InventoryService,
     private readonly warehouseService: WarehouseService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('warehouses')
@@ -70,6 +72,17 @@ export class InventoryController {
   @Permissions(Permission.ADJUST_STOCK)
   logMovement(@TenantId() tenantId: string, @Body() data: LogMovementDto) {
     return this.warehouseService.logMovement(tenantId, data);
+  }
+
+  @Get('movements')
+  @Permissions(Permission.VIEW_REPORTS)
+  async getMovements(@TenantId() tenantId: string) {
+    return this.prisma.stockMovement.findMany({
+      where: { tenantId },
+      include: { product: { select: { name: true, sku: true } }, warehouse: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
   }
 
   @Post('products/:id/opening-balance')

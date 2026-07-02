@@ -600,7 +600,7 @@ export class InventoryService {
   }
 
   async getStats(tenantId: string) {
-    const [totalProducts, totalStock, lowStock] = await Promise.all([
+    const [totalProducts, totalStock, lowStock, totalValueResult] = await Promise.all([
       this.prisma.product.count({ where: { tenantId, isDeleted: false } }),
       this.prisma.product.aggregate({
         where: { tenantId, isDeleted: false },
@@ -613,12 +613,22 @@ export class InventoryService {
           stock: { lt: 10 },
         },
       }),
+      this.prisma.product.findMany({
+        where: { tenantId, isDeleted: false },
+        select: { price: true, stock: true },
+      }),
     ]);
+
+    const totalValue = totalValueResult.reduce(
+      (sum, p) => sum + (Number(p.price) || 0) * (Number(p.stock) || 0),
+      0,
+    );
 
     return {
       totalProducts,
       totalStock: totalStock._sum.stock || 0,
-      lowStockCount: lowStock,
+      totalValue,
+      lowStock,
     };
   }
 

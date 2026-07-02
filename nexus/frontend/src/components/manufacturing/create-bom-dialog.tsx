@@ -35,6 +35,9 @@ interface Product {
   costPrice?: number;
   stock?: number;
   tags?: string;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface BOMItem {
@@ -161,8 +164,8 @@ export function CreateBOMDialog({
           <DialogTitle>Create New Bill of Materials</DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-3 py-3">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-2 py-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="space-y-2">
               <Label>BOM Name</Label>
               <Input
@@ -220,7 +223,7 @@ export function CreateBOMDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <div className="space-y-2">
               <Label>Output Quantity</Label>
               <NumericInput value={quantity} onChange={setQuantity} />
@@ -244,8 +247,8 @@ export function CreateBOMDialog({
             </div>
           </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="border-t pt-2">
+            <div className="flex justify-between items-center mb-2">
               <div>
                 <Label>Raw Materials / Components</Label>
                 <p className="text-[10px] text-muted-foreground">
@@ -268,9 +271,9 @@ export function CreateBOMDialog({
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {items.map((item, index) => (
-                <div key={index} className="flex gap-3 items-end">
+                <div key={index} className="flex gap-2 items-end">
                   <div className="flex-1 space-y-1">
                     <Label className="text-xs text-muted-foreground">
                       Component

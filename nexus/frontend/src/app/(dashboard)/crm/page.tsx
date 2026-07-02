@@ -39,6 +39,7 @@ import {
 import { toast } from "sonner";
 import { Badge } from "../../../components/ui/badge";
 import { useUX } from "../../../components/providers/ux-provider";
+import { INDIAN_STATES, COUNTRY_CODES } from "../../../lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { LoadingSpinner } from "../../../components/ui/loading-spinner";
 import {
@@ -142,8 +143,9 @@ export default function CrmPage() {
     phone: "",
     company: "",
     address: "",
-    state: "",
+        state: "Karnataka",
     gstin: "",
+    countryCode: "+91",
   });
   const [dealData, setDealData] = useState({
     title: "",
@@ -240,10 +242,21 @@ export default function CrmPage() {
     try {
       setIsSubmitting(true);
       setUILocked(true);
-      // REMOVED: status field - not part of customer creation schema
-      await api.post("crm/customers", {
-        ...formData,
-      });
+      const fullPhone = formData.phone.trim()
+        ? `${formData.countryCode} ${formData.phone.trim()}`
+        : undefined;
+      const payload: Record<string, any> = {
+        firstName: formData.firstName.trim(),
+        status: activeTab === "customers" ? "Customer" : "Lead",
+      };
+      if (fullPhone) payload.phone = fullPhone;
+      if (formData.lastName.trim()) payload.lastName = formData.lastName.trim();
+      if (formData.email.trim()) payload.email = formData.email.trim();
+      if (formData.company.trim()) payload.company = formData.company.trim();
+      if (formData.address.trim()) payload.address = formData.address.trim();
+      if (formData.state.trim()) payload.state = formData.state.trim();
+      if (formData.gstin.trim()) payload.gstin = formData.gstin.trim();
+      await api.post("crm/customers", payload);
       setShowForm(false);
       setFormData({
         firstName: "",
@@ -252,8 +265,9 @@ export default function CrmPage() {
         phone: "",
         company: "",
         address: "",
-        state: "",
+    state: "Karnataka",
         gstin: "",
+        countryCode: "+91",
       });
       toast.success(
         `${activeTab === "leads" ? "Lead" : "Customer"} created successfully`,
@@ -376,18 +390,18 @@ export default function CrmPage() {
     return <LoadingSpinner className="h-full" text="Loading CRM data..." />;
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-2 pt-1 md:pt-2 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm shrink-0" />
             <span className="truncate">Customers & Deals</span>
           </h2>
-          <p className="text-slate-500 mt-2 font-medium truncate">
+          <p className="text-slate-500 mt-1 font-medium truncate">
             Manage your customers, contacts, and sales deals in one place.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+        <div className="flex flex-wrap gap-2 w-full lg:w-auto mt-1 lg:mt-0">
           <div className="relative flex-1 sm:flex-none">
             <Input
               type="file"
@@ -417,16 +431,16 @@ export default function CrmPage() {
 
       {/* Forms Section */}
       {showForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-4 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
+        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-1.5 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               {activeTab === "leads" ? "Add New Lead" : "Add New Customer"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
+          <CardContent className="pt-2">
             <form
               onSubmit={handleCreateCustomer}
-              className="grid grid-cols-1 md:grid-cols-3 gap-3"
+              className="grid grid-cols-1 md:grid-cols-3 gap-2"
             >
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -443,7 +457,7 @@ export default function CrmPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Last Name <span className="text-rose-500">*</span>
+                  Last Name
                 </Label>
                 <Input
                   className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
@@ -451,12 +465,11 @@ export default function CrmPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, lastName: e.target.value })
                   }
-                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Primary Email <span className="text-rose-500">*</span>
+                  Primary Email
                 </Label>
                 <Input
                   className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
@@ -465,21 +478,39 @@ export default function CrmPage() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   type="email"
-                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Mobile/Phone <span className="text-rose-500">*</span>
                 </Label>
-                <Input
-                  className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  required
-                />
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.countryCode}
+                    onValueChange={(val) => setFormData({ ...formData, countryCode: val })}
+                  >
+                    <SelectTrigger className="w-[100px] shrink-0 h-11 bg-slate-50 border-slate-200 text-slate-900 rounded-xl font-bold text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRY_CODES.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })
+                    }
+                    placeholder="e.g. 9876543210"
+                    inputMode="numeric"
+                    maxLength={10}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -511,14 +542,16 @@ export default function CrmPage() {
                   State / Province
                   <FieldInfo content="Used to calculate domestic taxation. Determines IGST vs CGST/SGST routing." />
                 </Label>
-                <Input
-                  className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11 focus:ring-blue-500/20"
-                  placeholder="Required for Tax Compliance"
+                <select
                   value={formData.state}
-                  onChange={(e) =>
-                    setFormData({ ...formData, state: e.target.value })
-                  }
-                />
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  className="flex h-11 w-full rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-sm font-bold ring-offset-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Select State</option>
+                  {INDIAN_STATES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -552,9 +585,9 @@ export default function CrmPage() {
       )}
 
       {showDealForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-4 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-amber-500">
+        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-1.5 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-amber-500">
           <CardHeader className="bg-amber-50/50 border-b border-amber-100 py-3 px-4">
-            <CardTitle className="text-amber-900 flex items-center gap-3 font-black text-xl">
+            <CardTitle className="text-amber-900 flex items-center gap-2 font-black text-xl">
               <Sparkles className="h-5 w-5 text-amber-500" />
               Create New Deal
             </CardTitle>
@@ -562,7 +595,7 @@ export default function CrmPage() {
           <CardContent>
             <form
               onSubmit={handleCreateDeal}
-              className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-3"
+              className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-2"
             >
               <div className="md:col-span-2 space-y-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
@@ -624,7 +657,7 @@ export default function CrmPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="md:col-span-4 flex justify-end gap-3">
+              <div className="md:col-span-4 flex justify-end gap-2">
                 <Button
                   type="button"
                   variant="ghost"
@@ -654,7 +687,7 @@ export default function CrmPage() {
             <DialogTitle>Edit Deal</DialogTitle>
           </DialogHeader>
           {editingDeal && (
-            <form onSubmit={handleUpdateDeal} className="grid gap-4 py-4">
+            <form onSubmit={handleUpdateDeal} className="grid gap-2 py-2">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest pl-1">
                   Deal Title
@@ -702,7 +735,7 @@ export default function CrmPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end gap-3 pt-3">
+              <div className="flex justify-end gap-2 pt-2">
                 <Button
                   type="button"
                   variant="ghost"
@@ -723,24 +756,24 @@ export default function CrmPage() {
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="pipeline" className="space-y-4">
+      <Tabs defaultValue="pipeline" className="space-y-2">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="pipeline"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Pipeline
           </TabsTrigger>
           <TabsTrigger
             value="customers"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Customers
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pipeline" className="space-y-3">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <TabsContent value="pipeline" className="space-y-2">
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -767,7 +800,7 @@ export default function CrmPage() {
             </Card>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {stages.map((stage) => {
               const stageOpps = opportunities.filter((o) => o.stage === stage);
               const total = stageOpps.reduce(
@@ -780,8 +813,8 @@ export default function CrmPage() {
                   key={stage}
                   className="min-w-[340px] w-full bg-slate-100/50 border border-slate-200 rounded-3xl flex flex-col h-[65vh] shadow-inner"
                 >
-                  <div className="p-5 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md rounded-t-3xl z-10 shadow-sm">
-                    <div className="flex items-center gap-3">
+                    <div className="p-3 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md rounded-t-3xl z-10 shadow-sm">
+                    <div className="flex items-center gap-2">
                       <div className="text-xs font-black text-slate-900 uppercase tracking-[0.15em]">
                         {stage}
                       </div>
@@ -796,14 +829,14 @@ export default function CrmPage() {
                       {currencySymbol}{(total / 1000).toFixed(1)}K
                     </div>
                   </div>
-                  <div className="p-4 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+                  <div className="p-2.5 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
                     {stageOpps.map((opp) => (
                       <div
                         onClick={() => setEditingDeal(opp)}
                         key={opp.id}
-                        className="p-5 cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-2xl group transition-all shadow-sm hover:shadow-xl hover:shadow-blue-500/5 active:scale-[0.98]"
+                        className="p-3 cursor-pointer bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 rounded-2xl group transition-all shadow-sm hover:shadow-xl hover:shadow-blue-500/5 active:scale-[0.98]"
                       >
-                        <div className="flex justify-between items-start mb-3">
+                        <div className="flex justify-between items-start mb-1">
                           <h4
                             className="text-sm font-black text-slate-900 leading-tight truncate max-w-[180px]"
                             title={opp.title}
@@ -814,7 +847,7 @@ export default function CrmPage() {
                             {currencySymbol}{Number(opp.value).toLocaleString("en-IN")}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 mb-4">
+                        <div className="flex items-center gap-2 mb-1.5">
                           <div className="h-6 w-6 rounded-lg bg-blue-100 flex items-center justify-center text-[10px] text-blue-700 font-black shadow-sm">
                             {opp.customer?.firstName?.[0]}
                           </div>
@@ -871,9 +904,9 @@ export default function CrmPage() {
         <TabsContent value="customers">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
             <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mt-4 md:mt-0">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0 mt-2 md:mt-0">
                 <div>
-                  <div className="flex gap-4 mb-4">
+                  <div className="flex gap-2 mb-1.5">
                     <button
                       onClick={() => setActiveTab("customers")}
                       className={`text-xl font-black transition-colors ${activeTab === "customers" ? "text-slate-900 border-b-2 border-blue-600 pb-1" : "text-slate-400 hover:text-slate-600"}`}
@@ -893,7 +926,7 @@ export default function CrmPage() {
                       : "Potential clients and ongoing leads"}
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full md:w-auto">
                   <div className="relative w-full md:w-96 group">
                     <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                     <Input
@@ -954,7 +987,7 @@ export default function CrmPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1.5">
+                        <div className="space-y-0.5.5">
                           <div className="flex items-center text-xs text-slate-600 font-bold">
                             <Mail className="h-3 w-3 mr-2 text-blue-500" />
                             {c.email || "No email"}

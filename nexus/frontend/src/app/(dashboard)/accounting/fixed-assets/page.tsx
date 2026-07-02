@@ -141,7 +141,7 @@ export default function FixedAssetsPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900">
@@ -162,8 +162,8 @@ export default function FixedAssetsPage() {
             <DialogHeader>
               <DialogTitle>Add Fixed Asset</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2 pt-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
                   <Label>Asset Name</Label>
                   <Input
@@ -195,7 +195,7 @@ export default function FixedAssetsPage() {
                   }
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
                   <Label>Purchase Value ({currencySymbol})</Label>
                   <Input
@@ -256,8 +256,8 @@ export default function FixedAssetsPage() {
           Loading assets...
         </div>
       ) : fetchError ? (
-        <div className="text-center py-20 flex flex-col items-center gap-4">
-          <div className="p-5 bg-red-50 rounded-3xl">
+        <div className="text-center py-20 flex flex-col items-center gap-2">
+          <div className="p-3 bg-red-50 rounded-3xl">
             <Building2 className="h-10 w-10 text-red-400" />
           </div>
           <div>
@@ -270,15 +270,15 @@ export default function FixedAssetsPage() {
                 setLoading(true);
                 fetchAssets();
               }}
-              className="mt-4 text-sm text-blue-600 font-bold hover:underline"
+              className="mt-2 text-sm text-blue-600 font-bold hover:underline"
             >
               Try again
             </button>
           </div>
         </div>
       ) : assets.length === 0 ? (
-        <div className="text-center py-20 flex flex-col items-center gap-4">
-          <div className="p-5 bg-slate-100 rounded-3xl">
+        <div className="text-center py-20 flex flex-col items-center gap-2">
+          <div className="p-3 bg-slate-100 rounded-3xl">
             <Building2 className="h-10 w-10 text-slate-400" />
           </div>
           <div>
@@ -379,14 +379,14 @@ export default function FixedAssetsPage() {
                             Depreciation History: {asset.name}
                           </DialogTitle>
                         </DialogHeader>
-                        <div className="space-y-4 pt-2">
+                        <div className="space-y-2 pt-2">
                           {!asset.depreciationLogs ||
                           asset.depreciationLogs.length === 0 ? (
-                            <p className="text-center py-4 text-slate-400 text-sm">
+                            <p className="text-center py-2 text-slate-400 text-sm">
                               No depreciation logs found.
                             </p>
                           ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-1.5">
                               {asset.depreciationLogs.map((log) => (
                                 <div
                                   key={log.id}

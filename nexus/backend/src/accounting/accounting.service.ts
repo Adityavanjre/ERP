@@ -117,6 +117,10 @@ export class AccountingService {
     return this.invoice.cancelInvoice(tenantId, id, reason);
   }
 
+  async updateInvoice(tenantId: string, id: string, data: any) {
+    return this.invoice.updateInvoice(tenantId, id, data);
+  }
+
   // --- Payments ---
   async createPayment(tenantId: string, data: CreatePaymentDto) {
     return this.payment.createPayment(tenantId, data);

@@ -163,7 +163,7 @@ export function CompleteWorkOrderDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 py-3">
+        <div className="grid gap-2 py-3">
           <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
             <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               Product Details
@@ -213,7 +213,7 @@ export function CompleteWorkOrderDialog({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label className="text-slate-700 font-bold">Machine</Label>
               <Select value={machineId} onValueChange={setMachineId}>

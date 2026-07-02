@@ -12,20 +12,28 @@ import {
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
 import { Input } from "../../components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { INDIAN_STATES, COUNTRY_CODES, INDIAN_PHONE_REGEX } from "../../lib/constants";
 
 const customerSchema = z.object({
   firstName: z.string().min(1, "First Name is required"),
   lastName: z.string().optional(),
-  email: z.string().email("Invalid email address").min(1, "Email is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
   phone: z
     .string()
-    .regex(/^\d{10}$/, "Phone number must be exactly 10 digits")
+    .regex(/^\d{10}$/, "Phone must be exactly 10 digits")
     .optional()
     .or(z.literal("")),
   company: z.string().optional(),
@@ -69,11 +77,13 @@ export function EditCustomerDialog({
   customer,
 }: EditCustomerDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState("+91");
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<CustomerFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,11 +102,24 @@ export function EditCustomerDialog({
 
   useEffect(() => {
     if (customer) {
+      const rawPhone = customer.phone || "";
+      let extractedCode = "+91";
+      let extractedNumber = rawPhone;
+
+      const matchedCode = COUNTRY_CODES.find((c) =>
+        rawPhone.startsWith(c.code + " ") || rawPhone.startsWith(c.code),
+      );
+      if (matchedCode) {
+        extractedCode = matchedCode.code;
+        extractedNumber = rawPhone.slice(matchedCode.code.length).trim();
+      }
+
+      setCountryCode(extractedCode);
       reset({
         firstName: customer.firstName || "",
         lastName: customer.lastName || "",
         email: customer.email || "",
-        phone: customer.phone || "",
+        phone: extractedNumber,
         company: customer.company || "",
         address: customer.address || "",
         state: customer.state || "",
@@ -110,7 +133,19 @@ export function EditCustomerDialog({
       if (!customer) return;
       setLoading(true);
       try {
-        await api.patch(`crm/customers/${customer.id}`, data);
+        const fullPhone = data.phone
+          ? `${countryCode} ${data.phone}`
+          : undefined;
+        const payload: Record<string, any> = {};
+        if (data.firstName?.trim()) payload.firstName = data.firstName.trim();
+        if (data.lastName?.trim()) payload.lastName = data.lastName.trim();
+        if (data.email?.trim()) payload.email = data.email.trim();
+        if (fullPhone) payload.phone = fullPhone;
+        if (data.company?.trim()) payload.company = data.company.trim();
+        if (data.address?.trim()) payload.address = data.address.trim();
+        if (data.state?.trim()) payload.state = data.state.trim();
+        if (data.gstin?.trim()) payload.gstin = data.gstin.trim();
+        await api.patch(`crm/customers/${customer.id}`, payload);
         toast.success("Customer record updated successfully");
         onOpenChange(false);
         onSuccess?.();
@@ -122,7 +157,7 @@ export function EditCustomerDialog({
         setLoading(false);
       }
     },
-    [customer, onOpenChange, onSuccess, reset],
+    [customer, onOpenChange, onSuccess, reset, countryCode],
   );
 
   const handleCancel = useCallback(() => {
@@ -140,8 +175,8 @@ export function EditCustomerDialog({
             Modify customer profile and business details.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-3">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-1.5 pt-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="firstName"
@@ -174,13 +209,13 @@ export function EditCustomerDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="email"
                 className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1"
               >
-                Business Email <span className="text-rose-500">*</span>
+                Business Email
               </Label>
               <Input
                 id="email"
@@ -201,12 +236,32 @@ export function EditCustomerDialog({
               >
                 Phone Number
               </Label>
-              <Input
-                id="phone"
-                {...register("phone")}
-                placeholder="10 Digits"
-                className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
-              />
+              <div className="flex gap-2">
+                <Select
+                  value={countryCode}
+                  onValueChange={(val) => setCountryCode(val)}
+                >
+                  <SelectTrigger className="w-[100px] shrink-0 h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRY_CODES.map((c) => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="e.g. 9876543210"
+                  inputMode="numeric"
+                  maxLength={15}
+                  onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '').slice(0, 15); }}
+                  className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
+                />
+              </div>
               {errors.phone && (
                 <p className="text-xs text-rose-500 font-semibold ml-1">
                   {errors.phone.message}
@@ -227,7 +282,7 @@ export function EditCustomerDialog({
               className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="gstin"
@@ -254,11 +309,16 @@ export function EditCustomerDialog({
                 State (Tax Jurisdiction){" "}
                 <span className="text-rose-500">*</span>
               </Label>
-              <Input
+              <select
                 id="state"
                 {...register("state")}
-                className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
-              />
+                className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold border p-2"
+              >
+                <option value="">Select State</option>
+                {INDIAN_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
               {errors.state && (
                 <p className="text-xs text-rose-500 font-semibold ml-1">
                   {errors.state.message}

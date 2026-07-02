@@ -11,6 +11,9 @@ interface Product {
   stock: string | number;
   category?: string;
   gstRate?: number;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 interface ProductGridProps {
@@ -126,7 +129,7 @@ export function ProductGrid({ onProductClick }: ProductGridProps) {
             </button>
           ))}
           {filteredProducts.length === 0 && (
-            <div className="col-span-full py-4 text-center text-slate-400">
+            <div className="col-span-full py-2 text-center text-slate-400">
               No products found matching your search.
             </div>
           )}

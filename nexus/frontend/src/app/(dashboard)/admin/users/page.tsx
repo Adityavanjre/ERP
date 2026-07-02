@@ -343,8 +343,8 @@ export default function SuperAdminPage() {
   // ──── Detail View ────
   if (selectedTenant) {
     return (
-      <div className="p-4 md:p-4 space-y-4 bg-slate-50/50 min-h-screen pb-20">
-        <div className="flex items-center gap-4">
+      <div className="p-2.5 md:p-4 space-y-2 bg-slate-50/50 min-h-screen pb-20">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setSelectedTenant(null)}
             className="h-12 w-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all shadow-sm"
@@ -417,14 +417,14 @@ export default function SuperAdminPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => {
               setModalTarget(selectedTenant);
               setNewPlan(selectedTenant.plan);
               setShowPlanModal(true);
             }}
-            className="h-12 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-violet-500/20"
+            className="h-12 px-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-violet-500/20"
           >
             <Crown className="w-4 h-4 mr-2" /> Change Plan
           </Button>
@@ -435,7 +435,7 @@ export default function SuperAdminPage() {
               setSuspendReason("");
               setShowStatusModal(true);
             }}
-            className="h-12 px-6 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
+            className="h-12 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20"
           >
             {selectedTenant.subscriptionStatus === "Suspended" ? (
               <UnlockIcon className="w-4 h-4 mr-2" />
@@ -448,7 +448,7 @@ export default function SuperAdminPage() {
           </Button>
           <Button
             onClick={() => openModuleModal(selectedTenant)}
-            className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
+            className="h-12 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20"
           >
             <Puzzle className="w-4 h-4 mr-2" /> Module Access
           </Button>
@@ -460,13 +460,13 @@ export default function SuperAdminPage() {
             <Users className="w-6 h-6 text-slate-400" />
             Team Members
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {(selectedTenant.users || []).map((tu: TenantUser) => (
               <Card
                 key={tu.id}
                 className="bg-white border-none shadow-lg shadow-slate-200/30 p-3 rounded-[24px] flex flex-col lg:flex-row items-start lg:items-center gap-3 justify-between"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 font-black text-lg">
                     {(tu.user.fullName || tu.user.email)
                       .charAt(0)
@@ -567,12 +567,12 @@ export default function SuperAdminPage() {
             onClose={() => setShowPlanModal(false)}
             title="Change Subscription Plan"
           >
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {PLANS.map((p) => (
                 <button
                   key={p}
                   onClick={() => setNewPlan(p)}
-                  className={`w-full p-4 rounded-2xl text-left font-black text-sm transition-all border-2 ${newPlan === p ? "border-violet-500 bg-violet-50 text-violet-700" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"}`}
+                  className={`w-full p-2.5 rounded-2xl text-left font-black text-sm transition-all border-2 ${newPlan === p ? "border-violet-500 bg-violet-50 text-violet-700" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"}`}
                 >
                   <div className="flex items-center justify-between">
                     {p}
@@ -586,7 +586,7 @@ export default function SuperAdminPage() {
             <Button
               onClick={handleUpdatePlan}
               disabled={actionLoading}
-              className="w-full h-14 mt-6 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
+              className="w-full h-14 mt-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
               {actionLoading ? "Updating..." : "Confirm Plan Change"}
             </Button>
@@ -599,12 +599,12 @@ export default function SuperAdminPage() {
             onClose={() => setShowStatusModal(false)}
             title="Change Subscription Status"
           >
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {STATUSES.map((s) => (
                 <button
                   key={s}
                   onClick={() => setNewStatus(s)}
-                  className={`w-full p-4 rounded-2xl text-left font-black text-sm transition-all border-2 ${newStatus === s ? "border-amber-500 bg-amber-50 text-amber-700" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"}`}
+                  className={`w-full p-2.5 rounded-2xl text-left font-black text-sm transition-all border-2 ${newStatus === s ? "border-amber-500 bg-amber-50 text-amber-700" : "border-slate-100 bg-white text-slate-600 hover:border-slate-200"}`}
                 >
                   <div className="flex items-center justify-between">
                     {s}
@@ -620,13 +620,13 @@ export default function SuperAdminPage() {
                 value={suspendReason}
                 onChange={(e) => setSuspendReason(e.target.value)}
                 placeholder="Reason for suspension..."
-                className="w-full mt-4 h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="w-full mt-2 h-14 px-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             )}
             <Button
               onClick={handleUpdateStatus}
               disabled={actionLoading}
-              className="w-full h-14 mt-6 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
+              className="w-full h-14 mt-3 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
               {actionLoading ? "Updating..." : "Confirm Status Change"}
             </Button>
@@ -674,7 +674,7 @@ export default function SuperAdminPage() {
             onClose={() => setShowProfileModal(false)}
             title="Edit User Profile"
           >
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">
                   Full Name
@@ -682,7 +682,7 @@ export default function SuperAdminPage() {
                 <input
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className="w-full h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-14 px-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -692,14 +692,14 @@ export default function SuperAdminPage() {
                 <input
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full h-14 px-6 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-14 px-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <Button
               onClick={handleUpdateProfile}
               disabled={actionLoading}
-              className="w-full h-14 mt-6 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
+              className="w-full h-14 mt-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
               {actionLoading ? "Saving..." : "Save Changes"}
             </Button>
@@ -743,7 +743,7 @@ export default function SuperAdminPage() {
                 ? " They will be instantly logged out and unable to access the system until unblocked."
                 : ""}
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-2">
               <Button
                 onClick={() => setShowDeleteModal(false)}
                 variant="outline"
@@ -804,7 +804,7 @@ export default function SuperAdminPage() {
             <Button
               onClick={handleSaveModules}
               disabled={actionLoading}
-              className="w-full h-14 mt-6 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
+              className="w-full h-14 mt-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest"
             >
               <Save className="w-4 h-4 mr-2" />
               {actionLoading ? "Saving..." : "Save Module Access"}
@@ -817,11 +817,11 @@ export default function SuperAdminPage() {
 
   // ──── Main List View ────
   return (
-    <div className="p-4 md:p-4 space-y-4 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-20">
+    <div className="p-2.5 md:p-4 space-y-2 md:space-y-12 bg-slate-50/50 text-slate-900 min-h-screen pb-20">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-4">
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 flex items-center gap-2">
             <div className="p-3 bg-slate-900 rounded-2xl shadow-xl">
               <Shield className="h-7 w-7 text-amber-400" />
             </div>
@@ -834,7 +834,7 @@ export default function SuperAdminPage() {
         <Button
           onClick={() => router.push("/portal/admin/monitoring")}
           variant="outline"
-          className="h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+          className="h-12 px-3 rounded-2xl text-[10px] font-black uppercase tracking-widest"
         >
           <BarChart3 className="w-4 h-4 mr-2" /> Business Monitoring
         </Button>
@@ -842,7 +842,7 @@ export default function SuperAdminPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
           <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-3 rounded-[28px] text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
               Total
@@ -868,7 +868,7 @@ export default function SuperAdminPage() {
       )}
 
       {/* Search + Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -881,7 +881,7 @@ export default function SuperAdminPage() {
         <select
           value={filterPlan}
           onChange={(e) => setFilterPlan(e.target.value)}
-          className="h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]"
+          className="h-14 px-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]"
         >
           <option value="">All Plans</option>
           {PLANS.map((p) => (
@@ -893,7 +893,7 @@ export default function SuperAdminPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]"
+          className="h-14 px-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm appearance-none font-bold text-slate-600 min-w-[160px]"
         >
           <option value="">All Statuses</option>
           {STATUSES.map((s) => (
@@ -905,10 +905,10 @@ export default function SuperAdminPage() {
       </div>
 
       {/* Tenant List */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {tenants.length === 0 ? (
-          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-4 rounded-[32px] text-center">
-            <Building2 className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+          <Card className="bg-white border-none shadow-xl shadow-slate-200/40 p-2.5 rounded-[32px] text-center">
+            <Building2 className="w-12 h-12 text-slate-200 mx-auto mb-2" />
             <p className="text-slate-400 font-black uppercase tracking-widest text-sm">
               No tenants found
             </p>
@@ -921,7 +921,7 @@ export default function SuperAdminPage() {
               onClick={() => openTenantDetail(tenant)}
             >
               <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3 justify-between">
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white font-black text-lg shrink-0 group-hover:bg-blue-600 transition-colors">
                     {tenant.name.charAt(0).toUpperCase()}
                   </div>
@@ -1028,12 +1028,12 @@ function ModalOverlay({
   title: string;
 }) {
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-2.5">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-[32px] shadow-2xl max-w-lg w-full p-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-[32px] shadow-2xl max-w-lg w-full p-2.5 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xl font-black text-slate-900 tracking-tight">
             {title}

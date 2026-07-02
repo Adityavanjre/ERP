@@ -121,9 +121,9 @@ export default function BOMPage() {
     return <LoadingSpinner className="h-full" text="Loading BOM Catalog..." />;
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       {/* Removed BAMDetailsDialog as we are now using on-page cards for details */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Command className="mr-4 h-9 w-9 text-blue-600 shadow-sm" />
@@ -143,7 +143,7 @@ export default function BOMPage() {
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
         <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 md:py-3 px-4 md:px-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
                 BOM Directory
@@ -277,7 +277,7 @@ export default function BOMPage() {
           </CardHeader>
           <CardContent className="p-0">
             {detailsLoading ? (
-              <div className="p-4 flex justify-center">
+              <div className="p-2.5 flex justify-center">
                 <LoadingSpinner />
               </div>
             ) : selectedBom ? (
@@ -314,7 +314,7 @@ export default function BOMPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="p-4 flex flex-col items-center justify-center text-center space-y-4">
+              <div className="p-2.5 flex flex-col items-center justify-center text-center space-y-2">
                 <div className="h-16 w-16 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300">
                   <Boxes className="h-8 w-8" />
                 </div>
@@ -337,14 +337,14 @@ export default function BOMPage() {
               Total manufacturing value projection
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4">
+          <CardContent className="p-2.5">
             {detailsLoading ? (
               <div className="flex justify-center">
                 <LoadingSpinner />
               </div>
             ) : selectedBom && costAnalysis ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center bg-white/5 p-2.5 rounded-2xl border border-white/10">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                     Base Material Cost
                   </span>
@@ -352,7 +352,7 @@ export default function BOMPage() {
                     {currencySymbol}{costAnalysis.materialCost.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between items-center bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20">
+                <div className="flex justify-between items-center bg-emerald-500/10 p-2.5 rounded-2xl border border-emerald-500/20">
                   <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest">
                     Estimated Unit Cost
                   </span>
@@ -368,7 +368,7 @@ export default function BOMPage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center text-center space-y-4">
+              <div className="flex flex-col items-center justify-center text-center space-y-2">
                 <div className="h-16 w-16 rounded-3xl bg-white/5 flex items-center justify-center text-white/20">
                   <ArrowRight className="h-8 w-8" />
                 </div>

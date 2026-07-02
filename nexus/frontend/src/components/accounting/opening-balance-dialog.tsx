@@ -148,7 +148,7 @@ export function OpeningBalanceDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-2">
             <Scale className="w-6 h-6 text-blue-600" />
           </div>
           <DialogTitle className="text-xl font-bold">
@@ -161,7 +161,7 @@ export function OpeningBalanceDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-3 py-4">
+        <div className="grid gap-2 py-2">
           {productId && (
             <div className="grid gap-2">
               <Label className="font-bold text-slate-700 uppercase text-[10px] tracking-widest">

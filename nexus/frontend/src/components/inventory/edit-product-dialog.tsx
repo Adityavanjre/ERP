@@ -26,6 +26,9 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, "Price must be >= 0"),
   costPrice: z.coerce.number().min(0, "Cost Price must be >= 0"),
   baseUnit: z.string().min(1, "Base Unit is required"),
+  pricingMode: z.string().optional(),
+  width: z.coerce.number().min(0).optional(),
+  length: z.coerce.number().min(0).optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -39,6 +42,9 @@ interface Product {
   costPrice: number;
   baseUnit: string;
   stock: number;
+  pricingMode?: string | null;
+  width?: number | null;
+  length?: number | null;
 }
 
 interface EditProductDialogProps {
@@ -60,6 +66,7 @@ export function EditProductDialog({
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ProductFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,8 +78,13 @@ export function EditProductDialog({
       price: 0,
       costPrice: 0,
       baseUnit: "pcs",
+      pricingMode: "piece",
+      width: 0,
+      length: 0,
     },
   });
+
+  const pricingMode = watch("pricingMode");
 
   useEffect(() => {
     if (product) {
@@ -83,6 +95,9 @@ export function EditProductDialog({
         price: Number(product.price) || 0,
         costPrice: Number(product.costPrice) || 0,
         baseUnit: product.baseUnit || "pcs",
+        pricingMode: product.pricingMode || "piece",
+        width: Number(product.width) || 0,
+        length: Number(product.length) || 0,
       });
     }
   }, [product, reset]);
@@ -92,11 +107,15 @@ export function EditProductDialog({
       if (!product) return;
       setLoading(true);
       try {
-        const { price, baseUnit, category, ...rest } = data;
+        const { price, baseUnit, ...rest } = data;
         const payload = {
           ...rest,
           basePrice: price,
           uom: baseUnit,
+          category: data.category || "",
+          pricingMode: data.pricingMode || "piece",
+          width: data.pricingMode === "area" ? data.width : null,
+          length: data.pricingMode === "area" ? data.length : null,
         };
         await api.patch(`inventory/products/${product.id}`, payload);
         toast.success("Product updated successfully");
@@ -128,8 +147,8 @@ export function EditProductDialog({
             Modify the product catalog details. Note: Stock levels cannot be edited here.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-3">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-2 pt-2">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"
@@ -167,7 +186,7 @@ export function EditProductDialog({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="category"
@@ -201,7 +220,7 @@ export function EditProductDialog({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
               <Label
                 htmlFor="price"
@@ -243,7 +262,60 @@ export function EditProductDialog({
               )}
             </div>
           </div>
-          <DialogFooter className="pt-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-2">
+              <Label
+                htmlFor="pricingMode"
+                className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1"
+              >
+                Pricing Mode
+              </Label>
+              <select
+                id="pricingMode"
+                {...register("pricingMode")}
+                className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold px-3"
+              >
+                <option value="piece">Piece-Based</option>
+                <option value="area">Area-Based (Dimensional)</option>
+              </select>
+            </div>
+            <div className="grid gap-2" />
+          </div>
+          {pricingMode === "area" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="width"
+                  className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1"
+                >
+                  Width (m)
+                </Label>
+                <Input
+                  id="width"
+                  type="number"
+                  step="0.001"
+                  {...register("width")}
+                  className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="length"
+                  className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1"
+                >
+                  Length (m)
+                </Label>
+                <Input
+                  id="length"
+                  type="number"
+                  step="0.001"
+                  {...register("length")}
+                  className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="pt-1">
             <Button
               type="button"
               variant="ghost"

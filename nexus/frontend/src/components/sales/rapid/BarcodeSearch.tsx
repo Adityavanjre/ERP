@@ -20,6 +20,9 @@ interface SearchProduct {
   sku: string;
   price: string | number;
   gstRate: number;
+  pricingMode?: string;
+  width?: number;
+  length?: number;
 }
 
 export const BarcodeSearch: React.FC<BarcodeSearchProps> = ({

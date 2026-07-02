@@ -182,7 +182,10 @@ export default function InventoryPage() {
           api.get("inventory/warehouses"),
         ]);
 
-        if (prodRes.data?.data) {
+        if (prodRes.data?.items) {
+          setProducts(prodRes.data.items);
+          setTotalPages(prodRes.data.total ? Math.ceil(prodRes.data.total / (prodRes.data.limit || 50)) : 1);
+        } else if (prodRes.data?.data) {
           setProducts(prodRes.data.data);
           setTotalPages(prodRes.data.meta?.totalPages || 1);
         } else {
@@ -229,7 +232,6 @@ export default function InventoryPage() {
         sku: finalSku,
         basePrice: Number(formData.price),
         costPrice: Number(formData.costPrice),
-        gstRate: Number(formData.gstRate),
         hsnCode: formData.hsnCode.trim() || undefined,
         uom: formData.uom,
         stock: Number(formData.stock),
@@ -290,7 +292,6 @@ export default function InventoryPage() {
         sku: formData.sku.trim() || undefined,
         basePrice: Number(formData.price),
         costPrice: Number(formData.costPrice),
-        gstRate: Number(formData.gstRate),
         hsnCode: formData.hsnCode.trim() || undefined,
         uom: formData.uom,
         description: formData.description.trim() || undefined,
@@ -405,9 +406,9 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-1 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       {fetchError && (
-        <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex items-center gap-3 text-rose-600 font-bold text-sm mb-4">
+        <div className="bg-rose-50 border border-rose-100 p-3 rounded-2xl flex items-center gap-2 text-rose-600 font-bold text-sm mb-1">
           <AlertCircle className="w-5 h-5" />
           {fetchError}
           <Button
@@ -419,17 +420,17 @@ export default function InventoryPage() {
           </Button>
         </div>
       )}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Boxes className="mr-4 h-9 w-9 text-blue-600 shadow-sm shrink-0" />
             <span className="truncate">Products & Inventory</span>
           </h2>
-          <p className="text-slate-500 mt-2 font-medium truncate">
+          <p className="text-slate-500 mt-1 font-medium truncate">
             Manage your products, stock levels, and warehouse items.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 w-full lg:w-auto mt-2 lg:mt-0">
+        <div className="flex flex-wrap gap-2 w-full lg:w-auto mt-1 lg:mt-0">
           <div className="relative flex-1 sm:flex-none">
             <Input
               type="file"
@@ -450,7 +451,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -462,9 +463,9 @@ export default function InventoryPage() {
             <div
               className={`text-3xl font-black tracking-tighter ${stats.totalProducts > 0 ? "text-slate-900" : "text-slate-300"}`}
             >
-              {stats.totalProducts} Items
+              {stats.totalProducts ?? 0} Items
             </div>
-            <p className="text-xs text-slate-500 mt-2 flex items-center font-bold">
+            <p className="text-xs text-slate-500 mt-1 flex items-center font-bold">
               <TrendingDown
                 className={`h-3 w-3 mr-1 ${stats.lowStock > 0 ? "text-amber-500" : "text-emerald-500"}`}
               />
@@ -485,7 +486,7 @@ export default function InventoryPage() {
             <div className="text-2xl font-black text-orange-600 tracking-tighter">
               {stats.lowStock ?? 0} Items
             </div>
-            <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">
+            <p className="text-xs text-slate-500 mt-1 font-bold tracking-tight">
               Requiring immediate replenishment
             </p>
           </CardContent>
@@ -499,11 +500,11 @@ export default function InventoryPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-slate-900 tracking-tighter">
-              {currencySymbol}{Number(stats.totalValue).toLocaleString("en-IN", {
+              {currencySymbol}{Number(stats.totalValue ?? 0).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
               })}
             </div>
-            <p className="text-xs text-slate-500 mt-2 font-bold tracking-tight">
+            <p className="text-xs text-slate-500 mt-1 font-bold tracking-tight">
               Total stock valuation
             </p>
           </CardContent>
@@ -511,7 +512,7 @@ export default function InventoryPage() {
       </div>
 
       {showForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-4 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
+        <Card className="bg-white border-slate-200 shadow-2xl shadow-slate-200/50 rounded-3xl mb-1 animate-in fade-in slide-in-from-top-4 overflow-hidden border-t-4 border-t-blue-500">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               Add Product
@@ -520,10 +521,10 @@ export default function InventoryPage() {
               Add a new product to your inventory
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-4">
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="space-y-2 lg:col-span-2">
+          <CardContent className="pt-2">
+            <form onSubmit={handleCreate} className="space-y-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                <div className="space-y-1 lg:col-span-2">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Product Name <span className="text-rose-500">*</span>
                   </Label>
@@ -536,7 +537,7 @@ export default function InventoryPage() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Product SKU (Unique)
                   <FieldInfo content="Stock Keeping Unit. A unique code identifier for system integration." />
@@ -550,7 +551,7 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Stock Control <span className="text-rose-500">*</span>
                     <FieldInfo content="Initial inventory count for this product. Updates generate stock ledger adjustment entries." />
@@ -564,7 +565,7 @@ export default function InventoryPage() {
                       }
                     />
                     {formData.stock > 0 && (
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="flex justify-between items-center px-1">
                           <span className="text-[9px] text-slate-400 font-bold">Assign to warehouse</span>
                           <button
@@ -616,7 +617,7 @@ export default function InventoryPage() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Unit of Measurement (UoM)
                     <FieldInfo content="The unit in which this product is measured and sold." />
@@ -638,7 +639,7 @@ export default function InventoryPage() {
                     <option value="Boxes">Boxes</option>
                   </select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Pricing Mode
                   </Label>
@@ -655,7 +656,7 @@ export default function InventoryPage() {
                 </div>
                 {formData.pricingMode === "area" && (
                   <>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                         Width (metres)
                       </Label>
@@ -666,7 +667,7 @@ export default function InventoryPage() {
                         onChange={(val) => setFormData({ ...formData, width: val })}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                         Length (metres)
                       </Label>
@@ -679,7 +680,7 @@ export default function InventoryPage() {
                     </div>
                   </>
                 )}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Brand / Manufacturer
                   </Label>
@@ -692,7 +693,7 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
+                <div className="space-y-1 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
                   <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">
                     Low Stock Alert Level
                     <FieldInfo content="When warehouse quantity drops below this level, the dashboard and reports will highlight this product as Low Stock." />
@@ -705,7 +706,7 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Tags (Comma Separated)
                   </Label>
@@ -721,7 +722,7 @@ export default function InventoryPage() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Primary Category
                   </Label>
@@ -733,7 +734,7 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Manufacturer
                   </Label>
@@ -746,7 +747,7 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
                   </Label>
@@ -757,7 +758,7 @@ export default function InventoryPage() {
                     onChange={(val) => setFormData({ ...formData, price: val })}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Purchase Price
                   </Label>
@@ -770,7 +771,7 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     HSN Classification
                     <FieldInfo content="Harmonized System of Nomenclature code. Used for classifying goods for domestic GST tax filing." />
@@ -784,27 +785,12 @@ export default function InventoryPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                    Tax (GST %) Rate
-                    <FieldInfo content="The standard Goods and Services Tax percentage rate applicable to this product." />
-                  </Label>
-                  <NumericInput
-                    decimal
-                    className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11"
-                    placeholder="18"
-                    value={formData.gstRate}
-                    onChange={(val) =>
-                      setFormData({ ...formData, gstRate: val })
-                    }
-                  />
-                </div>
-                <div className="lg:col-span-4 space-y-2">
+                <div className="lg:col-span-4 space-y-1">
                   <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                     Description & Attributes
                   </Label>
                   <textarea
-                    className="w-full bg-slate-50 border-slate-200 text-slate-900 rounded-xl p-4 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm transition-all"
+                    className="w-full bg-slate-50 border-slate-200 text-slate-900 rounded-xl p-2.5 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm transition-all"
                     placeholder="Detailed specifications, warranty info, etc."
                     value={formData.description}
                     onChange={(e) =>
@@ -813,7 +799,7 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 mt-1">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 mt-1">
                 <Button
                   type="button"
                   variant="ghost"
@@ -869,7 +855,7 @@ export default function InventoryPage() {
         }}
       >
         <DialogContent className="sm:max-w-[780px] bg-white border-slate-200 text-slate-900 rounded-[28px] shadow-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="pb-4 border-b border-slate-100">
+          <DialogHeader className="pb-2 border-b border-slate-100">
             <DialogTitle className="text-slate-900 font-black text-xl">
               Edit Product
             </DialogTitle>
@@ -879,9 +865,9 @@ export default function InventoryPage() {
                 : ""}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleUpdate} className="space-y-3 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div className="space-y-2 lg:col-span-2">
+          <form onSubmit={handleUpdate} className="space-y-1 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+              <div className="space-y-1 lg:col-span-2">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Product Name <span className="text-rose-500">*</span>
                 </Label>
@@ -894,7 +880,7 @@ export default function InventoryPage() {
                   required
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Product Code (Unique)
                 </Label>
@@ -904,7 +890,7 @@ export default function InventoryPage() {
                   disabled
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest flex items-center gap-2">
                   Stock Level
                   <span className="text-[10px] text-amber-500 normal-case font-normal">
@@ -940,7 +926,7 @@ export default function InventoryPage() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Brand / Manufacturer
                 </Label>
@@ -952,7 +938,7 @@ export default function InventoryPage() {
                   }
                 />
               </div>
-              <div className="space-y-2 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
+              <div className="space-y-1 text-rose-600 bg-rose-50/30 p-2 rounded-xl border border-rose-100/50">
                 <Label className="text-rose-500 font-bold uppercase text-[10px] tracking-widest">
                   Min Alert Stock Threshold
                 </Label>
@@ -964,7 +950,7 @@ export default function InventoryPage() {
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Tags (Comma Separated)
                 </Label>
@@ -980,7 +966,7 @@ export default function InventoryPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Primary Category
                 </Label>
@@ -992,7 +978,7 @@ export default function InventoryPage() {
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Pricing Mode
                 </Label>
@@ -1009,7 +995,7 @@ export default function InventoryPage() {
               </div>
               {formData.pricingMode === "area" && (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Width (metres)</Label>
                     <NumericInput
                       decimal
@@ -1018,7 +1004,7 @@ export default function InventoryPage() {
                       onChange={(val) => setFormData({ ...formData, width: val })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Length (metres)</Label>
                     <NumericInput
                       decimal
@@ -1029,7 +1015,7 @@ export default function InventoryPage() {
                   </div>
                 </>
               )}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Manufacturer
                 </Label>
@@ -1041,7 +1027,7 @@ export default function InventoryPage() {
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Selling Price ({currencySymbol}) <span className="text-rose-500">*</span>
                 </Label>
@@ -1052,7 +1038,7 @@ export default function InventoryPage() {
                   onChange={(val) => setFormData({ ...formData, price: val })}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Purchase Price
                 </Label>
@@ -1065,7 +1051,7 @@ export default function InventoryPage() {
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   HSN Classification
                 </Label>
@@ -1077,23 +1063,12 @@ export default function InventoryPage() {
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
-                  Tax (GST %) Rate
-                </Label>
-                <NumericInput
-                  decimal
-                  className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl h-11"
-                  value={formData.gstRate}
-                  onChange={(val) => setFormData({ ...formData, gstRate: val })}
-                />
-              </div>
-              <div className="lg:col-span-4 space-y-2">
+              <div className="lg:col-span-4 space-y-1">
                 <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                   Description & Attributes
                 </Label>
                 <textarea
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-4 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm transition-all"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-2.5 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm transition-all"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -1101,7 +1076,7 @@ export default function InventoryPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <Button
                 type="button"
                 variant="ghost"
@@ -1133,7 +1108,7 @@ export default function InventoryPage() {
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none border-t-4 border-t-amber-500">
         <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
-          <CardTitle className="text-slate-900 flex items-center gap-3 font-black">
+          <CardTitle className="text-slate-900 flex items-center gap-2 font-black">
             <Brain className="h-5 w-5 text-amber-600" />
             Inventory Forecast
           </CardTitle>
@@ -1141,15 +1116,15 @@ export default function InventoryPage() {
             Predictions and trends for stock levels
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-4">
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="pt-2">
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
             {Array.isArray(forecast?.recommendations) &&
               forecast.recommendations
                 .slice(0, 4)
                 .map((rec: ForecastRecommendation, i: number) => (
                   <div
                     key={i}
-                    className="p-3 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-4 relative overflow-hidden group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all border-b-2 border-b-transparent hover:border-b-blue-500"
+                    className="p-3 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-1 relative overflow-hidden group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all border-b-2 border-b-transparent hover:border-b-blue-500"
                   >
                     <div className="flex justify-between items-start relative z-10">
                       <div className="space-y-1">
@@ -1173,7 +1148,7 @@ export default function InventoryPage() {
                           : "STABLE"}
                       </Badge>
                     </div>
-                    <div className="space-y-2 relative z-10">
+                    <div className="space-y-1 relative z-10">
                       <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tight">
                         <span className="text-slate-400">Velocity</span>
                         <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md">
@@ -1210,7 +1185,7 @@ export default function InventoryPage() {
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
         <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 px-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 px-4">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
                 Product Inventory
@@ -1219,7 +1194,7 @@ export default function InventoryPage() {
                 Complete list of items and current stock levels
               </CardDescription>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="relative w-full md:w-96 group">
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                 <Input
@@ -1280,6 +1255,9 @@ export default function InventoryPage() {
                 <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-8">
                   Total Value
                 </TableHead>
+                <TableHead className="text-slate-500 font-bold uppercase text-[10px] tracking-widest text-right pr-8">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1315,7 +1293,7 @@ export default function InventoryPage() {
                       </div>
                       {p.hsnCode && (
                         <span className="text-[10px] text-slate-400 font-bold tracking-tighter">
-                          HSN {p.hsnCode} • {p.gstRate}% TAX
+                          HSN {p.hsnCode}
                         </span>
                       )}
                       {p.brand && (
@@ -1373,13 +1351,15 @@ export default function InventoryPage() {
                     })}
                   </TableCell>
                   <TableCell className="text-right pr-8">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="font-black text-slate-900 tracking-tighter">
-                        {currencySymbol}{(Number(p.price) * Number(p.stock)).toLocaleString(
-                          "en-IN",
-                          { minimumFractionDigits: 0 },
-                        )}
-                      </div>
+                    <div className="font-black text-slate-900 tracking-tighter">
+                      {currencySymbol}{((Number(p.price) || 0) * (Number(p.stock) || 0)).toLocaleString(
+                        "en-IN",
+                        { minimumFractionDigits: 0 },
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right pr-8">
+                    <div className="flex items-center justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1416,10 +1396,10 @@ export default function InventoryPage() {
               {filteredProducts.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="h-64 border-none bg-slate-50/30"
                   >
-                    <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="flex flex-col items-center justify-center space-y-1">
                       <div className="h-16 w-16 bg-white rounded-full shadow-sm flex items-center justify-center border border-slate-100">
                         <Search className="h-8 w-8 text-slate-300" />
                       </div>
@@ -1434,7 +1414,7 @@ export default function InventoryPage() {
                       {searchQuery && (
                         <Button
                           variant="outline"
-                          className="mt-2 h-8 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100"
+                          className="mt-1 h-8 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100"
                           onClick={() => setSearchQuery("")}
                         >
                           Clear Search Rules
@@ -1446,7 +1426,7 @@ export default function InventoryPage() {
               )}
             </TableBody>
           </Table>
-          <div className="flex justify-between items-center px-4 py-5 border-t border-slate-100 bg-slate-50/50">
+          <div className="flex justify-between items-center px-4 py-3 border-t border-slate-100 bg-slate-50/50">
             <Button
               variant="ghost"
               size="sm"

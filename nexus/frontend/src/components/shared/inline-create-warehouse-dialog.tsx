@@ -70,7 +70,7 @@ export function InlineCreateWarehouseDialog({
             Add a new storage location on-the-spot.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3 pt-3">
+        <form onSubmit={onSubmit} className="space-y-1.5 pt-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Warehouse Name *</Label>
             <Input
@@ -96,7 +96,7 @@ export function InlineCreateWarehouseDialog({
             />
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"

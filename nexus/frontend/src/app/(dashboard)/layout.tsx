@@ -8,6 +8,7 @@ import { CommandPalette } from "../../components/layout/command-palette";
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
 import { DraftRecovery } from "../../components/auth/draft-recovery";
+import { SidebarProvider, useSidebar } from "../../components/providers/sidebar-provider";
 import {
   hydrateDesktopOfflineSession,
   isDesktopShell,
@@ -19,20 +20,17 @@ interface DecodedToken {
   [key: string]: string | number | boolean | undefined;
 }
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+const DashboardLayoutInner = ({ children }: { children: React.ReactNode }) => {
   const [isIdentityState, setIsIdentityState] = useState<boolean | null>(null);
+  const { collapsed } = useSidebar();
 
   useEffect(() => {
     let cancelled = false;
 
     const bootstrap = async () => {
-      console.log("[DashboardLayout] bootstrap started");
       try {
         const isShell = isDesktopShell();
-        console.log("[DashboardLayout] isDesktopShell:", isShell);
         if (isShell) {
-          console.log("[DashboardLayout] hydrating desktop offline session");
-          // Wrap in a 2-second timeout to prevent IPC bridge hangs from blocking the UI forever
           await Promise.race([
             hydrateDesktopOfflineSession(),
             new Promise((resolve) => setTimeout(resolve, 2000))
@@ -42,24 +40,16 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           typeof window !== "undefined"
             ? localStorage.getItem("k_token")
             : null;
-        console.log("[DashboardLayout] token found:", !!token);
         if (token) {
           const decoded = jwtDecode<DecodedToken>(token);
-          console.log("[DashboardLayout] decoded token:", decoded);
           if (!cancelled) {
             const isId =
               decoded.type === "identity" ||
               (decoded.type === "admin" && !decoded.tenantId);
-            console.log("[DashboardLayout] setting identity state:", isId);
             setIsIdentityState(isId);
-          } else {
-            console.log("[DashboardLayout] cancelled was true during decode");
           }
         } else if (!cancelled) {
-          console.log("[DashboardLayout] setting identity state to false (no token)");
           setIsIdentityState(false);
-        } else {
-          console.log("[DashboardLayout] cancelled was true (no token)");
         }
       } catch (err) {
         console.error("[DashboardLayout] bootstrap error:", err);
@@ -70,14 +60,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     };
 
     void bootstrap();
-
-    return () => {
-      console.log("[DashboardLayout] useEffect cleanup (cancelled = true)");
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // Prevent hydration flashes
   if (isIdentityState === null) {
     return (
       <div className="flex flex-col bg-slate-50 h-screen w-screen items-center justify-center gap-4">
@@ -91,14 +76,17 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     return <AuthGuard>{children}</AuthGuard>;
   }
 
+  const sidebarWidth = collapsed ? "w-16" : "w-60";
+  const plValue = collapsed ? "md:pl-16" : "md:pl-60";
+
   return (
     <AuthGuard>
       <div className="h-screen bg-white text-slate-900 overflow-hidden relative">
         <CommandPalette />
-        <div className="hidden h-full md:flex md:w-60 md:flex-col md:fixed md:inset-y-0 z-[80] border-r border-slate-100 bg-slate-50/50">
+        <div className={`hidden h-full md:flex ${sidebarWidth} md:flex-col md:fixed md:inset-y-0 z-[80] border-r border-slate-100 bg-slate-50/50 transition-all duration-300`}>
           <Sidebar />
         </div>
-        <div className="md:pl-60 h-full flex flex-col overflow-hidden">
+        <div className={`${plValue} h-full flex flex-col overflow-hidden transition-all duration-300`}>
           <Navbar />
           <DraftRecovery />
           <main className="flex-1 overflow-y-auto scrollbar-hide">
@@ -109,6 +97,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
     </AuthGuard>
+  );
+};
+
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <SidebarProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </SidebarProvider>
   );
 };
 

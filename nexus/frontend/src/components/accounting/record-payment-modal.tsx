@@ -122,8 +122,8 @@ export function RecordPaymentModal({
             Record a payment for Invoice #{invoice.invoiceNumber}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-1 py-2">
+          <div className="space-y-1">
             <Label>Outstanding Balance</Label>
             <div className="text-2xl font-bold text-white">
               ₹
@@ -133,8 +133,8 @@ export function RecordPaymentModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
               <Label htmlFor="amount">Payment Amount</Label>
               <Input
                 id="amount"
@@ -146,7 +146,7 @@ export function RecordPaymentModal({
                 className="bg-white/5 border-white/10 text-white"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="mode">Mode</Label>
               <Select value={mode} onValueChange={setMode}>
                 <SelectTrigger className="bg-white/5 border-white/10 text-white">
@@ -162,7 +162,7 @@ export function RecordPaymentModal({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="reference">Reference / Transaction ID</Label>
             <Input
               id="reference"

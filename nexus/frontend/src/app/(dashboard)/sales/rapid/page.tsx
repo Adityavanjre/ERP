@@ -20,7 +20,9 @@ interface Item {
   sku: string;
   price: number;
   quantity: number;
-  gstRate: number;
+  igstRate: number;
+  cgstRate: number;
+  sgstRate: number;
   pricingMode?: string;
   width?: number | null;
   length?: number | null;
@@ -72,6 +74,8 @@ export default function RapidBillingPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isProductCreateOpen, setIsProductCreateOpen] = useState(false);
+  const [bankAccountId, setBankAccountId] = useState<string>("");
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
 
   const isSyncingRef = useRef(false);
 
@@ -83,8 +87,19 @@ export default function RapidBillingPage() {
     } catch {}
   }, []);
 
+  const fetchBankAccounts = useCallback(async () => {
+    try {
+      const res = await api.get("system/bank-accounts");
+      const list = Array.isArray(res.data) ? res.data : res.data?.data || [];
+      setBankAccounts(list);
+      const defaultAccount = list.find((a: any) => a.isDefault);
+      if (defaultAccount) setBankAccountId(defaultAccount.id);
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchCustomers();
+    fetchBankAccounts();
   }, [fetchCustomers]);
 
   const searchRef = useRef<HTMLInputElement>(null!);
@@ -107,7 +122,9 @@ export default function RapidBillingPage() {
           sku: product.sku,
           price: typeof product.price === "string" ? parseFloat(product.price) : product.price,
           quantity: quantity,
-          gstRate: product.gstRate || 0,
+          igstRate: 0,
+          cgstRate: 0,
+          sgstRate: 0,
           pricingMode: product.pricingMode || "piece",
           width: product.width ?? null,
           length: product.length ?? null,
@@ -210,6 +227,16 @@ export default function RapidBillingPage() {
     );
   };
 
+  const updateIgstRate = (id: string, rate: number) => {
+    setItems((prev) => prev.map((i) => (i.productId === id ? { ...i, igstRate: rate } : i)));
+  };
+  const updateCgstRate = (id: string, rate: number) => {
+    setItems((prev) => prev.map((i) => (i.productId === id ? { ...i, cgstRate: rate } : i)));
+  };
+  const updateSgstRate = (id: string, rate: number) => {
+    setItems((prev) => prev.map((i) => (i.productId === id ? { ...i, sgstRate: rate } : i)));
+  };
+
   const removeItem = (id: string) => {
     setItems((prev) => prev.filter((i) => i.productId !== id));
   };
@@ -224,11 +251,19 @@ export default function RapidBillingPage() {
   };
 
   const subtotal = items.reduce((sum, i) => sum + getItemAmount(i), 0);
-  const taxTotal = items.reduce((sum, i) => {
-    const itemTaxable = getItemAmount(i);
-    const itemTax = (itemTaxable * (i.gstRate || 0)) / 100;
-    return sum + itemTax;
+  const igstTotal = items.reduce((sum, i) => {
+    const taxable = getItemAmount(i);
+    return sum + taxable * ((i.igstRate || 0) / 100);
   }, 0);
+  const cgstTotal = items.reduce((sum, i) => {
+    const taxable = getItemAmount(i);
+    return sum + taxable * ((i.cgstRate || 0) / 100);
+  }, 0);
+  const sgstTotal = items.reduce((sum, i) => {
+    const taxable = getItemAmount(i);
+    return sum + taxable * ((i.sgstRate || 0) / 100);
+  }, 0);
+  const taxTotal = igstTotal + cgstTotal + sgstTotal;
   const total = round2(subtotal + taxTotal);
 
   const reset = useCallback(() => {
@@ -262,11 +297,13 @@ export default function RapidBillingPage() {
         const effectivePrice = isArea && i.width && i.length && i.sheets && i.ratePerSqm
           ? i.width * i.length * i.sheets * i.ratePerSqm
           : i.price * i.quantity;
+        const totalGstRate = (i.igstRate || 0) + (i.cgstRate || 0) + (i.sgstRate || 0);
         return {
           productId: i.productId,
           quantity: i.quantity,
           price: isArea ? effectivePrice / i.quantity : i.price,
-          gstRate: i.gstRate,
+          gstRate: totalGstRate,
+          gstType: (i.igstRate || 0) > 0 ? "IGST" : "CGST_SGST",
         };
       }),
       itemSections: items.reduce((acc: any, i) => {
@@ -291,6 +328,7 @@ export default function RapidBillingPage() {
       billingAddress: billingAddress || undefined,
       shippingAddress: shippingAddress || undefined,
       supplierAddress: supplierAddress || undefined,
+      bankAccountId: bankAccountId || undefined,
     };
 
     if (isOffline) {
@@ -320,7 +358,7 @@ export default function RapidBillingPage() {
     }
   }, [
     items, isSubmitting, total, customAmountPaid, paymentMode,
-    customerId, elapsed, isOffline, reset, billingAddress, shippingAddress, supplierAddress,
+    customerId, elapsed, isOffline, reset, billingAddress, shippingAddress, supplierAddress, bankAccountId,
   ]);
 
   const handleCompletePress = useCallback(() => {
@@ -387,28 +425,28 @@ export default function RapidBillingPage() {
   return (
     <div className="h-[calc(100vh-64px)] bg-slate-50 flex flex-col overflow-hidden font-sans antialiased text-slate-900">
       {/* POS Toolbar */}
-      <header className="px-4 py-2 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm shrink-0">
+      <header className="px-3 py-1.5 border-b border-slate-200 bg-white flex justify-between items-center shadow-sm shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="text-sm font-black tracking-tighter uppercase">
-            Rapid <span className="text-blue-600">Commerce</span>
+            Quick <span className="text-blue-600">Sale</span>
           </span>
         </div>
 
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-2 items-center">
           {pendingSync > 0 && !isOffline && (
             <button
               onClick={() => void syncQueue()}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
             >
               <Zap className="w-3 h-3" />
               <span>Sync {pendingSync} Records</span>
             </button>
           )}
-          <div className="flex gap-2 items-center bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+          <div className="flex gap-1.5 items-center bg-slate-50 px-4 py-1 rounded-full border border-slate-100">
             {isOffline ? (
               <WifiOff className="w-3.5 h-3.5 text-amber-500" />
             ) : (
@@ -422,7 +460,7 @@ export default function RapidBillingPage() {
       </header>
 
       {/* Scanner Row — full width, single prominent row */}
-      <div className="shrink-0 border-b border-slate-200 bg-white space-y-2 p-2">
+      <div className="shrink-0 border-b border-slate-200 bg-white space-y-0.5 p-1">
         <BarcodeSearch
           search={search}
           setSearch={setSearch}
@@ -436,11 +474,11 @@ export default function RapidBillingPage() {
         
         {/* Recently Added Products Quick Access */}
         {items.length > 0 && (
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-2">
-            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1.5">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-1">
+            <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-0.5">
               📦 Items in Cart ({items.length})
             </div>
-            <div className="flex gap-1.5 flex-wrap">
+            <div className="flex gap-1 flex-wrap">
               {items.map((item) => (
                 <button
                   key={item.productId}
@@ -449,12 +487,12 @@ export default function RapidBillingPage() {
                     name: item.name,
                     sku: item.sku,
                     price: item.price,
-                    gstRate: item.gstRate,
+                    gstRate: 0,
                     pricingMode: item.pricingMode,
                     width: item.width,
                     length: item.length,
                   })}
-                  className="px-2.5 py-1.5 bg-white border border-blue-200 rounded-lg text-[10px] font-bold text-slate-700 hover:bg-blue-100 hover:border-blue-300 transition-colors active:scale-95 flex items-center gap-1"
+                  className="px-4 py-1.5 bg-white border border-blue-200 rounded-lg text-[10px] font-bold text-slate-700 hover:bg-blue-100 hover:border-blue-300 transition-colors active:scale-95 flex items-center gap-1"
                 >
                   <span className="text-sm">+</span>
                   <span className="truncate max-w-[100px]">{item.name}</span>
@@ -478,6 +516,9 @@ export default function RapidBillingPage() {
               removeItem={removeItem}
               setItems={setItems}
               updateAreaField={updateAreaField}
+              updateIgstRate={updateIgstRate}
+              updateCgstRate={updateCgstRate}
+              updateSgstRate={updateSgstRate}
               currencySymbol={currencySymbol}
               getItemAmount={getItemAmount}
             />
@@ -507,8 +548,14 @@ export default function RapidBillingPage() {
             setShippingAddress={setShippingAddress}
             supplierAddress={supplierAddress}
             setSupplierAddress={setSupplierAddress}
+            bankAccountId={bankAccountId}
+            setBankAccountId={setBankAccountId}
+            bankAccounts={bankAccounts}
             subtotal={subtotal}
             taxTotal={taxTotal}
+            igstTotal={igstTotal}
+            cgstTotal={cgstTotal}
+            sgstTotal={sgstTotal}
             total={total}
             itemsCount={items.length}
             isSubmitting={isSubmitting}

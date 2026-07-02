@@ -99,7 +99,7 @@ export default function CustomerDetailPage() {
 
   if (!customer) {
     return (
-      <div className="text-slate-900 p-8 h-screen bg-slate-50 font-black uppercase tracking-widest flex items-center justify-center">
+      <div className="text-slate-900 p-4 h-screen bg-slate-50 font-black uppercase tracking-widest flex items-center justify-center">
         Strategic Relation Not Found.
       </div>
     );
@@ -109,8 +109,8 @@ export default function CustomerDetailPage() {
     ledger && ledger.length > 0 ? ledger[ledger.length - 1].balance : 0;
 
   return (
-    <div className="flex-1 space-y-3 md:space-y-4 pt-2 md:pt-4 px-2 md:px-4 bg-slate-50 min-h-screen w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row md:items-center gap-4">
+    <div className="flex-1 space-y-1.5 md:space-y-4 pt-2 md:pt-4 px-2 md:px-4 bg-slate-50 min-h-screen w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row md:items-center gap-2">
         <Button
           variant="ghost"
           className="text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl font-bold md:h-10 px-0 md:px-4 w-fit"
@@ -128,7 +128,7 @@ export default function CustomerDetailPage() {
         </div>
         <div className="md:ml-auto w-full md:w-auto">
           <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] overflow-hidden border-none border-b-4 border-b-amber-500">
-            <CardContent className="p-4 flex items-center space-x-4">
+            <CardContent className="p-2.5 flex items-center space-x-4">
               <div className="p-2 bg-amber-50 rounded-2xl">
                 <Wallet className="h-6 w-6 text-amber-600" />
               </div>
@@ -150,14 +150,14 @@ export default function CustomerDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] md:col-span-1 h-fit border-none">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-2 px-3">
             <CardTitle className="text-slate-900 text-lg font-black tracking-tight">
               Relation Metadata
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 space-y-4">
+          <CardContent className="p-2.5 space-y-2">
             <div className="flex items-center text-slate-600 font-bold text-sm">
               <Mail className="h-4 w-4 mr-3 text-blue-500" />{" "}
               {customer.email || "No email provided"}
@@ -170,14 +170,14 @@ export default function CustomerDetailPage() {
               <Building className="h-4 w-4 mr-3 text-slate-400" />{" "}
               {customer.company || "Retail Consumer"}
             </div>
-            <div className="pt-4 border-t border-slate-50">
+            <div className="pt-2 border-t border-slate-50">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   Status
                 </span>
                 <Badge
                   variant="outline"
-                  className="text-emerald-600 border-emerald-100 bg-emerald-50 font-black text-[9px] uppercase tracking-widest px-2.5 py-0.5"
+                  className="text-emerald-600 border-emerald-100 bg-emerald-50 font-black text-[9px] uppercase tracking-widest px-4 py-0.5"
                 >
                   {customer.status}
                 </Badge>
@@ -195,7 +195,7 @@ export default function CustomerDetailPage() {
         </Card>
 
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-[32px] md:col-span-2 border-none overflow-hidden print:col-span-3 print:border-none print:shadow-none print:bg-white print:text-black">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-4 flex flex-row items-center justify-between print:border-b print:border-black">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-2.5 flex flex-row items-center justify-between print:border-b print:border-black">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black tracking-tight print:text-black">
                 Audit Statement
@@ -217,7 +217,7 @@ export default function CustomerDetailPage() {
             <Table className="min-w-[700px]">
               <TableHeader className="bg-slate-50/30">
                 <TableRow className="border-slate-100 hover:bg-transparent print:border-black">
-                  <TableHead className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] pl-4 py-4">
+                  <TableHead className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] pl-4 py-2">
                     Date
                   </TableHead>
                   <TableHead className="text-slate-500 font-black text-[10px] uppercase tracking-[0.2em]">
@@ -272,7 +272,16 @@ export default function CustomerDetailPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-slate-500 text-[10px] font-black tracking-widest uppercase opacity-60 font-mono">
-                      {entry.ref}
+                      {entry.type === "INVOICE" ? (
+                        <button
+                          onClick={() => window.open(`/invoice/${entry.id}`, "_blank")}
+                          className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                        >
+                          {entry.ref}
+                        </button>
+                      ) : (
+                        entry.ref
+                      )}
                     </TableCell>
                     <TableCell className="text-right text-rose-600 font-black text-sm">
                       {Number(entry.debit) > 0
@@ -295,7 +304,7 @@ export default function CustomerDetailPage() {
               </TableBody>
             </Table>
 
-            <div className="p-8 border-t border-slate-100 text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] print:block hidden">
+            <div className="p-4 border-t border-slate-100 text-center text-[10px] text-slate-400 font-black uppercase tracking-[0.3em] print:block hidden">
               <p>Computer generated statement • No signature required</p>
               <p className="mt-1 text-slate-500">
                 Generated at: {new Date().toLocaleString()}

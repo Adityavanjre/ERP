@@ -546,6 +546,24 @@ model Invoice {
   vehicleNumber      String?
   buyersOrderNo      String?
   eWayBillNo         String?
+  placeOfSupply      String?
+referenceNumber    String?
+  otherReferences   String?
+  lrRrNumber        String?
+  salesPerson        String?
+  warehouse          String?
+  paymentTerms       String?
+  discount           Decimal?      @default(0)
+  freight            Decimal?      @default(0)
+  packingCharges     Decimal?      @default(0)
+  loadingCharges     Decimal?      @default(0)
+  insurance          Decimal?      @default(0)
+  otherCharges       Decimal?      @default(0)
+  roundOff           Decimal?      @default(0)
+  cessAmount         Decimal?      @default(0)
+  notes              String?
+  declaration        String?
+  qrCodeUrl          String?
   itemSections       Json?
   amountDue          Decimal       @default(0.00)
   paymentStatus      PaymentStatus @default(Unpaid)

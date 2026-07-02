@@ -178,8 +178,8 @@ export default function ProjectPage() {
     return <LoadingSpinner className="h-full" text="Loading Projects..." />;
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <ClipboardList className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
@@ -254,7 +254,7 @@ export default function ProjectPage() {
       </div>
 
       {showForm && (
-        <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-4 animate-in fade-in slide-in-from-top-4">
+        <Card className="bg-white border-slate-200 shadow-2xl rounded-3xl overflow-hidden border-none mb-2 animate-in fade-in slide-in-from-top-4">
           <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-4">
             <CardTitle className="text-slate-900 font-black text-xl">
               New Project
@@ -263,7 +263,7 @@ export default function ProjectPage() {
               Fill in the details to create a new project
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 md:p-4">
+          <CardContent className="p-2.5 md:p-4">
             <form
               onSubmit={handleCreate}
               className="grid grid-cols-1 md:grid-cols-2 gap-3"
@@ -319,7 +319,7 @@ export default function ProjectPage() {
                   }
                 />
               </div>
-              <div className="md:col-span-2 flex justify-end gap-3 pt-4">
+              <div className="md:col-span-2 flex justify-end gap-3 pt-2">
                 <Button
                   type="button"
                   variant="ghost"
@@ -362,7 +362,7 @@ export default function ProjectPage() {
                   style={{ width: `${100 - progress}%`, float: "right" }}
                 />
               </div>
-              <CardHeader className="pb-4 bg-slate-50/50">
+              <CardHeader className="pb-2 bg-slate-50/50">
                 <div className="flex justify-between items-start mb-2">
                   <Badge
                     variant="secondary"
@@ -389,7 +389,7 @@ export default function ProjectPage() {
                   {project.description || "No description provided."}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 pt-3">
+              <CardContent className="space-y-1.5 pt-3">
                 <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                     <span className="text-slate-400">Progress</span>
@@ -404,7 +404,7 @@ export default function ProjectPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400 pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 pt-2 border-t border-slate-100">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 text-slate-300" />
                     {project.startDate
@@ -454,14 +454,14 @@ export default function ProjectPage() {
         onOpenChange={(open) => !open && setSelectedProject(null)}
       >
         <DialogContent className="w-11/12 sm:min-w-fit sm:max-w-2xl bg-white border-none shadow-2xl rounded-[32px] overflow-hidden p-0 max-h-[90vh] flex flex-col">
-          <div className="bg-slate-900 p-3 md:p-3 pb-4 md:pb-12 flex-shrink-0">
-            <DialogTitle className="flex items-center gap-4 text-white text-2xl md:text-3xl font-black tracking-tight">
+          <div className="bg-slate-900 p-3 md:p-3 pb-2 md:pb-12 flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-white text-2xl md:text-3xl font-black tracking-tight">
               <div className="p-2 md:p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-500/40">
                 <ListTodo className="h-5 w-5 md:h-6 md:w-6 text-white" />
               </div>
               Task Management
             </DialogTitle>
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-4 md:mt-6 flex flex-wrap items-center gap-2">
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2 md:mt-6 flex flex-wrap items-center gap-2">
               Project:{" "}
               <span className="text-blue-400 break-words">
                 {selectedProject?.name}
@@ -469,14 +469,14 @@ export default function ProjectPage() {
             </p>
           </div>
 
-          <div className="p-3 md:p-3 -mt-4 bg-white rounded-t-[32px] space-y-4 flex-1 overflow-hidden flex flex-col">
+          <div className="p-3 md:p-3 -mt-4 bg-white rounded-t-[32px] space-y-2 flex-1 overflow-hidden flex flex-col">
             <form
               onSubmit={handleCreateTask}
               className="flex flex-col lg:flex-row gap-3 flex-shrink-0"
             >
               <Input
                 placeholder="New task..."
-                className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-14 px-6 font-bold focus:ring-blue-500/20"
+                className="bg-slate-50 border-slate-200 text-slate-900 rounded-2xl h-14 px-3 font-bold focus:ring-blue-500/20"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
               />
@@ -489,14 +489,14 @@ export default function ProjectPage() {
             </form>
 
             <div className="flex-1 overflow-y-auto pr-2 md:pr-4 custom-scrollbar min-h-[300px]">
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {projectTasks.map(
                   (task) =>
                     task && (
                       <div
                         key={task.id}
                         className={cn(
-                          "group flex items-center justify-between p-5 rounded-[20px] border transition-all",
+                          "group flex items-center justify-between p-3 rounded-[20px] border transition-all",
                           task.status === "Completed"
                             ? "bg-slate-50/50 border-slate-100"
                             : "bg-white border-slate-200 shadow-sm hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/5",

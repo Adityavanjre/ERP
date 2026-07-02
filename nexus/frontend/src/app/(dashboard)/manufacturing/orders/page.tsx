@@ -116,8 +116,8 @@ export default function WorkOrdersPage() {
     return <LoadingSpinner className="h-full" text="Loading work orders..." />;
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Factory className="mr-4 h-9 w-9 text-emerald-600 shadow-sm" />
@@ -192,7 +192,7 @@ export default function WorkOrdersPage() {
 
       <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden border-none">
         <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 md:py-3 px-4 md:px-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
             <div>
               <CardTitle className="text-slate-900 text-xl font-black">
                 Work Orders

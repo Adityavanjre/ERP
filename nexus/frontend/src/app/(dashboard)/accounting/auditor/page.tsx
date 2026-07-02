@@ -178,14 +178,14 @@ export default function AuditorDashboard() {
     }
   };
 
-  if (loading && !data) return <div className="p-4">Loading Auditor...</div>;
+  if (loading && !data) return <div className="p-2.5">Loading Auditor...</div>;
 
   if (!mounted) return null;
 
   return (
-    <div className="p-4 md:p-4 pb-24 md:pb-20 space-y-4 bg-slate-50 text-slate-900 min-h-screen">
+    <div className="p-2.5 md:p-4 pb-24 md:pb-20 space-y-2 bg-slate-50 text-slate-900 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2">
             <ShieldCheck className="w-8 h-8 text-emerald-600" />
@@ -196,7 +196,7 @@ export default function AuditorDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-white border border-slate-200 p-2 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-2 bg-white border border-slate-200 p-2 rounded-2xl shadow-sm">
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
@@ -234,7 +234,7 @@ export default function AuditorDashboard() {
       {/* Main Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-200 p-3 rounded-[32px] shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+          <div className="absolute top-0 right-0 p-2.5 opacity-5 group-hover:opacity-10 transition-opacity">
             <ShieldCheck className="w-16 h-16 text-slate-900" />
           </div>
           <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
@@ -250,7 +250,7 @@ export default function AuditorDashboard() {
               {(data?.confidenceScore ?? 0) > 90 ? "High" : "Moderate"}
             </span>
           </div>
-          <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+          <div className="mt-2 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-emerald-500 h-full transition-all duration-1000"
               style={{ width: `${data?.confidenceScore ?? 0}%` }}
@@ -312,7 +312,7 @@ export default function AuditorDashboard() {
             </span>
             <FileText className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="mt-4 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+          <div className="mt-2 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
             <div
               className="bg-blue-600 h-full transition-all duration-1000"
               style={{ width: `${data?.hsnCoverage ?? 0}%` }}
@@ -322,16 +322,16 @@ export default function AuditorDashboard() {
       </div>
 
       {/* Grid: Risk & Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         {/* Risk Flags */}
-        <div className="bg-white border border-slate-200 rounded-[32px] p-4 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-[32px] p-2.5 shadow-sm">
           <h2 className="text-xl font-black text-slate-900 mb-3 flex items-center gap-2 tracking-tight">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             Account Alerts & Blockers
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {(!data?.riskFlags || data?.riskFlags?.length === 0) && (
-              <div className="text-slate-400 font-bold italic py-4 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <div className="text-slate-400 font-bold italic py-2 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                 No major flags detected for this period.
               </div>
             )}
@@ -340,7 +340,7 @@ export default function AuditorDashboard() {
                 key={i}
                 className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all hover:scale-[1.01] ${flag.severity === "BLOCKER" ? "bg-red-50 border-red-100 text-red-900" : "bg-amber-50 border-amber-100 text-amber-900"}`}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   {flag.type === "BACKDATED" && (
                     <Clock className="w-6 h-6 text-amber-600" />
                   )}
@@ -371,7 +371,7 @@ export default function AuditorDashboard() {
             ))}
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-2 space-y-1.5">
             {data?.errors?.map((err: string, i: number) => (
               <div key={i} className="text-sm text-red-400 flex gap-2">
                 <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -382,14 +382,14 @@ export default function AuditorDashboard() {
         </div>
 
         {/* Financial Summary (Trial Balance Simulation) */}
-        <div className="bg-white border border-slate-200 rounded-[32px] p-4 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-[32px] p-2.5 shadow-sm">
           <h2 className="text-xl font-black text-slate-900 mb-3 flex items-center gap-2 tracking-tight">
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Trial Balance Overview
           </h2>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+          <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                   Total Sales
                 </p>
@@ -397,7 +397,7 @@ export default function AuditorDashboard() {
                   {currencySymbol}{(data?.summary?.totalSales ?? 0).toLocaleString()}
                 </p>
               </div>
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                   Total GST Liability
                 </p>
@@ -405,7 +405,7 @@ export default function AuditorDashboard() {
                   {currencySymbol}{(data?.summary?.totalGST ?? 0).toLocaleString()}
                 </p>
               </div>
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                   Total Receipts
                 </p>
@@ -413,7 +413,7 @@ export default function AuditorDashboard() {
                   {currencySymbol}{(data?.summary?.totalReceipts ?? 0).toLocaleString()}
                 </p>
               </div>
-              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                   Total Payments
                 </p>
@@ -424,7 +424,7 @@ export default function AuditorDashboard() {
             </div>
 
             <div className="border-t border-slate-100 pt-3">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-2">
                 <span className="text-slate-500 font-bold text-sm">
                   Simulated Net Dr (Receivables)
                 </span>
@@ -440,7 +440,7 @@ export default function AuditorDashboard() {
                   {currencySymbol}{(data?.summary?.netBalanceCr ?? 0).toLocaleString()}
                 </span>
               </div>
-              <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center justify-between">
+              <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-2xl flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   <span className="font-black text-emerald-700 uppercase tracking-tight text-xs">
@@ -457,7 +457,7 @@ export default function AuditorDashboard() {
       </div>
 
       {/* Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4 px-4 md:px-4 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 p-2.5 flex flex-col sm:flex-row justify-between items-center gap-2 px-4 md:px-4 z-50">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div
@@ -476,28 +476,28 @@ export default function AuditorDashboard() {
             <>
               <button
                 onClick={() => setIsReopening(true)}
-                className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all border border-zinc-700"
+                className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold flex items-center gap-2 transition-all border border-zinc-700"
               >
                 <Unlock className="w-4 h-4" />
                 Reopen Month
               </button>
               <button
                 onClick={handleCloseYear}
-                className="px-6 py-2.5 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30 rounded-xl font-bold flex items-center gap-2 transition-all border border-emerald-900/30"
+                className="px-3 py-2 bg-emerald-900/20 text-emerald-400 hover:bg-emerald-900/30 rounded-xl font-bold flex items-center gap-2 transition-all border border-emerald-900/30"
               >
                 <ShieldCheck className="w-4 h-4" />
                 Close Year {year}
               </button>
               <button
                 onClick={handleTallyMasters}
-                className="px-6 py-2.5 bg-white/50 text-slate-600 hover:bg-white rounded-xl font-bold flex items-center gap-2 transition-all border border-slate-200"
+                className="px-3 py-2 bg-white/50 text-slate-600 hover:bg-white rounded-xl font-bold flex items-center gap-2 transition-all border border-slate-200"
               >
                 <ArrowRightLeft className="w-4 h-4" />
                 Sync Masters
               </button>
               <button
                 onClick={handleTallyExport}
-                className="px-6 py-2.5 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-white/5 border border-slate-200"
+                className="px-3 py-2 bg-white text-black hover:bg-zinc-200 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-white/5 border border-slate-200"
               >
                 <Download className="w-4 h-4" />
                 Final Tally Export
@@ -518,13 +518,13 @@ export default function AuditorDashboard() {
 
       {/* Reopen Dialog */}
       {isReopening && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xl flex items-center justify-center z-[100] p-4">
-          <div className="bg-white border border-slate-200 w-full max-w-md rounded-[32px] p-4 shadow-2xl">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xl flex items-center justify-center z-[100] p-2.5">
+          <div className="bg-white border border-slate-200 w-full max-w-md rounded-[32px] p-2.5 shadow-2xl">
             <h3 className="text-2xl font-black text-slate-900 flex items-center gap-3 mb-2 tracking-tighter">
               <Unlock className="w-6 h-6 text-amber-600" />
               Reopen Closed Month
             </h3>
-            <p className="text-slate-500 font-medium text-xs mb-4">
+            <p className="text-slate-500 font-medium text-xs mb-2">
               Reopening a closed month will allow new entries to be made. Please
               provide a reason for reopening.
             </p>
@@ -533,10 +533,10 @@ export default function AuditorDashboard() {
               value={reopenReason}
               onChange={(e) => setReopenReason(e.target.value)}
               placeholder="Reason for reopening (e.g., Late GST invoice from supplier...)"
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-4 text-sm font-semibold"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none h-36 mb-2 text-sm font-semibold"
             />
 
-            <div className="flex gap-4">
+            <div className="flex gap-2">
               <button
                 onClick={() => setIsReopening(false)}
                 className="flex-1 px-4 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl font-bold text-slate-500 transition-all"

@@ -70,7 +70,12 @@ export class PrismaService
                           !txProp.startsWith('$') &&
                           txTarget[txProp]
                         ) {
-                          return new Proxy(txTarget[txProp], {
+                          const modelDelegate = txTarget[txProp];
+                          if (typeof modelDelegate !== 'object' && typeof modelDelegate !== 'function') {
+                            return modelDelegate;
+                          }
+                          try {
+                          return new Proxy(modelDelegate, {
                             get: (modelTarget: any, op: string | symbol) => {
                               if (
                                 typeof op === 'string' &&
@@ -194,6 +199,9 @@ export class PrismaService
                               return modelTarget[op];
                             },
                           });
+                          } catch {
+                            return modelDelegate;
+                          }
                         }
                         return txTarget[txProp];
                       },

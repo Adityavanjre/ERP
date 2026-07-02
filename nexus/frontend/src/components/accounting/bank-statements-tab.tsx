@@ -189,11 +189,11 @@ export function BankStatementsTab() {
   };
 
   if (loading) {
-    return <div className="p-4 flex justify-center"><Loader2 className="animate-spin" /></div>;
+    return <div className="p-2.5 flex justify-center"><Loader2 className="animate-spin" /></div>;
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">Bank Statements</h2>
@@ -209,10 +209,10 @@ export function BankStatementsTab() {
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-2">
         {statements.map(stmt => (
           <Card key={stmt.id}>
-            <CardHeader className="py-4">
+            <CardHeader className="py-2">
               <CardTitle className="text-lg">{stmt.account?.name || 'Unknown Account'}</CardTitle>
               <CardDescription>Statement ID: {stmt.id.slice(0, 8)} | Uploaded: {new Date(stmt.uploadDate).toLocaleDateString()}</CardDescription>
             </CardHeader>
@@ -259,7 +259,7 @@ export function BankStatementsTab() {
           </Card>
         ))}
         {statements.length === 0 && (
-          <div className="text-center py-4 text-slate-500 bg-white rounded-xl border border-dashed">
+          <div className="text-center py-2 text-slate-500 bg-white rounded-xl border border-dashed">
             No bank statements found. Add a manual entry or upload a CSV to get started.
           </div>
         )}
@@ -270,7 +270,7 @@ export function BankStatementsTab() {
           <DialogHeader>
             <DialogTitle>Record Bank Transaction</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-2 py-2">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Bank Account</Label>
@@ -289,7 +289,7 @@ export function BankStatementsTab() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Date</Label>
                 <Input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} />
@@ -303,7 +303,7 @@ export function BankStatementsTab() {
               <Label>Description (Add tags like #vendorName)</Label>
               <Input placeholder="e.g. Payment to Supplier #XYZ" value={manualDesc} onChange={e => setManualDesc(e.target.value)} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Reference Number</Label>
                 <Input placeholder="UTR or Cheque No" value={manualRef} onChange={e => setManualRef(e.target.value)} />
@@ -332,7 +332,7 @@ export function BankStatementsTab() {
           <DialogHeader>
             <DialogTitle>Upload CSV Statement</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-2 py-2">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label>Target Bank Account</Label>
@@ -354,7 +354,7 @@ export function BankStatementsTab() {
             <div className="space-y-2">
               <Label>CSV File</Label>
               <Input type="file" accept=".csv" onChange={handleCsvUpload} />
-              <p className="text-xs text-slate-500 mt-2">Format: Date, Description, Amount, Reference, Type(Credit/Debit)</p>
+              <p className="text-xs text-slate-500 mt-1">Format: Date, Description, Amount, Reference, Type(Credit/Debit)</p>
             </div>
           </div>
         </DialogContent>
@@ -374,7 +374,7 @@ export function BankStatementsTab() {
           <DialogHeader>
             <DialogTitle>Payment History</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-2 py-2">
             {selectedLine && (
               <div className="space-y-2">
                 <div className="text-sm">
@@ -395,7 +395,7 @@ export function BankStatementsTab() {
             {loadingPaymentHistory ? (
               <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
             ) : paymentHistory.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 <h4 className="text-sm font-bold text-zinc-300">Linked Payments & Outstanding History</h4>
                 <Table>
                   <TableHeader>

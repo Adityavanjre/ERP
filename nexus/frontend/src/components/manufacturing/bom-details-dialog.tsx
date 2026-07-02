@@ -108,13 +108,13 @@ export function BOMDetailsDialog({
         </DialogHeader>
 
         {loading ? (
-          <div className="py-4">
+          <div className="py-2">
             <LoadingSpinner text="Loading BOM Structure..." />
           </div>
         ) : bom ? (
-          <div className="space-y-3 py-3">
+          <div className="space-y-1.5 py-3">
             {/* Header Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <Card className="bg-slate-50 border-slate-200 shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -247,7 +247,7 @@ export function BOMDetailsDialog({
             </div>
           </div>
         ) : (
-          <div className="py-4 text-center text-slate-400">
+          <div className="py-2 text-center text-slate-400">
             Failed to load BOM details.
           </div>
         )}

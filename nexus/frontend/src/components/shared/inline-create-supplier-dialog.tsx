@@ -108,7 +108,7 @@ export function InlineCreateSupplierDialog({
             Register a new vendor on-the-spot. Optional fields can be left blank.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3 pt-3">
+        <form onSubmit={onSubmit} className="space-y-1.5 pt-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Supplier Name *</Label>
             <Input
@@ -191,7 +191,7 @@ export function InlineCreateSupplierDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"

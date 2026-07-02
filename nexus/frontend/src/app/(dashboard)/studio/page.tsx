@@ -107,8 +107,8 @@ export default function StudioPage() {
   }, [appName, modelName, modelLabel, fields]);
 
   return (
-    <div className="flex-1 space-y-3 p-4 md:p-4 pt-2 md:pt-3">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-1.5 p-2.5 md:p-4 pt-2 md:pt-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900 flex items-center">
             <Wand2 className="mr-3 h-8 w-8 text-fuchsia-600" />
@@ -136,7 +136,7 @@ export default function StudioPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-2 lg:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-xl shadow-slate-200/40 rounded-3xl lg:col-span-1 overflow-hidden">
           <CardHeader className="bg-slate-50 border-b border-slate-100">
             <CardTitle className="text-slate-900 flex items-center font-black text-lg">
@@ -147,7 +147,7 @@ export default function StudioPage() {
               Select app and define object details.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-3">
+          <CardContent className="space-y-1.5 pt-3">
             <div className="space-y-2">
               <Label className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                 App Name
@@ -203,11 +203,11 @@ export default function StudioPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Field
             </Button>
           </CardHeader>
-          <CardContent className="space-y-3 pt-3">
+          <CardContent className="space-y-1.5 pt-3">
             {fields.map((field, index) => (
               <div
                 key={index}
-                className="flex flex-col sm:flex-row flex-wrap gap-4 items-start sm:items-end p-4 rounded-xl bg-slate-50/50 border border-slate-100 group relative transition-all hover:bg-white hover:shadow-md"
+                className="flex flex-col sm:flex-row flex-wrap gap-2 items-start sm:items-end p-2.5 rounded-xl bg-slate-50/50 border border-slate-100 group relative transition-all hover:bg-white hover:shadow-md"
               >
                 <div className="flex-1 w-full sm:w-auto space-y-2">
                   <Label className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
@@ -287,7 +287,7 @@ export default function StudioPage() {
               Grant permissions to system roles.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pt-3">
+          <CardContent className="space-y-1.5 pt-3">
             {["Admin", "Manager", "Employee", "Viewer"].map((role) => (
               <div
                 key={role}

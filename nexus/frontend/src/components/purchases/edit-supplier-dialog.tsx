@@ -107,7 +107,7 @@ export function EditSupplierDialog({
             Update supplier information for {supplier?.name}.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-1.5 pt-2">
           <div className="space-y-2">
             <div className="grid gap-2">
               <Label
@@ -127,7 +127,7 @@ export function EditSupplierDialog({
                 className="h-11 rounded-xl border-slate-100 bg-slate-50/50 focus:bg-white transition-all font-bold"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label
                   htmlFor="email"

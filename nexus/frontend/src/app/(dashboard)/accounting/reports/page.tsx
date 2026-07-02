@@ -104,7 +104,7 @@ export default function ReportsPage() {
     );
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+    <div className="flex-1 space-y-1.5 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
@@ -128,17 +128,17 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="trial-balance" className="space-y-3">
+      <Tabs defaultValue="trial-balance" className="space-y-1.5">
         <TabsList className="bg-slate-100 p-1.5 rounded-2xl h-auto">
           <TabsTrigger
             value="trial-balance"
-            className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold"
+            className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm rounded-xl px-3 py-2 font-bold"
           >
             Trial Balance
           </TabsTrigger>
           <TabsTrigger
             value="profit-loss"
-            className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm rounded-xl px-6 py-2.5 font-bold"
+            className="data-[state=active]:bg-white data-[state=active]:text-violet-600 data-[state=active]:shadow-sm rounded-xl px-3 py-2 font-bold"
           >
             Profit & Loss
           </TabsTrigger>
@@ -147,8 +147,8 @@ export default function ReportsPage() {
         {/* --- TRIAL BALANCE --- */}
         <TabsContent value="trial-balance">
           <Card className="rounded-3xl border-none shadow-xl shadow-slate-200/40">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 py-3 px-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <CardTitle className="text-xl font-black text-slate-900">
                     Trial Balance
@@ -226,7 +226,7 @@ export default function ReportsPage() {
               </Table>
               {/* Totals Row */}
               {trialBalance && (
-                <div className="border-t-2 border-slate-900 py-4 px-4 flex justify-end gap-16 bg-slate-50">
+                <div className="border-t-2 border-slate-900 py-2 px-4 flex justify-end gap-16 bg-slate-50">
                   <div className="text-right">
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
                       Total Dr
@@ -251,11 +251,11 @@ export default function ReportsPage() {
 
         {/* --- PROFIT & LOSS --- */}
         <TabsContent value="profit-loss">
-          <div className="grid lg:grid-cols-3 gap-3 mb-4">
+          <div className="grid lg:grid-cols-3 gap-3 mb-2">
             <Card
               className={`rounded-3xl border-none shadow-xl col-span-1 overflow-hidden ${profitLoss?.isProfitable ? "bg-emerald-600" : "bg-red-600"} text-white`}
             >
-              <CardContent className="p-4 flex flex-col gap-2 h-full justify-center">
+              <CardContent className="p-2.5 flex flex-col gap-2 h-full justify-center">
                 <div className="text-[10px] font-black uppercase tracking-widest text-white/70">
                   Net Profit / (Loss)
                 </div>
@@ -279,7 +279,7 @@ export default function ReportsPage() {
               <CardContent className="p-0">
                 {/* Revenue Section */}
                 <div className="p-3 border-b border-slate-100">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
                     Income / Revenue
                   </div>
                   {(profitLoss?.revenue || []).map((a: ProfitLossAccount) => (
@@ -295,7 +295,7 @@ export default function ReportsPage() {
                       </span>
                     </div>
                   ))}
-                  <div className="flex justify-between items-center pt-4 mt-2 border-t border-dashed border-slate-200">
+                  <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-slate-200">
                     <span className="font-black text-slate-900 text-sm uppercase tracking-wider">
                       Total Revenue
                     </span>
@@ -307,7 +307,7 @@ export default function ReportsPage() {
 
                 {/* Expense Section */}
                 <div className="p-3">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
                     Expenses
                   </div>
                   {(profitLoss?.expenses || []).map((a: ProfitLossAccount) => (
@@ -323,7 +323,7 @@ export default function ReportsPage() {
                       </span>
                     </div>
                   ))}
-                  <div className="flex justify-between items-center pt-4 mt-2 border-t border-dashed border-slate-200">
+                  <div className="flex justify-between items-center pt-2 mt-2 border-t border-dashed border-slate-200">
                     <span className="font-black text-slate-900 text-sm uppercase tracking-wider">
                       Total Expenses
                     </span>

@@ -286,24 +286,24 @@ export default function HrPage() {
   if (!mounted) return null;
   if (loading)
     return (
-      <div className="p-4 text-center text-slate-500 font-bold">
+      <div className="p-2.5 text-center text-slate-500 font-bold">
         Synchronizing personnel data...
       </div>
     );
 
   return (
-    <div className="flex-1 space-y-3 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0">
+    <div className="flex-1 space-y-2 pt-1 md:pt-3 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div>
           <h2 className="text-xl font-black tracking-tight text-slate-900 flex items-center">
             <Users className="mr-4 h-8 w-8 md:h-9 md:w-9 text-blue-600 shadow-sm" />
             Employees & HR
           </h2>
-          <p className="text-slate-500 mt-2 font-medium">
+          <p className="text-slate-500 mt-1 font-medium">
             Manage employees, payroll, leaves, and departments.
           </p>
         </div>
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <Button className="w-full md:w-auto justify-center rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-lg shadow-blue-500/20 text-white h-11 whitespace-nowrap">
@@ -319,8 +319,8 @@ export default function HrPage() {
                   Fill in the employee details below.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2 py-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                       First Name *
@@ -348,7 +348,7 @@ export default function HrPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                       Employee ID *
@@ -379,7 +379,7 @@ export default function HrPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                       Email
@@ -408,7 +408,7 @@ export default function HrPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">
                       Monthly Gross Salary (INR)
@@ -482,7 +482,7 @@ export default function HrPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-2 md:grid-cols-3">
         <Card className="bg-white border-slate-200 shadow-sm rounded-3xl overflow-hidden border-b-4 border-b-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -494,7 +494,7 @@ export default function HrPage() {
             <div className="text-2xl font-black text-slate-900 tracking-tighter">
               {stats.activeEmployees}
             </div>
-            <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
+            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-tighter">
               On-site Staff
             </p>
           </CardContent>
@@ -510,7 +510,7 @@ export default function HrPage() {
             <div className="text-2xl font-black text-amber-600 tracking-tighter">
               {stats.pendingLeaves}
             </div>
-            <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
+            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-tighter">
               Awaiting approval
             </p>
           </CardContent>
@@ -529,36 +529,36 @@ export default function HrPage() {
                 minimumFractionDigits: 0,
               })}
             </div>
-            <p className="text-xs text-slate-500 font-bold mt-2 uppercase tracking-tighter">
+            <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-tighter">
               Net Payroll Amount
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="employees" className="space-y-4">
+      <Tabs defaultValue="employees" className="space-y-2">
         <TabsList className="bg-slate-100 border-slate-200 p-1.5 rounded-2xl h-auto w-full flex flex-wrap justify-start overflow-x-auto snap-x">
           <TabsTrigger
             value="employees"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Employee Directory
           </TabsTrigger>
           <TabsTrigger
             value="departments"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Departments
           </TabsTrigger>
           <TabsTrigger
             value="leaves"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Leaves & Absence
           </TabsTrigger>
           <TabsTrigger
             value="payroll"
-            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2.5 font-bold transition-all snap-start"
+            className="flex-1 sm:flex-none data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm rounded-xl px-4 md:px-4 py-2 font-bold transition-all snap-start"
           >
             Payroll Ledger
           </TabsTrigger>
@@ -678,7 +678,7 @@ export default function HrPage() {
                 Update employee profile information.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="grid grid-cols-2 gap-2 py-2">
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">First Name</Label>
                 <Input
@@ -766,7 +766,7 @@ export default function HrPage() {
                         Create a new business department block.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
+                    <div className="py-2">
                       <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 block">
                         Department Name *
                       </Label>
@@ -797,8 +797,8 @@ export default function HrPage() {
                 </Dialog>
               </div>
             </CardHeader>
-            <CardContent className="p-4 md:p-4">
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <CardContent className="p-2.5 md:p-4">
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
                 {Array.isArray(departments) &&
                   departments.map((dept) => (
                     <Card
@@ -806,7 +806,7 @@ export default function HrPage() {
                       className="bg-slate-50/50 border-slate-100 hover:border-blue-500/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all group rounded-2xl"
                     >
                       <CardHeader className="pb-3">
-                        <div className="p-3 bg-white w-fit rounded-xl shadow-sm mb-4 border border-slate-100 group-hover:border-blue-100 transition-all">
+                        <div className="p-3 bg-white w-fit rounded-xl shadow-sm mb-2 border border-slate-100 group-hover:border-blue-100 transition-all">
                           <Building2 className="h-6 w-6 text-blue-600" />
                         </div>
                         <CardTitle className="text-lg font-black text-slate-900 tracking-tight">

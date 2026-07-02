@@ -24,6 +24,13 @@ export class CrmService {
       );
     }
 
+    if (!customerData.state) {
+      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+      if (tenant?.state) {
+        customerData.state = tenant.state;
+      }
+    }
+
     const customer = await this.prisma.customer.create({
       data: { ...customerData, tenantId },
     });

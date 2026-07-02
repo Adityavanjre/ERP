@@ -72,13 +72,13 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
   }, [sections, onChange]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {sections.map((section) => (
-        <div key={section.id} className="border border-white/10 rounded-lg p-3">
+        <div key={section.id} className="border border-slate-200 rounded-lg p-3">
           <div className="space-y-2 mb-3">
             <Label>Section Title</Label>
             <Input
-              className="bg-white/5 border-white/10 text-white"
+              className="bg-slate-50 border-slate-200 text-slate-900"
               value={section.title}
               onChange={(e) => handleSectionTitleChange(section.id, e.target.value)}
               placeholder="e.g. Materials, Labor, Transport"
@@ -90,7 +90,7 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
                 <div className="col-span-4">
                   <Label>Description</Label>
                   <Input
-                    className="bg-white/5 border-white/10 text-white text-xs h-8"
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-8"
                     value={item.description}
                     onChange={(e) => handleItemChange(section.id, item.id, "description", e.target.value)}
                     placeholder="Item description"
@@ -99,7 +99,7 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
                 <div className="col-span-2">
                   <Label>HSN/SAC</Label>
                   <Input
-                    className="bg-white/5 border-white/10 text-white text-xs h-8"
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-8"
                     value={item.hsnSac}
                     onChange={(e) => handleItemChange(section.id, item.id, "hsnSac", e.target.value)}
                     placeholder="998311"
@@ -109,7 +109,7 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
                   <Label>Qty</Label>
                   <Input
                     type="number"
-                    className="bg-white/5 border-white/10 text-white text-xs h-8"
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-8"
                     value={item.qty}
                     onChange={(e) => handleItemChange(section.id, item.id, "qty", e.target.value)}
                     min="0"
@@ -119,7 +119,7 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
                   <Label>Rate</Label>
                   <Input
                     type="number"
-                    className="bg-white/5 border-white/10 text-white text-xs h-8"
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-8"
                     value={item.rate}
                     onChange={(e) => handleItemChange(section.id, item.id, "rate", e.target.value)}
                     min="0"
@@ -128,7 +128,7 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
                 </div>
                 <div className="col-span-1">
                   <Label>Amount</Label>
-                  <div className="text-xs h-8 flex items-center text-zinc-400">
+                  <div className="text-xs h-8 flex items-center text-slate-600 font-mono">
                     ₹{item.amount.toLocaleString("en-IN")}
                   </div>
                 </div>
@@ -136,7 +136,7 @@ export function DimensionalBillingEditor({ sections, onChange }: DimensionalBill
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-zinc-500 hover:text-rose-500"
+                    className="h-8 w-8 text-slate-500 hover:text-rose-500"
                     onClick={() => handleRemoveItem(section.id, item.id)}
                   >
                     <Trash2 className="h-3 w-3" />

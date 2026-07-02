@@ -97,7 +97,7 @@ export function CreateSupplierDialog({
             Register a new vendor or supplier for your procurement needs.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 pt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-1.5 pt-2">
           <div className="space-y-2">
             <div className="grid gap-2">
               <Label
@@ -118,7 +118,7 @@ export function CreateSupplierDialog({
                 </p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-2">
                 <Label
                   htmlFor="email"

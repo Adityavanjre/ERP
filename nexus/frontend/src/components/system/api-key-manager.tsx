@@ -95,7 +95,7 @@ export function ApiKeyManager() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       <Card className="border-blue-200/50 bg-blue-50/5 backdrop-blur-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ export function ApiKeyManager() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3 items-end bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
+          <div className="flex gap-2 items-end bg-white p-2.5 rounded-2xl border border-blue-100 shadow-sm">
             <div className="flex-1 space-y-1.5">
               <label className="text-xs font-black uppercase text-slate-500 tracking-widest pl-1">
                 Key Description
@@ -139,21 +139,21 @@ export function ApiKeyManager() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="mt-6 p-3 rounded-2xl bg-slate-900 text-white border-2 border-blue-500/50 shadow-2xl relative overflow-hidden"
+                className="mt-3 p-3 rounded-2xl bg-slate-900 text-white border-2 border-blue-500/50 shadow-2xl relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-2">
                   <Badge className="bg-blue-500 text-white font-black border-none px-3 py-1 animate-pulse">
                     SECRET GENERATED
                   </Badge>
                 </div>
-                <div className="flex items-center gap-3 mb-2 text-blue-400">
+                <div className="flex items-center gap-2 mb-1 text-blue-400">
                   <ShieldAlert className="w-5 h-5" />
                   <span className="text-xs font-black uppercase tracking-widest">
                     Copy this key now. It will never be shown again.
                   </span>
                 </div>
-                <div className="flex gap-3 mt-4">
-                  <div className="flex-1 bg-white/10 p-4 rounded-xl font-mono text-lg break-all border border-white/5 select-all">
+                <div className="flex gap-2 mt-2">
+                  <div className="flex-1 bg-white/10 p-2.5 rounded-xl font-mono text-lg break-all border border-white/5 select-all">
                     {newKeySecret}
                   </div>
                   <Button
@@ -170,7 +170,7 @@ export function ApiKeyManager() {
                 </div>
                 <Button
                   variant="ghost"
-                  className="mt-4 text-white/50 hover:text-white text-xs"
+                  className="mt-2 text-white/50 hover:text-white text-xs"
                   onClick={() => setNewKeySecret(null)}
                 >
                   I have saved this key safely
@@ -190,11 +190,11 @@ export function ApiKeyManager() {
         <CardContent className="p-0">
           <div className="divide-y divide-slate-50">
             {loading ? (
-              <div className="p-4 text-center animate-pulse text-slate-400 font-bold tracking-widest uppercase text-xs">
+              <div className="p-2.5 text-center animate-pulse text-slate-400 font-bold tracking-widest uppercase text-xs">
                 Synchronizing Vault...
               </div>
             ) : keys.length === 0 ? (
-              <div className="p-4 text-center text-slate-400 font-medium italic">
+              <div className="p-2.5 text-center text-slate-400 font-medium italic">
                 No API keys active. Connectivity is offline.
               </div>
             ) : (
@@ -203,7 +203,7 @@ export function ApiKeyManager() {
                   key={key.id}
                   className="p-3 px-4 flex items-center justify-between hover:bg-slate-50 transition-all group"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div className="p-3.5 bg-slate-900 rounded-2xl shadow-lg shadow-slate-900/10 group-hover:scale-110 transition-transform">
                       <Key className="w-5 h-5 text-blue-400" />
                     </div>
@@ -211,7 +211,7 @@ export function ApiKeyManager() {
                       <h4 className="font-black text-slate-900 text-lg leading-tight">
                         {key.name}
                       </h4>
-                      <div className="flex items-center gap-3 mt-1.5">
+                      <div className="flex items-center gap-2 mt-1.5">
                         <code className="text-[10px] font-black bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase tracking-widest">
                           {key.prefix}.****
                         </code>
@@ -223,7 +223,7 @@ export function ApiKeyManager() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div className="flex gap-2">
                       {key.scopes.map((s) => (
                         <Badge

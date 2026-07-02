@@ -99,8 +99,8 @@ export function EditWarehouseDialog({
             Update storage information for {warehouse?.name}.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3 pt-4">
-          <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-1.5 pt-2">
+          <div className="space-y-1.5">
             <div className="grid gap-2">
               <Label
                 htmlFor="name"

@@ -45,8 +45,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[420px] rounded-[32px] p-4">
-        <DialogHeader className="flex flex-col items-center gap-4">
+      <DialogContent className="sm:max-w-[420px] rounded-[32px] p-2.5">
+        <DialogHeader className="flex flex-col items-center gap-2">
           <div
             className={`w-16 h-16 rounded-full flex items-center justify-center ${iconStyles[variant]}`}
           >
@@ -59,7 +59,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             {description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+        <DialogFooter className="flex flex-col sm:flex-row gap-3 mt-3">
           <Button
             variant="outline"
             onClick={onClose}
