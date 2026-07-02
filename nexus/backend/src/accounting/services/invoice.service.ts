@@ -274,7 +274,16 @@ export class InvoiceService {
         try {
           await this.ledger.initializeTenantAccounts(tenantId, tx);
           console.log('[Invoice Creation] Chart of accounts initialized successfully');
-          // Re-fetch accounts after initialization
+          
+          // Re-fetch accounts after initialization with explicit logging
+          console.log('[Invoice Creation] Fetching all accounts for tenant:', tenantId);
+          const allAccounts = await tx.account.findMany({
+            where: { tenantId },
+            select: { id: true, name: true, type: true },
+          });
+          console.log('[Invoice Creation] Total accounts found:', allAccounts.length);
+          console.log('[Invoice Creation] Account names:', allAccounts.map((a: any) => a.name));
+          
           arAccount = await tx.account.findFirst({
             where: {
               tenantId,
