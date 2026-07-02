@@ -253,20 +253,56 @@ export class InvoiceService {
         });
       }
 
-      const arAccount = await tx.account.findFirst({
+      let arAccount = await tx.account.findFirst({
         where: {
           tenantId,
           type: AccountType.Asset,
           name: StandardAccounts.ACCOUNTS_RECEIVABLE,
         },
       });
-      const revenueAccount = await tx.account.findFirst({
+      let revenueAccount = await tx.account.findFirst({
         where: {
           tenantId,
           type: AccountType.Revenue,
           name: StandardAccounts.SALES,
         },
       });
+
+      // Auto-initialize accounts if missing (first invoice setup)
+      if (!arAccount || !revenueAccount) {
+        console.log('[Invoice Creation] Auto-initializing chart of accounts...');
+        try {
+          await this.ledger.initializeTenantAccounts(tenantId, tx);
+          console.log('[Invoice Creation] Chart of accounts initialized successfully');
+          // Re-fetch accounts after initialization
+          const newArAccount = await tx.account.findFirst({
+            where: {
+              tenantId,
+              type: AccountType.Asset,
+              name: StandardAccounts.ACCOUNTS_RECEIVABLE,
+            },
+          });
+          const newRevenueAccount = await tx.account.findFirst({
+            where: {
+              tenantId,
+              type: AccountType.Revenue,
+              name: StandardAccounts.SALES,
+            },
+          });
+          if (newArAccount) arAccount = newArAccount;
+          if (newRevenueAccount) revenueAccount = newRevenueAccount;
+        } catch (initError: any) {
+          console.error('[Invoice Creation] Failed to initialize accounts:', initError?.message);
+          throw new BadRequestException(
+            'Ledger Configuration Error: Unable to initialize accounting system. Please contact support.',
+          );
+        }
+      }
+
+      if (!arAccount || !revenueAccount)
+        throw new BadRequestException(
+          'Ledger Configuration Error: Missing Accounts after initialization.',
+        );
 
       // Split tax ledgers
       const cgstAccount = await tx.account.findFirst({
@@ -278,11 +314,6 @@ export class InvoiceService {
       const igstAccount = await tx.account.findFirst({
         where: { tenantId, name: StandardAccounts.OUTPUT_IGST },
       });
-
-      if (!arAccount || !revenueAccount)
-        throw new BadRequestException(
-          'Ledger Configuration Error: Missing Accounts.',
-        );
 
       const transactionsList = [
         {
