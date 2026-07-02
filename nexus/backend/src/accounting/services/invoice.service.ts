@@ -260,6 +260,7 @@ export class InvoiceService {
           name: StandardAccounts.ACCOUNTS_RECEIVABLE,
         },
       });
+      
       let revenueAccount = await tx.account.findFirst({
         where: {
           tenantId,
@@ -267,6 +268,17 @@ export class InvoiceService {
           name: StandardAccounts.SALES,
         },
       });
+      
+      // Fallback: if Sales account not found, try alternative names
+      if (!revenueAccount) {
+        revenueAccount = await tx.account.findFirst({
+          where: {
+            tenantId,
+            type: AccountType.Revenue,
+            name: { in: ['Sales', 'Sales Revenue', 'Sale'] },
+          },
+        });
+      }
 
       // Auto-initialize accounts if missing (first invoice setup)
       if (!arAccount || !revenueAccount) {
@@ -295,7 +307,7 @@ export class InvoiceService {
             where: {
               tenantId,
               type: AccountType.Revenue,
-              name: StandardAccounts.SALES,
+              name: { in: ['Sales', 'Sales Revenue', 'Sale'] },
             },
           });
           console.log('[Invoice Creation] After re-fetch - AR:', arAccount?.id, 'Revenue:', revenueAccount?.id);
@@ -314,16 +326,27 @@ export class InvoiceService {
         );
       }
 
-      // Split tax ledgers
-      const cgstAccount = await tx.account.findFirst({
+      // Split tax ledgers - with fallback names for IGST
+      let cgstAccount = await tx.account.findFirst({
         where: { tenantId, name: StandardAccounts.OUTPUT_CGST },
       });
-      const sgstAccount = await tx.account.findFirst({
+      let sgstAccount = await tx.account.findFirst({
         where: { tenantId, name: StandardAccounts.OUTPUT_SGST },
       });
-      const igstAccount = await tx.account.findFirst({
+      let igstAccount = await tx.account.findFirst({
         where: { tenantId, name: StandardAccounts.OUTPUT_IGST },
       });
+      
+      // Fallback: if Output IGST not found, try alternative names
+      if (!igstAccount) {
+        igstAccount = await tx.account.findFirst({
+          where: {
+            tenantId,
+            type: AccountType.Liability,
+            name: { in: ['Output IGST', 'IGST Payable', 'Output GST'] },
+          },
+        });
+      }
 
       const transactionsList = [
         {
