@@ -337,6 +337,8 @@ export class InvoiceService {
         where: { tenantId, name: StandardAccounts.OUTPUT_IGST },
       });
       
+      console.log('[Invoice Accounts] CGST Found:', !!cgstAccount, 'SGST Found:', !!sgstAccount, 'IGST Found:', !!igstAccount);
+      
       // Fallback: if Output IGST not found, try alternative names
       if (!igstAccount) {
         igstAccount = await tx.account.findFirst({
@@ -346,6 +348,7 @@ export class InvoiceService {
             name: { in: ['Output IGST', 'IGST Payable', 'Output GST'] },
           },
         });
+        console.log('[Invoice Accounts] IGST after fallback:', !!igstAccount);
       }
 
       const transactionsList = [
