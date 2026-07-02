@@ -113,10 +113,19 @@ export function UXProvider({ children }: { children: React.ReactNode }) {
     setIsSessionExpired(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (confirmOptions) {
-      confirmOptions.onConfirm();
       setConfirmOptions(null);
+      try {
+        const result = confirmOptions.onConfirm;
+        if (typeof result === "function") {
+          await result();
+        } else {
+          console.error("[Confirm Error] onConfirm is not a function:", result);
+        }
+      } catch (err) {
+        console.error("[Confirm Error]", err);
+      }
     }
   };
 
