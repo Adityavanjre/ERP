@@ -437,6 +437,21 @@ export class InvoiceService {
       }
 
       // 1. Create Invoice Journal
+      console.log('[Invoice Journal] Transaction List:', JSON.stringify(
+        transactionsList.map(t => ({ 
+          type: t.type, 
+          amount: t.amount.toNumber(),
+          description: t.description 
+        })), 
+        null, 2
+      ));
+      console.log('[Invoice Journal] Total Debits:', transactionsList
+        .filter(t => t.type === 'Debit')
+        .reduce((sum, t) => sum + t.amount.toNumber(), 0));
+      console.log('[Invoice Journal] Total Credits:', transactionsList
+        .filter(t => t.type === 'Credit')
+        .reduce((sum, t) => sum + t.amount.toNumber(), 0));
+      
       await this.ledger.createJournalEntry(
         tenantId,
         {
