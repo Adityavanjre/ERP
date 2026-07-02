@@ -464,25 +464,50 @@ export function CreateInvoiceDialog({
       if (newInvoiceId) window.open(`/invoice/${newInvoiceId}`, "_blank");
     } catch (err: unknown) {
       try {
-        const error = err as any;
-        const raw = error?.response?.data;
+        console.log("[Invoice Submit Error] Raw error:", err);
+        console.log("[Invoice Submit Error] Error type:", typeof err);
+        console.log("[Invoice Submit Error] Error keys:", err ? Object.keys(err as any) : "null");
+        
         let errMsg = "Failed to issue invoice";
         
-        if (Array.isArray(raw?.message)) {
-          errMsg = raw.message.join(", ");
-        } else if (typeof raw?.message === "string") {
-          errMsg = raw.message;
-        } else if (typeof raw === "string") {
-          errMsg = raw;
-        } else if (raw?.error) {
-          errMsg = typeof raw.error === "string" ? raw.error : JSON.stringify(raw.error);
-        } else if (typeof error?.message === "string") {
+        const error = err as any;
+        
+        // Handle custom API error objects (from interceptors)
+        if (error?.message && typeof error.message === "string") {
           errMsg = error.message;
         }
+        // Handle axios response errors
+        else if (error?.response?.data?.message) {
+          const msg = error.response.data.message;
+          if (Array.isArray(msg)) {
+            errMsg = msg.join(", ");
+          } else if (typeof msg === "string") {
+            errMsg = msg;
+          }
+        }
+        // Handle plain response data
+        else if (error?.response?.data) {
+          const data = error.response.data;
+          if (typeof data === "string") {
+            errMsg = data;
+          } else if (data?.error) {
+            errMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
+          }
+        }
+        // Fallback to error message
+        else if (error?.message) {
+          errMsg = String(error.message);
+        }
         
+        // Ensure errMsg is always a valid string
+        if (!errMsg || typeof errMsg !== "string" || errMsg.length === 0) {
+          errMsg = "Failed to issue invoice";
+        }
+        
+        console.log("[Invoice Submit Error] Final message:", errMsg);
         toast.error(errMsg);
       } catch (toastErr) {
-        console.error("Error in invoice submission:", toastErr);
+        console.error("[Invoice Submit Error] Exception in error handler:", toastErr);
         toast.error("Failed to issue invoice - please try again");
       }
     } finally {
