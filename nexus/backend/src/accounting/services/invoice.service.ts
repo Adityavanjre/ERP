@@ -86,12 +86,19 @@ export class InvoiceService {
       // REMOVED: Quota check - subscription system removed
       // await this.billing.checkQuota(tenantId, 'maxInvoicesPerMonth', tx);
 
-      const calculation = await this.calculateTotals(
-        tenantId,
-        customerId,
-        items,
-        tx,
-      );
+      let calculation;
+      try {
+        calculation = await this.calculateTotals(
+          tenantId,
+          customerId,
+          items,
+          tx,
+        );
+      } catch (calcError: any) {
+        throw new BadRequestException(
+          calcError?.message || 'Failed to calculate invoice totals'
+        );
+      }
       let {
         totalTaxable,
         totalGST,
@@ -114,7 +121,22 @@ export class InvoiceService {
       totalIGST = this.ledger.round2(totalIGST);
 
       // ACC-007: Round-Off Ledger Implementation
-      const unroundedGrandTotal = totalTaxable.add(totalGST);
+      // Calculate invoice-level charges
+      const discount = new Decimal(data.discount || 0);
+      const freight = new Decimal(data.freight || 0);
+      const packingCharges = new Decimal(data.packingCharges || 0);
+      const loadingCharges = new Decimal(data.loadingCharges || 0);
+      const insurance = new Decimal(data.insurance || 0);
+      const otherCharges = new Decimal(data.otherCharges || 0);
+      const cessAmount = new Decimal(data.cessAmount || 0);
+      const chargesTotal = freight.add(packingCharges).add(loadingCharges).add(insurance).add(otherCharges);
+      
+      // Apply discount to taxable base, then add charges
+      const afterDiscount = totalTaxable.minus(discount);
+      const taxableBase = afterDiscount.add(chargesTotal);
+      
+      // Grand total = taxable base + tax + cess - round off
+      const unroundedGrandTotal = taxableBase.add(totalGST).add(cessAmount);
       grandTotal = new Decimal(Math.round(unroundedGrandTotal.toNumber()));
       const roundingDifference = grandTotal.minus(unroundedGrandTotal);
 
@@ -187,6 +209,22 @@ export class InvoiceService {
           vehicleNumber: data.vehicleNumber || null,
           buyersOrderNo: data.buyersOrderNo || null,
           eWayBillNo: data.eWayBillNo || null,
+          placeOfSupply: data.placeOfSupply || null,
+          referenceNumber: data.referenceNumber || null,
+          lrRrNumber: data.lrRrNumber || null,
+          salesPerson: data.salesPerson || null,
+          warehouse: data.warehouse || null,
+          paymentTerms: data.paymentTerms || null,
+          discount: data.discount || 0,
+          freight: data.freight || 0,
+          packingCharges: data.packingCharges || 0,
+          loadingCharges: data.loadingCharges || 0,
+          insurance: data.insurance || 0,
+          otherCharges: data.otherCharges || 0,
+          roundOff: data.roundOff || 0,
+          cessAmount: data.cessAmount || 0,
+          notes: data.notes || null,
+          declaration: data.declaration || null,
           items: {
             create: invoiceItemsData,
           },
@@ -610,6 +648,7 @@ export class InvoiceService {
           },
         },
         project: true,
+        bankAccount: true,
       },
     });
 
@@ -798,8 +837,8 @@ export class InvoiceService {
       );
     }
     if (!customer?.state) {
-      throw new BadRequestException(
-        'Compliance Error: Customer state is missing. GST calculation requires place of supply.',
+      console.warn(
+        `Customer ${customer?.firstName || customerId} has no state. Falling back to tenant state for GST calculation.`,
       );
     }
 
@@ -852,7 +891,7 @@ export class InvoiceService {
 
       const qty = new Decimal(item.quantity);
       const unitPrice = this.ledger.round2(item.price);
-      const gstRate = new Decimal(product.gstRate || 0);
+      const gstRate = new Decimal(item.gstRate ?? product.gstRate ?? 0);
 
       // Verify GST rate against HSN Master
       const { isValid, officialRate } = await this.hsn.validateGstRate(
@@ -964,15 +1003,11 @@ export class InvoiceService {
       } else {
         // Fallback for tenants without warehouses (though unlikely given onboarding)
         // We still need to decrement global stock at a minimum.
-        const result = await tx.product.updateMany({
-          where: { id: item.productId, tenantId, stock: { gte: qty } },
+        // Allow negative stock — the business may procure stock after invoicing.
+        await tx.product.updateMany({
+          where: { id: item.productId, tenantId },
           data: { stock: { decrement: qty } },
         });
-        if (result.count === 0) {
-          throw new BadRequestException(
-            `Insufficient stock for ${item.productName}. Requested: ${qty}`,
-          );
-        }
       }
     }
   }
