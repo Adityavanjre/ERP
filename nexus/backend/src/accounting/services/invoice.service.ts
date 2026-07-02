@@ -95,6 +95,11 @@ export class InvoiceService {
           tx,
         );
       } catch (calcError: any) {
+        console.error('calculateTotals error:', {
+          message: calcError?.message,
+          stack: calcError?.stack,
+          error: calcError,
+        });
         throw new BadRequestException(
           calcError?.message || 'Failed to calculate invoice totals'
         );
@@ -890,7 +895,8 @@ export class InvoiceService {
       }
 
       const qty = new Decimal(item.quantity);
-      const unitPrice = this.ledger.round2(item.price);
+      const itemPrice = item.price ?? product?.price ?? 0;
+      const unitPrice = this.ledger.round2(itemPrice);
       const gstRate = new Decimal(item.gstRate ?? product.gstRate ?? 0);
 
       // Verify GST rate against HSN Master
