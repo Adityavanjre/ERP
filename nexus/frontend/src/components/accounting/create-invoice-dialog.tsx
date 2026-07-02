@@ -385,12 +385,12 @@ export function CreateInvoiceDialog({
     try {
       const apiItems = items.map((i) => {
         const product = products.find(p => p.id === i.productId);
-        const itemPrice = i.price || Number(product?.price) || 0;
+        const itemPrice = Number(i.price) || Number(product?.price) || 0;
         
         const baseItem: Record<string, any> = {
           productId: i.productId,
           quantity: Number(i.quantity) || 1,
-          price: itemPrice,
+          price: Math.max(0, itemPrice), // Ensure price is not negative
           gstRate: igstRate + cgstRate + sgstRate,
           gstType: igstRate > 0 ? "IGST" : "CGST_SGST",
           hsnCode: i.hsnCode || undefined,
@@ -398,8 +398,8 @@ export function CreateInvoiceDialog({
         if (i.type === "dimensional") {
           const area = i.width * i.length;
           const calculatedAmount = area * i.sheets * i.ratePerSqm;
-          const perUnit = i.quantity > 0 ? calculatedAmount / i.quantity : calculatedAmount;
-          baseItem.price = perUnit;
+          const perUnit = i.quantity > 0 ? calculatedAmount / i.quantity : (calculatedAmount || 0);
+          baseItem.price = Math.max(0, perUnit); // Ensure price is not negative
         }
         if (!i.productId && i.description) {
           baseItem.name = i.description;
